@@ -3,6 +3,36 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.3.7 — 2026-07-25
+
+### Fixed — an approved tool call deadlocked the client and hung every caller
+- **Why:** `EngineClient._recv_loop` is the only consumer of the WebSocket, and
+  it awaited the notification handler inline. `chat()`'s handler answers a
+  `chat.pending_approval` notification by issuing `chat.approve`, and `call()`
+  ends in `await asyncio.wait_for(fut, …)` — on a future only the receive loop
+  can resolve. So the approve request went out, the engine really did run the
+  tool, and every frame after it was buffered and never dispatched. Sixty
+  seconds later the inner `wait_for` raised `TimeoutError` *inside* the receive
+  loop; the `except (ConnectionClosed, CancelledError)` clause did not catch it,
+  the receive task died silently, and the outer `chat.send` future was never
+  resolved nor failed — the caller blocked until something killed it.
+  Measured against the live engine 2026-07-25: `chat.send` returned in 43.2 s and
+  the client, still not listening, was killed 106 s later. This is why
+  `cs chat --allow send_draft` "sends but never returns", and why it also hit
+  `cs ask` / `cs draft-reply`: the handler calls `chat.approve` even to DENY, so
+  the deadlock fires on any gated tool regardless of the allow-set. It also left
+  the engine holding a zombie turn per abandoned call.
+- **What:** notification handlers are spawned with `asyncio.create_task` and
+  tracked, never awaited inside the receive loop (the module docstring already
+  promised exactly this: "a second call can be issued while a long-running one
+  is still in flight"). Defence in depth: the receive loop now fails every
+  pending future on ANY exception, not only on connection close, so a dead
+  reader surfaces as an error instead of an indefinite hang; a failed handler is
+  reported on stderr instead of at garbage-collection time; and `__aexit__`
+  cancels outstanding handler tasks.
+- **Re-collaudo:** full, every clone. This is the shared RPC path — `ask`,
+  `draft-reply`, `chat`, and every campaign loop that talks to the engine.
+
 ## v0.3.6 — 2026-07-25
 
 ### Fixed — threading headers survived only for short Message-IDs

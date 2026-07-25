@@ -44,6 +44,7 @@ class EngineClient:
         self._ws = None
         self._recv_task: asyncio.Task | None = None
         self._pending: dict[Any, asyncio.Future] = {}
+        self._handlers: set[asyncio.Task] = set()
         self._ids = itertools.count(1)
 
     @property
@@ -69,6 +70,8 @@ class EngineClient:
     async def __aexit__(self, *exc) -> None:
         if self._recv_task:
             self._recv_task.cancel()
+        for t in list(self._handlers):
+            t.cancel()
         if self._ws:
             await self._ws.close()
         for fut in self._pending.values():
@@ -103,11 +106,47 @@ class EngineClient:
                     if self.on_notification:
                         out = self.on_notification(method, params)
                         if asyncio.iscoroutine(out):
-                            await out
+                            # NEVER await a handler inline. This task is the only
+                            # consumer of the socket, and the approval handler
+                            # answers a notification by issuing `chat.approve` —
+                            # whose response only THIS loop can deliver. Awaiting
+                            # here deadlocks: the approve request goes out, the
+                            # engine really does run the tool, and every frame
+                            # after it is buffered and never dispatched, so the
+                            # caller hangs until something kills it.
+                            t = asyncio.create_task(out)
+                            self._handlers.add(t)
+                            t.add_done_callback(self._handler_done)
         except (websockets.ConnectionClosed, asyncio.CancelledError):
-            for fut in self._pending.values():
-                if not fut.done():
-                    fut.set_exception(ConnectionError("engine connection closed"))
+            self._fail_pending(ConnectionError("engine connection closed"))
+        except Exception as exc:  # noqa: BLE001
+            # The receive task must never die quietly: whatever killed it, every
+            # caller waiting on a future is now waiting on a loop that will never
+            # answer. Surfacing the real exception turns a silent hang into a
+            # failure the caller can log and retry.
+            self._fail_pending(exc)
+
+    def _handler_done(self, task: asyncio.Task) -> None:
+        """Retire a finished notification handler, loudly if it failed.
+
+        A fire-and-forget task whose exception nobody retrieves is reported by
+        asyncio only at garbage-collection time, long after the run it belongs
+        to. An approval that failed to reach the engine is exactly the kind of
+        thing that must not be discovered that way.
+        """
+        self._handlers.discard(task)
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            import sys
+
+            sys.stderr.write(f"[rpc] notification handler failed: {exc!r}\n")
+
+    def _fail_pending(self, exc: BaseException) -> None:
+        for fut in self._pending.values():
+            if not fut.done():
+                fut.set_exception(exc)
 
     async def call(self, method: str, params: dict | None = None, timeout: float = 60) -> Any:
         rid = next(self._ids)
