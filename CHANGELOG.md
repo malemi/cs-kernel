@@ -3,6 +3,42 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.3.6 — 2026-07-25
+
+### Fixed — threading headers survived only for short Message-IDs
+- **Why:** `In-Reply-To` / `References` are not in `email.policy.default`'s
+  header registry, so they are folded as unstructured text: any Message-ID too
+  long for one 78-column line came out RFC2047 encoded-word-mangled
+  (`In-Reply-To: =?utf-8?q?=3C!=26!AAAA…?=`). The receiving client then saw no
+  valid reference at all — the reply opened a NEW thread and our outbound
+  carried no trace of the customer's message, which also breaks any
+  "did we already answer this?" check that reads `References` back. Measured on
+  the live support@ mailbox: 2 of the 25 batch-2 contacts who wrote have an
+  inbound Message-ID over 78 chars (105 and 85), so v0.3.5's threading silently
+  did nothing for them.
+- **What:** `build_mime()` builds the message with
+  `email.policy.default.clone(max_line_length=998)` (the RFC 5322 hard maximum).
+  Both headers now come out verbatim on one line; `Subject` is still RFC2047-
+  encoded for accents. Mapping the two headers to `MessageIDHeader` in a cloned
+  `header_factory` was tried and rejected: it fixes `In-Reply-To` and silently
+  truncates a multi-id `References` to the first id.
+
+### Fixed — a delivered mail could be reported to the caller as a failed send
+- **Why:** `send()` mirrors the message into Gmail Sent over a second IMAP
+  session AFTER SMTP has accepted it. Only the `typ != "OK"` case was soft; an
+  exception (IMAP login failure, throttling, a dropped connection) propagated
+  out of `send()`, so a mail the customer had already received was reported as
+  a failure. In a campaign loop that means the state write that follows a
+  successful send is skipped, the operator is told the customer was not
+  answered, and the next run sends a duplicate.
+- **What:** the mirror moved into `_mirror_to_sent()`, which never raises —
+  every failure writes one stderr warning saying the mail WAS delivered. Only
+  the SMTP phase may raise, which is what the docstring always promised.
+
+### Re-collaudo
+- Every clone that sends mail: static tier. `mrcall-cs`: full — it is the clone
+  whose conversational loop depends on both fixes.
+
 ## v0.3.5 — 2026-07-25
 
 ### Added — RFC threading headers on the cs-SMTP send path

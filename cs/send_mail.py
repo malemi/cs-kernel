@@ -19,6 +19,7 @@ import imaplib
 import re
 import smtplib
 import time
+from email import policy
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 
@@ -26,6 +27,20 @@ from .config import Settings
 from .gmail_drafts import _imap  # reuse IMAP login
 
 _LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")  # markdown links — structured input
+
+# `In-Reply-To` and `References` are NOT in email.policy.default's header
+# registry, so they are treated as unstructured text: a Message-ID too long for
+# one 78-column line gets RFC2047 encoded-word-mangled
+# (`In-Reply-To: =?utf-8?q?=3C!=26!AAAA…?=`), and the receiving mail client sees
+# no valid Message-ID at all — the reply opens a NEW thread and our outbound
+# carries no reference to the customer's message. Real example, 2026-07-25:
+# lineatielle@lineatielle.com's Message-ID is 105 characters.
+# Raising the fold limit to the RFC 5322 hard maximum keeps those two headers
+# verbatim on one line while `Subject` is still RFC2047-encoded for accents.
+# (Mapping them to MessageIDHeader in a cloned header_factory does NOT work: it
+# fixes In-Reply-To and silently truncates a multi-id References to the first
+# id — verified.)
+_POLICY = policy.default.clone(max_line_length=998)
 
 
 def find_special_folder(M: imaplib.IMAP4_SSL, attr: str, fallback: str) -> str:
@@ -79,13 +94,15 @@ def build_mime(
     of starting a new one. `references` is the parent's own `References`
     header plus its `Message-ID`, space-separated; when empty it falls back to
     `in_reply_to`. Both values are used VERBATIM — they are already
-    angle-bracketed `Message-ID`s, never re-quoted or re-encoded."""
+    angle-bracketed `Message-ID`s, never re-quoted or re-encoded (see
+    `_POLICY`: with the stock policy a long Message-ID is encoded-word-mangled
+    and the threading silently breaks)."""
     if body_md is not None:
         plain = md_to_plain(body_md)
         html = md_to_html(body_md)
     if plain is None or html is None:
         raise ValueError("provide (plain, html) or body_md")
-    msg = EmailMessage()
+    msg = EmailMessage(policy=_POLICY)
     # From display name comes from the manifest ([company].from_name →
     # settings.email_from_name); bare address when unset.
     sender = settings.email_address
@@ -136,19 +153,42 @@ def send(
         s.starttls()
         s.login(settings.email_address, pw)
         s.send_message(msg)
-    M = _imap(settings)
+    # ---- from here on the mail HAS been delivered. Nothing below may raise.
+    # The Sent mirror is bookkeeping; the customer already has the mail. An
+    # IMAP hiccup here used to propagate, so the caller logged "send failed"
+    # for a mail that went out — and then either re-sent it or, worse, skipped
+    # the state write that the successful send was supposed to record.
+    _mirror_to_sent(settings, msg)
+    return msg["Message-ID"]
+
+
+def _mirror_to_sent(settings: Settings, msg: EmailMessage) -> None:
+    """APPEND a copy into the mailbox's Sent. Best effort, NEVER raises.
+
+    Gmail Sent is our dedup ground truth, so a lost mirror matters — but it is
+    strictly less bad than telling the caller that a delivered mail failed.
+    Every failure path writes one warning line to stderr and returns.
+    """
+    import sys
+
+    M = None
     try:
+        M = _imap(settings)
         folder = find_special_folder(M, "Sent", "[Gmail]/Sent Mail")
         typ, resp = M.append(
             f'"{folder}"', r"(\Seen)", imaplib.Time2Internaldate(time.time()), msg.as_bytes()
         )
         if typ != "OK":
-            import sys
-
-            sys.stderr.write(f"[send_mail] WARNING: Sent APPEND failed for {msg['Message-ID']}: {typ} {resp!r}\n")
+            sys.stderr.write(
+                f"[send_mail] WARNING: Sent APPEND failed for {msg['Message-ID']}: "
+                f"{typ} {resp!r}\n")
+    except Exception as e:  # noqa: BLE001 — the mail is already delivered
+        sys.stderr.write(
+            f"[send_mail] WARNING: Sent mirror failed for {msg['Message-ID']} "
+            f"({type(e).__name__}: {e}) — the mail WAS delivered\n")
     finally:
-        try:
-            M.logout()
-        except Exception:
-            pass
-    return msg["Message-ID"]
+        if M is not None:
+            try:
+                M.logout()
+            except Exception:  # noqa: BLE001
+                pass
