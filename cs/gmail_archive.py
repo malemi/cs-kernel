@@ -13,9 +13,12 @@ Read-only: SEARCH/FETCH headers only, never writes. Reuses the IMAP login from
 from __future__ import annotations
 
 import email
+import imaplib
+import re
 from datetime import datetime, timedelta, timezone
 from email import policy
 from email.utils import getaddresses, parseaddr, parsedate_to_datetime
+from html.parser import HTMLParser
 
 from .config import Settings
 from .gmail_drafts import _imap
@@ -49,7 +52,7 @@ def _fetch_headers(M, ids, chunk: int = 200):
         typ, data = M.uid(
             "FETCH",
             batch,
-            "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC SUBJECT MESSAGE-ID)])",
+            "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
         )
         if typ != "OK" or not data:
             continue
@@ -71,7 +74,11 @@ def _find_folder(M, flag: str, default: str) -> str:
 
 
 def _hdr(M, uid: bytes):
-    typ, md = M.uid("FETCH", uid, "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT MESSAGE-ID)])")
+    typ, md = M.uid(
+        "FETCH",
+        uid,
+        "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
+    )
     if typ != "OK" or not md or not md[0]:
         return None
     return email.message_from_bytes(md[0][1], policy=policy.default)
@@ -230,6 +237,189 @@ def inbound_recent(settings: Settings, days: int) -> list[dict]:
                     "message_id": h.get("Message-ID") or "",
                 }
             )
+        return out
+    finally:
+        try:
+            M.logout()
+        except Exception:
+            pass
+
+
+def _part_text(part) -> str:
+    """Decoded text of one non-multipart part; '' when it cannot be decoded."""
+    payload = part.get_payload(decode=True)
+    if not payload:
+        return ""
+    charset = part.get_content_charset() or "utf-8"
+    try:
+        return payload.decode(charset, errors="replace")
+    except (LookupError, UnicodeDecodeError):
+        return payload.decode("utf-8", errors="replace")
+
+
+class _HTMLToText(HTMLParser):
+    """HTML -> text for HTML-only mail, via the stdlib parser.
+
+    Deliberately NOT a regex: a tag-stripping regex over real mail HTML both
+    leaks markup (conditional comments, unclosed tags) and swallows content,
+    and the text is fed to a model that then answers a customer. Block-level
+    tags become newlines so paragraphs survive; script/style are dropped."""
+
+    _BLOCK = {"p", "div", "br", "tr", "li", "ul", "ol", "table", "blockquote",
+              "h1", "h2", "h3", "h4", "h5", "h6", "pre", "hr"}
+    _SKIP = {"script", "style", "head", "title"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._out: list[str] = []
+        self._skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self._SKIP:
+            self._skip += 1
+        elif tag in self._BLOCK:
+            self._out.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self._SKIP:
+            self._skip = max(0, self._skip - 1)
+        elif tag in self._BLOCK:
+            self._out.append("\n")
+
+    def handle_data(self, data):
+        if not self._skip:
+            self._out.append(data)
+
+    def text(self) -> str:
+        return "".join(self._out)
+
+
+def _html_to_text(raw: str) -> str:
+    p = _HTMLToText()
+    try:
+        p.feed(raw)
+        p.close()
+    except Exception:
+        return ""
+    return p.text()
+
+
+_SPACES = re.compile(r"[ \t\f\v]+")
+_BLANKS = re.compile(r"\n{3,}")
+BODY_MAX = 4000  # chars kept per message body — enough to reply, small enough to prompt
+
+
+def _normalise(text: str, limit: int = BODY_MAX) -> str:
+    """Collapse runs of spaces/blank lines, strip, truncate at `limit` chars."""
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = _SPACES.sub(" ", text)
+    text = "\n".join(line.strip() for line in text.split("\n"))
+    return _BLANKS.sub("\n\n", text).strip()[:limit]
+
+
+def _body_and_attachments(msg) -> tuple[str, list[str]]:
+    """(body, attachment filenames) of a parsed message.
+
+    text/plain wins; an HTML-only mail is tag-stripped. Attachment parts (and
+    any part carrying a filename, e.g. an inline screenshot) contribute their
+    FILENAME only, never body text — base64 in a prompt is noise."""
+    plain, html_alt, files = [], [], []
+    for part in msg.walk():
+        if part.get_content_maintype() == "multipart":
+            continue
+        filename = part.get_filename()
+        if (part.get_content_disposition() or "").lower() == "attachment" or filename:
+            files.append(filename or f"(unnamed {part.get_content_type()})")
+            continue
+        ctype = part.get_content_type()
+        if ctype == "text/plain":
+            plain.append(_part_text(part))
+        elif ctype == "text/html":
+            html_alt.append(_html_to_text(_part_text(part)))
+    body = "\n\n".join(p for p in plain if p.strip())
+    if not body.strip():
+        body = "\n\n".join(p for p in html_alt if p.strip())
+    return _normalise(body), files
+
+
+def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
+    """Every message exchanged with `addr` (All Mail), NEWEST FIRST, with bodies.
+
+    The ground-truth conversation reader: one read-only IMAP session
+    (`BODY.PEEK`, never a flag change), All Mail so it covers both directions
+    — our sends and their replies — independent of any engine sync state. The
+    newest inbound is simply the first element with `outbound is False`.
+
+    DRAFT-FREE: All Mail also holds unsent drafts, and Gmail expresses their
+    draft-ness only as the `\\Draft` X-GM-LABEL (the IMAP `\\Draft` FLAG is not
+    set, so an `UNDRAFT` search does NOT exclude them — verified 2026-07-25).
+    They are dropped here: a queued draft is a mail the customer never got,
+    and feeding it back as something "we wrote" would ground a reply in a
+    conversation that never happened.
+
+    Each row:
+      date         tz-aware datetime | None (from the Date HEADER)
+      from_addr    bare lowercased address
+      outbound     True when we sent it (from_addr == the operator mailbox)
+      subject      str ('' when absent)
+      message_id   angle-bracketed Message-ID, '' when absent
+      references   References header, whitespace-normalised, '' when absent
+      body         text/plain (or tag-stripped HTML), truncated at BODY_MAX
+      attachments  filenames only
+
+    `limit` keeps the newest N messages of the conversation (0 = all)."""
+    addr = (addr or "").strip().lower()
+    self_addr = (settings.email_address or "").strip().lower()
+    M = _imap(settings)
+    try:
+        allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
+        M.select(f'"{allm}"', readonly=True)
+        typ, d = M.uid("SEARCH", None, "OR", "FROM", f'"{addr}"', "TO", f'"{addr}"')
+        ids = d[0].split() if (typ == "OK" and d and d[0]) else []
+        out = []
+        labels = True  # X-GM-LABELS is a Gmail extension; degrade on other servers
+        # UIDs ascend with arrival: walk from the newest back and stop once
+        # `limit` REAL messages are in hand (drafts are skipped, not counted).
+        for uid in reversed(ids):
+            if limit and limit > 0 and len(out) >= limit:
+                break
+            typ, md = "NO", None
+            if labels:
+                try:
+                    typ, md = M.uid("FETCH", uid, "(X-GM-LABELS BODY.PEEK[])")
+                except imaplib.IMAP4.error:
+                    labels = False
+            if not labels:
+                typ, md = M.uid("FETCH", uid, "(BODY.PEEK[])")
+            if typ != "OK" or not md or not isinstance(md[0], tuple) or not md[0][1]:
+                continue
+            line = md[0][0].decode(errors="replace") if md[0][0] else ""
+            if "\\Draft" in line:  # matches both the \Draft and escaped \\Draft forms
+                continue
+            msg = email.message_from_bytes(md[0][1], policy=policy.default)
+            mid = str(msg.get("Message-ID") or "").strip()
+            if mid and not mid.startswith("<"):
+                mid = f"<{mid}>"
+            from_addr = (parseaddr(str(msg.get("From") or ""))[1] or "").strip().lower()
+            body, files = _body_and_attachments(msg)
+            out.append(
+                {
+                    "date": _parse_date(msg.get("Date")),
+                    "from_addr": from_addr,
+                    "outbound": bool(from_addr) and from_addr == self_addr,
+                    "subject": str(msg.get("Subject") or ""),
+                    "message_id": mid,
+                    "references": _SPACES.sub(
+                        " ", str(msg.get("References") or "").replace("\n", " ")
+                    ).strip(),
+                    "body": body,
+                    "attachments": files,
+                }
+            )
+        # Date header order, newest first; undated messages sink to the bottom
+        # keeping their UID-descending order (sort is stable).
+        floor = datetime.min.replace(tzinfo=timezone.utc)
+        out.sort(key=lambda m: m["date"] or floor, reverse=True)
         return out
     finally:
         try:

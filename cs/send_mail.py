@@ -67,10 +67,19 @@ def build_mime(
     html: str | None = None,
     body_md: str | None = None,
     cc: str | None = None,
+    in_reply_to: str | None = None,
+    references: str | None = None,
 ) -> EmailMessage:
     """Build a multipart/alternative message. Pass either an explicit
     (plain, html) pair (preferred for hand-built rich HTML) or `body_md`
-    (markdown convenience)."""
+    (markdown convenience).
+
+    Threading: pass `in_reply_to` (the angle-bracketed `Message-ID` of the
+    message being answered) to make the mail land INSIDE that thread instead
+    of starting a new one. `references` is the parent's own `References`
+    header plus its `Message-ID`, space-separated; when empty it falls back to
+    `in_reply_to`. Both values are used VERBATIM — they are already
+    angle-bracketed `Message-ID`s, never re-quoted or re-encoded."""
     if body_md is not None:
         plain = md_to_plain(body_md)
         html = md_to_html(body_md)
@@ -87,6 +96,12 @@ def build_mime(
     msg["Subject"] = subject
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid(domain=sender.split("@")[-1] if "@" in sender else None)
+    if in_reply_to:
+        msg["In-Reply-To"] = in_reply_to.strip()
+        refs = (references or "").strip() or in_reply_to.strip()
+        msg["References"] = refs
+    elif references:
+        msg["References"] = references.strip()
     msg.set_content(plain)
     msg.add_alternative(html, subtype="html")
     return msg
@@ -101,14 +116,21 @@ def send(
     plain: str | None = None,
     html: str | None = None,
     cc: str | None = None,
+    in_reply_to: str | None = None,
+    references: str | None = None,
 ) -> str:
     """SMTP-send as the operator mailbox and append a copy to Sent. Returns Message-ID.
 
     Raises on SMTP failure (caller must NOT mark the contact sent). A
     failed Sent-mirror APPEND is logged but does not raise — the mail
     already went out; raising would invite a double-send on retry.
+
+    `in_reply_to` / `references` thread the mail into an existing
+    conversation — see `build_mime`. A reply to a customer must always carry
+    them, or the mail opens a second thread in the customer's mailbox.
     """
-    msg = build_mime(settings, to, subject, plain=plain, html=html, body_md=body_md, cc=cc)
+    msg = build_mime(settings, to, subject, plain=plain, html=html, body_md=body_md, cc=cc,
+                     in_reply_to=in_reply_to, references=references)
     pw = settings.email_password.replace(" ", "").strip()
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as s:
         s.starttls()

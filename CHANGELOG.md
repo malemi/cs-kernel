@@ -3,6 +3,54 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.3.5 — 2026-07-25
+
+### Added — RFC threading headers on the cs-SMTP send path
+- **Why:** every mail `send_mail.send()` produced was a NEW thread. A campaign
+  loop that answers a customer's reply therefore opened a second conversation in
+  their mailbox instead of replying inside theirs (live defect: the batch-2
+  acknowledgement mails). Any clone whose operator answers customers wants this —
+  rule of two, so it belongs here and not in a clone.
+- **What:** `build_mime()` and `send()` take optional `in_reply_to` and
+  `references`. `In-Reply-To` is set verbatim (the value is already an
+  angle-bracketed `Message-ID`); `References` is set to `references`, falling back
+  to `in_reply_to` when empty. Passing neither is byte-identical to v0.3.4 — no
+  existing caller changes.
+
+### Added — `gmail_archive.thread_with()`: the ground-truth conversation reader
+- **Why:** the loop that decides what to answer must read the mailbox itself. The
+  engine's search could not surface the body of a real customer reply for 31+
+  hours (`emails.search` depends on sync state), which froze a live campaign
+  contact. IMAP has no such dependency. The existing readers return headers only,
+  so nothing in the kernel could hand a customer's actual words to the composer.
+- **What:** `thread_with(settings, addr, limit=20) -> list[dict]`, newest first,
+  one read-only IMAP session (`BODY.PEEK`) over All Mail, matching `OR FROM TO`
+  so it covers both directions. Each row carries
+  `date / from_addr / outbound / subject / message_id / references / body /
+  attachments`. `text/plain` wins; an HTML-only mail is tag-stripped with the
+  stdlib `html.parser` (never a regex — the text is fed to a model that then
+  answers a customer); bodies are whitespace-normalised and truncated at 4000
+  chars; attachment parts contribute FILENAMES only, never base64.
+- **DRAFT-FREE:** All Mail also holds unsent drafts, and Gmail marks them only
+  with the `\Draft` X-GM-LABEL — the IMAP `\Draft` FLAG is NOT set, so an
+  `UNDRAFT` search does not exclude them (verified 2026-07-25 against the mother
+  clone's mailbox). They are dropped: a queued draft is a mail the customer never
+  received, and feeding it back as something "we wrote" would ground a reply in a
+  conversation that never happened. On a non-Gmail IMAP server the labelled FETCH
+  degrades to a plain one instead of failing.
+
+### Changed — header FETCH now asks for `REFERENCES` and `IN-REPLY-TO`
+- `_hdr()` and `_fetch_headers()` add both fields, so a caller can thread a reply
+  from any of the existing header readers, not only from `thread_with`.
+
+- **Re-collaudo:** `mrcall-cs` (batch-2 Centralix→Vonage conversational loop) —
+  full (live send + live IMAP read). Other clones: static — the two send-path
+  parameters are optional and default to the v0.3.4 behaviour, and `thread_with`
+  is purely additive.
+- **Known pre-existing gate failure (not introduced here):** `tests/run.sh` step 1
+  (company-literal grep) has been red since v0.3.2 — `cs/templates/project/
+  CLAUDE.md.j2:52` names the mother clone's engine host. Every other step passes.
+
 ## v0.3.4 — 2026-07-22
 
 ### Fixed — `send-first` no longer dedups against the whole Sent archive
