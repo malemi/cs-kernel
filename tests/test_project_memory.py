@@ -163,6 +163,30 @@ def main() -> int:
             proc = _run(repo, env, "project", "new", bad)
             assert proc.returncode != 0, f"non-slug name accepted: {bad!r}"
 
+        # ---- 6b. Gmail-IMAP verbs refuse a non-default --account ---------
+        # They read the operator's ONE mail credential, so --account cannot
+        # redirect them. They used to answer anyway, about the wrong mailbox:
+        # `contacted` returned a confident "no" with exit 1, which reads as
+        # "never contacted" and is the exact check that gates outreach.
+        # The registry's uids live in the env layer, not the manifest.
+        env3 = {**env, "CS_ACCOUNTS": "ops:uid-ops-acme,other:uid-other-acme"}
+        for verb, extra in (("contacted", ["x@acme.example"]),
+                            ("unanswered", []),
+                            ("dossier", ["x@acme.example"]),
+                            ("draft-reply", ["say hello"])):
+            proc = _run(repo, env3, "--account", "other", verb, *extra)
+            out = proc.stderr + proc.stdout
+            assert proc.returncode == 2, (
+                f"`--account other {verb}` must refuse, got rc={proc.returncode}: {out}"
+            )
+            assert "engine profile" in out, f"{verb}: refusal must explain why: {out}"
+            assert "unknown --account" not in out, f"{verb}: refused for the wrong reason"
+        # ...and the DEFAULT account is NOT blocked: it gets past the guard and
+        # fails later on the network, not on the flag.
+        proc = _run(repo, env3, "--account", "ops", "contacted", "x@acme.example")
+        assert "engine profile" not in (proc.stderr + proc.stdout), \
+            "the default account must not be blocked by the guard"
+
         # ---- 7. outside a clone root: refused, nothing created ----------
         loose = Path(td, "loose"); loose.mkdir()
         proc = _run(loose, env, "project", "new", "acme-corp")

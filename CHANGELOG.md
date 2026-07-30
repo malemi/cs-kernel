@@ -42,12 +42,10 @@ and at which tier (design brief §6.6: static / +live read-only / full).
   for a meeting note, including a "Not recorded here" section, because a note
   that hides its own gaps gets mistaken for the whole truth.
 
-  It also documents two traps found while using the verbs on a real prospect:
-  `--account` switches the ENGINE profile only, so `cs contacted` / `cs unanswered`
-  answer for the operator's own mailbox whatever account is passed (a false
-  "never contacted", exit 1) while `cs thread` / `cs ask` do honour it; and `cs`
+  It also records one trap found while using the verbs on a real prospect: `cs`
   must run from the clone root, since the manifest and env chain resolve from the
-  working directory.
+  working directory. The other trap that session surfaced — `--account` on the
+  Gmail-IMAP verbs — is fixed in code below rather than documented.
 
   Templates live in a root of their own (`templates/project_memory/`, with its own
   `package-data` glob) because they are stamped per project by this verb, not once
@@ -63,6 +61,26 @@ and at which tier (design brief §6.6: static / +live read-only / full).
   Clones pick the convention up with `cs update`, which adds
   `_meeting-template.md` and refreshes `docs/projects/README.md` (asking first if
   the local copy was modified).
+
+### Fixed — `--account` no longer answers about the wrong mailbox
+- **Why:** `--account` switches the ENGINE profile and nothing else, but four
+  verbs read or write the operator's own Gmail over IMAP on a single credential:
+  `contacted`, `unanswered`, `dossier` and `draft-reply`. Passed another account
+  they answered anyway, about the operator's mailbox. `cs --account <other>
+  contacted <addr>` returned a confident "no" with exit code 1 — which reads as
+  "never contacted", and that is the exact check that gates outreach. The same
+  flag sent `draft-reply`'s Gmail Drafts APPEND to the wrong mailbox. Observed
+  live 2026-07-30 while working a real prospect whose relationship sits on a
+  non-default account.
+- **What:** those four parsers are marked `reads_operator_mailbox=True`, and
+  `main()` refuses before dispatch when `--account` resolves to a uid other than
+  the configured owner — naming the constraint and pointing at `thread` / `ask`,
+  which are engine-backed and do honour the flag. The default account is
+  untouched, so the cron and every existing invocation behave exactly as before.
+  Documenting the trap was the wrong fix: prose does not stop a wrong answer
+  being acted on. Gate 13 asserts all four refuse with exit 2 and that the
+  default account is not over-blocked.
+
 - **On the ordering:** this work was written and committed before v0.4.0 landed
   on `main`, and carried the v0.4.0 number until the two met. It is renumbered
   here rather than the other way round because v0.4.0's changelog had already

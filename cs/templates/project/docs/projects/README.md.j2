@@ -140,11 +140,9 @@ conclusion we ever drew.
 working directory: from anywhere else `--account` fails with *"unknown --account
 … Configured: (none)"*.
 
-**`--account` switches the ENGINE profile only.** `cs contacted` and
-`cs unanswered` read Gmail over IMAP with the operator's single credential
-({{ email_address }}), so on any other account they answer for
-{{ email_address }} — a false "never contacted", exit code 1. `cs thread` and
-`cs ask` do honour `--account`, because they go through the engine. Use those to
-check whether a thread has been answered on a non-default mailbox.
+**`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
+`contacted`, `unanswered`, `dossier`, `draft-reply` — run on the operator's one
+mail credential, so on any other account they refuse and point you at the
+engine-backed `thread` / `ask`, which do honour `--account`.
 
 Twin rule in `CLAUDE.md` §9, loaded on every agent session.

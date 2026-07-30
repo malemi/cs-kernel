@@ -690,7 +690,9 @@ def main(argv=None) -> int:
     pc = sub.add_parser("contacted", help="did the operator write to this address recently?")
     pc.add_argument("email")
     pc.add_argument("--days", type=int, default=30)
-    pc.set_defaults(func=cmd_contacted)
+    # Gmail-IMAP backed: reads the operator's own Sent folder, so --account
+    # cannot redirect it (see the guard in main()).
+    pc.set_defaults(func=cmd_contacted, reads_operator_mailbox=True)
 
     pun = sub.add_parser(
         "unanswered",
@@ -698,7 +700,7 @@ def main(argv=None) -> int:
     )
     pun.add_argument("--days", type=int, default=14)
     pun.add_argument("--json", action="store_true")
-    pun.set_defaults(func=cmd_unanswered)
+    pun.set_defaults(func=cmd_unanswered, reads_operator_mailbox=True)
 
     pk = sub.add_parser(
         "tasks",
@@ -738,7 +740,8 @@ def main(argv=None) -> int:
     pd = sub.add_parser("dossier", help="thread+contacted+tasks+CRM for one address")
     pd.add_argument("email")
     pd.add_argument("--dedup-days", type=int, default=30)
-    pd.set_defaults(func=cmd_dossier)
+    # its `contacted` half is Gmail-IMAP backed — same constraint
+    pd.set_defaults(func=cmd_dossier, reads_operator_mailbox=True)
 
     ph = sub.add_parser(
         "chat",
@@ -770,7 +773,8 @@ def main(argv=None) -> int:
     )
     pdr.add_argument("message")
     pdr.add_argument("--timeout", type=float, default=600)
-    pdr.set_defaults(func=cmd_draft_reply)
+    # APPENDS the composed draft into the operator's own Gmail Drafts
+    pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
 
     prv = sub.add_parser(
         "review",
@@ -913,6 +917,27 @@ def main(argv=None) -> int:
         if not uid:
             print(f"unknown --account '{args.account}'. Configured: "
                   f"{sorted(amap) or '(none — set CS_ACCOUNTS)'}", file=sys.stderr)
+            return 2
+        # `--account` switches the ENGINE profile and nothing else. The Gmail
+        # IMAP identity is the operator's single credential, so a verb that
+        # reads or writes that mailbox cannot honour the flag — and used to
+        # answer anyway, about the wrong mailbox: `cs --account other contacted
+        # <addr>` returned a confident "no" with exit 1, which reads as "never
+        # contacted" and is exactly the check that gates outreach. Refuse
+        # instead of lying; the engine-backed verbs below do honour --account.
+        if uid != settings.engine_owner_uid and getattr(
+            args, "reads_operator_mailbox", False
+        ):
+            print(
+                f"`{args.cmd}` reads {_self_label(settings)}'s own Gmail over IMAP, and "
+                f"--account switches only the engine profile — there is one mail "
+                f"credential, not one per account.\n"
+                f"Answering anyway would report on the wrong mailbox. Use an "
+                f"engine-backed verb, which does honour --account:\n"
+                f"  {settings.prog_name or 'cs'} --account {args.account} thread <email>\n"
+                f"  {settings.prog_name or 'cs'} --account {args.account} ask \"<question>\"",
+                file=sys.stderr,
+            )
             return 2
         os.environ["CS_ENGINE_OWNER_UID"] = uid  # config.load() reads env first
     return args.func(args)

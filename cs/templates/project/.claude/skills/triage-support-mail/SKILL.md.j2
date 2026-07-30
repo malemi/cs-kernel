@@ -54,6 +54,12 @@ follow-up is `/campaign-tick`'s job, not this one.
   this binary: both have answered it WRONG (a per-thread read missed a
   sibling-thread confirmation; the engine chat called two answered threads
   "unanswered"). The Sent archive does not lie.
+- **Read this company's own team convention before judging "handled".**
+  `company/team-conventions.md` (a clone-owned slot) states who replies from
+  which mailbox, and therefore how complete {{ accounts_default }}@'s Sent
+  archive actually is. A teammate replying from a mailbox that never touches
+  {{ accounts_default }}@ stays invisible to every check above: when a thread
+  shows signs a human is already handling it, ESCALATE rather than draft.
 - **Engine memory/tasks are for CONTEXT and judgment, not the binary.** Use
   `cs ask` / `cs tasks` to understand a situation and to surface forwards —
   but before flagging anything "unanswered / urgent", CONFIRM against the Sent
@@ -146,8 +152,9 @@ that via the engine).
 
 ## 2b. When unsure HOW to answer — search past mail, don't guess
 
-If you are not fully sure how to answer (a mechanic like credits/top-up, a
-policy, what we previously promised, how we phrase it): **memory first** (this
+If you are not fully sure how to answer (a mechanic of this company's own domain
+— see `company/triage-domain-examples.md` — a policy, what we previously
+promised, how we phrase it): **memory first** (this
 skill + `cs ask`), and **if memory is thin → SEARCH {{ email_address }}'s PAST SENT MAIL
 for precedent**, then ground the reply in how we actually handled it before:
 
@@ -159,14 +166,16 @@ for precedent**, then ground the reply in how we actually handled it before:
 NEVER invent mechanics, prices, steps, or commitments — lift them from the past
 emails (or escalate if you can't find them). **After you draft, UPDATE memory**
 with what you learned, so next time it's already there. (Doing the opposite —
-guessing instead of searching the archive — is the Styven/Fani mistake.)
+guessing at a mechanic instead of searching the archive — has already produced a
+confidently wrong answer to a real customer.)
 
 ## 3. Decide per candidate
 
 For each candidate the engine flagged open, decide. Two outcomes only:
 
 **(a) Answerable within {{ email_address }}'s normal scope** — a question about
-{{ company_display_name }}, a routine account/config issue, a normal reply where the answer
+{{ company_display_name }} (this company's domain: `company/triage-domain-examples.md`),
+a routine account/config issue, a normal reply where the answer
 is **grounded in the thread + engine memory**:
 
 ```bash

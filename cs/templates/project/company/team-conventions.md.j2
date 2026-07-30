@@ -1,0 +1,21 @@
+# Team conventions — who answers from where
+
+Clone-owned prose slot. The triage skill reads this before deciding that a
+customer mail is unanswered, because every automated check it has looks at
+**{{ accounts_default }}@'s own Sent archive** — and a teammate replying from a
+mailbox that never touches {{ accounts_default }}@ is invisible to all of them.
+
+Fill in, for this company:
+
+- **Who replies to customers, and from which address.** Name the mailboxes that
+  handle customer mail without going through {{ email_address }}.
+- **When a thread is deliberately left to a human**, and how you can tell —
+  a label, an assignment, a phrase people use.
+- **Which senders are internal or automated**, so they are never treated as a
+  customer waiting for an answer.
+- **Anything the Sent archive cannot see**: replies by phone, in a portal, via a
+  shared inbox, or forwarded out to somebody else to handle.
+
+If this file is empty, the operator has to assume {{ accounts_default }}@'s Sent
+archive is the whole story. Where that is not true, it will draft a reply to
+somebody a colleague has already answered — so write down what it cannot see.
