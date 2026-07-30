@@ -3,6 +3,20 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.4.3 — 2026-07-30
+
+### Fixed — `cs update` stripped a clone's runtime ignores and staged its lock files
+- **Why:** `cs update` rewrites `.gitignore` wholesale from the template. A clone
+  that had added its own ignores for runtime artefacts — flock sidecars written
+  next to a state file, and an acceptance-test fixture — lost them on the next
+  update, and those files then showed up staged for commit. Hit on a real clone
+  2026-07-30, where a schedule CSV's `.lock` and a test fixture were about to be
+  committed as if they were project data.
+- **What:** the patterns move into the template, where `cs update` preserves them:
+  `*.csv.lock` for the sidecars, and `_*.csv` for the underscore-prefixed fixture
+  convention (a file that must never be mistaken for real state).
+- **Re-collaudo:** static, every clone. `.gitignore` only.
+
 ## v0.4.2 — 2026-07-30
 
 ### Fixed — templates recommended the very call the new `--account` guard refuses

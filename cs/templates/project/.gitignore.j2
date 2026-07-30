@@ -20,3 +20,12 @@ queue/
 drafts/
 *.log
 
+
+# runtime flock sidecars written next to a state file (e.g. a schedule CSV).
+# In the template because `cs update` rewrites this file wholesale: a clone that
+# added them itself had them stripped on the next update, and its lock files
+# then showed up staged for commit.
+*.csv.lock
+# local fixtures: an underscore prefix marks a file that must never be mistaken
+# for real state (acceptance-test schedules and the like).
+_*.csv
