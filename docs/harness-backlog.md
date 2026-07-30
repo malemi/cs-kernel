@@ -3,14 +3,14 @@
 Enforcement / tooling gaps: what check is missing and what class of error it
 would prevent. Delete an entry as the enforcement lands.
 
-- [ ] **Gate 1 has been red since `v0.3.0` and nothing stops a tag shipping over
-  it** — Discovered: 2026-07-27 — `bash tests/run.sh` exits 1 on
-  `cs/templates/project/CLAUDE.md.j2:52` (`desktop.mrcall.ai`, `mrcalld`,
-  `/run/mrcalld/<uid>.sock`), yet `v0.3.1` … `v0.3.7` all shipped. A suite whose
-  failure is routine stops being read: gates 2–10 could go red tomorrow and the
-  `RESULT: FAIL` line would look exactly the same as it does today. Two things are
-  missing — the fix itself (those values are manifest fields), and a release step
-  that refuses to tag while the suite is red.
+- [ ] **Nothing stops a tag shipping over a red suite** — Discovered:
+  2026-07-27, narrowed 2026-07-30 — gate 1 was red at every tag `v0.3.1` …
+  `v0.3.7` and they all shipped anyway. The gate itself is FIXED as of
+  `v0.4.0` (literal purged, pattern widened to the operator's name/mailbox,
+  plus gate 12 rendering every template and sweeping the output), so the
+  suite is 12/12 green — but the missing enforcement is unchanged: no release
+  step refuses to tag while `bash tests/run.sh` exits 1. A pre-tag hook or a
+  `make release` that runs the suite first would close it.
 
 - [ ] **Nothing verifies that a clone's pin is actually installed, or that the
   three pin sites agree** — Discovered: 2026-07-27 (`mrcall-cs`) — that clone ran

@@ -3,7 +3,7 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-## Unreleased — proposed v0.4.0
+## v0.4.0 — 2026-07-30
 
 ### Added — the kernel can make its own LLM calls, and the provider is config
 - **Why:** the kernel made **zero** LLM calls of its own: every generation went
@@ -79,9 +79,10 @@ and at which tier (design brief §6.6: static / +live read-only / full).
   `/v1/messages`; `/api/v1` 404s on an HTML page), `CS_LLM_API_KEY`,
   `MODEL_<ROLE>`, `MODEL_<TIER>`. With nothing set but an `OPENROUTER_API_KEY`
   present, the worker tier goes to OpenRouter.
-- **Defaults:** both tiers default to `@claude-sonnet`. Choosing a smaller model
-  to save money is a decision that must be EARNED by a measurement on that
-  role's real task; the A/B earns it for `CLASSIFIER` (`@glm`) and nothing else.
+- **Defaults:** LEAD `@claude-opus`, WORKER `@claude-sonnet`. Choosing a
+  smaller model to save money is a decision that must be EARNED by a
+  measurement on that role's real task; the A/B earns it for `CLASSIFIER`
+  (`@glm`) and nothing else.
 - **Dependency:** `anthropic>=0.107` is an **extra** (`pip install
   "cs-kernel[llm]"`), imported lazily — a clone that makes no kernel-side LLM
   call does not grow a dependency, and every other verb works without it.
