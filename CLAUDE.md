@@ -20,7 +20,7 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
    empty):
 
    ```bash
-   grep -rEi 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|CAFE124|\bHB\b' cs/
+   grep -rEi 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi|CAFE124|\bHB\b' cs/
    ```
 
    Platform names are allowed where they name shared infrastructure the

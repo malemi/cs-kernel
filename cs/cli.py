@@ -547,6 +547,92 @@ def cmd_accounts(args) -> int:
     return 0
 
 
+def cmd_llm(args) -> int:
+    # The kernel's own LLM configuration: what it resolves to now, what else is
+    # on offer, and how to change it. Non-interactive on purpose — the same
+    # verbs have to work from a cron wrapper and from a human's terminal, and a
+    # prompt loop only works for one of those.
+    from . import model_catalog, model_config
+
+    action = getattr(args, "llm_action", None) or "show"
+
+    if action == "show":
+        cfg = model_config.current_config()
+        print(f"  provider   {cfg['provider']}  ({cfg['source']})")
+        print(f"  base_url   {cfg['base_url']}")
+        print(f"  api key    {cfg['api_key']}")
+        print("  models")
+        for role, model in cfg["models"].items():
+            rates = model_config.token_rates(model)
+            price = f"${rates[0]:.2f}/${rates[1]:.2f} per 1M" if rates else "price unknown"
+            print(f"    {role:<12} {model:<38} {price}")
+        return 0
+
+    if action == "models":
+        rows = model_catalog.menu(model_catalog.FAMILIES, refresh=args.refresh)
+        if not rows:
+            print("catalog unavailable (no network, no cache)")
+            return 1
+        offline = [r for r in rows if not r["live"]]
+        print(f"{'family':<18} {'resolves to':<36} {'shipped':<11} "
+              f"{'in/out per 1M':<17} note")
+        for r in rows:
+            price = f"${r['input_per_m']:.2f}/${r['output_per_m']:.2f}"
+            print(f"  @{r['family']:<16} {r['model']:<36} {r['shipped']:<11} "
+                  f"{price:<17} {r['note']}")
+        if offline:
+            print(f"\n  {len(offline)} row(s) from the offline snapshot — "
+                  "prices and ids may be stale.")
+        print("\nSet one with:  cs llm set <role|tier> @<family>   (or a pinned model id)")
+        return 0
+
+    if action == "set":
+        key = args.key.strip().upper()
+        known = ({r.value.upper() for r in model_config.Role}
+                 | {t.value.upper() for t in model_config.Tier})
+        if key not in known:
+            print(f"unknown role/tier {args.key!r}; known: {', '.join(sorted(known))}")
+            return 2
+        spec = args.spec.strip()
+        # Validate BEFORE writing: a family typo that only surfaces on the next
+        # cron run is a config file that looks fine and a loop that does not.
+        try:
+            resolved = model_catalog.resolve(spec)
+        except KeyError as e:
+            print(str(e))
+            return 2
+        settings = config.load()
+        # Without a slug the state dir is ~/.cs, but env_file_chain() only
+        # includes ~/.<slug>-cs/.env when a slug exists — the write would
+        # succeed and then never be read, which is worse than refusing.
+        if not settings.slug:
+            print("no manifest slug resolved: there is no clone env file to "
+                  "write. Run from a clone, or set MODEL_" + key +
+                  " in the environment instead.")
+            return 2
+        env_path = settings.state_dir / ".env"
+        model_config.write_env(env_path, {f"MODEL_{key}": spec})
+        print(f"  MODEL_{key}={spec}  ->  {resolved}")
+        print(f"  written to {env_path}")
+        return 0
+
+    if action == "test":
+        endpoint = model_config.llm_env()
+        model = args.model or model_config.model_for(model_config.Role.CLASSIFIER)
+        result = model_config.check_connection(
+            endpoint.base_url, endpoint.api_key, model
+        )
+        status = "ok" if result["success"] else "FAILED"
+        print(f"  {status}  {model} via {endpoint.base_url}  "
+              f"({result['latency_ms']:.0f} ms)")
+        if not result["success"]:
+            print(f"  {result['error']}")
+            return 1
+        return 0
+
+    return 2
+
+
 # --------------------------------------------------------------------- main
 
 
@@ -764,6 +850,30 @@ def main(argv=None) -> int:
     )
     cpk.add_argument("--json", action="store_true")
     cpk.set_defaults(func=cmd_campaign_packs)
+
+    # --- llm: the kernel's own provider/model configuration ---
+    pl = sub.add_parser(
+        "llm",
+        help="the kernel's own LLM config: what it resolves to, what else exists",
+    )
+    pl.set_defaults(func=cmd_llm)  # bare `cs llm` = show the current config
+    lsub = pl.add_subparsers(dest="llm_action")
+    lm = lsub.add_parser(
+        "models",
+        help="the model menu: every family, its newest member, price, what it is for",
+    )
+    lm.add_argument("--refresh", action="store_true",
+                    help="re-fetch the catalog instead of using the cached copy")
+    lm.set_defaults(func=cmd_llm)
+    ls = lsub.add_parser(
+        "set", help="pin a role or tier to a family (@deepseek-pro) or an exact id"
+    )
+    ls.add_argument("key", help="a role (classifier) or a tier (lead, worker)")
+    ls.add_argument("spec", help="@<family> or an exact model id")
+    ls.set_defaults(func=cmd_llm)
+    lt = lsub.add_parser("test", help="one minimal round trip against the configured endpoint")
+    lt.add_argument("--model", default="", help="override the model to test")
+    lt.set_defaults(func=cmd_llm)
 
     # --- cron: manage crontab entry (requires manifest) ---
     try:

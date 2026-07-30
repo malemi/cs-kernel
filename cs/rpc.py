@@ -16,12 +16,15 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
-from typing import Any, Awaitable, Callable, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 import websockets
 
 from . import auth
 from .config import Settings
+
+if TYPE_CHECKING:  # import cycle: model_config imports config, config imports nothing
+    from .model_config import Role
 
 NotifyHandler = Callable[[str, Any], Optional[Awaitable[None]]]
 
@@ -180,8 +183,36 @@ async def chat(
     timeout: float = 600,
     echo: Callable[[str], None] = print,
     conversation_id: str | None = None,
+    role: "Role | None" = None,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
+
+    **Routing.** Passing ``role=`` declares this call to be mechanical kernel
+    work — a classification, an extraction — rather than generation a customer
+    will read. Such a call MAY be served directly by the configured provider
+    instead of the engine, which is what makes a cheap model reachable without
+    routing customer-facing prose through it. It only happens when the clone
+    has opted in with ``CS_LLM_ROUTE=direct``; without a role, or without the
+    opt-in, the call goes to the engine exactly as before.
+
+    The role has to be declared by the CALLER, and an empty ``allow_tools`` is
+    deliberately NOT used as the signal, because it does not carry the meaning
+    one would hope: ``cs draft-reply`` and a campaign's reply-composer also run
+    with an empty allow-list, and they write the words a customer reads.
+    Inferring "safe to route" from tool-freedom would send exactly the traffic
+    the charter keeps on the engine (policy, voice and signature live in the
+    engine's ``USER_NOTES``, outside every repo) to whatever model is cheapest.
+
+    Two semantics differ from the engine path, on purpose:
+
+    * ``timeout`` is per ATTEMPT, not overall — the worker client retries
+      transient failures (SDK default, 2 retries), so the worst case is ~3×
+      the given timeout. The engine path treats it as one overall budget.
+    * Errors are LOUD: a truncated answer, a configuration mismatch or an
+      exhausted retry raises out of this call rather than silently falling
+      back to the engine. A fallback would hide a broken provider config
+      behind the very spend this path exists to avoid; the caller (or the
+      operator, via ``CS_LLM_ROUTE=engine``) decides what degradation means.
 
     The engine pauses on destructive tools (send_email, update_memory, …)
     and emits ``chat.pending_approval``; we approve a tool only if it is in
@@ -196,6 +227,25 @@ async def chat(
     later call fail ``ChatBusyError``. A fresh id per one-shot isolates us.
     """
     import uuid
+
+    from . import model_config
+
+    if role is not None and model_config.route_direct():
+        from . import worker_llm
+
+        # to_thread, not a bare call: worker_llm uses the SYNCHRONOUS anthropic
+        # client, and blocking this loop would stall any concurrent engine work
+        # a caller has in flight.
+        done = await asyncio.to_thread(worker_llm.call, message, role=role,
+                                       timeout=timeout)
+        echo(f"[direct] {done.model} {done.output_tokens}t "
+             f"{done.latency_ms:.0f}ms"
+             + (f" ${done.cost_usd:.6f}" if done.cost_usd is not None else ""))
+        # The engine's response shape, kept verbatim: callers read
+        # result["response"], and a router that changes the contract is a
+        # router every call site has to be taught about.
+        return {"result": {"response": done.text}, "approvals": [],
+                "notifications": []}
 
     allow = allow_tools or set()
     conv = conversation_id or f"cs-{uuid.uuid4().hex[:16]}"

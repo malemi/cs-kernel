@@ -24,7 +24,10 @@ step() { printf '\n== %s ==\n' "$*"; }
 
 step "1. grep gate: zero company literals in cs/"
 # Company / customer / product names — case-insensitive (catches CAFE124, Centralix, …).
-CI_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal' cs/ || true)"
+# \bmario\b|alemi: the operator's name and mailbox are company data like any other —
+# they were found baked into 20+ places across the project templates (2026-07-30),
+# invisible to the old pattern. A clone stamped for another company must not ship them.
+CI_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi' cs/ || true)"
 # The 'HB' shared-drive literal is UPPERCASE — match it case-SENSITIVELY so the gate
 # does not false-positive on the lowercase 'hb' path segment (e.g. ~/hb/…), which is
 # a filesystem path, not the drive token.
@@ -102,6 +105,26 @@ step "10. tasks create/close verbs write the engine ledger (params guard)"
 # write-path (create-on-miss, close-on-handled). This pins the RPC method +
 # params so a refactor can't drop sources / the event_id key / the close note.
 if "$VENV/bin/python" "$ROOT/tests/test_tasks_verbs.py"; then echo "OK"; else echo "FAIL: tasks create/close params regressed"; FAIL=1; fi
+
+step "11. provider swap (auth header, base_url, response shape, pricing)"
+# The kernel's OWN LLM calls: credential on the right kwarg, no second auth
+# header from an ambient env var, "" base_url not read as a custom gateway,
+# ThinkingBlock skipped, max_tokens checked before the text is read, unknown
+# model priced as None. Asserted against the ACTUAL installed anthropic SDK —
+# "no new dependency" is not the same as "version-independent behaviour".
+# Installing the [llm] extra here also proves the extra resolves.
+if "$VENV/bin/pip" -q install "$ROOT[llm]" >/dev/null 2>&1; then
+  if "$VENV/bin/python" "$ROOT/tests/test_llm_client.py"; then echo "OK"; else echo "FAIL: provider-swap semantics regressed"; FAIL=1; fi
+else
+  echo "SKIP: could not install the [llm] extra (offline?)"
+fi
+
+step "12. template render gate (StrictUndefined, single- and multi-account)"
+# Every .j2 must render with cs init's own jinja env in BOTH account shapes —
+# the single-account clone is the one that crashed — and the RENDERED output
+# must carry no company literal (the source grep in step 1 cannot see a
+# literal the template engine assembles).
+if "$VENV/bin/python" "$ROOT/tests/test_template_render.py"; then echo "OK"; else echo "FAIL: template render gate"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

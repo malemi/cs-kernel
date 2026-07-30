@@ -1,4 +1,7 @@
-{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (accounts.keys() | reject('equalto', accounts_default) | first) %}
+{% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}
+{# `| first` on the raw reject crashes under StrictUndefined for a single-account
+   clone; with one account the default IS the only place to look. #}
+{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
 ---
 description: Read-only analysis of one of THIS project's engine mailboxes (see `cs accounts`). Takes an account name as argument (mailbox address, e.g. "{{ nondefault_account }}"); if absent, list accounts and ask. ZERO side effects — no drafts, no sends, no memory writes, no commits. Reports what's in the inbox and what still needs attention.
 ---

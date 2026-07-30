@@ -3,6 +3,117 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## Unreleased — proposed v0.4.0
+
+### Added — the kernel can make its own LLM calls, and the provider is config
+- **Why:** the kernel made **zero** LLM calls of its own: every generation went
+  through the engine (`rpc.chat` → `chat.send`), whose provider is decided
+  downstream and whose spend is the company's own Anthropic bill. That is right
+  for anything a customer reads, and pure waste for a mechanical call — the
+  batch-2 campaign pays a customer-facing model, routed through the engine's
+  agent loop, to emit one structured line. Measured on the 61 real customer
+  replies of that campaign against the prompt production actually runs
+  (full method and per-item results in the A/B record, which quotes customer
+  mail and therefore lives with the operator's own docs, never in this repo):
+  on the calls both sides completed, `z-ai/glm-5.2` through a gateway matches
+  the engine's accuracy exactly (56/58 each) at **3.1 s** instead of the
+  engine's **33 s** median, for **$1.17 per 1000 calls** — while answering all
+  61 calls where the engine's transport failed 3 of them (a 502 and two dropped
+  connections), and never once writing a schedule the customer did not agree
+  to, which the engine does once (a bare "ok" read as "now", scheduling a
+  migration seven hours before the moment the customer was told).
+- **What:** four new modules, no required dependency added.
+  - `cs/model_catalog.py` — the model catalog is **fetched, not hardcoded**.
+    `GET /v1/models` (no API key needed) gives every id, its ship date and its
+    real per-token prices; 17 curated *families* map a product line to a glob,
+    and `@family` resolves to that line's newest member at call time. Disk cache
+    with a 24 h TTL, stale cache preferred over no catalog, static snapshot last.
+    A hardcoded list is wrong within weeks: measured 2026-07-28, an
+    eight-day-old curated list already named three superseded models and priced
+    one of them 37% wrong.
+  - `cs/model_config.py` — `Provider` / `Tier` / `Role` (exactly ONE role today,
+    `CLASSIFIER`), `ROLE_TIER`, `TIER_FAMILIES` per provider, `model_for(role)`
+    (`MODEL_<ROLE>` → `MODEL_<TIER>` → provider default, each of which may be a
+    pinned id or an `@family`), `resolve_spec()`, `llm_env()` endpoint
+    resolution over the SAME env chain as `Settings`, `route_direct()`,
+    `token_rates` (live prices; unknown id → `None`, never a fallback price),
+    `call_cost`, `check_connection`, `read_env`/`write_env`/`mask_key`.
+  - `cs/llm_client.py` — `build_client()`: credential onto `api_key=`
+    (`X-Api-Key`) for Anthropic vs `auth_token=` (Bearer) for a gateway, `""`
+    base_url collapsed to `None`, `base_url` always passed explicitly, and the
+    unchosen credential attribute nulled after construction so behaviour does
+    not depend on the SDK version's env-resolution. `extract_text()` selects
+    text blocks (never `content[0]`, which a leading `ThinkingBlock` breaks);
+    `text_of()` checks `stop_reason == "max_tokens"` BEFORE reading the text —
+    without which a reasoning model that spends its whole budget thinking
+    returns a silent default instead of an error.
+  - `cs/worker_llm.py` — `call` / `complete` / `classify` for single-shot
+    mechanical work. No prompt text and no model id lives here: the caller
+    supplies the prompt, the role resolves the model. Raises `LLMConfigError`
+    *before* sending when a gateway-style id meets the Anthropic-direct wire,
+    which otherwise surfaces as a bare 404 naming a model that exists and is fine.
+  - `cs/rpc.py` — `chat(..., role=)`. A role-declared call MAY be served
+    directly by the configured provider instead of the engine. Response shape
+    unchanged. An empty `allow_tools` is deliberately NOT the signal: the
+    campaign reply-composer and `cs draft-reply` also run tool-free and write
+    the words a customer reads, so inferring "safe to route" from tool-freedom
+    would route exactly the traffic the charter keeps on the engine.
+  - `cs/cli.py` — `cs llm` (what the kernel resolves to now), `cs llm models`
+    (the menu: family, newest member, ship date, real price, what it is for),
+    `cs llm set <role|tier> <@family|id>` (validates before writing), `cs llm
+    test`. Non-interactive so the same verbs work from a cron wrapper.
+  - `cs/config.py` — `env_file_chain()` split out of `load()` so the dotenv
+    layers have ONE definition, shared with `model_config.env_layers()`.
+- **Charter:** the tier split *is* the safety boundary — worker only. Contextual
+  and customer-facing generation stays an engine call (invariant §4), and no
+  send path, `CS_PAUSE` check, or deny-list changes because a model got cheaper.
+  No company literal enters `cs/`: model ids and family names are the same for
+  every clone, and the endpoint, credential and per-role model come from env.
+- **Config:** all optional, and **routing is off unless asked for**.
+  `CS_LLM_ROUTE=direct` opts a clone into the provider path and is the kill
+  switch (set it back to `engine` and the next cron tick is on the old path —
+  no code change, no re-pin). On the direct path errors are LOUD by design:
+  a broken provider config raises instead of silently falling back to the
+  engine, so it cannot hide behind the very spend this path avoids. `CS_LLM_PROVIDER`, `CS_LLM_BASE_URL` (for
+  OpenRouter this is `https://openrouter.ai/api` — the SDK appends
+  `/v1/messages`; `/api/v1` 404s on an HTML page), `CS_LLM_API_KEY`,
+  `MODEL_<ROLE>`, `MODEL_<TIER>`. With nothing set but an `OPENROUTER_API_KEY`
+  present, the worker tier goes to OpenRouter.
+- **Defaults:** both tiers default to `@claude-sonnet`. Choosing a smaller model
+  to save money is a decision that must be EARNED by a measurement on that
+  role's real task; the A/B earns it for `CLASSIFIER` (`@glm`) and nothing else.
+- **Dependency:** `anthropic>=0.107` is an **extra** (`pip install
+  "cs-kernel[llm]"`), imported lazily — a clone that makes no kernel-side LLM
+  call does not grow a dependency, and every other verb works without it.
+- **Re-collaudo:** static for both clones — this adds modules, changes no
+  existing behaviour, and nothing calls it yet (`role=` is opt-in and
+  `CS_LLM_ROUTE` defaults to the engine). It becomes a full re-collaudo the
+  moment a call site is wired, which is a SEPARATE, reviewed change.
+
+### Fixed — the project templates carried the mother company's operator
+- **Why:** the anti-fork gate greps for company hosts and slugs, but the
+  operator's NAME is company data too, and it was invisible to the pattern.
+  Found 2026-07-30: the founder's first name in 20+ places across the project
+  templates (skills, README, `.env.example`), his personal mailbox as a search
+  example, a real customer's name inside an incident note, and the engine host
+  as a literal in `CLAUDE.md.j2` — every clone stamped for another company
+  shipped all of it. Separately, four templates shared a
+  `… | reject(…) | first` expression that CRASHES `cs init` under
+  StrictUndefined for any clone with a single account: the minimal clone could
+  not render its own CLAUDE.md.
+- **What:** all operator/customer/host literals replaced with neutral prose or
+  existing template variables (`engine_ws_url` was already prompted — the
+  literal was just never converted); the single-account crash fixed in all four
+  templates (with one account, the default account is the fallback). Two gates
+  so neither returns: the step-1 grep now also matches the operator's name and
+  mailbox (pattern updated in `CLAUDE.md` too — the two must stay identical),
+  and a new step 12 renders EVERY template under `cs init`'s own jinja env in
+  both account shapes and sweeps the RENDERED output for literals — the source
+  grep cannot see a literal the template engine assembles.
+- **Re-collaudo:** static, plus one `cs update` dry-run per clone to confirm
+  the re-stamped skills read correctly. Behaviour of running clones is
+  untouched — these files are only read at `init`/`update` time.
+
 ## v0.3.7 — 2026-07-25
 
 ### Fixed — an approved tool call deadlocked the client and hung every caller

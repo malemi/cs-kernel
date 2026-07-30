@@ -27,7 +27,7 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
   bootstrap itself sends nothing, drafts nothing, marks nothing. It only
   decides-to-run and delegates.
 - **Nothing is sent autonomously while `CS_TRIAGE_MODE=draft`** (the
-  default). Free-form replies become engine drafts for Mario to review;
+  default). Free-form replies become engine drafts for the operator to review;
   the sub-skills enforce this, you do not override it.
 - **You do not self-authorize the out-of-scope actions in step 6.**
 
@@ -69,7 +69,7 @@ Run the inbound-mail triage sub-skill:
 It finds inbound {{ email_address }} mail needing a human answer, reads full bodies
 (not snippets) via the engine, and — under `CS_TRIAGE_MODE` — composes
 replies **through the engine** (memory + trained voice + threading). In
-`draft` mode it leaves engine drafts for Mario and **sends nothing**; it
+`draft` mode it leaves engine drafts for the operator and **sends nothing**; it
 escalates judgment calls / out-of-scope / angry mail rather than
 auto-answering, and marks handled threads so a later tick does not
 re-draft them. Capture what it reports (drafted / escalated / nothing to
@@ -115,7 +115,7 @@ strictly read-only.
 
 Hold these rules:
 - **READ-ONLY.** Never `draft-reply`, `chat`, mark, or contact for `{{ founder_sweep_account }}`. You
-  only LIST what is open, for Mario to handle by hand.
+  only LIST what is open, for the operator to handle by hand.
 - The `ask` proposes candidates; use light judgment — don't surface a clearly
   handled thread. When unsure, list it (surfacing is cheap and changes nothing).
 - Fold the result into the report (step 6) under the `{{ founder_sweep_account }}` line. Nothing open
