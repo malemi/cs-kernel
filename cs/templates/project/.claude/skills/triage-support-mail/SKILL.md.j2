@@ -77,9 +77,9 @@ real unanswered client mail 6–13 days old that had no engine task (incident
 
 `cs unanswered` does NOT classify intent — it can over-include autoresponders and
 system/no-reply senders (unless they are listed in `CS_SYSTEM_SENDERS`); filter
-those with judgment. It also cannot see mail **Mario FORWARDED** to {{ accounts_default }}@ (the
-`Fwd:` sender is Mario, a SELF address, so it is excluded): for those keep the
-`cs tasks` signal and treat a `Fwd:` / `from:mario.alemi` with NO {{ accounts_default }}@ reply
+those with judgment. It also cannot see mail **the operator FORWARDED** to {{ accounts_default }}@ (the
+`Fwd:` sender is the operator, a SELF address, so it is excluded): for those keep the
+`cs tasks` signal and treat a `Fwd:` / `from:<operator's personal address>` with NO {{ accounts_default }}@ reply
 to the ORIGINAL sender as a real catch.
 
 Then for EACH candidate, the authoritative unanswered-check — across threads:
@@ -94,14 +94,14 @@ Then for EACH candidate, the authoritative unanswered-check — across threads:
   had already replied — MADEA's confirmation was in a sibling thread.)
 - Only what survives the Sent-archive check is genuinely open. (Forwarded mail
   with NO {{ email_address }} reply to the original sender is the real catch — e.g. a
-  `Fwd:` from Mario where nobody answered the customer.)
+  `Fwd:` from the operator where nobody answered the customer.)
 
 ## 1b. Reconcile each survivor against the engine task ledger
 
 The Sent-anchored sweep only sees {{ accounts_default }}@'s OWN Sent folder. It CANNOT see a
-reply Mario sent from his personal mailbox (`mario.alemi@…`) — so an item
-handled elsewhere still surfaces (incident 2026-07-17: Eva Fani was answered
-from `mario.alemi@` personal; the sweep re-flagged it). The engine task ledger
+reply the operator sent from a personal mailbox (a non-SELF address) — so an item
+handled elsewhere still surfaces (observed 2026-07-17: a contact answered from
+the operator's personal mailbox was re-flagged by the sweep). The engine task ledger
 is where we record that a contact is handled, so for every survivor, match by
 `contact_email` against the ledger and apply this rule:
 
@@ -123,7 +123,7 @@ is where we record that a contact is handled, so for every survivor, match by
   --event-id <message-id> [--thread-id <tid>] [--urgency high] [--reason "<perché>"]
 ```
 
-- When the operator (or Mario) says an item is handled → close it:
+- When the operator says an item is handled → close it:
 
 ```bash
 .venv/bin/python -m cs tasks close <task_id> --note "<come/dove risolto>"

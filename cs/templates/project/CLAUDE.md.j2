@@ -42,16 +42,16 @@ that would help every clone belongs in `cs-kernel` (rule of two + anti-fork char
 
 ## 0. Operator profile
 
-Mario — founder. Wants this to run by itself **once trusted**: prepare the
+The operator wants this to run by itself **once trusted**: prepare the
 day's mail in the right voice, review, send, let replies return to
 {{ email_address }}. Course corrections are cheap; an unwanted blast — or a
 tone-deaf mail to someone we already talk to — is not.
 
 ## 1. The engine daemon (the body)
 
-On `desktop.mrcall.ai` a dedicated user `mrcalld` runs one engine per profile
-as systemd units `zylch-server@<uid>`, each on a unix socket
-`/run/mrcalld/<uid>.sock`, fronted by Caddy at `{{ engine_ws_url }}/ws/<uid>`.
+On the engine host a dedicated service user runs one engine per profile
+as systemd units `zylch-server@<uid>`, each on a unix socket,
+fronted by a reverse proxy at `{{ engine_ws_url }}/ws/<uid>`.
 The {{ email_address }} profile is `{{ engine_owner_uid }}`
 (config `CS_ENGINE_OWNER_UID`).
 
@@ -177,8 +177,13 @@ draft/triage loop always runs on the **default** account only
 
 ## 9. Customer knowledge — engine memory first (do not be a goldfish)
 
-{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (accounts.keys() | reject('equalto', accounts_default) | first) %}
-When Mario asks about a **customer / prospect / integration** (or you need
+{% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}
+{# `| first` on the raw reject crashed `cs init` under StrictUndefined for any
+   clone with a single account and no founder sweep — the minimal clone could
+   not render its own CLAUDE.md. With one account, the default account IS the
+   only place to look, so it is also the fallback. #}
+{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
+When the operator asks about a **customer / prospect / integration** (or you need
 customer state to act), **load both layers before answering**:
 
 1. **Engine memory (primary, live)** — `cs ask "…"` on the account that owns

@@ -6,3 +6,14 @@ build/
 dist/
 *.egg-info/
 .env
+
+# A/B evidence for the provider-swap work (2026-07-27). It holds REAL customer
+# replies harvested read-only from a clone's campaign — company + customer data,
+# which the kernel repo must never carry (anti-fork charter §1). Kept on disk so
+# the run is reproducible and reviewable; never committed here.
+ab/
+# Same reason, session-local: the task brief and the A/B report both name
+# clones, hosts and absolute paths. They live here for review convenience and
+# must never ride into the published repo on a careless `git add .`.
+AB-REPORT.md
+TASK-multiprovider.md

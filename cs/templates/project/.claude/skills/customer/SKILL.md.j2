@@ -1,8 +1,11 @@
 ---
 name: customer
-description: Load a customer/prospect into working context. Argument is the folder name under docs/projects/ (e.g. acme-corp, globex, initech). Reads the dossier files AND — mandatorily — loads the mrcall-desktop engine memory for that customer. Use when Mario says /customer <nome>, or when starting any work on a named customer. Does not send; memory writes only when the operator explicitly asks to persist a fact.
+description: Load a customer/prospect into working context. Argument is the folder name under docs/projects/ (e.g. acme-corp, globex, initech). Reads the dossier files AND — mandatorily — loads the mrcall-desktop engine memory for that customer. Use when the operator says /customer <name>, or when starting any work on a named customer. Does not send; memory writes only when the operator explicitly asks to persist a fact.
 ---
-{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (accounts.keys() | reject('equalto', accounts_default) | first) %}
+{% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}
+{# `| first` on the raw reject crashes under StrictUndefined for a single-account
+   clone; with one account the default IS the only place to look. #}
+{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
 
 # customer — load a customer into context
 
@@ -33,10 +36,10 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 2. **Many customer relationships live on `{{ nondefault_account }}`**, not on
    the default `{{ accounts_default }}@` operator box. Always query **both** accounts unless
    the dossier explicitly pins one. Account names in `cs accounts` are
-   **mailbox addresses** (never bare `mario`).
+   **mailbox addresses** (never a bare first name).
 3. **No customer-visible action without a fresh dossier** on the relevant
    contact email (`cs dossier` / `cs contacted`) — CLAUDE.md §5.
-4. **No autonomous send.** This skill never drafts or sends unless Mario
+4. **No autonomous send.** This skill never drafts or sends unless the operator
    explicitly asks *after* the load, and then only through the normal gated
    paths (`cs draft-reply` / `cs chat --allow send_draft`). Default = read +
    reason.
@@ -72,7 +75,7 @@ Do **not** treat this as the answer. It is the map for step 2–3.
 ## 2. Engine memory — MANDATORY (primary layer)
 
 Load what the engine actually knows. Run **both** accounts (default first if
-the dossier pins {{ accounts_default }}@; otherwise start with mario's mailbox — most B2B
+the dossier pins {{ accounts_default }}@; otherwise start with `{{ nondefault_account }}` — most B2B
 relationships live there):
 
 ```bash
@@ -117,7 +120,7 @@ Before speaking, compare:
 | Signal | Prefer |
 |---|---|
 | Engine has a newer fact than the file | **engine** — flag the file as stale |
-| File has a fact engine doesn't (meeting note, web research) | **file for now** — and queue a memory write (step 5) if Mario wants it persisted |
+| File has a fact engine doesn't (meeting note, web research) | **file for now** — and queue a memory write (step 5) if the operator wants it persisted |
 | Conflict | surface both; do not silently pick one |
 | Engine empty on both accounts | say so explicitly; answer from file **and** mark the memory gap |
 
@@ -163,7 +166,7 @@ Memoria:   <pronto a lavorare su engine memory di <nome>>
 Then **stay in this frame**: subsequent questions about "loro / il cliente /
 la call" refer to this customer. Prefer engine verbs
 (`cs ask`, `cs dossier`, `cs thread`, `cs draft-reply` when asked) over
-re-reading the markdown. If Mario asks to update the dossier, write the file
+re-reading the markdown. If the operator asks to update the dossier, write the file
 **and** mirror non-mail facts into engine memory (step 5).
 
 ## Out of scope (do not do under this skill alone)
@@ -172,7 +175,7 @@ re-reading the markdown. If Mario asks to update the dossier, write the file
 - Flipping `CS_TRIAGE_MODE`
 - Cold outreach without a fresh `cs dossier` + `cs contacted` check
 - Touching another company's clone (a sibling clone, e.g. `ACME-CS`) or accounts outside this project's mail domain
-- Committing dossier edits unless Mario explicitly asks
+- Committing dossier edits unless the operator explicitly asks
 
 ## Quick reference — existing folders
 

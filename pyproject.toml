@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cs-kernel"
-version = "0.4.0"
+version = "0.4.1"
 description = "Shared kernel of the <company>-cs customer-service operators: import package `cs` (frozen module path), per-company variance declared in the clone's manifest.toml."
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -17,6 +17,14 @@ dependencies = [
     "requests>=2.31",
     "jinja2>=3.1",
 ]
+
+# Kernel-owned LLM calls (cs/worker_llm.py) need the anthropic SDK — which is
+# also the OpenRouter / gateway client, since they speak the same wire. It is an
+# EXTRA, not a hard dependency: a clone that never makes a kernel-side LLM call
+# should not grow one, and worker_llm imports it lazily so every other verb
+# still works without it. Install with `pip install "cs-kernel[llm]"`.
+[project.optional-dependencies]
+llm = ["anthropic>=0.107"]
 
 [tool.setuptools.packages.find]
 include = ["cs*"]

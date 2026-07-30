@@ -1,6 +1,6 @@
 ---
 name: campaign-tick
-description: Advance every active {{ company_prog_name }} campaign{% if excluded_campaign %} EXCEPT {{ excluded_campaign }} (a dedicated process owns it){% endif %}. Reconcile already-sent drafts, surface composed-draft outreach via the dedup-gated send-draft verb, classify new human replies from full thread bodies, and route free-form answers through the engine as drafts. Identity is always {{ email_address }}. Opus-driven for now (Mario's call, temporary). DEFAULT ON UNCERTAINTY = ESCALATE.
+description: Advance every active {{ company_prog_name }} campaign{% if excluded_campaign %} EXCEPT {{ excluded_campaign }} (a dedicated process owns it){% endif %}. Reconcile already-sent drafts, surface composed-draft outreach via the dedup-gated send-draft verb, classify new human replies from full thread bodies, and route free-form answers through the engine as drafts. Identity is always {{ email_address }}. Opus-driven for now (operator's call, temporary). DEFAULT ON UNCERTAINTY = ESCALATE.
 ---
 
 # {{ company_prog_name }} — Campaign Tick
@@ -15,7 +15,7 @@ Your job: advance every active campaign one step, per the worklist the
 verbs hand you. You do NOT decide policy — the verbs do (draft-vs-send,
 dedup, rate-cap, kill-switch are all inside them). You read replies,
 classify the human message, and route. **You are Opus here on purpose
-(Mario: "OPUS, l'avevo detto") — TEMPORARY**; a leaner deterministic
+(the operator's explicit, repeated choice) — TEMPORARY**; a leaner deterministic
 `campaign tick` verb replaces this later. Do not build that now.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
@@ -94,7 +94,7 @@ it somehow does, skip it.{% else %} Any excluded campaign will not appear here.{
 .venv/bin/python -m cs campaign reconcile <contact_id> --commit
 ```
 
-Corrective only: the mail was already sent out-of-band (e.g. by Mario, by
+Corrective only: the mail was already sent out-of-band (e.g. by the operator, by
 hand in Gmail), so the `drafted` row is stale. This fixes the state to `sent`
 and records the Sent thread. **No mail is sent — safe.** The verb refuses if
 no Sent thread exists (it never invents a send), so trust its result. Record

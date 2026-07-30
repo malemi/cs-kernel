@@ -275,6 +275,30 @@ class Settings(BaseSettings):
         )
 
 
+def env_file_chain(overrides: dict[str, Any] | None = None) -> tuple[str, ...]:
+    """The dotenv layers, ordered LOWEST → HIGHEST precedence.
+
+    Split out of ``load()`` so anything that must read the same values without
+    building a full ``Settings`` (``cs/model_config.py`` resolves the LLM
+    provider this way) uses ONE definition of the chain. Pass *overrides* when
+    the manifest has already been loaded; otherwise it is read here.
+    """
+    if overrides is None:
+        mpath = manifest_mod.find_manifest_path()
+        m = manifest_mod.load_manifest(mpath) if mpath is not None else None
+        overrides = manifest_mod.settings_overrides(m) if m else {}
+
+    env_files: list[str] = []
+    plat = overrides.get("platform_env_path", "")
+    if plat:
+        env_files.append(str(Path(plat).expanduser()))
+    slug = overrides.get("slug", "")
+    if slug:
+        env_files.append(str(Path.home() / f".{slug}-cs" / ".env"))
+    env_files.append(".env")  # repo-local override, highest dotenv layer
+    return tuple(env_files)
+
+
 def load() -> Settings:
     """Read the manifest (if any), validate its adapters LOUDLY, then build
     Settings over the layered env chain. Tolerates a MISSING manifest (so
@@ -303,14 +327,7 @@ def load() -> Settings:
                     "[producer.mrcall_tracking] script_path + python_path in manifest.toml"
                 )
 
-    env_files: list[str] = []
-    plat = overrides.get("platform_env_path", "")
-    if plat:
-        env_files.append(str(Path(plat).expanduser()))
-    slug = overrides.get("slug", "")
-    if slug:
-        env_files.append(str(Path.home() / f".{slug}-cs" / ".env"))
-    env_files.append(".env")  # repo-local override, highest dotenv layer
+    env_files = env_file_chain(overrides)
 
     _LOAD_CTX["overrides"] = overrides
     _LOAD_CTX["prefix"] = overrides.get("shopify_env_prefix", "")

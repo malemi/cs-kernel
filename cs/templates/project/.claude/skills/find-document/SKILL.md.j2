@@ -2,7 +2,10 @@
 name: find-document
 description: Locate a document, file, attachment, or a specific email when it's requested ("send me the usual R&D description", a report, a prior attachment) or when you need to find mail/files that aren't in the engine's recent sync window. Searches broadly across the engine, Google Drive, and the full mailbox. Read-only — finds and reports, never drafts or sends.
 ---
-{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (accounts.keys() | reject('equalto', accounts_default) | first) %}
+{% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}
+{# `| first` on the raw reject crashes under StrictUndefined for a single-account
+   clone; with one account the default IS the only place to look. #}
+{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
 
 # find-document
 
