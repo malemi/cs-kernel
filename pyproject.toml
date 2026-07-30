@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cs-kernel"
-version = "0.3.7"
+version = "0.4.0"
 description = "Shared kernel of the <company>-cs customer-service operators: import package `cs` (frozen module path), per-company variance declared in the clone's manifest.toml."
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -30,4 +30,8 @@ cs = [
     "templates/project/**/*",
     "templates/project/.*",
     "templates/project/.claude/**/*",
+    # Stamped per project by `cs project new`, NOT once per clone by `cs init` —
+    # hence a template root of its own, which needs its own glob here or the
+    # verb ships without its templates and fails on a clean install.
+    "templates/project_memory/**/*",
 ]

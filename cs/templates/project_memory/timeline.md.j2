@@ -1,0 +1,43 @@
+---
+project: {{ project_name }}
+kind: timeline
+created: {{ today }}
+updated: {{ today }}
+coverage: "{{ today }} → {{ today }}"
+---
+
+# Timeline
+
+## Abstract
+
+The verified chronology of the relationship with {{ project_title }}: what
+happened, when, and how we know it. Every entry carries a source, so a later
+reader can re-check it instead of trusting it. This is also the chronological
+index into [`meetings/`](meetings/) — each meeting gets a line here linking to
+its note.
+
+**Append at the bottom; never rewrite an entry.** If an entry turns out to be
+wrong, add a corrected one with today's date saying so. The value of a timeline
+is that it shows what we believed at the time.
+
+**State the timezone once and normalise to it.** Mail archives usually store UTC
+while quoted mail headers are already local, and mixing the two silently shifts
+events by an hour or two — enough to invert who replied first.
+
+<!-- Times below are <TZ>. Verify the archive's own offset once and record how:
+     e.g. a mail stored at 09:49 quoted as "at 11:49" in a later reply is UTC+2. -->
+
+## {{ today[:4] }}
+
+<!-- Format, one line per event:
+
+**<Weekday> <D>, HH:MM** `[mail]` — who did what, with the words that matter
+quoted verbatim, and what followed from it.
+
+Use `[mail]` for anything read out of the engine archive, `[meeting]` for a
+debrief, `[inferred]` where you are reconstructing. A meeting gets a one-line
+entry plus a link:
+
+**<Weekday> <D>, HH:MM–HH:MM** — <what changed>.
+→ [`meetings/YYYY-MM-DD-<slug>.md`](meetings/YYYY-MM-DD-<slug>.md)
+-->

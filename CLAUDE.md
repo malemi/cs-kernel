@@ -85,9 +85,17 @@ cs/
 ├── gmail_drafts.py  append-only Gmail Drafts review surface (SMTP-free)
 ├── crm/             port + adapters: starchat, shopify, none
 ├── ingest/          port + adapters: mrcall-tracking, none
+├── project_memory.py `cs project new`: stamps a project's written memory
+│                    (index + status + timeline + meetings/) under docs/projects/
 ├── rpc.py auth.py resolve.py drive.py review.py state.py filter.py _time.py
 └── scripts/find_profile_uid.py   clone-onboarding setup tool
 ```
+
+Two template roots, and the distinction is load-bearing:
+`templates/project/` is stamped **once per clone** by `cs init` / `cs update`;
+`templates/project_memory/` is stamped **once per project** by `cs project new`.
+Each needs its own `package-data` glob in `pyproject.toml` or the verb ships
+without its templates.
 
 NOT in this repo (template/clone side): `.claude/` (skills, commands,
 settings.json), the cron wrapper `bin/cs_operator_cron.sh` (its deny body

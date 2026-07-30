@@ -3,6 +3,71 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.4.0 — 2026-07-30
+
+### Added — `cs project new`: the per-project written memory, identical in every clone
+- **Why:** every clone keeps a folder per company under `docs/projects/`, and that
+  folder is the operator's memory of the relationship — what is agreed, what we
+  owe, what happened, who these people are. Until now its shape was a paragraph
+  of prose in `docs/projects/README.md`, and prose drifts the moment somebody is
+  in a hurry. The failure that prompted this: a live prospect whose folder held a
+  dossier and nothing else. Three weeks of drift sat outside it — two further
+  meetings, a new counterpart who had become the project manager, a first project
+  that had moved to a different business unit, and three deliverables with a
+  deadline. All of it existed only in one person's head and in an unread mail. A
+  convention cannot fail loudly; a missing folder structure looks exactly like a
+  quiet project.
+- **What:** a new verb group, `cs project new <slug> [--title …]`, stamping four
+  artifacts from `cs/templates/project_memory/`:
+  - `README.md` — what the project is, plus the index of its own files
+  - `status.md` — the ONLY file describing the present: agreed scope, what we owe
+    with dates, who decides, live risks. One home for state, so two files cannot
+    disagree about it
+  - `timeline.md` — what happened, when, and how we know, one source per entry;
+    append-only, because a timeline's value is showing what we believed at the time
+  - `meetings/` — one file per meeting, append-only with dated addenda, plus a
+    `.gitkeep` so the append-only half of the scaffold survives a commit
+
+  Every stamped file opens with front matter and an `## Abstract`, mirroring the
+  `docs/` harness so a reader decides in ten seconds whether to read on. Bodies
+  are HTML comments saying what belongs where rather than prose pretending to be
+  content: an empty section is honest, invented content is not.
+
+  `docs/projects/README.md.j2` is rewritten to specify the shape, the reliability
+  markers (`[confirmed] [mail] [meeting] [inferred] [reported] [to verify]`), the
+  append-only rule, and the division of labour between the files and engine
+  memory — the engine owns live mail and is ground truth for it; the files own
+  judgment, which never arrives by mail and therefore exists only if written
+  down. New sibling `docs/projects/_meeting-template.md.j2` is the copy-me shape
+  for a meeting note, including a "Not recorded here" section, because a note
+  that hides its own gaps gets mistaken for the whole truth.
+
+  It also documents two traps found while using the verbs on a real prospect:
+  `--account` switches the ENGINE profile only, so `cs contacted` / `cs unanswered`
+  answer for the operator's own mailbox whatever account is passed (a false
+  "never contacted", exit 1) while `cs thread` / `cs ask` do honour it; and `cs`
+  must run from the clone root, since the manifest and env chain resolve from the
+  working directory.
+
+  Templates live in a root of their own (`templates/project_memory/`, with its own
+  `package-data` glob) because they are stamped per project by this verb, not once
+  per clone by `cs init`. New gate `tests/run.sh` step 11 runs the verb against
+  the fresh-venv install — proving the templates are packaged — and asserts
+  abstract-first front matter, zero unrendered Jinja reaching a clone, the date
+  taken from the manifest timezone rather than UTC, the founder-sweep mailbox
+  owning the project when that sweep is on, refusal of a non-slug name, refusal
+  outside a clone root, and refusal on an existing folder **without modifying it**
+  (clobbering a project folder destroys the only copy of a judgment).
+- **Re-collaudo:** static, every clone. No send path, no engine call and no
+  campaign code is touched; the verb only writes files under `docs/projects/`.
+  Clones pick the convention up with `cs update`, which adds
+  `_meeting-template.md` and refreshes `docs/projects/README.md` (asking first if
+  the local copy was modified).
+- **Known-red gate, pre-existing:** `tests/run.sh` step 1 fails on
+  `cs/templates/project/CLAUDE.md.j2:52`, which hardcodes an engine host instead
+  of deriving it from the manifest. Present before this change and untouched by
+  it; it belongs with the in-flight de-companyisation of the skill templates.
+
 ## v0.3.7 — 2026-07-25
 
 ### Fixed — an approved tool call deadlocked the client and hung every caller

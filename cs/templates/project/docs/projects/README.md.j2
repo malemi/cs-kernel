@@ -1,36 +1,150 @@
-# docs/projects/ — per-project working folders
+# docs/projects/ — per-project memory
 
-## Convention
+## Abstract
 
-- **One folder per company/project** (`<name>/`): the `<name>.md` dossier, plans, working files, and related documents (proposals, PDF/DOCX, attachments).
-- Tracked in **git** (private repo `hahnbanach/{{ company_slug }}-cs`) for multi-machine sync. **No secrets/credentials** in these files.
-- **Project/customer codebases** (e.g. `~/acme-corp/`, owned by ACME) stay where they are, **outside** here: the dossier only needs to note that they exist / that we cloned them.
+One folder per company or project, holding everything we know about it: the
+current state, the chronology, one note per meeting, the durable dossier, and
+the documents we sent them. This is the operator's **written memory** — the
+place a new session reads to stop being a goldfish.
 
-## Key principle — the engine memory is the recall brain
+The shape is not a matter of taste. `cs project new <name>` stamps it, so every
+project in every `<company>-cs` clone looks the same and an agent can find its
+way without being told. Read the conventions below before adding a file by hand.
 
-These files are **documents** (human-readable artifacts). The **source of truth for the operator's recall is the `mrcall-desktop` engine memory** — the always-on knowledge the agent draws on (`cs ask`, triage, compose).
+## Creating a project
 
-**Every fact must ALWAYS live ALSO in the engine memory, not only in these files.** A dossier not backed by memory is a dead artifact: the operator does not "know" it.
+```bash
+.venv/bin/python -m cs project new <name>          # name = folder slug
+.venv/bin/python -m cs project new <name> --title "Full Company Name S.p.A."
+```
 
-- Information that arrives **by mail** is in memory **automatically**, via the update pipeline:
-  `cs --account <acct> rpc update.run` (syncs mail → memory/entities → tasks).
-- Information that does **not** come from mail (web research, a verbal debrief, decisions taken in a meeting) must be **brought explicitly into the engine memory** — via the engine's `create_memory` / `update_memory` tools (e.g. an interactive `cs chat --allow create_memory "…"` session), not left only in the dossier.
-  - **Note (known gap, Jul 2026):** the `cs chat` memory-write turn **persists the data engine-side but does NOT always return cleanly to the client** — it can hit `TimeoutError` after `update_memory` is approved (the turn never closes; seen at 600s and 1500s). So: treat it as **fire-and-forget** and **always verify with `cs ask`** that the fact actually landed in memory. The turn-never-closes is an engine-side defect to fix separately.
+`<name>` is a lowercase slug (`acme-corp`), not a person's first name and not an
+email address. The command refuses to touch a folder that already exists, so it
+is safe to run when you are unsure whether the project is already there.
 
-In short: when you write/update a dossier here, make sure the same facts are (or end up) in the engine memory — the document is the readable copy, the memory is the brain.
+## The shape of a project folder
 
-## Agent procedure — when Mario asks about a project/customer
+```
+docs/projects/<name>/
+├── README.md      what this project is, and the index of its own files
+├── status.md      where we are NOW: agreed scope, what we owe, deadlines, risks
+├── timeline.md    the verified chronology, with a source per entry
+├── meetings/      one file per meeting: YYYY-MM-DD-<slug>.md
+└── <name>.md      the durable dossier (optional): the company, the people,
+                   the research. Add it when there is enough to warrant it.
+```
 
-**Mandatory before answering** (even if a file already exists here). Do not just read `docs/projects/` — that is the goldfish trap.
+Plus whatever the project itself accumulates: proposals, analyses, PDFs, DOCX,
+saved attachments.
 
-1. **Engine memory (first):**
+| File | Owns | Volatility |
+|------|------|------------|
+| `README.md` | What the project is; the index of the folder | Low |
+| `status.md` | The present. **Wins on "what is the current state"** | High — update on every contact |
+| `timeline.md` | What happened, when, and how we know. The chronological index into `meetings/` | Append-only |
+| `meetings/*` | One meeting each: who was there, what was decided, what was asked of us | Append-only, never rewritten |
+| `<name>.md` | Durable facts: the company's numbers, the people, the research. **Wins on durable company facts** | Low |
+
+Two rules keep this from rotting:
+
+**`status.md` is the only place that describes the present.** If the dossier
+also carries a "where we are" section, they will disagree within a month and a
+reader cannot tell which is stale. State goes in one file.
+
+**Meetings are append-only.** A meeting note records what happened at a point in
+time. If we later learn we misread the room, add a dated addendum at the bottom —
+never edit the body. Otherwise the memory quietly rewrites its own history and we
+lose the ability to see that we were wrong.
+
+## How to write
+
+**Every file opens with front matter, then `## Abstract`.** The abstract is a
+short paragraph saying what the document is and what it currently claims, so a
+reader — human or agent — can decide in ten seconds whether to read on. Files
+`cs project new` stamps already have both; keep them when you edit.
+
+**Mark how much you trust each fact.** A dossier that does not distinguish what
+we verified from what we assumed will eventually be quoted back to a customer.
+
+| Marker | Meaning |
+|---|---|
+| `[confirmed]` | Verified against primary sources, or independent sources that concur |
+| `[mail]` | From a real mail in the engine archive — cite date and sender |
+| `[meeting]` | From a meeting, i.e. from somebody's debrief |
+| `[inferred]` | One weak source, or our own inference |
+| `[reported]` | An authoritative source says so, but we could not verify it |
+| `[to verify]` | We are acting on it, but it is not established |
+
+**Language is English**, these notes included. The exceptions are copy written
+for the customer, which follows the customer's own language, and **verbatim
+quotes**, which stay in the language they were said in — quote first, gloss in
+English if the meaning is not obvious.
+
+**A new meeting** starts from [`_meeting-template.md`](_meeting-template.md):
+
+```bash
+cp docs/projects/_meeting-template.md docs/projects/<name>/meetings/2026-01-31-kickoff.md
+```
+
+Then add a line for it in that project's `timeline.md`, so it can be found from
+the chronology.
+
+**No secrets.** These files are tracked in git (private repo
+`hahnbanach/{{ company_slug }}-cs`) for multi-machine sync. Credentials, tokens
+and passwords never go in here.
+
+**Customer codebases stay outside.** A repo owned by the customer (e.g.
+`~/acme-corp/`) lives where it lives; the dossier only records that it exists and
+where.
+
+## The two layers — files and engine memory
+
+The `mrcall-desktop` engine holds the **live** layer: synced mail, entities,
+tasks. These files hold the **durable** layer: what was decided, what we
+concluded, what we owe. You need both, and they answer different questions.
+
+- **Mail is the engine's, and the engine's is ground truth.** Never transcribe a
+  mail from memory. Read it:
+  `cs --account <acct> rpc emails.search '{"query":"…","folder":"all","limit":60}'`
+- **Judgment is the files'.** A decision taken in a meeting, a piece of research,
+  a read on a person — that never arrives by mail, so it exists only if somebody
+  writes it here.
+- **Where they disagree about history, the files win** — they are versioned and
+  reviewable. Where they disagree about mail, the engine wins.
+- Facts worth having in both places can be pushed into engine memory with
+  `cs chat --allow create_memory "<atomic fact, with date and source>"`. Treat it
+  as fire-and-forget and **verify with `cs ask`**: the turn persists engine-side
+  but does not always return cleanly to the client.
+
+## Agent procedure — when asked about a project or customer
+
+**Mandatory before answering**, even when a folder already exists here. Reading
+only `docs/projects/` is the goldfish trap; reading only the engine loses every
+conclusion we ever drew.
+
+1. **The project's own memory:** `docs/projects/<name>/status.md` first, then
+   `timeline.md`, then the meeting notes that matter and the dossier.
+2. **Engine memory**, on the account that owns the relationship:
    ```bash
    .venv/bin/python -m cs --account {{ founder_sweep_account if founder_sweep_enabled else email_address }} ask "<company / contacts / status / deadlines>"
-   .venv/bin/python -m cs ask "<same question>"   # if it might be on {{ accounts_default }}
+   .venv/bin/python -m cs ask "<same question>"   # the {{ accounts_default }} default, if it might be there
    ```
-   Many customer relationships (e.g. ACME) live on **`{{ founder_sweep_account if founder_sweep_enabled else email_address }}`**, not on `{{ accounts_default }}` (the autonomous loop's default). The names in `cs accounts` are **mail addresses** (never a bare first name — there can be several same-named mailboxes). If `{{ accounts_default }}` is empty and the dossier cites that mailbox, **query it**.
-2. **Key contacts:** `cs --account {{ founder_sweep_account if founder_sweep_enabled else email_address }} dossier <email>` (and {{ accounts_default }} if needed) — threads, open tasks, contacted, CRM.
-3. **Dossier files (second):** `docs/projects/<name>/` — the readable summary, proposals, analyses; compare against the engine and flag drift.
-4. **Answer** by combining the two layers; if the engine is fresher than the file, the file is stale (update it when you close the piece of work).
+   Many business relationships live on **{{ founder_sweep_account if founder_sweep_enabled else email_address }}** rather than on
+   `{{ accounts_default }}` (the autonomous loop's default). Names in
+   `cs accounts` are mail addresses, never a bare first name.
+3. **Key contacts:** `cs --account <acct> dossier <email>` — threads, tasks, CRM.
+4. **Answer from both layers**, and say which is stale when they disagree. Then
+   fix the stale one before closing the work.
 
-Twin rule in `CLAUDE.md` §9 (loaded on every agent session).
+**Run `cs` from the clone root.** The manifest and env chain resolve from the
+working directory: from anywhere else `--account` fails with *"unknown --account
+… Configured: (none)"*.
+
+**`--account` switches the ENGINE profile only.** `cs contacted` and
+`cs unanswered` read Gmail over IMAP with the operator's single credential
+({{ email_address }}), so on any other account they answer for
+{{ email_address }} — a false "never contacted", exit code 1. `cs thread` and
+`cs ask` do honour `--account`, because they go through the engine. Use those to
+check whether a thread has been answered on a non-default mailbox.
+
+Twin rule in `CLAUDE.md` §9, loaded on every agent session.

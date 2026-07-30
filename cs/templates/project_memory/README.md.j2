@@ -1,0 +1,55 @@
+---
+project: {{ project_name }}
+kind: index
+created: {{ today }}
+updated: {{ today }}
+---
+
+# {{ project_title }} — project memory
+
+## Abstract
+
+<!-- Replace this: one paragraph on who they are and why we are talking to them.
+     What they do, how big, how the relationship started, and what stage it is at
+     today. A reader should be able to stop here and still know what this is. -->
+
+Index and entry point for everything we know about {{ project_title }} — read
+[`status.md`](status.md) first, as it is the only file that describes the present.
+
+> **Confidential — internal.** Commercial intelligence about a third party.
+> Tracked in git for multi-machine sync; **no credentials in these files**.
+
+## Index
+
+| File | Owns |
+|------|------|
+| [`status.md`](status.md) | Where we are **now**: agreed scope, what we owe and by when, live risks. Wins on current state. |
+| [`timeline.md`](timeline.md) | The verified chronology, one entry per event with its source. The chronological index into `meetings/`. |
+| [`meetings/`](meetings/) | One file per meeting. Append-only — corrections go at the bottom, dated. |
+
+Add a durable dossier as `{{ project_name }}.md` when there is enough to warrant
+one: the company's numbers, the people, the research. Keep the present out of it,
+because that belongs in `status.md`.
+
+## Contacts
+
+<!-- Name, role, email. The engine can find the mail; only a human records who
+     someone actually is and how they behave. -->
+
+| Person | Role | Email |
+|---|---|---|
+| | | |
+
+## Where the relationship lives
+
+Mail for this project is on **{{ owner_account }}**.
+<!-- Correct this if the relationship sits on another configured account. -->
+
+```bash
+.venv/bin/python -m cs --account {{ owner_account }} ask "{{ project_title }}: status, contacts, open items"
+.venv/bin/python -m cs --account {{ owner_account }} thread <email>
+```
+
+Conventions for writing in here — abstract-first, reliability markers,
+append-only meetings — are in [`../README.md`](../README.md). Follow them; they
+are what makes this folder readable by the next session.

@@ -59,7 +59,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply review drive accounts chat campaign; do
+for v in plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply review drive accounts chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -72,6 +72,11 @@ done
 for tv in create close; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs tasks "$tv" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs tasks $tv --help"; tree_fail=1
+  fi
+done
+for pv in new; do
+  if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs project "$pv" --help >>"$HELPLOG" 2>&1); then
+    echo "FAIL: cs project $pv --help"; tree_fail=1
   fi
 done
 if [ "$tree_fail" -eq 0 ]; then echo "OK: $(grep -c '^usage:' "$HELPLOG") usage screens"; else FAIL=1; fi
@@ -102,6 +107,14 @@ step "10. tasks create/close verbs write the engine ledger (params guard)"
 # write-path (create-on-miss, close-on-handled). This pins the RPC method +
 # params so a refactor can't drop sources / the event_id key / the close note.
 if "$VENV/bin/python" "$ROOT/tests/test_tasks_verbs.py"; then echo "OK"; else echo "FAIL: tasks create/close params regressed"; FAIL=1; fi
+
+step "11. project memory scaffold (cs project new)"
+# The per-project memory shape is only uniform across clones because a generator
+# stamps it. Guards: abstract-first + front matter on every stamped file, no
+# unrendered Jinja reaching a clone, market-local date, and a REFUSAL on an
+# existing folder (clobbering it destroys the only copy of a judgment).
+# Runs against the fresh venv, so it also proves the templates are PACKAGED.
+if "$VENV/bin/python" "$ROOT/tests/test_project_memory.py"; then echo "OK"; else echo "FAIL: project memory scaffold regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

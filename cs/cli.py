@@ -16,6 +16,8 @@ Code is the brain. These verbs are thin transport:
   dossier    thread + contacted + tasks + CRM for one address, in one shot.
   chat       one engine-chat turn (drafting surface; destructive tools
              denied unless --allow'ed).
+  project    `project new <slug>` stamps a project's written memory under
+             docs/projects/ (index + status + timeline + meetings/).
 
 Writing/sending NEVER happens here: contextual drafts are composed by the
 engine (memory + trained voice + threading) and reviewed before any send;
@@ -36,6 +38,7 @@ from . import filter as filt
 from . import manifest as manifest_mod
 from . import state as state_mod
 from . import project_init, project_update
+from . import project_memory as project_memory_mod
 from . import cron as cron_mod
 
 
@@ -764,6 +767,20 @@ def main(argv=None) -> int:
     )
     cpk.add_argument("--json", action="store_true")
     cpk.set_defaults(func=cmd_campaign_packs)
+
+    # --- project: the written memory of one company, under docs/projects/ ---
+    # A generator rather than a documented convention: the shape only stays the
+    # same across clones if getting it right is the path of least effort.
+    ppj = sub.add_parser("project", help="per-project written memory (docs/projects/)")
+    pjsub = ppj.add_subparsers(dest="paction", required=True)
+    pjn = pjsub.add_parser(
+        "new", help="stamp a new project folder: index + status + timeline + meetings/"
+    )
+    pjn.add_argument("name", help="folder slug, lowercase-with-hyphens (e.g. acme-corp)")
+    pjn.add_argument(
+        "--title", help="human title for the headings (default: derived from the slug)"
+    )
+    pjn.set_defaults(func=project_memory_mod.cmd_project_new)
 
     # --- cron: manage crontab entry (requires manifest) ---
     try:
