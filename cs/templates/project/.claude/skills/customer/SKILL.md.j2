@@ -106,15 +106,16 @@ For each **primary contact email** from the dossier (and any the engine just
 surfaced), run:
 
 ```bash
-.venv/bin/python -m cs --account {{ nondefault_account }} dossier <email>
-.venv/bin/python -m cs dossier <email>   # {{ accounts_default }}@ if the relationship might be there
+.venv/bin/python -m cs --account {{ nondefault_account }} thread <email>
+.venv/bin/python -m cs dossier <email>   # {{ accounts_default }}@ — the fuller check, its own mailbox
 ```
 
 This is thread + contacted (Gmail Sent truth) + tasks + CRM. Use it before any
 later outreach. Skip only contacts with no email on file.
 
-On a non-default account `dossier` refuses rather than answering about the wrong
-mailbox — use `cs --account <acct> thread <email>` there, which is engine-backed.
+`dossier` is the fuller check but only on {{ accounts_default }}@: on any other
+account it refuses, because its `contacted` half reads {{ email_address }}'s own
+Gmail. There, `thread` is the engine-backed equivalent.
 
 ## 4. Reconcile the two layers
 

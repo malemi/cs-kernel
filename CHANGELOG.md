@@ -3,6 +3,24 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.4.2 — 2026-07-30
+
+### Fixed — templates recommended the very call the new `--account` guard refuses
+- **Why:** v0.4.1 made `contacted` / `unanswered` / `dossier` / `draft-reply`
+  refuse a non-default `--account` instead of answering about the operator's own
+  mailbox. That exposed two templates telling an agent to do exactly that: the
+  clone `CLAUDE.md` §9 and the `customer` skill both used
+  `cs --account <other> dossier <email>` as their key-contacts step, which is now
+  an exit-2 dead end on the account where most business relationships actually
+  live.
+- **What:** both use `thread` there — engine-backed, honours `--account` — and
+  say plainly that `dossier` is the fuller check but only on the operator's own
+  mailbox. Adds the `company/team-conventions.md` slot the triage skill
+  references, so that pointer is no longer dangling: it records who replies from
+  which mailbox, i.e. what the Sent-archive checks structurally cannot see.
+- **Re-collaudo:** static, every clone. Template-only plus one new prose slot;
+  no code path changes.
+
 ## v0.4.1 — 2026-07-30
 
 ### Added — `cs project new`: the per-project written memory, identical in every clone

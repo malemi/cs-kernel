@@ -191,7 +191,10 @@ customer state to act), **load both layers before answering**:
    not on the default `{{ accounts_default }}@` operator box:
    - `.venv/bin/python -m cs --account {{ nondefault_account }} ask "<customer / contatti / stato>"`
    - also try default `cs ask "…"` if the relationship might be on {{ accounts_default }}@
-   - key contacts: `cs --account {{ nondefault_account }} dossier <email>` (and {{ accounts_default }}@ if needed)
+   - key contacts: `cs --account {{ nondefault_account }} thread <email>` — on a
+     non-default account use `thread` (engine-backed); `dossier` refuses there,
+     because its `contacted` half reads {{ email_address }}'s own Gmail. On
+     {{ accounts_default }}@ itself, `cs dossier <email>` is the fuller check.
 2. **Dossier files (secondary, human-readable)** — `docs/projects/<azienda>/`
    (see [`docs/projects/README.md`](docs/projects/README.md)). These are
    artefacts; **the engine memory is the recall brain**. A file-only answer is
