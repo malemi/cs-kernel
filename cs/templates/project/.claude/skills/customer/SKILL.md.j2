@@ -134,13 +134,21 @@ Facts that did **not** arrive by mail must be pushed into the engine, or the
 operator will forget them next session:
 
 ```bash
-.venv/bin/python -m cs --account <acct> chat --allow create_memory "<fatto atomico, con data e fonte>"
+.venv/bin/python -m cs --account <acct> chat --allow create_memory,update_memory "<atomic fact, with date and source>"
 ```
 
 Use the account that owns the relationship (usually
-`{{ nondefault_account }}`). **Known gap (lug 2026):** the chat turn often
-`TimeoutError`s after approving `update_memory` / `create_memory` — treat as
-**fire-and-forget**, then **always verify**:
+`{{ nondefault_account }}`). Authorise **both** tool names: the engine's actual
+write call is `update_memory`, not `create_memory`, and `--allow` matches by
+exact name — allow only `create_memory` and the write is silently **denied**
+(no error, just a polite conversational refusal), and the fact is lost. This is
+a different failure mode from the known TimeoutError gap below, so the same
+rule applies for a different reason: **never trust the absence of an error,
+always verify**.
+
+**Known gap (Jul 2026):** the chat turn often `TimeoutError`s after approving
+`update_memory` / `create_memory` — treat as **fire-and-forget**, then
+**always verify**:
 
 ```bash
 .venv/bin/python -m cs --account <acct> ask "Conferma: <fatto appena scritto>?"

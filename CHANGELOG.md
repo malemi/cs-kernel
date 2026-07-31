@@ -3,6 +3,25 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.4.5 — 2026-07-31
+
+### Fixed — memory-write docs authorized a tool the engine never calls
+- **Why:** the engine's write call for memory is `update_memory`, but three
+  templates (clone `CLAUDE.md` §9, the `customer` skill, `docs/projects/README.md`)
+  prescribed `cs chat --allow create_memory` alone. `--allow` matches by exact
+  name, so the gate denied the write with a polite conversational refusal — no
+  error, no non-zero exit — and the fact was silently lost. Hit live 2026-07-31
+  on the reference clone; verified both ways (single name → `update_memory ->
+  deny`, nothing written; both names → write lands and `cs ask` reads it back).
+- **What:** every prescription becomes `--allow create_memory,update_memory`,
+  and the `customer` skill states the failure mode explicitly: a wrong tool name
+  does not raise, so never trust the absence of an error — always verify with
+  `cs ask`. Placeholders on the touched lines moved to English.
+- **Re-collaudo:** static, every clone — three templates, picked up by
+  `cs update`. The reference clone (mrcall-cs) is already hand-patched, because
+  its `.claude/` adoption is deferred and `cs update` would not re-render those
+  files there.
+
 ## v0.4.4 — 2026-07-31
 
 ### Fixed — the clone CLAUDE.md did not know two of its own verbs
