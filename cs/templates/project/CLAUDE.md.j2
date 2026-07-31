@@ -97,7 +97,17 @@ service account, corrected 2026-07-14 doc-critic pass) ·
 `campaign packs|send-reminder|send-sms` (fixed-template lifecycle) ·
 `chat "<msg>" [--allow …]` (supervised SEND path — DENIED to the headless
 operator) · `accounts` · `cron install|uninstall|status` (manage the
-operator's own crontab entry) · `--account <name>`.
+operator's own crontab entry) ·
+`project new <slug> [--title …]` (stamp a project's written memory under
+`docs/projects/`: index + status + timeline + meetings/) ·
+`llm [models|set|test]` (the kernel's own provider/model config) ·
+`--account <name>`.
+
+**`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
+`contacted`, `unanswered`, `dossier`, `draft-reply` — run on {{ email_address }}'s
+single mail credential, so on any other account they REFUSE (exit 2) rather than
+answering about the wrong mailbox. Use `thread` / `ask` there; both are
+engine-backed and honour the flag.
 
 ## 3. Pipeline (one daily run)
 

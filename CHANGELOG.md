@@ -3,6 +3,20 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+## v0.4.4 — 2026-07-31
+
+### Fixed — the clone CLAUDE.md did not know two of its own verbs
+- **Why:** §2 is the verb list every agent session loads, and it still ended at
+  `cron`. `project` (v0.4.1) and `llm` (v0.4.0) were missing, so the capability a
+  session needs in order to write a project's memory was invisible to the very
+  file that is supposed to advertise it — the same failure mode the project-memory
+  work exists to prevent. The `--account` refusal added in v0.4.1 was also absent,
+  leaving an agent to discover it by hitting the exit-2.
+- **What:** §2 lists both verbs and states the `--account` constraint plainly:
+  the Gmail-IMAP verbs refuse on a non-default account, `thread` / `ask` are the
+  engine-backed alternatives.
+- **Re-collaudo:** static, every clone — one template, picked up by `cs update`.
+
 ## v0.4.3 — 2026-07-30
 
 ### Fixed — `cs update` stripped a clone's runtime ignores and staged its lock files
