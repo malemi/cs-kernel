@@ -6,10 +6,20 @@ edits and SENDS from Gmail. The sent mail lands in Gmail Sent and the
 engine's normal sync picks it up — archive, threading and dedup stay
 correct with zero extra plumbing. The engine-side Draft store is NOT used
 in this flow (single copy, no divergence).
+
+This path is deliberately UNGUARDED in the blocking sense used by
+`cs/send_mail.py`: a Gmail draft IS the human review surface, so a bad body
+must reach the reviewer's eyes, not be hidden or refused. What it does get is
+the middle ground — `append_draft(..., body_md=True)` runs the send guard's
+DETERMINISTIC tells (`cs/send_guard.py`'s `inspect()`; no LLM, no cost) on
+model-composed bodies and surfaces any hits as warnings (logged here, and
+returned so the caller can put them in its own JSON/stdout shape). It never
+blocks, never raises, and never alters `body`. See `append_draft` below.
 """
 from __future__ import annotations
 
 import imaplib
+import sys
 import time
 from email.message import EmailMessage
 from email.utils import formatdate
@@ -44,12 +54,39 @@ def append_draft(
     references: list[str] | None = None,
     html: str | None = None,
     cc: str | None = None,
-) -> str:
-    """Append one draft; returns the folder it landed in.
+    body_md: bool = False,
+) -> tuple[str, list[str]]:
+    """Append one draft; returns ``(folder, guard_warnings)``.
 
     With ``html``, the draft is multipart/alternative: ``body`` is the
     text/plain fallback, ``html`` the rich part (clean anchor text, full
-    URLs — UTM included — only in href)."""
+    URLs — UTM included — only in href).
+
+    ``body_md=True`` marks ``body`` as MODEL-COMPOSED text — the same marker
+    role `send_mail.send`'s `body_md` parameter plays on the send path (see
+    `cs/send_guard.py`). It is a bool here, not the text itself, because
+    `body` is always present regardless of source; the flag only says
+    whether it is worth inspecting. When set, this runs the guard's
+    DETERMINISTIC tells (`send_guard.inspect()` — no LLM, no cost) and, if
+    any fire, logs ONE warning naming them and returns their string forms as
+    `guard_warnings`. It NEVER blocks the append and NEVER alters `body` —
+    the draft is the human review surface, so a bad body must reach the
+    reviewer, not be hidden. Defaults to False, so human/pack-template
+    callers (e.g. `send_first`'s draft branch, fixed-template copy from a
+    campaign pack) are unaffected and never pay for an inspection they don't
+    need."""
+    guard_warnings: list[str] = []
+    if body_md:
+        from . import send_guard
+
+        tells = send_guard.inspect(body, to, settings=settings)
+        if tells:
+            guard_warnings = [str(t) for t in tells]
+            sys.stderr.write(
+                f"[gmail_drafts] WARNING: draft to {to} tripped send-guard "
+                f"tell(s) — review before sending: {'; '.join(guard_warnings)}\n"
+            )
+
     msg = EmailMessage()
     msg["From"] = settings.email_address
     msg["To"] = to
@@ -72,7 +109,7 @@ def append_draft(
         )
         if typ != "OK":
             raise RuntimeError(f"IMAP APPEND failed: {typ} {resp!r}")
-        return folder
+        return folder, guard_warnings
     finally:
         try:
             M.logout()

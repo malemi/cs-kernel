@@ -9,8 +9,13 @@ headless permission set — it is the operator's deliberate bulk tool.
 Sends multipart/alternative (clean anchor text in HTML, full URL only in
 href), generates a Message-ID, and IMAP-APPENDs the sent MIME to the
 mailbox's Sent so the outbound shows in mrcall-desktop and replies thread
-to it. Never used for AI-composed outreach — that goes through the
-engine's compose path.
+to it.
+
+Free-form outreach is still composed by the engine, never here — but the
+composed text does leave through this module (`send()` with `body_md=`,
+the markdown convenience path), which makes `body_md is not None` the marker
+"a model wrote this body" and this file the last checkpoint before the wire.
+That path is therefore gated by `cs/send_guard.py`.
 """
 from __future__ import annotations
 
@@ -145,7 +150,16 @@ def send(
     `in_reply_to` / `references` thread the mail into an existing
     conversation — see `build_mime`. A reply to a customer must always carry
     them, or the mail opens a second thread in the customer's mailbox.
+
+    `body_md` is the MODEL-COMPOSED path (every fixed-template caller passes a
+    `plain`/`html` pair a human authored), so it is gated by `cs/send_guard.py`
+    — which raises `SendGuardRefusal` here, before the message is built and
+    before any socket is opened. See that module for what it refuses and why.
     """
+    if body_md is not None:
+        from . import send_guard
+
+        send_guard.check(settings, to, body_md)
     msg = build_mime(settings, to, subject, plain=plain, html=html, body_md=body_md, cc=cc,
                      in_reply_to=in_reply_to, references=references)
     pw = settings.email_password.replace(" ", "").strip()

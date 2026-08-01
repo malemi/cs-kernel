@@ -1,7 +1,13 @@
 # Changelog — cs-kernel
 
+
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
+
+## v0.5.0 - 2026-08-01
+
+Full drafts are in the two kernel agents' reports
+ (send-guard entry + draft-warnings entry + classify_detailed temperature fix)
 
 ## v0.4.5 — 2026-07-31
 

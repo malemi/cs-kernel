@@ -173,6 +173,7 @@ def classify_detailed(
     model: str | None = None,
     system: str | None = None,
     max_tokens: int = DEFAULT_MAX_TOKENS,
+    temperature: float | None = 0.0,
     timeout: float = 60.0,
     max_retries: int = 2,
 ) -> tuple[str, Completion]:
@@ -188,6 +189,13 @@ def classify_detailed(
     Raises :class:`NoLabelError` when the answer contains no allowed label —
     never a default. A wrong-but-plausible label written into campaign state is
     worse than an error the caller has to handle, because it looks decided.
+
+    ``temperature`` is forwarded to :func:`call` and defaults to the same 0.0,
+    so nothing moves for existing callers. It is settable because ``None``
+    (omit the parameter) is the only way to reach a model that refuses it: some
+    current frontier models return HTTP 400 "``temperature`` is deprecated for
+    this model" rather than ignoring it, and a classification that cannot be
+    made at all is worse than one made at the provider's default.
     """
     labels = list(labels)
     if not labels:
@@ -198,6 +206,7 @@ def classify_detailed(
         model=model,
         system=system,
         max_tokens=max_tokens,
+        temperature=temperature,
         timeout=timeout,
         max_retries=max_retries,
     )

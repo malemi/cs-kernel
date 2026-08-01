@@ -141,6 +141,17 @@ step "13. project memory scaffold (cs project new)"
 # first one, so this is the only thing standing between it and shipping empty.
 if "$VENV/bin/python" "$ROOT/tests/test_project_memory.py"; then echo "OK"; else echo "FAIL: project memory scaffold regressed"; FAIL=1; fi
 
+step "14. model-output send guard (send_mail.send with body_md=)"
+# The 2026-07-28 incident: a campaign loop mailed a customer the model's own
+# meta-deliberation — deliberation paragraph, "here is the reply:", the reply
+# between --- rules, and a closing question to the OPERATOR naming the
+# customer's address. The gate asserts the offending body opens NO SMTP
+# connection while a legitimate reply reaches the socket, so the guard is
+# provably the only thing between generated text and the wire.
+# Offline: the register-judgment leg runs against stubs; the LIVE provider leg
+# is opt-in (CS_SEND_GUARD_LIVE=1) so this suite never spends a cent.
+if "$VENV/bin/python" "$ROOT/tests/test_send_guard.py"; then echo "OK"; else echo "FAIL: model-output send guard regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

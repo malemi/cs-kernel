@@ -106,6 +106,11 @@ class Knobs(_Table):
     reminder_max: int = 3
     system_senders: str = ""        # comma-separated no-reply/system addresses the
                                     # `unanswered` sweep ignores (env CS_SYSTEM_SENDERS wins)
+    # cs/send_guard.py — the only two per-company knobs of the model-output
+    # send guard. The banned list EXTENDS the kernel's (it never replaces it:
+    # the kernel phrases out the writer as an AI, which no company wants sent).
+    send_guard_min_chars: int = 40
+    send_guard_banned_phrases: str = ""   # comma-separated (env CS_SEND_GUARD_BANNED wins)
 
 
 class Sms(_Table):
@@ -220,6 +225,8 @@ def settings_overrides(m: Manifest) -> dict:
     put("sms_hour", m.knobs.sms_hour)
     put("reminder_max", m.knobs.reminder_max)
     put("system_senders", m.knobs.system_senders)
+    put("send_guard_min_chars", m.knobs.send_guard_min_chars)
+    put("send_guard_banned_phrases", m.knobs.send_guard_banned_phrases)
 
     put("sms_enabled", m.sms.enabled)
     put("sms_proxy_base", m.sms.proxy_base)

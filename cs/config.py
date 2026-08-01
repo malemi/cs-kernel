@@ -175,6 +175,18 @@ class Settings(BaseSettings):
     sms_hour: int = 18
     reminder_max: int = 3
 
+    # --- model-output send guard (cs/send_guard.py) ---
+    # Only the two knobs that are legitimately per-company: how short a
+    # composed body may be, and extra phrases this company never wants to send.
+    # The tells themselves are code, not config — a guard with an off switch is
+    # a guard that is off.
+    send_guard_min_chars: int = Field(
+        default=40, validation_alias=AliasChoices("CS_SEND_GUARD_MIN_CHARS")
+    )
+    send_guard_banned_phrases: str = Field(
+        default="", validation_alias=AliasChoices("CS_SEND_GUARD_BANNED")
+    )
+
     # --- SMS capability (optional; manifest [sms]) ---
     sms_enabled: bool = False
     sms_proxy_base: str = ""      # full send-endpoint URL of the SMS proxy

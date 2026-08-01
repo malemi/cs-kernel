@@ -314,12 +314,21 @@ def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
             return {"ok": True, "dry_run": True, "email": email, "mode": "draft",
                     "would": "append to the operator's Gmail Drafts for review"}
         from . import gmail_drafts
-        folder = gmail_drafts.append_draft(settings, email, subject, body)
+        # `body` is the same MODEL-COMPOSED draft_body the send-mode branch
+        # below gates with send_guard via send_mail.send(body_md=body) — mark
+        # it here too so a tell logs a WARNING and comes back as
+        # guard_warnings; the draft is the review surface, so it is appended
+        # either way, never blocked.
+        folder, guard_warnings = gmail_drafts.append_draft(
+            settings, email, subject, body, body_md=True)
         dossier["gmail_draft_pushed"] = True
         dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
         rpc.call_sync(settings, "campaign.update_contact",
                       {"contact_id": contact_id, "dossier": dossier})
-        return {"ok": True, "email": email, "mode": "draft", "pushed_to": folder}
+        out = {"ok": True, "email": email, "mode": "draft", "pushed_to": folder}
+        if guard_warnings:
+            out["guard_warnings"] = guard_warnings
+        return out
 
     # send mode (CS_TRIAGE_MODE=send) — autonomous send, rate-capped
     cap = _rate_capped(settings)
@@ -328,11 +337,22 @@ def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
     if not commit:
         return {"ok": True, "dry_run": True, "email": email, "mode": "send",
                 "would": "cs-SMTP send + mark sent"}
-    from . import send_mail
+    from . import send_guard, send_mail
     # The Sent-archive dedup above is the double-send backstop (a crash after the
     # send is caught next run as 'already in Sent' → reconcile), so send then mark.
-    mid = send_mail.send(settings, email, subject, body_md=body,
-                         cc=settings.email_address or None)
+    #
+    # `body` is a MODEL-COMPOSED draft, so send_mail gates it (cs/send_guard.py).
+    # A refusal is caught HERE only to report it in this verb's own JSON shape —
+    # every state write is below the call, so the draft stays, the contact stays
+    # out of 'sent', and no `sends` row appears, exactly as with any other refusal.
+    try:
+        mid = send_mail.send(settings, email, subject, body_md=body,
+                             cc=settings.email_address or None)
+    except send_guard.SendGuardRefusal as e:
+        return {"ok": False, "email": email, "refused": "send_guard",
+                "tells": list(e.tell_names), "error": str(e),
+                "next": "review the draft by hand — the composed body did not "
+                        "read as a message to the customer"}
     rpc.call_sync(settings, "campaign.update_contact",
                   {"contact_id": contact_id, "state": "sent", "message_id": mid})
     _record_send(settings, contact_id=contact_id, email=email, subject=subject, message_id=mid)
@@ -364,13 +384,20 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
         return {"ok": True, "dry_run": True, "email": email,
                 "would": "append to the operator's Gmail Drafts for review (no send)"}
     from . import gmail_drafts
-    folder = gmail_drafts.append_draft(
-        settings, email, c.get("draft_subject") or "", c.get("draft_body") or "")
+    # Same draft_body a send-mode send_draft() would gate with send_guard —
+    # mark it body_md=True so a tell logs a WARNING and comes back as
+    # guard_warnings; queue_draft never sends, so it never blocks on one.
+    folder, guard_warnings = gmail_drafts.append_draft(
+        settings, email, c.get("draft_subject") or "", c.get("draft_body") or "",
+        body_md=True)
     dossier["gmail_draft_pushed"] = True
     dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
     rpc.call_sync(settings, "campaign.update_contact",
                   {"contact_id": contact_id, "dossier": dossier})
-    return {"ok": True, "email": email, "queued_to": folder}
+    out = {"ok": True, "email": email, "queued_to": folder}
+    if guard_warnings:
+        out["guard_warnings"] = guard_warnings
+    return out
 
 
 # --------------------------------------------- fixed-template pack senders
@@ -528,8 +555,11 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
                     "subject": subject,
                     "would": "append the first-notice mail (HTML) to the operator's Gmail Drafts"}
         from . import gmail_drafts
-        folder = gmail_drafts.append_draft(settings, email, subject, plain, html=html,
-                                           cc=settings.email_address or None)
+        # plain/html are pack-rendered fixed-template copy, not model output —
+        # body_md stays at its default (False): never inspected, matching the
+        # send-mode branch below, which never gates this content with send_guard.
+        folder, _guard_warnings = gmail_drafts.append_draft(
+            settings, email, subject, plain, html=html, cc=settings.email_address or None)
         dossier["gmail_draft_pushed"] = True
         dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
         rpc.call_sync(settings, "campaign.update_contact",

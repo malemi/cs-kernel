@@ -51,10 +51,10 @@ def run() -> None:
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 
     def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None):
+                    references=None, html=None, cc=None, body_md=False):
         appended.update(to=to, subject=subject, body=body,
-                        in_reply_to=in_reply_to, references=references)
-        return "[Gmail]/Drafts"
+                        in_reply_to=in_reply_to, references=references, body_md=body_md)
+        return "[Gmail]/Drafts", []
 
     cfg.load = lambda: types.SimpleNamespace()          # settings unused by stubs
     rpc.call_sync = fake_call_sync
@@ -71,6 +71,10 @@ def run() -> None:
     assert appended["body"] == "Corpo della bozza composta dall'engine.", appended
     assert appended["in_reply_to"] == "<abc@example.com>", appended
     assert appended["references"] == ["<abc@example.com>"], appended
+    # The engine's composed body is always model output — draft-reply must mark
+    # it body_md=True so send_guard's deterministic tells run (warn, never
+    # block) on the Gmail-draft path. See cs/gmail_drafts.py + cs/send_guard.py.
+    assert appended["body_md"] is True, appended
     print("OK: draft-reply mirrors the freshly composed engine draft into Gmail Drafts")
 
 

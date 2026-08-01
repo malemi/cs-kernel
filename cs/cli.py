@@ -503,7 +503,10 @@ def cmd_draft_reply(args) -> int:
         print("\n[gmail-drafts] ERROR: composed draft has no recipient/body; "
               "NOT appended to Gmail Drafts.", file=sys.stderr)
         return 1
-    folder = gmail_drafts.append_draft(
+    # `body` is the engine's freshly composed reply — always model output —
+    # so body_md=True: send_guard's deterministic tells run and, on a hit,
+    # log a WARNING and come back here to print, never to block the append.
+    folder, guard_warnings = gmail_drafts.append_draft(
         settings,
         to=to,
         subject=d.get("subject") or "",
@@ -511,9 +514,13 @@ def cmd_draft_reply(args) -> int:
         in_reply_to=d.get("in_reply_to"),
         references=d.get("references"),
         cc=", ".join(d.get("cc_addresses") or []) or None,
+        body_md=True,
     )
     print(f"\n[gmail-drafts] draft appended to Gmail Drafts ({folder}): "
           f"{d.get('subject')} -> {to}")
+    if guard_warnings:
+        print(f"[gmail-drafts] send-guard tell(s) — review before sending: "
+              f"{'; '.join(guard_warnings)}")
     return 0
 
 
