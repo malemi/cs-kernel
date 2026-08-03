@@ -83,6 +83,7 @@ HEAD_TAGGED_RE = re.compile(
 # described away in prose.
 IMMUTABLE_TAG_TARGETS = {
     "v0.5.0": "038d7e59dd4ec0959cb190e060271041575f2dc9",
+    "v0.5.1": "b2f07b29623a2cf4fa4d46c370fac02617833716",
 }
 
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")

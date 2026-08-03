@@ -12,10 +12,11 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.5.1`. Current HEAD status: tagged as `v0.5.1`.** The
-corrective release repairs the `v0.5.0` metadata drift (that tag shipped with
-pyproject `0.4.5`), signs `cs tasks close` as the external operator, and adds
-the release-truth gate. Do not move `v0.5.0` or `v0.5.1`.
+**Latest release tag: `v0.5.1`. Current HEAD status: untagged.** The
+corrective release (tag `v0.5.1`, commit `b2f07b2`, 2026-08-03) repairs the
+`v0.5.0` metadata drift (that tag shipped with pyproject `0.4.5`), signs
+`cs tasks close` as the external operator, and adds the release-truth gate.
+The 15 gates were verified green AT the tag. Do not move `v0.5.0` or `v0.5.1`.
 
 Both known clones currently agree across manifest, requirement and lock pins on
 `v0.4.5`; their local installed distributions also report `0.4.5` (verified
@@ -161,10 +162,11 @@ either.
 
 ## Immediate next steps
 
-1. Operator reviews and commits the working tree, then tags the corrective
-   `v0.5.1` (metadata repair + release-consistency gate). `v0.5.0` never moves.
+1. ~~Tag the corrective `v0.5.1`~~ — DONE 2026-08-03 (`b2f07b2`, gates green at
+   the tag, pushed). `v0.5.0` never moves.
 2. Re-pin both clones to `v0.5.1` with FULL collaudo (the v0.5.0 arc changes
-   the send chokepoint), one clone at a time, `mrcall-cs` first.
+   the send chokepoint), one clone at a time, `mrcall-cs` first — in progress
+   2026-08-03.
 3. Promote the batch-2 loop's reusable parts (unchanged from last session):
    the flock'd schedule store (`schedule.py`), the deterministic migrator
    pattern (`migrator.py`), and the IMAP attachment reader
