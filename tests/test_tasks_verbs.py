@@ -8,8 +8,8 @@ inbound the engine's own detection never turned into a task) and close (mark a
 contact handled — possibly answered from a personal mailbox the Sent-anchored
 sweep can't see). Both are thin transport over the engine RPCs
 `tasks.create` / `tasks.complete`; this test pins the method name + params so a
-refactor can't silently drop `sources`, the `event_id` idempotency key, or the
-close note.
+refactor can't silently drop `sources`, the `event_id` idempotency key, the
+close note, or the external operator's audit identity/reason.
 
 We stub `cs.rpc.call_sync` to capture (method, params) and drive the two
 cmd_* functions with a fake args Namespace — no engine, no IMAP.
@@ -78,7 +78,7 @@ def run() -> None:
     _, params2 = captured[-1]
     assert params2["sources"] == {"emails": ["ev-2"]}, params2
 
-    # --- close: forwards task_id + note to tasks.complete ---
+    # --- close: forwards task_id + display note + audit identity/reason ---
     close_args = types.SimpleNamespace(
         task_id="t-123", note="risposto da mario.alemi@ personale", json=False
     )
@@ -86,14 +86,22 @@ def run() -> None:
     assert rc == 0, f"cmd_tasks_close returned {rc}"
     method, params = captured[-1]
     assert method == "tasks.complete", method
-    assert params["task_id"] == "t-123", params
-    assert params["note"] == "risposto da mario.alemi@ personale", params
+    assert params == {
+        "task_id": "t-123",
+        "actor": "operator",
+        "why": "risposto da mario.alemi@ personale",
+        "note": "risposto da mario.alemi@ personale",
+    }, params
 
-    # --- close without a note: the key is omitted, not sent empty ---
+    # --- close without a note: still carries a non-empty audit reason ---
     close_args2 = types.SimpleNamespace(task_id="t-9", note=None, json=False)
     assert cli.cmd_tasks_close(close_args2) == 0
     _, params_c2 = captured[-1]
-    assert params_c2 == {"task_id": "t-9"}, params_c2
+    assert params_c2 == {
+        "task_id": "t-9",
+        "actor": "operator",
+        "why": "closed by the cs operator via `cs tasks close`",
+    }, params_c2
 
     print("OK: tasks create/close call tasks.create/tasks.complete with the right params")
 

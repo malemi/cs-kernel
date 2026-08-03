@@ -10,6 +10,21 @@ Measured, not approved: `mrcall-cs` and `124-cs` each declare, lock and have
 
 ## Unreleased — v0.5.1 corrective candidate
 
+### Fixed — cs task closes carry the external operator audit identity
+- **Why:** the engine RPC accepts additive `actor`/`why` fields, but
+  `cs tasks close` still sent only `task_id`/`note`; every operator close was
+  therefore stored as the engine's backward-compatible default actor `human`.
+- **What:** the kernel consumer now sends `actor="operator"` and a non-empty
+  `why` on every close. A supplied `--note` remains the display note and is also
+  the audit reason; a no-note close uses a stable kernel-owned reason. The
+  consumer gate asserts the exact payload in both shapes.
+- **Compatibility:** requires engine commit `677e319` plus the follow-up close
+  history repair `1367e71` — both deployed to the five live daemons 2026-08-03.
+  The older strict engine rejects `actor`/`why` as unknown parameters; rollout
+  is engine first, kernel second, operators last.
+- **Re-collaudo:** **full, every clone** — exercise a task close through the real
+  engine and verify `close_actor="operator"` plus the persisted close reason.
+
 ### Fixed — release metadata agrees before the next tag
 - **Why:** tag `v0.5.0` was cut while `pyproject.toml` still declared `0.4.5`,
   the active context still called `v0.4.0` the tip, and this changelog's
@@ -22,11 +37,12 @@ Measured, not approved: `mrcall-cs` and `124-cs` each declare, lock and have
   them: the pyproject version owns a changelog section with a real body and a
   re-collaudo tier; the company-literal grep `tests/run.sh` **executes** carries
   every charter token plus the case-sensitive `\bHB\b` leg (a token left in a
-  comment no longer counts); `docs/active-context.md` names the tag that
-  `git tag --points-at HEAD` really reports; and every `cs-kernel@vX.Y.Z` line in
-  `README.md` is either the package version or the operational pin recorded at the
-  top of this file. It reads repo files plus one local git call — no network. The
-  existing `v0.5.0` tag is immutable and is not moved.
+  comment no longer counts); `docs/active-context.md` separately names the latest
+  semver release and current HEAD's tagged/untagged state; and every
+  `cs-kernel@vX.Y.Z` line in `README.md` is either the package version or the
+  operational pin recorded at the top of this file. It reads repo files plus
+  local git refs — no network. The published `v0.5.0` target is pinned by commit
+  id so a force-move fails even if prose moves with it.
 - **Re-collaudo:** same as `v0.5.0` below. Metadata and docs alone are static,
   but the cumulative upgrade crosses the model-output send chokepoint and
   therefore requires **full collaudo** on every clone before adoption.

@@ -12,9 +12,10 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**The immutable repository tip/tag is `v0.5.0`, but it shipped with stale
-package metadata `0.4.5`.** The corrective working-tree candidate is `v0.5.1`;
-it is not a release until an approved commit/tag exists. Do not move `v0.5.0`.
+**Latest release tag: `v0.5.0`. Current HEAD status: untagged.** The release
+shipped with stale package metadata `0.4.5`; current HEAD contains the
+corrective `v0.5.1` candidate plus later documentation. The candidate is not a
+release until an approved tag exists. Do not move `v0.5.0`.
 
 Both known clones currently agree across manifest, requirement and lock pins on
 `v0.4.5`; their local installed distributions also report `0.4.5` (verified
@@ -33,10 +34,24 @@ wheel's metadata is not evidence of the process currently serving a profile.
 ## v0.5.1 corrective candidate — release truth gate (2026-08-01)
 
 - Package metadata, changelog, active context and README guidance are checked by
-  the release-consistency gate in `tests/run.sh` — repo files plus one local
-  `git tag --points-at HEAD`, no network.
+  the release-consistency gate in `tests/run.sh` — repo files plus local git
+  refs, no network. Latest release and current HEAD are separate facts, so a
+  docs-only commit does not manufacture release drift.
 - `v0.5.0` now documents the send-guard/draft-warning behavior and full
   re-collaudo tier instead of pointing at ephemeral agent reports.
+- `cs tasks close` now signs the provider call as `actor="operator"` and sends
+  a non-empty audit reason. This shape requires the engine RPC contract at
+  `677e319` plus the follow-up close-history repair `1367e71` — both deployed
+  to the five live daemons 2026-08-03, so the provider side is live. Rollout
+  stays engine first (done), kernel second, paused operators last.
+- Tagging procedure the release gate imposes: the release commit itself must
+  already claim `Latest release tag:` + `Current HEAD status: tagged as` for
+  the new vX.Y.Z, so the gate is red in the gap between that commit and the
+  tag — commit, tag immediately, then verify the 15 gates AT the tag. The
+  first post-tag commit flips the HEAD status back to untagged prose and pins
+  the new tag's commit id in `IMMUTABLE_TAG_TARGETS`
+  (`tests/test_release_consistency.py`); the anchor cannot ride the tagged
+  commit because its own id does not exist yet.
 - This section records working-tree intent only; it must not be described as
   tagged, pushed, installed or live before those actions are separately approved.
 

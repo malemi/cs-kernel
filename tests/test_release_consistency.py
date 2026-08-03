@@ -1,8 +1,8 @@
 """Release-truth gate: package metadata, the changelog, the operator docs and the
 gates `tests/run.sh` actually EXECUTES must agree.
 
-Hermetic: reads files from this repo plus one local `git tag --points-at HEAD`.
-No network, no engine, no mailbox.
+Hermetic: reads files from this repo plus local git refs. No network, no engine,
+no mailbox.
 
 Each check is a drift class that has really happened:
 
@@ -13,9 +13,9 @@ Each check is a drift class that has really happened:
 2. the company-literal gate in `tests/run.sh` rejects every charter token IN
    THE PATTERN IT RUNS, and the case-sensitive `\\bHB\\b` leg still exists —
    asserting on the file's TEXT passes on a token left in a comment;
-3. `docs/active-context.md` names the tag that actually points at HEAD as the
-   tip (or states explicitly that HEAD carries no tag) — the active context
-   called `v0.4.0` the tip while `v0.5.0` was cut;
+3. `docs/active-context.md` names BOTH the latest semver release tag and whether
+   current HEAD is tagged — a docs-only commit after a release must not turn the
+   release truth red, while calling `v0.4.0` latest after `v0.5.0` still fails;
 4. every `cs-kernel@vX.Y.Z` install line in `README.md` is either the package
    version or the operational pin recorded in `CHANGELOG.md` — a blacklist of
    one obsolete tag rots the day a second obsolete tag appears.
@@ -67,20 +67,23 @@ POINTER_LOOKBACK = 5
 # `grep [-flags] '<pattern>' cs/` — the invocation shape of the charter gate.
 GREP_CALL_RE = re.compile(r"grep\s+(?P<opts>(?:-{1,2}\S+\s+)*)'(?P<pattern>[^']*)'\s+cs/")
 
-# Who is the tip. Both shapes occur in the operator docs:
-#   "**`v0.4.0` is the tip; …**"   /   "The immutable repository tip/tag is `v0.5.0`"
-TIP_CLAIM_RES = (
-    re.compile(
-        rf"`?\*{{0,2}}v(?P<v>{SEMVER})\*{{0,2}}`?\s+(?:is|remains|stays)\s+"
-        rf"(?:the\s+)?(?:current\s+|repository\s+|immutable\s+)?tip",
-        re.I,
-    ),
-    re.compile(rf"tip(?:/tag)?\s*(?:is|:|=)\s*\*{{0,2}}`?v(?P<v>{SEMVER})", re.I),
+# Explicit release-state markers. "Latest release" and "HEAD" are different
+# facts: after a docs-only commit v0.5.0 can remain the latest immutable release
+# while HEAD is (truthfully) untagged.
+LATEST_RELEASE_RE = re.compile(
+    rf"latest release tag:\s*`(?P<tag>v{SEMVER})`", re.I
 )
-NO_TAG_RES = (
-    re.compile(r"no tag (?:currently )?points at HEAD", re.I),
-    re.compile(r"HEAD (?:is untagged|carries no tag)", re.I),
+HEAD_UNTAGGED_RE = re.compile(r"current HEAD status:\s*untagged\b", re.I)
+HEAD_TAGGED_RE = re.compile(
+    rf"current HEAD status:\s*tagged as\s*`(?P<tag>v{SEMVER})`", re.I
 )
+
+# This tag was already published before this candidate existed. Moving it is
+# forbidden by the release plan; pin its object so a force-move cannot be
+# described away in prose.
+IMMUTABLE_TAG_TARGETS = {
+    "v0.5.0": "038d7e59dd4ec0959cb190e060271041575f2dc9",
+}
 
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")
 PIN_MARKER_LABEL = "current operational pin"
@@ -197,47 +200,120 @@ def check_executing_charter_gate(runner: str, charter: str) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# 3. the tip the repository actually has
+# 3. release refs and current HEAD are separate facts
 # --------------------------------------------------------------------------- #
-def tags_at_head() -> list[str]:
-    """Version tags pointing at HEAD. Local git read: hermetic, but real."""
+def _git(*args: str) -> list[str]:
+    """Run one read-only git query and return its non-blank output lines."""
     proc = subprocess.run(
-        ["git", "-C", str(ROOT), "tag", "--points-at", "HEAD"],
+        ["git", "-C", str(ROOT), *args],
         capture_output=True,
         text=True,
     )
     assert proc.returncode == 0, (
-        f"`git tag --points-at HEAD` failed (rc={proc.returncode}): "
-        f"{proc.stderr.strip()!r}. This gate must read the real tip; it does not skip."
+        f"`git {' '.join(args)}` failed (rc={proc.returncode}): "
+        f"{proc.stderr.strip()!r}. This gate reads real refs; it does not skip."
     )
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _version_key(tag: str) -> tuple[int, int, int]:
+    return tuple(  # type: ignore[return-value]
+        int(part) for part in tag.removeprefix("v").split(".")
+    )
+
+
+def version_tags() -> list[str]:
+    """All local semver tags, newest version first."""
+    tags = [tag for tag in _git("tag", "--list") if re.fullmatch(rf"v{SEMVER}", tag)]
+    return sorted(tags, key=_version_key, reverse=True)
+
+
+def version_tags_at_head() -> list[str]:
+    """Semver tags pointing exactly at current HEAD."""
     return [
-        t.strip()
-        for t in proc.stdout.splitlines()
-        if re.fullmatch(rf"v{SEMVER}", t.strip())
+        tag
+        for tag in _git("tag", "--points-at", "HEAD")
+        if re.fullmatch(rf"v{SEMVER}", tag)
     ]
 
 
-def check_tip(active: str) -> list[str]:
-    tags = tags_at_head()
-    if not tags:
-        assert any(rx.search(active) for rx in NO_TAG_RES), (
-            "no version tag points at HEAD and docs/active-context.md does not say "
-            "so. State the discrepancy explicitly (e.g. 'no tag points at HEAD')."
-        )
-        return tags
+def tag_commit(tag: str) -> str:
+    lines = _git("rev-parse", f"{tag}^{{commit}}")
+    assert len(lines) == 1, f"expected one commit for {tag}, got {lines}"
+    return lines[0]
 
-    claimed = sorted({m.group("v") for rx in TIP_CLAIM_RES for m in rx.finditer(active)})
-    assert claimed, (
-        f"docs/active-context.md makes no claim about the repository tip while "
-        f"{', '.join(tags)} points at HEAD. Name the tip explicitly."
+
+def check_immutable_tag_targets(actual: dict[str, str]) -> list[str]:
+    """Published anchors never move, even if prose and HEAD move together."""
+    for tag, expected in IMMUTABLE_TAG_TARGETS.items():
+        assert tag in actual, f"immutable release tag {tag} is missing"
+        assert actual[tag] == expected, (
+            f"immutable release tag {tag} moved: expected {expected}, got {actual[tag]}"
+        )
+    return sorted(actual)
+
+
+def check_release_state(
+    active: str, tags: list[str], head_tags: list[str]
+) -> tuple[str, list[str]]:
+    """Active context agrees with latest release and current HEAD separately."""
+    assert tags, "repository has no semver release tags"
+    latest = tags[0]
+    claims = {m.group("tag") for m in LATEST_RELEASE_RE.finditer(active)}
+    assert claims == {latest}, (
+        f"docs/active-context.md must contain exactly "
+        f"'Latest release tag: `{latest}`'; "
+        f"found {sorted(claims) or 'no explicit claim'}"
     )
-    actual = {t.lstrip("v") for t in tags}
-    wrong = [c for c in claimed if c not in actual]
-    assert not wrong, (
-        f"docs/active-context.md calls v{', v'.join(wrong)} the tip, but the tag(s) "
-        f"actually pointing at HEAD are {', '.join(tags)}."
+
+    says_untagged = bool(HEAD_UNTAGGED_RE.search(active))
+    claimed_head_tags = {m.group("tag") for m in HEAD_TAGGED_RE.finditer(active)}
+    assert not (says_untagged and claimed_head_tags), (
+        "docs/active-context.md claims HEAD is both tagged and untagged"
     )
-    return tags
+    if head_tags:
+        assert claimed_head_tags == set(head_tags), (
+            f"HEAD carries {head_tags}, but active context claims "
+            f"{sorted(claimed_head_tags) or 'no HEAD tag'}"
+        )
+    else:
+        assert says_untagged, (
+            "current HEAD has no semver tag; active context must contain the explicit "
+            "marker `Current HEAD status: untagged`"
+        )
+        assert not claimed_head_tags
+    return latest, head_tags
+
+
+def _expect_assertion(fn, needle: str) -> None:
+    try:
+        fn()
+    except AssertionError as exc:
+        assert needle in str(exc), f"negative proof failed for the wrong reason: {exc}"
+    else:
+        raise AssertionError(f"negative proof did not fail: expected {needle!r}")
+
+
+def prove_release_state_negatives(
+    active: str, tags: list[str], head_tags: list[str], actual_targets: dict[str, str]
+) -> int:
+    """Prove the gate rejects its own two highest-risk drift classes."""
+    assert len(tags) >= 2, "negative proof needs an older release tag"
+    stale = LATEST_RELEASE_RE.sub(
+        f"Latest release tag: `{tags[1]}`", active, count=1
+    )
+    _expect_assertion(
+        lambda: check_release_state(stale, tags, head_tags),
+        "must contain exactly",
+    )
+
+    moved = dict(actual_targets)
+    moved["v0.5.0"] = "0" * 40
+    _expect_assertion(
+        lambda: check_immutable_tag_targets(moved),
+        "immutable release tag v0.5.0 moved",
+    )
+    return 2
 
 
 # --------------------------------------------------------------------------- #
@@ -294,7 +370,14 @@ def main() -> None:
 
     body_lines, tier = check_changelog_entry(changelog, release)
     check_executing_charter_gate(runner, charter)
-    tags = check_tip(active)
+    tags = version_tags()
+    head_tags = version_tags_at_head()
+    latest, head_tags = check_release_state(active, tags, head_tags)
+    actual_targets = {tag: tag_commit(tag) for tag in IMMUTABLE_TAG_TARGETS}
+    immutable = check_immutable_tag_targets(actual_targets)
+    negative_proofs = prove_release_state_negatives(
+        active, tags, head_tags, actual_targets
+    )
     assert release in active, (
         f"{release} (the pyproject version) is not mentioned in docs/active-context.md"
     )
@@ -303,8 +386,9 @@ def main() -> None:
     print(
         f"test_release_consistency: {release} — changelog section {body_lines} lines, "
         f"re-collaudo tier '{tier}'; executing charter grep carries "
-        f"{len(COMPANY_TOKENS)} company tokens + {HB_TOKEN}; tip "
-        f"{', '.join(tags) or 'untagged (declared in active-context)'}; README pins "
+        f"{len(COMPANY_TOKENS)} company tokens + {HB_TOKEN}; latest release "
+        f"{latest}; HEAD {', '.join(head_tags) if head_tags else 'untagged'}; immutable "
+        f"{', '.join(immutable)}; {negative_proofs} negative release proofs; README pins "
         f"{', '.join('v' + p for p in pins)}"
     )
 

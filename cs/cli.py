@@ -261,9 +261,14 @@ def cmd_tasks_close(args) -> int:
     # CLOSED task for a contact as "already handled" (possibly answered from a
     # personal mailbox the Sent-anchored sweep can't see) and SKIPS it.
     settings = config.load()
-    params = {"task_id": args.task_id}
-    if args.note:
-        params["note"] = args.note
+    note = (args.note or "").strip()
+    params = {
+        "task_id": args.task_id,
+        "actor": "operator",
+        "why": note or "closed by the cs operator via `cs tasks close`",
+    }
+    if note:
+        params["note"] = note
     res = rpc.call_sync(settings, "tasks.complete", params, timeout=120)
     if args.json:
         _print_json(res)
