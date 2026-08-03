@@ -12,12 +12,33 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**`v0.4.0` is the tip; neither clone runs it yet.** `mrcall-cs` runs `v0.3.7`
-(all three pin sites agree, installed, verified). **`124-cs` is pinned to
-`v0.3.2`**, seven releases back — it has neither the RPC deadlock fix (any
-gated engine call from that clone still hangs) nor any of the send-path arc.
-Re-pinning both is the standing next step; `v0.4.0` needs only a static
-collaudo (see below).
+**The immutable repository tip/tag is `v0.5.0`, but it shipped with stale
+package metadata `0.4.5`.** The corrective working-tree candidate is `v0.5.1`;
+it is not a release until an approved commit/tag exists. Do not move `v0.5.0`.
+
+Both known clones currently agree across manifest, requirement and lock pins on
+`v0.4.5`; their local installed distributions also report `0.4.5` (verified
+2026-08-01). This does not prove the live daemons' source revision. Neither
+clone has adopted the `v0.5.0` send-boundary changes. The next approved upgrade
+must target the corrective release and use full collaudo, one clone at a time.
+
+| Clone | Declared | Locked | Installed locally | Live daemon | Target | Collaudo |
+|---|---|---|---|---|---|---|
+| `mrcall-cs` | `v0.4.5` | `v0.4.5` | `0.4.5` | unknown | corrective `v0.5.1` after approval | full |
+| `124-cs` | `v0.4.5` | `v0.4.5` | `0.4.5` | unknown | corrective `v0.5.1` after approval | full |
+
+“Live daemon” deliberately stays unknown until queried on the host; a local
+wheel's metadata is not evidence of the process currently serving a profile.
+
+## v0.5.1 corrective candidate — release truth gate (2026-08-01)
+
+- Package metadata, changelog, active context and README guidance are checked by
+  the release-consistency gate in `tests/run.sh` — repo files plus one local
+  `git tag --points-at HEAD`, no network.
+- `v0.5.0` now documents the send-guard/draft-warning behavior and full
+  re-collaudo tier instead of pointing at ephemeral agent reports.
+- This section records working-tree intent only; it must not be described as
+  tagged, pushed, installed or live before those actions are separately approved.
 
 ## v0.4.0 — multi-provider LLM + template literal purge (2026-07-28..30)
 
@@ -85,7 +106,7 @@ per call — it thinks in 434 tokens). Full record with per-item tables:
 meta-repo `docs/briefs/2026-07-28-multi-provider-llm-ab.md` (quotes customer
 mail; never enters this repo).
 
-## Gates — all green (12/12) for the first time since v0.3.0
+## Gates — all green (12/12 at v0.4.0, first time since v0.3.0; 15 steps as of the v0.5.1 candidate)
 
 Gate 1 (zero company literals) was red at every tag since `v0.3.0`. The fix
 turned out to need **no new manifest fields**: the offending paragraph already
@@ -98,7 +119,8 @@ for any single-account clone**. All purged/fixed. Two new enforcements:
 
 - Gate 1's pattern now also matches the operator's name and mailbox (the
   pattern documented in `CLAUDE.md` must be kept in sync with it).
-- **Gate 12** (`tests/test_template_render.py`) renders all 27 templates with
+- **Gate 12** (`tests/test_template_render.py`) renders all project templates
+  (29 today; the test rglobs, no hardcoded count) with
   `cs init`'s own jinja env (StrictUndefined) in single- AND multi-account
   shapes, and sweeps the RENDERED output for literals — the source grep
   cannot see a literal the template engine assembles.
@@ -111,11 +133,9 @@ either.
 
 ## Unresolved / watch
 
-- **`124-cs` at `v0.3.2`** — seven releases behind, RPC deadlock included.
-  Re-pin + full collaudo is overdue independent of v0.4.0.
-- **Re-collaudo for v0.4.0:** static for both clones, plus one `cs update`
-  dry-run each to confirm the re-stamped templates read correctly. Becomes a
-  FULL collaudo the moment a call site is wired.
+- **Both clones sit on `v0.4.5`** (measured 2026-08-01, matrix above) —
+  pre-send-guard. The pending step is the corrective `v0.5.1` release and a
+  full-collaudo re-pin, one clone at a time.
 - **First wiring candidate** is whatever replaces `giada.py` (the batch-2
   campaign loop is being superseded by a more general agent — the A/B
   measurement transfers to it). One `role=Role.CLASSIFIER` argument +
@@ -126,10 +146,10 @@ either.
 
 ## Immediate next steps
 
-1. Tag `v0.4.0` (this commit), re-pin `mrcall-cs`, static collaudo +
-   `cs update` dry-run.
-2. Bring `124-cs` from `v0.3.2` to current. Full collaudo — the arc since
-   `v0.3.2` touches send paths and `gmail_archive`.
+1. Operator reviews and commits the working tree, then tags the corrective
+   `v0.5.1` (metadata repair + release-consistency gate). `v0.5.0` never moves.
+2. Re-pin both clones to `v0.5.1` with FULL collaudo (the v0.5.0 arc changes
+   the send chokepoint), one clone at a time, `mrcall-cs` first.
 3. Promote the batch-2 loop's reusable parts (unchanged from last session):
    the flock'd schedule store (`schedule.py`), the deterministic migrator
    pattern (`migrator.py`), and the IMAP attachment reader

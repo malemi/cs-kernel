@@ -152,6 +152,9 @@ step "14. model-output send guard (send_mail.send with body_md=)"
 # is opt-in (CS_SEND_GUARD_LIVE=1) so this suite never spends a cent.
 if "$VENV/bin/python" "$ROOT/tests/test_send_guard.py"; then echo "OK"; else echo "FAIL: model-output send guard regressed"; FAIL=1; fi
 
+step "15. release metadata and docs consistency"
+if "$VENV/bin/python" "$ROOT/tests/test_release_consistency.py"; then echo "OK"; else echo "FAIL: release metadata/docs drift"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

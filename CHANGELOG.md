@@ -4,10 +4,52 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
+**Current operational pin** (both clones, measured 2026-08-01): `v0.4.5`.
+Measured, not approved: `mrcall-cs` and `124-cs` each declare, lock and have
+`0.4.5` installed locally; their live daemon revisions are unknown.
+
+## Unreleased — v0.5.1 corrective candidate
+
+### Fixed — release metadata agrees before the next tag
+- **Why:** tag `v0.5.0` was cut while `pyproject.toml` still declared `0.4.5`,
+  the active context still called `v0.4.0` the tip, and this changelog's
+  `v0.5.0` entry was a placeholder. An install from that tag would therefore
+  report the old package version. The two known clones remain independently
+  verified at declared/locked/local-installed `v0.4.5`; their live daemon
+  revisions are still unknown.
+- **What:** package metadata advances to `0.5.1`, and a release-consistency gate
+  (`tests/test_release_consistency.py`) asserts four things instead of describing
+  them: the pyproject version owns a changelog section with a real body and a
+  re-collaudo tier; the company-literal grep `tests/run.sh` **executes** carries
+  every charter token plus the case-sensitive `\bHB\b` leg (a token left in a
+  comment no longer counts); `docs/active-context.md` names the tag that
+  `git tag --points-at HEAD` really reports; and every `cs-kernel@vX.Y.Z` line in
+  `README.md` is either the package version or the operational pin recorded at the
+  top of this file. It reads repo files plus one local git call — no network. The
+  existing `v0.5.0` tag is immutable and is not moved.
+- **Re-collaudo:** same as `v0.5.0` below. Metadata and docs alone are static,
+  but the cumulative upgrade crosses the model-output send chokepoint and
+  therefore requires **full collaudo** on every clone before adoption.
+
 ## v0.5.0 - 2026-08-01
 
-Full drafts are in the two kernel agents' reports
- (send-guard entry + draft-warnings entry + classify_detailed temperature fix)
+### Fixed — model output is guarded at the send chokepoint
+- **Why:** a campaign path could pass model deliberation/meta text to SMTP.
+  Guarding one caller was insufficient because another model-composed path
+  could reach the same wire.
+- **What:** deterministic register/tell checks now run in `send_mail.send` for
+  model-composed bodies before any SMTP connection opens. The optional LLM
+  register judgment degrades loudly to deterministic checks if unavailable;
+  deterministic refusals never degrade. Fixed human-authored templates retain
+  their existing path.
+- **Draft behavior:** model-composed Gmail drafts are not blocked, because the
+  draft is the review surface. They carry explicit guard warnings through the
+  verb's JSON response; human/template drafts do not invoke the judgment leg.
+- **Also fixed:** `classify_detailed` forwards the requested temperature.
+- **Re-collaudo:** **full, every clone** — this changes the final send boundary
+  and draft response surface. Prove refusal opens no SMTP socket, legitimate
+  replies still reach the fake transport, warnings reach draft output, and the
+  clone's pause/rate/dedup/stamp invariants remain green. No automated real send.
 
 ## v0.4.5 — 2026-07-31
 
