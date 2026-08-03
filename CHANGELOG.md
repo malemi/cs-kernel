@@ -8,7 +8,7 @@ and at which tier (design brief §6.6: static / +live read-only / full).
 Measured, not approved: `mrcall-cs` and `124-cs` each declare, lock and have
 `0.4.5` installed locally; their live daemon revisions are unknown.
 
-## Unreleased — v0.5.1 corrective candidate
+## v0.5.1 — 2026-08-03 (corrective release)
 
 ### Fixed — cs task closes carry the external operator audit identity
 - **Why:** the engine RPC accepts additive `actor`/`why` fields, but

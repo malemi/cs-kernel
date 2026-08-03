@@ -12,10 +12,10 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.5.0`. Current HEAD status: untagged.** The release
-shipped with stale package metadata `0.4.5`; current HEAD contains the
-corrective `v0.5.1` candidate plus later documentation. The candidate is not a
-release until an approved tag exists. Do not move `v0.5.0`.
+**Latest release tag: `v0.5.1`. Current HEAD status: tagged as `v0.5.1`.** The
+corrective release repairs the `v0.5.0` metadata drift (that tag shipped with
+pyproject `0.4.5`), signs `cs tasks close` as the external operator, and adds
+the release-truth gate. Do not move `v0.5.0` or `v0.5.1`.
 
 Both known clones currently agree across manifest, requirement and lock pins on
 `v0.4.5`; their local installed distributions also report `0.4.5` (verified
