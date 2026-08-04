@@ -4,9 +4,10 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, measured 2026-08-01): `v0.4.5`.
-Measured, not approved: `mrcall-cs` and `124-cs` each declare, lock and have
-`0.4.5` installed locally; their live daemon revisions are unknown.
+**Current operational pin** (both clones, measured 2026-08-04): `v0.5.1`.
+Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
+`0.5.1` installed (FULL collaudo green on both; operator-signed close proven
+live through each clone's real engine daemon).
 
 ## v0.5.1 — 2026-08-03 (corrective release)
 

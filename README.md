@@ -59,7 +59,7 @@ mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 # Install the current operational pin recorded in CHANGELOG.md, never a branch.
-uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.4.5"
+uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.5.1"
 ```
 
 `v0.4.5` predates the `v0.5.0` model-output send guard, so an install from this
@@ -261,7 +261,7 @@ Turning on autonomous send is a deliberate later choice, not the default.
 Install a **version tag**, not a floating branch:
 
 ```bash
-uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.4.5"
+uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.5.1"
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.

@@ -18,19 +18,25 @@ corrective release (tag `v0.5.1`, commit `b2f07b2`, 2026-08-03) repairs the
 `cs tasks close` as the external operator, and adds the release-truth gate.
 The 15 gates were verified green AT the tag. Do not move `v0.5.0` or `v0.5.1`.
 
-Both known clones currently agree across manifest, requirement and lock pins on
-`v0.4.5`; their local installed distributions also report `0.4.5` (verified
-2026-08-01). This does not prove the live daemons' source revision. Neither
-clone has adopted the `v0.5.0` send-boundary changes. The next approved upgrade
-must target the corrective release and use full collaudo, one clone at a time.
+Both known clones were re-pinned to `v0.5.1` on 2026-08-04, one at a time
+(`mrcall-cs` first), each with FULL collaudo: baseline captured at `v0.4.5`
+(autotest ALL GREEN), then tier=full old-vs-new. Deltas were exactly the
+declared surface: the two send-guard settings knobs (additions-allowlist) and,
+on `124-cs` only, two rendered-file diffs adjudicated as the charter
+de-personalization catch-up. The CHANGELOG's live proof ran on both: a probe
+task closed via `cs tasks close` through each clone's real engine daemon
+persists `close_actor="operator"` plus the `sources.closes[]` audit event
+(with-note path proven on mrcall-cs, no-note default-reason path on 124-cs).
 
-| Clone | Declared | Locked | Installed locally | Live daemon | Target | Collaudo |
-|---|---|---|---|---|---|---|
-| `mrcall-cs` | `v0.4.5` | `v0.4.5` | `0.4.5` | unknown | corrective `v0.5.1` after approval | full |
-| `124-cs` | `v0.4.5` | `v0.4.5` | `0.4.5` | unknown | corrective `v0.5.1` after approval | full |
+| Clone | Declared | Locked | Installed | Collaudo |
+|---|---|---|---|---|
+| `mrcall-cs` | `v0.5.1` | `v0.5.1` (commit `b2f07b2`) | `0.5.1` | full — green 2026-08-04 |
+| `124-cs` | `v0.5.1` | `v0.5.1` (commit `b2f07b2`) | `0.5.1` | full — green 2026-08-04 |
 
-“Live daemon” deliberately stays unknown until queried on the host; a local
-wheel's metadata is not evidence of the process currently serving a profile.
+The kernel runs per-invocation from each clone's venv (no long-running kernel
+process). The provider side — the engine RPC contract the signed closes need —
+is the mrcall-desktop daemons, deployed at `d239e5f` on 2026-08-03. Both
+operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
 
 ## v0.5.1 corrective candidate — release truth gate (2026-08-01)
 
@@ -149,9 +155,12 @@ either.
 
 ## Unresolved / watch
 
-- **Both clones sit on `v0.4.5`** (measured 2026-08-01, matrix above) —
-  pre-send-guard. The pending step is the corrective `v0.5.1` release and a
-  full-collaudo re-pin, one clone at a time.
+- ~~Both clones sit on `v0.4.5`~~ — RESOLVED 2026-08-04: `v0.5.1` released and
+  both clones re-pinned with full collaudo (matrix above).
+- **`cs update` crashes (EOFError) on a conflict prompt when stdin is not a
+  tty** (hit 2026-08-04 during both re-pins; worked around by piping `N`). It
+  should default to keep-local on EOF or grow a `--keep-local` flag — kernel
+  fix for the next release.
 - **First wiring candidate** is whatever replaces `giada.py` (the batch-2
   campaign loop is being superseded by a more general agent — the A/B
   measurement transfers to it). One `role=Role.CLASSIFIER` argument +
@@ -164,9 +173,9 @@ either.
 
 1. ~~Tag the corrective `v0.5.1`~~ — DONE 2026-08-03 (`b2f07b2`, gates green at
    the tag, pushed). `v0.5.0` never moves.
-2. Re-pin both clones to `v0.5.1` with FULL collaudo (the v0.5.0 arc changes
-   the send chokepoint), one clone at a time, `mrcall-cs` first — in progress
-   2026-08-03.
+2. ~~Re-pin both clones to `v0.5.1` with FULL collaudo~~ — DONE 2026-08-04,
+   one clone at a time, `mrcall-cs` first (matrix above; probe closes verified
+   live on both engines).
 3. Promote the batch-2 loop's reusable parts (unchanged from last session):
    the flock'd schedule store (`schedule.py`), the deterministic migrator
    pattern (`migrator.py`), and the IMAP attachment reader
