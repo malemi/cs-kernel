@@ -155,6 +155,13 @@ if "$VENV/bin/python" "$ROOT/tests/test_send_guard.py"; then echo "OK"; else ech
 step "15. release metadata and docs consistency"
 if "$VENV/bin/python" "$ROOT/tests/test_release_consistency.py"; then echo "OK"; else echo "FAIL: release metadata/docs drift"; FAIL=1; fi
 
+step "16. cs update — EOF-safe conflict prompt (no tty crash)"
+# 2026-08-04: a headless `cs update` (agent, cron, `stdin </dev/null`) hit a
+# template conflict and died with an EOFError traceback instead of applying
+# the prompt's own declared default (keep the local file). Guards the helper
+# AND a real `python -m cs update` subprocess against a manufactured conflict.
+if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

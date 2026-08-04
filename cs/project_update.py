@@ -30,6 +30,21 @@ def _write_manifest(clone_root: Path, data: dict) -> None:
     )
 
 
+def _read_overwrite_choice(prompt: str, default: str) -> str:
+    """Read a conflict-resolution answer from stdin.
+
+    A headless run (agent, cron, `stdin </dev/null`) has no tty to answer
+    from: `input()` raises EOFError instead of blocking. Apply the default
+    the prompt itself declares (e.g. the capital letter in `[y/N/diff]`)
+    rather than letting the traceback kill the whole `cs update` run.
+    """
+    try:
+        return input(prompt).strip().lower()
+    except EOFError:
+        print("    (no tty — keeping local file)")
+        return default
+
+
 def cmd_update(args: list[str]) -> int:
     clone_root = Path.cwd()
 
@@ -120,7 +135,7 @@ def cmd_update(args: list[str]) -> int:
                 else:
                     # Clone was modified AND template changed — ask
                     print(f"\n  ? {str_out_rel}: modified locally AND template changed.")
-                    response = input("    Overwrite? [y/N/diff] ").strip().lower()
+                    response = _read_overwrite_choice("    Overwrite? [y/N/diff] ", default="n")
                     if response == "y":
                         clone_file.parent.mkdir(parents=True, exist_ok=True)
                         clone_file.write_text(rendered)
@@ -136,7 +151,7 @@ def cmd_update(args: list[str]) -> int:
                             )
                         )
                         print("".join(diff))
-                        response2 = input("    Overwrite? [y/N] ").strip().lower()
+                        response2 = _read_overwrite_choice("    Overwrite? [y/N] ", default="n")
                         if response2 == "y":
                             clone_file.parent.mkdir(parents=True, exist_ok=True)
                             clone_file.write_text(rendered)

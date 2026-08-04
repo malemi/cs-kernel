@@ -62,6 +62,15 @@ operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
 - This section records working-tree intent only; it must not be described as
   tagged, pushed, installed or live before those actions are separately approved.
 
+## v0.5.2 candidate — EOF-safe `cs update` (2026-08-04)
+
+- The two `cs update` conflict prompts resolve a closed stdin (EOFError) to
+  the declared keep-local default instead of crashing mid-run; the decision
+  is printed. Gate 16 (`tests/test_project_update.py`) proves the real
+  `python -m cs update` subprocess path with `stdin=DEVNULL` against a
+  manufactured conflict. Not tagged; `v0.5.1` remains the latest release.
+  Static re-collaudo at the next re-pin.
+
 ## v0.4.0 — multi-provider LLM + template literal purge (2026-07-28..30)
 
 The kernel can now make its own LLM calls, with the provider and model as
@@ -157,10 +166,10 @@ either.
 
 - ~~Both clones sit on `v0.4.5`~~ — RESOLVED 2026-08-04: `v0.5.1` released and
   both clones re-pinned with full collaudo (matrix above).
-- **`cs update` crashes (EOFError) on a conflict prompt when stdin is not a
-  tty** (hit 2026-08-04 during both re-pins; worked around by piping `N`). It
-  should default to keep-local on EOF or grow a `--keep-local` flag — kernel
-  fix for the next release.
+- ~~`cs update` crashes (EOFError) on a conflict prompt when stdin is not a
+  tty~~ — FIXED on main 2026-08-04 (v0.5.2 candidate, gate 16): EOF resolves
+  to the declared keep-local default and the decision is printed. Ships to
+  clones at the next tag + re-pin (static tier).
 - **First wiring candidate** is whatever replaces `giada.py` (the batch-2
   campaign loop is being superseded by a more general agent — the A/B
   measurement transfers to it). One `role=Role.CLASSIFIER` argument +

@@ -9,6 +9,25 @@ Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
 `0.5.1` installed (FULL collaudo green on both; operator-signed close proven
 live through each clone's real engine daemon).
 
+## Unreleased — v0.5.2 candidate
+
+### Fixed — `cs update` no longer crashes at a conflict prompt without a tty
+- **Why:** the template-conflict prompt (`Overwrite? [y/N/diff]`) read its
+  answer with a bare `input()`. A headless run (agent, cron,
+  `stdin </dev/null`) has no tty: `input()` raised EOFError and the whole
+  `cs update` died with a traceback mid-run — hit live 2026-08-04 during the
+  v0.5.1 re-pins (worked around by piping `N`). Depending on file order the
+  crash could leave a clone half-updated.
+- **What:** both conflict prompts resolve EOF to the default the prompt
+  itself declares — `n`, keep the local file — and print the decision
+  (`(no tty — keeping local file)`). Gate 16 (`tests/test_project_update.py`)
+  characterizes the helper AND proves the real `python -m cs update`
+  subprocess with closed stdin against a manufactured conflict: exit 0,
+  local file byte-identical, decision named in the output.
+- **Re-collaudo:** **static, every clone** — only the clone-maintenance
+  verb's prompt handling changes; no operator surface, no send path. Picked
+  up at the next re-pin.
+
 ## v0.5.1 — 2026-08-03 (corrective release)
 
 ### Fixed — cs task closes carry the external operator audit identity
