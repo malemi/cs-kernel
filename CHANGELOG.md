@@ -10,8 +10,9 @@ Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
 autotest); `mrcall-cs` green on every static/semantic gate — permission bytes
 equal the v0.5.2 enumeration (allow 65, deny 7, cron 24+4) — with its
 live-gate signature pending: a Firebase token-exchange HTTP 403 hit both
-clones' engines from the operator host mid-collaudo (abuse protection
-suspected; retry scheduled; see cs-collaudo LOOP-LOG 2026-08-09). Operators
+clones mid-collaudo — root cause: an HTTP-referrer restriction now on the
+shared engine-project web API key blocks no-referer server-side calls
+(console action required; see cs-collaudo LOOP-LOG 2026-08-09). Operators
 remain paused.
 
 ## Unreleased
