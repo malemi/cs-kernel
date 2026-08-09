@@ -16,11 +16,18 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
 ## The charter (anti-fork rules — enforced by review + CI)
 
 1. **No company literal anywhere in `cs/`** — no mailbox, slug, drive
-   scope, campaign name, brand, or absolute path. CI gate (must stay
-   empty):
+   scope, campaign name, brand, or absolute path. Enforcement is a
+   wordlist scan plus OPERATOR JUDGMENT, not a regex law: the gate greps
+   `cs/` for the wordlist below and fails on any hit the operator has not
+   explicitly approved in `tests/reviewed_literals.txt` (`path :: exact
+   line :: reason`). An approved hit is a recorded decision — e.g.
+   `malemi` in the kernel's own install URL, the kernel's home, shared
+   infrastructure; a new hit is a proposal to the operator, never
+   auto-approved:
 
    ```bash
-   grep -rEi 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi|CAFE124|\bHB\b' cs/
+   grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi|hahnbanach' cs/
+   grep -rEn --exclude-dir=__pycache__ '\bHB\b' cs/
    ```
 
    Platform names are allowed where they name shared infrastructure the
@@ -54,8 +61,14 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
    - **Gmail Sent/All Mail is the dedup ground truth** — never the engine
      archive (`emails.search folder:sent` misses hand-sent mail and drops
      threads when the customer replies last). No dedup-source knob exists.
-   - **Module path `cs` is frozen**; every clone permission string is the
-     literal `.venv/bin/python -m cs …`. `prog_name` is display-only.
+   - **Module path `cs` is frozen**; the console script `cs` is a second door
+     onto the same `cs.cli:main`. Permission rules match command TEXT, so
+     clone permission strings must enumerate every spelling that reaches it:
+     deny sets carry all six (`.venv/bin/python -m cs`,
+     `.venv/bin/python3 -m cs`, `.venv/bin/cs`, `python -m cs`,
+     `python3 -m cs`, `cs`), the allow list the four canonical ones (no
+     python3). `tests/run.sh` gates the deny enumeration. `prog_name` is
+     display-only.
    - Engine RPC response shapes are kernel-owned (`emails.search→{threads}`,
      `list_by_thread→{emails}`, `tasks/campaign.*/drafts.list→bare arrays`,
      `settings.get→{values}`).

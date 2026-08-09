@@ -34,6 +34,15 @@ from pydantic_settings import (
 
 from . import manifest as manifest_mod
 
+
+class ConfigError(RuntimeError):
+    """A required setting is missing or unusable.
+
+    The CLI catches these at dispatch and prints them as one-line actionable
+    errors (no traceback): configuration absence is a product state, not a bug.
+    """
+
+
 # Set by load() just before Settings is instantiated (single-threaded CLI):
 # the manifest layer + the shopify prefix + the resolved env-file chain.
 _LOAD_CTX: dict[str, Any] = {"overrides": {}, "prefix": "", "env_files": ()}

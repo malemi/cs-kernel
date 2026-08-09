@@ -1,0 +1,17 @@
+# Registry of operator-approved company-shaped literals in cs/.
+#
+# tests/run.sh step 1 scans cs/ against a wordlist of company-shaped strings
+# (mailbox domain, slugs, the operator's name, etc). The wordlist only PROPOSES
+# candidates — it does not judge them. The operator disposes: each line below
+# is a literal he has explicitly reviewed and approved, with a reason on
+# record. A hit that is NOT listed here fails CI as a proposal for his review.
+#
+# Format, one approval per line:
+#   path :: exact line content :: reason
+# `#` comments and blank lines are ignored. The path and content must match a
+# grep hit exactly (content is whitespace-trimmed before comparison); the line
+# number is deliberately NOT part of the key, because line numbers drift.
+#
+# Never add an entry here without the operator's explicit decision.
+
+cs/templates/project/requirements.txt.j2 :: cs-kernel @ git+https://github.com/malemi/cs-kernel@v{{ repo_kernel_version }} :: operator-approved 2026-08-09 — "malemi" is the kernel's own public home; shared infrastructure, identical for every clone, not clone data

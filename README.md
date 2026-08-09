@@ -59,18 +59,13 @@ mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 # Install the current operational pin recorded in CHANGELOG.md, never a branch.
-uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.5.1"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.5.2"
 ```
-
-`v0.4.5` predates the `v0.5.0` model-output send guard, so an install from this
-pin has no guard at the `send_mail.send` chokepoint. Re-pinning to `v0.5.x` is
-pending the full re-collaudo that release requires; when to run it is the
-operator's decision.
 
 ### 2. Create your company project
 
 ```bash
-python -m cs init
+cs init
 ```
 
 Answer the prompts (defaults are fine when unsure). It asks more than
@@ -115,7 +110,7 @@ cd acme-cs
 uv venv .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
-python -m cs whoami
+cs whoami
 ```
 
 If `whoami` shows you signed in as the right mailbox, the body is alive.
@@ -238,7 +233,9 @@ cd acme-cs
 source .venv/bin/activate
 # if the pin in requirements.txt changed:
 uv pip install -r requirements.txt
-python -m cs update    # refreshes skills/templates; asks before overwriting your edits
+cs update    # refreshes skills/templates; keeps your edits, except the two
+             # security-critical files (settings.json, cron wrapper): those are
+             # applied, with your version saved next to them as *.local-bak
 ```
 
 Then reopen `claude` / `opencode` in that folder.
@@ -261,7 +258,7 @@ Turning on autonomous send is a deliberate later choice, not the default.
 Install a **version tag**, not a floating branch:
 
 ```bash
-uv pip install "cs-kernel @ git+https://github.com/hahnbanach/cs-kernel@v0.5.1"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.5.2"
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
@@ -273,6 +270,5 @@ See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
 MIT. Public setup kit for operators that sit in front of **mrcall-desktop**.
 You still need engine access, credentials, and human review in draft mode.
 
-**Current pin recorded in [CHANGELOG.md](CHANGELOG.md):** `v0.4.5` — what both
-known clones declare, lock and have installed (measured 2026-08-01). The `v0.5.1`
-corrective candidate is not install guidance until it is reviewed and tagged.
+**Current release:** `v0.5.2` — see [CHANGELOG.md](CHANGELOG.md) for what it
+changes and the re-collaudo it requires.

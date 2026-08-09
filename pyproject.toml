@@ -26,6 +26,26 @@ dependencies = [
 [project.optional-dependencies]
 llm = ["anthropic>=0.107"]
 
+# The README has always described `cs` as a command ("After `cs init`, you
+# have:", "skills → cs CLI"). Until now only `python -m cs` existed, so the
+# document and the package described two different products. This makes the
+# better of the two true. It does not touch the frozen module path: the entry
+# point is a second door onto the same `cs.cli:main` that `cs/__main__.py`
+# already calls.
+#
+# CAUTION for the clones: permission rules match command TEXT, not behavior,
+# so every rule must enumerate every spelling that reaches this entry point.
+# The kernel templates do: deny sets carry six spellings (python/python3,
+# venv-prefixed and bare, module path and console script), the allow list the
+# four canonical ones. tests/run.sh gates the deny enumeration. After a clone
+# re-pins, confirm the rendered .claude/settings.json and
+# bin/cs_operator_cron.sh actually carry the enumerated entries before
+# un-pausing the operators (cs update applies these two security-critical
+# files on conflict, saving the local version as *.local-bak; other local
+# edits are kept).
+[project.scripts]
+cs = "cs.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["cs*"]
 

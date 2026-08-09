@@ -24,20 +24,91 @@ step() { printf '\n== %s ==\n' "$*"; }
 
 step "1. grep gate: zero company literals in cs/"
 # Company / customer / product names — case-insensitive (catches CAFE124, Centralix, …).
+# The wordlist below finds CANDIDATES, nothing more — it does not judge them.
+# The operator's judgment, recorded with a reason in tests/reviewed_literals.txt,
+# decides: an approved hit is green. Any hit NOT in that registry is a PROPOSAL
+# for the operator's review and fails loudly until he approves it there or
+# removes the literal. The registry is versioned, so every admission is a
+# recorded decision, never a silent pass.
 # \bmario\b|alemi: the operator's name and mailbox are company data like any other —
 # they were found baked into 20+ places across the project templates (2026-07-30),
-# invisible to the old pattern. A clone stamped for another company must not ship them.
-CI_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi' cs/ || true)"
+# invisible to the old pattern. A clone stamped for another company must not ship
+# them without an on-record reason.
+CI_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi|hahnbanach' cs/ || true)"
 # The 'HB' shared-drive literal is UPPERCASE — match it case-SENSITIVELY so the gate
 # does not false-positive on the lowercase 'hb' path segment (e.g. ~/hb/…), which is
-# a filesystem path, not the drive token.
+# a filesystem path, not the drive token. Same registry, same judgment pass as the
+# case-insensitive wordlist above: an HB hit is a proposal too, not an auto-fail.
 CS_HITS="$(grep -rEn --exclude-dir=__pycache__ '\bHB\b' cs/ || true)"
-if [ -n "$CI_HITS$CS_HITS" ]; then
-  [ -n "$CI_HITS" ] && printf '%s\n' "$CI_HITS"
-  [ -n "$CS_HITS" ] && printf '%s\n' "$CS_HITS"
-  echo "FAIL: company literals found in the kernel package"; FAIL=1
-else
-  echo "OK"
+ALL_HITS="$(printf '%s\n%s\n' "$CI_HITS" "$CS_HITS")"
+if ! ALL_HITS="$ALL_HITS" REVIEWED_LITERALS="$ROOT/tests/reviewed_literals.txt" python3 - <<'PYEOF'
+import os
+
+hits_raw = os.environ.get("ALL_HITS", "")
+reviewed_path = os.environ["REVIEWED_LITERALS"]
+
+hits = []
+for line in hits_raw.splitlines():
+    if not line:
+        continue
+    path, _, rest = line.partition(":")
+    _lineno, _, content = rest.partition(":")
+    hits.append((path, content))
+
+approvals = []  # (path, content_stripped, raw_line)
+try:
+    with open(reviewed_path) as f:
+        for raw in f:
+            line = raw.rstrip("\n")
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            parts = line.split(" :: ", 2)
+            if len(parts) != 3:
+                continue
+            a_path, a_content, _reason = parts
+            approvals.append((a_path.strip(), a_content.strip(), line))
+except FileNotFoundError:
+    pass
+
+unapproved = []
+matched_raws = set()
+approved_hits = 0
+for path, content in hits:
+    content_stripped = content.strip()
+    hit_match = None
+    for a_path, a_content, a_raw in approvals:
+        if a_path == path and a_content == content_stripped:
+            hit_match = a_raw
+            break
+    if hit_match is None:
+        unapproved.append((path, content_stripped))
+    else:
+        approved_hits += 1
+        matched_raws.add(hit_match)
+
+stale = [a_raw for (_, _, a_raw) in approvals if a_raw not in matched_raws]
+for a_raw in stale:
+    print("note: stale approval — %s" % a_raw)
+
+if unapproved:
+    for path, content in unapproved:
+        print("NEEDS REVIEW: %s :: %s" % (path, content))
+    print(
+        "FAIL: %d unreviewed company-shaped literal(s) in cs/ — these are "
+        "PROPOSALS, not confirmed violations: approve each by adding a "
+        "'path :: line :: reason' entry to tests/reviewed_literals.txt, "
+        "or remove the literal." % len(unapproved)
+    )
+    raise SystemExit(1)
+
+print(
+    "OK: no unreviewed company-shaped literals (%d approved hits in "
+    "tests/reviewed_literals.txt)" % approved_hits
+)
+PYEOF
+then
+  FAIL=1
 fi
 
 step "2. boundary greps"
@@ -57,6 +128,15 @@ if (cd "$EMPTY" && "$VENV/bin/python" -m cs --help >/dev/null 2>&1); then
   echo "OK: python -m cs --help from an empty dir"
 else
   echo "FAIL: python -m cs --help"; (cd "$EMPTY" && "$VENV/bin/python" -m cs --help); FAIL=1
+fi
+# The suite otherwise only ever invokes `python -m cs`; the `cs` console
+# script is a second entry point (pyproject.toml [project.scripts]) that
+# resolves at invocation time, so a typo'd target (e.g. `cs.cli:mian`)
+# installs fine and every other gate stays green. Exercise it directly.
+if (cd "$EMPTY" && "$VENV/bin/cs" --help >/dev/null 2>&1); then
+  echo "OK: cs --help (console script) from an empty dir"
+else
+  echo "FAIL: cs --help (console script)"; (cd "$EMPTY" && "$VENV/bin/cs" --help); FAIL=1
 fi
 
 step "4. full --help tree (every verb / sub-verb)"
@@ -160,7 +240,112 @@ step "16. cs update — EOF-safe conflict prompt (no tty crash)"
 # template conflict and died with an EOFError traceback instead of applying
 # the prompt's own declared default (keep the local file). Guards the helper
 # AND a real `python -m cs update` subprocess against a manufactured conflict.
+# Also guards two other conflict-branch decisions cmd_update makes headlessly:
+# requirements.txt is the operator's pin and is always skipped, never asked
+# about; SECURITY_CRITICAL templates (.claude/settings.json,
+# bin/cs_operator_cron.sh) are never gated behind the prompt at all — the new
+# render is applied and the local version backed up to <file>.local-bak.
 if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict"; FAIL=1; fi
+
+step "17. deny-enumeration gate (six command-text spellings, same deny)"
+# Claude Code permission rules match command TEXT, not behaviour: the console
+# script `cs` and the `python3` aliases invoke the exact same cs.cli:main as
+# `.venv/bin/python -m cs`, so a deny-listed verb spelled only one way leaves
+# the other five doors open. Presence alone is not enough — a spelling can
+# grep true from the wrong list (allow instead of deny), from a line that got
+# commented out, or after the --disallowed-tools flag itself was deleted, and
+# all three still pass a file-wide `grep -qF`. This gate checks PLACEMENT:
+# settings.json.j2 membership under permissions.deny (and nothing
+# chat/send-draft-shaped under permissions.allow), and the cron's
+# --disallowed-tools argument list compared for exact, order-preserving
+# equality against the 24 deny entries + 4 keeps.
+CRON_TPL="$ROOT/cs/templates/project/bin/cs_operator_cron.sh.j2"
+SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
+if ! python3 - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
+import json, re, sys
+
+SETTINGS_PATH, CRON_PATH = sys.argv[1], sys.argv[2]
+
+SPELLINGS = [
+    ".venv/bin/python -m cs",
+    ".venv/bin/python3 -m cs",
+    ".venv/bin/cs",
+    "python -m cs",
+    "python3 -m cs",
+    "cs",
+]
+VERBS = ["chat", "rpc chat", "campaign send-draft", "rpc settings.update"]
+
+problems = []
+
+try:
+    with open(SETTINGS_PATH) as f:
+        settings = json.load(f)
+except (OSError, json.JSONDecodeError) as exc:
+    problems.append("FAIL: settings.json.j2 unreadable/invalid JSON: %s" % exc)
+    settings = {}
+
+deny = settings.get("permissions", {}).get("deny", [])
+allow = settings.get("permissions", {}).get("allow", [])
+
+for spelling in SPELLINGS:
+    entry = "Bash(%s campaign send-draft:*)" % spelling
+    if entry not in deny:
+        problems.append("FAIL: settings.json permissions.deny missing %s" % entry)
+
+for entry in allow:
+    if "chat" in entry or "send-draft" in entry:
+        problems.append(
+            "FAIL: settings.json permissions.allow carries a send-capable entry: %s" % entry
+        )
+
+try:
+    with open(CRON_PATH) as f:
+        lines = f.readlines()
+except OSError as exc:
+    problems.append("FAIL: cron template unreadable: %s" % exc)
+    lines = []
+
+start = next((i for i, l in enumerate(lines) if "--disallowed-tools" in l), None)
+if start is None or lines[start].strip().startswith("#"):
+    problems.append("FAIL: cron template --disallowed-tools flag line missing or commented out")
+else:
+    end = next((i for i in range(start + 1, len(lines)) if '>>"$LOG"' in lines[i]), None)
+    if end is None:
+        problems.append('FAIL: cron template closing >>"$LOG" line not found after --disallowed-tools')
+    else:
+        tokens = []
+        for line in lines[start:end]:
+            if line.strip().startswith("#"):
+                continue
+            tokens.extend(re.findall(r'"([^"]*)"', line))
+        expected = ["Bash(%s %s:*)" % (sp, v) for v in VERBS for sp in SPELLINGS]
+        expected += ["Write", "Edit", "Bash(rm:*)", "Bash(git push:*)"]
+        if tokens != expected:
+            problems.append(
+                "FAIL: cron --disallowed-tools token list mismatch (got %d, expected %d)"
+                % (len(tokens), len(expected))
+            )
+            missing = [t for t in expected if t not in tokens]
+            extra = [t for t in tokens if t not in expected]
+            if missing:
+                problems.append("FAIL:   missing: %s" % ", ".join(missing))
+            if extra:
+                problems.append("FAIL:   extra:   %s" % ", ".join(extra))
+            if tokens != expected and not missing and not extra:
+                problems.append("FAIL:   same members present, but order differs")
+
+if problems:
+    for p in problems:
+        print(p)
+    sys.exit(1)
+
+print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 28-entry order verified")
+sys.exit(0)
+PYEOF
+then
+  FAIL=1
+fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

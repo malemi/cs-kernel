@@ -4,12 +4,103 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, measured 2026-08-04): `v0.5.1`.
-Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
-`0.5.1` installed (FULL collaudo green on both; operator-signed close proven
-live through each clone's real engine daemon).
+**Current operational pin**: `v0.5.2` (release 2026-08-09; the operator's
+clones re-pin via the guided script immediately after the tag — measurement
+note updated at re-pin).
 
-## Unreleased — v0.5.2 candidate
+## v0.5.2 — 2026-08-09
+
+### Added — the `cs` console script, finished across the permission surface
+- **Why:** `pyproject.toml` now declares `[project.scripts] cs = "cs.cli:main"`,
+  so `cs` reaches the exact same code as `.venv/bin/python -m cs`. Claude
+  Code's permission rules match the literal command TEXT typed on the Bash
+  tool, not the program that ends up running, so a deny rule written for
+  only the old spelling leaves the new one — and the plain `python -m cs` /
+  `python3 -m cs` aliases — wide open. That is a live send-guard hole, not a
+  cosmetic gap.
+- **What:** every permission template now enumerates every spelling that
+  reaches the entry point. The cron wrapper's `--disallowed-tools` re-deny
+  set carries six spellings (`.venv/bin/python -m cs`,
+  `.venv/bin/python3 -m cs`, `.venv/bin/cs`, `python -m cs`, `python3 -m cs`,
+  `cs`) across the four surfaces it must block (`chat`, `rpc chat`,
+  `campaign send-draft`, `rpc settings.update`) — 24 deny entries plus the 4
+  non-cs keeps (`Write`, `Edit`, `rm`, `git push`). `.claude/settings.json`'s
+  `permissions.deny` carries the same six spellings for `campaign
+  send-draft`; its `permissions.allow` carries the four canonical spellings
+  (module path and console script, `venv`-prefixed and bare — deliberately
+  no `python3` alias there) across the 15 read/draft-only verbs.
+  `CLAUDE.md`'s "module path is frozen" invariant is rewritten: the console
+  script is a second door onto the same `cs.cli:main`, and clone permission
+  strings must enumerate every spelling, not assume one. `tests/run.sh` step
+  17 gates the enumeration by PLACEMENT — deny vs. allow, not just
+  file-wide presence — and by exact, order-preserving token equality on the
+  cron's list, so a spelling that greps true from the wrong list, a
+  commented-out line, or a deleted flag all still fail loudly.
+
+### Fixed — customer onboarding walls
+- **Why:** walking the README's own setup path on a machine with no prior
+  clone hit a wall at nearly every step: the install URL named the
+  operator's private org; the doc told a new user to type `python -m cs
+  init` when the console script makes `cs init` the natural spelling; `cs
+  whoami` with no engine configured raised a bare `RuntimeError` traceback
+  instead of saying what to fix; `cs init` given a closed stdin (piped,
+  headless, or a stray Ctrl-C) died the same way; the wizard's kernel-version
+  default and the shipped `requirements.txt` template both pointed at a
+  stale pin over an SSH URL a customer has no key for; and the wizard's
+  example company and two templates still carried the operator's own brand
+  or private repo.
+- **What:** the README's install line and its "Versioning" pin both point
+  at the public `malemi/cs-kernel` repository, and every `python -m cs …`
+  example in prose is now the bare `cs …`. `cs whoami` and every other verb
+  whose auth resolution hits a missing `CS_ENGINE_OWNER_UID` /
+  `FIREBASE_WEB_API_KEY` now raises the new `cs.config.ConfigError`, caught
+  at dispatch in `cs/cli.py` and printed as one stderr line with exit 1 — no
+  traceback. `cs init` catches `EOFError` (exhausted stdin) and
+  `KeyboardInterrupt` around the prompt loop, exiting 1 / 130 with a
+  one-line message; its own argparse `SystemExit` is now propagated by its
+  real code instead of being flattened to 1, so `--help`/`--version`
+  correctly exit 0. `--version` reads the installed package's own metadata
+  instead of a string hardcoded at `0.2.0`. The generated `requirements.txt`
+  installs over anonymous HTTPS from the public repo instead of SSH, the
+  wizard's kernel-version default tracks the release being cut, the
+  wizard's example company is now the neutral `Acme Corp`, and the two
+  templates that named the operator's product or private repo now render
+  from `company_name` or say "your private repository" instead.
+
+### Changed — the charter's literal gate becomes a reviewed registry
+- **Why:** the anti-fork grep in `tests/run.sh` step 1 was all-or-nothing:
+  any wordlist hit failed the gate outright, with no way to record that a
+  hit is there on purpose — the kernel's own public install URL has to name
+  `malemi` somewhere, and the old gate had no way to say so without
+  weakening the pattern itself.
+- **What:** step 1 runs the same wordlist scan (now also catching
+  `hahnbanach`, the operator's GitHub org, found in a stale
+  `requirements.txt.j2` URL and a private-repo mention in the projects
+  README — both fixed) but a hit is no longer an automatic failure. Every
+  hit is checked against the new `tests/reviewed_literals.txt`, a versioned
+  registry of `path :: exact line :: reason` entries the operator has
+  explicitly approved; an unmatched hit prints as `NEEDS REVIEW` and still
+  fails the gate, as a proposal rather than a silent pass. The registry
+  currently holds one entry: `malemi` in `requirements.txt.j2`'s install
+  URL, approved because it names the kernel's own public home, identical
+  for every clone.
+
+### Changed — `cs update` no longer touches the operator's pin or silently overwrites security-critical templates
+- **Why:** `cs update` used to treat `requirements.txt` as an ordinary
+  render target, but it is the operator's own installed pin, not
+  kernel-owned state ("upgrades are a pin bump + pip install, never a
+  cherry-pick" — CLAUDE.md's Versioning & release section). And two of the
+  rendered files carry the draft-only send-guard invariant itself
+  (`.claude/settings.json`, `bin/cs_operator_cron.sh`); gating their update
+  behind the same interactive "overwrite?" prompt as any other template
+  means a headless run, or an operator answering "no" out of habit, can
+  leave a clone running a stale deny list.
+- **What:** `cs update` now reports that `requirements.txt` exists and
+  leaves it alone unconditionally — never rewriting or re-pinning it. The
+  two security-critical templates apply the new render unconditionally on
+  conflict, back up the operator's previous local version next to it, and
+  print what changed so the operator can re-apply any local edit by hand,
+  replacing the ordinary conflict prompt for exactly these two files.
 
 ### Fixed — `cs update` no longer crashes at a conflict prompt without a tty
 - **Why:** the template-conflict prompt (`Overwrite? [y/N/diff]`) read its
@@ -27,6 +118,15 @@ live through each clone's real engine daemon).
 - **Re-collaudo:** **static, every clone** — only the clone-maintenance
   verb's prompt handling changes; no operator surface, no send path. Picked
   up at the next re-pin.
+
+### Re-collaudo (this release)
+- **Full, both clones.** Any one of the four items above touching the
+  permission surface — the deny/allow spelling enumeration, the charter's
+  reviewed-literal registry, or the security-critical apply-on-conflict
+  path — is enough to require it on its own; together they put `v0.5.2`
+  squarely behind the charter's full-tier bar for a behavior change. It
+  does not go operational on either clone until the full collaudo suite is
+  green on both — the same bar the two known clones cleared for `v0.5.1`.
 
 ## v0.5.1 — 2026-08-03 (corrective release)
 

@@ -42,12 +42,37 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # Re-deny every customer-send / mutate surface so a skill bug or a prompt-injection
 # in inbound mail can never send autonomously. NOTE: settings.json allows the broad
 # `cs rpc:*`, so the `cs rpc chat` deny is load-bearing and MUST live here too.
+# Each surface is denied in SIX spellings (.venv/bin/python -m cs, .venv/bin/python3 -m cs,
+# .venv/bin/cs, python -m cs, python3 -m cs, cs): permission rules match command TEXT,
+# not behavior, and the console script, the module path and the python3 aliases all
+# reach the same code. Do not "tidy" the list back to one spelling — a missing
+# spelling is a hole, and tests/run.sh gates the full enumeration.
 "$CLAUDE_BIN" -p "/cs-operator" \
   --disallowed-tools \
     "Bash(.venv/bin/python -m cs chat:*)" \
+    "Bash(.venv/bin/python3 -m cs chat:*)" \
+    "Bash(.venv/bin/cs chat:*)" \
+    "Bash(python -m cs chat:*)" \
+    "Bash(python3 -m cs chat:*)" \
+    "Bash(cs chat:*)" \
     "Bash(.venv/bin/python -m cs rpc chat:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc chat:*)" \
+    "Bash(.venv/bin/cs rpc chat:*)" \
+    "Bash(python -m cs rpc chat:*)" \
+    "Bash(python3 -m cs rpc chat:*)" \
+    "Bash(cs rpc chat:*)" \
     "Bash(.venv/bin/python -m cs campaign send-draft:*)" \
+    "Bash(.venv/bin/python3 -m cs campaign send-draft:*)" \
+    "Bash(.venv/bin/cs campaign send-draft:*)" \
+    "Bash(python -m cs campaign send-draft:*)" \
+    "Bash(python3 -m cs campaign send-draft:*)" \
+    "Bash(cs campaign send-draft:*)" \
     "Bash(.venv/bin/python -m cs rpc settings.update:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc settings.update:*)" \
+    "Bash(.venv/bin/cs rpc settings.update:*)" \
+    "Bash(python -m cs rpc settings.update:*)" \
+    "Bash(python3 -m cs rpc settings.update:*)" \
+    "Bash(cs rpc settings.update:*)" \
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
   >>"$LOG" 2>&1
 rc=$?

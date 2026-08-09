@@ -45,6 +45,14 @@ def _read_overwrite_choice(prompt: str, default: str) -> str:
         return default
 
 
+# The draft-only invariant lives in these rendered files. A template update to
+# them must LAND — it must never be held hostage by an interactive prompt or a
+# headless default that keeps the stale version. On conflict the new render is
+# applied, the operator's local version is preserved next to it, and a loud
+# message says what to re-apply by hand.
+SECURITY_CRITICAL = {".claude/settings.json", "bin/cs_operator_cron.sh"}
+
+
 def cmd_update(args: list[str]) -> int:
     clone_root = Path.cwd()
 
@@ -109,6 +117,17 @@ def cmd_update(args: list[str]) -> int:
             rendered = tpl_file.read_text()
 
         str_out_rel = str(out_rel)
+
+        if str_out_rel == "requirements.txt":
+            # requirements.txt is operational state, not a template render
+            # target: "upgrades are a pin bump" (CLAUDE.md, Versioning &
+            # release). Letting cs update rewrite it would either silently
+            # re-pin the clone or overwrite it with whatever `cs init` froze
+            # long ago — stale or outright broken. It is the operator's file;
+            # cs update only reports that it exists and leaves it alone.
+            print("  · requirements.txt is the operator's pin — cs update never touches it")
+            continue
+
         rendered_checksum = _checksum(rendered)
         new_checksums[str_out_rel] = rendered_checksum
 
@@ -132,6 +151,18 @@ def cmd_update(args: list[str]) -> int:
                     clone_file.write_text(rendered)
                     updated += 1
                     print(f"  ✓ {str_out_rel}")
+                elif str_out_rel in SECURITY_CRITICAL:
+                    # Security-critical: never ask. Apply the new render, and
+                    # preserve the operator's local version next to it — the
+                    # backup always holds the state from just before THIS
+                    # update, so overwrite it if one already exists.
+                    backup_file = clone_file.with_name(clone_file.name + ".local-bak")
+                    backup_file.write_text(clone_content)
+                    clone_file.write_text(rendered)
+                    updated += 1
+                    print(f"  ! {str_out_rel}: SECURITY-CRITICAL template updated — new version applied.")
+                    print(f"    Your locally-edited version was saved to {str_out_rel}.local-bak.")
+                    print("    Re-apply any clone-specific entries on top of the new file, then delete the backup.")
                 else:
                     # Clone was modified AND template changed — ask
                     print(f"\n  ? {str_out_rel}: modified locally AND template changed.")

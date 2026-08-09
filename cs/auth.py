@@ -21,7 +21,7 @@ import firebase_admin
 from firebase_admin import auth as fb_auth
 from firebase_admin import credentials
 
-from .config import Settings
+from .config import ConfigError, Settings
 
 _EXCHANGE_URL = (
     "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key={key}"
@@ -77,9 +77,15 @@ def _write_cache(settings: Settings, id_token: str) -> None:
 def get_id_token(settings: Settings, force: bool = False) -> str:
     """Return a valid Firebase ID token for the engine owner uid."""
     if not settings.engine_owner_uid:
-        raise RuntimeError("CS_ENGINE_OWNER_UID not configured")
+        raise ConfigError(
+            "CS_ENGINE_OWNER_UID not set — export it in the profile env; it is "
+            "the engine owner's uid (cs/scripts/find_profile_uid.py can look it up)"
+        )
     if not settings.firebase_web_api_key:
-        raise RuntimeError("FIREBASE_WEB_API_KEY not configured")
+        raise ConfigError(
+            "FIREBASE_WEB_API_KEY not set — export it in the profile env; it is "
+            "the Web API key of the engine's Firebase project"
+        )
 
     if not force:
         cached = _read_cache(settings)

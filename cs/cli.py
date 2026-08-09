@@ -952,7 +952,11 @@ def main(argv=None) -> int:
             )
             return 2
         os.environ["CS_ENGINE_OWNER_UID"] = uid  # config.load() reads env first
-    return args.func(args)
+    try:
+        return args.func(args)
+    except config.ConfigError as e:
+        print(f"{settings.prog_name or 'cs'}: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

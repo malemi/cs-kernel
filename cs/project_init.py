@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 import hashlib
 from datetime import datetime
@@ -61,7 +62,7 @@ def collect_config() -> dict:
     config = {}
     
     # Basic company info
-    config["company_name"] = prompt_input("Company name", "MrCall")
+    config["company_name"] = prompt_input("Company name", "Acme Corp")
     config["company_display_name"] = prompt_input("Display name", config["company_name"])
     config["company_from_name"] = prompt_input("From name for emails", config["company_display_name"])
     
@@ -244,7 +245,8 @@ def collect_config() -> dict:
     config["firebase_sa_path"] = prompt_input("Firebase service account path", f"~/.{config['company_slug']}-cs/firebase-sa.json")
     
     # Repo kernel version
-    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.2.0")
+    # Default = the current operational pin; keep in lockstep with README step 1 and CHANGELOG at each release (the onboarding gate enforces the match).
+    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.5.2")
 
     # Repo docs shape (generic = mother/kernel-canonical; as-built = a stamped clone)
     config["repo_docs_shape"] = prompt_input("Repository docs shape (generic, as-built)", "generic")
@@ -336,13 +338,19 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
 def cmd_init(argv=None) -> int:
     """Main entry point for the init command."""
     # Parse command line arguments
+    try:
+        _kernel_version = f"cs-kernel {_pkg_version('cs-kernel')}"
+    except PackageNotFoundError:
+        _kernel_version = "cs-kernel (version unknown — package not installed)"
+
     parser = argparse.ArgumentParser(prog='cs init')
-    parser.add_argument('--version', action='version', version='cs-kernel 0.2.0')
+    parser.add_argument('--version', action='version', version=_kernel_version)
     
     try:
         args = parser.parse_args(argv)
-    except SystemExit:
-        return 1
+    except SystemExit as e:
+        code = e.code
+        return code if isinstance(code, int) else (0 if code is None else 1)
     
     # Import cs to find template directory
     try:
@@ -357,10 +365,22 @@ def cmd_init(argv=None) -> int:
         return 1
     
     # Collect configuration
-    config = collect_config()
-    
+    try:
+        config = collect_config()
+        proceed = prompt_yes_no("Proceed with these settings?", default=True)
+    except EOFError:
+        print(
+            "cs init: input ended before the wizard finished — run it in an "
+            "interactive terminal and answer the prompts",
+            file=sys.stderr,
+        )
+        return 1
+    except KeyboardInterrupt:
+        print("\ncs init: cancelled", file=sys.stderr)
+        return 130
+
     # Confirm before proceeding
-    if not prompt_yes_no("Proceed with these settings?", default=True):
+    if not proceed:
         print("Initialization cancelled.")
         return 1
     
