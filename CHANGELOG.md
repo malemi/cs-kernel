@@ -4,9 +4,25 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin**: `v0.5.2` (release 2026-08-09; the operator's
-clones re-pin via the guided script immediately after the tag — measurement
-note updated at re-pin).
+**Current operational pin** (both clones, re-pinned 2026-08-09): `v0.5.2`.
+Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
+`0.5.2` installed. Collaudo: `124-cs` FULL tier all green (old-vs-new +
+autotest); `mrcall-cs` green on every static/semantic gate — permission bytes
+equal the v0.5.2 enumeration (allow 65, deny 7, cron 24+4) — with its
+live-gate signature pending: a Firebase token-exchange HTTP 403 hit both
+clones' engines from the operator host mid-collaudo (abuse protection
+suspected; retry scheduled; see cs-collaudo LOOP-LOG 2026-08-09). Operators
+remain paused.
+
+## Unreleased
+
+### Known — a refused auth token exchange still tracebacks
+- `cs whoami` (and every engine-backed verb) prints a raw
+  `urllib.error.HTTPError: HTTP Error 403: Forbidden` traceback when Google's
+  custom-token exchange refuses the request — observed live 2026-08-09 on
+  both clones (operator-host abuse protection). v0.5.2's `ConfigError` covers
+  a MISSING key, not a refused exchange; wrap the exchange call in the same
+  handled one-line error path. Target: v0.5.3.
 
 ## v0.5.2 — 2026-08-09
 
