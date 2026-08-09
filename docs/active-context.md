@@ -12,26 +12,32 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.5.1`. Current HEAD status: untagged.** The
-corrective release (tag `v0.5.1`, commit `b2f07b2`, 2026-08-03) repairs the
-`v0.5.0` metadata drift (that tag shipped with pyproject `0.4.5`), signs
-`cs tasks close` as the external operator, and adds the release-truth gate.
-The 15 gates were verified green AT the tag. Do not move `v0.5.0` or `v0.5.1`.
+**Latest release tag: `v0.5.2`. Current HEAD status: untagged.** The release
+(tag `v0.5.2`, commit `7c4933c`, 2026-08-09) ships the `cs` console script
+with the permission surface finished around it — deny sets enumerate six
+command-text spellings (24-entry cron block, settings 65/7), placement-aware
+gate — plus the customer-onboarding wall fixes (public install URLs, handled
+`ConfigError` for unconfigured verbs, EOF/^C-safe `cs init`, release-tracking
+wizard defaults), the reviewed-literals registry replacing the regex-law
+charter grep, and the new `cs update` semantics (requirements.txt is
+operator-owned; security-critical templates apply with a `*.local-bak`).
+All 17 gates green at the tag. Do not move `v0.5.0`, `v0.5.1` or `v0.5.2`.
 
-Both known clones were re-pinned to `v0.5.1` on 2026-08-04, one at a time
-(`mrcall-cs` first), each with FULL collaudo: baseline captured at `v0.4.5`
-(autotest ALL GREEN), then tier=full old-vs-new. Deltas were exactly the
-declared surface: the two send-guard settings knobs (additions-allowlist) and,
-on `124-cs` only, two rendered-file diffs adjudicated as the charter
-de-personalization catch-up. The CHANGELOG's live proof ran on both: a probe
-task closed via `cs tasks close` through each clone's real engine daemon
-persists `close_actor="operator"` plus the `sources.closes[]` audit event
-(with-note path proven on mrcall-cs, no-note default-reason path on 124-cs).
+Both clones were re-pinned to `v0.5.2` on 2026-08-09 via
+`hb/scripts/repin-clone-v0.5.2.sh` (backup, HTTPS pin, install, headless
+`cs update`, clone-specific deny re-merge, verification). Collaudo against
+the v0.5.1-frozen baselines, then baselines re-frozen at v0.5.2: `124-cs`
+FULL tier all green (old-vs-new + autotest); `mrcall-cs` green on every
+static/semantic gate — permission bytes equal the declared v0.5.2 enumeration
+— with the live-gate signature pending: a Firebase token-exchange HTTP 403
+hit both clones' engines from the operator host mid-collaudo (abuse
+protection suspected; retry scheduled; cs-collaudo LOOP-LOG 2026-08-09).
+Operators remain paused on both clones.
 
 | Clone | Declared | Locked | Installed | Collaudo |
 |---|---|---|---|---|
-| `mrcall-cs` | `v0.5.1` | `v0.5.1` (commit `b2f07b2`) | `0.5.1` | full — green 2026-08-04 |
-| `124-cs` | `v0.5.1` | `v0.5.1` (commit `b2f07b2`) | `0.5.1` | full — green 2026-08-04 |
+| `mrcall-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | static/semantic green 2026-08-09; live signature pending (403 outage) |
+| `124-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | full — green 2026-08-09 |
 
 The kernel runs per-invocation from each clone's venv (no long-running kernel
 process). The provider side — the engine RPC contract the signed closes need —
