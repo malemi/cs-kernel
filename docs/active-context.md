@@ -30,8 +30,9 @@ the v0.5.1-frozen baselines, then baselines re-frozen at v0.5.2: `124-cs`
 FULL tier all green (old-vs-new + autotest); `mrcall-cs` green on every
 static/semantic gate — permission bytes equal the declared v0.5.2 enumeration
 — with the live-gate signature pending: a Firebase token-exchange HTTP 403
-hit both clones' engines from the operator host mid-collaudo (abuse
-protection suspected; retry scheduled; cs-collaudo LOOP-LOG 2026-08-09).
+hit both clones mid-collaudo — root cause: an HTTP-referrer restriction now
+on the shared engine-project web API key blocks no-referer server-side calls
+(console action required; cs-collaudo LOOP-LOG 2026-08-09).
 Operators remain paused on both clones.
 
 | Clone | Declared | Locked | Installed | Collaudo |

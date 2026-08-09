@@ -20,7 +20,10 @@ remain paused.
 - v0.5.2's `ConfigError` covers the two missing env keys; every layer beneath
   still crashes raw. Observed live 2026-08-09 (both clones + the blind
   onboarding probe): a refused custom-token exchange prints
-  `urllib.error.HTTPError: HTTP Error 403: Forbidden`; a missing
+  `urllib.error.HTTPError: HTTP Error 403: Forbidden` (root cause found the
+  same evening: an HTTP-referrer restriction on the shared engine-project web
+  API key blocks all no-referer server-side calls — a console/config matter,
+  not kernel code; the kernel's job is only to print it as one line); a missing
   `firebase-sa.json` prints `FileNotFoundError`; an invalid one prints
   `ValueError: Invalid service account certificate…`. Wrap the exchange call
   and the service-account load in the same handled one-line error path,
