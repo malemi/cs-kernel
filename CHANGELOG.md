@@ -16,13 +16,22 @@ remain paused.
 
 ## Unreleased
 
-### Known — a refused auth token exchange still tracebacks
-- `cs whoami` (and every engine-backed verb) prints a raw
-  `urllib.error.HTTPError: HTTP Error 403: Forbidden` traceback when Google's
-  custom-token exchange refuses the request — observed live 2026-08-09 on
-  both clones (operator-host abuse protection). v0.5.2's `ConfigError` covers
-  a MISSING key, not a refused exchange; wrap the exchange call in the same
-  handled one-line error path. Target: v0.5.3.
+### Known — the auth boundary still tracebacks below the env-key layer
+- v0.5.2's `ConfigError` covers the two missing env keys; every layer beneath
+  still crashes raw. Observed live 2026-08-09 (both clones + the blind
+  onboarding probe): a refused custom-token exchange prints
+  `urllib.error.HTTPError: HTTP Error 403: Forbidden`; a missing
+  `firebase-sa.json` prints `FileNotFoundError`; an invalid one prints
+  `ValueError: Invalid service account certificate…`. Wrap the exchange call
+  and the service-account load in the same handled one-line error path,
+  naming the artifact and what it is. Target: v0.5.3.
+
+### Known — two onboarding-probe findings on `cs init` (2026-08-09 blind run)
+- `cs --help` does not list `init`/`update` (they dispatch before argparse):
+  a customer sanity-checking the tool concludes `init` does not exist.
+- The wizard's "Git remote URL" prompt is required, has no default and is
+  absent from the README's prompts table; needs a local-only default or
+  documentation. Target: v0.5.3.
 
 ## v0.5.2 — 2026-08-09
 
