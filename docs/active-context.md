@@ -27,17 +27,16 @@ Both clones were re-pinned to `v0.5.2` on 2026-08-09 via
 `hb/scripts/repin-clone-v0.5.2.sh` (backup, HTTPS pin, install, headless
 `cs update`, clone-specific deny re-merge, verification). Collaudo against
 the v0.5.1-frozen baselines, then baselines re-frozen at v0.5.2: `124-cs`
-FULL tier all green (old-vs-new + autotest); `mrcall-cs` green on every
-static/semantic gate — permission bytes equal the declared v0.5.2 enumeration
-— with the live-gate signature pending: a Firebase token-exchange HTTP 403
-hit both clones mid-collaudo — root cause: an HTTP-referrer restriction now
-on the shared engine-project web API key blocks no-referer server-side calls
-(console action required; cs-collaudo LOOP-LOG 2026-08-09).
+FULL tier all green (old-vs-new + autotest, 2026-08-09); `mrcall-cs` FULL
+tier signed 2026-08-13 — 11/11 ALL GREEN on the same-day re-frozen baseline,
+after the 08-09 auth outage (an HTTP-referrer restriction on the shared
+engine web API key, since replaced by a dedicated server key restricted to
+Identity Toolkit + Token Service in both clones' .env; cs-collaudo LOOP-LOG).
 Operators remain paused on both clones.
 
 | Clone | Declared | Locked | Installed | Collaudo |
 |---|---|---|---|---|
-| `mrcall-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | static/semantic green 2026-08-09; live signature pending (403 outage) |
+| `mrcall-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | full — green 2026-08-13 |
 | `124-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | full — green 2026-08-09 |
 
 The kernel runs per-invocation from each clone's venv (no long-running kernel

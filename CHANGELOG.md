@@ -4,16 +4,16 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, re-pinned 2026-08-09): `v0.5.2`.
-Measured at re-pin: `mrcall-cs` and `124-cs` each declare, lock and have
-`0.5.2` installed. Collaudo: `124-cs` FULL tier all green (old-vs-new +
-autotest); `mrcall-cs` green on every static/semantic gate — permission bytes
-equal the v0.5.2 enumeration (allow 65, deny 7, cron 24+4) — with its
-live-gate signature pending: a Firebase token-exchange HTTP 403 hit both
-clones mid-collaudo — root cause: an HTTP-referrer restriction now on the
-shared engine-project web API key blocks no-referer server-side calls
-(console action required; see cs-collaudo LOOP-LOG 2026-08-09). Operators
-remain paused.
+**Current operational pin** (both clones, measured 2026-08-13): `v0.5.2`.
+`mrcall-cs` and `124-cs` each declare, lock and have `0.5.2` installed —
+**FULL collaudo green on both**. `124-cs` signed 2026-08-09 (old-vs-new +
+autotest, all green); `mrcall-cs` signed 2026-08-13: the 08-09 outage was an
+HTTP-referrer restriction that had landed on the shared engine web API key
+(blocking all no-referer server-side calls), replaced by a dedicated server
+key restricted to Identity Toolkit + Token Service; behavioral old-vs-new
+evidence from 08-09 (live diffs data-only, shapes identical) plus a same-day
+11/11 ALL GREEN check on the re-frozen baseline (cs-collaudo LOOP-LOG).
+Operators remain paused.
 
 ## Unreleased
 
