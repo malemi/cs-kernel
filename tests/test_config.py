@@ -7,6 +7,9 @@ sandbox HOME and a trial manifest (no company value from any real clone):
     > manifest > kernel default
   - shopify <PREFIX>_ keys beat the bare SHOPIFY_* fallback
   - unknown adapter in the manifest = LOUD startup error
+  - session paths (token cache, refresh token) derive PER ACCOUNT UID —
+    id_token-<uid>.json / refresh_token-<uid>.json, empty uid keeps the
+    legacy un-suffixed name, an explicit override always wins over derivation
 """
 from __future__ import annotations
 
@@ -17,6 +20,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+from cs.config import Settings
+
 DUMP = r"""
 import json
 from cs import config
@@ -25,6 +30,7 @@ print(json.dumps({
     "state_dir": str(s.state_dir),
     "db_path": s.db_path,
     "token_cache_path": s.token_cache_path,
+    "refresh_token_path": s.refresh_token_path,
     "firebase_sa_path": s.firebase_sa_path,
     "pause_path": str(s.pause_path),
     "log_path": str(s.log_path),
@@ -112,7 +118,8 @@ kernel_version = "v0.1.0"
 def _clean_env(home: Path) -> dict:
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("CS_", "SHOPIFY", "EMAIL_", "ENGINE_"))
-           and k not in ("RATE_CAP", "DEDUP_DAYS", "DRY_RUN")}
+           and k not in ("RATE_CAP", "DEDUP_DAYS", "DRY_RUN",
+                         "TOKEN_CACHE_PATH", "REFRESH_TOKEN_PATH")}
     env["HOME"] = str(home)
     return env
 
@@ -148,7 +155,8 @@ def main() -> int:
         # -- derived paths, all under the sandbox HOME's ~/.<slug>-cs --
         assert d["state_dir"] == str(state), d["state_dir"]
         assert d["db_path"] == str(state / "cs.db"), d["db_path"]
-        assert d["token_cache_path"] == str(state / "id_token.json")
+        assert d["token_cache_path"] == str(state / "id_token-uid-ops-acme.json")
+        assert d["refresh_token_path"] == str(state / "refresh_token-uid-ops-acme.json")
         assert d["firebase_sa_path"] == str(state / "firebase-sa.json"), \
             f"manifest ~ not expanded into sandbox HOME: {d['firebase_sa_path']}"
         assert d["pause_path"] == str(state / "CS_PAUSE")
@@ -212,6 +220,43 @@ def main() -> int:
                               capture_output=True, text=True)
         assert proc.returncode != 0
         assert "script_path" in (proc.stderr + proc.stdout)
+
+    # -- per-uid session-file derivation (in-process; state_dir only shapes
+    # the PREFIX via Path.home(), so these assert on the BASENAME only — no
+    # sandbox HOME needed). `_env_file=()` only disables the DOTENV layer —
+    # env_settings stays live — so an ambient CS_ENGINE_OWNER_UID /
+    # ENGINE_OWNER_UID / TOKEN_CACHE_PATH / REFRESH_TOKEN_PATH in the
+    # invoking process's own environment would otherwise leak into these
+    # Settings and make the pins non-hermetic. Save/pop/restore, same idiom
+    # as tests/test_login.py's CS_ZYLCH_ROOT guard. --
+    _leak_keys = ("CS_ENGINE_OWNER_UID", "ENGINE_OWNER_UID",
+                  "TOKEN_CACHE_PATH", "REFRESH_TOKEN_PATH")
+    _saved_env = {k: os.environ.get(k) for k in _leak_keys}
+    for k in _leak_keys:
+        os.environ.pop(k, None)
+    try:
+        no_uid = Settings(_env_file=(), slug="acme")
+        assert Path(no_uid.token_cache_path).name == "id_token.json", no_uid.token_cache_path
+        assert Path(no_uid.refresh_token_path).name == "refresh_token.json", \
+            no_uid.refresh_token_path
+
+        with_uid = Settings(_env_file=(), slug="acme", engine_owner_uid="u1")
+        assert Path(with_uid.token_cache_path).name == "id_token-u1.json", \
+            with_uid.token_cache_path
+        assert Path(with_uid.refresh_token_path).name == "refresh_token-u1.json", \
+            with_uid.refresh_token_path
+
+        explicit = Settings(
+            _env_file=(), slug="acme", engine_owner_uid="u1",
+            token_cache_path="/x/cache.json",
+        )
+        assert explicit.token_cache_path == "/x/cache.json", explicit.token_cache_path
+    finally:
+        for k, v in _saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
     print("test_config: all assertions passed")
     return 0

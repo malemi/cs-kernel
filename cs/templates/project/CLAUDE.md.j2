@@ -58,13 +58,18 @@ The {{ email_address }} profile is `{{ engine_owner_uid }}`
 Auth chain (headless): the mrcall-desktop app owns interactive sign-in and
 writes a profile descriptor (`~/.zylch/profiles/<uid>/cs-descriptor.json`);
 `cs login` reads it and stores the Firebase **refresh token** locally
-(`~/.{{ company_slug }}-cs/refresh_token.json`, mode `0600`). Every verb then
-exchanges that refresh token via Google's Secure Token API for a short-lived
-**ID token** (~1h, cached at `~/.{{ company_slug }}-cs/id_token.json`); the WS
-handshake carries it as `Authorization: Bearer` and the daemon verifies RS256
-and gates `token.sub == OWNER_ID` — unchanged. The service-account key
-(`firebase-sa.json`) plays no part in this chain: it is used only for the
-optional Drive / lead-resolution surfaces (`cs drive`, `cs/resolve.py`).
+(`~/.{{ company_slug }}-cs/refresh_token-<uid>.json`, mode `0600`). Every verb
+then exchanges that refresh token via Google's Secure Token API for a
+short-lived **ID token** (~1h, cached at
+`~/.{{ company_slug }}-cs/id_token-<uid>.json`); the WS handshake carries it
+as `Authorization: Bearer` and the daemon verifies RS256 and gates
+`token.sub == OWNER_ID` — unchanged. Sessions are per account uid:
+`cs --account <name> …` uses that account's own session files, and
+`cs --account <name> login` stores that account's session without
+touching any other account's. The service-account key
+(`firebase-sa.json`) plays no part in this chain: it is used only for
+the optional Drive / lead-resolution surfaces (`cs drive`,
+`cs/resolve.py`).
 
 **Outreach/reply policy lives in the profile, not this repo.** The declared-AI
 identity (if any), signature, recipient-language rule and the LLM-ism ban list

@@ -47,7 +47,7 @@ operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
 ## v0.6.0 candidate — Phase B auth: refresh-token exchange (2026-08-14)
 
 - `cs/auth.py` no longer mints custom tokens with the service-account key:
-  it exchanges a refresh token (stored at `<state_dir>/refresh_token.json`
+  it exchanges a refresh token (stored at `<state_dir>/refresh_token-<uid>.json`
   by `cs login`, sourced from the desktop app's profile
   descriptor) via Google's Secure Token API — the same headless mechanism
   the engine itself uses (`zylch/auth/refresh.py`). Every auth-boundary
@@ -58,6 +58,10 @@ operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
   operational pin. Full re-collaudo on both clones is the bar at the tag
   (auth path changed). Plan:
   `hb/docs/execution-plans/2026-08-13-phase-b-execution-plan.md`.
+- Session files are per account uid (`id_token-<uid>.json` /
+  `refresh_token-<uid>.json`); `cs --account <name> login` stores the
+  secondary's own session; the operator-mailbox cross-check applies to the
+  primary identity only.
 
 ## v0.5.1 corrective candidate — release truth gate (2026-08-01)
 

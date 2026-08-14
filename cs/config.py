@@ -130,8 +130,8 @@ class Settings(BaseSettings):
     )
     engine_ws_url: str = ""       # manifest [engine].ws_url; client appends /ws/<uid>
     firebase_web_api_key: str = ""  # public web API key of the engine's Firebase project
-    token_cache_path: str = ""    # empty → <state_dir>/id_token.json
-    refresh_token_path: str = ""  # empty → <state_dir>/refresh_token.json
+    token_cache_path: str = ""    # empty → <state_dir>/id_token-<uid>.json
+    refresh_token_path: str = ""  # empty → <state_dir>/refresh_token-<uid>.json
     firebase_sa_path: str = ""    # empty → <state_dir>/firebase-sa.json
 
     # multi-account (THIS project only): registry name->uid in env CS_ACCOUNTS,
@@ -246,10 +246,28 @@ class Settings(BaseSettings):
         sd = self.state_dir
         if not self.db_path:
             self.db_path = str(sd / "cs.db")
+        # Per-uid session files are what keep `--account <name>` working:
+        # cs/cli.py swaps CS_ENGINE_OWNER_UID into the env before
+        # config.load() runs, so this derivation follows whichever account
+        # was selected for that invocation. This uid is operator-written
+        # (manifest [engine].owner_uid, CS_ENGINE_OWNER_UID, or a CS_ACCOUNTS
+        # entry — never the descriptor's own uid, which cs login only reads
+        # for the identity cross-check) and kernel-unvalidated; the
+        # derivation trusts it as a filename component, which is fine for
+        # every real uid and every value the operator has any reason to
+        # type. An empty uid keeps the un-suffixed legacy names — auth.py
+        # raises its own "uid not set" ConfigError before either file is
+        # ever read or written, so an empty uid never actually reaches
+        # these paths.
+        uid = (self.engine_owner_uid or "").strip()
         if not self.token_cache_path:
-            self.token_cache_path = str(sd / "id_token.json")
+            self.token_cache_path = str(
+                sd / (f"id_token-{uid}.json" if uid else "id_token.json")
+            )
         if not self.refresh_token_path:
-            self.refresh_token_path = str(sd / "refresh_token.json")
+            self.refresh_token_path = str(
+                sd / (f"refresh_token-{uid}.json" if uid else "refresh_token.json")
+            )
         if not self.firebase_sa_path:
             self.firebase_sa_path = str(sd / "firebase-sa.json")
         self.db_path = os.path.expanduser(self.db_path)

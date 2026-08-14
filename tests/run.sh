@@ -354,7 +354,10 @@ step "18. auth boundary — refresh-token exchange (handled ConfigError, cache s
 # (never a raw traceback below the env-key layer); `_write_refresh` writes
 # mode 0600; a still-valid cached id_token short-circuits before the
 # refresh/exchange path is ever touched (proved by pointing
-# refresh_token_path at a nonexistent directory).
+# refresh_token_path at a nonexistent directory); token-cache and
+# refresh-token paths are now derived PER ACCOUNT UID, so a second account's
+# session (`cs --account <name> login`) coexists with the primary's under
+# the same state dir instead of overwriting it.
 if "$VENV/bin/python" "$ROOT/tests/test_auth_boundary.py"; then echo "OK"; else echo "FAIL: auth boundary regressed"; FAIL=1; fi
 
 step "19. cs login — descriptor parsing, profile scan, identity cross-check, no-descriptor path"
@@ -367,7 +370,13 @@ step "19. cs login — descriptor parsing, profile scan, identity cross-check, n
 # to them; a real `python -m cs login` subprocess with zero descriptors
 # found exits 1 naming the mrcall-desktop app (closed stdin, never blocks);
 # the identity cross-check refuses a uid mismatch naming BOTH uids (built
-# directly against a hand-built Settings, no config.load(), no network).
+# directly against a hand-built Settings, no config.load(), no network) and
+# never relaxes it for `account_switched`; the email cross-check binds the
+# PRIMARY profile only and is skipped exactly when `cs --account <name>
+# login` deliberately selected a secondary account — proved end-to-end by a
+# real `python -m cs --account founder login` subprocess that stores the
+# session at that account's own per-uid path, contrasted with the same
+# descriptor refused (uid mismatch, nothing written) without --account.
 if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
 echo

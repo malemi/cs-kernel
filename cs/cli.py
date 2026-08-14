@@ -659,6 +659,33 @@ def cmd_llm(args) -> int:
 # instead of the tree silently ending at `plan`, and so `cs login` (etc.)
 # still has a working path if the early dispatch is ever bypassed or
 # reordered by a future change.
+#
+# `login` is the one stub route real invocations DO take: `cs --account
+# <name> login …` puts `--account` at argv[0], so the early dispatch above
+# (which only fires on a bare argv[0] in ("init","update","login")) never
+# triggers — this is the founder-sweep migration path, one `cs --account
+# <name> login` per secondary account. That is why the login stub mirrors
+# `cs/login.py`'s own options explicitly (`--descriptor PATH`) instead of
+# using `nargs=argparse.REMAINDER` the way init/update's stubs do: an
+# UNKNOWN option-looking token (anything starting with "-") inside a
+# subparser's REMAINDER escapes to the parent parser as "unrecognized
+# arguments" — verified directly, and it has NOTHING to do with a preceding
+# top-level optional: `cs update --version`, with no `--account` at all,
+# fails the exact same way. A token the subparser DECLARES explicitly
+# parses fine, REMAINDER elsewhere in the same subparser or not. So `cs
+# --account X login --descriptor P` used to die inside `parse_args` itself
+# with "unrecognized arguments: --descriptor" (exit 2), before dispatch
+# ever ran, purely because `--descriptor` was REMAINDER-swallowed instead
+# of declared — declaring it here fixes that. init/update never hit this in
+# practice because their real invocations always take the early dispatch
+# above (bare `cs init`/`cs update`, argv[0] matches); a through-the-tree
+# invocation of their stubs with an unrecognized flag fails the identical
+# way (e.g. `cs --account X update --version` still exits 2 today), which
+# is acceptable because `--account` is meaningless for init/update anyway —
+# login is the one stub real invocations actually take. Maintenance rule:
+# any new `cs login` option must be added BOTH to `cs/login.py`'s own
+# parser AND on this stub — the failure mode of forgetting is LOUD
+# (argparse exit 2 here), never a silent drop.
 def cmd_init_stub(args) -> int:
     return project_init.cmd_init(args.init_args)
 
@@ -668,7 +695,12 @@ def cmd_update_stub(args) -> int:
 
 
 def cmd_login_stub(args) -> int:
-    return login.cmd_login(args.login_args)
+    rest = ["--descriptor", args.descriptor] if args.descriptor else []
+    return login.cmd_login(
+        rest,
+        account_switched=getattr(args, "account_switched", False),
+        account_name=getattr(args, "account", None),
+    )
 
 
 def main(argv=None) -> int:
@@ -726,7 +758,11 @@ def main(argv=None) -> int:
         help="sign in via the mrcall-desktop profile descriptor (stores the "
         "session, proves it with account.who_am_i)",
     )
-    plg.add_argument("login_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
+    plg.add_argument(
+        "--descriptor",
+        metavar="PATH",
+        help="use this cs-descriptor.json directly, skipping the ~/.zylch profile scan",
+    )
     plg.set_defaults(func=cmd_login_stub)
 
     pp = sub.add_parser("plan", help="producer worklist: who to consider today")
@@ -1002,6 +1038,11 @@ def main(argv=None) -> int:
             )
             return 2
         os.environ["CS_ENGINE_OWNER_UID"] = uid  # config.load() reads env first
+        # `cs --account X login` must skip the operator-mailbox cross-check: a
+        # deliberately selected secondary profile's mailbox is by definition not
+        # the clone's own operator mailbox. Only an actual switch relaxes it —
+        # `--account <the-default-account>` stays strict.
+        args.account_switched = uid != (settings.engine_owner_uid or "").strip()
     try:
         return args.func(args)
     except config.ConfigError as e:

@@ -25,9 +25,17 @@ Guards:
   (iv)  `_identity_conflict`, exercised directly against a hand-built
         `Settings` (no `config.load()`, no filesystem, no network — mirrors
         `tests/test_auth_boundary.py`'s `_settings()` helper): a uid
-        mismatch refuses naming BOTH uids; an email mismatch refuses naming
-        both emails but is case-insensitive; an empty configured uid
-        refuses pointing at `cs init`.
+        mismatch refuses naming BOTH uids (and `account_switched=True`
+        never relaxes it — uid equality IS the identity statement for a
+        secondary account); an email mismatch refuses naming both emails,
+        is case-insensitive, and points at `cs --account <name> login` for
+        the legitimate secondary case — UNLESS `account_name` names a
+        given-but-not-switched `--account` (it already resolved to this
+        clone's own default uid), in which case the message names that
+        real cause instead of the now-wrong pointer; an empty configured
+        uid refuses pointing at `cs init`; `account_switched=True` skips
+        the email check entirely for a deliberately selected secondary
+        account.
   (v)   `project_init.descriptor_defaults()`, hermetic via `CS_ZYLCH_ROOT`:
         `{}` on zero valid descriptors, `{}` on two (`cs init` stays
         neutral — picking among signed-in profiles is `cs login`'s job),
@@ -42,11 +50,23 @@ Guards:
   (viii) `cmd_login`'s proof-call failure (closed local port, `get_id_token`
         stubbed): exits 1, names the failure, and — the point of this guard
         — never lets a raw traceback reach stderr.
+  (ix)  `cs --account <name> login` (real subprocess, B1.5's LOAD-BEARING
+        routing pin): the deliberate secondary-account selection routes
+        through `cli.main()`'s full argparse tree, skips the
+        operator-mailbox email cross-check, and stores the session at that
+        account's own per-uid `refresh_token-<uid>.json` — never the
+        primary's. The contrast case (same descriptor, no `--account`)
+        still refuses the uid mismatch and writes no session file at all.
+        Both proof-call legs die at the same closed local port — the WS
+        connect directly, the id-token exchange via an http_proxy/
+        https_proxy env override — so nothing leaves the machine, online
+        or not.
 """
 from __future__ import annotations
 
 import json
 import os
+import stat
 import subprocess
 import sys
 import tempfile
@@ -201,7 +221,8 @@ def _test_scan_descriptors() -> None:
 def _clean_env(home: Path) -> dict:
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("CS_", "SHOPIFY", "EMAIL_", "ENGINE_"))
-           and k not in ("RATE_CAP", "DEDUP_DAYS", "DRY_RUN")}
+           and k not in ("RATE_CAP", "DEDUP_DAYS", "DRY_RUN",
+                         "TOKEN_CACHE_PATH", "REFRESH_TOKEN_PATH")}
     env["HOME"] = str(home)
     return env
 
@@ -265,12 +286,59 @@ def _test_identity_conflict() -> None:
     )
     assert ok is None, f"case-insensitive email match must not be a conflict: {ok}"
 
-    # -- same uid, email mismatch: refusal names both emails --
+    # -- same uid, email mismatch: refusal names both emails, and points at
+    # `--account` for the legitimate secondary-account case --
     reason = login._identity_conflict(
         _settings(), _valid_descriptor(uid=UID, email="someone-else@acme.example")
     )
     assert reason is not None, "expected a refusal on email mismatch"
     assert "ops@acme.example" in reason and "someone-else@acme.example" in reason, reason
+    assert "--account" in reason, (
+        f"refusal must point at `cs --account <name> login` for a legitimate "
+        f"secondary account: {reason}"
+    )
+
+    # -- same uid, email mismatch, `--account <name>` given but it did NOT
+    # switch the uid (it resolved to this clone's own default): the generic
+    # "run `cs --account <name> login`" pointer would be wrong advice here —
+    # --account WAS already used — so the message must name the real cause
+    # (a CS_ACCOUNTS/CS_ENGINE_OWNER_UID configuration error) instead --
+    reason = login._identity_conflict(
+        _settings(),
+        _valid_descriptor(uid=UID, email="someone-else@acme.example"),
+        account_switched=False,
+        account_name="founder",
+    )
+    assert reason is not None, "expected a refusal on email mismatch"
+    assert "'founder'" in reason and "default uid" in reason, reason
+    assert "run `cs --account <name> login`" not in reason, (
+        f"the generic pointer must not appear once account_name names the "
+        f"real cause: {reason}"
+    )
+
+    # -- same uid, email mismatch, but account_switched=True: `cs --account
+    # X login` is a deliberate registry selection, so the descriptor's own
+    # mailbox legitimately differs from the clone's operator mailbox — no
+    # conflict --
+    ok = login._identity_conflict(
+        _settings(),
+        _valid_descriptor(uid=UID, email="someone-else@acme.example"),
+        account_switched=True,
+    )
+    assert ok is None, (
+        f"account_switched=True must skip the operator-mailbox email check: {ok}"
+    )
+
+    # -- uid mismatch + account_switched=True: STILL refuses — the flag
+    # never relaxes the uid check, which IS the identity statement for a
+    # secondary account --
+    reason = login._identity_conflict(
+        _settings(),
+        _valid_descriptor(uid=OTHER_UID, email="ops@acme.example"),
+        account_switched=True,
+    )
+    assert reason is not None, "account_switched=True must NOT relax the uid check"
+    assert UID in reason and OTHER_UID in reason, reason
 
     # -- configured uid empty: refuse pointing at `cs init` --
     reason = login._identity_conflict(
@@ -279,9 +347,13 @@ def _test_identity_conflict() -> None:
     assert reason is not None and "cs init" in reason, reason
 
     print(
-        "OK: _identity_conflict — uid mismatch refuses naming both uids; "
-        "email mismatch refuses naming both emails (case-insensitive match "
-        "is not a conflict); empty configured uid refuses pointing at `cs init`"
+        "OK: _identity_conflict — uid mismatch refuses naming both uids "
+        "(account_switched never relaxes it); email mismatch refuses naming "
+        "both emails and points at `--account` (case-insensitive match is "
+        "not a conflict); a given-but-not-switched --account names the real "
+        "cause instead of the generic pointer; account_switched=True skips "
+        "the email check for a deliberate secondary-account login; empty "
+        "configured uid refuses pointing at `cs init`"
     )
 
 
@@ -449,6 +521,144 @@ def _test_cmd_login_proof_call_failure() -> None:
     )
 
 
+def _test_account_login_routing() -> None:
+    """The LOAD-BEARING routing pin for B1.5: `cs --account <name> login`
+    must actually route through `cli.main()`'s full argparse tree (NOT the
+    early `argv[0] == "login"` dispatch, which `--account` bypasses since it
+    occupies argv[0] instead), carry `account_switched=True` into
+    `_identity_conflict`, and store the session at the SECONDARY account's
+    own per-uid path — never the primary's, and never answering "different
+    profile" for a deliberately selected secondary. Real subprocess (this
+    proves the actual `--account` plumbing end to end, not just the pure
+    `_identity_conflict` function `_test_identity_conflict` exercises
+    above); the proof call's WS URL is a closed local port, same trick as
+    `_test_cmd_login_proof_call_failure`, and — unlike that in-process
+    guard — this one cannot stub `auth.get_id_token`, so `http_proxy`/
+    `https_proxy` are forced onto the SAME closed port: urllib builds its
+    ProxyHandler from the environment, so the id-token exchange's HTTPS
+    CONNECT to securetoken.googleapis.com dies there too, deterministically,
+    online or offline. Both proof-call legs therefore fail locally."""
+    import socket
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("127.0.0.1", 0))
+    closed_port = s.getsockname()[1]
+    s.close()
+    closed_url = f"ws://127.0.0.1:{closed_port}"
+
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        state = home / ".acme-cs"; state.mkdir()
+        (state / ".env").write_text(
+            "CS_ACCOUNTS=founder:uid-founder-xyz\n"
+            "FIREBASE_WEB_API_KEY=fake-web-api-key\n"
+        )
+        # Minimal manifest (adapted from tests/test_config.py's MANIFEST
+        # fixture idiom): just enough for a primary identity and a WS URL
+        # that dials nowhere.
+        (clone / "manifest.toml").write_text(
+            "[company]\n"
+            'slug = "acme"\n'
+            "\n"
+            "[operator]\n"
+            'email_address = "ops@acme.example"\n'
+            "\n"
+            "[engine]\n"
+            'owner_uid = "uid-primary"\n'
+            f'ws_url = "{closed_url}"\n'
+        )
+        descriptor_path = _write(
+            clone / "founder-descriptor.json",
+            _valid_descriptor(
+                uid="uid-founder-xyz",
+                email="founder@acme.example",
+                engine_ws_url=closed_url,
+                refresh_token="rt-founder",
+            ),
+        )
+
+        env = _clean_env(home)
+        # An inherited no_proxy/NO_PROXY (e.g. "*" or a googleapis.com entry)
+        # would bypass the proxy override below via proxy_bypass_environment,
+        # letting the exchange reach the real network silently — drop it.
+        env.pop("no_proxy", None)
+        env.pop("NO_PROXY", None)
+        # Force the id-token exchange's HTTPS CONNECT through the SAME
+        # closed local port as the WS proof call above: urllib builds its
+        # ProxyHandler from http_proxy/https_proxy, so the connect to
+        # securetoken.googleapis.com dies here too, deterministically,
+        # online or offline — no real network egress either way. Applies to
+        # BOTH subprocess runs below, which share this env dict.
+        env["http_proxy"] = env["https_proxy"] = f"http://127.0.0.1:{closed_port}"
+        founder_refresh = state / "refresh_token-uid-founder-xyz.json"
+        primary_refresh = state / "refresh_token-uid-primary.json"
+
+        # -- contrast case FIRST: bare `cs login` (no --account) refuses the
+        # uid mismatch and writes NOTHING — the founder descriptor's uid
+        # does not match this clone's configured primary uid, and no
+        # --account was given to relax the check --
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "login", "--descriptor", str(descriptor_path)],
+            cwd=clone, env=env, input="y\n",
+            capture_output=True, text=True, timeout=60,
+        )
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
+        assert "different profile" in out, (
+            f"expected the uid-mismatch refusal without --account:\n{out}"
+        )
+        assert "uid-primary" in out and "uid-founder-xyz" in out, (
+            f"refusal must name BOTH uids:\n{out}"
+        )
+        assert not founder_refresh.exists() and not primary_refresh.exists(), (
+            "the refused bare login must not write any session file"
+        )
+
+        # -- `cs --account founder login`: the deliberate secondary-account
+        # selection must route through cli.main()'s full argparse tree,
+        # carry account_switched=True, skip the operator-mailbox email
+        # cross-check, and store the session at the FOUNDER's own per-uid
+        # path only --
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "--account", "founder", "login",
+             "--descriptor", str(descriptor_path)],
+            cwd=clone, env=env, input="y\n",
+            capture_output=True, text=True, timeout=60,
+        )
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, (
+            f"expected exit 1 (the proof call fails against a closed port), "
+            f"got {proc.returncode}:\n{out}"
+        )
+        assert "stored the session" in out, (
+            f"the session must be stored even though the proof call fails:\n{out}"
+        )
+        assert "different profile" not in out, (
+            f"--account must skip the operator-mailbox email cross-check:\n{out}"
+        )
+        assert "Traceback" not in out, f"must not traceback:\n{out}"
+
+        assert founder_refresh.exists(), "founder's per-uid session file was not written"
+        mode = stat.S_IMODE(founder_refresh.stat().st_mode)
+        assert mode == 0o600, f"founder session file mode is {oct(mode)}, expected 0o600"
+        written = json.loads(founder_refresh.read_text())
+        assert written == {"uid": "uid-founder-xyz", "refresh_token": "rt-founder"}, written
+
+        assert not primary_refresh.exists(), (
+            "the --account run must not cross-write the primary's session file"
+        )
+
+    print(
+        "OK: cs --account <name> login (real subprocess) — routes through "
+        "the full argparse tree, skips the operator-mailbox email "
+        "cross-check, and stores the session at the secondary account's "
+        "OWN per-uid path (no cross-write onto the primary's); the "
+        "contrast case (no --account) still refuses the uid mismatch and "
+        "writes no session file at all"
+    )
+
+
 def main() -> int:
     _test_parse_descriptor()
     _test_descriptor_ws_base()
@@ -456,6 +666,7 @@ def main() -> int:
     _test_cmd_login_zero_descriptors()
     _test_cmd_login_proof_call_failure()
     _test_identity_conflict()
+    _test_account_login_routing()
     _test_descriptor_defaults()
     _test_cmd_update_help()
     print("test_login: all assertions passed")

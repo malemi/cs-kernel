@@ -42,7 +42,7 @@ Operators remain paused.
   malformed response, an identity mismatch on the exchanged token — is now a
   single handled `ConfigError` line; none of the failure branches propagate
   a raw traceback. New derived setting `refresh_token_path` (empty →
-  `<state_dir>/refresh_token.json`, derived exactly like `token_cache_path`)
+  `<state_dir>/refresh_token-<uid>.json` — see the per-account entry below)
   backs a new uid-tagged, mode-`0600` JSON file managed by
   `_read_refresh`/`_write_refresh`. `cs/sms.py` and `cs/rpc.py` are
   unchanged — both call `auth.get_id_token` and only ever use its return
@@ -53,8 +53,10 @@ Operators remain paused.
   or given directly via `--descriptor`), confirms — or, with more than one
   profile present, numbered-picks — with the operator, refuses strictly (no
   `--force`) on any mismatch between the descriptor's identity and this
-  clone's own configured `engine_owner_uid`/`email_address`, stores the
-  refresh token through the `_write_refresh` above, and proves the session
+  clone's own configured `engine_owner_uid` — plus `email_address`, but that
+  half applies to the clone's PRIMARY identity only (see the per-account
+  entry below) — stores the refresh token through the `_write_refresh`
+  above, and proves the session
   with one live `account.who_am_i` call; it carries no cron/allow-list entry
   of its own. `cs --help` (bare, no subcommand) now lists `init`, `update`
   and `login` as real subparsers — normally bypassed by the early dispatch
@@ -89,18 +91,101 @@ Operators remain paused.
   longer describe the service account as the auth credential, naming it
   optional and scoped to the Drive/lead-resolution surfaces instead.
 - **Migration note:** a clone re-pinned to this version has no stored
-  session. A still-valid `~/.<slug>-cs/id_token.json` from the old mint
-  path keeps every verb working for up to ~1h — delete it
-  (`rm ~/.<slug>-cs/id_token.json`) to see the real state. After that,
-  every engine verb prints the handled "not signed in — run `cs login`"
-  line until the operator runs `cs login` once.
+  session for `cs login` to overwrite. A stale `~/.<slug>-cs/id_token.json`
+  from the v0.5.2 mint path is now simply ignored — the per-uid derivation
+  the entry directly below this one adds reads `id_token-<uid>.json`, a
+  filename the old path never wrote, so the false-green scenario this
+  paragraph used to warn about (a cached token from the old path silently
+  keeping every verb "working" for up to ~1h) is now structurally
+  impossible. Deleting the stale file (`rm ~/.<slug>-cs/id_token.json`) is
+  hygiene, not a correctness step. Every engine verb prints the handled
+  "not signed in — run `cs login`" line until the operator runs `cs login`
+  once.
 - **Re-collaudo:** **full, both clones** — this changes the auth boundary
   every RPC call, SMS send and engine WebSocket connect goes through
   (`cs/rpc.py`, `cs/sms.py` call the same `get_id_token` signature, but what
   runs underneath it is entirely new). Prove a real refresh-token exchange
   against the live engine Firebase project on both clones before this ships.
-  Delete `id_token.json` on both clones FIRST, or the suite passes on a
-  cached token minted by the old path and proves nothing.
+  The per-uid filename (see the entry directly below) makes the old
+  false-green risk — a cached `id_token.json` from the v0.5.2 mint path
+  silently passing the suite — structurally impossible, since the new code
+  never reads that filename once an engine identity is configured; deleting
+  the stale file first is optional hygiene, not a precondition for a
+  trustworthy result.
+
+### Changed — session files are per account uid (`--account` keeps working)
+- **Why:** the founder-inbox sweep — a daily, read-only check of a second
+  configured mailbox alongside the operator's own (the F3 decision) — needs
+  `cs --account <secondary> …` to keep working across repeated logins. The
+  refresh-token rewrite in the entry directly above stored exactly ONE
+  session per clone (`<state_dir>/refresh_token.json`,
+  `<state_dir>/id_token.json`), so a second `cs --account <secondary> login`
+  silently overwrote the first: signing in to the founder mailbox clobbered
+  the primary operator mailbox's own session file, regressing
+  `cs --account <secondary>` the moment two accounts were both signed in.
+  Fixing that surfaced a second, discovered-by-recon bug:
+  `login._identity_conflict` also compared the clone's configured
+  `email_address` (the primary operator mailbox) against the descriptor's
+  own email, and for a secondary account's descriptor — the founder's own
+  mailbox, never the operator's — that comparison ALWAYS mismatches, so
+  `cs --account <name> login` was refused outright before the per-clone
+  session file could even become the practical problem.
+- **What:** `token_cache_path` and `refresh_token_path` (`cs/config.py`)
+  now derive as `<state_dir>/id_token-<uid>.json` and
+  `<state_dir>/refresh_token-<uid>.json`, where `<uid>` is the resolved
+  `engine_owner_uid` — the same uid `cs --account <name>` swaps into
+  `CS_ENGINE_OWNER_UID` before `config.load()` runs, so the derivation
+  follows whichever account is selected for that invocation. An empty uid
+  (no engine identity configured at all) keeps the legacy un-suffixed
+  names, since `cs/auth.py` raises its own "uid not set" `ConfigError`
+  before either file is ever read or written. An explicit
+  `token_cache_path`/`refresh_token_path` set in the environment is
+  untouched, exactly as before — derivation only ever fills in an EMPTY
+  field. `cs/auth.py`'s id-token cache read/write now also strips the
+  configured uid before tagging or comparing it, so a whitespace-bearing
+  configured uid no longer thrashes the cache between the default and
+  `--account` paths. `cs login`'s identity cross-check
+  (`login._identity_conflict`) now takes an `account_switched` flag,
+  threaded from `cli.main()`'s `--account` handling through the new
+  `cmd_login_stub` signature: the uid checks (empty configured uid, uid
+  mismatch against the descriptor) stay unconditionally active — uid
+  equality with the `CS_ACCOUNTS` registry entry IS the identity statement
+  for a secondary account — but the operator-mailbox email comparison now
+  binds the clone's PRIMARY profile only, and is skipped exactly when
+  `--account` actually switched the uid away from the clone's default. The
+  email-mismatch refusal message also gains a pointer for the legitimate
+  secondary case: "…or pick the matching descriptor; for a registered
+  secondary account run `cs --account <name> login` instead." The
+  operator-mailbox cross-check was always an independent second opinion,
+  never the sole guard: for a switched `--account` login the invariant now
+  rests on the unconditional uid check against the operator-written
+  `CS_ACCOUNTS` registry, plus the interactive confirm every `cs login` run
+  requires (`cs login` prints `email (uid)` and stores nothing without an
+  explicit yes). This diff also fixes an operator-visible CLI parsing
+  defect it would otherwise have shipped un-exercised:
+  `cs --account <name> login --descriptor PATH` now actually parses —
+  before, it exited 2 with argparse's own "unrecognized arguments:
+  --descriptor" (the login stub's argv passthrough used a REMAINDER
+  positional, which cannot coexist with an unrecognized flag anywhere in
+  its subparser); the stub (`cs/cli.py::cmd_login_stub`) now mirrors
+  `cs login`'s real `--descriptor` option instead, and `cs/cli.py` records
+  the resulting maintenance rule that any new `cs login` option must be
+  added to both parsers.
+- **Migration note:** any clone that configures a founder-sweep (or other
+  secondary) account has no stored session for it yet. Once per clone: sign
+  in to the mrcall-desktop app AS the secondary mailbox — that sign-in
+  writes the secondary profile's own descriptor under
+  `~/.zylch/profiles/<uid>/cs-descriptor.json` — then run
+  `cs --account <name> login` once. That stores the secondary account's
+  session under its own per-uid path and never touches the primary
+  account's session, which needs no migration step of its own beyond the
+  one already described in the entry directly above.
+- **Re-collaudo:** covered by the same full-both-clones requirement as the
+  refresh-token-exchange entry directly above — this changes the same auth
+  boundary — plus one additional live proof per clone that configures a
+  secondary account: `cs --account <name> login` followed by
+  `cs --account <name> whoami` must succeed without disturbing the default
+  account's own `cs whoami`.
 
 ### Known — the auth boundary still tracebacks below the env-key layer
 - **Resolved for the auth path by the candidate above:** the service-account

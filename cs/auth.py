@@ -50,7 +50,7 @@ def _read_cache(settings: Settings) -> str | None:
     except (OSError, ValueError):
         return None
     token = data.get("id_token")
-    if not token or data.get("uid") != settings.engine_owner_uid:
+    if not token or data.get("uid") != (settings.engine_owner_uid or "").strip():
         return None
     if _token_exp(token) - time.time() < _SKEW_SECONDS:
         return None
@@ -60,7 +60,9 @@ def _read_cache(settings: Settings) -> str | None:
 def _write_cache(settings: Settings, id_token: str) -> None:
     p = _cache_path(settings)
     p.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps({"uid": settings.engine_owner_uid, "id_token": id_token})
+    payload = json.dumps(
+        {"uid": (settings.engine_owner_uid or "").strip(), "id_token": id_token}
+    )
     # 0600 from creation, never a world-readable window; tmp+rename so a
     # concurrent reader never sees a half-written long-lived credential.
     tmp = p.with_name(p.name + ".tmp")

@@ -15,7 +15,9 @@ sign-in it writes a JSON descriptor to
      company's profile — see `_identity_conflict`),
   4. stores the refresh token at ``settings.refresh_token_path`` (mode
      0600, via `cs.auth._write_refresh` — the same file every subsequent
-     `cs.auth.get_id_token` call reads),
+     `cs.auth.get_id_token` call reads). That path is derived per account
+     uid (`cs/config.py::_derive_paths`), so signing in a secondary account
+     (`cs --account <name> login`) never overwrites the primary's session,
   5. proves the stored session with one live ``account.who_am_i`` call.
 
 What it deliberately does NOT do: it never writes or edits ``.env`` or
@@ -113,7 +115,13 @@ def descriptor_ws_base(descriptor: dict) -> str:
     return url[: -len(suffix)] if url.endswith(suffix) else url
 
 
-def _identity_conflict(settings: Settings, descriptor: dict) -> str | None:
+def _identity_conflict(
+    settings: Settings,
+    descriptor: dict,
+    *,
+    account_switched: bool = False,
+    account_name: str | None = None,
+) -> str | None:
     """Return a one-line refusal reason if THIS clone's configured identity
     conflicts with the descriptor's, or None when it is safe to store the
     session.
@@ -122,6 +130,27 @@ def _identity_conflict(settings: Settings, descriptor: dict) -> str | None:
     it directly with a hand-built Settings and descriptor dict. The
     invariant being protected: a clone must never silently switch to
     another company's profile.
+
+    The uid checks (empty configured uid, uid mismatch) are ALWAYS active:
+    uid equality with the `CS_ACCOUNTS` registry entry IS the identity
+    statement for a secondary account, so `account_switched` never relaxes
+    them. The email comparison binds the clone's operator mailbox to its
+    PRIMARY profile only — it is skipped when `account_switched` is true,
+    because `cs --account X login` is a deliberate registry selection whose
+    descriptor mailbox is that secondary account's own, and legitimately
+    differs from the operator mailbox.
+
+    `account_name` is cosmetic: it only changes the WORDING of the email
+    refusal, never the outcome. When `--account <name>` was given but did
+    NOT switch the uid away from this clone's own default (the registry
+    entry resolved to the same uid the clone is already configured for —
+    the only way to reach the email check with `account_name` set, since an
+    actual switch already returned None above), the usual "run `cs
+    --account <name> login` instead" pointer would be actively wrong
+    advice: `--account` WAS already used. The message names the real cause
+    instead — the resolved uid IS the primary, so the primary-identity
+    email check correctly applies, and a mismatch there points at a
+    CS_ACCOUNTS/CS_ENGINE_OWNER_UID configuration error, not a missing flag.
     """
     configured_uid = (settings.engine_owner_uid or "").strip()
     if not configured_uid:
@@ -137,14 +166,29 @@ def _identity_conflict(settings: Settings, descriptor: dict) -> str | None:
             f"{descriptor_uid!r}) — fix manifest.toml [engine].owner_uid "
             "deliberately, or pick the matching descriptor"
         )
+    if account_switched:
+        return None
     configured_email = (settings.email_address or "").strip()
     descriptor_email = descriptor["email"].strip()
     if configured_email and configured_email.lower() != descriptor_email.lower():
+        if account_name is None:
+            pointer = (
+                "; for a registered secondary account run `cs --account "
+                "<name> login` instead"
+            )
+        else:
+            pointer = (
+                f" (--account {account_name!r} resolved to this clone's own "
+                "default uid, so the primary-identity check applies — if it "
+                "is meant to be a secondary account, its CS_ACCOUNTS uid or "
+                "this clone's CS_ENGINE_OWNER_UID pin is wrong)"
+            )
         return (
             "this clone is stamped for a different profile (configured "
             f"email_address={configured_email!r}, descriptor email="
             f"{descriptor_email!r}) — fix manifest.toml [operator].email_address "
             "deliberately, or pick the matching descriptor"
+            f"{pointer}"
         )
     return None
 
@@ -174,7 +218,12 @@ def _prompt_choice(n: int) -> int:
         print(f"Please enter a number between 1 and {n}.")
 
 
-def cmd_login(argv: list[str] | None = None) -> int:
+def cmd_login(
+    argv: list[str] | None = None,
+    *,
+    account_switched: bool = False,
+    account_name: str | None = None,
+) -> int:
     parser = argparse.ArgumentParser(
         prog="cs login",
         description="Sign in this clone: read the mrcall-desktop app's "
@@ -259,7 +308,9 @@ def cmd_login(argv: list[str] | None = None) -> int:
         print("\ncs login: cancelled", file=sys.stderr)
         return 130
 
-    conflict = _identity_conflict(settings, descriptor)
+    conflict = _identity_conflict(
+        settings, descriptor, account_switched=account_switched, account_name=account_name
+    )
     if conflict:
         print(f"cs login: {conflict}", file=sys.stderr)
         return 1
