@@ -131,6 +131,7 @@ class Settings(BaseSettings):
     engine_ws_url: str = ""       # manifest [engine].ws_url; client appends /ws/<uid>
     firebase_web_api_key: str = ""  # public web API key of the engine's Firebase project
     token_cache_path: str = ""    # empty → <state_dir>/id_token.json
+    refresh_token_path: str = ""  # empty → <state_dir>/refresh_token.json
     firebase_sa_path: str = ""    # empty → <state_dir>/firebase-sa.json
 
     # multi-account (THIS project only): registry name->uid in env CS_ACCOUNTS,
@@ -247,10 +248,13 @@ class Settings(BaseSettings):
             self.db_path = str(sd / "cs.db")
         if not self.token_cache_path:
             self.token_cache_path = str(sd / "id_token.json")
+        if not self.refresh_token_path:
+            self.refresh_token_path = str(sd / "refresh_token.json")
         if not self.firebase_sa_path:
             self.firebase_sa_path = str(sd / "firebase-sa.json")
         self.db_path = os.path.expanduser(self.db_path)
         self.token_cache_path = os.path.expanduser(self.token_cache_path)
+        self.refresh_token_path = os.path.expanduser(self.refresh_token_path)
         self.firebase_sa_path = os.path.expanduser(self.firebase_sa_path)
         return self
 

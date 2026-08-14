@@ -142,7 +142,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply review drive accounts chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply review drive accounts chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -346,6 +346,29 @@ PYEOF
 then
   FAIL=1
 fi
+
+step "18. auth boundary — refresh-token exchange (handled ConfigError, cache short-circuit)"
+# cs/auth.py mints via a Firebase refresh-token exchange (Secure Token API),
+# not a locally-signed service-account custom token. Guards: a missing/
+# mismatched refresh file raises a handled ConfigError naming `cs login`
+# (never a raw traceback below the env-key layer); `_write_refresh` writes
+# mode 0600; a still-valid cached id_token short-circuits before the
+# refresh/exchange path is ever touched (proved by pointing
+# refresh_token_path at a nonexistent directory).
+if "$VENV/bin/python" "$ROOT/tests/test_auth_boundary.py"; then echo "OK"; else echo "FAIL: auth boundary regressed"; FAIL=1; fi
+
+step "19. cs login — descriptor parsing, profile scan, identity cross-check, no-descriptor path"
+# cs/login.py is the human verb that produces what cs/auth.py consumes (the
+# stored refresh-token session). Guards, all network-free (the who_am_i
+# proof call needs a live engine and is out of scope here): parse_descriptor
+# accepts a valid fixture and rejects bad JSON / wrong version / each
+# missing field by name; scan_descriptors finds real descriptors under a
+# CS_ZYLCH_ROOT-rooted temp tree and does not choke on an invalid one next
+# to them; a real `python -m cs login` subprocess with zero descriptors
+# found exits 1 naming the mrcall-desktop app (closed stdin, never blocks);
+# the identity cross-check refuses a uid mismatch naming BOTH uids (built
+# directly against a hand-built Settings, no config.load(), no network).
+if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

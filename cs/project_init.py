@@ -12,6 +12,42 @@ import hashlib
 from datetime import datetime
 import jinja2
 
+from . import login
+
+def descriptor_defaults() -> dict:
+    """Prefill `cs init`'s engine-identity prompts from a mrcall-desktop
+    sign-in already on this machine.
+
+    Scans `login.descriptor_root()` via `login.scan_descriptors()` +
+    `login.parse_descriptor()`. Returns `{}` when there is no valid
+    descriptor. When there is EXACTLY ONE valid descriptor, returns it
+    mapped onto config keys: `email_address`, `engine_ws_url`,
+    `engine_owner_uid`, `default_uid`, `descriptor_email`. When there is
+    MORE THAN ONE valid descriptor, also returns `{}` — `cs init` stays
+    neutral in that case; picking among several signed-in profiles is `cs
+    login`'s job, not this wizard's. An unparsable descriptor found during
+    the scan is skipped silently: this runs unconditionally at the top of
+    every `cs init`, and a stray or corrupt file already on the machine
+    must never crash the wizard.
+    """
+    root = login.descriptor_root()
+    valid = []
+    for path in login.scan_descriptors(root):
+        try:
+            valid.append(login.parse_descriptor(path))
+        except ValueError:
+            continue
+    if len(valid) != 1:
+        return {}
+    d = valid[0]
+    return {
+        "email_address": d["email"],
+        "engine_ws_url": login.descriptor_ws_base(d),
+        "engine_owner_uid": d["uid"],
+        "default_uid": d["uid"],
+        "descriptor_email": d["email"],
+    }
+
 def validate_slug(slug: str) -> bool:
     """Validate slug is lowercase alphanumeric with hyphens only."""
     return bool(re.match(r"^[a-z0-9-]+$", slug))
@@ -58,7 +94,17 @@ def collect_config() -> dict:
     """Collect configuration through interactive prompts."""
     print("Welcome to cs init - Let's set up your new company clone")
     print("=" * 60)
-    
+
+    # A mrcall-desktop sign-in already on this machine prefills the
+    # engine-identity prompts below; the operator still sees and can
+    # override every one of them.
+    defaults = descriptor_defaults()
+    if defaults:
+        print(
+            f"Found a mrcall-desktop profile: {defaults['descriptor_email']} "
+            f"({defaults['engine_owner_uid']}) — using it for defaults."
+        )
+
     config = {}
     
     # Basic company info
@@ -81,7 +127,7 @@ def collect_config() -> dict:
     config["company_prog_name"] = prompt_input("Program name", default_prog_name)
     
     # Operator email
-    config["email_address"] = prompt_input("Operator email")
+    config["email_address"] = prompt_input("Operator email", defaults.get("email_address"))
     
     # IMAP/SMTP settings
     config["imap_host"] = prompt_input("IMAP host", "imap.gmail.com")
@@ -99,12 +145,16 @@ def collect_config() -> dict:
         config["smtp_port"] = 587
     
     # Engine settings
-    config["engine_ws_url"] = prompt_input("Engine WS URL", "wss://desktop.example.com")
-    config["engine_owner_uid"] = prompt_input("Engine owner UID")
-    
+    config["engine_ws_url"] = prompt_input(
+        "Engine WS URL", defaults.get("engine_ws_url", "wss://desktop.example.com")
+    )
+    config["engine_owner_uid"] = prompt_input("Engine owner UID", defaults.get("engine_owner_uid"))
+
     # Accounts
     default_account = prompt_input("Default account name", "support")
-    default_uid = prompt_input(f"Default account UID for '{default_account}'")
+    default_uid = prompt_input(
+        f"Default account UID for '{default_account}'", defaults.get("default_uid")
+    )
     accounts = {default_account: default_uid}
     
     additional = prompt_input("Additional accounts (comma-separated name:uid pairs, or empty)", "")
@@ -187,8 +237,14 @@ def collect_config() -> dict:
     config["cron_schedule"] = prompt_input("Cron schedule", "0 6-18/2 * * 2-5")
     config["cron_comment"] = prompt_input("Cron comment", "cs-operator")
     
-    # Git remote
-    config["repo_git_remote"] = prompt_input("Git remote URL")
+    # Git remote — empty is a legitimate answer (local-only clone). The sole
+    # consumer, manifest.toml.j2's [repo].git_remote, is a template-only field
+    # (never parsed back into Settings — see manifest.py's module docstring)
+    # and renders an empty string as valid TOML, so no downstream prose needs
+    # adapting for the empty case.
+    config["repo_git_remote"] = prompt_input(
+        "Git remote URL (empty = local-only, add one later with `git remote add`)", ""
+    )
     
     # Destination directory (runtime only — stripped before template-manifest)
     default_dest = f"{config['company_slug']}-cs"

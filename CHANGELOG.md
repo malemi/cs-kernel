@@ -15,9 +15,104 @@ evidence from 08-09 (live diffs data-only, shapes identical) plus a same-day
 11/11 ALL GREEN check on the re-frozen baseline (cs-collaudo LOOP-LOG).
 Operators remain paused.
 
-## Unreleased
+## Unreleased — v0.6.0 candidate
+
+### Changed — auth exchanges a refresh token via the Secure Token API; the service-account credential exits the mint path
+- **Why:** the v0.5.2 blind onboarding probe (both clones, 2026-08-09) proved
+  the wall a new customer actually hits at the terminal step is the
+  vendor-only service-account credential the old mint path required
+  (`firebase-sa.json`, obtainable only from inside the vendor's own console)
+  plus the raw tracebacks every layer beneath it threw once that credential
+  existed but the exchange still failed — see the two "Known" entries
+  directly below, both opened the same day.
+- **What:** `cs/auth.py` is rewritten end to end. It no longer mints a
+  Firebase custom token locally with a service-account private key and
+  exchanges it via identitytoolkit `signInWithCustomToken`; instead it reads
+  the refresh token written by the desktop app's own sign-in descriptor —
+  the surface `cs login` (below) consumes — and exchanges it for a
+  short-lived ID token through Google's Secure Token API, mirroring the
+  engine's own headless refresh
+  (`mrcall-desktop/engine/zylch/auth/refresh.py::exchange_refresh_token`)
+  request shape. The service-account file exits the auth path entirely:
+  `firebase_sa_path` remains in `Settings` only for the optional
+  Drive/lead-resolve surfaces (`cs/drive.py`, `cs/resolve.py`,
+  `scripts/find_profile_uid.py`), which still need the Admin SDK and are
+  untouched here. Every auth-boundary failure — not signed in, a stored
+  session for the wrong uid, an HTTP or network failure from the exchange, a
+  malformed response, an identity mismatch on the exchanged token — is now a
+  single handled `ConfigError` line; none of the failure branches propagate
+  a raw traceback. New derived setting `refresh_token_path` (empty →
+  `<state_dir>/refresh_token.json`, derived exactly like `token_cache_path`)
+  backs a new uid-tagged, mode-`0600` JSON file managed by
+  `_read_refresh`/`_write_refresh`. `cs/sms.py` and `cs/rpc.py` are
+  unchanged — both call `auth.get_id_token` and only ever use its return
+  value, so nothing downstream of the token needed to know the mint
+  mechanism changed underneath it. `cs login` (`cs/login.py`) is the new
+  human-run verb that actually produces that stored session: it finds the
+  profile descriptor (scanned under `~/.zylch/profiles/<uid>/cs-descriptor.json`,
+  or given directly via `--descriptor`), confirms — or, with more than one
+  profile present, numbered-picks — with the operator, refuses strictly (no
+  `--force`) on any mismatch between the descriptor's identity and this
+  clone's own configured `engine_owner_uid`/`email_address`, stores the
+  refresh token through the `_write_refresh` above, and proves the session
+  with one live `account.who_am_i` call; it carries no cron/allow-list entry
+  of its own. `cs --help` (bare, no subcommand) now lists `init`, `update`
+  and `login` as real subparsers — normally bypassed by the early dispatch
+  that actually runs them, registered only so the help tree tells the
+  truth — closing the onboarding-probe finding below that `cs --help` did
+  not list `init`/`update` at all. This batch closes the remaining
+  onboarding-probe gaps: `cs init` now autodetects a mrcall-desktop profile
+  already signed in on this machine — new `project_init.descriptor_defaults()`
+  scans the same `~/.zylch/profiles/*/cs-descriptor.json` tree via
+  `login.descriptor_root`/`scan_descriptors`/`parse_descriptor` and, when
+  EXACTLY ONE valid descriptor is found, prefills the wizard's `Operator
+  email`, `Engine WS URL`, `Engine owner UID` and default-account-UID
+  prompts from it (printing which profile it used); the operator still sees
+  and can override every value, and zero or more than one descriptor leaves
+  the wizard neutral — picking among several signed-in profiles stays `cs
+  login`'s job. The wizard's `Git remote URL` prompt now defaults to empty
+  ("local-only, add one later with `git remote add`") instead of being
+  required with no default — the finding below — since its sole consumer,
+  `manifest.toml.j2`'s template-only `[repo].git_remote` field, was already
+  safe with an empty value (valid TOML, never parsed back into `Settings`).
+  `cs update` gains the same minimal argparse treatment as `cs init` — a
+  real `prog='cs update'` parser, `--version` off the installed package
+  metadata, identical `SystemExit` code propagation — so `cs update --help`
+  now prints usage and exits 0 instead of falling through into a live
+  template-merge walk against the current directory. The stamped-clone docs
+  catch up: `CLAUDE.md.j2`'s "Auth chain (headless)" paragraph now describes
+  the desktop app writing the profile descriptor, `cs login` storing the
+  refresh token (state dir, mode `0600`), every verb exchanging it via the
+  Secure Token API for a cached short-lived ID token, and the engine
+  verifying RS256 and gating `token.sub == OWNER_ID` — unchanged; and
+  `.env.example.j2`'s `FIREBASE_WEB_API_KEY`/`FIREBASE_SA_PATH` comments no
+  longer describe the service account as the auth credential, naming it
+  optional and scoped to the Drive/lead-resolution surfaces instead.
+- **Migration note:** a clone re-pinned to this version has no stored
+  session. A still-valid `~/.<slug>-cs/id_token.json` from the old mint
+  path keeps every verb working for up to ~1h — delete it
+  (`rm ~/.<slug>-cs/id_token.json`) to see the real state. After that,
+  every engine verb prints the handled "not signed in — run `cs login`"
+  line until the operator runs `cs login` once.
+- **Re-collaudo:** **full, both clones** — this changes the auth boundary
+  every RPC call, SMS send and engine WebSocket connect goes through
+  (`cs/rpc.py`, `cs/sms.py` call the same `get_id_token` signature, but what
+  runs underneath it is entirely new). Prove a real refresh-token exchange
+  against the live engine Firebase project on both clones before this ships.
+  Delete `id_token.json` on both clones FIRST, or the suite passes on a
+  cached token minted by the old path and proves nothing.
 
 ### Known — the auth boundary still tracebacks below the env-key layer
+- **Resolved for the auth path by the candidate above:** the service-account
+  load this note describes no longer exists in `cs/auth.py` — the file load
+  (and therefore its `FileNotFoundError` / `ValueError: Invalid service
+  account certificate…` failure modes) is gone from the mint path, and the
+  403-on-exchange case is now a handled `ConfigError` line naming the
+  API-key-restriction possibility instead of a bare
+  `urllib.error.HTTPError` traceback. The historical observation immediately
+  below is kept for the record; `firebase_sa_path` and its own failure modes
+  still apply wherever `cs/resolve.py` / `cs/drive.py` /
+  `scripts/find_profile_uid.py` load it directly for the Admin SDK.
 - v0.5.2's `ConfigError` covers the two missing env keys; every layer beneath
   still crashes raw. Observed live 2026-08-09 (both clones + the blind
   onboarding probe): a refused custom-token exchange prints

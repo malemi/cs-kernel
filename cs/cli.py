@@ -35,6 +35,7 @@ from collections import Counter
 from . import config, crm, ingest, rpc
 from . import campaign as campaign_mod
 from . import filter as filt
+from . import login
 from . import manifest as manifest_mod
 from . import state as state_mod
 from . import project_init, project_update
@@ -651,18 +652,44 @@ def cmd_llm(args) -> int:
 # --------------------------------------------------------------------- main
 
 
+# init/update/login are normally intercepted by the early dispatch in
+# main() below, before this module's argparse tree is even built — so these
+# three wrappers are never actually invoked in ordinary use. They exist so
+# `cs --help` (bare, no subcommand) lists all three "human verbs" truthfully
+# instead of the tree silently ending at `plan`, and so `cs login` (etc.)
+# still has a working path if the early dispatch is ever bypassed or
+# reordered by a future change.
+def cmd_init_stub(args) -> int:
+    return project_init.cmd_init(args.init_args)
+
+
+def cmd_update_stub(args) -> int:
+    return project_update.cmd_update(args.update_args)
+
+
+def cmd_login_stub(args) -> int:
+    return login.cmd_login(args.login_args)
+
+
 def main(argv=None) -> int:
-    # --- init/update: work WITHOUT a manifest ---
+    # --- init/update/login: dispatched before the argparse tree is even
+    # built. init/update must work WITHOUT a manifest (a brand-new machine
+    # has none yet); login DOES need one (it runs from a clone root) but
+    # loads it itself (see login.cmd_login) so it can be exercised the same
+    # way in isolation. See the "human verbs" stub subparsers below for why
+    # all three are ALSO registered on the real argparse tree. ---
     if argv is None:
         argv = sys.argv[1:]
-    if argv and argv[0] in ("init", "update"):
+    if argv and argv[0] in ("init", "update", "login"):
         cmd = argv[0]
         rest = argv[1:]
         if cmd == "init":
             return project_init.cmd_init(rest)
         elif cmd == "update":
             return project_update.cmd_update(rest)
-    
+        elif cmd == "login":
+            return login.cmd_login(rest)
+
     try:
         settings = config.load()
     except manifest_mod.ManifestError as e:
@@ -678,6 +705,29 @@ def main(argv=None) -> int:
         "This project's accounts only — never another project's.",
     )
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    # --- the "human verbs" (init/update/login): registered here ONLY so
+    # `cs --help` tells the truth about what exists — see the double
+    # registration comment on the cmd_*_stub wrappers above. Real
+    # invocations never reach these; main()'s early dispatch (top of this
+    # function) has already returned by the time argparse would.
+    pin = sub.add_parser(
+        "init", help="interactively generate a new company clone from the templates"
+    )
+    pin.add_argument("init_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
+    pin.set_defaults(func=cmd_init_stub)
+    pup = sub.add_parser(
+        "update", help="selectively merge template changes into this clone"
+    )
+    pup.add_argument("update_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
+    pup.set_defaults(func=cmd_update_stub)
+    plg = sub.add_parser(
+        "login",
+        help="sign in via the mrcall-desktop profile descriptor (stores the "
+        "session, proves it with account.who_am_i)",
+    )
+    plg.add_argument("login_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
+    plg.set_defaults(func=cmd_login_stub)
 
     pp = sub.add_parser("plan", help="producer worklist: who to consider today")
     pp.add_argument("--period", default="7d")

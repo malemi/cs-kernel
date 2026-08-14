@@ -44,6 +44,21 @@ process). The provider side — the engine RPC contract the signed closes need �
 is the mrcall-desktop daemons, deployed at `d239e5f` on 2026-08-03. Both
 operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
 
+## v0.6.0 candidate — Phase B auth: refresh-token exchange (2026-08-14)
+
+- `cs/auth.py` no longer mints custom tokens with the service-account key:
+  it exchanges a refresh token (stored at `<state_dir>/refresh_token.json`
+  by `cs login`, sourced from the desktop app's profile
+  descriptor) via Google's Secure Token API — the same headless mechanism
+  the engine itself uses (`zylch/auth/refresh.py`). Every auth-boundary
+  failure is a handled one-line `ConfigError`. The service-account file
+  remains only for the optional drive/resolve surfaces.
+- Working-tree intent on branch `phase-b-auth` only; not tagged, not
+  installed anywhere. `v0.5.2` remains the latest release and the
+  operational pin. Full re-collaudo on both clones is the bar at the tag
+  (auth path changed). Plan:
+  `hb/docs/execution-plans/2026-08-13-phase-b-execution-plan.md`.
+
 ## v0.5.1 corrective candidate — release truth gate (2026-08-01)
 
 - Package metadata, changelog, active context and README guidance are checked by

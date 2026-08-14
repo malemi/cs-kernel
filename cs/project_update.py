@@ -6,10 +6,12 @@ overwrites or asks on conflict.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import sys
 from difflib import unified_diff
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 
 
@@ -54,6 +56,20 @@ SECURITY_CRITICAL = {".claude/settings.json", "bin/cs_operator_cron.sh"}
 
 
 def cmd_update(args: list[str]) -> int:
+    try:
+        _kernel_version = f"cs-kernel {_pkg_version('cs-kernel')}"
+    except PackageNotFoundError:
+        _kernel_version = "cs-kernel (version unknown — package not installed)"
+
+    parser = argparse.ArgumentParser(prog="cs update")
+    parser.add_argument("--version", action="version", version=_kernel_version)
+
+    try:
+        parser.parse_args(args)
+    except SystemExit as e:
+        code = e.code
+        return code if isinstance(code, int) else (0 if code is None else 1)
+
     clone_root = Path.cwd()
 
     # Verify we're in a clone

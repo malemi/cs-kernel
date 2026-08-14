@@ -63,6 +63,9 @@ delete the file to resume.
   (see [.env.example](.env.example)).
 - `USER_NOTES` authored (voice / policy) via `cs rpc settings.update`.
 - `.venv` with the pinned kernel: `pip install -r requirements.txt`.
+- `cs login` once — signs this clone in from the mrcall-desktop app's profile
+  descriptor and stores the session at `~/.{{ company_slug }}-cs/refresh_token.json`.
+  Every engine verb refuses with "not signed in" until you have.
 
 ## Safety (the NEVERs)
 
