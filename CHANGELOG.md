@@ -15,7 +15,7 @@ evidence from 08-09 (live diffs data-only, shapes identical) plus a same-day
 11/11 ALL GREEN check on the re-frozen baseline (cs-collaudo LOOP-LOG).
 Operators remain paused.
 
-## Unreleased — v0.6.0 candidate
+## v0.6.0 candidate  — 2026-08-15
 
 ### Changed — auth exchanges a refresh token via the Secure Token API; the service-account credential exits the mint path
 - **Why:** the v0.5.2 blind onboarding probe (both clones, 2026-08-09) proved
