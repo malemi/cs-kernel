@@ -20,6 +20,132 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## Unreleased — v0.7.0 candidate
+
+### Added — top-level `cs --version`
+- **Why:** `cs --version` used to exit 2 with an argparse usage dump
+  demanding a subcommand — the version was reachable only as `cs init
+  --version` / `cs update --version`, neither discoverable from a bare
+  invocation, and it is the first thing a newcomer or an operator
+  verifying a re-pin actually types. It also made its way into a release
+  runbook as a wrong command, twice (backlog item filed 2026-08-16).
+- **What:** `cs/cli.py`'s root `argparse.ArgumentParser` now registers
+  `--version`, sourced from a new single-purpose module `cs/_version.py`
+  (`kernel_version()` / `kernel_version_bare()`, both reading
+  `importlib.metadata` live off the installed `cs-kernel` distribution).
+  `cs/project_init.py`'s `cs init --version` and `cs/project_update.py`'s
+  `cs update --version` are refactored onto the same helper, retiring the
+  two near-identical local `try/except PackageNotFoundError` blocks that
+  used to exist independently — one shared source instead of three copies
+  of the same import, and `cs update --check` (below) reuses the "bare"
+  half of the same helper for its installed-vs-latest comparison. Works on
+  a bare install with no manifest anywhere, exactly like `--help` already
+  did (proven by `tests/test_version.py`, which runs it from an empty
+  directory).
+- **Migration note:** none — additive CLI surface, no state, no config.
+- **Re-collaudo:** none by itself — see the shared reasoning at the bottom
+  of this entry.
+
+### Added — `cs login` auto-selects the descriptor it already knows; no more picking from a menu of wrong answers
+- **Why:** with `--account`, or on any stamped clone, the target engine uid
+  is already fully determined before `cs login` ever runs — yet it still
+  printed the full numbered list of every descriptor found on the machine
+  and let the operator choose, including the wrong ones, which were only
+  refused AFTERWARDS by the identity cross-check, with a message
+  ("fix manifest.toml [engine].owner_uid deliberately") that reads like a
+  manifest misconfiguration for what was simply a menu the operator should
+  never have been shown. On a machine with several signed-in profiles —
+  the normal case for a founder-sweep secondary account — that menu is a
+  trap, not a convenience (backlog item filed 2026-08-16, Mario signing in
+  a secondary account and picking the primary's descriptor by habit).
+- **What:** `cs/login.py::cmd_login` now branches on whether
+  `settings.engine_owner_uid` is already configured. When it is, the
+  descriptor whose uid matches is auto-selected and printed
+  (`selected: <email> (<uid>)`) with NO prompt at all; when none of the
+  descriptors found match that uid, `cs login` fails immediately —
+  `no descriptor for uid <uid> [(account '<name>')] — sign in to the
+  mrcall-desktop app as that account` — instead of offering a list in
+  which every option is wrong. The numbered picker (and the single-profile
+  `Proceed? [Y/n]` confirm) survives untouched for the one case that is
+  genuinely ambiguous: no engine identity configured yet, e.g. a brand-new
+  clone before `cs init` has stamped one. `_identity_conflict` — the
+  post-pick cross-check that actually decides whether a session gets
+  stored — is completely unchanged; this only changes WHICH descriptor is
+  ever offered, never what is accepted.
+- **Migration note:** none — behavior-only fix to an interactive verb, no
+  state, no config. An operator who was used to seeing (and ignoring) the
+  full menu will now see either a one-line auto-select confirmation or an
+  immediate, clearer refusal.
+- **Re-collaudo:** none by itself — see the shared reasoning at the bottom
+  of this entry.
+
+### Added — `cs update --check` / `cs update --pin <tag>`: the discovery half of the upgrade path
+- **Why:** nothing told an operator that a newer kernel tag had shipped —
+  the only way to find out was reading the CHANGELOG in another repo, and
+  re-pinning was a hand-edit of `requirements.txt` (in practice a `sed`).
+  A clone could sit on an old kernel indefinitely with no signal (backlog
+  item filed 2026-08-16, mid a `v0.6.0` re-pin).
+- **What:** two new opt-in flags on `cs/project_update.py`'s argparse
+  layer; bare `cs update` is completely unchanged. `--check` parses the
+  kernel origin straight off `requirements.txt`'s own pin line (`cs-kernel
+  @ git+<url>@<tag>` — the URL is READ, never hardcoded), runs `git
+  ls-remote --tags <url>` against it, and prints installed (the actually
+  `pip`-installed version, via `cs._version.kernel_version_bare()`),
+  pinned, and latest. When a newer tag exists it also prints that tag's
+  own re-collaudo tier when it can determine it — read straight off the
+  newer tag's OWN `CHANGELOG.md` via `git show <tag>:CHANGELOG.md`,
+  attempted ONLY when the origin is something git can read off the local
+  filesystem (a `file://` remote or a local path some kernel-developer
+  clone may legitimately pin to); a real customer clone pinned to a remote
+  GitHub URL has no local copy of the kernel's tree to read the tag's
+  CHANGELOG from, which is the common case, and the command degrades to
+  printing just the tag name rather than guessing or fetching raw content
+  over an assumed host shape. `--check` WRITES NOTHING, ever — including
+  when the origin is unreachable, which prints one handled line naming it
+  and exits 1, never a traceback. `--pin <tag>` rewrites ONLY the kernel
+  pin line in `requirements.txt` (every other byte, including comments,
+  is untouched), prints the exact before/after line, and says installing
+  it is a separate, deliberate step (`pip install -r requirements.txt`).
+  Neither flag auto-bumps the pin: `requirements.txt` is the operator's
+  own pin (the `v0.5.2` decision — "`cs update` never touches it"), and
+  every kernel upgrade owes a re-collaudo (CLAUDE.md, Versioning &
+  release) — `--check`'s own output says so, and so does the code comment
+  above `--pin`'s implementation. A `--check` that rewrote the pin itself
+  would not be a pin anymore.
+- **Migration note:** none — additive CLI surface; `requirements.txt`'s
+  format is unchanged and `--check`/`--pin` are both opt-in.
+- **Re-collaudo:** none by itself — see the shared reasoning at the bottom
+  of this entry.
+
+### Re-collaudo (this release)
+- **STATIC tier, both clones.** This is the first release to apply the
+  amended charter rule (CLAUDE.md, Versioning & release, changed
+  2026-08-16 while scoping this very candidate): the version digit
+  describes the INTERFACE, and the re-collaudo tier is a separate
+  judgement decided by what the release TOUCHES. This candidate is
+  therefore a MINOR — new CLI surface (a root flag, two `cs update`
+  flags, a changed `cs login` interaction shape), and a verb that stops
+  prompting is not something an operator reading "patch" should discover
+  on their own — while carrying NO
+  new manifest field and touches none of the charter's escalation
+  triggers: no send path (`cs/send_mail.py`, `cs/campaign.py`'s pack
+  senders), no `cs/gmail_archive.py`, no `cs/send_guard.py`, no engine RPC
+  shape, and — proven by gate 17's own byte-for-byte token check, which
+  stays green unmodified — no permission bytes in either
+  `.claude/settings.json.j2` or `bin/cs_operator_cron.sh.j2`. The only
+  collaudo-visible surface any of the three changes touch is the `--help`
+  tree and two interactive verbs' console output, and the STATIC tier
+  (gate 4's full `--help` walk plus the three new/expanded test files —
+  `tests/test_version.py`, the `--check`/`--pin` guards folded into
+  `tests/test_project_update.py`, the known-uid auto-select guards folded
+  into `tests/test_login.py`) already exercises every one of those real
+  code paths end to end, several of them as REAL subprocesses against a
+  real local git repo standing in for the kernel's remote origin. The
+  reasoning is on record here, and the tier is stated per entry as the
+  amended rule now requires, precisely so the next MINOR that DOES touch a
+  send path, the auth boundary or a manifest field cannot point at this
+  entry as precedent for skipping FULL.
+
 ## v0.6.1 — 2026-08-16
 
 ### Fixed — the public README still walked a new reader onto the retired `v0.5.2` install pin and skipped `cs login` entirely

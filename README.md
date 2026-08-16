@@ -175,9 +175,15 @@ uv pip install -r requirements.txt
 cs login
 ```
 
-This reads the profile descriptor mrcall-desktop wrote in Step 0, prints
-`email (uid)` for you to confirm, stores a refresh-token session under
-`~/.acme-cs/`, and proves it with one live call.
+This reads the profile descriptor mrcall-desktop wrote in Step 0. If your
+clone already has an engine identity configured (any stamped clone does,
+and this is always the case under `cs --account <name> login`), `cs login`
+auto-selects the matching descriptor and prints `selected: email (uid)` —
+no picking from a list. Only a genuinely fresh clone with no engine
+identity yet asks you to confirm (`email (uid)`, one descriptor) or pick a
+number (more than one descriptor found on the machine). Either way it then
+stores a refresh-token session under `~/.acme-cs/` and proves it with one
+live call.
 
 If it also prints a line starting with `note: … FIREBASE_WEB_API_KEY=…`,
 paste that exact line into `~/.acme-cs/.env` and run `cs login` again — it
@@ -350,15 +356,36 @@ not what you get on day one.
 
 ## Upgrading later
 
+First find out whether there is anything to upgrade TO — `cs update --check`
+reads the kernel origin already pinned in your `requirements.txt`, checks it
+for newer tags, and prints installed vs. latest (plus that tag's re-collaudo
+tier, when it can determine one). It writes nothing:
+
 ```bash
 cd acme-cs
 source .venv/bin/activate
-# if the pin in requirements.txt changed:
+cs update --check
+```
+
+If a newer tag is what you want, re-pin explicitly — this never happens on
+its own; a pin that updates itself is not a pin:
+
+```bash
+cs update --pin v0.7.0     # rewrites ONLY the kernel pin line in
+                            # requirements.txt and prints the before/after
+```
+
+Then install it and refresh the stamped templates:
+
+```bash
 uv pip install -r requirements.txt
 cs update    # refreshes skills/templates; keeps your edits, except the two
              # security-critical files (settings.json, cron wrapper): those are
              # applied, with your version saved next to them as *.local-bak
 ```
+
+Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG entry —
+`cs update --check`'s own output says so.
 
 Then reopen `claude` / `opencode` in that folder.
 

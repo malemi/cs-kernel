@@ -8,8 +8,18 @@ sign-in it writes a JSON descriptor to
 
   1. finds that descriptor (scanning the profile root, or via
      ``--descriptor PATH`` directly),
-  2. lets the operator confirm (or pick, if more than one profile is
-     present),
+  2. resolves WHICH one: when this clone already has a configured engine
+     identity (``settings.engine_owner_uid`` — always true under
+     ``--account``, and true for any stamped clone), it auto-selects the
+     descriptor whose uid matches and never prompts, or fails immediately
+     naming the uid when none matches. Only the genuinely ambiguous case —
+     no configured uid at all, e.g. a brand-new clone before `cs init` has
+     stamped one — falls back to letting the operator confirm (one
+     descriptor) or numbered-pick (more than one). See the dedicated
+     comment at the branch in `cmd_login` below for why: offering a menu
+     that already contains only wrong answers, and refusing the pick
+     afterwards, reads as a misconfiguration rather than as a menu the
+     operator should never have been shown,
   3. refuses if the descriptor's identity does not match what THIS clone is
      already stamped for (a clone must never silently switch to another
      company's profile — see `_identity_conflict`),
@@ -281,32 +291,72 @@ def cmd_login(
             )
         return 1
 
-    try:
-        if len(found) == 1:
-            _, descriptor = found[0]
-            print(f"{descriptor['email']} ({descriptor['uid']})")
-            if not _prompt_yes_no("Proceed? [Y/n] ", default=True):
-                print("cs login: cancelled")
-                return 1
-        else:
-            print("Multiple profiles found:")
-            for i, (_, d) in enumerate(found, 1):
+    configured_uid = (settings.engine_owner_uid or "").strip()
+    if configured_uid:
+        # The uid is already known — always true under `--account`, and
+        # true for any stamped clone — so there is exactly one CORRECT
+        # answer among `found`, and every other entry is a trap: picking
+        # one for a different uid used to be accepted here and only
+        # refused AFTERWARDS by `_identity_conflict` below, with a message
+        # ("fix manifest.toml [engine].owner_uid deliberately") that reads
+        # like a misconfiguration rather than "you picked the wrong menu
+        # item." On a machine with several signed-in profiles that menu is
+        # a trap, not a convenience. Resolve deterministically instead:
+        # auto-select the descriptor whose uid matches — printing which one,
+        # never prompting — or fail immediately naming the uid when none
+        # matches, instead of offering a list in which every option is
+        # wrong. This only changes WHICH descriptor is offered; the
+        # identity cross-check below still runs exactly as it always has,
+        # unchanged, and is what actually decides whether the session gets
+        # stored.
+        matches = [(p, d) for p, d in found if d["uid"] == configured_uid]
+        if not matches:
+            if account_name:
                 print(
-                    f"  {i}. {d['email']}  ({d['uid']})  "
-                    f"written_at={d.get('written_at', '?')}"
+                    f"cs login: no descriptor for uid {configured_uid} "
+                    f"(account {account_name!r}) — sign in to the "
+                    "mrcall-desktop app as that account",
+                    file=sys.stderr,
                 )
-            choice = _prompt_choice(len(found))
-            _, descriptor = found[choice - 1]
-    except EOFError:
-        print(
-            "cs login: input ended before a profile was chosen — run it in "
-            "an interactive terminal and answer the prompt",
-            file=sys.stderr,
-        )
-        return 1
-    except KeyboardInterrupt:
-        print("\ncs login: cancelled", file=sys.stderr)
-        return 130
+            else:
+                print(
+                    f"cs login: no descriptor for uid {configured_uid} — "
+                    "sign in to the mrcall-desktop app as that account",
+                    file=sys.stderr,
+                )
+            return 1
+        _, descriptor = matches[0]
+        print(f"selected: {descriptor['email']} ({descriptor['uid']})")
+    else:
+        # Genuinely ambiguous: no engine identity is configured yet (a
+        # brand-new clone before `cs init` has stamped one) to resolve
+        # the choice against, so the operator has to pick.
+        try:
+            if len(found) == 1:
+                _, descriptor = found[0]
+                print(f"{descriptor['email']} ({descriptor['uid']})")
+                if not _prompt_yes_no("Proceed? [Y/n] ", default=True):
+                    print("cs login: cancelled")
+                    return 1
+            else:
+                print("Multiple profiles found:")
+                for i, (_, d) in enumerate(found, 1):
+                    print(
+                        f"  {i}. {d['email']}  ({d['uid']})  "
+                        f"written_at={d.get('written_at', '?')}"
+                    )
+                choice = _prompt_choice(len(found))
+                _, descriptor = found[choice - 1]
+        except EOFError:
+            print(
+                "cs login: input ended before a profile was chosen — run it "
+                "in an interactive terminal and answer the prompt",
+                file=sys.stderr,
+            )
+            return 1
+        except KeyboardInterrupt:
+            print("\ncs login: cancelled", file=sys.stderr)
+            return 130
 
     conflict = _identity_conflict(
         settings, descriptor, account_switched=account_switched, account_name=account_name

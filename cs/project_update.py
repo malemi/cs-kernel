@@ -3,17 +3,37 @@
 Reads `template-manifest.json` (created by `cs init`) in the clone root,
 compares current template files against stored checksums, and selectively
 overwrites or asks on conflict.
+
+Two opt-in discovery/re-pin flags (bare `cs update` is unchanged):
+
+  --check      read the clone's configured kernel origin — the git URL
+               already pinned in requirements.txt, parsed, never hardcoded
+               — for its tags, and print installed-vs-latest plus (when
+               determinable) the newer tag's re-collaudo tier. Writes
+               NOTHING.
+  --pin TAG    rewrite ONLY the kernel pin line in requirements.txt to TAG
+               and print the before/after line. Deliberately does not
+               install it — `pip install -r requirements.txt` stays a
+               separate, deliberate step.
+
+Neither flag auto-bumps the pin: requirements.txt is the operator's own
+pin (v0.5.2 decision — "cs update never touches it"), and every kernel
+upgrade owes a re-collaudo (CLAUDE.md, Versioning & release). A `--check`
+that rewrote the pin itself would not be a pin anymore.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
+import re
+import subprocess
 import sys
 from difflib import unified_diff
-from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 
+from ._version import kernel_version, kernel_version_bare
 from .project_init import is_executable_target
 
 
@@ -68,23 +88,252 @@ def _read_overwrite_choice(prompt: str, default: str) -> str:
 # message says what to re-apply by hand.
 SECURITY_CRITICAL = {".claude/settings.json", "bin/cs_operator_cron.sh"}
 
+# The exact shape `requirements.txt.j2` stamps (see that template):
+#   cs-kernel @ git+https://example.invalid/org/cs-kernel@v0.6.1
+# Group 1 is the literal PEP 508 direct-URL prefix, group 2 the origin URL
+# (whatever it is — never hardcoded here, always read off this line), group
+# 3 the pinned tag.
+_PIN_RE = re.compile(r"^(cs-kernel\s*@\s*git\+)(\S+)@([^\s@]+)\s*$")
+
+# This project's own tag shape (CLAUDE.md, Versioning & release): semver
+# `v0.MINOR.PATCH`, MAJOR always 0.
+_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
+
+_RECOLLAUDO_RE = re.compile(r"\*\*Re-collaudo:?\*\*\s*(.+)")
+
+
+def _find_pin_line(text: str) -> tuple[int, str, str, str] | None:
+    """Locate the kernel pin line in `requirements.txt` content.
+
+    Returns `(line_index, prefix, origin_url, tag)` — `prefix` is the
+    literal `"cs-kernel @ git+"` text, `origin_url` the git remote the
+    pin points at (parsed, never assumed), `tag` the pinned ref — or
+    `None` when no line matches the shape this kernel's own
+    `requirements.txt.j2` stamps."""
+    for i, line in enumerate(text.splitlines()):
+        m = _PIN_RE.match(line.strip())
+        if m:
+            prefix, origin_url, tag = m.groups()
+            return i, prefix, origin_url, tag
+    return None
+
+
+def _tag_key(tag: str) -> tuple[int, int, int]:
+    m = _TAG_RE.match(tag)
+    return tuple(int(x) for x in m.groups()) if m else (-1, -1, -1)
+
+
+def _parse_remote_tags(ls_remote_output: str) -> list[str]:
+    """`vX.Y.Z` tag names from `git ls-remote --tags` output, deduped
+    (annotated tags list twice — the ref itself and a `^{}` peeled
+    entry) and sorted oldest -> newest. Anything not matching this
+    project's own tag shape is ignored, not just skipped-with-a-warning —
+    a stray non-release tag on the remote is not this command's business."""
+    names: set[str] = set()
+    for line in ls_remote_output.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 2 or not parts[1].startswith("refs/tags/"):
+            continue
+        name = parts[1][len("refs/tags/"):]
+        if name.endswith("^{}"):
+            name = name[:-3]
+        if _TAG_RE.match(name):
+            names.add(name)
+    return sorted(names, key=_tag_key)
+
+
+def _extract_recollaudo_tier(changelog_text: str, tag: str) -> str | None:
+    """Pull the first `**Re-collaudo:** …` line out of `tag`'s own `##
+    <version> — …` section of a CHANGELOG.md that follows this project's
+    entry style (see neighbouring CHANGELOG entries). Best-effort: any
+    format surprise just yields `None`, never a crash — this is a
+    convenience for `--check`'s output, not a parser the release process
+    depends on."""
+    version = tag[1:] if tag.startswith("v") else tag
+    heading = re.search(rf"^## {re.escape(version)}\b", changelog_text, re.MULTILINE)
+    if not heading:
+        return None
+    section = changelog_text[heading.end():]
+    next_heading = re.search(r"^## ", section, re.MULTILINE)
+    if next_heading:
+        section = section[: next_heading.start()]
+    tier = _RECOLLAUDO_RE.search(section)
+    if not tier:
+        return None
+    # First line only: the CHANGELOG's own paragraph is prose for a human
+    # reading the file directly, not for a one-line `--check` summary.
+    return tier.group(1).split("\n")[0].strip()
+
+
+def _changelog_tier(origin_url: str, tag: str) -> str | None:
+    """Best-effort: the re-collaudo tier `tag`'s CHANGELOG.md entry
+    declares, read WITHOUT any extra network round trip beyond the `git
+    ls-remote` `--check` already made. Only succeeds when `origin_url`
+    names a location git can read straight off the local filesystem (a
+    `file://` remote, or a plain local path — the shape a kernel
+    developer's own clone may legitimately pin to). A real customer clone
+    is pinned to a remote URL (GitHub, in practice) and has no local copy
+    of the kernel's tree to read the tag's CHANGELOG.md from; that is the
+    common case, and this returns `None` so the caller falls back to
+    printing just the tag — never a raw fetch failure."""
+    if origin_url.startswith("file://"):
+        local_path = origin_url[len("file://"):]
+    elif os.path.isdir(origin_url):
+        local_path = origin_url
+    else:
+        return None
+    try:
+        proc = subprocess.run(
+            ["git", "show", f"{tag}:CHANGELOG.md"],
+            cwd=local_path, capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    return _extract_recollaudo_tier(proc.stdout, tag)
+
+
+def cmd_update_check(clone_root: Path) -> int:
+    """`cs update --check`: read the clone's configured kernel origin
+    (parsed from requirements.txt's own pin line — never a hardcoded URL)
+    for its tags, and print installed-vs-latest. WRITES NOTHING — this is
+    discovery only; re-pinning is `--pin`'s job, on request. A network
+    failure prints one handled line, never a traceback."""
+    req_path = clone_root / "requirements.txt"
+    if not req_path.exists():
+        print(
+            "error: no requirements.txt found in current directory.\n"
+            "Run `cs update --check` from the clone root.",
+            file=sys.stderr,
+        )
+        return 1
+
+    found = _find_pin_line(req_path.read_text())
+    if found is None:
+        print(
+            "error: requirements.txt has no recognizable cs-kernel pin line "
+            "(expected `cs-kernel @ git+<url>@<tag>`) — cannot check for updates.",
+            file=sys.stderr,
+        )
+        return 1
+    _, _prefix, origin_url, pinned_tag = found
+
+    installed = kernel_version_bare()
+    print(f"  installed:  {installed or '(unknown — package not installed)'}")
+    print(f"  pinned:     {pinned_tag}  ({origin_url})")
+
+    try:
+        proc = subprocess.run(
+            ["git", "ls-remote", "--tags", origin_url],
+            capture_output=True, text=True, timeout=20,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        print(f"\ncould not reach {origin_url}: {type(e).__name__}: {e}")
+        return 1
+    if proc.returncode != 0:
+        print(f"\ncould not reach {origin_url}: "
+              f"{proc.stderr.strip() or 'git ls-remote failed'}")
+        return 1
+
+    tags = _parse_remote_tags(proc.stdout)
+    if not tags:
+        print(f"\nno release tags found at {origin_url}")
+        return 1
+    latest = tags[-1]
+    print(f"  latest:     {latest}")
+
+    if _tag_key(latest) <= _tag_key(pinned_tag):
+        print("\nup to date.")
+        return 0
+
+    tier = _changelog_tier(origin_url, latest)
+    if tier:
+        print(f"\nnewer tag available: {latest} — re-collaudo: {tier}")
+    else:
+        print(f"\nnewer tag available: {latest}")
+    print(
+        "Every kernel upgrade owes a re-collaudo (CLAUDE.md, Versioning & "
+        "release) — this only reports the tag, it writes nothing. Re-pin "
+        f"explicitly with `cs update --pin {latest}`, then "
+        "`pip install -r requirements.txt`."
+    )
+    return 0
+
+
+def cmd_update_pin(clone_root: Path, tag: str) -> int:
+    """`cs update --pin <tag>`: rewrite ONLY the kernel pin line in
+    requirements.txt to `tag`, and print the before/after line. Does not
+    install it — `pip install -r requirements.txt` stays a separate,
+    deliberate step, and nothing else `cs update` would otherwise render
+    is touched."""
+    req_path = clone_root / "requirements.txt"
+    if not req_path.exists():
+        print(
+            "error: no requirements.txt found in current directory.\n"
+            "Run `cs update --pin` from the clone root.",
+            file=sys.stderr,
+        )
+        return 1
+
+    text = req_path.read_text()
+    found = _find_pin_line(text)
+    if found is None:
+        print(
+            "error: requirements.txt has no recognizable cs-kernel pin line "
+            "(expected `cs-kernel @ git+<url>@<tag>`) — nothing to re-pin.",
+            file=sys.stderr,
+        )
+        return 1
+    idx, prefix, origin_url, _old_tag = found
+
+    lines = text.splitlines(keepends=True)
+    old_line = lines[idx]
+    ending = "\n" if old_line.endswith("\n") else ""
+    new_line = f"{prefix}{origin_url}@{tag}{ending}"
+    lines[idx] = new_line
+    req_path.write_text("".join(lines))
+
+    print(f"  - {old_line.rstrip(chr(10))}")
+    print(f"  + {new_line.rstrip(chr(10))}")
+    print(
+        "\nrequirements.txt updated. Installing it is a separate, deliberate "
+        "step: run `pip install -r requirements.txt`, then re-collaudo per "
+        "the new tag's CHANGELOG entry before un-pausing operators."
+    )
+    return 0
+
 
 def cmd_update(args: list[str]) -> int:
-    try:
-        _kernel_version = f"cs-kernel {_pkg_version('cs-kernel')}"
-    except PackageNotFoundError:
-        _kernel_version = "cs-kernel (version unknown — package not installed)"
-
     parser = argparse.ArgumentParser(prog="cs update")
-    parser.add_argument("--version", action="version", version=_kernel_version)
+    parser.add_argument("--version", action="version", version=kernel_version())
+    checkpin = parser.add_mutually_exclusive_group()
+    checkpin.add_argument(
+        "--check", action="store_true",
+        help="check the clone's configured kernel origin (requirements.txt) "
+        "for a newer tag; print installed-vs-latest and, when known, the "
+        "re-collaudo tier the newer tag's CHANGELOG entry declares. Writes "
+        "NOTHING.",
+    )
+    checkpin.add_argument(
+        "--pin", metavar="TAG",
+        help="rewrite ONLY requirements.txt's kernel pin line to TAG (e.g. "
+        "v0.7.0) and print the before/after line. Does not install it — "
+        "`pip install -r requirements.txt` is a separate, deliberate step.",
+    )
 
     try:
-        parser.parse_args(args)
+        parsed = parser.parse_args(args)
     except SystemExit as e:
         code = e.code
         return code if isinstance(code, int) else (0 if code is None else 1)
 
     clone_root = Path.cwd()
+
+    if parsed.check:
+        return cmd_update_check(clone_root)
+    if parsed.pin:
+        return cmd_update_pin(clone_root, parsed.pin)
 
     # Verify we're in a clone
     manifest = _read_manifest(clone_root)

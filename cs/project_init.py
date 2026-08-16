@@ -6,12 +6,12 @@ import json
 import os
 import re
 import sys
-from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 import hashlib
 from datetime import datetime
 import jinja2
 
+from ._version import kernel_version
 from . import login
 
 def descriptor_defaults() -> dict:
@@ -418,13 +418,8 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
 def cmd_init(argv=None) -> int:
     """Main entry point for the init command."""
     # Parse command line arguments
-    try:
-        _kernel_version = f"cs-kernel {_pkg_version('cs-kernel')}"
-    except PackageNotFoundError:
-        _kernel_version = "cs-kernel (version unknown — package not installed)"
-
     parser = argparse.ArgumentParser(prog='cs init')
-    parser.add_argument('--version', action='version', version=_kernel_version)
+    parser.add_argument('--version', action='version', version=kernel_version())
     
     try:
         args = parser.parse_args(argv)

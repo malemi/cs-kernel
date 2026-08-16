@@ -33,6 +33,32 @@ at all — also end-to-end, same closed-stdin subprocess technique:
     all: on conflict the new render is applied unconditionally, the
     operator's prior local content is preserved as `<file>.local-bak`, and a
     message says so.
+
+2026-08-16 (Task 3, backlog `cs-kernel: a clone cannot tell that a newer
+kernel tag exists`): `cs update --check` / `cs update --pin <tag>`. Real
+`python -m cs update …` subprocesses throughout, against a REAL local git
+repo standing in for the kernel's remote origin (`_make_kernel_origin`
+below) — `git ls-remote --tags`/`git show <tag>:CHANGELOG.md` behave
+identically against a local path, so this needs no network and no fixture
+faking git's own output format. Guards:
+
+  - `--check` with no requirements.txt in the cwd: exit 1, one-line error,
+    no traceback.
+  - `--check` against a requirements.txt whose pin line does not match the
+    `cs-kernel @ git+<url>@<tag>` shape: exit 1, names the expected shape.
+  - `--check` already at the latest tag: "up to date.", writes NOTHING
+    (requirements.txt byte-identical before/after).
+  - `--check` with a newer tag on the origin: prints installed, pinned and
+    latest, AND the newer tag's re-collaudo tier — read from that tag's
+    OWN CHANGELOG.md via `git show`, not hardcoded — writes NOTHING.
+  - `--check` against an unreachable origin (a local path that is not a
+    git repo — deterministic, no real network wait): one handled line
+    naming the origin, exit 1, no traceback.
+  - `--pin <tag>`: rewrites ONLY the kernel pin line, prints the exact
+    before/after line, says installing it is a separate step, and leaves
+    every other line of requirements.txt byte-identical.
+  - bare `cs update` (no flags): unaffected — still walks the template
+    tree exactly as before Task 3.
 """
 from __future__ import annotations
 
@@ -47,6 +73,7 @@ from pathlib import Path
 import jinja2
 
 from cs import project_update
+from cs._version import kernel_version_bare
 
 # The smallest real template in cs/templates/project: `.gitignore.j2`
 # interpolates exactly one variable (company_slug), so a minimal init_data
@@ -283,11 +310,241 @@ def _e2e_requirements_txt_never_touched() -> None:
         )
 
 
+def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", *args], cwd=cwd, capture_output=True, text=True, timeout=30,
+    )
+
+
+def _make_kernel_origin(root: Path, releases: list[tuple[str, str]]) -> Path:
+    """A REAL local git repo standing in for the kernel's remote origin,
+    one commit + one semver tag per `(tag, changelog_body)` pair in
+    `releases`, oldest first. `git ls-remote --tags`/`git show
+    <tag>:CHANGELOG.md` behave identically against a local repo path, so
+    `cs update --check` needs no network and no fixture faking git's own
+    output format — it is exercised against a real one."""
+    origin = root / "kernel-origin"
+    origin.mkdir()
+    _git("init", "-q", cwd=origin)
+    for tag, body in releases:
+        (origin / "CHANGELOG.md").write_text(body)
+        _git("add", "CHANGELOG.md", cwd=origin)
+        _git(
+            "-c", "user.email=test@example.com", "-c", "user.name=test",
+            "commit", "-q", "-m", tag, cwd=origin,
+        )
+        _git("tag", tag, cwd=origin)
+    return origin
+
+
+def _write_requirements(clone: Path, origin: Path | str, tag: str) -> Path:
+    path = clone / "requirements.txt"
+    path.write_text(
+        "# The clone's ONLY dependency: the pinned cs-kernel.\n"
+        f"cs-kernel @ git+{origin}@{tag}\n"
+    )
+    return path
+
+
+def _run_update(argv: list[str], clone: Path, env: dict) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, "-m", "cs", "update", *argv],
+        cwd=clone, env=env, stdin=subprocess.DEVNULL,
+        capture_output=True, text=True, timeout=60,
+    )
+
+
+def _e2e_check_no_requirements_txt() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
+        assert "no requirements.txt found" in out, out
+        assert "Traceback" not in out, out
+
+
+def _e2e_check_malformed_pin() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+        (clone / "requirements.txt").write_text("cs-kernel==0.4.7\n")
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
+        assert "no recognizable cs-kernel pin line" in out, out
+        assert "git+<url>@<tag>" in out, out
+        assert "Traceback" not in out, out
+
+
+def _e2e_check_up_to_date() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        origin = _make_kernel_origin(
+            Path(td), [("v0.1.0", "## 0.1.0\n\n- **Re-collaudo:** static\n")],
+        )
+        before = _write_requirements(clone, origin, "v0.1.0").read_text()
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 0, f"expected exit 0, got {proc.returncode}:\n{out}"
+        assert "up to date." in out, out
+        assert (clone / "requirements.txt").read_text() == before, (
+            "--check must write NOTHING, ever"
+        )
+
+
+def _e2e_check_newer_tag_with_tier() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        origin = _make_kernel_origin(
+            Path(td),
+            [
+                ("v0.1.0", "## 0.1.0\n\n- **Re-collaudo:** static\n"),
+                (
+                    "v0.2.0",
+                    "## 0.2.0 — 2026-08-16\n\n"
+                    "### Added — something\n"
+                    "- **Why:** because.\n"
+                    "- **What:** this.\n"
+                    "- **Re-collaudo:** full, both clones — because it touches "
+                    "the send boundary.\n",
+                ),
+            ],
+        )
+        before = _write_requirements(clone, origin, "v0.1.0").read_text()
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 0, f"expected exit 0, got {proc.returncode}:\n{out}"
+        assert "pinned:     v0.1.0" in out, out
+        assert "latest:     v0.2.0" in out, out
+        assert "newer tag available: v0.2.0" in out, out
+        assert "full, both clones" in out, (
+            f"the newer tag's OWN CHANGELOG.md re-collaudo line must be read "
+            f"and printed, not hardcoded:\n{out}"
+        )
+        assert "cs update --pin v0.2.0" in out, out
+        assert (clone / "requirements.txt").read_text() == before, (
+            "--check must write NOTHING, ever"
+        )
+
+
+def _e2e_check_installed_version_reported() -> None:
+    """The "installed" half of installed-vs-latest is the ACTUAL installed
+    package (importlib.metadata via cs._version.kernel_version_bare),
+    independently computed here so the test does not trust the code under
+    test to report its own truth."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        origin = _make_kernel_origin(
+            Path(td), [("v0.1.0", "## 0.1.0\n\n- **Re-collaudo:** static\n")],
+        )
+        _write_requirements(clone, origin, "v0.1.0")
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        installed = kernel_version_bare()
+        expect = installed or "(unknown — package not installed)"
+        assert f"installed:  {expect}" in out, out
+
+
+def _e2e_check_unreachable_origin() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        # A local path that does NOT exist / is not a git repo — git
+        # fails fast against it (no network wait either way), exercising
+        # the handled-failure branch deterministically.
+        not_a_repo = str(Path(td, "does-not-exist"))
+        _write_requirements(clone, not_a_repo, "v0.1.0")
+
+        proc = _run_update(["--check"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
+        assert "could not reach" in out, out
+        assert not_a_repo in out, out
+        assert "Traceback" not in out, out
+
+
+def _e2e_pin_rewrites_only_the_pin_line() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        origin_url = "https://github.com/malemi/cs-kernel"
+        req_path = clone / "requirements.txt"
+        req_path.write_text(
+            "# The clone's ONLY dependency: the pinned cs-kernel.\n"
+            "# Upgrade = bump the pin, pip install, re-collaudo.\n"
+            f"cs-kernel @ git+{origin_url}@v0.6.1\n"
+        )
+
+        proc = _run_update(["--pin", "v0.7.0"], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 0, f"expected exit 0, got {proc.returncode}:\n{out}"
+        assert f"- cs-kernel @ git+{origin_url}@v0.6.1" in out, out
+        assert f"+ cs-kernel @ git+{origin_url}@v0.7.0" in out, out
+        assert "pip install -r requirements.txt" in out, (
+            f"must say installing it is a separate, deliberate step:\n{out}"
+        )
+
+        new_text = req_path.read_text()
+        assert new_text == (
+            "# The clone's ONLY dependency: the pinned cs-kernel.\n"
+            "# Upgrade = bump the pin, pip install, re-collaudo.\n"
+            f"cs-kernel @ git+{origin_url}@v0.7.0\n"
+        ), (
+            "--pin must rewrite ONLY the pin line — every other byte of "
+            f"requirements.txt must be unchanged:\n{new_text}"
+        )
+
+
+def _e2e_bare_update_unaffected() -> None:
+    """Bare `cs update` (no --check/--pin) must be untouched by Task 3 —
+    still requires template-manifest.json and still walks the template
+    tree exactly as before."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        proc = _run_update([], clone, env)
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
+        assert "no template-manifest.json found" in out, out
+
+
 def main() -> int:
     _characterize_eof_default()
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
+    _e2e_check_no_requirements_txt()
+    _e2e_check_malformed_pin()
+    _e2e_check_up_to_date()
+    _e2e_check_newer_tag_with_tier()
+    _e2e_check_installed_version_reported()
+    _e2e_check_unreachable_origin()
+    _e2e_pin_rewrites_only_the_pin_line()
+    _e2e_bare_update_unaffected()
     print("test_project_update: all assertions passed")
     return 0
 

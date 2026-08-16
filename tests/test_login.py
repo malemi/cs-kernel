@@ -61,6 +61,17 @@ Guards:
         connect directly, the id-token exchange via an http_proxy/
         https_proxy env override — so nothing leaves the machine, online
         or not.
+  (x)   `cmd_login`'s known-uid auto-select (Task 2 / backlog `cs-kernel:
+        cs --account <name> login asks the operator to pick a descriptor
+        it already knows`): with `settings.engine_owner_uid` already
+        configured, the matching descriptor among several is picked with
+        NO prompt at all — `_prompt_yes_no`/`_prompt_choice` are stubbed
+        to raise if called, so this is a positive guard, not just an
+        output assertion — and a configured uid with no matching
+        descriptor fails immediately, naming the uid (and the --account
+        name when given), writing nothing. Guard (ix) above's contrast
+        case exercises the real subprocess routing for the same fix; this
+        one isolates the selection step in-process.
 """
 from __future__ import annotations
 
@@ -521,6 +532,162 @@ def _test_cmd_login_proof_call_failure() -> None:
     )
 
 
+def _test_known_uid_auto_select() -> None:
+    """Task 2 (backlog `cs-kernel: cs --account <name> login asks the
+    operator to pick a descriptor it already knows`): when
+    `settings.engine_owner_uid` is already known, `cmd_login` must
+    auto-select the descriptor whose uid matches — printing which one,
+    NEVER prompting — and fail immediately, naming the uid, when none
+    matches.
+
+    Both `login._prompt_yes_no` and `login._prompt_choice` are swapped for
+    a stub that raises `AssertionError` if called at all: with TWO
+    descriptors present (one matching, one not) a naive "one descriptor ->
+    confirm, otherwise -> numbered pick" implementation would call one of
+    them, so this is a positive guard against the exact bug being fixed,
+    not just an assertion on the printed output. Mirrors
+    `_test_cmd_login_proof_call_failure`'s in-process stubbing idiom (a
+    closed local port so the proof call fails deterministically, no real
+    network egress) since the point here is the SELECTION step, not the
+    proof call."""
+    import contextlib
+    import io
+    import socket
+
+    from cs import auth as auth_mod
+    from cs import config as config_mod
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(("127.0.0.1", 0))
+    closed_port = s.getsockname()[1]
+    s.close()
+    closed_url = f"ws://127.0.0.1:{closed_port}"
+
+    def _no_prompt(*_a, **_k):
+        raise AssertionError(
+            "the known-uid auto-select path must never prompt the operator"
+        )
+
+    # -- match found among SEVERAL descriptors: auto-selected, no prompt,
+    # the session is stored under the MATCHING descriptor's own data --
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write(
+            root / "profiles" / UID / login.DESCRIPTOR_FILENAME,
+            _valid_descriptor(
+                uid=UID, email="ops@acme.example", engine_ws_url=closed_url,
+                firebase_web_api_key="fake-web-api-key",
+            ),
+        )
+        _write(
+            root / "profiles" / OTHER_UID / login.DESCRIPTOR_FILENAME,
+            _valid_descriptor(uid=OTHER_UID, email="someone-else@acme.example"),
+        )
+        settings = Settings(
+            _env_file=(),
+            engine_owner_uid=UID,
+            email_address="ops@acme.example",
+            engine_ws_url=closed_url,
+            firebase_web_api_key="fake-web-api-key",
+            refresh_token_path=str(root / "refresh_token.json"),
+            token_cache_path=str(root / "id_token.json"),
+        )
+
+        old_zylch = os.environ.get("CS_ZYLCH_ROOT")
+        os.environ["CS_ZYLCH_ROOT"] = str(root)
+        orig_load = config_mod.load
+        orig_get_id_token = auth_mod.get_id_token
+        orig_yn, orig_choice = login._prompt_yes_no, login._prompt_choice
+        config_mod.load = lambda: settings
+        auth_mod.get_id_token = lambda *a, **k: "fake-id-token"
+        login._prompt_yes_no = _no_prompt
+        login._prompt_choice = _no_prompt
+
+        out, err = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = login.cmd_login([])
+        finally:
+            config_mod.load = orig_load
+            auth_mod.get_id_token = orig_get_id_token
+            login._prompt_yes_no, login._prompt_choice = orig_yn, orig_choice
+            if old_zylch is None:
+                os.environ.pop("CS_ZYLCH_ROOT", None)
+            else:
+                os.environ["CS_ZYLCH_ROOT"] = old_zylch
+
+        printed = out.getvalue()
+        assert code == 1, (
+            f"expected exit 1 (the proof call fails against a closed port), got {code}"
+        )
+        assert f"selected: ops@acme.example ({UID})" in printed, (
+            f"the matching descriptor must be auto-selected and named:\n{printed}"
+        )
+        assert (root / "refresh_token.json").exists(), (
+            "the auto-selected descriptor's session must still be stored"
+        )
+        written = json.loads((root / "refresh_token.json").read_text())
+        assert written == {"uid": UID, "refresh_token": "rt-abc"}, written
+
+    # -- configured uid with NO matching descriptor at all: immediate
+    # failure naming the uid (and the --account name, when given), nothing
+    # written, no prompt --
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _write(
+            root / "profiles" / OTHER_UID / login.DESCRIPTOR_FILENAME,
+            _valid_descriptor(uid=OTHER_UID, email="someone-else@acme.example"),
+        )
+        settings = Settings(
+            _env_file=(),
+            engine_owner_uid=UID,
+            email_address="ops@acme.example",
+            refresh_token_path=str(root / "refresh_token.json"),
+            token_cache_path=str(root / "id_token.json"),
+        )
+
+        old_zylch = os.environ.get("CS_ZYLCH_ROOT")
+        os.environ["CS_ZYLCH_ROOT"] = str(root)
+        orig_load = config_mod.load
+        orig_yn, orig_choice = login._prompt_yes_no, login._prompt_choice
+        config_mod.load = lambda: settings
+        login._prompt_yes_no = _no_prompt
+        login._prompt_choice = _no_prompt
+
+        out, err = io.StringIO(), io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = login.cmd_login([], account_name="founder")
+        finally:
+            config_mod.load = orig_load
+            login._prompt_yes_no, login._prompt_choice = orig_yn, orig_choice
+            if old_zylch is None:
+                os.environ.pop("CS_ZYLCH_ROOT", None)
+            else:
+                os.environ["CS_ZYLCH_ROOT"] = old_zylch
+
+        stderr_text = err.getvalue()
+        assert code == 1, f"expected exit 1, got {code}:\n{stderr_text}"
+        assert f"no descriptor for uid {UID}" in stderr_text, stderr_text
+        assert "'founder'" in stderr_text, (
+            f"the no-match refusal must name the --account name when given:\n{stderr_text}"
+        )
+        assert "mrcall-desktop" in stderr_text, (
+            f"the no-match refusal must point at the mrcall-desktop app:\n{stderr_text}"
+        )
+        assert not (root / "refresh_token.json").exists(), (
+            "a no-match refusal must never write a session file"
+        )
+
+    print(
+        "OK: known-uid auto-select — a matching descriptor among several is "
+        "picked with NO prompt (both prompt helpers stubbed to raise if "
+        "called); a configured uid with no matching descriptor fails "
+        "immediately, naming the uid (and the --account name when given), "
+        "writing nothing"
+    )
+
+
 def _test_account_login_routing() -> None:
     """The LOAD-BEARING routing pin for B1.5: `cs --account <name> login`
     must actually route through `cli.main()`'s full argparse tree (NOT the
@@ -597,7 +764,14 @@ def _test_account_login_routing() -> None:
         # -- contrast case FIRST: bare `cs login` (no --account) refuses the
         # uid mismatch and writes NOTHING — the founder descriptor's uid
         # does not match this clone's configured primary uid, and no
-        # --account was given to relax the check --
+        # --account was given to relax the check. Since B1.6 (the
+        # known-uid auto-select fix) this is caught BEFORE
+        # `_identity_conflict` even runs: the configured uid resolves the
+        # choice deterministically, so a descriptor for a different uid is
+        # never offered as a pick in the first place, and the refusal names
+        # only the configured uid (the message this clone actually knows),
+        # not the descriptor's — see `_test_known_uid_auto_select` below
+        # for the direct guard on that branch. --
         proc = subprocess.run(
             [sys.executable, "-m", "cs", "login", "--descriptor", str(descriptor_path)],
             cwd=clone, env=env, input="y\n",
@@ -605,11 +779,15 @@ def _test_account_login_routing() -> None:
         )
         out = proc.stdout + proc.stderr
         assert proc.returncode == 1, f"expected exit 1, got {proc.returncode}:\n{out}"
-        assert "different profile" in out, (
-            f"expected the uid-mismatch refusal without --account:\n{out}"
+        assert "no descriptor for uid uid-primary" in out, (
+            f"expected the known-uid no-match refusal without --account:\n{out}"
         )
-        assert "uid-primary" in out and "uid-founder-xyz" in out, (
-            f"refusal must name BOTH uids:\n{out}"
+        assert "mrcall-desktop" in out, (
+            f"the no-match refusal must point at the mrcall-desktop app:\n{out}"
+        )
+        assert "different profile" not in out, (
+            f"the known-uid auto-select path must never reach the "
+            f"post-pick _identity_conflict refusal:\n{out}"
         )
         assert not founder_refresh.exists() and not primary_refresh.exists(), (
             "the refused bare login must not write any session file"
@@ -619,7 +797,12 @@ def _test_account_login_routing() -> None:
         # selection must route through cli.main()'s full argparse tree,
         # carry account_switched=True, skip the operator-mailbox email
         # cross-check, and store the session at the FOUNDER's own per-uid
-        # path only --
+        # path only. `--account founder` resolves CS_ENGINE_OWNER_UID to
+        # the founder's own uid before config.load() runs, so this is also
+        # the known-uid AUTO-SELECT path (Task 2/B1.6): the single
+        # descriptor's uid matches, so it is picked with no prompt at all —
+        # `input="y\n"` is passed but never consumed, proving nothing reads
+        # it. --
         proc = subprocess.run(
             [sys.executable, "-m", "cs", "--account", "founder", "login",
              "--descriptor", str(descriptor_path)],
@@ -630,6 +813,12 @@ def _test_account_login_routing() -> None:
         assert proc.returncode == 1, (
             f"expected exit 1 (the proof call fails against a closed port), "
             f"got {proc.returncode}:\n{out}"
+        )
+        assert "selected: founder@acme.example (uid-founder-xyz)" in out, (
+            f"the known uid must be auto-selected, printed, and not prompted for:\n{out}"
+        )
+        assert "Proceed?" not in out and "Multiple profiles" not in out, (
+            f"the known-uid auto-select path must never show a picker prompt:\n{out}"
         )
         assert "stored the session" in out, (
             f"the session must be stored even though the proof call fails:\n{out}"
@@ -665,6 +854,7 @@ def main() -> int:
     _test_scan_descriptors()
     _test_cmd_login_zero_descriptors()
     _test_cmd_login_proof_call_failure()
+    _test_known_uid_auto_select()
     _test_identity_conflict()
     _test_account_login_routing()
     _test_descriptor_defaults()

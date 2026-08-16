@@ -36,6 +36,7 @@ from collections import Counter
 import websockets
 
 from . import config, crm, ingest, rpc
+from ._version import kernel_version
 from . import campaign as campaign_mod
 from . import filter as filt
 from . import login
@@ -734,6 +735,12 @@ def main(argv=None) -> int:
         return 2
 
     p = argparse.ArgumentParser(prog=settings.prog_name or "cs")
+    p.add_argument(
+        "--version",
+        action="version",
+        version=kernel_version(),
+        help="print the installed cs-kernel version and exit",
+    )
     p.add_argument(
         "--account",
         help="target a configured account by name (CS_ACCOUNTS); default = CS_ENGINE_OWNER_UID. "

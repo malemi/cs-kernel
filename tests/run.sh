@@ -235,7 +235,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_send_guard.py"; then echo "OK"; else ech
 step "15. release metadata and docs consistency"
 if "$VENV/bin/python" "$ROOT/tests/test_release_consistency.py"; then echo "OK"; else echo "FAIL: release metadata/docs drift"; FAIL=1; fi
 
-step "16. cs update — EOF-safe conflict prompt (no tty crash)"
+step "16. cs update — EOF-safe conflict prompt (no tty crash); --check / --pin (discovery + explicit re-pin)"
 # 2026-08-04: a headless `cs update` (agent, cron, `stdin </dev/null`) hit a
 # template conflict and died with an EOFError traceback instead of applying
 # the prompt's own declared default (keep the local file). Guards the helper
@@ -245,7 +245,13 @@ step "16. cs update — EOF-safe conflict prompt (no tty crash)"
 # about; SECURITY_CRITICAL templates (.claude/settings.json,
 # bin/cs_operator_cron.sh) are never gated behind the prompt at all — the new
 # render is applied and the local version backed up to <file>.local-bak.
-if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict"; FAIL=1; fi
+# 2026-08-16 (Task 3): `cs update --check` / `--pin <tag>`, against a REAL
+# local git repo standing in for the kernel's remote origin (git ls-remote
+# and git show behave identically against a local path) — installed-vs-
+# latest, the newer tag's re-collaudo tier read off ITS OWN CHANGELOG.md
+# (never hardcoded), up-to-date and unreachable-origin both write NOTHING,
+# --pin rewrites ONLY the pin line, and bare `cs update` is unaffected.
+if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict, or --check/--pin regressed"; FAIL=1; fi
 
 step "17. deny-enumeration gate (six command-text spellings, same deny)"
 # Claude Code permission rules match command TEXT, not behaviour: the console
@@ -360,7 +366,7 @@ step "18. auth boundary — refresh-token exchange (handled ConfigError, cache s
 # the same state dir instead of overwriting it.
 if "$VENV/bin/python" "$ROOT/tests/test_auth_boundary.py"; then echo "OK"; else echo "FAIL: auth boundary regressed"; FAIL=1; fi
 
-step "19. cs login — descriptor parsing, profile scan, identity cross-check, no-descriptor path"
+step "19. cs login — descriptor parsing, profile scan, known-uid auto-select, identity cross-check, no-descriptor path"
 # cs/login.py is the human verb that produces what cs/auth.py consumes (the
 # stored refresh-token session). Guards, all network-free (the who_am_i
 # proof call needs a live engine and is out of scope here): parse_descriptor
@@ -369,14 +375,19 @@ step "19. cs login — descriptor parsing, profile scan, identity cross-check, n
 # CS_ZYLCH_ROOT-rooted temp tree and does not choke on an invalid one next
 # to them; a real `python -m cs login` subprocess with zero descriptors
 # found exits 1 naming the mrcall-desktop app (closed stdin, never blocks);
-# the identity cross-check refuses a uid mismatch naming BOTH uids (built
-# directly against a hand-built Settings, no config.load(), no network) and
-# never relaxes it for `account_switched`; the email cross-check binds the
-# PRIMARY profile only and is skipped exactly when `cs --account <name>
-# login` deliberately selected a secondary account — proved end-to-end by a
-# real `python -m cs --account founder login` subprocess that stores the
-# session at that account's own per-uid path, contrasted with the same
-# descriptor refused (uid mismatch, nothing written) without --account.
+# 2026-08-16 (Task 2): when the engine uid is already known, the matching
+# descriptor among several is auto-selected with NO prompt (both prompt
+# helpers stubbed to raise if called), and a known uid with no matching
+# descriptor fails immediately naming the uid — never the numbered picker
+# offering only wrong answers; the identity cross-check refuses a uid
+# mismatch naming BOTH uids (built directly against a hand-built Settings,
+# no config.load(), no network) and never relaxes it for `account_switched`;
+# the email cross-check binds the PRIMARY profile only and is skipped
+# exactly when `cs --account <name> login` deliberately selected a
+# secondary account — proved end-to-end by a real `python -m cs --account
+# founder login` subprocess that auto-selects and stores the session at
+# that account's own per-uid path, contrasted with the same descriptor
+# refused (known-uid no-match, nothing written) without --account.
 if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
 step "20. rendered bin/ scripts are executable (cs init AND cs update)"
@@ -415,6 +426,19 @@ step "22. engine-unreachable — one clean line, never a raw traceback"
 # never bare Exception) — a non-connection exception injected into the same
 # verb still propagates uncaught, proving the fix cannot mask a real bug.
 if "$VENV/bin/python" "$ROOT/tests/test_engine_unreachable.py"; then echo "OK"; else echo "FAIL: engine-unreachable error handling regressed"; FAIL=1; fi
+
+step "23. cs --version — the top-level flag (Task 1)"
+# Before this fix, `cs --version` exited 2 with an argparse usage dump
+# demanding a subcommand — the version was only reachable as `cs init
+# --version` / `cs update --version`, neither discoverable, and it is the
+# first thing a newcomer or an operator verifying a re-pin actually types.
+# Guards, real `python -m cs …` subprocesses, no manifest anywhere (must
+# work on a bare install, exactly like --help already does): exits 0,
+# prints "cs-kernel X.Y.Z" with no "usage:" fallthrough and no traceback;
+# the string is byte-identical across the root flag and the two subcommand
+# stubs — cs/_version.py is the one shared source, never a third copy of
+# the same importlib.metadata try/except.
+if "$VENV/bin/python" "$ROOT/tests/test_version.py"; then echo "OK"; else echo "FAIL: cs --version regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
