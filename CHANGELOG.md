@@ -20,7 +20,7 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
-## Unreleased — v0.7.0 candidate
+## v0.7.0 — 2026-08-16
 
 ### Added — top-level `cs --version`
 - **Why:** `cs --version` used to exit 2 with an argparse usage dump
