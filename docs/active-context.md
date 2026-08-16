@@ -13,6 +13,15 @@ which clones must re-collaudo). This file tracks only what is *current*.
 ## Released and in use
 
 **Latest release tag: `v0.7.0`. Current HEAD status: untagged.**
+`v0.7.1` is prepared in the working tree (pyproject already at `0.7.1`):
+it fixes a package that installed under the wrong number — `v0.6.1` and
+`v0.7.0` were both tagged without bumping `pyproject.toml`, so a clone
+pinned at either reports `0.6.0`, including from the `cs --version` that
+`v0.7.0` adds. The release gate now checks `git show <tag>:pyproject.toml`
+against every tag; writing that check surfaced the same drift at `v0.4.0`
+and `v0.5.0`, all four recorded in `TAG_VERSION_EXCEPTIONS` because a
+published tag is immutable and a recorded mistake beats a hidden one.
+
 `v0.7.0` (commit `79d8ea3`, 2026-08-16) adds the three things a newcomer
 reaches for and does not find: a root `cs --version` (it used to exit 2
 with a usage dump), `cs login` auto-selecting the descriptor whose uid

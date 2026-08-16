@@ -20,6 +20,37 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.7.1 — 2026-08-16
+
+### Fixed — a published tag installed under the previous version number
+- **Why:** `v0.6.1` and `v0.7.0` were both cut without bumping
+  `pyproject.toml`, which still said `0.6.0`. A clone pinned at either tag
+  installs a package that reports `0.6.0` — from `pip show`, from
+  `cs update --version`, and from the brand-new `cs --version` that
+  `v0.7.0` exists to provide. The collaudo's "Installed" column would have
+  recorded the same wrong number. Nothing misbehaves at runtime; the
+  package simply lies about which release it is, which is exactly the kind
+  of quiet untruth this repo's release gate exists to prevent — and did
+  not, because it only ever checked the pyproject version against the
+  CHANGELOG and the active context, never against the tag being cut.
+- **What:** `pyproject.toml` moves to `0.7.1`. The release gate
+  (`tests/test_release_consistency.py`) gains `check_tag_versions`: for
+  every semver tag, `git show <tag>:pyproject.toml` must declare that same
+  version. The three tags that cannot comply — `v0.5.0` (historical) and
+  `v0.6.1` / `v0.7.0` (this incident) — are listed in
+  `TAG_VERSION_EXCEPTIONS` with the reason inline, because a published tag
+  is immutable and a recorded mistake is worth more than a hidden one. A
+  NEW mismatch fails the suite: it is a release bug to fix before tagging,
+  never an entry to append.
+- **Migration note:** none for behaviour. A clone pinned at `v0.6.1` or
+  `v0.7.0` has the right code under the wrong version string; re-pinning to
+  `v0.7.1` makes the reported version true again. Anyone reading an
+  "Installed 0.6.0" from a clone that declares `v0.7.0` is looking at this
+  bug, not at a failed upgrade.
+- **Re-collaudo:** **static tier, both clones** — a version-string fix plus
+  a test-only addition. No runtime code path changes; `cs/` is untouched
+  apart from the metadata version.
+
 ## v0.7.0 — 2026-08-16
 
 ### Added — top-level `cs --version`

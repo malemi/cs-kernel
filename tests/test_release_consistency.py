@@ -86,6 +86,29 @@ IMMUTABLE_TAG_TARGETS = {
     "v0.5.1": "b2f07b29623a2cf4fa4d46c370fac02617833716",
 }
 
+# A published tag must install as the version it claims: `git show
+# <tag>:pyproject.toml` has to declare the tag's own number, or a clone
+# pinned at vX.Y.Z reports something else from `cs --version` and from
+# `pip show`, and the collaudo's "Installed" column lies.
+#
+# The exceptions below are IMMUTABLE MISTAKES, recorded rather than hidden —
+# the tags cannot be moved, so the registry is the only honest place to keep
+# them. Nothing may be added here without an operator decision; a NEW
+# mismatch is a release bug to fix before tagging, not an entry to append.
+TAG_VERSION_EXCEPTIONS = {
+    # Historical, found by this gate the day it was written — the drift is
+    # older than the incident that prompted it, which is the point of
+    # writing gates instead of remembering rules.
+    "v0.4.0": "0.3.7",
+    "v0.5.0": "0.4.5",
+    # 2026-08-16: v0.6.1 and v0.7.0 were both cut without bumping
+    # pyproject.toml, so each installs and reports 0.6.0 — including from
+    # the `cs --version` that v0.7.0 exists to add. Fixed forward by
+    # v0.7.1, which is also where this gate lands.
+    "v0.6.1": "0.6.0",
+    "v0.7.0": "0.6.0",
+}
+
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")
 PIN_MARKER_LABEL = "current operational pin"
 POINTER_RE = re.compile(r"operational pin[^.]*CHANGELOG\.md", re.I | re.S)
@@ -238,6 +261,33 @@ def version_tags_at_head() -> list[str]:
     ]
 
 
+def check_tag_versions(tags: list[str]) -> list[str]:
+    """Every release tag must ship a pyproject declaring that same version.
+
+    Returns the tags checked clean. A mismatch that is not in
+    TAG_VERSION_EXCEPTIONS fails: it means a tag was cut without bumping
+    `pyproject.toml`, so the package installs under the previous number
+    while claiming to be the new one.
+    """
+    checked = []
+    for tag in tags:
+        raw = "\n".join(_git("show", f"{tag}:pyproject.toml"))
+        declared = tomllib.loads(raw)["project"]["version"]
+        expected = tag[1:]
+        if declared == expected:
+            checked.append(tag)
+            continue
+        known = TAG_VERSION_EXCEPTIONS.get(tag)
+        assert known == declared, (
+            f"{tag} ships pyproject version {declared!r}, expected {expected!r} — "
+            f"a clone pinned at {tag} would install and report {declared}. "
+            "Bump pyproject.toml in the release commit BEFORE tagging; only an "
+            "already-published tag may be recorded in TAG_VERSION_EXCEPTIONS, "
+            "and only by operator decision."
+        )
+    return checked
+
+
 def tag_commit(tag: str) -> str:
     lines = _git("rev-parse", f"{tag}^{{commit}}")
     assert len(lines) == 1, f"expected one commit for {tag}, got {lines}"
@@ -374,6 +424,7 @@ def main() -> None:
     tags = version_tags()
     head_tags = version_tags_at_head()
     latest, head_tags = check_release_state(active, tags, head_tags)
+    tag_versions = check_tag_versions(tags)
     actual_targets = {tag: tag_commit(tag) for tag in IMMUTABLE_TAG_TARGETS}
     immutable = check_immutable_tag_targets(actual_targets)
     negative_proofs = prove_release_state_negatives(
@@ -390,7 +441,8 @@ def main() -> None:
         f"{len(COMPANY_TOKENS)} company tokens + {HB_TOKEN}; latest release "
         f"{latest}; HEAD {', '.join(head_tags) if head_tags else 'untagged'}; immutable "
         f"{', '.join(immutable)}; {negative_proofs} negative release proofs; README pins "
-        f"{', '.join('v' + p for p in pins)}"
+        f"{', '.join('v' + p for p in pins)}; tag/pyproject match "
+        f"{len(tag_versions)}/{len(tags)} ({len(TAG_VERSION_EXCEPTIONS)} recorded exceptions)"
     )
 
 
