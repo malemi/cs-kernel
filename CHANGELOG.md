@@ -20,7 +20,7 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
-## Unreleased — v0.6.1 candidate
+## v0.6.1 — 2026-08-16
 
 ### Fixed — the public README still walked a new reader onto the retired `v0.5.2` install pin and skipped `cs login` entirely
 - **Why:** an adversarial UX review of the README as a fresh, competent
