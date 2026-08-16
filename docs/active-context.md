@@ -12,8 +12,23 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.6.0`. Current HEAD status: untagged.** The release
-(tag `v0.6.0`, commit `0d75ea6`, 2026-08-15) moves auth to a Firebase
+**Latest release tag: `v0.6.1`. Current HEAD status: untagged.**
+`v0.6.1` (commit `f75969e`, 2026-08-16) is the onboarding-path patch an
+adversarial UX review forced: rendered files under `bin/` are created 0755
+by both `cs init` and `cs update` (every clone ever stamped had a mode-0644
+cron wrapper, so the documented crontab entry failed SILENTLY), an
+unreachable engine prints one actionable line instead of a
+`ConnectionRefusedError` traceback (catching `ConnectionError`, never
+`OSError` — whose `FileNotFoundError` subclass would misreport a missing
+file as an unreachable engine), the stamped templates stop shipping
+`desktop.example.com` / "this is the mother clone" / unguarded `none`
+adapter bullets / references to the non-existent `cs-template` and
+`copier`, and the README documents `cs login`, the desktop app and its
+daemon, troubleshooting, and the Gmail prerequisite. Three new gates
+(20-22). The clones are NOT re-pinned to it yet — the operational pin
+below is still `v0.6.0`.
+
+The auth release (tag `v0.6.0`, commit `0d75ea6`, 2026-08-15) moves auth to a Firebase
 refresh-token exchange via the Secure Token API: the vendor-only
 service-account file leaves the mint path entirely, `cs login` reads the
 profile descriptor the mrcall-desktop app writes at sign-in, and sessions
@@ -34,45 +49,29 @@ charter grep, and the new `cs update` semantics (requirements.txt is
 operator-owned; security-critical templates apply with a `*.local-bak`).
 All 17 gates green at that tag (19 at v0.6.0).
 
-Both clones were re-pinned to `v0.5.2` on 2026-08-09 via
-`hb/scripts/repin-clone-v0.5.2.sh` (backup, HTTPS pin, install, headless
-`cs update`, clone-specific deny re-merge, verification). Collaudo against
-the v0.5.1-frozen baselines, then baselines re-frozen at v0.5.2: `124-cs`
-FULL tier all green (old-vs-new + autotest, 2026-08-09); `mrcall-cs` FULL
-tier signed 2026-08-13 — 11/11 ALL GREEN on the same-day re-frozen baseline,
-after the 08-09 auth outage (an HTTP-referrer restriction on the shared
-engine web API key, since replaced by a dedicated server key restricted to
-Identity Toolkit + Token Service in both clones' .env; cs-collaudo LOOP-LOG).
-Operators remain paused on both clones.
+Both clones were re-pinned to `v0.6.0` on 2026-08-16 and signed in live with
+the new auth: `cs login` for the primary mailbox plus
+`cs --account <name> login` for each configured secondary, each account
+holding its own session file (mode 0600, per uid). FULL collaudo signed the
+same day on both — the RED gates were the three declared deltas (help tree,
+per-uid session paths, stamped auth-chain paragraph) plus live diffs that
+were root-caused as non-regressions: engine-authored prose over identical
+items, and `campaign_pending` losing its `send_sms` entries purely because
+that branch is gated on `local_hour >= sms_hour` (18:00 Rome) and baseline
+and candidate straddled it. Baselines re-frozen on both (cs-collaudo
+`20e8785`); that live gate is RED-by-default by construction and the fix is
+filed in `hb/docs/harness-backlog.md`. Operators remain paused on both
+clones.
 
 | Clone | Declared | Locked | Installed | Collaudo |
 |---|---|---|---|---|
-| `mrcall-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | full — green 2026-08-13 |
-| `124-cs` | `v0.5.2` | `v0.5.2` (commit `7c4933c`) | `0.5.2` | full — green 2026-08-09 |
+| `mrcall-cs` | `v0.6.0` | `v0.6.0` (commit `0d75ea6`) | `0.6.0` | full — signed 2026-08-16 |
+| `124-cs` | `v0.6.0` | `v0.6.0` (commit `0d75ea6`) | `0.6.0` | full — signed 2026-08-16 |
 
 The kernel runs per-invocation from each clone's venv (no long-running kernel
 process). The provider side — the engine RPC contract the signed closes need —
 is the mrcall-desktop daemons, deployed at `d239e5f` on 2026-08-03. Both
 operators remain PAUSED (`CS_PAUSE`); revival is a separate operator action.
-
-## v0.6.0 candidate — Phase B auth: refresh-token exchange (2026-08-14)
-
-- `cs/auth.py` no longer mints custom tokens with the service-account key:
-  it exchanges a refresh token (stored at `<state_dir>/refresh_token-<uid>.json`
-  by `cs login`, sourced from the desktop app's profile
-  descriptor) via Google's Secure Token API — the same headless mechanism
-  the engine itself uses (`zylch/auth/refresh.py`). Every auth-boundary
-  failure is a handled one-line `ConfigError`. The service-account file
-  remains only for the optional drive/resolve surfaces.
-- Working-tree intent on branch `phase-b-auth` only; not tagged, not
-  installed anywhere. `v0.5.2` remains the latest release and the
-  operational pin. Full re-collaudo on both clones is the bar at the tag
-  (auth path changed). Plan:
-  `hb/docs/execution-plans/2026-08-13-phase-b-execution-plan.md`.
-- Session files are per account uid (`id_token-<uid>.json` /
-  `refresh_token-<uid>.json`); `cs --account <name> login` stores the
-  secondary's own session; the operator-mailbox cross-check applies to the
-  primary identity only.
 
 ## v0.5.1 corrective candidate — release truth gate (2026-08-01)
 
