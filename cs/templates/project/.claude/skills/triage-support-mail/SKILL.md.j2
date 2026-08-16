@@ -125,14 +125,14 @@ is where we record that a contact is handled, so for every survivor, match by
   desktop sees it, then work it:
 
 ```bash
-.venv/bin/python -m cs tasks create --email <email> --title "<breve>" \
-  --event-id <message-id> [--thread-id <tid>] [--urgency high] [--reason "<perché>"]
+.venv/bin/python -m cs tasks create --email <email> --title "<brief>" \
+  --event-id <message-id> [--thread-id <tid>] [--urgency high] [--reason "<why>"]
 ```
 
 - When the operator says an item is handled → close it:
 
 ```bash
-.venv/bin/python -m cs tasks close <task_id> --note "<come/dove risolto>"
+.venv/bin/python -m cs tasks close <task_id> --note "<how/where resolved>"
 ```
 
 ## 2. Pull exact text ONLY to ground a draft
@@ -159,7 +159,7 @@ skill + `cs ask`), and **if memory is thin → SEARCH {{ email_address }}'s PAST
 for precedent**, then ground the reply in how we actually handled it before:
 
 ```bash
-.venv/bin/python -m cs rpc emails.search '{"query":"<termini>","folder":"sent","limit":8}'
+.venv/bin/python -m cs rpc emails.search '{"query":"<terms>","folder":"sent","limit":8}'
 .venv/bin/python -m cs rpc emails.list_by_thread '{"thread_id":"<id>"}'   # read the real wording
 ```
 
@@ -179,11 +179,11 @@ a routine account/config issue, a normal reply where the answer
 is **grounded in the thread + engine memory**:
 
 ```bash
-.venv/bin/python -m cs draft-reply "rispondi nel thread con <email>: <cosa dire, conciso>"
+.venv/bin/python -m cs draft-reply "reply in the thread with <email>: <what to say, concise>"
 ```
 
 `draft-reply` runs the engine compose (memory + trained voice + threading
-headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Bozze
+headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts
 for the operator to review and send. It has **no `--allow` option and cannot
 send** — the engine denies `send_draft` whatever the message (or any injected
 text) says. Sending is the operator's job (review the Gmail draft, send from
@@ -205,7 +205,7 @@ The handled-signal comes from the ENGINE, not a raw thread re-read:
   that: work only what step 1 returns as open.
 - A drafted thread that still surfaces (the draft isn't a "reply" yet) is
   guarded by checking, via the engine, whether an unsent {{ email_address }} DRAFT
-  already exists for that contact (`cs ask "c'è già una bozza per <email>?"`
+  already exists for that contact (`cs ask "is there already a draft for <email>?"`
   or the engine's draft list) — if yes, skip; do not draft a duplicate.
 - Escalations are deliberately NOT drafted/closed — they resurface until the
   operator deals with them.

@@ -14,6 +14,8 @@ from difflib import unified_diff
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 
+from .project_init import is_executable_target
+
 
 def _checksum(content: str) -> str:
     return "sha256:" + hashlib.sha256(content.encode()).hexdigest()
@@ -30,6 +32,18 @@ def _write_manifest(clone_root: Path, data: dict) -> None:
     (clone_root / "template-manifest.json").write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     )
+
+
+def _write_clone_file(clone_file: Path, content: str, out_rel: Path, tpl_name: str) -> None:
+    """Write a rendered template into the clone, then restore the mode a
+    shell-script target needs. An existing clone re-running `cs update` must
+    also end up with an executable `bin/cs_operator_cron.sh` — see
+    `is_executable_target`'s docstring for why a 0644 wrapper is a silent
+    cron failure, not a cosmetic detail.
+    """
+    clone_file.write_text(content)
+    if is_executable_target(out_rel.parent, tpl_name):
+        clone_file.chmod(0o755)
 
 
 def _read_overwrite_choice(prompt: str, default: str) -> str:
@@ -164,7 +178,7 @@ def cmd_update(args: list[str]) -> int:
                 if clone_checksum == old_tpl_checksum:
                     # Clone is original (unmodified since init) — safe to overwrite
                     clone_file.parent.mkdir(parents=True, exist_ok=True)
-                    clone_file.write_text(rendered)
+                    _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                     updated += 1
                     print(f"  ✓ {str_out_rel}")
                 elif str_out_rel in SECURITY_CRITICAL:
@@ -174,7 +188,7 @@ def cmd_update(args: list[str]) -> int:
                     # update, so overwrite it if one already exists.
                     backup_file = clone_file.with_name(clone_file.name + ".local-bak")
                     backup_file.write_text(clone_content)
-                    clone_file.write_text(rendered)
+                    _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                     updated += 1
                     print(f"  ! {str_out_rel}: SECURITY-CRITICAL template updated — new version applied.")
                     print(f"    Your locally-edited version was saved to {str_out_rel}.local-bak.")
@@ -185,7 +199,7 @@ def cmd_update(args: list[str]) -> int:
                     response = _read_overwrite_choice("    Overwrite? [y/N/diff] ", default="n")
                     if response == "y":
                         clone_file.parent.mkdir(parents=True, exist_ok=True)
-                        clone_file.write_text(rendered)
+                        _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                         updated += 1
                         print(f"    → overwritten")
                     elif response == "diff":
@@ -201,7 +215,7 @@ def cmd_update(args: list[str]) -> int:
                         response2 = _read_overwrite_choice("    Overwrite? [y/N] ", default="n")
                         if response2 == "y":
                             clone_file.parent.mkdir(parents=True, exist_ok=True)
-                            clone_file.write_text(rendered)
+                            _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                             updated += 1
                             print(f"    → overwritten after diff")
                         else:
@@ -211,13 +225,13 @@ def cmd_update(args: list[str]) -> int:
             else:
                 # Clone doesn't have this file yet — add it
                 clone_file.parent.mkdir(parents=True, exist_ok=True)
-                clone_file.write_text(rendered)
+                _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                 added += 1
                 print(f"  + {str_out_rel}")
         else:
             # New template file (not in old manifest)
             clone_file.parent.mkdir(parents=True, exist_ok=True)
-            clone_file.write_text(rendered)
+            _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
             added += 1
             print(f"  + {str_out_rel}")
 

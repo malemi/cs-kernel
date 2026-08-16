@@ -301,8 +301,11 @@ def collect_config() -> dict:
     config["firebase_sa_path"] = prompt_input("Firebase service account path", f"~/.{config['company_slug']}-cs/firebase-sa.json")
     
     # Repo kernel version
-    # Default = the current operational pin; keep in lockstep with README step 1 and CHANGELOG at each release (the onboarding gate enforces the match).
-    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.5.2")
+    # Default = the current operational pin the wizard should hand a new clone.
+    # Nothing enforces this automatically — no onboarding gate checks it against
+    # README or CHANGELOG. Bump it by hand at each release, in lockstep with
+    # README step 1 and the CHANGELOG entry.
+    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.6.1")
 
     # Repo docs shape (generic = mother/kernel-canonical; as-built = a stamped clone)
     config["repo_docs_shape"] = prompt_input("Repository docs shape (generic, as-built)", "generic")
@@ -330,6 +333,18 @@ def collect_config() -> dict:
             print(f"  {key}: {value}")
     
     return config
+
+def is_executable_target(rel_dir: Path, template_name: str) -> bool:
+    """A rendered/copied file that lives under a `bin/` directory, or whose
+    source template is named `*.sh.j2`, is a shell script the operator's
+    crontab (or a doc) tells them to invoke directly. Shared by
+    `render_templates` (cs init) and `cs update`'s write path so both leave
+    the file executable — a non-executable cron wrapper fails SILENTLY in
+    cron ("Permission denied"), which reads as "the product does nothing"
+    rather than as a permissions bug.
+    """
+    return "bin" in rel_dir.parts or template_name.endswith(".sh.j2")
+
 
 def render_templates(config: dict, template_dir: Path, dest_dir: Path):
     """Render Jinja2 templates and copy other files to destination."""
@@ -375,7 +390,16 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
                 # Copy non-template file
                 dest_path.write_bytes(template_path.read_bytes())
                 print(f"Copied: {rel_path} -> {dest_path.relative_to(dest_dir.parent)}")
-            
+
+            # A file rendered/copied under bin/ (or sourced from a *.sh.j2
+            # template) is a shell script the operator's crontab is told to
+            # invoke directly. write_text/write_bytes leaves it mode 0644;
+            # cron then fails SILENTLY with "Permission denied", which reads
+            # to the operator as "the product does nothing" rather than as a
+            # permissions bug. Make it executable.
+            if is_executable_target(rel_path.parent, template_path.name):
+                dest_path.chmod(0o755)
+
             # Calculate checksum for rendered/copy file
             file_content = dest_path.read_bytes()
             file_hash = hashlib.sha256(file_content).hexdigest()

@@ -9,11 +9,11 @@ description: Load a customer/prospect into working context. Argument is the fold
 
 # customer — load a customer into context
 
-Argument: **`<nome>`** = directory name under `docs/projects/`
+Argument: **`<name>`** = directory name under `docs/projects/`
 (e.g. `acme-corp`, `globex`, `initech`). Not a bare first name,
 not an email, not a display name — the **folder slug**.
 
-If `<nome>` is missing or the folder does not exist:
+If `<name>` is missing or the folder does not exist:
 
 ```bash
 ls docs/projects/
@@ -51,23 +51,23 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 ## 0. Resolve the folder (silently)
 
 ```bash
-ls docs/projects/<nome>/
+ls docs/projects/<name>/
 ```
 
-Expect at least `docs/projects/<nome>/<nome>.md` (the dossier). Related
-files (proposte, analisi, PDF/DOCX notes) live beside it. If the directory
-is missing → list `docs/projects/`, report available names, **STOP**.
+Expect at least `docs/projects/<name>/<name>.md` (the dossier). Related
+files (proposals, analysis notes, PDF/DOCX notes) live beside it. If the
+directory is missing → list `docs/projects/`, report available names, **STOP**.
 
 ## 1. Read the dossier files (secondary layer — orientation)
 
-Read **every** file under `docs/projects/<nome>/` (the main
-`<nome>.md` and siblings). Extract, and keep in working memory:
+Read **every** file under `docs/projects/<name>/` (the main
+`<name>.md` and siblings). Extract, and keep in working memory:
 
-- **TL;DR / stato** (active? blocked? deadline?)
-- **Contatti chiave** (name → email) — needed for `cs dossier`
+- **TL;DR / status** (active? blocked? deadline?)
+- **Key contacts** (name → email) — needed for `cs dossier`
 - **Account engine** cited (often `{{ nondefault_account }}`)
-- **Blocchi aperti / scadenze / prossimi passi**
-- **Provenienza** markers (`[mail]`, `[memoria]`, `[meeting]`, `[repo]`) so
+- **Open blockers / deadlines / next steps**
+- **Provenance** markers (`[mail]`, `[memory]`, `[meeting]`, `[repo]`) so
   you know what is file-only vs already engine-backed
 
 Do **not** treat this as the answer. It is the map for step 2–3.
@@ -80,8 +80,8 @@ relationships live there):
 
 ```bash
 .venv/bin/python -m cs --account {{ nondefault_account }} whoami
-.venv/bin/python -m cs --account {{ nondefault_account }} ask "<azienda>: stato relazione, contatti, scadenze, blocchi aperti, ultimi scambi rilevanti"
-.venv/bin/python -m cs ask "<stessa domanda>"   # {{ accounts_default }}@ default
+.venv/bin/python -m cs --account {{ nondefault_account }} ask "<company>: relationship status, contacts, deadlines, open blockers, latest relevant exchanges"
+.venv/bin/python -m cs ask "<same question>"   # {{ accounts_default }}@ default
 ```
 
 If `whoami` fails on an account (daemon down, wrong identity): note it and
@@ -94,7 +94,7 @@ Tune the `ask` with names/emails from the dossier (e.g. "Acme-Corp Jane Smith",
 Optional depth when the first `ask` is thin:
 
 ```bash
-.venv/bin/python -m cs --account {{ nondefault_account }} rpc emails.search '{"query":"<azienda OR contatto>","folder":"all","limit":30}'
+.venv/bin/python -m cs --account {{ nondefault_account }} rpc emails.search '{"query":"<company OR contact>","folder":"all","limit":30}'
 ```
 
 (Remember: `emails.search` → `{"threads":[…]}`; `emails.list_by_thread` →
@@ -151,7 +151,7 @@ always verify**.
 **always verify**:
 
 ```bash
-.venv/bin/python -m cs --account <acct> ask "Conferma: <fatto appena scritto>?"
+.venv/bin/python -m cs --account <acct> ask "Confirm: <fact just written>?"
 ```
 
 Do **not** leave a non-mail fact only in `docs/projects/`. When you update
@@ -195,6 +195,6 @@ re-reading the markdown. If the operator asks to update the dossier, write the f
 ls docs/projects/
 ```
 
-Convention: one folder per company, dossier = `<nome>/<nome>.md`, related
+Convention: one folder per company, dossier = `<name>/<name>.md`, related
 docs beside it. See `docs/projects/README.md`.
 

@@ -12,8 +12,19 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.5.2`. Current HEAD status: untagged.** The release
-(tag `v0.5.2`, commit `7c4933c`, 2026-08-09) ships the `cs` console script
+**Latest release tag: `v0.6.0`. Current HEAD status: untagged.** The release
+(tag `v0.6.0`, commit `0d75ea6`, 2026-08-15) moves auth to a Firebase
+refresh-token exchange via the Secure Token API: the vendor-only
+service-account file leaves the mint path entirely, `cs login` reads the
+profile descriptor the mrcall-desktop app writes at sign-in, and sessions
+are stored PER ACCOUNT UID (`refresh_token-<uid>.json` / `id_token-<uid>.json`)
+so `cs --account <name>` keeps working across logins. `cs --help` finally
+lists `init`/`update`/`login`. FULL collaudo signed on BOTH clones
+2026-08-16: permission bytes byte-identical, the three declared deltas being
+the help tree, the per-uid session paths and the stamped auth-chain
+paragraph (cs-collaudo `20e8785`). Do not move any released tag.
+
+The previous release (tag `v0.5.2`, commit `7c4933c`, 2026-08-09) ships the `cs` console script
 with the permission surface finished around it — deny sets enumerate six
 command-text spellings (24-entry cron block, settings 65/7), placement-aware
 gate — plus the customer-onboarding wall fixes (public install URLs, handled
@@ -21,7 +32,7 @@ gate — plus the customer-onboarding wall fixes (public install URLs, handled
 wizard defaults), the reviewed-literals registry replacing the regex-law
 charter grep, and the new `cs update` semantics (requirements.txt is
 operator-owned; security-critical templates apply with a `*.local-bak`).
-All 17 gates green at the tag. Do not move `v0.5.0`, `v0.5.1` or `v0.5.2`.
+All 17 gates green at that tag (19 at v0.6.0).
 
 Both clones were re-pinned to `v0.5.2` on 2026-08-09 via
 `hb/scripts/repin-clone-v0.5.2.sh` (backup, HTTPS pin, install, headless

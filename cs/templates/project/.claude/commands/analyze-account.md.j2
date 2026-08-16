@@ -40,7 +40,7 @@ mint failure, wrong identity), **STOP** and report the one-line reason — do no
 - What still seems unanswered (the engine's processed view — memory + tasks +
   handled-state, not a raw thread re-read):
   ```bash
-  .venv/bin/python -m cs --account <name> ask "Elenca la posta degli ultimi 7 giorni che sembra ancora senza risposta umana: per ciascuna mittente e oggetto. Solo elenco, niente bozze."
+  .venv/bin/python -m cs --account <name> ask "List the mail from the last 7 days that still looks unanswered by a human: for each, sender and subject. List only, no drafts."
   ```
 - Recent inbox threads (returns `{"threads":[…]}` — summaries):
   ```bash

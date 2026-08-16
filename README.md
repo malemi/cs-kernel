@@ -39,8 +39,13 @@ Voice and product policy live in the engine profile, not in this repo.
   curl -LsSf https://astral.sh/uv/install.sh | sh
   ```
 - **Claude Code** or **OpenCode** (the TUI/session you work in)
-- A **mrcall-desktop** engine profile for your support mailbox  
-  (you’ll need the engine WebSocket URL and the profile’s Firebase uid)
+- A **mrcall-desktop** engine profile for your support mailbox — see
+  **Step 0** below; signing in there writes everything `cs init` and
+  `cs login` need, so you never have to look up a WebSocket URL or a
+  Firebase uid by hand.
+- **Gmail or Google Workspace** for the operator mailbox — dedup and Gmail
+  Drafts read Gmail's own Sent/All Mail folders over IMAP; other IMAP
+  providers are not supported today.
 - Mailbox password / app password for that address (IMAP/SMTP)
 
 Without the engine and secrets, setup still creates the folder, but the AI
@@ -52,6 +57,29 @@ cannot load real mail or memory yet.
 
 Imagine your operator address is `support@acme.example`.
 
+### 0. Install mrcall-desktop and sign in
+
+**mrcall-desktop** is a separate desktop app: it holds the mailbox sync,
+the relationship memory and the task list, and it runs a small local
+daemon (the "engine") that everything below actually talks to. **`cs` must
+run on the same machine as that app and its daemon** — there is no
+remote/cloud engine to point `cs` at instead.
+
+- **macOS / Windows:** install the mrcall-desktop app.
+- **Linux:** there is no packaged desktop build yet; run the engine from
+  source — see the [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)
+  repo for build/run instructions.
+
+Open the app and sign in with the Google account for your support mailbox.
+Signing in writes a profile descriptor to
+`~/.zylch/profiles/<uid>/cs-descriptor.json`; `cs login` (step 5 below)
+reads that file, which is why you never have to hunt down a WebSocket URL
+or a Firebase uid yourself.
+
+You need a mrcall-desktop release **newer than v0.1.29** (2026-05-05):
+that public build predates the file above. If a later step reports no
+descriptor found and you are sure you are signed in, update the app first.
+
 ### 1. Install the toolkit (once)
 
 ```bash
@@ -59,7 +87,7 @@ mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 # Install the current operational pin recorded in CHANGELOG.md, never a branch.
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.5.2"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.6.0"
 ```
 
 ### 2. Create your company project
@@ -68,20 +96,23 @@ uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.5.2"
 cs init
 ```
 
-Answer the prompts (defaults are fine when unsure). It asks more than
-this table shows — IMAP/SMTP host and port, timezone, cron schedule,
-dedup/rate-limit knobs, and a few others — all with sensible defaults;
-here are the ones you actually need to think about. For ACME you might
-enter:
+Several prompts are required — pressing Enter on an empty value just
+re-asks ("Please provide a value.") — so have these ready before you
+start: the **operator email**, and, if Step 0's sign-in was **not**
+auto-detected, the **engine WS URL** and the **engine owner uid** (`cs
+init` prefills both from the mrcall-desktop sign-in when it can). Most
+other prompts — IMAP/SMTP host and port, timezone, cron schedule,
+dedup/rate-limit knobs, CRM/producer/SMS/Drive — have sensible defaults;
+here is what to expect for ACME:
 
 | Question | Example |
 |---|---|
 | Company name | `ACME Corp` |
 | Display name | `ACME` |
 | From name for emails | `ACME` |
-| Short slug | `acme` → state lives under `~/.acme-cs/` |
-| Operator email | `support@acme.example` |
-| Engine URL + owner uid | from your mrcall-desktop setup |
+| Short slug | type **`acme`** explicitly — the wizard's own default for "ACME Corp" is `acme-corp`, which would put your state under `~/.acme-corp-cs/` instead and silently break every `~/.acme-cs/...` command below |
+| Operator email | `support@acme.example` (required) |
+| Engine URL + owner uid | prefilled from Step 0's sign-in if it found exactly one profile; otherwise required — from your mrcall-desktop setup |
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Destination folder | `acme-cs` |
@@ -103,19 +134,47 @@ Edit `~/.acme-cs/.env` (any text editor) and fill at least:
 
 Never commit this file.
 
-### 4. Install the project pin and check the engine
+### 4. Install the project pin
 
 ```bash
 cd acme-cs
 uv venv .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
+```
+
+### 5. Sign in
+
+```bash
+cs login
+```
+
+This reads the profile descriptor mrcall-desktop wrote in Step 0, prints
+`email (uid)` for you to confirm, stores a refresh-token session under
+`~/.acme-cs/`, and proves it with one live call.
+
+If it also prints a line starting with `note: … FIREBASE_WEB_API_KEY=…`,
+paste that exact line into `~/.acme-cs/.env` and run `cs login` again — it
+means the key currently in your `.env` is missing or does not match the
+one mrcall-desktop is using.
+
+If instead it prints `cs login: no profile descriptor found under
+~/.zylch/profiles/ — sign in to the mrcall-desktop app first…`, go back to
+Step 0: you are not signed in on this machine, or your mrcall-desktop
+build predates the descriptor writer.
+
+### 6. Check the engine
+
+```bash
 cs whoami
 ```
 
-If `whoami` shows you signed in as the right mailbox, the body is alive.
+This is the proof: it makes one real call through the engine and prints
+back the identity it authenticated as. `not signed in — run cs login`
+means step 5 was skipped or did not complete; anything else is covered
+under Troubleshooting below.
 
-### 5. Open the TUI and work
+### 7. Open the TUI and work
 
 Still inside `acme-cs/` with the venv active:
 
@@ -139,6 +198,34 @@ You’re in a chat UI in **this project**. The AI loads skills from `.claude/`
 
 You do **not** need to memorize CLI subcommands day to day. The skills are
 the product surface; the CLI is plumbing the AI (and you, if you want) can call.
+
+---
+
+## Troubleshooting
+
+- **`not signed in — run cs login`** — the exact line every engine-backed
+  verb prints when no session is stored yet, or the stored one does not
+  match this clone's configured uid. Run `cs login` (step 5 above).
+- **Connection refused / the engine seems unreachable** — the daemon is
+  not answering at the configured WebSocket URL. During `cs login` this
+  is caught and printed as one line (`cs login: stored the session, but
+  the proof call to '<url>' failed: …`); on other verbs (`cs whoami` and
+  friends) it currently surfaces as a raw Python traceback ending in
+  something like `ConnectionRefusedError: [Errno 111] Connect call
+  failed…`. Either way, it means the mrcall-desktop app is not running,
+  or it is running on a **different machine** than the one you're typing
+  `cs` on — `cs` only ever talks to the daemon on the machine it runs on
+  (see Step 0).
+- **`cs login: no profile descriptor found under ~/.zylch/profiles/ —
+  sign in to the mrcall-desktop app first (it writes the descriptor at
+  sign-in)`** — you have not signed in to mrcall-desktop on this machine
+  yet, or your build predates the v0.1.29 descriptor writer (Step 0).
+  Sign in (or update the app), then re-run `cs login`.
+- **Nothing shows up in Gmail Drafts after a tick** — first check
+  `~/.<slug>-cs/CS_PAUSE`: if that file exists, the kill-switch is on and
+  every automated tick is a deliberate no-op (`rm` it to resume). If it
+  is absent, read the tail of `~/.<slug>-cs/cs_operator.log` for what the
+  last tick actually did.
 
 ---
 
@@ -203,7 +290,16 @@ source .venv/bin/activate
 
 ### Install a schedule (when you’re ready)
 
-Example: every 2 hours during business hours, weekdays (adjust to taste):
+The CLI has a `cron` verb that reads `[cron].schedule` from your
+`manifest.toml`, builds the crontab line with the absolute path to your
+clone, and installs it idempotently:
+
+```bash
+cs cron install    # cs cron status | cs cron uninstall
+```
+
+If you'd rather manage it by hand instead, edit the crontab directly (adjust
+the schedule to taste):
 
 ```bash
 crontab -e
@@ -258,7 +354,7 @@ Turning on autonomous send is a deliberate later choice, not the default.
 Install a **version tag**, not a floating branch:
 
 ```bash
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.5.2"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.6.0"
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
@@ -270,5 +366,5 @@ See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
 MIT. Public setup kit for operators that sit in front of **mrcall-desktop**.
 You still need engine access, credentials, and human review in draft mode.
 
-**Current release:** `v0.5.2` — see [CHANGELOG.md](CHANGELOG.md) for what it
+**Current release:** `v0.6.0` — see [CHANGELOG.md](CHANGELOG.md) for what it
 changes and the re-collaudo it requires.

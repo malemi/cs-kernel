@@ -4,14 +4,16 @@
 **{{ email_address }}** mailbox. It triages incoming mail, drafts replies in
 {{ company_from_name }}'s voice, and advances outreach campaigns — but **nothing is
 sent automatically**: it prepares drafts, *you* review and send.
+{% if repo_docs_shape == 'generic' %}
 This is the original; other `<name>-cs` clones are stamped from it.
+{% endif %}
 > New here? Read this top-to-bottom. For depth: [CLAUDE.md](CLAUDE.md) (operator
 > manual) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (as-built config,
 stamped from `manifest.toml`).
 
 ## How it works (the short version)
 
-- **Body** = the `mrcall-desktop` engine on `desktop.example.com`: it syncs the
+- **Body** = the `mrcall-desktop` engine on `{{ engine_ws_url }}`: it syncs the
   mailbox, holds entity memory, a writing voice trained on the mailbox's own
   sent mail, tasks, and the compose/draft/send tools. One engine profile per mailbox.
 - **Brain** = this repo (`cs`, a thin CLI installed from the pinned `cs-kernel`)
@@ -27,11 +29,18 @@ accounts are never mixed in (different repos, config, registries).
 
 ## The pieces specific to {{ company_name }}
 
+{% if producer_adapter != 'none' %}
 - **Producer (outreach worklist):** `cs plan` reads the `{{ producer_adapter }}` producer (leads / signups / cancellations).
+{% endif %}
+{% if crm_adapter != 'none' %}
 - **CRM:** `cs business <email>` / the dossier query {{ crm_adapter }} (`mrcall.search_businesses`) — the {{ company_name }} telephony CRM.
+{% endif %}
 - **Product mechanics** (what we sell, how, the policies) live in the engine's
   **`USER_NOTES`**, not in this repo.
+{% if excluded_campaign %}
 - The `{{ excluded_campaign }}` campaign is carved out to a dedicated process.
+{% endif %}
+
 ## What runs (cron is opt-in)
 
 The operator tick is `claude -p "/cs-operator"` (triage + campaign-tick,
@@ -45,20 +54,20 @@ delete the file to resume.
 
 ## What YOU do
 
-1. **See what's ready** — open Gmail → **Bozze** (Drafts): review, edit, send.
+1. **See what's ready** — open Gmail → **Drafts**: review, edit, send.
    Replies return to the mailbox and re-ingest automatically.
 2. **Or open a Claude session** here (`claude`) and use `/cs-review`,
    `/triage-support-mail`, `/campaign-tick`, `/munchausen`,
    `/analyze-account <name>`, or just ask.
 3. **Send** — always your call: from Gmail Drafts, or in a session after review
-   (`cs chat "invia la bozza per X" --allow send_draft`, only on a draft you've seen).
+   (`cs chat "send the draft for X" --allow send_draft`, only on a draft you've seen).
 
 > The operator is **draft-first**. You are the send button.
 
 ## Setup / config
 
 - Author `manifest.toml` (the single source of variance) and `company/*.md`
-  (skill prose slots); everything else is stamped by `cs-template`.
+  (skill prose slots); everything else is stamped by `cs init` / `cs update`.
 - `~/.{{ company_slug }}-cs/.env` holds the secrets + real account uids
   (see [.env.example](.env.example)).
 - `USER_NOTES` authored (voice / policy) via `cs rpc settings.update`.

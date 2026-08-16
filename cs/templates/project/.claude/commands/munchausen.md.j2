@@ -123,17 +123,17 @@ cell.
 
 - **You review and recommend. You do not blast.** Every send needs the
   operator's explicit instruction on a draft they have seen.
-- **"prepara la bozza per X"** → `cs chat "componi una bozza … nel
-  thread con X …"` (no `--allow`): the engine composes with memory +
+- **"prepare the draft for X"** → `cs chat "compose a draft … in the
+  thread with X …"` (no `--allow`): the engine composes with memory +
   trained voice + threading and stores a draft. Report subject + body
   back to the operator verbatim.
-- **"cerca in memoria X" / drill-down** → `cs chat "cerca in memoria …"`
+- **"search memory for X" / drill-down** → `cs chat "search memory …"`
   (read-only tools auto-execute; destructive ones are denied by default).
-- **"invia"** → only for a draft the operator just reviewed:
-  `cs chat "invia la bozza …" --allow send_draft`. One draft per
+- **"send"** → only for a draft the operator just reviewed:
+  `cs chat "send the draft …" --allow send_draft`. One draft per
   command; never batch-approve.
 - **`RATE_CAP` and dedup are hard.** On the cap, stop and report.
 - **Suppression** → `state.suppress(email, reason)` when the operator
-  says "non contattare più".
+  says "do not contact again".
 - **You do not commit anything.** Repo edits stay in the operator's hands.
 

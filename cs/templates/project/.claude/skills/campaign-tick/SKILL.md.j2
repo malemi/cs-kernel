@@ -30,8 +30,8 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
   scope, angry, or you are not sure: leave the contact untouched and list it
   under "Escalations (need you):". Never auto-confirm, never auto-send a
   free-form reply, never re-mail. A missed nudge is cheap; a wrong send is not.
-- **Autoresponder ≠ a real reply.** "richiesta ricevuta / your request has
-  been taken up / Auto-replay / out-of-office / studio OOO"
+- **Autoresponder ≠ a real reply.** "request received / your request has
+  been taken up / Auto-replay / out-of-office / OOO"
   is NOT engagement and NOT a confirmation. Never treat it as a reply worth
   answering or closing on.
 - **Re-classify only on a NEWER reply.** Re-LLM a contact's reply only when a
@@ -130,7 +130,7 @@ The result is `{"emails":[…]}` (a dict, not a list). Read the message
 it is already classified — leave it, do nothing. Otherwise classify with
 judgment and route:
 
-- **Autoresponder / out-of-office / "richiesta ricevuta"** ⇒ NOT a reply
+- **Autoresponder / out-of-office / "request received"** ⇒ NOT a reply
   worth acting on. Leave the contact in track (NO `--state` change), but you
   MUST persist that you saw it AND stamp `classified_upto` to this reply's
   timestamp — otherwise the next tick re-classifies the same autoresponder
@@ -145,7 +145,7 @@ judgment and route:
   from the thread + memory** ⇒ compose a contextual reply **via the engine**
   (memory + trained voice + threading, {{ email_address }}):
   ```bash
-  .venv/bin/python -m cs draft-reply "rispondi nel thread con <email>: <breve intento>"
+  .venv/bin/python -m cs draft-reply "reply in the thread with <email>: <brief intent>"
   ```
   `draft-reply` stores a DRAFT and cannot send (the operator reviews & sends).
   Then mark the contact engaged:
@@ -163,7 +163,7 @@ judgment and route:
   `cs review` until the operator clears it, and stamp `classified_upto` so the
   same reply isn't re-escalated every tick:
   ```bash
-  .venv/bin/python -m cs campaign mark <contact_id> --dossier '{"escalated": true, "escalate_reason": "<perché: ambiguo / fuori scope / arrabbiato>", "classified_upto": "<reply ISO ts>"}' --commit
+  .venv/bin/python -m cs campaign mark <contact_id> --dossier '{"escalated": true, "escalate_reason": "<why: ambiguous / out of scope / angry>", "classified_upto": "<reply ISO ts>"}' --commit
   ```
   Also list it under "Escalations (need you):" in the report. The operator
   handles it and clears the flag when done. Default whenever judgment is

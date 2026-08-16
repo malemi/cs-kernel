@@ -29,8 +29,11 @@ import argparse
 import asyncio
 import json
 import os
+import socket
 import sys
 from collections import Counter
+
+import websockets
 
 from . import config, crm, ingest, rpc
 from . import campaign as campaign_mod
@@ -1047,6 +1050,32 @@ def main(argv=None) -> int:
         return args.func(args)
     except config.ConfigError as e:
         print(f"{settings.prog_name or 'cs'}: {e}", file=sys.stderr)
+        return 1
+    except (ConnectionError, socket.gaierror, socket.timeout,
+            websockets.exceptions.WebSocketException) as e:
+        # Configuration/environment absence is a product state, not a bug: the
+        # commonest cause by far is the mrcall-desktop app simply not running
+        # yet, or its engine living on another machine. `websockets.connect`
+        # raises ConnectionRefusedError straight out of the TCP handshake in
+        # that case — a raw traceback here is the first thing a new customer
+        # sees, and it reads as "the product is broken" rather than "start the
+        # app".
+        #
+        # Catch ConnectionError, NOT OSError: FileNotFoundError and
+        # PermissionError are OSError subclasses too, so the wider net would
+        # announce "cannot reach the engine" for a missing file in any verb —
+        # a confidently wrong diagnosis, which is worse than the traceback it
+        # replaced. ConnectionError covers refused/reset/aborted connections;
+        # gaierror and timeout cover an unresolvable or silent host. Anything
+        # else (a real bug) still surfaces as a traceback.
+        print(
+            f"{settings.prog_name or 'cs'}: cannot reach the engine at "
+            f"{settings.engine_ws_url!r}: {type(e).__name__}: {e}\n"
+            "  The mrcall-desktop app is probably not running, or its engine "
+            "is on another machine — start it there, or point [engine].ws_url "
+            "in manifest.toml at the machine that is running it.",
+            file=sys.stderr,
+        )
         return 1
 
 

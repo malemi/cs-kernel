@@ -4,18 +4,135 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, measured 2026-08-13): `v0.5.2`.
-`mrcall-cs` and `124-cs` each declare, lock and have `0.5.2` installed —
-**FULL collaudo green on both**. `124-cs` signed 2026-08-09 (old-vs-new +
-autotest, all green); `mrcall-cs` signed 2026-08-13: the 08-09 outage was an
-HTTP-referrer restriction that had landed on the shared engine web API key
-(blocking all no-referer server-side calls), replaced by a dedicated server
-key restricted to Identity Toolkit + Token Service; behavioral old-vs-new
-evidence from 08-09 (live diffs data-only, shapes identical) plus a same-day
-11/11 ALL GREEN check on the re-frozen baseline (cs-collaudo LOOP-LOG).
-Operators remain paused.
+**Current operational pin** (both clones, signed 2026-08-16): `v0.6.0`.
+`mrcall-cs` and `124-cs` each declare, lock and have `0.6.0` installed —
+**FULL collaudo signed on both**, permission bytes byte-identical to the
+`v0.5.2` baseline; the declared deltas were the `cs --help` tree (`init`,
+`update` and `login` now listed as real subparsers), the per-uid session
+paths (`id_token-<uid>.json` / `refresh_token-<uid>.json`), and the stamped
+`CLAUDE.md.j2` "Auth chain (headless)" paragraph, which now describes the
+descriptor → `cs login` → refresh-token-exchange chain instead of the
+retired service-account mint path. Operators remain paused.
 
-## v0.6.0 candidate  — 2026-08-15
+`v0.5.2` and every earlier tag mint the auth token from a locally-held
+Firebase service-account credential (`firebase-sa.json`) that only the
+vendor can issue — a new customer cannot complete onboarding on those tags
+and must not be pointed at them; `v0.6.0` is the first tag a new customer
+can install end to end.
+
+## Unreleased — v0.6.1 candidate
+
+### Fixed — the public README still walked a new reader onto the retired `v0.5.2` install pin and skipped `cs login` entirely
+- **Why:** an adversarial UX review of the README as a fresh, competent
+  reader with no prior context on this project found it breaking at
+  installation and at first use. The install pin, the Versioning section's
+  pin and the "Current release" line all still named `v0.5.2` — the tag
+  from *before* the `v0.6.0` auth rewrite — so a reader who followed the
+  README to the letter installed the vendor-only-service-account mint path
+  and dead-ended on a `FileNotFoundError: firebase-sa.json` traceback for a
+  file only the vendor can issue. `cs login`, the verb `v0.6.0` actually
+  introduced to turn a desktop sign-in into a usable session, was entirely
+  absent from the document (`grep login README.md` matched nothing), so the
+  reader had no path from "toolkit installed" to "`cs whoami` succeeds."
+  Prerequisites told the reader to look up "the engine WebSocket URL and the
+  profile's Firebase uid" by hand — both now unobtainable that way, since
+  `v0.6.0` derives them from the desktop app's own sign-in descriptor. The
+  document also never used the word "daemon" and never said `cs` has to run
+  on the same machine as the mrcall-desktop app, never stated the Gmail /
+  Google Workspace requirement `cs/gmail_archive.py`'s IMAP special-use
+  folder selection actually has, told the reader "defaults are fine when
+  unsure" when several `cs init` prompts are hard-required (an empty answer
+  loops on "Please provide a value."), and its own worked example silently
+  diverged from the wizard's real behaviour: the table said the slug for
+  "ACME Corp" is `acme`, but `project_init.get_company_slug()` derives
+  `acme-corp`, so a reader who accepted that default would get a state
+  directory every later command in the same README — including the
+  `CS_PAUSE` kill-switch — then misses.
+- **What:** the README gained a new Step 0 ("Install mrcall-desktop and
+  sign in") ahead of the toolkit install, stating plainly what the app and
+  its local daemon do, that `cs` must run on the same machine, the
+  macOS/Windows-vs-Linux-from-source split, that sign-in writes the profile
+  descriptor `cs login` reads, and that a release newer than the public
+  `v0.1.29` (2026-05-05) is required. The now-false "you'll need the engine
+  WebSocket URL and the profile's Firebase uid" line is removed from
+  Prerequisites. `cs login` is now its own numbered step between installing
+  the project pin and `cs whoami`, explaining the `email (uid)` confirm
+  prompt, the stored session, the `FIREBASE_WEB_API_KEY=` note to paste into
+  `.env` on a key mismatch, and what `cs whoami` proves. A new
+  Troubleshooting section right after the setup steps quotes the tool's real
+  message text — verified against `cs/auth.py` and `cs/login.py` rather than
+  paraphrased — for "not signed in", connection-refused / engine-unreachable
+  (naming the asymmetry: `cs login` catches this as one line, other verbs
+  still surface a raw traceback), "no profile descriptor found", and nothing
+  landing in Drafts (`CS_PAUSE` and `cs_operator.log`). Prerequisites gained
+  the Gmail / Google Workspace requirement with its one-line reason. The
+  setup-prompts prose now names which answers must be ready before starting
+  instead of claiming defaults are always safe, and the worked example tells
+  the reader to type `acme` explicitly, spelling out why the wizard's own
+  default (`acme-corp`) would silently break the rest of the walkthrough.
+  The cron section now leads with the `cs cron install`/`status`/`uninstall`
+  verb, keeping the manual `crontab -e` route as the documented fallback
+  rather than the only path. All three stale `v0.5.2` install lines move to
+  `v0.6.0`, the released tag. This changelog's own top-of-file pin paragraph
+  is rewritten to `v0.6.0` (FULL collaudo signed on both clones 2026-08-16)
+  with a sentence warning that `v0.5.2` and earlier require the vendor-only
+  service-account file, so a new customer must not be installed onto them;
+  and the `v0.6.0` heading below drops the stale "candidate" wording now
+  that the tag is cut and pushed.
+- **Migration note:** documentation-only; no operator action.
+- **Re-collaudo:** none by itself — see the shared reasoning at the bottom
+  of this entry.
+
+### Fixed — `cs init` stamped a clone that could not run, and left its own cron entry silently dead
+- **Why:** three defects surfaced together while walking `cs init`'s output
+  end to end: the rendered `bin/*.sh` scripts came out of the Jinja render
+  at mode `0644`, so a freshly stamped clone's cron wrapper was not
+  executable — the exact crontab line this README documents
+  (`… bin/cs_operator_cron.sh …`) then failed silently under cron, with
+  nothing in `cs_operator.log` to explain why, which is the single defect
+  most likely to make a new operator conclude the product does nothing. The
+  wizard's own kernel-version default for the generated
+  `requirements.txt.j2` pin still read `0.5.2` — the pre-auth-rewrite tag —
+  so a clone stamped with the wizard's own suggested answer would re-hit the
+  same vendor-only service-account wall the README fix above describes.
+  Separately, the stamped clone templates themselves still carried
+  operator-visible defects: a hardcoded `wss://desktop.example.com`
+  placeholder where the real engine URL belongs, a "this is the mother
+  clone" sentence told to every company regardless of which clone it was,
+  CRM/producer/excluded-campaign bullets that printed even when the
+  operator had chosen the `none` adapter, prose left in Italian in at least
+  one template, and stale references to a `cs-template`/`copier` mechanism
+  that does not exist in this project.
+- **What:** rendered `bin/` scripts are now created with the executable bit
+  set, in both `cs init`'s render path and `cs update`'s re-render path, via
+  a shared `is_executable_target` helper so the two can never drift apart
+  on which files qualify. The
+  wizard's kernel-version default moves off `0.5.2` (now tracking the
+  release being cut). The stamped templates are corrected: the engine-URL
+  placeholder renders from the real configured value, the mother-clone
+  sentence is removed from the generic template, CRM/producer/excluded-campaign
+  bullets are guarded so a `none` adapter omits them entirely instead of
+  printing an empty or misleading line, the Italian strings are translated
+  to English, and the `cs-template`/`copier` references are corrected to
+  describe this project's actual `cs init`/`cs update` mechanism.
+- **Migration note:** affects what `cs init` stamps and the file mode of the
+  rendered scripts going forward. An already-stamped clone is unaffected
+  until it runs `cs update`, which re-renders the touched templates and
+  restores the intended file mode on `bin/`; no state, no send path, no
+  auth boundary changes underneath it.
+- **Re-collaudo:** none by itself — see the shared reasoning below.
+
+### Re-collaudo (this release)
+- **PATCH — static, picked up at the next `cs init` / `cs update`.** Every
+  item above changes what `cs init` STAMPS into a new clone, the file mode
+  of rendered scripts, or documentation; none of it touches a code path a
+  clone already running `v0.6.0` depends on — the auth boundary, the send
+  chokepoint, the campaign lifecycles and the engine RPC shapes are
+  untouched. A full collaudo is not required to adopt this tag; re-running
+  `cs init` on a fresh clone (or `cs update` plus a `chmod +x bin/*.sh`
+  sanity check) is enough to confirm the fix landed.
+
+## v0.6.0 — 2026-08-15
 
 ### Changed — auth exchanges a refresh token via the Secure Token API; the service-account credential exits the mint path
 - **Why:** the v0.5.2 blind onboarding probe (both clones, 2026-08-09) proved

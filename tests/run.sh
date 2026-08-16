@@ -379,6 +379,43 @@ step "19. cs login — descriptor parsing, profile scan, identity cross-check, n
 # descriptor refused (uid mismatch, nothing written) without --account.
 if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
+step "20. rendered bin/ scripts are executable (cs init AND cs update)"
+# A rendered file under bin/ (or sourced from a *.sh.j2 template) is a shell
+# script the operator's crontab is told to invoke directly. render_templates
+# used to write it with a bare write_text/write_bytes and never chmod —
+# bin/cs_operator_cron.sh came out 0644, and the crontab line the docs tell
+# the operator to install then failed SILENTLY with "Permission denied" (cron
+# does not mail a traceback for a non-executable script). Guards both write
+# paths: cs init's render_templates on a fresh render, and cs update
+# restoring the executable bit on an existing clone whose wrapper had
+# regressed to 0644.
+if "$VENV/bin/python" "$ROOT/tests/test_render_permissions.py"; then echo "OK"; else echo "FAIL: rendered bin/ scripts are not executable"; FAIL=1; fi
+
+step "21. rendered README hygiene (no example.com, no empty-var artifact, no Italian)"
+# An adversarial UX review (2026-08) found the stamped clone's own README
+# hardcoded desktop.example.com instead of {{ engine_ws_url }}, rendered
+# visible garbage for the common case (excluded_campaign="" -> the literal
+# 'The `` campaign is carved out...'), and shipped Italian strings ('Bozze',
+# 'invia la bozza per X') inside an English-only artifact. Renders
+# README.md.j2 through cs init's own jinja env in both the defaults shape
+# and a fully-populated shape, and asserts none of the three families reach
+# the render (and that the populated shape still renders the real bullets —
+# the guard is a visibility toggle, not a silent feature delete).
+if "$VENV/bin/python" "$ROOT/tests/test_readme_hygiene.py"; then echo "OK"; else echo "FAIL: rendered README carries a kernel-authoring leftover"; FAIL=1; fi
+
+step "22. engine-unreachable — one clean line, never a raw traceback"
+# Every engine-backed verb but `cs login` let ConnectionRefusedError escape
+# cli.main() as a raw traceback when the mrcall-desktop app is not running —
+# verified live: 'ConnectionRefusedError: [Errno 111] Connect call failed
+# (127.0.0.1, 1)'. Configuration/environment absence is a product state, not
+# a bug (charter). Guards: `cs whoami` against a closed local port (no real
+# network egress) exits non-zero with ONE line naming the configured engine
+# URL and the mrcall-desktop app, no "Traceback" on stderr; and the caught
+# family stays narrow (OSError + websockets.exceptions.WebSocketException,
+# never bare Exception) — a non-connection exception injected into the same
+# verb still propagates uncaught, proving the fix cannot mask a real bug.
+if "$VENV/bin/python" "$ROOT/tests/test_engine_unreachable.py"; then echo "OK"; else echo "FAIL: engine-unreachable error handling regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

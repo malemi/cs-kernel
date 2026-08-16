@@ -1,13 +1,15 @@
 # {{ company_name }} — Architecture
 
-**Source of truth for HOW the system is built + the cloning guide.** This is
-the mother clone: the generic skeleton every `<name>-cs` reuses. The shared
-engine is the kernel (`cs-kernel`, import package `cs`); the per-company
-variance is entirely in `manifest.toml`, stamped below.
+**Source of truth for HOW the system is built + the cloning guide.**
+{% if repo_docs_shape == 'generic' %}
+This is the mother clone: the generic skeleton every `<name>-cs` reuses.
+{% endif %}
+The shared engine is the kernel (`cs-kernel`, import package `cs`); the
+per-company variance is entirely in `manifest.toml`, stamped below.
 
-Everything company-specific below is STAMPED from `manifest.toml` by the
-`cs-template` copier — do not hand-edit it; change `manifest.toml` and
-`copier update` instead (variance lives in the manifest + `company/*.md`,
+Everything company-specific below is STAMPED from `manifest.toml` by
+`cs init` / `cs update` — do not hand-edit it; change `manifest.toml` and
+run `cs update` instead (variance lives in the manifest + `company/*.md`,
 never in a rendered file).
 
 ---

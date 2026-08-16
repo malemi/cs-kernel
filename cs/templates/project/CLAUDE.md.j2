@@ -128,7 +128,7 @@ engine-backed and honour the flag.
 3. **Decide**: thread exists → reply in it; prior relationship → informed
    outreach; genuinely cold → cold template, flagged; contacted within
    `DEDUP_DAYS` / suppressed / self → **stop**.
-4. **Draft via the engine** (`cs draft-reply` / `cs chat "componi …"`) — never
+4. **Draft via the engine** (`cs draft-reply` / `cs chat "compose …"`) — never
    from scratch in cs.
 5. **Review** (desktop app or Gmail Drafts). 6. **Send** — only through the
    engine's approval gate (`cs chat … --allow send_draft`), after review.
@@ -141,7 +141,7 @@ Autonomous operator (`.claude/skills/`, cron `claude -p "/cs-operator"`):
 `/campaign-tick`{% if founder_sweep_enabled %} → read-only `{{ founder_sweep_account }}` sweep{% endif %} → report → STOP),
 `/triage-support-mail` (inbound → grounded DRAFT), `/campaign-tick` (advance
 campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}). Interactive skills
-(`.claude/skills/`): `/customer <nome>` (load `docs/projects/<nome>/` +
+(`.claude/skills/`): `/customer <name>` (load `docs/projects/<name>/` +
 **engine memory** for that customer — mandatory before customer work),
 `/find-document`. Interactive commands (`.claude/commands/`, zero side
 effects): `/cs-review`, `/munchausen`, `/analyze-account <name>`.
@@ -190,7 +190,7 @@ effects): `/cs-review`, `/munchausen`, `/analyze-account <name>`.
 (or unambiguous roles like `{{ accounts_default }}`) — never a bare first name. It holds
 **ONLY this project's own mail domain** — never another company's mailboxes or
 another project's uid. To analyse a non-default account, open a session and ask
-(*"analizza la casella <name>"*) or run **`/analyze-account <name>`** — read-only
+(*"analyse mailbox <name>"*) or run **`/analyze-account <name>`** — read-only
 verbs with `--account <name>`, no drafts/sends/memory writes. The autonomous
 draft/triage loop always runs on the **default** account only
 (`{{ accounts_default }}`).
@@ -209,13 +209,13 @@ customer state to act), **load both layers before answering**:
 1. **Engine memory (primary, live)** — `cs ask "…"` on the account that owns
    the relationship. Many customer threads live on **`{{ nondefault_account }}`**,
    not on the default `{{ accounts_default }}@` operator box:
-   - `.venv/bin/python -m cs --account {{ nondefault_account }} ask "<customer / contatti / stato>"`
+   - `.venv/bin/python -m cs --account {{ nondefault_account }} ask "<customer / contacts / status>"`
    - also try default `cs ask "…"` if the relationship might be on {{ accounts_default }}@
    - key contacts: `cs --account {{ nondefault_account }} thread <email>` — on a
      non-default account use `thread` (engine-backed); `dossier` refuses there,
      because its `contacted` half reads {{ email_address }}'s own Gmail. On
      {{ accounts_default }}@ itself, `cs dossier <email>` is the fuller check.
-2. **Dossier files (secondary, human-readable)** — `docs/projects/<azienda>/`
+2. **Dossier files (secondary, human-readable)** — `docs/projects/<name>/`
    (see [`docs/projects/README.md`](docs/projects/README.md)). These are
    artefacts; **the engine memory is the recall brain**. A file-only answer is
    incomplete.
