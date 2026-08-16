@@ -12,7 +12,21 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.6.1`. Current HEAD status: untagged.**
+**Latest release tag: `v0.7.0`. Current HEAD status: untagged.**
+`v0.7.0` (commit `79d8ea3`, 2026-08-16) adds the three things a newcomer
+reaches for and does not find: a root `cs --version` (it used to exit 2
+with a usage dump), `cs login` auto-selecting the descriptor whose uid
+matches the configured identity instead of offering a menu in which every
+other entry is refused after the fact, and `cs update --check` / `--pin`
+so a clone can learn a newer kernel tag exists without a hand-edit — with
+no auto-bump, because requirements.txt is the operator's pin. Re-collaudo
+declared **STATIC, both clones**: the first release under the amended
+charter rule (tier decided by what the release touches, not by the semver
+digit) — nothing here touches a send path, the auth boundary, a manifest
+field or a permission byte. Deliberately NOT in it: the report-language
+manifest field, reverted under the rule of two (both clones are Italian,
+so no company needs the knob yet).
+
 `v0.6.1` (commit `f75969e`, 2026-08-16) is the onboarding-path patch an
 adversarial UX review forced: rendered files under `bin/` are created 0755
 by both `cs init` and `cs update` (every clone ever stamped had a mode-0644
