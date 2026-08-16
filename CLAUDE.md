@@ -118,10 +118,23 @@ is an invariant baked by the template), `company/*.md` prose slots,
 ## Versioning & release
 
 Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches.
-PATCH = behavior-identical fix (cheap re-pin); MINOR = new manifest field /
-adapter / behavior change (full re-collaudo). Every tag gets a CHANGELOG
-entry naming what changed and **which clones must re-collaudo** at which
-tier (brief §6.6). Never push without the operator's explicit ok.
+The version number describes the INTERFACE: PATCH = behavior-identical fix;
+MINOR = new manifest field / adapter / new or changed CLI surface. A verb
+that stops prompting, or a flag that did not exist, is a MINOR even when the
+diff is small — an operator reading "patch" is entitled to expect nothing
+observable changed.
+
+**The re-collaudo tier is a separate judgement, decided by what the release
+TOUCHES — never inferred from the version digit.** FULL on both clones when
+it touches send paths, `campaign`, `gmail_archive`, `send_mail`, the auth
+boundary or the permission surface (the same list invariant 4 and the Tests
+section escalate on). Otherwise the tier is declared per entry — static when
+the only observable surface is the help tree or stamped prose, `read` when a
+live engine call could plausibly differ. Every tag gets a CHANGELOG entry
+naming what changed, **which clones must re-collaudo**, at which tier, and —
+when the tier is below FULL for a MINOR — one line of why that is safe
+(brief §6.6). Bending this rule silently rots it; bending it in writing does
+not. Never push without the operator's explicit ok.
 
 ## Tests
 
