@@ -29,6 +29,32 @@ You need a mrcall-desktop profile for the mailbox you want to operate.
 
 Voice and product policy live in the engine profile, not in this repo.
 
+### What a morning looks like
+
+```text
+$ cs review
+
+3 drafts ready · 2 open tasks · 1 escalation
+
+DRAFTS — in Gmail → Drafts. You read, you send.
+  studio.bianchi@example.it    Re: number unreachable after the migration
+  academy@example.com          Re: calendar integration
+  m.rossi@example.it           Re: cancellation
+
+TASKS
+  [critical]  +39 340 ••• 2299      Call back — lead came in yesterday, never answered
+  [critical]  invoices@example.it   Invoices 0065/0066 unanswered for 12 days
+
+ESCALATION
+  pms@example.com — angry customer, third report of the same bug.
+  No draft written: this needs a decision from you, not a reply.
+```
+
+The last block is the point. The operator drafts what it can defend and
+**stops** where it cannot — an escalation is the system refusing to answer,
+not a failure. Nothing above was sent: drafts sit in Gmail until you send
+them.
+
 ---
 
 ## Prerequisites
