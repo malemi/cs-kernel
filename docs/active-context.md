@@ -12,9 +12,9 @@ which clones must re-collaudo). This file tracks only what is *current*.
 
 ## Released and in use
 
-**Latest release tag: `v0.7.0`. Current HEAD status: untagged.**
-`v0.7.1` is prepared in the working tree (pyproject already at `0.7.1`):
-it fixes a package that installed under the wrong number — `v0.6.1` and
+**Latest release tag: `v0.7.1`. Current HEAD status: untagged.**
+`v0.7.1` (commit `57c2caf`, 2026-08-16, pushed) fixes a package that
+installed under the wrong number — `v0.6.1` and
 `v0.7.0` were both tagged without bumping `pyproject.toml`, so a clone
 pinned at either reports `0.6.0`, including from the `cs --version` that
 `v0.7.0` adds. The release gate now checks `git show <tag>:pyproject.toml`
