@@ -13,6 +13,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Step 15 (release-truth) reads TAGS and history from local git
+          # refs: which tag is latest, whether HEAD is tagged, and — since
+          # v0.7.1 — the pyproject version recorded at every release tag.
+          # actions/checkout defaults to a depth-1 clone with NO tags, so
+          # that gate asserted "repository has no semver release tags" on
+          # every single push, and the red became background noise nobody
+          # read. Full history + tags is what makes the gate mean in CI
+          # what it means locally.
+          fetch-depth: 0
+          fetch-tags: true
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
