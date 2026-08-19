@@ -57,6 +57,12 @@ what is *current*.
 
 ## Unresolved
 
+- The v0.8.x secrets writer is gate-proven (gate 24, function level) but the
+  full **interactive `cs init` walk** — wizard prompts through the new
+  getpass ending, on a fresh machine — has not been run end-to-end. The
+  clean-Mac customer walk (meta-repo Phase B handoff, open item 4) is the
+  verification vehicle.
+
 - **First wiring candidate** for the LLM path is whatever replaces `giada.py`
   (the batch-2 campaign loop is being superseded by a more general agent —
   the A/B measurement transfers to it). One `role=Role.CLASSIFIER` argument +
