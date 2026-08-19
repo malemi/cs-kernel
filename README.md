@@ -121,10 +121,10 @@ cs init
 ```
 
 Several prompts are required — pressing Enter on an empty value just
-re-asks ("Please provide a value.") — so have these ready before you
-start: the **operator email**, and, if Step 0's sign-in was **not**
-auto-detected, the **engine WS URL** and the **engine owner uid** (`cs
-init` prefills both from the mrcall-desktop sign-in when it can). Most
+re-asks ("Please provide a value.") — so have the **operator email**
+ready. The **engine WS URL** and **engine owner uid** come prefilled
+from Step 0's sign-in; if the wizard asks for them, Step 0 didn't happen
+on this machine — sign in (app v0.1.29+) and re-run `cs init`. Most
 other prompts — IMAP/SMTP host and port, timezone, cron schedule,
 dedup/rate-limit knobs, CRM/producer/SMS/Drive — have sensible defaults;
 here is what to expect for ACME:
@@ -136,7 +136,7 @@ here is what to expect for ACME:
 | From name for emails | `ACME` |
 | Short slug | type **`acme`** explicitly — the wizard's own default for "ACME Corp" is `acme-corp`, which would put your state under `~/.acme-corp-cs/` instead and silently break every `~/.acme-cs/...` command below |
 | Operator email | `support@acme.example` (required) |
-| Engine URL + owner uid | prefilled from Step 0's sign-in if it found exactly one profile; otherwise required — from your mrcall-desktop setup |
+| Engine URL + owner uid | prefilled from Step 0's sign-in; if asked, redo Step 0 and re-run |
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Destination folder | `acme-cs` |
