@@ -72,7 +72,13 @@ what is *current*.
 
 ## Next
 
-1. Promote the batch-2 loop's reusable parts: the flock'd schedule store
+1. `cs update --pin <tag>` must also refresh `template-manifest.json`'s
+   `init_data.repo_kernel_version` (bare number, no `v`). Found 2026-08-19:
+   mrcall-cs's init_data still said `"v0.3.0"` five releases later, so the
+   ARCHITECTURE re-stamp would have rendered `cs-kernel@vv0.3.0` — stamped
+   data rots when the pin verb doesn't own it. Fixed by hand in mrcall-cs;
+   the verb fix ships with the next kernel batch.
+2. Promote the batch-2 loop's reusable parts: the flock'd schedule store
    (`schedule.py`), the deterministic migrator pattern (`migrator.py`), and
    the IMAP attachment reader (`ext/attachments.py` — the engine indexes
    filenames but stores no bytes and exposes no fetch RPC). The attachment
