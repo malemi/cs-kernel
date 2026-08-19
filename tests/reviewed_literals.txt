@@ -15,3 +15,4 @@
 # Never add an entry here without the operator's explicit decision.
 
 cs/templates/project/requirements.txt.j2 :: cs-kernel @ git+https://github.com/malemi/cs-kernel@v{{ repo_kernel_version }} :: operator-approved 2026-08-09 — "malemi" is the kernel's own public home; shared infrastructure, identical for every clone, not clone data
+cs/templates/project/README.md.j2 :: kernel README, [The `cs` CLI](https://github.com/malemi/cs-kernel#the-cs-cli). :: same recorded decision as requirements.txt.j2 (operator-approved 2026-08-09): "malemi" is the kernel's own public home — this line links the clone README to the kernel README's CLI reference, identical for every clone

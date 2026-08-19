@@ -99,7 +99,12 @@ You need a mrcall-desktop release **newer than v0.1.29** (2026-05-05):
 that public build predates the file above. If a later step reports no
 descriptor found and you are sure you are signed in, update the app first.
 
-### 1. Install the toolkit (once)
+### 1. Install the `cs` command (once)
+
+This gives your computer the `cs` command. Copy-paste the whole block
+into the terminal, one line at a time or all together — it creates a
+private folder (`~/work`) and installs the tool inside it, touching
+nothing else on your machine:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh    # once, if uv is missing
@@ -199,10 +204,11 @@ claude
 opencode
 ```
 
-First thing to type: **`/cs-review`** — what the operator prepared for
-you (drafts waiting in Gmail Drafts, open tasks, campaign flags), zero
-side effects. **`/munchausen`** builds the day's review table (producer
-worklist, one dossier per candidate). Or just talk:
+First thing to type: **`/cs-review`** — the one review bootstrap, zero
+side effects: what the operator prepared for you (drafts waiting in
+Gmail Drafts, open tasks, campaign flags) and, when a lead source is
+configured, the day's outreach candidates with one dossier each. Or
+just talk:
 
 - *"What's still open in support mail?"* → triage review
 - *"Load customer Northwind"* → customer skill (docs + engine memory)

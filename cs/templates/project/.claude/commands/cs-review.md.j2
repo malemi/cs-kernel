@@ -1,61 +1,145 @@
 ---
-description: Operator review — open a session and see what the headless cs-operator prepared and left for you. Lists drafts waiting in {{ email_address }}'s Gmail Drafts, open engine tasks (triage escalations), per-campaign flags, and the last tick. ZERO side effects; this is where YOU review and authorise — the operator only ever drafts.
+description: The ONE review bootstrap — run it when you sit down. Verifies the {{ email_address }} engine session, shows what the headless operator prepared and left for you (drafts in Gmail Drafts, open tasks/escalations, campaign flags, last tick){% if producer_adapter != 'none' %}, then runs the producer worklist and builds a dossier + verdict for every outreach candidate{% endif %}. ZERO side effects — no drafting, no sending, no memory writes; YOU review and authorise.
 ---
 
 # {{ company_prog_name }} — Operator Review
 
-The bootstrap you run when you sit down: it shows what the headless operator
-**prepared** (drafts) and **left for you** (escalations / open tasks). The
-operator is draft-only by permission — it never sent anything. **You** are the
-authorise step: review the drafts and send them, handle the escalations.
+The bootstrap you run when you sit down. Two halves, one command:
+what the headless operator **prepared** for you (it is draft-only by
+permission — it never sent anything){% if producer_adapter == 'none' %}. No producer (lead source) is
+wired for {{ company_slug }} — reply-only, so there is no outreach half; when one
+is added (`cs/ingest/`), this same command grows the day's candidate
+table{% else %}, and the day's **outreach candidates**
+from the `{{ producer_adapter }}` producer, each with a dossier and a
+verdict{% endif %}.
 
-Run the steps silently; the only user-visible text is the digest + your offer
-of next actions. **ZERO side effects** (no sends, no marks, no drafts).
+Execute ALL steps silently — tool calls are fine, narration is not; the
+first user-visible text is the greeting in the final step. **ZERO side
+effects**: no `cs chat` (it spins the engine LLM), no drafts, no sends,
+no memory writes, no commits. If a step fails, capture a one-line note
+and continue; the greeting has a `Note:` slot.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
-## 1. Verify the engine session
+## 1. Read CLAUDE.md (know the surface)
+
+Read `CLAUDE.md` in this directory **in full** (single Read, no limit).
+It carries the engine facts, the verbs, the pipeline, and the Safety
+(NEVER) block — especially: never write without a dossier, never
+cold-mail an address that has a thread, never send outside the engine's
+approval gate.
+
+## 2. Verify the engine session
 
 ```bash
 .venv/bin/python -m cs whoami
 ```
 
-Expect `signed_in: true`, `email: {{ email_address }}`. If it fails, say so and
-stop — the digest needs the engine.
+Expect `signed_in: true`, `email: {{ email_address }}`. If it fails
+(daemon down, token mint failure), note it — threads/tasks/CRM lookups
+are unavailable; say so in the greeting instead of guessing.
 
-## 2. The digest
+## 3. What the operator prepared — the digest
 
 ```bash
 .venv/bin/python -m cs review
 ```
 
-Read-only aggregation: drafts waiting in {{ email_address }}'s Gmail Drafts, open engine
-tasks (where triage escalations live), per-campaign state + contacts flagged
-escalated / engaged / declined, and the last cron tick from the log.
+Read-only aggregation: drafts waiting in {{ email_address }}'s Gmail
+Drafts, open engine tasks (where triage escalations live), per-campaign
+state + contacts flagged escalated / engaged / declined, and the last
+cron tick from the log.
+{% if producer_adapter != 'none' %}
 
-## 3. Present + offer
+## 4. The day's candidates — producer worklist
 
-Present the digest in Italian, founders' register: tight, no emoji, no "fammi
-sapere". Lead with the numbers (N bozze, M task/escalation), then the lists.
-End by offering the next move:
+```bash
+.venv/bin/python -m cs plan -v --period 7d
+```
+
+Live prod data via the `{{ producer_adapter }}` producer: lead / signup /
+cancellation candidates after self-filter and suppression. Leads show as
+`uid_prefix` + behavioural hint (no email yet).
+
+## 5. Resolve lead emails
+
+For each lead candidate, resolve UID → email with the Firebase SA
+(read-only, one call per lead):
+
+```bash
+.venv/bin/python -c "
+from cs import config, resolve
+s = config.load()
+print(resolve.resolve_email('<uid>', s))"
+```
+
+No email → the lead is unreachable: mark `skip (no email)`. If the
+resolved email is in `SELF_EMAILS` → mark `self` and drop.
+
+## 6. Dossier every candidate
+
+For EVERY remaining candidate (signups and cancellations already carry
+their email):
+
+```bash
+.venv/bin/python -m cs dossier <email>
+```
+
+The dossier returns: existing threads (both directions), whether
+{{ email_address }} wrote to them within the dedup window, open engine
+tasks for the contact, {% if crm_adapter == 'shopify' %}Shopify{% elif crm_adapter == 'starchat' %}StarChat{% else %}the{% endif %} CRM state, and a mechanical verdict.
+Treat the verdict as input, not gospel — e.g. a "contacted" hit that is
+only a transactional notification (missed-call mail) is weaker than a
+human reply; surface the distinction to the operator.
+{% endif %}
+
+## Greet the operator
+
+Now — and only now — present yourself. Italian, founders' register:
+tight, complete sentences, no jargon, no emoji, no "fammi sapere".
+Lead with the numbers, then the lists{% if producer_adapter != 'none' %}, then the candidate table{% endif %}:
 
 ```
+{{ company_prog_name }} — review
+
+Engine:  {{ email_address }} ✓ (o: NON raggiungibile — <nota>)
+Preparato: <N> bozze in Gmail Drafts · <M> task/escalation aperti · ultimo tick <quando>
+{% if producer_adapter != 'none' %}Finestra: <window> · candidati: lead <n> / signup <n> / cancellation <n>
+
+| candidato | cat | thread? | contattato ≤30g | task | CRM | verdetto |
+|---|---|---|---|---|---|---|
+| … | … | … | … | … | … | rispondi-in-thread / outreach informato / cold (serve ok) / STOP |
+
+Scartati a monte: <reason xN, …>
+{% endif %}
+Note: <una riga per nota; ometti se nessuna>
+
 Da dove partiamo?
-- rivedere/inviare una bozza (sono nei Gmail Drafts di {{ email_address }});
-- gestire un'escalation o un task aperto;
+- rivedere/inviare una bozza (sono nei Gmail Drafts);
+- gestire un'escalation o un task aperto;{% if producer_adapter != 'none' %}
+- partire da un candidato della tabella;{% endif %}
 - preparare una risposta a X (te la metto in bozza, la rivedi e invii tu).
 ```
+{% if producer_adapter != 'none' %}
+One row per candidate; the verdict column is YOUR synthesis of the
+dossier (not just the mechanical verdict). Keep the table honest: if a
+"contacted" hit is transactional-only, say `solo notifiche` in that cell.
+{% endif %}
 
-## 4. Posture — the authorise boundary
+## Posture — the authorise boundary
 
-- **The operator drafted; YOU send.** A reviewed draft is sent by you — from
-  Gmail, or by telling this session to send it via the supervised path
-  (`cs chat "…" --allow send_draft`, used ONLY on a draft you just read and
-  approved). The headless operator has no send capability, by permission.
+- **The operator drafted; YOU send.** Every send needs your explicit
+  instruction on a draft you have seen. A reviewed draft is sent from
+  Gmail, or via the supervised path (`cs chat "send the draft …"
+  --allow send_draft`) — one draft per command, never batch-approve.
 - **"prepare a reply to X"** → `cs draft-reply "reply in the thread with
-  X: …"` (engine compose, a DRAFT; you review + send). Report subject + body
-  back to the operator verbatim.
+  X: …"` (engine compose with memory + trained voice + threading; a
+  DRAFT — you review + send). Report subject + body back verbatim.
+- **"search memory for X" / drill-down** → `cs chat "search memory …"`
+  (read-only tools auto-execute; destructive ones denied by default).
 - **Clearing an escalation** after you handle it →
   `cs campaign mark <id> --dossier '{"escalated": false}' --commit`.
-- You do not blast, you do not auto-send. One reviewed draft at a time.
-
+- **`RATE_CAP` and dedup are hard.** On the cap, stop and report.
+- **Suppression** → `state.suppress(email, reason)` when the operator
+  says "do not contact again".
+- You do not blast, you do not auto-send, you do not commit repo edits.
