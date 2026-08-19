@@ -1,6 +1,6 @@
 ---
 name: cs-operator
-description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then runs /triage-support-mail and /campaign-tick in order and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
+description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then runs /cs-triage-mail and /cs-campaign-tick in order and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
 ---
 
 # {{ company_prog_name }} — General Operator Bootstrap
@@ -63,7 +63,7 @@ for this tick.
 Run the inbound-mail triage sub-skill:
 
 ```
-/triage-support-mail
+/cs-triage-mail
 ```
 
 It finds inbound {{ email_address }} mail needing a human answer, reads full bodies
@@ -81,7 +81,7 @@ on.
 Run the campaign sub-skill:
 
 ```
-/campaign-tick
+/cs-campaign-tick
 ```
 
 {% if excluded_campaign %}

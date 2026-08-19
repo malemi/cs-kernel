@@ -1,5 +1,5 @@
 ---
-name: customer
+name: cs-customer
 description: Load a customer/prospect into working context. Argument is the folder name under docs/projects/ (e.g. acme-corp, globex, initech). Reads the dossier files AND — mandatorily — loads the mrcall-desktop engine memory for that customer. Use when the operator says /customer <name>, or when starting any work on a named customer. Does not send; memory writes only when the operator explicitly asks to persist a fact.
 ---
 {% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}

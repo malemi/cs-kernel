@@ -306,7 +306,7 @@ on purpose.
 After `cs init`, you have:
 
 - `bin/cs_operator_cron.sh` — one headless tick  
-- skill `/cs-operator` — triage + campaign-tick, then stop  
+- skill `/cs-operator` — `/cs-triage-mail` + `/cs-campaign-tick`, then stop  
 - kill-switch: `touch ~/.acme-cs/CS_PAUSE` (any slug: `~/.<slug>-cs/CS_PAUSE`)  
 - log: `~/.<slug>-cs/cs_operator.log`  
 

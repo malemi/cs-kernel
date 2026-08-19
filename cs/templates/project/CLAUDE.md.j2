@@ -137,14 +137,14 @@ engine-backed and honour the flag.
 ## 4. Skills + commands
 
 Autonomous operator (`.claude/skills/`, cron `claude -p "/cs-operator"`):
-`/cs-operator` (bootstrap: CS_PAUSE → session → `/triage-support-mail` →
-`/campaign-tick`{% if founder_sweep_enabled %} → read-only `{{ founder_sweep_account }}` sweep{% endif %} → report → STOP),
-`/triage-support-mail` (inbound → grounded DRAFT), `/campaign-tick` (advance
+`/cs-operator` (bootstrap: CS_PAUSE → session → `/cs-triage-mail` →
+`/cs-campaign-tick`{% if founder_sweep_enabled %} → read-only `{{ founder_sweep_account }}` sweep{% endif %} → report → STOP),
+`/cs-triage-mail` (inbound → grounded DRAFT), `/cs-campaign-tick` (advance
 campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}). Interactive skills
-(`.claude/skills/`): `/customer <name>` (load `docs/projects/<name>/` +
+(`.claude/skills/`): `/cs-customer <name>` (load `docs/projects/<name>/` +
 **engine memory** for that customer — mandatory before customer work),
-`/find-document`. Interactive commands (`.claude/commands/`, zero side
-effects): `/cs-review` (the one review bootstrap), `/analyze-account <name>`.
+`/cs-find-document`. Interactive commands (`.claude/commands/`, zero side
+effects): `/cs-review` (the one review bootstrap), `/cs-account <name>`.
 
 ## 5. Safety (NEVER)
 
@@ -190,7 +190,7 @@ effects): `/cs-review` (the one review bootstrap), `/analyze-account <name>`.
 (or unambiguous roles like `{{ accounts_default }}`) — never a bare first name. It holds
 **ONLY this project's own mail domain** — never another company's mailboxes or
 another project's uid. To analyse a non-default account, open a session and ask
-(*"analyse mailbox <name>"*) or run **`/analyze-account <name>`** — read-only
+(*"analyse mailbox <name>"*) or run **`/cs-account <name>`** — read-only
 verbs with `--account <name>`, no drafts/sends/memory writes. The autonomous
 draft/triage loop always runs on the **default** account only
 (`{{ accounts_default }}`).

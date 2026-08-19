@@ -1,9 +1,9 @@
 ---
-name: triage-support-mail
+name: cs-triage-mail
 description: Find inbound {{ email_address }} mail that needs a human answer and DRAFT a grounded reply via the engine (or, only when CS_TRIAGE_MODE=send, send it). Default on uncertainty is ESCALATE — never auto-send a free-form reply.
 ---
 
-# triage-support-mail
+# cs-triage-mail
 
 Execute ALL steps below silently. **Do not address the operator until the
 final report (step 6).** This is the genuinely-agentic capability of the
@@ -16,10 +16,10 @@ user-visible text is the report in step 6.
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 {% if excluded_campaign %}
 This skill is **general** — it is NOT about the {{ excluded_campaign }} campaign or any
-campaign; campaign follow-up is `/campaign-tick`'s job, not this one.
+campaign; campaign follow-up is `/cs-campaign-tick`'s job, not this one.
 {% else %}
 This skill is **general** — it is NOT about any campaign; campaign
-follow-up is `/campaign-tick`'s job, not this one.
+follow-up is `/cs-campaign-tick`'s job, not this one.
 {% endif %}
 
 ## Invariants (read before acting)
@@ -227,7 +227,7 @@ register: tight, complete sentences, no jargon, no emoji, no "fammi
 sapere". Compact and skimmable:
 
 ```
-triage-support-mail — <n> candidati
+cs-triage-mail — <n> candidati
 
 Bozze pronte (da rivedere e inviare):
 - <email> — "<oggetto>"

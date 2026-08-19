@@ -1,5 +1,5 @@
 ---
-name: campaign-tick
+name: cs-campaign-tick
 description: Advance every active {{ company_prog_name }} campaign{% if excluded_campaign %} EXCEPT {{ excluded_campaign }} (a dedicated process owns it){% endif %}. Reconcile already-sent drafts, surface composed-draft outreach via the dedup-gated send-draft verb, classify new human replies from full thread bodies, and route free-form answers through the engine as drafts. Identity is always {{ email_address }}. Opus-driven for now (operator's call, temporary). DEFAULT ON UNCERTAINTY = ESCALATE.
 ---
 
