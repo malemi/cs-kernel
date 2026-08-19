@@ -16,9 +16,12 @@ Each check is a drift class that has really happened:
 3. `docs/active-context.md` names BOTH the latest semver release tag and whether
    current HEAD is tagged — a docs-only commit after a release must not turn the
    release truth red, while calling `v0.4.0` latest after `v0.5.0` still fails;
-4. every `cs-kernel@vX.Y.Z` install line in `README.md` is either the package
-   version or the operational pin recorded in `CHANGELOG.md` — a blacklist of
-   one obsolete tag rots the day a second obsolete tag appears.
+4. `README.md` carries NO literal `cs-kernel@vX.Y.Z` install pin — every
+   hardcoded tag ever written there went stale (v0.6.0 survived two whole
+   releases). Installs go through the dynamic resolver snippet
+   (`git ls-remote --tags` feeding an `@${TAG}` install line), which must be
+   present; the operational pin of the live clones stays recorded in
+   `CHANGELOG.md` and must name a real release tag.
 """
 
 from __future__ import annotations
@@ -60,9 +63,6 @@ MIN_BODY_CHARS = 300
 # continuation; the marker plus five lines covers both the bullet shape
 # ("- **Re-collaudo:** …") and the heading shape ("### Re-collaudo").
 COLLAUDO_WINDOW = 6
-
-# How far above an install line the pin guidance may sit.
-POINTER_LOOKBACK = 5
 
 # `grep [-flags] '<pattern>' cs/` — the invocation shape of the charter gate.
 GREP_CALL_RE = re.compile(r"grep\s+(?P<opts>(?:-{1,2}\S+\s+)*)'(?P<pattern>[^']*)'\s+cs/")
@@ -111,7 +111,9 @@ TAG_VERSION_EXCEPTIONS = {
 
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")
 PIN_MARKER_LABEL = "current operational pin"
-POINTER_RE = re.compile(r"operational pin[^.]*CHANGELOG\.md", re.I | re.S)
+
+# The dynamic install snippet the README must carry instead of a literal pin.
+RESOLVER_MARKS = ("git ls-remote --tags", "@${TAG}")
 
 
 # --------------------------------------------------------------------------- #
@@ -379,34 +381,40 @@ def operational_pins(changelog: str) -> list[str]:
     return pins
 
 
-def check_readme_pins(readme: str, changelog: str, release: str) -> list[str]:
-    lines = readme.splitlines()
-    hits = [(i, m.group("v")) for i, ln in enumerate(lines) for m in PIN_RE.finditer(ln)]
-    assert hits, (
-        "README.md contains no 'cs-kernel@vX.Y.Z' install line, so its pin guidance "
-        "cannot be checked against anything."
+def check_readme_install(readme: str, changelog: str, tags: list[str]) -> list[str]:
+    hardcoded = sorted({m.group("v") for m in PIN_RE.finditer(readme)})
+    assert not hardcoded, (
+        f"README.md hardcodes cs-kernel@v{', v'.join(hardcoded)}; every literal "
+        f"pin ever written there went stale. Use the dynamic resolver snippet "
+        f"({RESOLVER_MARKS[0]!r} feeding an {RESOLVER_MARKS[1]!r} install line)."
     )
+    for mark in RESOLVER_MARKS:
+        assert mark in readme, (
+            f"README.md has no dynamic install snippet: {mark!r} not found. "
+            f"Without it a reader has no install line at all."
+        )
     pins = operational_pins(changelog)
     assert pins, (
         f"CHANGELOG.md has no '{PIN_MARKER_LABEL}' line naming a vX.Y.Z tag; the "
-        f"README's install pin then has no recorded fact to agree with."
+        f"operational pin of the live clones must stay recorded there."
     )
-    allowed = {release.lstrip("v"), *pins}
-    wrong = sorted({v for _, v in hits if v not in allowed})
-    assert not wrong, (
-        f"README.md installs cs-kernel@v{', v'.join(wrong)}; the only pins it may "
-        f"name are the package version {release} and the operational pin(s) recorded "
-        f"in CHANGELOG.md ({', '.join('v' + p for p in pins)})."
+    missing = sorted(p for p in pins if f"v{p}" not in tags)
+    assert not missing, (
+        f"CHANGELOG.md records operational pin(s) v{', v'.join(missing)} that "
+        f"match no existing release tag."
     )
-    assert any(
-        POINTER_RE.search("\n".join(lines[max(0, i - POINTER_LOOKBACK) : i]))
-        for i, _ in hits
-    ), (
-        "no README.md install line is introduced by a pointer to the operational pin "
-        "recorded in CHANGELOG.md, so a reader gets a bare tag with no way to tell "
-        "whether it is still the current one."
+    return pins
+
+
+def prove_readme_install_negative(readme: str, changelog: str, tags: list[str]) -> int:
+    doctored = readme + (
+        '\nuv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.0.1"\n'
     )
-    return sorted({v for _, v in hits})
+    _expect_assertion(
+        lambda: check_readme_install(doctored, changelog, tags),
+        "hardcodes cs-kernel@v0.0.1",
+    )
+    return 1
 
 
 def main() -> None:
@@ -433,14 +441,16 @@ def main() -> None:
     assert release in active, (
         f"{release} (the pyproject version) is not mentioned in docs/active-context.md"
     )
-    pins = check_readme_pins(readme, changelog, release)
+    pins = check_readme_install(readme, changelog, tags)
+    negative_proofs += prove_readme_install_negative(readme, changelog, tags)
 
     print(
         f"test_release_consistency: {release} — changelog section {body_lines} lines, "
         f"re-collaudo tier '{tier}'; executing charter grep carries "
         f"{len(COMPANY_TOKENS)} company tokens + {HB_TOKEN}; latest release "
         f"{latest}; HEAD {', '.join(head_tags) if head_tags else 'untagged'}; immutable "
-        f"{', '.join(immutable)}; {negative_proofs} negative release proofs; README pins "
+        f"{', '.join(immutable)}; {negative_proofs} negative release proofs; README install "
+        f"dynamic (no literal pin), operational pin "
         f"{', '.join('v' + p for p in pins)}; tag/pyproject match "
         f"{len(tag_versions)}/{len(tags)} ({len(TAG_VERSION_EXCEPTIONS)} recorded exceptions)"
     )

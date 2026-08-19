@@ -69,9 +69,6 @@ in. In full:
   providers are not supported today.
 - Mailbox password / app password for that address (IMAP/SMTP)
 
-Without the engine and secrets, setup still creates the folder, but the AI
-cannot load real mail or memory yet.
-
 ---
 
 ## Setup (copy & paste) — example: ACME
@@ -112,8 +109,9 @@ descriptor found and you are sure you are signed in, update the app first.
 mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-# Install the current operational pin recorded in CHANGELOG.md, never a branch.
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.7.1"
+# Resolve the newest release tag and install it — always a tag, never a branch.
+TAG=$(git ls-remote --tags --refs https://github.com/malemi/cs-kernel 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -1)
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@${TAG}"
 ```
 
 ### 2. Create your company project
@@ -403,10 +401,12 @@ Turning on autonomous send is a deliberate later choice, not the default.
 
 ### Versioning
 
-Install a **version tag**, not a floating branch:
+Install a **version tag**, not a floating branch. The snippet resolves the
+newest release tag at install time, so it never goes stale:
 
 ```bash
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.7.1"
+TAG=$(git ls-remote --tags --refs https://github.com/malemi/cs-kernel 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -1)
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@${TAG}"
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
@@ -416,6 +416,7 @@ See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
 MIT. Public setup kit for operators that sit in front of **mrcall-desktop**.
 You still need engine access, credentials, and human review in draft mode.
 
-**Latest tag:** `v0.7.1`. **Operational pin for new installs:** `v0.7.1` —
-see [CHANGELOG.md](CHANGELOG.md) for what each release changes and the
-re-collaudo it requires.
+The install snippets above resolve the newest release tag at run time. See
+[CHANGELOG.md](CHANGELOG.md) for what each release changes, the current
+operational pin of the live clones, and the re-collaudo each release
+requires.
