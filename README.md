@@ -113,7 +113,7 @@ mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 # Install the current operational pin recorded in CHANGELOG.md, never a branch.
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.6.0"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.7.1"
 ```
 
 ### 2. Create your company project
@@ -406,7 +406,7 @@ Turning on autonomous send is a deliberate later choice, not the default.
 Install a **version tag**, not a floating branch:
 
 ```bash
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.6.0"
+uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.7.1"
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
@@ -416,6 +416,6 @@ See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
 MIT. Public setup kit for operators that sit in front of **mrcall-desktop**.
 You still need engine access, credentials, and human review in draft mode.
 
-**Latest tag:** `v0.7.1`. **Operational pin for new installs:** `v0.6.0` —
+**Latest tag:** `v0.7.1`. **Operational pin for new installs:** `v0.7.1` —
 see [CHANGELOG.md](CHANGELOG.md) for what each release changes and the
 re-collaudo it requires.

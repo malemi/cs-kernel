@@ -305,7 +305,7 @@ def collect_config() -> dict:
     # Nothing enforces this automatically — no onboarding gate checks it against
     # README or CHANGELOG. Bump it by hand at each release, in lockstep with
     # README step 1 and the CHANGELOG entry.
-    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.6.1")
+    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.7.1")
 
     # Repo docs shape (generic = mother/kernel-canonical; as-built = a stamped clone)
     config["repo_docs_shape"] = prompt_input("Repository docs shape (generic, as-built)", "generic")
