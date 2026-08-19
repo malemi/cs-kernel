@@ -1,33 +1,12 @@
 # cs-kernel
 
-**A ready-made customer-service operator for your company mailbox.**
-
-Typical path:
-
-1. **Interactive first** — open Claude Code or OpenCode in the project folder,
-   work in natural language (“load this customer”, “draft a reply…”).  
-2. **Memory fills up** — mrcall-desktop syncs mail and stores relationship
-   state; the more you use it, the less you re-explain.  
-3. **Optional automation** — when you trust the drafts, turn on a small
-   cron tick that prepares the next batch for you (still draft-first by default).
-
-Under the hood it talks to **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**
-(the engine that syncs mail, keeps memory, and can draft/send). This package
-is the thin setup + skills layer in front of that engine — not a mail server
-by itself.
-
-You need a mrcall-desktop profile for the mailbox you want to operate.
-
----
-
-## What you get
-
-1. A small project folder (e.g. `acme-cs/`) configured for **your** company  
-2. Skills the AI can run: load a customer, triage mail, advance campaigns, …  
-3. Safety defaults: **draft first**, review before anything is sent  
-4. An optional **cron wrapper** so the same operator can tick unattended  
-
-Voice and product policy live in the engine profile, not in this repo.
+**A ready-made customer-service operator for your company support mailbox.**
+It reads your support inbox, drafts the replies it can defend — in your
+company's voice — and leaves them in Gmail Drafts for you to read and send.
+Nothing goes out without you. The one thing it needs already running is
+**[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, a
+separate app that syncs your mail and holds the relationship memory this
+operator drafts from; Step 0 below installs it and signs you in.
 
 ### What a morning looks like
 
@@ -57,7 +36,23 @@ them.
 
 ---
 
+## What you get
+
+1. A small project folder (e.g. `acme-cs/`) configured for **your** company  
+2. Skills the AI can run: load a customer, triage mail, advance campaigns, …  
+3. Safety defaults: **draft first**, review before anything is sent  
+4. An optional **cron wrapper** so the same operator can tick unattended  
+
+Voice and product policy live in the engine profile, not in this repo.
+
+---
+
 ## Prerequisites
+
+What this actually costs you: a **Gmail or Google Workspace** mailbox for
+the operator address, the **mrcall-desktop** app (with its local daemon)
+running on this same machine, and **Claude Code** or **OpenCode** to work
+in. In full:
 
 - **Python 3.11+**
 - **[uv](https://github.com/astral-sh/uv)** (fast installer)  
@@ -82,6 +77,11 @@ cannot load real mail or memory yet.
 ## Setup (copy & paste) — example: ACME
 
 Imagine your operator address is `support@acme.example`.
+
+**The whole path, in order:** install the app and sign in → install the
+tool → make your project → put your secrets somewhere → install the
+project's own pin → sign in → check → work. Steps 0–7 below walk through
+each one — skip nothing on a first run.
 
 ### 0. Install mrcall-desktop and sign in
 
@@ -287,9 +287,14 @@ You don’t “train a model” by hand. You:
 
 Next sessions — interactive or cron — start from that memory instead of a blank page.
 
+You’re set up. Everything from here on is reference material for when you
+need it, not more onboarding.
+
 ---
 
-## Optional: run it automatically (cron)
+## Reference
+
+### Optional: run it automatically (cron)
 
 When interactive use feels solid and drafts look right, you can let the
 operator prepare work on a schedule. **Default remains draft-only**: the tick
@@ -297,7 +302,7 @@ triages inbound mail and advances campaigns into **drafts for your review**;
 it does not freely email customers unless you later change mode and permissions
 on purpose.
 
-### What’s already in the project
+#### What’s already in the project
 
 After `cs init`, you have:
 
@@ -311,7 +316,7 @@ The wrapper re-denies send surfaces so a cron run cannot “accidentally” send
 You need the **Claude Code CLI** available to cron (default path
 `~/.local/bin/claude`, overridable with `CLAUDE_BIN`).
 
-### Try one tick by hand
+#### Try one tick by hand
 
 ```bash
 cd acme-cs
@@ -320,7 +325,7 @@ source .venv/bin/activate
 # then inspect Gmail Drafts / run your review skill in the TUI
 ```
 
-### Install a schedule (when you’re ready)
+#### Install a schedule (when you’re ready)
 
 The CLI has a `cron` verb that reads `[cron].schedule` from your
 `manifest.toml`, builds the crontab line with the absolute path to your
@@ -352,9 +357,7 @@ rm ~/.acme-cs/CS_PAUSE
 Sending without review is a **later, deliberate** step (config + permissions),
 not what you get on day one.
 
----
-
-## Upgrading later
+### Upgrading later
 
 First find out whether there is anything to upgrade TO — `cs update --check`
 reads the kernel origin already pinned in your `requirements.txt`, checks it
@@ -371,7 +374,7 @@ If a newer tag is what you want, re-pin explicitly — this never happens on
 its own; a pin that updates itself is not a pin:
 
 ```bash
-cs update --pin v0.7.0     # rewrites ONLY the kernel pin line in
+cs update --pin v0.7.1     # rewrites ONLY the kernel pin line in
                             # requirements.txt and prints the before/after
 ```
 
@@ -389,9 +392,7 @@ Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG entry —
 
 Then reopen `claude` / `opencode` in that folder.
 
----
-
-## Safety (defaults)
+### Safety (defaults)
 
 - **Draft first** — automated paths are not free-fire send.  
 - No cold outreach without a proper contact check.  
@@ -400,9 +401,7 @@ Then reopen `claude` / `opencode` in that folder.
 
 Turning on autonomous send is a deliberate later choice, not the default.
 
----
-
-## Versioning
+### Versioning
 
 Install a **version tag**, not a floating branch:
 
@@ -412,12 +411,11 @@ uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@v0.6.0"
 
 See [CHANGELOG.md](CHANGELOG.md) for what each release changes.
 
----
-
-## License & status
+### License & status
 
 MIT. Public setup kit for operators that sit in front of **mrcall-desktop**.
 You still need engine access, credentials, and human review in draft mode.
 
-**Current release:** `v0.6.0` — see [CHANGELOG.md](CHANGELOG.md) for what it
-changes and the re-collaudo it requires.
+**Latest tag:** `v0.7.1`. **Operational pin for new installs:** `v0.6.0` —
+see [CHANGELOG.md](CHANGELOG.md) for what each release changes and the
+re-collaudo it requires.
