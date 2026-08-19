@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.8.1`. Current HEAD status: tagged as `v0.8.1`.**
+- **Latest release tag: `v0.8.1`. Current HEAD status: untagged.**
   `v0.8.1` is the corrective for `v0.8.0` (2026-08-19), which was tagged and
   pushed straight from the feature commit and therefore installs as `0.7.1` —
   the fifth entry in `TAG_VERSION_EXCEPTIONS`, object pinned immutable.
