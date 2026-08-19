@@ -28,8 +28,8 @@ what is *current*.
 
   | Clone | Pinned | Collaudo | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking |
-  | `124-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking |
+  | `mrcall-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused; **cron NOT installed** |
+  | `124-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, deployed
@@ -57,6 +57,11 @@ what is *current*.
 
 ## Unresolved
 
+- **mrcall-cs has no operator cron installed** (`cs cron status` → "Not
+  installed"; the host crontab carries only the retired centralix-batch2
+  entries and 124-cs's). Found by the doc-critic 2026-08-19 while verifying
+  the "ticking" claim. Deliberate or forgotten? — operator call, then
+  `cs cron install` or drop the claim for good.
 - The v0.8.x secrets writer is gate-proven (gate 24, function level) but the
   full **interactive `cs init` walk** — wizard prompts through the new
   getpass ending, on a fresh machine — has not been run end-to-end. The

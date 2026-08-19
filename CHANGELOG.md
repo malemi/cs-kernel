@@ -5,14 +5,12 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (both clones, static tier, 2026-08-19): `v0.8.1`.
-`mrcall-cs` and `124-cs` each declare, lock and have `0.6.0` installed —
-**FULL collaudo signed on both**, permission bytes byte-identical to the
-`v0.5.2` baseline; the declared deltas were the `cs --help` tree (`init`,
-`update` and `login` now listed as real subparsers), the per-uid session
-paths (`id_token-<uid>.json` / `refresh_token-<uid>.json`), and the stamped
-`CLAUDE.md.j2` "Auth chain (headless)" paragraph, which now describes the
-descriptor → `cs login` → refresh-token-exchange chain instead of the
-retired service-account mint path. Operators remain paused.
+`mrcall-cs` and `124-cs` each pin `@v0.8.1` and have `0.8.1` installed
+(`cs --version` verified on both). Static-tier evidence recorded at re-pin:
+`.claude/settings.json` and `bin/cs_operator_cron.sh` byte-identical before
+and after `cs update`, live `cs whoami` proof call OK on both engines.
+Operators are un-paused; 124-cs's operator cron is installed and ticking,
+mrcall-cs's is not installed (open item in `docs/active-context.md`).
 
 `v0.5.2` and every earlier tag mint the auth token from a locally-held
 Firebase service-account credential (`firebase-sa.json`) that only the

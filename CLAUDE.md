@@ -110,10 +110,12 @@ Two template roots, and the distinction is load-bearing:
 Each needs its own `package-data` glob in `pyproject.toml` or the verb ships
 without its templates.
 
-NOT in this repo (template/clone side): `.claude/` (skills, commands,
-settings.json), the cron wrapper `bin/cs_operator_cron.sh` (its deny body
-is an invariant baked by the template), `company/*.md` prose slots,
-`campaigns/` pack content, `manifest.toml` itself, docs/customers, `ext/`.
+Clone-owned, never kernel source (the kernel ships them ONLY as `.j2`
+templates under `cs/templates/project/`, stamped per clone): `.claude/`
+(skills, commands, settings.json), the cron wrapper `bin/cs_operator_cron.sh`
+(its deny body is an invariant baked by the template), `company/*.md` prose
+slots, `manifest.toml` itself. Not in this repo in ANY form: `campaigns/`
+pack content, docs/customers, `ext/`.
 
 ## Versioning & release
 
