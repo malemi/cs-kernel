@@ -20,6 +20,52 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.8.1 — 2026-08-19
+
+### Fixed — `v0.8.0` installs as `0.7.1` (tag cut without the release commit)
+- **Why:** `v0.8.0` was tagged and pushed directly from the feature commit,
+  skipping the release commit, so `git show v0.8.0:pyproject.toml` still
+  says `0.7.1`: a clone pinned at `v0.8.0` runs the right code but reports
+  the wrong number from `cs --version` and `pip show` — the v0.6.1/v0.7.0
+  incident again, and a published tag is immutable.
+- **What:** `pyproject.toml` moves to `0.8.1`; `v0.8.0` is recorded in
+  `TAG_VERSION_EXCEPTIONS` and its object pinned in `IMMUTABLE_TAG_TARGETS`
+  (operator decision, 2026-08-19). No runtime change of any kind —
+  `v0.8.1` is `v0.8.0` under its true name.
+- **Migration note:** a clone pinned at `v0.8.0` works; re-pin with
+  `cs update --pin v0.8.1` when convenient to make the reported version
+  true again.
+- **Re-collaudo:** **static tier, both clones** — metadata-only; `cs/` is
+  untouched apart from the version string.
+
+## v0.8.0 — 2026-08-19
+
+### Added — `cs init` writes the secrets file itself
+- **Why:** README Step 3 told a (often non-technical) operator to
+  mkdir/cp/hand-edit a dotenv whose values the wizard already knew — the
+  worst step of the onboarding walk.
+- **What:** the wizard's last prompt is the mailbox app password
+  (`getpass`, Enter to skip) and `cs init` writes `~/.<slug>-cs/.env` onto
+  the rendered `.env.example`'s own anchor lines: `CS_ACCOUNTS` from the
+  accounts registry, `FIREBASE_WEB_API_KEY` from the Step-0 descriptor,
+  file mode 0600 in a 0700 state dir regardless of umask. An existing
+  `.env` is operator-owned and never touched; EOF/^C on the prompt writes
+  `EMAIL_PASSWORD` blank and prints the decision (the v0.5.2 EOF
+  contract). Gate 24 (`tests/test_state_env.py`) proves all of it on the
+  real template.
+- **Also in this tag:** the README quick-start cut to size (uv
+  de-emphasised, steps 5–7 terse, day-to-day model before Troubleshooting,
+  a "The `cs` CLI" verb map under Reference); the README install snippets
+  resolve the newest tag at run time and a literal `cs-kernel@vX.Y.Z`
+  install pin in README is now a gate failure; `cs init`'s wizard default
+  for a new clone's pin follows the operational pin.
+- **Known defect:** the tag installs as `0.7.1` — no release commit
+  preceded it; recorded and fixed forward by `v0.8.1` above.
+- **Re-collaudo:** **static tier, both clones** — nothing here touches a
+  send path, the auth boundary, a manifest field or a permission byte; the
+  secrets writer fires only on a fresh `cs init`, and an existing clone's
+  `.env` is by contract never touched.
+
 ## v0.7.1 — 2026-08-16
 
 ### Fixed — a published tag installed under the previous version number

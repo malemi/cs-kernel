@@ -14,10 +14,11 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.7.1`. Current HEAD status: untagged.** `v0.7.1`
-  (commit `57c2caf`, 2026-08-16, pushed) fixed tag↔package version drift; the
-  release gate now checks `git show <tag>:pyproject.toml` against every tag,
-  with the four historical drifts recorded in `TAG_VERSION_EXCEPTIONS`.
+- **Latest release tag: `v0.8.1`. Current HEAD status: tagged as `v0.8.1`.**
+  `v0.8.1` is the corrective for `v0.8.0` (2026-08-19), which was tagged and
+  pushed straight from the feature commit and therefore installs as `0.7.1` —
+  the fifth entry in `TAG_VERSION_EXCEPTIONS`, object pinned immutable.
+  `v0.8.1` is the same code under its true number.
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -39,14 +40,15 @@ what is *current*.
   gates AT the tag. The first post-tag commit flips the HEAD status back to
   untagged and pins the tag's commit id in `IMMUTABLE_TAG_TARGETS`
   (`tests/test_release_consistency.py`).
-- On main, untagged (v0.8.0 candidate — MINOR, new CLI surface): `cs init`
-  now writes `~/.<slug>-cs/.env` itself (getpass for the mailbox password,
+- Shipped in `v0.8.0`/`v0.8.1` (MINOR, new CLI surface; static tier): `cs
+  init` writes `~/.<slug>-cs/.env` itself (getpass for the mailbox password,
   `FIREBASE_WEB_API_KEY` from the Step-0 descriptor, `CS_ACCOUNTS` from the
   accounts registry; never overwrites, EOF-safe, 0600) — gate 24; the README
-  quick-start was cut to size and its install snippets resolve the newest
-  tag dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
-  failure); `cs init`'s wizard default for the clone pin follows the
-  operational pin (`0.7.1`).
+  quick-start cut to size, install snippets resolving the newest tag
+  dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
+  failure); the wizard's clone-pin default follows the operational pin.
+- Clone re-pin to `v0.8.x` is in progress (mrcall-cs first, static
+  re-collaudo); the matrix below still shows the last signed state.
 - The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
   site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
   behavior-neutral for a clone until one call site opts in.

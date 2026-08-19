@@ -84,6 +84,7 @@ HEAD_TAGGED_RE = re.compile(
 IMMUTABLE_TAG_TARGETS = {
     "v0.5.0": "038d7e59dd4ec0959cb190e060271041575f2dc9",
     "v0.5.1": "b2f07b29623a2cf4fa4d46c370fac02617833716",
+    "v0.8.0": "77e82cdfa99a7aa747cef1876c7ed1fa22003376",
 }
 
 # A published tag must install as the version it claims: `git show
@@ -107,6 +108,11 @@ TAG_VERSION_EXCEPTIONS = {
     # v0.7.1, which is also where this gate lands.
     "v0.6.1": "0.6.0",
     "v0.7.0": "0.6.0",
+    # 2026-08-19: v0.8.0 was tagged and pushed straight from the feature
+    # commit, skipping the release commit, so pyproject still said 0.7.1.
+    # Same class as v0.6.1/v0.7.0; fixed forward by v0.8.1 (operator
+    # decision, 2026-08-19).
+    "v0.8.0": "0.7.1",
 }
 
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")
