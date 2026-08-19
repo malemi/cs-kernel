@@ -367,8 +367,8 @@ If a newer tag is what you want, re-pin explicitly — this never happens on
 its own; a pin that updates itself is not a pin:
 
 ```bash
-cs update --pin v0.7.1     # rewrites ONLY the kernel pin line in
-                            # requirements.txt and prints the before/after
+cs update --pin vX.Y.Z      # the tag --check just showed you; rewrites ONLY
+                            # the pin line and prints the before/after
 ```
 
 Then install it and refresh the stamped templates:
