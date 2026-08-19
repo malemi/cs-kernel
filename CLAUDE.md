@@ -155,3 +155,10 @@ python tests/test_golden_pack.py
 Semantic tests only — no mock theatre. Anything touching send paths,
 campaign, gmail_archive, send_mail or permissions additionally requires
 the full collaudo suite on BOTH clones before the tag ships (brief §6.6).
+
+## Work traces
+
+Work traces: orchestrated or multi-session work starts by creating
+`docs/briefs/YYYY-MM-DD-<slug>.md` (what/why) +
+`docs/execution-plans/YYYY-MM-DD-<slug>.md` (status frontmatter) before
+execution.

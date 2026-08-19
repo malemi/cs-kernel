@@ -1,4 +1,7 @@
+harness_version = 3
+schema_version = 1
 mode = leaf
 index_file = CLAUDE.md
 inventory_ignore =
+index_max_lines = 200
 # build = bash tests/run.sh
