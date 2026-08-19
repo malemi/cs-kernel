@@ -28,8 +28,8 @@ what is *current*.
 
   | Clone | Pinned | Collaudo | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.7.1` | static — signed 2026-08-16 | un-paused, ticking |
-  | `124-cs` | `v0.7.1` | static — signed 2026-08-16 | un-paused, ticking |
+  | `mrcall-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking |
+  | `124-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking |
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, deployed
@@ -47,8 +47,6 @@ what is *current*.
   quick-start cut to size, install snippets resolving the newest tag
   dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
   failure); the wizard's clone-pin default follows the operational pin.
-- Clone re-pin to `v0.8.x` is in progress (mrcall-cs first, static
-  re-collaudo); the matrix below still shows the last signed state.
 - The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
   site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
   behavior-neutral for a clone until one call site opts in.

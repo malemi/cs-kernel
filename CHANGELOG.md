@@ -4,7 +4,7 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, static collaudo signed 2026-08-16): `v0.7.1`.
+**Current operational pin** (both clones, static tier, 2026-08-19): `v0.8.1`.
 `mrcall-cs` and `124-cs` each declare, lock and have `0.6.0` installed —
 **FULL collaudo signed on both**, permission bytes byte-identical to the
 `v0.5.2` baseline; the declared deltas were the `cs --help` tree (`init`,
