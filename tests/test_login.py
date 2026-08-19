@@ -414,6 +414,9 @@ def _test_descriptor_defaults() -> None:
                 "engine_owner_uid": UID,
                 "default_uid": UID,
                 "descriptor_email": "ops@acme.example",
+                # feeds write_state_env: cs init writes the .env key the
+                # descriptor already carries instead of prompting for it
+                "firebase_web_api_key": "fake-web-api-key",
             }, defaults
             assert "/ws/" not in defaults["engine_ws_url"], defaults["engine_ws_url"]
     finally:

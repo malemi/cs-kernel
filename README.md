@@ -72,9 +72,9 @@ in. In full:
 Imagine your operator address is `support@acme.example`.
 
 **The whole path, in order:** install the app and sign in → install the
-tool → make your project → put your secrets somewhere → install the
-project's own pin → sign in → check → work. Steps 0–7 below walk through
-each one — skip nothing on a first run.
+tool → make your project → check your secrets → install the project's
+own pin → sign in → check → work. Steps 0–7 below walk through each
+one — skip nothing on a first run.
 
 ### 0. Install mrcall-desktop and sign in
 
@@ -137,23 +137,16 @@ here is what to expect for ACME:
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Destination folder | `acme-cs` |
+| Mailbox app password | last prompt, typed blind; Enter skips it (see step 3) |
 
 When you confirm, you get a folder **`acme-cs/`**.
 
-### 3. Put secrets outside the repo
+### 3. Your secrets are already in place
 
-```bash
-mkdir -p ~/.acme-cs
-cp acme-cs/.env.example ~/.acme-cs/.env
-```
-
-Edit `~/.acme-cs/.env` (any text editor) and fill at least:
-
-- mailbox password  
-- Firebase / engine keys as in the example file  
-- `CS_ACCOUNTS=support:<your-uid>`  
-
-Never commit this file.
+`cs init` wrote `~/.acme-cs/.env` (outside the repo — never commit it):
+accounts and engine key are filled in, plus the mailbox app password if
+you typed it at the wizard's last prompt. Skipped it? Open
+`~/.acme-cs/.env` and set `EMAIL_PASSWORD=`.
 
 ### 4. Install the project pin
 

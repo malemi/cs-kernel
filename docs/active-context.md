@@ -39,6 +39,14 @@ what is *current*.
   gates AT the tag. The first post-tag commit flips the HEAD status back to
   untagged and pins the tag's commit id in `IMMUTABLE_TAG_TARGETS`
   (`tests/test_release_consistency.py`).
+- On main, untagged (v0.8.0 candidate — MINOR, new CLI surface): `cs init`
+  now writes `~/.<slug>-cs/.env` itself (getpass for the mailbox password,
+  `FIREBASE_WEB_API_KEY` from the Step-0 descriptor, `CS_ACCOUNTS` from the
+  accounts registry; never overwrites, EOF-safe, 0600) — gate 24; the README
+  quick-start was cut to size and its install snippets resolve the newest
+  tag dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
+  failure); `cs init`'s wizard default for the clone pin follows the
+  operational pin (`0.7.1`).
 - The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
   site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
   behavior-neutral for a clone until one call site opts in.

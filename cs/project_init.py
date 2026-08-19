@@ -2,6 +2,7 @@
 Module for initializing a new company clone from templates.
 """
 import argparse
+import getpass
 import json
 import os
 import re
@@ -46,6 +47,10 @@ def descriptor_defaults() -> dict:
         "engine_owner_uid": d["uid"],
         "default_uid": d["uid"],
         "descriptor_email": d["email"],
+        # Public web API key of the engine's Firebase project (the descriptor
+        # requires it) — lets the wizard write a ready `.env` instead of
+        # sending the operator to hunt the key down by hand.
+        "firebase_web_api_key": d["firebase_web_api_key"],
     }
 
 def validate_slug(slug: str) -> bool:
@@ -149,6 +154,9 @@ def collect_config() -> dict:
         "Engine WS URL", defaults.get("engine_ws_url", "wss://desktop.example.com")
     )
     config["engine_owner_uid"] = prompt_input("Engine owner UID", defaults.get("engine_owner_uid"))
+    # Not prompted: comes with the Step-0 descriptor (public key), consumed by
+    # write_state_env; empty when there was no usable descriptor.
+    config["firebase_web_api_key"] = defaults.get("firebase_web_api_key", "")
 
     # Accounts
     default_account = prompt_input("Default account name", "support")
@@ -415,6 +423,69 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
             
     return success, file_checksums
 
+def write_state_env(config: dict, dest_dir: Path) -> None:
+    """Write `~/.<slug>-cs/.env` from the freshly rendered `.env.example`.
+
+    The wizard already knows almost everything the secrets file asks for —
+    `CS_ACCOUNTS` from the accounts registry, `FIREBASE_WEB_API_KEY` from the
+    Step-0 descriptor — so the operator should not have to copy a file and
+    hand-edit it. The mailbox app password is the ONE real secret; it is
+    prompted here without echo. Contract:
+
+    - an existing `.env` is operator-owned and NEVER touched (same rule as
+      the clone's requirements.txt in `cs update`);
+    - EOF / ^C on the password prompt resolves to writing the file with
+      `EMAIL_PASSWORD` blank, and the decision is printed — the wizard never
+      crashes on a closed stdin (the v0.5.2 EOF contract);
+    - the file lands mode 0600 in a 0700 state dir, regardless of umask.
+    """
+    state_dir = Path.home() / f".{config['company_slug']}-cs"
+    env_path = state_dir / ".env"
+    if env_path.exists():
+        print(f"Kept existing {env_path} untouched (operator-owned).")
+        return
+    example = Path(dest_dir) / ".env.example"
+    try:
+        content = example.read_text(encoding="utf-8")
+    except OSError as e:
+        print(f"Skipped writing {env_path}: cannot read {example}: {e}", file=sys.stderr)
+        return
+    try:
+        password = getpass.getpass(
+            f"Mailbox app password for {config['email_address']} "
+            f"(Enter to leave blank and fill {env_path} later): "
+        )
+    except (EOFError, KeyboardInterrupt):
+        print(f"\nNo password given — writing {env_path} with EMAIL_PASSWORD blank.")
+        password = ""
+    values = {
+        "EMAIL_PASSWORD": password,
+        "FIREBASE_WEB_API_KEY": config.get("firebase_web_api_key", ""),
+        "CS_ACCOUNTS": ",".join(f"{n}:{u}" for n, u in config["accounts"].items()),
+    }
+    lines = []
+    filled = set()
+    for line in content.splitlines():
+        key = line.split("=", 1)[0]
+        if "=" in line and key in values and not line.lstrip().startswith("#"):
+            lines.append(f"{key}={values[key]}")
+            filled.add(key)
+        else:
+            lines.append(line)
+    # A missing anchor is a template regression; still land the value rather
+    # than silently dropping a secret the operator just typed.
+    for key, value in values.items():
+        if key not in filled:
+            lines.append(f"{key}={value}")
+    state_dir.mkdir(parents=True, exist_ok=True)
+    state_dir.chmod(0o700)
+    env_path.touch(mode=0o600)
+    env_path.chmod(0o600)  # touch honours umask; the mode must not
+    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    note = "" if password else " EMAIL_PASSWORD left blank — add it before SMTP/IMAP verbs."
+    print(f"Wrote {env_path} (mode 0600).{note}")
+
+
 def cmd_init(argv=None) -> int:
     """Main entry point for the init command."""
     # Parse command line arguments
@@ -493,12 +564,15 @@ def cmd_init(argv=None) -> int:
         except Exception as e:
             print(f"Warning: error during git init: {e}")
     
+    # Secrets file — after the stamp so the rendered .env.example exists.
+    write_state_env(config, dest_dir)
+
     # Print post-init instructions
     print("\n" + "=" * 60)
     print("Initialization Complete")
     print("=" * 60)
-    print(f"Done! Enter '{dest_dir.name}/' and set up your secrets in '~/.{config['company_slug']}-cs/.env'")
-    print(f"The .env.example file is at: {dest_dir}/.env.example")
+    print(f"Done! Your secrets live in '~/.{config['company_slug']}-cs/.env' (never commit it)")
+    print(f"Its reference copy is: {dest_dir}/.env.example")
     print(f"Run `pip install -r {dest_dir}/requirements.txt` to install the kernel")
     
     return 0

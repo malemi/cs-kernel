@@ -440,6 +440,16 @@ step "23. cs --version — the top-level flag (Task 1)"
 # the same importlib.metadata try/except.
 if "$VENV/bin/python" "$ROOT/tests/test_version.py"; then echo "OK"; else echo "FAIL: cs --version regressed"; FAIL=1; fi
 
+step "24. cs init writes ~/.<slug>-cs/.env — one password typed, zero files hand-edited"
+# README Step 3 used to be mkdir/cp/hand-edit a dotenv whose values the wizard
+# already knew — the worst onboarding step for a non-technical operator.
+# Guards on the REAL rendered .env.example: anchors filled (EMAIL_PASSWORD via
+# getpass, FIREBASE_WEB_API_KEY from the Step-0 descriptor, CS_ACCOUNTS from
+# the registry), file 0600 / state dir 0700 regardless of umask, an existing
+# .env NEVER touched (operator-owned, no prompt shown), EOF on the prompt
+# writes EMAIL_PASSWORD blank and prints the decision (v0.5.2 EOF contract).
+if "$VENV/bin/python" "$ROOT/tests/test_state_env.py"; then echo "OK"; else echo "FAIL: cs init secrets writer regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"
