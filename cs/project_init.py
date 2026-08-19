@@ -12,7 +12,7 @@ import hashlib
 from datetime import datetime
 import jinja2
 
-from ._version import kernel_version
+from ._version import kernel_version, kernel_version_bare
 from . import login
 
 def descriptor_defaults() -> dict:
@@ -308,12 +308,15 @@ def collect_config() -> dict:
     # Firebase SA path
     config["firebase_sa_path"] = prompt_input("Firebase service account path", f"~/.{config['company_slug']}-cs/firebase-sa.json")
     
-    # Repo kernel version
-    # Default = the current operational pin the wizard should hand a new clone.
-    # Nothing enforces this automatically — no onboarding gate checks it against
-    # README or CHANGELOG. Bump it by hand at each release, in lockstep with
-    # README step 1 and the CHANGELOG entry.
-    config["repo_kernel_version"] = prompt_input("Repository kernel version", "0.7.1")
+    # Repo kernel version — the pin `cs init` stamps into the new clone's
+    # requirements.txt. Default = the version of the kernel RUNNING this
+    # wizard (always true by construction). A hand-maintained literal here
+    # went stale twice in one day (2026-08-19: "0.6.1", then "0.7.1" hours
+    # before v0.8.x shipped); never reintroduce one. On a dev checkout with
+    # no installed metadata the prompt simply has no default.
+    config["repo_kernel_version"] = prompt_input(
+        "Repository kernel version", kernel_version_bare() or None
+    )
 
     # Repo docs shape (generic = mother/kernel-canonical; as-built = a stamped clone)
     config["repo_docs_shape"] = prompt_input("Repository docs shape (generic, as-built)", "generic")

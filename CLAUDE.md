@@ -117,6 +117,11 @@ is an invariant baked by the template), `company/*.md` prose slots,
 
 ## Versioning & release
 
+**The executable procedure is [docs/release-procedure.md](docs/release-procedure.md)
+— follow it, never reconstruct it from memory.** It carries the ordered
+release and clone-upgrade steps, the inventory of every file that holds a
+version claim, and the mandatory multi-version grep sweep that closes both.
+
 Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches.
 The version number describes the INTERFACE: PATCH = behavior-identical fix;
 MINOR = new manifest field / adapter / new or changed CLI surface. A verb
