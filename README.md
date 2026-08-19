@@ -54,11 +54,7 @@ the operator address, the **mrcall-desktop** app (with its local daemon)
 running on this same machine, and **Claude Code** or **OpenCode** to work
 in. In full:
 
-- **Python 3.11+**
-- **[uv](https://github.com/astral-sh/uv)** (fast installer)  
-  ```bash
-  curl -LsSf https://astral.sh/uv/install.sh | sh
-  ```
+- **Python 3.11+** and **[uv](https://github.com/astral-sh/uv)**
 - **Claude Code** or **OpenCode** (the TUI/session you work in)
 - A **mrcall-desktop** engine profile for your support mailbox — see
   **Step 0** below; signing in there writes everything `cs init` and
@@ -106,6 +102,7 @@ descriptor found and you are sure you are signed in, update the app first.
 ### 1. Install the toolkit (once)
 
 ```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh    # once, if uv is missing
 mkdir -p ~/work && cd ~/work
 uv venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
@@ -173,25 +170,10 @@ uv pip install -r requirements.txt
 cs login
 ```
 
-This reads the profile descriptor mrcall-desktop wrote in Step 0. If your
-clone already has an engine identity configured (any stamped clone does,
-and this is always the case under `cs --account <name> login`), `cs login`
-auto-selects the matching descriptor and prints `selected: email (uid)` —
-no picking from a list. Only a genuinely fresh clone with no engine
-identity yet asks you to confirm (`email (uid)`, one descriptor) or pick a
-number (more than one descriptor found on the machine). Either way it then
-stores a refresh-token session under `~/.acme-cs/` and proves it with one
-live call.
-
-If it also prints a line starting with `note: … FIREBASE_WEB_API_KEY=…`,
-paste that exact line into `~/.acme-cs/.env` and run `cs login` again — it
-means the key currently in your `.env` is missing or does not match the
-one mrcall-desktop is using.
-
-If instead it prints `cs login: no profile descriptor found under
-~/.zylch/profiles/ — sign in to the mrcall-desktop app first…`, go back to
-Step 0: you are not signed in on this machine, or your mrcall-desktop
-build predates the descriptor writer.
+It picks up Step 0's sign-in (`selected: email (uid)`), stores a session
+under `~/.acme-cs/` and proves it with one live call. When something is
+off it tells you exactly what to do — paste a `FIREBASE_WEB_API_KEY` line
+into `~/.acme-cs/.env`, or go back to Step 0 — do that and re-run it.
 
 ### 6. Check the engine
 
@@ -199,10 +181,19 @@ build predates the descriptor writer.
 cs whoami
 ```
 
-This is the proof: it makes one real call through the engine and prints
-back the identity it authenticated as. `not signed in — run cs login`
-means step 5 was skipped or did not complete; anything else is covered
-under Troubleshooting below.
+One real call through the engine. Expected:
+
+```json
+{
+  "signed_in": true,
+  "uid": "AbC123dEf456gHi789jKl012mNo3",
+  "email": "support@acme.example",
+  "expires_at_ms": 1787150583000
+}
+```
+
+`not signed in — run cs login` → redo step 5. Anything else:
+Troubleshooting below.
 
 ### 7. Open the TUI and work
 
@@ -215,19 +206,46 @@ claude
 opencode
 ```
 
-You’re in a chat UI in **this project**. The AI loads skills from `.claude/`
-(and OpenCode config if present). Talk normally, for example:
+First thing to type: **`/cs-review`** — what the operator prepared for
+you (drafts waiting in Gmail Drafts, open tasks, campaign flags), zero
+side effects. **`/munchausen`** builds the day's review table (producer
+worklist, one dossier per candidate). Or just talk:
 
-- *“Load customer Northwind”* → uses the **customer** skill: reads
-  `docs/customers/…` **and** queries **mrcall-desktop memory** for that
-  relationship (not just the markdown file).
-- *“What’s still open in support mail?”* → triage / review skills  
-- *“Draft a reply to …”* → grounded draft; **nothing is sent** until you
-  review and approve through the normal gates  
-- *“Advance campaigns”* → campaign tick skill (draft-oriented by default)
+- *"What's still open in support mail?"* → triage review
+- *"Load customer Northwind"* → customer skill (docs + engine memory)
+- *"Draft a reply to …"* → grounded draft; **nothing is sent** until you
+  review and approve it
 
-You do **not** need to memorize CLI subcommands day to day. The skills are
-the product surface; the CLI is plumbing the AI (and you, if you want) can call.
+The skills are the product surface; the CLI is plumbing the AI (and you,
+if you want) can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
+
+---
+
+## Day-to-day mental model
+
+```text
+You  →  Claude / OpenCode (in acme-cs/)  →  skills  →  cs CLI  →  mrcall-desktop
+                                                              →  Gmail (when needed)
+         (later) cron → same /cs-operator skill, draft-only by default
+```
+
+| You care about | What happens |
+|---|---|
+| Customer context | Skill loads dossier files + **engine memory** |
+| Memory over time | Engine keeps relationships as mail is synced and you work |
+| Replies | Drafts prepared for review; send is gated |
+| Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
+| “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
+
+### How memory gets rich
+
+You don’t “train a model” by hand. You:
+
+- work interactively (customers, drafts, questions)  
+- let mrcall-desktop **sync the mailbox** into entities/memory/tasks  
+- optionally write durable facts the AI should keep (when you ask it to)  
+
+Next sessions — interactive or cron — start from that memory instead of a blank page.
 
 ---
 
@@ -259,38 +277,22 @@ the product surface; the CLI is plumbing the AI (and you, if you want) can call.
 
 ---
 
-## Day-to-day mental model
-
-```text
-You  →  Claude / OpenCode (in acme-cs/)  →  skills  →  cs CLI  →  mrcall-desktop
-                                                              →  Gmail (when needed)
-         (later) cron → same /cs-operator skill, draft-only by default
-```
-
-| You care about | What happens |
-|---|---|
-| Customer context | Skill loads dossier files + **engine memory** |
-| Memory over time | Engine keeps relationships as mail is synced and you work |
-| Replies | Drafts prepared for review; send is gated |
-| Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
-| “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
-
-### How memory gets rich
-
-You don’t “train a model” by hand. You:
-
-- work interactively (customers, drafts, questions)  
-- let mrcall-desktop **sync the mailbox** into entities/memory/tasks  
-- optionally write durable facts the AI should keep (when you ask it to)  
-
-Next sessions — interactive or cron — start from that memory instead of a blank page.
-
 You’re set up. Everything from here on is reference material for when you
 need it, not more onboarding.
 
 ---
 
 ## Reference
+
+### The `cs` CLI
+
+`cs --help` is the reference: one line per verb there, details under
+`cs <verb> --help`. The map — **setup**: `init`, `update`, `login`,
+`accounts`, `cron`; **read-only**: `review`, `plan`, `dossier`, `ask`,
+`whoami`, `thread`, `contacted`, `unanswered`, `tasks`, `business`,
+`drive`, `llm`; **gated writing**: `draft-reply` / `chat` (drafts only,
+never send), `campaign` (Sent-dedup, rate cap, pause file), `tasks
+create`/`close`; **plumbing**: `rpc`, `project`.
 
 ### Optional: run it automatically (cron)
 
