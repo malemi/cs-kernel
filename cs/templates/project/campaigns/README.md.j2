@@ -1,8 +1,8 @@
 # campaigns/ — campaign packs
 
 A **pack** is a campaign's reusable intelligence (copy, timing, playbook,
-gotchas) saved as a directory so that months later "abbiamo mai fatto una cosa
-simile?" is answered by `cs campaign packs`, and re-running one is copy-and-edit
+gotchas) saved as a directory so that months later "have we ever done
+something like this?" is answered by `cs campaign packs`, and re-running one is copy-and-edit
 — no new one-off script, no dedicated cron. **A pack is DATA + templates + prose
 in this clone; the runner is kernel code** (`cs/campaign.py` `send_reminder` /
 `send_sms`, loaded by `cs/campaign_pack.py`). This directory is empty on a fresh
