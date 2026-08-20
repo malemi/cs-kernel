@@ -10,29 +10,41 @@ One real requirement: you must be able to use the terminal. CS is terminal-based
 
 ### What a morning looks like
 
+You open Claude Code (or OpenCode) in your project folder. This is not a
+generic chatbot: the session in front of you **knows your customer
+service** — every correspondent's history, the open tasks, the campaigns,
+what was promised and when.
+
 ```text
-$ cs review
+> /cs-review
 
-3 drafts ready · 2 open tasks · 1 escalation
+support@acme.example ✓ · 3 drafts ready · 2 open tasks · 1 escalation
 
-DRAFTS — in Gmail → Drafts. You read, you send.
+DRAFTS — waiting in Gmail → Drafts. You read, you send.
   studio.bianchi@example.it    Re: number unreachable after the migration
   academy@example.com          Re: calendar integration
-  m.rossi@example.it           Re: cancellation
-
-TASKS
-  [critical]  +39 340 ••• 2299      Call back — lead came in yesterday, never answered
-  [critical]  invoices@example.it   Invoices 0065/0066 unanswered for 12 days
 
 ESCALATION
   pms@example.com — angry customer, third report of the same bug.
   No draft written: this needs a decision from you, not a reply.
+
+> what's the story with pms?
+
+Three reports of the same missed-call bug: Aug 2, Aug 11, yesterday —
+tone degrading, and on Aug 11 we promised a fix. There's an open task
+from that promise. I wouldn't send an apology template: they need a
+date, or a call.
+
+> ok — draft an honest reply: the fix ships Friday, and offer them a call
+
+Done. The draft is in the thread, in your voice, in Gmail Drafts —
+subject "Re: missed calls not logged". You read, you send.
 ```
 
-The last block is the point. The operator drafts what it can defend and
-**stops** where it cannot — an escalation is the system refusing to answer,
-not a failure. Nothing above was sent: drafts sit in Gmail until you send
-them.
+The escalation block is the point. The operator drafts what it can defend
+and **stops** where it cannot — an escalation is the system refusing to
+answer, not a failure. And nothing above was sent: drafts sit in Gmail
+until you send them.
 
 ---
 
@@ -59,7 +71,7 @@ What you need:
 
 Imagine your operator address is `support@acme.example`.
 
-### 0. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
+### 1. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
 
 **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)** is a separate desktop app: it holds the mailbox sync,
 the memory and the task list, and it runs a local engine that everything below actually talks to.
@@ -68,7 +80,7 @@ the memory and the task list, and it runs a local engine that everything below a
 
 Launch MrCall Desktop and sign in with the Google account for your support mailbox.
 
-### 1. Create your company project
+### 2. Create your company project
 
 Copy-paste this whole block into the terminal. Nothing to install first:
 it fetches the latest release and runs the setup wizard directly.
@@ -96,7 +108,7 @@ Here is what to expect for ACME:
 | From name for emails | `ACME` |
 | Short slug | type **`acme`** explicitly — the wizard's own default for "ACME Corp" is `acme-corp`, which would put your state under `~/.acme-corp-cs/` instead and silently break every `~/.acme-cs/...` command below |
 | Operator email | `support@acme.example` (required) |
-| Engine URL + owner uid | prefilled from Step 0's sign-in; if asked, redo Step 0 and re-run |
+| Engine URL + owner uid | prefilled from Step 1's sign-in; if asked, redo Step 1 and re-run |
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Destination folder | `acme-cs` |
@@ -106,7 +118,7 @@ When you confirm, you get a folder **`acme-cs/`**.
 
 If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
-### 2. Install the project pin
+### 3. Install the project pin
 
 Your project has its own private copy of the tool, pinned in
 `requirements.txt` — upgrades happen when *you* decide, per project:
@@ -118,18 +130,18 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-### 3. Sign in
+### 4. Sign in
 
 ```bash
 cs login
 ```
 
-It picks up Step 0's sign-in (`selected: email (uid)`), stores a session
+It picks up Step 1's sign-in (`selected: email (uid)`), stores a session
 under `~/.acme-cs/` and proves it with one live call. When something is
 off it tells you exactly what to do — paste a `FIREBASE_WEB_API_KEY` line
-into `~/.acme-cs/.env`, or go back to Step 0 — do that and re-run it.
+into `~/.acme-cs/.env`, or go back to Step 1 — do that and re-run it.
 
-### 4. Check the engine
+### 5. Check the engine
 
 ```bash
 cs whoami
@@ -146,10 +158,10 @@ One real call through the engine. Expected:
 }
 ```
 
-`not signed in — run cs login` → redo step 3. Anything else:
+`not signed in — run cs login` → redo step 4. Anything else:
 Troubleshooting below.
 
-### 5. Open the TUI and work
+### 6. Open the TUI and work
 
 Still inside `acme-cs/` with the venv active:
 
@@ -208,7 +220,7 @@ Next sessions — interactive or cron — start from that memory instead of a bl
 
 - **`not signed in — run cs login`** — the exact line every engine-backed
   verb prints when no session is stored yet, or the stored one does not
-  match this clone's configured uid. Run `cs login` (step 3 above).
+  match this clone's configured uid. Run `cs login` (step 4 above).
 - **Connection refused / the engine seems unreachable** — the daemon is
   not answering at the configured WebSocket URL. During `cs login` this
   is caught and printed as one line (`cs login: stored the session, but
@@ -218,11 +230,11 @@ Next sessions — interactive or cron — start from that memory instead of a bl
   failed…`. Either way, it means the mrcall-desktop app is not running,
   or it is running on a **different machine** than the one you're typing
   `cs` on — `cs` only ever talks to the daemon on the machine it runs on
-  (see Step 0).
+  (see Step 1).
 - **`cs login: no profile descriptor found under ~/.zylch/profiles/ —
   sign in to the mrcall-desktop app first (it writes the descriptor at
   sign-in)`** — you have not signed in to mrcall-desktop on this machine
-  yet, or your build predates the v0.1.29 descriptor writer (Step 0).
+  yet, or your build predates the v0.1.29 descriptor writer (Step 1).
   Sign in (or update the app), then re-run `cs login`.
 - **Nothing shows up in Gmail Drafts after a tick** — first check
   `~/.<slug>-cs/CS_PAUSE`: if that file exists, the kill-switch is on and
