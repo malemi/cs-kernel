@@ -16,9 +16,9 @@ service** — every correspondent's history, the open tasks, the campaigns,
 what was promised and when.
 
 ```text
-> /cs-review
+> what’s new today? 
 
-support@acme.example ✓ · 3 drafts ready · 2 open tasks · 1 escalation
+support@acme.com ✓ · 3 drafts ready · 2 open tasks · 1 escalation
 
 DRAFTS — waiting in Gmail → Drafts. You read, you send.
   studio.bianchi@example.it    Re: number unreachable after the migration
