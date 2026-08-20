@@ -1,12 +1,12 @@
 # A ready-made customer-service operator
 
-cs-kernel is an agentic platform you clone and adapt to your customer service 
+cs-kernel is an agentic platform for managing your customer service 
 workflow. It reads your inbox(es), whatsapp, or any other channel, and it 
 prepares replies, setup loops for periodic tasks, organizes campaigns.
 
-The one thing it needs already running is **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, a
-separate app that syncs your mail and holds the relationship memory this
-operator drafts from; Step 0 below installs it and signs you in.
+What it actually does is adding a powerful harness on top of **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, leveraging also on external platforms like Claude Code or Open Code. 
+
+One real requirement: you must be able to use the terminal. CS is terminal-based. 
 
 ### What a morning looks like
 
@@ -62,15 +62,11 @@ Imagine your operator address is `support@acme.example`.
 ### 0. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
 
 **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)** is a separate desktop app: it holds the mailbox sync,
-the relationship memory and the task list, and it runs a small local
-daemon (the "engine") that everything below actually talks to. **`cs` must
-run on the same machine as that app and its daemon** — there is no
-remote/cloud engine to point `cs` at instead.
+the memory and the task list, and it runs a local engine that everything below actually talks to.
 
-- **macOS / Windows:** install the mrcall-desktop app.
-- **Linux:** run the engine from source
+`cs` and MrCall Desktop must run on the same machine. 
 
-Open the app and sign in with the Google account for your support mailbox.
+Launch MrCall Desktop and sign in with the Google account for your support mailbox.
 
 ### 1. Create your company project
 
