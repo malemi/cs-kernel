@@ -116,12 +116,11 @@ Here is what to expect for ACME:
 | Company name | `ACME Corp` |
 | Display name | `ACME` |
 | From name for emails | `ACME` |
-| Short slug | type **`acme`** explicitly — the wizard's own default for "ACME Corp" is `acme-corp`, which would put your state under `~/.acme-corp-cs/` instead and silently break every `~/.acme-cs/...` command below |
+| Short slug | names your project (`acme` → `acme-cs/`); the wizard suggests one, Enter accepts |
 | Operator email | `support@acme.example` (required) |
 | Engine URL + owner uid | prefilled from Step 1's sign-in; if asked, redo Step 1 and re-run |
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
-| Destination folder | `acme-cs` |
 | Mailbox app password | You need your gmail [app password](https://support.google.com/mail/answer/185833?hl=en) |
 
 When you confirm, you get a folder **`acme-cs/`**.

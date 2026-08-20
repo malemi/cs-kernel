@@ -118,7 +118,11 @@ def collect_config() -> dict:
     config["company_from_name"] = prompt_input("From name for emails", config["company_display_name"])
     
     # Derived slug
-    default_slug = get_company_slug(config["company_name"])
+    # Suggest the first word only: "ACME Corp" → "acme" (project folder
+    # "acme-cs/", state dir "~/.acme-cs/"). The full-name slug ("acme-corp")
+    # made every reader of the old README learn why it was a bad idea.
+    full_slug = get_company_slug(config["company_name"])
+    default_slug = full_slug.split("-")[0] or full_slug
     while True:
         slug = prompt_input("Program slug for state dir", default_slug)
         if validate_slug(slug):
