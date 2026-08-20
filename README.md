@@ -72,26 +72,16 @@ remote/cloud engine to point `cs` at instead.
 
 Open the app and sign in with the Google account for your support mailbox.
 
-### 1. Install the `cs` command (once)
+### 1. Create your company project
 
-Copy-paste this whole block into the terminal:
+Copy-paste this whole block into the terminal. Nothing to install first:
+it fetches the latest release and runs the setup wizard directly.
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh    # once, if uv is missing
-mkdir -p ~/work && cd ~/work
-uv venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-# Resolve the newest release tag and install it — always a tag, never a branch.
+# Resolve the newest release tag and run the wizard from it — always a tag, never a branch.
 TAG=$(git ls-remote --tags --refs https://github.com/malemi/cs-kernel 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -1)
-uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@${TAG}"
-```
-
-You have now created private folder (`~/work`) and installed the `cs` tool inside it.
-
-### 2. Create your company project
-
-```bash
-cs init
+uvx --from "cs-kernel @ git+https://github.com/malemi/cs-kernel@${TAG}" cs init
 ```
 
 The `cs init` wizard prompts various questions to setup your agentic customer service
@@ -120,16 +110,19 @@ When you confirm, you get a folder **`acme-cs/`**.
 
 If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
-### 3. Install the project pin
+### 2. Install the project pin
+
+Your project has its own private copy of the tool, pinned in
+`requirements.txt` — upgrades happen when *you* decide, per project:
 
 ```bash
 cd acme-cs
 uv venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 uv pip install -r requirements.txt
 ```
 
-### 5. Sign in
+### 3. Sign in
 
 ```bash
 cs login
@@ -140,7 +133,7 @@ under `~/.acme-cs/` and proves it with one live call. When something is
 off it tells you exactly what to do — paste a `FIREBASE_WEB_API_KEY` line
 into `~/.acme-cs/.env`, or go back to Step 0 — do that and re-run it.
 
-### 6. Check the engine
+### 4. Check the engine
 
 ```bash
 cs whoami
@@ -157,10 +150,10 @@ One real call through the engine. Expected:
 }
 ```
 
-`not signed in — run cs login` → redo step 5. Anything else:
+`not signed in — run cs login` → redo step 3. Anything else:
 Troubleshooting below.
 
-### 7. Open the TUI and work
+### 5. Open the TUI and work
 
 Still inside `acme-cs/` with the venv active:
 
@@ -219,7 +212,7 @@ Next sessions — interactive or cron — start from that memory instead of a bl
 
 - **`not signed in — run cs login`** — the exact line every engine-backed
   verb prints when no session is stored yet, or the stored one does not
-  match this clone's configured uid. Run `cs login` (step 5 above).
+  match this clone's configured uid. Run `cs login` (step 3 above).
 - **Connection refused / the engine seems unreachable** — the daemon is
   not answering at the configured WebSocket URL. During `cs login` this
   is caught and printed as one line (`cs login: stored the session, but
