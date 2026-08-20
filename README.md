@@ -1,8 +1,9 @@
 # A ready-made customer-service operator
 
-cs-kernel is an agentic platform for managing your customer service 
-workflow. It reads your inbox(es), whatsapp, or any other channel, and it 
-prepares replies, setup loops for periodic tasks, organizes campaigns.
+cs-kernel is an agentic platform that runs your customer service.
+It reads your inbox(es), whatsapp, or any other channel, answers in
+your company's voice, runs periodic loops, and manages campaigns end
+to end — with a memory of every relationship that no human team keeps.
 
 What it actually does is adding a powerful harness on top of **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, leveraging also on external platforms like Claude Code or Open Code. 
 
@@ -10,49 +11,58 @@ One real requirement: you must be able to use the terminal. CS is terminal-based
 
 ### What a morning looks like
 
-You open Claude Code (or OpenCode) in your project folder. This is not a
-generic chatbot: the session in front of you **knows your customer
-service** — every correspondent's history, the open tasks, the campaigns,
-what was promised and when.
+While you slept, the operator worked: it triaged everything that came
+in, wrote every reply — in your company's voice, with each
+correspondent's full history in mind — and advanced the campaigns that
+were due. You open Claude Code (or OpenCode) in your project folder,
+and the session in front of you is not a generic chatbot: it **is**
+your customer service. It holds every relationship, every open task,
+every promise and its date — the total recall no human operator
+sustains across hundreds of threads.
 
 ```text
-> what’s new today? 
+> what's new today?
 
-support@acme.com ✓ · 3 drafts ready · 2 open tasks · 1 escalation
+support@acme.com ✓ · overnight: 11 mails handled · 9 replies written · 2 campaigns advanced
 
-DRAFTS — waiting in Gmail → Drafts. You read, you send.
+Ready to go — in Gmail → Drafts:
   studio.bianchi@example.it    Re: number unreachable after the migration
   academy@example.com          Re: calendar integration
+  … 7 more
 
-ESCALATION
-  pms@example.com — angry customer, third report of the same bug.
-  No draft written: this needs a decision from you, not a reply.
+Brought to you (1):
+  pms@example.com — third report of the same bug, and on Aug 11 we
+  promised a fix. A template apology would make this worse: they need
+  a date, or a call. Say the word and the reply goes out.
 
-> what's the story with pms?
+> the fix ships Friday — write it straight, and offer them a call
 
-Three reports of the same missed-call bug: Aug 2, Aug 11, yesterday —
-tone degrading, and on Aug 11 we promised a fix. There's an open task
-from that promise. I wouldn't send an apology template: they need a
-date, or a call.
-
-> ok — draft an honest reply: the fix ships Friday, and offer them a call
-
-Done. The draft is in the thread, in your voice, in Gmail Drafts —
-subject "Re: missed calls not logged". You read, you send.
+Done: in the thread, in your voice. Anything else from the list?
 ```
 
-The escalation block is the point. The operator drafts what it can defend
-and **stops** where it cannot — an escalation is the system refusing to
-answer, not a failure. And nothing above was sent: drafts sit in Gmail
-until you send them.
+That is the product: **everything handled** — and the one case where
+another apology would have burned the customer, it understood the
+situation and brought it to you with a recommendation. On day one every
+reply waits in Gmail Drafts for your send: the operator's judgment is on
+trial, not in charge. When what you read keeps matching what you would
+have written, open the autonomy dial and it sends on its own — the dial,
+and the kill-switch, stay in your hand.
 
 ---
 
 ## What you get
 
-1. A small project folder (e.g. `acme-cs/`) configured for **your** company  
-2. Skills the AI can run: load a customer, triage mail, advance campaigns, …  
-3. A **cron wrapper** so the same operator can tick unattended  
+A complete customer-service operator, not an autocomplete:
+
+1. **Triage and replies** for your whole inbox, in your company's voice,
+   grounded in each correspondent's history — it answers what it can
+   defend and brings you the rest with a recommendation
+2. **Campaigns and follow-ups** advanced on schedule, with hard dedup
+   and rate caps
+3. **Memory that compounds**: every mail synced and every session worked
+   makes the next answer better — no retraining, no CRM data entry
+4. A **cron wrapper** so all of the above runs unattended, plus the
+   autonomy dial: draft-first on day one, autonomous send when you say so
 
 ---
 
@@ -200,7 +210,7 @@ You  →  Claude / OpenCode (in acme-cs/)  →  skills  →  cs CLI  →  mrcall
 |---|---|
 | Customer context | Skill loads dossier files + **engine memory** |
 | Memory over time | Engine keeps relationships as mail is synced and you work |
-| Replies | Drafts prepared for review; send is gated |
+| Replies | Written end-to-end; land in Drafts until you open the autonomy dial |
 | Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
 | “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
 
@@ -263,11 +273,12 @@ create`/`close`; **plumbing**: `rpc`, `project`.
 
 ### Optional: run it automatically (cron)
 
-When interactive use feels solid and drafts look right, you can let the
-operator prepare work on a schedule. **Default remains draft-only**: the tick
-triages inbound mail and advances campaigns into **drafts for your review**;
-it does not freely email customers unless you later change mode and permissions
-on purpose.
+This is where the operator takes over the routine entirely: on a
+schedule, unattended, it triages inbound mail and advances campaigns —
+the same work as your sessions, without you in the room. Out of the box
+each tick lands its replies in Gmail Drafts (draft mode); flipping to
+autonomous send is one deliberate change of mode + permissions, once
+the drafts have earned it.
 
 #### What’s already in the project
 
@@ -321,8 +332,9 @@ touch ~/.acme-cs/CS_PAUSE
 rm ~/.acme-cs/CS_PAUSE
 ```
 
-Sending without review is a **later, deliberate** step (config + permissions),
-not what you get on day one.
+Autonomous send is the destination; day one is draft mode. Opening that
+dial is one deliberate step (config + permissions) — yours to take, and
+yours to close again.
 
 ### Upgrading later
 
