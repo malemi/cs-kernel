@@ -1,10 +1,10 @@
-# cs-kernel
+# A ready-made customer-service operator
 
-**A ready-made customer-service operator for your company support mailbox.**
-It reads your support inbox, drafts the replies it can defend — in your
-company's voice — and leaves them in Gmail Drafts for you to read and send.
-Nothing goes out without you. The one thing it needs already running is
-**[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, a
+cs-kernel is an agentic platform you clone and adapt to your customer service 
+workflow. It reads your inbox(es), whatsapp, or any other channel, and it 
+prepares replies, setup loops for periodic tasks, organizes campaigns.
+
+The one thing it needs already running is **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, a
 separate app that syncs your mail and holds the relationship memory this
 operator drafts from; Step 0 below installs it and signs you in.
 
@@ -40,71 +40,41 @@ them.
 
 1. A small project folder (e.g. `acme-cs/`) configured for **your** company  
 2. Skills the AI can run: load a customer, triage mail, advance campaigns, …  
-3. Safety defaults: **draft first**, review before anything is sent  
-4. An optional **cron wrapper** so the same operator can tick unattended  
-
-Voice and product policy live in the engine profile, not in this repo.
+3. A **cron wrapper** so the same operator can tick unattended  
 
 ---
 
 ## Prerequisites
 
-What this actually costs you: a **Gmail or Google Workspace** mailbox for
-the operator address, the **mrcall-desktop** app (with its local daemon)
-running on this same machine, and **Claude Code** or **OpenCode** to work
-in. In full:
+What you need:
 
 - **Python 3.11+** and **[uv](https://github.com/astral-sh/uv)**
 - **Claude Code** or **OpenCode** (the TUI/session you work in)
-- A **mrcall-desktop** engine profile for your support mailbox — see
-  **Step 0** below; signing in there writes everything `cs init` and
-  `cs login` need, so you never have to look up a WebSocket URL or a
-  Firebase uid by hand.
-- **Gmail or Google Workspace** for the operator mailbox — dedup and Gmail
-  Drafts read Gmail's own Sent/All Mail folders over IMAP; other IMAP
-  providers are not supported today.
-- Mailbox password / app password for that address (IMAP/SMTP)
+- A **mrcall-desktop** engine profile
+- Email IMAP for the operator mailbox (supported Google Mail at the moment)
 
 ---
 
-## Setup (copy & paste) — example: ACME
+## Setup example: ACME
 
 Imagine your operator address is `support@acme.example`.
 
-**The whole path, in order:** install the app and sign in → install the
-tool → make your project → check your secrets → install the project's
-own pin → sign in → check → work. Steps 0–7 below walk through each
-one — skip nothing on a first run.
+### 0. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
 
-### 0. Install mrcall-desktop and sign in
-
-**mrcall-desktop** is a separate desktop app: it holds the mailbox sync,
+**[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)** is a separate desktop app: it holds the mailbox sync,
 the relationship memory and the task list, and it runs a small local
 daemon (the "engine") that everything below actually talks to. **`cs` must
 run on the same machine as that app and its daemon** — there is no
 remote/cloud engine to point `cs` at instead.
 
 - **macOS / Windows:** install the mrcall-desktop app.
-- **Linux:** there is no packaged desktop build yet; run the engine from
-  source — see the [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)
-  repo for build/run instructions.
+- **Linux:** run the engine from source
 
 Open the app and sign in with the Google account for your support mailbox.
-Signing in writes a profile descriptor to
-`~/.zylch/profiles/<uid>/cs-descriptor.json`; `cs login` (step 5 below)
-reads that file, which is why you never have to hunt down a WebSocket URL
-or a Firebase uid yourself.
-
-You need a mrcall-desktop release **newer than v0.1.29** (2026-05-05):
-that public build predates the file above. If a later step reports no
-descriptor found and you are sure you are signed in, update the app first.
 
 ### 1. Install the `cs` command (once)
 
-This gives your computer the `cs` command. Copy-paste the whole block
-into the terminal, one line at a time or all together — it creates a
-private folder (`~/work`) and installs the tool inside it, touching
-nothing else on your machine:
+Copy-paste this whole block into the terminal:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh    # once, if uv is missing
@@ -116,20 +86,22 @@ TAG=$(git ls-remote --tags --refs https://github.com/malemi/cs-kernel 'v*' | sed
 uv pip install "cs-kernel @ git+https://github.com/malemi/cs-kernel@${TAG}"
 ```
 
+You have now created private folder (`~/work`) and installed the `cs` tool inside it.
+
 ### 2. Create your company project
 
 ```bash
 cs init
 ```
 
-Several prompts are required — pressing Enter on an empty value just
-re-asks ("Please provide a value.") — so have the **operator email**
-ready. The **engine WS URL** and **engine owner uid** come prefilled
-from Step 0's sign-in; if the wizard asks for them, Step 0 didn't happen
-on this machine — sign in (app v0.1.29+) and re-run `cs init`. Most
-other prompts — IMAP/SMTP host and port, timezone, cron schedule,
-dedup/rate-limit knobs, CRM/producer/SMS/Drive — have sensible defaults;
-here is what to expect for ACME:
+The `cs init` wizard prompts various questions to setup your agentic customer service
+platform. It should not be difficult, as all technical questions
+are prefilled.
+
+Remember: if the wizard asks for the **engine WS URL** and **engine owner uid**
+and no value is prefilled, it means you haven't signed in to mrcall-desktop. Do it!
+
+Here is what to expect for ACME:
 
 | Question | Example |
 |---|---|
@@ -142,18 +114,13 @@ here is what to expect for ACME:
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Destination folder | `acme-cs` |
-| Mailbox app password | last prompt, typed blind; Enter skips it (see step 3) |
+| Mailbox app password | You need your gmail [app password](https://support.google.com/mail/answer/185833?hl=en) |
 
 When you confirm, you get a folder **`acme-cs/`**.
 
-### 3. Your secrets are already in place
+If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
-`cs init` wrote `~/.acme-cs/.env` (outside the repo — never commit it):
-accounts and engine key are filled in, plus the mailbox app password if
-you typed it at the wizard's last prompt. Skipped it? Open
-`~/.acme-cs/.env` and set `EMAIL_PASSWORD=`.
-
-### 4. Install the project pin
+### 3. Install the project pin
 
 ```bash
 cd acme-cs
