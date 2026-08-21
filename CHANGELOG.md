@@ -18,6 +18,31 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.1 — 2026-08-21
+
+### Added — `cs init` offers to install the project itself
+- **Why:** README step 3 was a hand-typed `cd`/`uv venv`/`source`/`uv pip
+  install` right after the wizard already knows `dest_dir` and has
+  rendered `requirements.txt` — one more manual step for exactly the
+  reader this quick-start is written for.
+- **What:** `cs init` closes with `Install the project now (creates
+  <dir>/.venv and installs the pinned kernel)? [y/N]`. EOF/^C/"n" skip
+  with the manual fallback printed and **zero** subprocess calls (the
+  v0.5.2 EOF contract: never installs without an explicit "y"); "y"
+  runs `uv venv .venv` then `uv pip install --python <venv>/bin/python
+  -r requirements.txt`, stopping before the install call if venv
+  creation fails. Gate 25 (`tests/test_init_install_offer.py`) proves
+  the call shape with `subprocess.run` stubbed — hermetic, no real
+  venv or network in the suite.
+- **README:** step 2 documents the prompt; step 3 (manual install)
+  becomes the explicit fallback for a "no"; step 4 gains the
+  `cd`+`source` the "yes" path still needs — the offer installs into
+  the new venv but does not activate it for the caller's shell.
+- **Re-collaudo:** **static tier, both clones** — `cs init` runs once,
+  at clone creation; nothing here touches a send path, the auth
+  boundary, or a permission byte. An existing clone's next `cs update`
+  is unaffected (the offer lives in `cmd_init`, not `cmd_update`).
+
 ## v0.9.0 — 2026-08-21
 
 ### Added — the session is the product surface, and the surface says so

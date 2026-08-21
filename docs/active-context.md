@@ -14,12 +14,13 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.0`. Current HEAD status: untagged.**
-  The session-surface release (2026-08-21): `/cs-review` merge, `cs-` prefix,
-  `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release offer, human
-  `cs whoami`, wizard slug + derived pin default, uvx quick-start. Static
-  tier, both clones (CHANGELOG entry). `v0.8.0` remains the recorded
-  tag→0.7.1 exception (object pinned immutable).
+- **Latest release tag: `v0.9.1`. Current HEAD status: tagged as `v0.9.1`.**
+  `v0.9.1` adds the `cs init` install offer (one y, venv+install done) on
+  top of `v0.9.0`'s session-surface release (`/cs-review` merge, `cs-`
+  prefix, `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release
+  offer, human `cs whoami`, wizard slug + derived pin default, uvx
+  quick-start). Static tier, both tags (CHANGELOG entries). `v0.8.0`
+  remains the recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -29,8 +30,8 @@ what is *current*.
 
   | Clone | Pinned | Collaudo | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.9.0` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
-  | `124-cs` | `v0.9.0` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
+  | `mrcall-cs` | `v0.9.1` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
+  | `124-cs` | `v0.9.1` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, deployed
@@ -48,21 +49,12 @@ what is *current*.
   quick-start cut to size, install snippets resolving the newest tag
   dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
   failure); the wizard's clone-pin default follows the operational pin.
-- On main, untagged (rides the next tag — MINOR): `cs init` now OFFERS to
-  install the project itself right after stamping it — `Install the project
-  now (creates <dir>/.venv and installs the pinned kernel)? [y/N]`; EOF/N
-  skip with the manual fallback printed (v0.5.2 EOF contract, zero
-  subprocess calls), `y` runs `uv venv` then `uv pip install --python
-  <venv>/bin/python -r requirements.txt`. Gate 25
-  (`tests/test_init_install_offer.py`), hermetic (`subprocess.run` stubbed).
-  README step 2 notes the prompt; step 3 (manual install) is now the
-  fallback; step 4 adds the `cd`+`source` the "yes" path still needs (the
-  offer installs into the new venv but doesn't activate it for the caller's
-  shell).
-- Both live clones were re-stamped in place as the v0.9.0 surface was built
-  (2026-08-19/21: renamed commands, new workflows, checksums), so their
-  re-pin to `v0.9.0` changes no stamped file — it makes the installed CLI
-  match the surface they already carry.
+- Both live clones were re-stamped in place as the v0.9.0/v0.9.1 surface was
+  built (2026-08-19/21: renamed commands, new workflows, checksums), so
+  their re-pin changes no stamped file — it makes the installed CLI match
+  the surface they already carry. `cs init`'s install offer only runs at
+  clone creation (`cmd_init`, not `cmd_update`), so it never fires again on
+  an existing clone's re-pin.
 - The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
   site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
   behavior-neutral for a clone until one call site opts in.
