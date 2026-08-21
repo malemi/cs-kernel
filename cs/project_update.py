@@ -360,8 +360,15 @@ def _offer_release_upgrade(clone_root: Path) -> int | None:
     if rc != 0:
         return rc
     print("Installing the new pin into this venv …")
+    # `uv pip install`, not `python -m pip` — a venv created exactly per
+    # this kernel's own README Step 2 (`uv venv .venv`, no `--seed`) has no
+    # `pip` module inside it AT ALL, confirmed live 2026-08-21 ("No module
+    # named pip"). `uv` is already a hard prerequisite (Step 1); `--python`
+    # targets THIS process's interpreter, matching the working pattern
+    # `cs/project_init.py`'s own install offer already uses.
     proc = subprocess.run(
-        [sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt"],
+        ["uv", "pip", "install", "--python", sys.executable,
+         "-q", "-r", "requirements.txt"],
         cwd=clone_root,
     )
     if proc.returncode != 0:

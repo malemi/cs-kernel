@@ -768,8 +768,15 @@ def _offer_yes_path_repins_installs_reexecs() -> None:
 
         assert rc == 0, f"stubbed-execv path must return 0, got {rc}"
         assert f"@v0.2.0" in req.read_text(), "pin must be rewritten to the new tag"
-        assert calls["pip"] == [sys.executable, "-m", "pip", "install", "-q",
-                                "-r", "requirements.txt"], calls.get("pip")
+        # `uv pip install --python <this interpreter>`, never `python -m pip`:
+        # a venv made per README Step 2 (`uv venv .venv`) ships NO pip module,
+        # so the old form died with "No module named pip" on exactly the
+        # clones this flow exists for (confirmed live 2026-08-21).
+        assert calls["pip"] == ["uv", "pip", "install", "--python", sys.executable,
+                                "-q", "-r", "requirements.txt"], calls.get("pip")
+        assert "-m" not in calls["pip"], (
+            f"must not shell out to `python -m pip` — uv-made venvs have no pip: {calls['pip']}"
+        )
         assert calls["execv"] == (sys.executable,
                                   [sys.executable, "-m", "cs", "update"]), calls.get("execv")
 
