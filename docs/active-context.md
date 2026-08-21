@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.6`. Current HEAD status: tagged as `v0.9.6`.** The
+- **Latest release tag: `v0.9.6`. Current HEAD status: untagged.** The
   `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface; what each
   tag did is in `CHANGELOG.md`, not here. All static tier. `v0.8.0` remains
   the recorded tag→0.7.1 exception (object pinned immutable).
@@ -70,8 +70,10 @@ what is *current*.
   state from the packaging: reading the dependency list and concluding
   "no key configured" is how this file carried the wrong answer for a
   day. Run the check.
-- Measured recommendation for that path: `MODEL_CLASSIFIER=@glm` (A/B on the
-  live classification task, 2026-07-28; full record in meta-repo
+- That measurement is now the DEFAULT (v0.9.6): `ROLE_FAMILIES` resolves
+  CLASSIFIER to `@glm` on OpenRouter (Anthropic direct keeps
+  `@claude-sonnet` — `@glm` is not served there). `MODEL_CLASSIFIER` still
+  overrides. A/B record in meta-repo
   `docs/briefs/2026-07-28-multi-provider-llm-ab.md` — quotes customer mail,
   never enters this repo).
 
