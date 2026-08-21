@@ -47,7 +47,12 @@ what is *current*.
   quick-start cut to size, install snippets resolving the newest tag
   dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
   failure); the wizard's clone-pin default follows the operational pin.
-- On main, untagged (rides the next tag — MINOR, stamped surface):
+- On main, untagged (rides the next tag — MINOR): bare `cs update` now
+  OFFERS a pending release (`Found new tag (vX.Y.Z). Update? [y/N]`, default
+  No, EOF-safe; on yes: re-pin → pip install → re-exec on the new kernel);
+  `cs whoami` prints human-readable output (`--json` for the raw shape); new
+  workflow commands `/cs-cron` and `/cs-campaign`; wizard suggests the short
+  slug. Plus, same batch:
   `/munchausen` merged into `/cs-review` — the ONE review bootstrap
   (operator-prepared digest + outreach candidates when a producer is
   wired) — and every stamped skill/command renamed under the `cs-` prefix

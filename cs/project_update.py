@@ -261,7 +261,7 @@ def cmd_update_check(clone_root: Path) -> int:
     return 0
 
 
-def cmd_update_pin(clone_root: Path, tag: str) -> int:
+def cmd_update_pin(clone_root: Path, tag: str, advice: bool = True) -> int:
     """`cs update --pin <tag>`: rewrite ONLY the kernel pin line in
     requirements.txt to `tag`, and print the before/after line. Does not
     install it — `pip install -r requirements.txt` stays a separate,
@@ -296,12 +296,87 @@ def cmd_update_pin(clone_root: Path, tag: str) -> int:
 
     print(f"  - {old_line.rstrip(chr(10))}")
     print(f"  + {new_line.rstrip(chr(10))}")
-    print(
-        "\nrequirements.txt updated. Installing it is a separate, deliberate "
-        "step: run `pip install -r requirements.txt`, then re-collaudo per "
-        "the new tag's CHANGELOG entry before un-pausing operators."
-    )
+    if advice:
+        print(
+            "\nrequirements.txt updated. Installing it is a separate, deliberate "
+            "step: run `pip install -r requirements.txt`, then re-collaudo per "
+            "the new tag's CHANGELOG entry before un-pausing operators."
+        )
     return 0
+
+
+def _offer_release_upgrade(clone_root: Path) -> int | None:
+    """Bare `cs update` opener: one quick look at the pinned origin's tags;
+    when a newer release exists, OFFER the upgrade —
+    ``Found new tag (vX.Y.Z). Update? [y/N]``.
+
+    The pin stays operator-owned: the default is No, EOF/^C on the prompt
+    resolves to No with the decision printed (the v0.5.2 EOF contract), and
+    nothing is rewritten without an explicit "y". On yes: rewrite the pin
+    line (the same path as ``--pin``), install requirements into THIS venv,
+    then re-exec ``cs update`` so the template refresh runs on the NEW
+    kernel — the old one stays loaded in this process and would stamp the
+    previous release's templates. An unreachable origin is one printed line
+    and the update continues offline: discovery must never block a template
+    refresh. Returns an exit code to stop with, or None to continue.
+    """
+    req_path = clone_root / "requirements.txt"
+    if not req_path.exists():
+        return None  # nothing pinned — nothing to offer
+    found = _find_pin_line(req_path.read_text())
+    if found is None:
+        return None
+    _idx, _prefix, origin_url, pinned_tag = found
+    try:
+        proc = subprocess.run(
+            ["git", "ls-remote", "--tags", origin_url],
+            capture_output=True, text=True, timeout=20,
+        )
+        tags = _parse_remote_tags(proc.stdout) if proc.returncode == 0 else []
+    except (OSError, subprocess.TimeoutExpired):
+        tags = []
+    if not tags:
+        print(f"(release check skipped: could not read tags from {origin_url})")
+        return None
+    latest = tags[-1]
+    if _tag_key(latest) <= _tag_key(pinned_tag):
+        return None  # up to date — proceed quietly
+    tier = _changelog_tier(origin_url, latest)
+    tier_note = f" — re-collaudo: {tier}" if tier else ""
+    try:
+        answer = input(
+            f"Found new tag ({latest}, pinned {pinned_tag}{tier_note}). "
+            f"Update? [y/N]: "
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\nNo answer — keeping the current pin "
+              "(explicit re-pin: `cs update --pin`).")
+        answer = "n"
+    if answer not in ("y", "yes"):
+        print(f"Keeping {pinned_tag}; the template refresh below uses the "
+              f"installed kernel.")
+        return None
+    rc = cmd_update_pin(clone_root, latest, advice=False)
+    if rc != 0:
+        return rc
+    print("Installing the new pin into this venv …")
+    proc = subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "-r", "requirements.txt"],
+        cwd=clone_root,
+    )
+    if proc.returncode != 0:
+        print(
+            "pip install FAILED — the pin is rewritten but not installed. "
+            "Fix the error, run `pip install -r requirements.txt`, then "
+            "`cs update` again.",
+            file=sys.stderr,
+        )
+        return proc.returncode
+    print(f"Installed {latest}. Re-running `cs update` on the new kernel …"
+          "\nRemember the re-collaudo per the new tag's CHANGELOG entry "
+          "before un-pausing operators.")
+    os.execv(sys.executable, [sys.executable, "-m", "cs", "update"])
+    return 0  # unreachable in production; reached only when execv is stubbed
 
 
 def cmd_update(args: list[str]) -> int:
@@ -344,6 +419,12 @@ def cmd_update(args: list[str]) -> int:
             file=sys.stderr,
         )
         return 1
+
+    # Bare `cs update` opens with the release offer (prompted, default No);
+    # on an accepted upgrade it re-execs on the new kernel and never returns.
+    rc = _offer_release_upgrade(clone_root)
+    if rc is not None:
+        return rc
 
     # Find template root
     import cs as cs_mod

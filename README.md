@@ -357,38 +357,34 @@ yours to close again.
 
 ### Upgrading later
 
-First find out whether there is anything to upgrade TO — `cs update --check`
-reads the kernel origin already pinned in your `requirements.txt`, checks it
-for newer tags, and prints installed vs. latest (plus that tag's re-collaudo
-tier, when it can determine one). It writes nothing:
+One command:
 
 ```bash
 cd acme-cs
 source .venv/bin/activate
-cs update --check
+cs update
 ```
 
-If a newer tag is what you want, re-pin explicitly — this never happens on
-its own; a pin that updates itself is not a pin:
+It looks at the pinned origin first; when a newer release exists it asks —
+`Found new tag (vX.Y.Z). Update? [y/N]` — and on **y** it re-pins,
+installs, and re-runs itself on the new kernel before refreshing the
+stamped files (your edits are kept, except the two security-critical
+files — `settings.json` and the cron wrapper — which are applied with
+your version saved as `*.local-bak`). Anything but an explicit **y**
+changes nothing: a pin that updates itself is not a pin. Offline, the
+check is skipped in one line and the refresh proceeds.
+
+The pieces also work alone:
 
 ```bash
-cs update --pin vX.Y.Z      # the tag --check just showed you; rewrites ONLY
-                            # the pin line and prints the before/after
-```
-
-Then install it and refresh the stamped templates:
-
-```bash
+cs update --check           # look, write nothing (installed vs latest + tier)
+cs update --pin vX.Y.Z      # rewrite ONLY the pin line
 uv pip install -r requirements.txt
-cs update    # refreshes skills/templates; keeps your edits, except the two
-             # security-critical files (settings.json, cron wrapper): those are
-             # applied, with your version saved next to them as *.local-bak
 ```
 
-Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG entry —
-`cs update --check`'s own output says so.
-
-Then reopen `claude` / `opencode` in that folder.
+Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG
+entry — the prompt names the tier when the entry declares one. Then
+reopen `claude` / `opencode` in that folder.
 
 ### Safety (defaults)
 

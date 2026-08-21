@@ -532,8 +532,108 @@ def _e2e_bare_update_unaffected() -> None:
         assert "no template-manifest.json found" in out, out
 
 
+def _minimal_manifest(clone: Path) -> None:
+    (clone / "template-manifest.json").write_text(json.dumps({
+        "template_version": "1",
+        "init_data": {
+            "company_slug": "acme",
+            "company_name": "Acme Corp",
+            "company_prog_name": "acme-cs",
+            "repo_kernel_version": "0.5.2",
+        },
+        "file_checksums": {},
+    }))
+
+
+def _e2e_bare_update_offers_upgrade_eof_keeps_pin() -> None:
+    """Bare `cs update` against an origin with a newer tag OFFERS the
+    upgrade; a closed stdin resolves the prompt to the declared No (the
+    v0.5.2 EOF contract), the pin is byte-identical afterwards, and the
+    template refresh still runs (exit 0)."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        origin = _make_kernel_origin(Path(td), [
+            ("v0.1.0", "## v0.1.0 — old\n"),
+            ("v0.2.0", "## v0.2.0 — new\n- **Re-collaudo:** static\n"),
+        ])
+        req = _write_requirements(clone, origin, "v0.1.0")
+        pinned = req.read_text()
+        _minimal_manifest(clone)
+
+        proc = _run_update([], clone, _clean_env(home))
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert "Found new tag (v0.2.0" in out, out
+        assert "keeping the current pin" in out, out
+        assert req.read_text() == pinned, "EOF on the offer must not rewrite the pin"
+
+
+def _e2e_bare_update_offline_offer_skipped() -> None:
+    """An unreachable origin must not block the template refresh: the offer
+    prints one skip line and bare `cs update` proceeds to exit 0."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        _write_requirements(clone, Path(td, "no-such-origin"), "v0.1.0")
+        _minimal_manifest(clone)
+
+        proc = _run_update([], clone, _clean_env(home))
+        out = proc.stdout + proc.stderr
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert "release check skipped" in out, out
+
+
+def _offer_yes_path_repins_installs_reexecs() -> None:
+    """The accepted offer, in-process with the two irreversible seams
+    stubbed (pip install, execv — a real execv would replace this test
+    runner): the pin line is rewritten to the new tag, pip is invoked on
+    requirements.txt in this interpreter, and the re-exec targets
+    `python -m cs update`."""
+    import builtins
+    from cs import project_update as pu
+
+    with tempfile.TemporaryDirectory() as td:
+        clone = Path(td, "clone"); clone.mkdir()
+        origin = _make_kernel_origin(Path(td), [
+            ("v0.1.0", "## v0.1.0 — old\n"),
+            ("v0.2.0", "## v0.2.0 — new\n- **Re-collaudo:** static\n"),
+        ])
+        req = _write_requirements(clone, origin, "v0.1.0")
+
+        calls: dict = {}
+        real_run = pu.subprocess.run
+
+        def fake_run(cmd, *a, **kw):
+            if cmd[:2] == ["git", "ls-remote"] or cmd[0] == "git":
+                return real_run(cmd, *a, **kw)
+            calls["pip"] = cmd
+            return subprocess.CompletedProcess(cmd, 0)
+
+        old_input, old_execv = builtins.input, pu.os.execv
+        builtins.input = lambda *a, **kw: "y"
+        pu.subprocess.run = fake_run
+        pu.os.execv = lambda exe, argv: calls.__setitem__("execv", (exe, argv))
+        try:
+            rc = pu._offer_release_upgrade(clone)
+        finally:
+            builtins.input = old_input
+            pu.subprocess.run = real_run
+            pu.os.execv = old_execv
+
+        assert rc == 0, f"stubbed-execv path must return 0, got {rc}"
+        assert f"@v0.2.0" in req.read_text(), "pin must be rewritten to the new tag"
+        assert calls["pip"] == [sys.executable, "-m", "pip", "install", "-q",
+                                "-r", "requirements.txt"], calls.get("pip")
+        assert calls["execv"] == (sys.executable,
+                                  [sys.executable, "-m", "cs", "update"]), calls.get("execv")
+
+
 def main() -> int:
     _characterize_eof_default()
+    _e2e_bare_update_offers_upgrade_eof_keeps_pin()
+    _e2e_bare_update_offline_offer_skipped()
+    _offer_yes_path_repins_installs_reexecs()
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
