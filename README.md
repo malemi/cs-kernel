@@ -384,12 +384,24 @@ your version saved as `*.local-bak`). Anything but an explicit **y**
 changes nothing: a pin that updates itself is not a pin. Offline, the
 check is skipped in one line and the refresh proceeds.
 
-The pieces also work alone:
+That is the whole upgrade — three things happen behind that one **y**:
+the pin in `requirements.txt` moves, the new kernel is installed into
+your `.venv`, and the stamped files are re-rendered from it.
+
+**`--pin` is the escape hatch, not the normal path.** `cs update` only
+ever offers the *newest* tag, so name a version explicitly when you want
+a different one — above all to **go back**:
 
 ```bash
-cs update --check           # look, write nothing (installed vs latest + tier)
-cs update --pin vX.Y.Z      # rewrite ONLY the pin line
-uv pip install -r requirements.txt
+cs update --pin v0.9.1      # roll back (or jump to a specific tag)
+uv pip install -r requirements.txt   # --pin rewrites the pin; it never installs
+cs update                   # re-stamp the files from that kernel
+```
+
+And to look before leaping, writing nothing at all:
+
+```bash
+cs update --check           # installed vs latest, plus the re-collaudo tier
 ```
 
 Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG
