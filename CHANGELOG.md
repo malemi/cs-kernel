@@ -18,6 +18,45 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.2 — 2026-08-21
+
+### Fixed — `cs update` is now genuinely one command, and stops asking unanswerable questions
+- **The upgrade offer could not install.** Answering "y" to `Found new
+  tag … Update? [y/N]` rewrote the pin and then died with `No module
+  named pip`: it shelled out to `python -m pip`, but a venv created
+  exactly per this kernel's own README (`uv venv .venv`) contains no pip
+  module at all. The clone was left in the worst state — pin bumped,
+  kernel NOT installed — sending the operator back to the manual steps
+  the offer exists to remove. Now uses `uv pip install --python <this
+  interpreter>` (the form `cs init`'s own install offer already used);
+  `uv` is already a hard prerequisite. Verified end to end on a real uv
+  venv: pinned `v0.9.0` + one `cs update` + one "y" → installed `0.9.1`,
+  pin at `v0.9.1`, templates re-stamped.
+- **`manifest.toml` is clone-owned and is never touched again.** It went
+  through the normal diff/overwrite flow like any rendered template, so a
+  "y" at the conflict prompt silently replaced a hand-authored manifest
+  with a bare re-render from frozen `init_data` — deleting comments, and
+  producing INVALID TOML: account keys rendered unquoted, and an
+  email-shaped account name (the documented recommended shape) contains
+  `@`, illegal in a bare TOML key. Now exempt exactly like
+  `requirements.txt` (the charter always said so; the code never enforced
+  it), plus a `toml_quote` filter applied to every account key and value
+  so a future `cs init` render cannot repeat it either.
+- **No more conflict prompts with an empty diff.** A file whose content
+  already equals today's render, but whose STORED checksum is stale, hit
+  the "modified locally AND template changed" ask; choosing `diff`
+  printed nothing, leaving the operator with no way to decide. Now
+  recognized and reconciled silently (`✓ <file> (already current)`).
+- **Gates:** 26 (`test_toml_quote.py`), `test_template_render.py` gains an
+  email-account fixture and parses `manifest.toml.j2`'s render with
+  `tomllib`, `test_project_update.py` gains the `manifest.toml`
+  never-touched proof, the already-current no-prompt proof, and asserts
+  the install argv never shells out to `python -m pip`.
+- **Re-collaudo:** **static tier, both clones** — bug fixes in `cs
+  update`'s own flow; no send path, auth boundary or permission byte
+  touched. The `manifest.toml` exemption makes an existing clone's next
+  update strictly *less* invasive than before.
+
 ## v0.9.1 — 2026-08-21
 
 ### Added — `cs init` offers to install the project itself
