@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.2`. Current HEAD status: tagged as `v0.9.2`.**
+- **Latest release tag: `v0.9.2`. Current HEAD status: untagged.**
   `v0.9.2` makes `cs update` genuinely one command (the offer's install
   used `python -m pip`, absent from uv-made venvs), exempts `manifest.toml`
   from the overwrite flow, and stops the empty-diff conflict prompt.
