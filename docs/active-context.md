@@ -62,8 +62,14 @@ what is *current*.
   fixed-template send passes an authored `plain`/`html` pair and never
   reaches it. The call is gated by `llm_available()` — anthropic SDK plus a
   resolved provider credential — NOT by `CS_LLM_ROUTE`, and degrades loudly
-  to deterministic checks without one. So a clone with a provider key set
-  already spends provider tokens whenever the engine composed the body.
+  to deterministic checks without one. **Measured per clone 2026-08-21**
+  (`llm_available()`, run inside each): `mrcall-cs` → **True**
+  (`OPENROUTER_API_KEY` present in `~/.mrcall-cs/.env`) — its register
+  judgment is LIVE and already spending provider tokens on
+  model-composed sends; `124-cs` → False, SDK absent. Do not infer this
+  state from the packaging: reading the dependency list and concluding
+  "no key configured" is how this file carried the wrong answer for a
+  day. Run the check.
 - Measured recommendation for that path: `MODEL_CLASSIFIER=@glm` (A/B on the
   live classification task, 2026-07-28; full record in meta-repo
   `docs/briefs/2026-07-28-multi-provider-llm-ab.md` — quotes customer mail,

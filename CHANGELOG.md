@@ -26,10 +26,15 @@ can install end to end.
 - **Why:** `anthropic` shipped as the optional extra `cs-kernel[llm]`,
   named nowhere a reader would look (only in a cold-storage archive
   entry). Meanwhile `cs/send_guard.py`'s register judgment calls
-  `worker_llm.classify` on the model-composed send path. So every clone
-  installed the normal way ran that SAFETY check in degraded mode, and
-  said so only in a log line nobody reads. A dependency a safety path
-  reaches for is a dependency, not an extra.
+  `worker_llm.classify` on the model-composed send path. A clone that
+  installed the normal way therefore ran that SAFETY check in degraded
+  mode, and said so only in a log line nobody reads. A dependency a
+  safety path reaches for is a dependency, not an extra.
+  **Measured 2026-08-21, not assumed** (`llm_available()` in each clone):
+  `mrcall-cs` = True — SDK present and `OPENROUTER_API_KEY` set in its
+  `.env`, so its register judgment has been LIVE, not degraded;
+  `124-cs` = False, SDK missing. The split is exactly the accident this
+  entry removes.
 - **What:** `anthropic>=0.107` moves into the base dependencies —
   installed always. The `[llm]` extra stays as a no-op alias so any
   existing `cs-kernel[llm]` install line still resolves. `llm_available()`
@@ -39,9 +44,12 @@ can install end to end.
   (`OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY`), what happens without one,
   and the `cs llm show` / `cs llm test` verbs. The README gains the
   three-payers table (your session / the engine / the kernel).
-- **Migration note:** re-pinning installs `anthropic` automatically. With
-  no provider key set nothing changes at runtime — the guard degrades
-  exactly as before. Setting a key turns the register judgment on.
+- **Migration note:** re-pinning installs `anthropic` automatically.
+  Runtime effect depends on whether that clone already has a provider
+  key: with none, nothing changes (the guard degrades exactly as before);
+  with one, the register judgment starts running — which for `124-cs`
+  means its first re-pin turns it on, since its `.env` question is now
+  the only thing standing between it and the live judgment.
 - **Re-collaudo:** **static tier, both clones** — a new base dependency
   plus documentation. No code path changes shape; the guard's behaviour
   with no key is byte-identical to before.
