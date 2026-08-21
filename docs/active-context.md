@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.1`. Current HEAD status: tagged as `v0.9.1`.**
+- **Latest release tag: `v0.9.1`. Current HEAD status: untagged.**
   `v0.9.1` adds the `cs init` install offer (one y, venv+install done) on
   top of `v0.9.0`'s session-surface release (`/cs-review` merge, `cs-`
   prefix, `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release
