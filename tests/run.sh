@@ -450,6 +450,16 @@ step "24. cs init writes ~/.<slug>-cs/.env — one password typed, zero files ha
 # writes EMAIL_PASSWORD blank and prints the decision (v0.5.2 EOF contract).
 if "$VENV/bin/python" "$ROOT/tests/test_state_env.py"; then echo "OK"; else echo "FAIL: cs init secrets writer regressed"; FAIL=1; fi
 
+step "25. cs init offers to install the project — venv + pinned kernel, on explicit y"
+# README step 3 used to be a hand-typed cd/uv venv/source/uv pip install —
+# the wizard already has dest_dir and requirements.txt right there. Guards,
+# subprocess.run stubbed (hermetic, no real venv/network): EOF/^C/"n" skip
+# with the manual fallback printed and ZERO subprocess calls (the v0.5.2 EOF
+# contract: never install without an explicit "y"); "y" runs uv venv then
+# uv pip install --python <venv>/bin/python -r requirements.txt, in that
+# order, both cwd=dest_dir; a failed venv step stops before the install call.
+if "$VENV/bin/python" "$ROOT/tests/test_init_install_offer.py"; then echo "OK"; else echo "FAIL: cs init install offer regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

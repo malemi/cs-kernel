@@ -48,6 +48,17 @@ what is *current*.
   quick-start cut to size, install snippets resolving the newest tag
   dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
   failure); the wizard's clone-pin default follows the operational pin.
+- On main, untagged (rides the next tag — MINOR): `cs init` now OFFERS to
+  install the project itself right after stamping it — `Install the project
+  now (creates <dir>/.venv and installs the pinned kernel)? [y/N]`; EOF/N
+  skip with the manual fallback printed (v0.5.2 EOF contract, zero
+  subprocess calls), `y` runs `uv venv` then `uv pip install --python
+  <venv>/bin/python -r requirements.txt`. Gate 25
+  (`tests/test_init_install_offer.py`), hermetic (`subprocess.run` stubbed).
+  README step 2 notes the prompt; step 3 (manual install) is now the
+  fallback; step 4 adds the `cd`+`source` the "yes" path still needs (the
+  offer installs into the new venv but doesn't activate it for the caller's
+  shell).
 - Both live clones were re-stamped in place as the v0.9.0 surface was built
   (2026-08-19/21: renamed commands, new workflows, checksums), so their
   re-pin to `v0.9.0` changes no stamped file — it makes the installed CLI

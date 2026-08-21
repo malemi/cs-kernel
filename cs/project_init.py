@@ -6,6 +6,7 @@ import getpass
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 import hashlib
@@ -493,6 +494,73 @@ def write_state_env(config: dict, dest_dir: Path) -> None:
     print(f"Wrote {env_path} (mode 0600).{note}")
 
 
+def _venv_python(dest_dir: Path) -> Path:
+    if os.name == "nt":
+        return dest_dir / ".venv" / "Scripts" / "python.exe"
+    return dest_dir / ".venv" / "bin" / "python"
+
+
+def _manual_install_lines(dest_dir: Path) -> str:
+    return (
+        f"  cd {dest_dir}\n"
+        f"  uv venv .venv && source .venv/bin/activate  # Windows: .venv\\Scripts\\activate\n"
+        f"  uv pip install -r requirements.txt"
+    )
+
+
+def offer_project_install(dest_dir: Path) -> None:
+    """After `cs init` stamps the project, OFFER to create its venv and
+    install the pinned kernel right here — collapsing the manual `cd
+    <dir> && uv venv .venv && source … && uv pip install -r
+    requirements.txt` (README step 3) into one confirmed step.
+
+    EOF/^C on the prompt (closed stdin — the v0.5.2 EOF contract)
+    resolves to No, prints the decision, and hands back the manual
+    steps; nothing runs without an explicit "y". Uses `uv venv` +
+    `uv pip install --python <venv>` (Step 1 already required `uv`) so
+    no shell activation is needed for the install itself — the operator
+    still sources the venv afterwards to actually use `cs`.
+    """
+    try:
+        answer = input(
+            f"\nInstall the project now (creates {dest_dir}/.venv and "
+            f"installs the pinned kernel)? [y/N]: "
+        ).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\nNo answer — skipping install. Run it yourself:")
+        print(_manual_install_lines(dest_dir))
+        return
+    if answer not in ("y", "yes"):
+        print("Skipping install. Run it yourself:")
+        print(_manual_install_lines(dest_dir))
+        return
+
+    print(f"Creating venv in {dest_dir}/.venv …")
+    proc = subprocess.run(["uv", "venv", ".venv"], cwd=dest_dir)
+    if proc.returncode != 0:
+        print(
+            "uv venv FAILED — install by hand:\n" + _manual_install_lines(dest_dir),
+            file=sys.stderr,
+        )
+        return
+
+    print("Installing the pinned kernel …")
+    proc = subprocess.run(
+        ["uv", "pip", "install", "--python", str(_venv_python(dest_dir)),
+         "-r", "requirements.txt"],
+        cwd=dest_dir,
+    )
+    if proc.returncode != 0:
+        print(
+            "pip install FAILED — the venv exists; finish by hand:\n"
+            f"  cd {dest_dir} && source .venv/bin/activate && "
+            "uv pip install -r requirements.txt",
+            file=sys.stderr,
+        )
+        return
+    print(f"Installed. Next: cd {dest_dir} && source .venv/bin/activate && cs login")
+
+
 def cmd_init(argv=None) -> int:
     """Main entry point for the init command."""
     # Parse command line arguments
@@ -580,8 +648,9 @@ def cmd_init(argv=None) -> int:
     print("=" * 60)
     print(f"Done! Your secrets live in '~/.{config['company_slug']}-cs/.env' (never commit it)")
     print(f"Its reference copy is: {dest_dir}/.env.example")
-    print(f"Run `pip install -r {dest_dir}/requirements.txt` to install the kernel")
-    
+
+    offer_project_install(dest_dir)
+
     return 0
 
 if __name__ == "__main__":

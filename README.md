@@ -131,10 +131,15 @@ When you confirm, you get a folder **`acme-cs/`**.
 
 If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
-### 3. Install the project pin
+One last prompt: `Install the project now (creates acme-cs/.venv and
+installs the pinned kernel)? [y/N]`. Say **y** and step 3 below is
+already done for you — skip straight to step 4.
+
+### 3. Install the project pin (only if you said no above)
 
 Your project has its own private copy of the tool, pinned in
-`requirements.txt` — upgrades happen when *you* decide, per project:
+`requirements.txt` — upgrades happen when *you* decide, per project.
+Do this only if you skipped the wizard's own install prompt:
 
 ```bash
 cd acme-cs
@@ -145,7 +150,11 @@ uv pip install -r requirements.txt
 
 ### 4. Sign in
 
+Either way you got here, this shell isn't in the project yet:
+
 ```bash
+cd acme-cs
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 cs login
 ```
 
