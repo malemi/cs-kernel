@@ -310,6 +310,103 @@ def _e2e_requirements_txt_never_touched() -> None:
         )
 
 
+# manifest.toml.j2 is the one template that needs nearly the FULL init_data
+# shape (every [company]/[operator]/[engine]/[knobs]/… field) — unlike
+# requirements.txt.j2 (one variable) or the SECURITY_CRITICAL templates, the
+# other minimal fixtures in this file tolerate a 4-key init_data because
+# their templates barely read it. This one may not: an incomplete init_data
+# makes manifest.toml.j2 itself raise UndefinedError, which render_templates
+# catches, prints, and skips BEFORE ever reaching the "clone-owned, never
+# touched" exemption check below it — that would silently pass this test
+# for the wrong reason (the file was skipped because rendering crashed, not
+# because the exemption fired). The account name is email-shaped
+# (`jane.doe@acme.example`) to also exercise the exact bare-TOML-key shape
+# that broke live, end to end, through this fixture.
+_FULL_INIT_DATA = {
+    "company_slug": "acme", "company_name": "Acme Corp",
+    "company_display_name": "Acme", "company_from_name": "Acme Support",
+    "company_prog_name": "acme-cs",
+    "email_address": "support@acme.example",
+    "imap_host": "imap.example.com", "imap_port": "993",
+    "smtp_host": "smtp.example.com", "smtp_port": "587",
+    "engine_owner_uid": "UID123", "engine_ws_url": "wss://engines.example.com",
+    "firebase_sa_path": "~/.acme-cs/firebase-sa.json",
+    "accounts": {"support": "UID123", "jane.doe@acme.example": "UID999"},
+    "accounts_default": "support",
+    "founder_sweep_enabled": False, "founder_sweep_account": "",
+    "crm_adapter": "none", "crm_shopify": False,
+    "producer_adapter": "none", "producer_mrcall_tracking": False,
+    "excluded_campaign": "", "posture_note": "",
+    "dedup_days": "30", "rate_cap": "25", "cs_triage_mode": "draft",
+    "dry_run": True, "autonomous": False, "timezone": "Europe/Rome",
+    "sms_hour": "18", "reminder_max": "2",
+    "sms_enabled": False, "sms_proxy_base": "",
+    "drive_scope": "", "cron_schedule": "0 8 * * *", "cron_comment": "acme-cs",
+    "platform_env_path": "", "repo_git_remote": "git@example.com:acme/acme-cs.git",
+    "repo_kernel_version": "0.5.2", "repo_docs_shape": "generic",
+    "posture_note": "", "name": "Acme", "dest_dir": "acme-cs",
+}
+
+
+def _e2e_manifest_toml_never_touched() -> None:
+    """manifest.toml is clone-owned by charter (CLAUDE.md.j2, "Editing this
+    clone"), the ONE place values change — same class as requirements.txt.
+    Confirmed live 2026-08-21: offering it through the normal diff/overwrite
+    flow let an operator "y" their own hand-authored manifest away, and the
+    bare re-render was invalid TOML the moment an account name was an email
+    (the documented recommended shape). `cs update` must never write it,
+    never prompt on it, and never record it in the updated manifest's
+    file_checksums — even with a garbage stored checksum, which for any
+    OTHER file would be exactly the "template changed" trigger."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        hand_authored = (
+            '# hand-authored, never touch\n'
+            '[engine.accounts]\n'
+            'support = "UID1"\n'
+            '"jane.doe@acme.example" = "UID2"\n'
+        )
+        (clone / "manifest.toml").write_text(hand_authored)
+
+        manifest = {
+            "template_version": "1",
+            "init_data": _FULL_INIT_DATA,
+            "file_checksums": {"manifest.toml": BOGUS_CHECKSUM},
+        }
+        (clone / "template-manifest.json").write_text(json.dumps(manifest))
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert "failed to render" not in out, (
+            f"init_data must be complete enough to render every template — a "
+            f"render failure would skip manifest.toml's exemption check for "
+            f"the wrong reason:\n{out}"
+        )
+        assert proc.returncode == 0, (
+            f"`cs update` must exit 0 past a manifest.toml entry, got {proc.returncode}:\n{out}"
+        )
+        assert (clone / "manifest.toml").read_text() == hand_authored, (
+            "manifest.toml must be byte-identical to what it held before the update:\n" + out
+        )
+        assert "manifest.toml is clone-owned — cs update never touches it" in out, (
+            f"the never-touches-it message must be printed:\n{out}"
+        )
+
+        updated_manifest = json.loads((clone / "template-manifest.json").read_text())
+        assert "manifest.toml" not in updated_manifest["file_checksums"], (
+            "manifest.toml must be absent from the updated manifest's file_checksums:\n"
+            f"{updated_manifest['file_checksums']}"
+        )
+
+
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", *args], cwd=cwd, capture_output=True, text=True, timeout=30,
@@ -637,6 +734,7 @@ def main() -> int:
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
+    _e2e_manifest_toml_never_touched()
     _e2e_check_no_requirements_txt()
     _e2e_check_malformed_pin()
     _e2e_check_up_to_date()

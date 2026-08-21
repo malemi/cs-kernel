@@ -34,7 +34,7 @@ from difflib import unified_diff
 from pathlib import Path
 
 from ._version import kernel_version, kernel_version_bare
-from .project_init import is_executable_target
+from .project_init import is_executable_target, toml_quote
 
 
 def _checksum(content: str) -> str:
@@ -465,6 +465,7 @@ def cmd_update(args: list[str]) -> int:
                     trim_blocks=True,
                     lstrip_blocks=True,
                 )
+                env.filters["toml_quote"] = toml_quote
                 tpl = env.from_string(template_str)
                 # dest_dir is runtime-only; never a template var
                 render_vars = {k: v for k, v in init_data.items() if k != "dest_dir"}
@@ -486,6 +487,21 @@ def cmd_update(args: list[str]) -> int:
             # long ago — stale or outright broken. It is the operator's file;
             # cs update only reports that it exists and leaves it alone.
             print("  · requirements.txt is the operator's pin — cs update never touches it")
+            continue
+
+        if str_out_rel == "manifest.toml":
+            # manifest.toml is clone-owned by charter (CLAUDE.md.j2,
+            # "Editing this clone" — the ONE place values change), same
+            # class as requirements.txt: written once by `cs init`, never a
+            # render target again. Confirmed live 2026-08-21: offering it
+            # through the normal diff/overwrite flow let an operator
+            # "overwrite" their hand-authored manifest with a bare re-render
+            # from frozen init_data — which also broke the file outright,
+            # because bare TOML keys can't hold an `@` (an email-shaped
+            # account name, the DOCUMENTED recommended shape, made the
+            # rendered file fail to parse). cs update only reports that it
+            # exists and leaves it alone; `cs init` is the only writer.
+            print("  · manifest.toml is clone-owned — cs update never touches it")
             continue
 
         rendered_checksum = _checksum(rendered)

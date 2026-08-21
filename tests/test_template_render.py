@@ -1,21 +1,36 @@
 """Template render gate: every .j2 renders under cs init's own jinja env.
 
-Two configurations, because they break differently:
+Three configurations, because they break differently:
 
 * **single-account** — the minimal clone. `... | reject(...) | first` on the
   account registry crashed here under StrictUndefined (found 2026-07-30 in
   FOUR templates): the smallest possible clone could not render its own
   CLAUDE.md at `cs init` time.
 * **multi-account** — the founder-sweep shape the existing clones use.
+* **email-account** — an account name that IS an email
+  (`mario.alemi@mrcall.ai`), the shape the kernel's own docs recommend
+  ("prefer the mailbox address, never a bare first name") and both live
+  clones actually use. Found live 2026-08-21: `manifest.toml.j2` rendered
+  that name as a BARE TOML key (`{{ name }} = "{{ uid }}"`) — `@` is
+  illegal in a bare key, so the render was invalid TOML the instant an
+  operator's own `cs update` re-rendered it. Neither SINGLE nor MULTI
+  above happened to use an `@`-bearing name, so this gate ran green while
+  the defect shipped. Fixed via a `toml_quote` filter (`cs/project_init.py`)
+  applied to every account key AND value; this config plus the TOML-parse
+  assertion below is what would have caught it.
 
 Every rendered output is also swept for company literals: the grep gate reads
 the template SOURCE, but a literal can be assembled by the template engine,
 and what a clone actually receives is the render.
 """
 import sys
+import tomllib
 from pathlib import Path
 
 import jinja2
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from cs.project_init import toml_quote  # noqa: E402
 
 TPL = Path(__file__).resolve().parent.parent / "cs" / "templates" / "project"
 
@@ -41,14 +56,21 @@ BASE = dict(
 SINGLE = {**BASE, "accounts": {"support": "UID123"}, "accounts_default": "support"}
 MULTI = {**BASE, "accounts": {"support": "UID123", "founder": "UID999"},
          "accounts_default": "support"}
+EMAIL_ACCOUNT = {
+    **BASE,
+    "accounts": {"support": "UID123", "jane.doe@acme.example": "UID999"},
+    "accounts_default": "support",
+}
 
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(TPL), trim_blocks=True,
                          lstrip_blocks=True, undefined=jinja2.StrictUndefined)
+env.filters["toml_quote"] = toml_quote
 
 BAD = ("mrcall.ai", "mario", "eva fani", "cafe124", "centralix", "/home/mal")
 fails = 0
 templates = sorted(p.relative_to(TPL).as_posix() for p in TPL.rglob("*.j2"))
-for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI)):
+for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI),
+                    ("email-account", EMAIL_ACCOUNT)):
     for name in templates:
         try:
             out = env.get_template(name).render(**ctx)
@@ -60,6 +82,12 @@ for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI)):
         if leaked:
             print(f"  FAIL literal [{label}] {name}: {leaked}")
             fails += 1
-print(f"{len(templates)} templates x 2 configs: "
+        if name == "manifest.toml.j2":
+            try:
+                tomllib.loads(out)
+            except tomllib.TOMLDecodeError as e:
+                print(f"  FAIL invalid TOML [{label}] {name}: {e}\n--- rendered ---\n{out}")
+                fails += 1
+print(f"{len(templates)} templates x 3 configs: "
       + ("ALL RENDER CLEAN" if not fails else f"{fails} FAILURES"))
 sys.exit(1 if fails else 0)

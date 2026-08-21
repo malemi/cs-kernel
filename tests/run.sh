@@ -460,6 +460,20 @@ step "25. cs init offers to install the project — venv + pinned kernel, on exp
 # order, both cwd=dest_dir; a failed venv step stops before the install call.
 if "$VENV/bin/python" "$ROOT/tests/test_init_install_offer.py"; then echo "OK"; else echo "FAIL: cs init install offer regressed"; FAIL=1; fi
 
+step "26. manifest.toml is clone-owned — never a cs update render target, never a bare-key break"
+# Confirmed live 2026-08-21: manifest.toml went through the normal
+# diff/overwrite flow like any template output, so an operator's "y"
+# silently destroyed hand-authored comments — and the bare re-render was
+# INVALID TOML the moment an account name was an email (`@` illegal in a
+# bare key; the shape the kernel's own docs recommend). Guards: manifest.toml
+# is now exempt from cs update exactly like requirements.txt (byte-identical,
+# absent from updated file_checksums, "clone-owned" message printed);
+# toml_quote() round-trips every key/value shape through a real TOML parser;
+# the render gate's new email-account fixture proves manifest.toml.j2 itself
+# renders valid TOML for that shape, not just that toml_quote is correct in
+# isolation.
+if "$VENV/bin/python" "$ROOT/tests/test_toml_quote.py"; then echo "OK"; else echo "FAIL: toml_quote regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

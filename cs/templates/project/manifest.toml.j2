@@ -18,9 +18,9 @@ ws_url = "{{ engine_ws_url }}"
 sa_path = "{{ firebase_sa_path }}"
 
 [engine.accounts]
-default = "{{ accounts_default }}"
+default = {{ accounts_default | toml_quote }}
 {% for name, uid in accounts.items() %}
-{{ name }} = "{{ uid }}"
+{{ name | toml_quote }} = {{ uid | toml_quote }}
 {% endfor %}
 
 [engine.founder_sweep]

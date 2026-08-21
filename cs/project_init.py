@@ -362,6 +362,23 @@ def is_executable_target(rel_dir: Path, template_name: str) -> bool:
     return "bin" in rel_dir.parts or template_name.endswith(".sh.j2")
 
 
+def toml_quote(value) -> str:
+    """Render `value` as a TOML basic string, quotes included — safe as
+    either a key or a value.
+
+    A bare TOML key only allows `[A-Za-z0-9_-]`; an account name that is an
+    email (e.g. `jane.doe@acme.example` — the documented, RECOMMENDED
+    shape, "prefer the mailbox address, never a bare first name") breaks
+    the parser the moment it renders unquoted (`@` is illegal in a bare
+    key, confirmed live: "manifest.toml is not valid TOML"). Quoting every
+    rendered key/value here is simpler than knowing in advance which
+    strings happen to be bare-safe and getting it wrong once.
+    """
+    s = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    s = s.replace("\r\n", "\\n").replace("\n", "\\n").replace("\r", "\\n")
+    return f'"{s}"'
+
+
 def render_templates(config: dict, template_dir: Path, dest_dir: Path):
     """Render Jinja2 templates and copy other files to destination."""
     jinja_env = jinja2.Environment(
@@ -370,7 +387,8 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
         lstrip_blocks=True,
         undefined=jinja2.StrictUndefined
     )
-    
+    jinja_env.filters["toml_quote"] = toml_quote
+
     # Create destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)
     
