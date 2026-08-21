@@ -403,6 +403,30 @@ check("every tier default names a known family",
       all(mc.family_name(spec) in mc.FAMILIES
           for table in TIER_FAMILIES.values() for spec in table.values()))
 
+# Role-level EARNED defaults (ROLE_FAMILIES), consulted before the tier's.
+# The measured CLASSIFIER default is @glm — but @glm is an OpenRouter family
+# and does not exist on the Anthropic-direct wire. The first implementation
+# fell back to OpenRouter's role table for ANY provider not listed, which sent
+# z-ai/glm-* to Anthropic direct: a default that cannot resolve, in the same
+# class as the `CS_LLM_PROVIDER=custom` typo this module already refuses.
+from cs.model_config import (  # noqa: E402
+    ROLE_FAMILIES, Provider, Role, default_model_for,
+)
+
+check("every role default is a family reference",
+      all(mc.is_family_ref(spec)
+          for table in ROLE_FAMILIES.values() for spec in table.values()))
+check("every role default names a known family",
+      all(mc.family_name(spec) in mc.FAMILIES
+          for table in ROLE_FAMILIES.values() for spec in table.values()))
+check("the measured CLASSIFIER default is @glm on OpenRouter",
+      ROLE_FAMILIES[Provider.OPENROUTER][Role.CLASSIFIER] == "@glm")
+check("Anthropic direct is listed explicitly, so it inherits no role override",
+      Provider.ANTHROPIC in ROLE_FAMILIES
+      and Role.CLASSIFIER not in ROLE_FAMILIES[Provider.ANTHROPIC])
+check("classifier on Anthropic direct never resolves to a gateway-only id",
+      not default_model_for(Role.CLASSIFIER, Provider.ANTHROPIC).startswith("z-ai/"))
+
 # ------------------------------------------------------------------ routing
 print("routing opt-in")
 from cs.model_config import route_direct  # noqa: E402

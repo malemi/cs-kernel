@@ -116,6 +116,34 @@ TIER_FAMILIES: dict[Provider, dict[Tier, str]] = {
     },
 }
 
+# A role whose EARNED measurement moved it off its tier default. Consulted
+# before TIER_FAMILIES, and per provider because a family only exists where
+# the gateway serves it.
+#
+# CLASSIFIER → @glm on OpenRouter: measured 2026-07-28 on the real task (61
+# live replies, engine baseline, hand-adjudicated gold, scored through the
+# clone's own parser) — ties the engine's accuracy on the calls both
+# completed (56/58), zero unagreed schedule writes, answered 61/61 where the
+# engine's transport failed 3, 3.1s vs 33s median, $1.17/1k calls. Full
+# record: meta-repo docs/briefs/2026-07-28-multi-provider-llm-ab.md. The
+# measurement was left unapplied for three weeks while every classification
+# billed a frontier model; wiring it is what the tier indirection is FOR.
+#
+# Anthropic direct keeps @claude-sonnet: @glm is not served there, and a
+# default that cannot resolve is worse than a dearer one that can.
+# Every KNOWN provider is listed explicitly, empty included: for role
+# overrides "absent" must mean "no earned override here", never "borrow
+# another provider's" — borrowing sent @glm to the Anthropic-direct wire,
+# where it does not exist (caught by the resolution test below this change).
+# Only a genuinely unknown provider (`custom`) borrows OpenRouter's, matching
+# how TIER_FAMILIES treats it.
+ROLE_FAMILIES: dict[Provider, dict[Role, str]] = {
+    Provider.OPENROUTER: {
+        Role.CLASSIFIER: "@glm",
+    },
+    Provider.ANTHROPIC: {},
+}
+
 # --------------------------------------------------------------- price catalog
 #
 # OpenRouter prices come from the live catalog (cs/model_catalog.py) — they are
@@ -344,11 +372,19 @@ def resolve_spec(spec: str, provider: Provider) -> str:
 def default_model_for(role: Role, provider: Provider) -> str:
     """The built-in model for *role* under *provider*, ignoring configuration.
 
+    A role with an EARNED family (``ROLE_FAMILIES``, a measurement on that
+    role's real task) uses it; otherwise the role falls back to its tier's
+    family (``TIER_FAMILIES``).
+
     An unknown provider (``custom``) borrows the OpenRouter defaults: a custom
     gateway is far more likely to speak prefixed OpenRouter-style ids than
     Anthropic's bare ones, and either way the operator is expected to set
     ``MODEL_<ROLE>`` — this is only what keeps the resolver total.
     """
+    roles = ROLE_FAMILIES.get(provider, ROLE_FAMILIES.get(Provider.OPENROUTER, {}))
+    earned = roles.get(role)
+    if earned:
+        return resolve_spec(earned, provider)
     table = TIER_FAMILIES.get(provider, TIER_FAMILIES[Provider.OPENROUTER])
     return resolve_spec(table[ROLE_TIER[role]], provider)
 
@@ -358,7 +394,8 @@ def model_for(role: Role, env: Mapping[str, str] | None = None) -> str:
 
       1. ``MODEL_<ROLE>``  — e.g. ``MODEL_CLASSIFIER``
       2. ``MODEL_<TIER>``  — e.g. ``MODEL_WORKER``
-      3. the built-in default for the resolved provider
+      3. the built-in default for the resolved provider — a role's EARNED
+         family (``ROLE_FAMILIES``) if it has one, else its tier's
 
     Any of the three may be a pinned id (``deepseek/deepseek-v4-pro``) or a
     family reference (``@deepseek-pro``, resolved to the line's newest member

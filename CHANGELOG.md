@@ -20,6 +20,40 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.6 — 2026-08-21
+
+### Changed — the CLASSIFIER default is the model we measured, three weeks late
+- **Why:** the 2026-07-28 A/B measured `@glm` on the classifier's REAL task
+  (61 live replies, engine baseline, hand-adjudicated gold, scored through
+  the clone's own parser): ties the engine's accuracy on the calls both
+  completed (56/58), zero unagreed schedule writes, answered 61/61 where the
+  engine's transport failed 3, 3.1s vs 33s median, $1.17/1k calls. The
+  recommendation was written down and never wired: with `MODEL_CLASSIFIER`
+  unset, the role fell through to `Tier.WORKER = @claude-sonnet`, so every
+  classification billed a frontier model at $2/$10 per 1M. Caught by an
+  operator reading `cs llm` and asking why.
+- **What:** new `ROLE_FAMILIES` — a role-level default consulted before the
+  tier's, per provider. `Role.CLASSIFIER` → `@glm` on OpenRouter (and on
+  `custom`, which borrows OpenRouter's ids). Anthropic direct is listed
+  explicitly as EMPTY and keeps `@claude-sonnet`: `@glm` is not served on
+  that wire. Env precedence is unchanged — `MODEL_CLASSIFIER` /
+  `MODEL_WORKER` still win.
+- **Caught while building it:** the first cut let ANY unlisted provider
+  borrow OpenRouter's role table, which resolved `z-ai/glm-*` on the
+  Anthropic-direct wire — a default that cannot resolve, the same class as
+  the `CS_LLM_PROVIDER=custom` typo this module already refuses. Now every
+  known provider is listed explicitly, empty included, and four new
+  assertions in `tests/test_llm_client.py` hold that line.
+- **Migration note:** a clone on OpenRouter with no `MODEL_CLASSIFIER` set
+  changes model on its next re-pin — cheaper and ~10x faster, on the
+  measured task. Pin the old behaviour with `MODEL_CLASSIFIER=@claude-sonnet`
+  if you want to compare.
+- **Re-collaudo:** **static tier, both clones** — no send path, auth boundary
+  or permission byte changes. NOTE for whoever runs it: this default also
+  reaches the send guard's register judgment, whose task is NOT what the A/B
+  measured (that was reply classification). Read a few real guard verdicts
+  after the first re-pin before trusting it unattended.
+
 ## v0.9.5 — 2026-08-21
 
 ### Fixed — the LLM client was an undocumented optional extra a safety path depends on
