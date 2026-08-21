@@ -44,10 +44,12 @@ accounts are never mixed in (different repos, config, registries).
 ## What runs (cron is opt-in)
 
 The operator tick is `claude -p "/cs-operator"` (triage + cs-campaign-tick,
-draft-only). The cron wrapper is `bin/cs_operator_cron.sh`; **enable it in
-crontab when you want autonomous ticks** (declared intent: `{{ cron_schedule }}` —
-cs-operator every 2h, business hours, weekdays; verify the live crontab). Each tick sends nothing
-(`CS_TRIAGE_MODE={{ cs_triage_mode }}` + draft-only permissions) and escalates on uncertainty.
+draft-only). Turn it on from any session with **`/cs-cron`** (or by hand:
+`cs cron install`; declared intent `{{ cron_schedule }}` — verify the live
+crontab). Each tick sends nothing
+(`CS_TRIAGE_MODE={{ cs_triage_mode }}` + draft-only permissions) and
+escalates on uncertainty. New campaigns are designed in a session too —
+**`/cs-campaign`** builds the pack and the tick advances it.
 
 **Kill-switch:** `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every tick instantly;
 delete the file to resume.

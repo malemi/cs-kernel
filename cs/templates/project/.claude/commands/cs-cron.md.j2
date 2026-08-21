@@ -1,0 +1,63 @@
+---
+description: Manage {{ company_prog_name }}'s unattended operator from THIS session — see whether the cron tick is installed, install or remove it (with explicit confirmation), pause and resume. The tick is draft-only by permission; this command never widens anything.
+---
+
+# {{ company_prog_name }} — Automation (operator cron)
+
+The operator can tick unattended: `bin/cs_operator_cron.sh` runs
+`claude -p "/cs-operator"` on a schedule — triage + campaign advancement,
+draft-only, with its own re-denied permission set. This command manages
+that schedule from the session. All commands run from the repo root with
+`.venv/bin/python -m cs …`.
+
+## 1. Where things stand
+
+```bash
+.venv/bin/python -m cs cron status
+```
+
+Also check the kill-switch: does `~/.{{ company_slug }}-cs/CS_PAUSE`
+exist? Report both in one line: installed or not, schedule, paused or
+live.
+
+## 2. What the user wants
+
+- **"turn it on" / install** — show first what will happen: the manifest
+  schedule (`{{ cron_schedule }}`), what one tick does (triage inbound →
+  drafts; advance campaigns → drafts; escalate on uncertainty; NOTHING
+  sent while `CS_TRIAGE_MODE=draft`), and where it logs
+  (`~/.{{ company_slug }}-cs/cs_operator.log`). Then, on the user's
+  explicit yes:
+
+  ```bash
+  .venv/bin/python -m cs cron install
+  ```
+
+  Verify: `cs cron status` again and read the installed line back.
+  Requirement worth checking now: the Claude CLI must be reachable by
+  cron (default `~/.local/bin/claude`, override `CLAUDE_BIN` — the
+  wrapper says which it uses).
+
+- **"pause"** — `touch ~/.{{ company_slug }}-cs/CS_PAUSE` (every tick
+  becomes a deliberate no-op; nothing is uninstalled). **"resume"** —
+  remove that file.
+
+- **"turn it off" / uninstall** — on explicit yes:
+
+  ```bash
+  .venv/bin/python -m cs cron uninstall
+  ```
+
+- **"did it run? what did it do?"** — read the tail of
+  `~/.{{ company_slug }}-cs/cs_operator.log` and summarize the last tick
+  (when, what it drafted, what it escalated).
+
+## 3. Boundaries
+
+- Install/uninstall/pause only on the user's explicit instruction in
+  this conversation — never as a side effect of another request.
+- This command never edits `bin/cs_operator_cron.sh`, the permission
+  files, or `CS_TRIAGE_MODE`: going autonomous-send is a separate,
+  deliberate widening the user performs on purpose, not a cron setting.
+- A dedicated per-campaign cron is the exception, not the rule — the
+  operator tick already advances every campaign. See `/cs-campaign`.

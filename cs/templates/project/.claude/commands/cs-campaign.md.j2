@@ -1,0 +1,75 @@
+---
+description: Design a new outreach/follow-up campaign for {{ company_prog_name }} in THIS session and leave it ready to run — a campaign pack under campaigns/<name>/ (copy, timing, playbook) wired to the kernel runner, advanced automatically by the operator tick. Draft-first; nothing is sent by this command.
+---
+
+# {{ company_prog_name }} — Build a campaign
+
+A campaign here is a **pack**: the campaign's reusable intelligence as
+data in this repo, run by kernel code (`cs campaign …`). You design it
+once in a session; the operator tick advances it on schedule; months
+later `cs campaign packs` answers "have we ever done something like
+this?", and re-running is copy-and-edit. This command builds the pack
+WITH the user — it writes files and engine campaign state, but sends
+nothing and commits nothing.
+
+## 1. Interview (short, concrete)
+
+Ask only what the pack needs:
+- **Goal + name** — one line; slug it (`spring-winback`, not "campaign 2").
+- **Audience** — where the contact list comes from (a CRM segment, a CSV
+  the user has, an engine query). Every contact will still pass the
+  dossier gate before any send.
+- **Copy** — first mail; a reminder (how many? `reminder_max` is
+  {{ reminder_max }}); {% if sms_enabled %}an SMS fallback?{% else %}(SMS is disabled for this clone){% endif %}
+- **Timing** — windows and caps; defaults come from `manifest.toml`
+  `[knobs]` and only need overriding if this campaign differs.
+- **The confirm question** — the one-line question a human is asked
+  before a send in supervised runs (`confirm_question`).
+
+## 2. Scaffold the pack
+
+Create `campaigns/<name>/` exactly per the contract in
+[campaigns/README.md](../../campaigns/README.md) (the loader is strict —
+a missing placeholder or template refuses loudly rather than sending
+broken copy):
+
+```
+campaigns/<name>/
+├── campaign.toml      # [pack] kind/description/campaign/status/dates/confirm_question; [windows] optional overrides
+├── mail_first.md      # `Subject: …`, blank line, markdown body with {placeholders} from the contact row
+├── mail_reminder.md
+{% if sms_enabled %}├── sms.txt            # same {placeholders}
+{% endif %}└── playbook.md        # how it runs, the gotchas — written for the operator who finds this in a year
+```
+
+`builders.py` (hand-built rich HTML) only if the user explicitly wants
+more than the md→plain+html pipeline gives.
+
+## 3. Wire the campaign state
+
+Create the engine-side campaign and load the contacts (`cs rpc
+campaign.create …` / `campaign.add_contact …` — write RPCs return a
+dict, not an array). Then prove the loop **without sending**:
+
+```bash
+.venv/bin/python -m cs campaign packs        # the pack loads
+.venv/bin/python -m cs campaign pending      # who would be touched, and when
+.venv/bin/python -m cs campaign queue-draft <id>   # one contact → Gmail Drafts, for the user to judge the copy
+```
+
+## 4. Schedule — usually nothing to do
+
+The operator tick **already advances every campaign** (`/cs-operator` →
+`/cs-campaign-tick`): if the cron is installed (`/cs-cron`), this
+campaign runs with it, draft-first, inside `RATE_CAP`/dedup/`CS_PAUSE`.
+A dedicated cron for one campaign is the exception (odd cadence, its own
+kill-switch) — propose it only if the windows genuinely don't fit, and
+build it as its own wrapper script next to the pack, never by editing
+`bin/cs_operator_cron.sh`.
+
+## 5. Hand back
+
+Show the user: the pack tree, the `pending` picture, the one queued
+draft to judge, and where the playbook lives. Sending — supervised
+(`send-draft`) or autonomous (send mode) — stays the user's move.
+Repo commits stay the user's move too.

@@ -6,9 +6,9 @@ A pack is data + templates + prose; the runner is kernel code
 extensions rule: the machinery (lifecycle, gates, sending) is shared and
 lives in the kernel; what varies per campaign is CONTENT, and it lives in
 the clone under ``campaigns/<pack-name>/`` (git-tracked company data).
-Months later, "abbiamo mai fatto una cosa simile?" is answered by reading
-the packs (`cs campaign packs`), and re-running one is copy-and-edit — no
-new one-off script, no dedicated cron.
+Months later, "have we ever done something like this?" is answered by
+reading the packs (`cs campaign packs`), and re-running one is
+copy-and-edit — no new one-off script, no dedicated cron.
 
 Pack layout (in the CLONE repo)::
 

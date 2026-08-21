@@ -211,13 +211,15 @@ Three pieces:
    drive the engine. This is where you talk to your customer service —
    and where you build on it.
 3. **Your automations** — the cron ticks *you* choose to run: the
-   ready-made operator (`cs cron install` — triage + campaigns,
-   unattended) and any recurring job you invent.
+   ready-made operator (type `/cs-cron` in a session — triage +
+   campaigns, unattended) and any recurring job you invent.
 
 Pieces 1 and 2 come ready from this kit; piece 3 is yours — and piece 2
-is how you build it. In a session you can design a new campaign and have
-the session itself produce the whole automation: the **pack**
-(`campaigns/<name>/` — copy, timing, playbook) and its cron line. That
+is how you build it, with a workflow command for each move: `/cs-cron`
+installs, pauses or removes the operator tick from inside the session;
+`/cs-campaign` designs a new campaign and produces the whole automation —
+the **pack** (`campaigns/<name>/` — copy, timing, playbook), wired so
+the regular tick advances it. That
 is how we run our own migration campaigns: designed in a session one
 afternoon, then ticking on their own schedule for weeks — and months
 later "have we ever done something like this?" is answered by
