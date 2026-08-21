@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.6`. Current HEAD status: untagged.** The
+- **Latest release tag: `v0.10.0`. Current HEAD status: tagged as `v0.10.0`.** The
   `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface; what each
   tag did is in `CHANGELOG.md`, not here. All static tier. `v0.8.0` remains
   the recorded tag→0.7.1 exception (object pinned immutable).
@@ -26,7 +26,9 @@ what is *current*.
   the day's outreach candidates where a producer is wired), `/cs-account`,
   `/cs-cron`, `/cs-campaign`, `/cs-help` — over the operator skills
   (`cs-operator`, `cs-triage-mail`, `cs-campaign-tick`, `cs-customer`,
-  `cs-find-document`). `/munchausen` no longer exists.
+  `cs-find-document`). `/munchausen` no longer exists. Since v0.10.0 every
+  agent surface (`.opencode/`, `AGENTS.md`, `~/.codex/prompts`) is a symlink
+  into `.claude/` — stamped by init AND update, no second copy to drift.
 - **Upgrading a clone is one command.** Bare `cs update` checks the pinned
   origin, offers any newer tag (`Found new tag … Update? [y/N]`, default No,
   EOF-safe), and on "y" re-pins → `uv pip install` → re-execs on the new

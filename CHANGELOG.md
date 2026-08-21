@@ -20,6 +20,37 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.10.0 — 2026-08-21
+
+### Added — every agent reads the same commands; `.claude/` is the one source
+- **Why:** a clone's `.opencode/commands/` was a git-tracked COPY of the
+  commands, frozen in July, still offering `/munchausen` and the other
+  pre-`cs-` names weeks after `.claude/commands/` had been renamed — found
+  by an operator opening OpenCode and seeing the old menu. The kernel only
+  ever rendered `.claude/`, so nothing kept the two in step. A second copy
+  is a second source, and it drifts.
+- **What:** `cs init` AND `cs update` now point every other agent surface
+  into `.claude/` — `.opencode/commands/*.md`, `.opencode/skills`,
+  `AGENTS.md` → `CLAUDE.md` (the file both OpenCode and Codex read as
+  project instructions), and `~/.codex/prompts/*.md`. Symlinks, so
+  divergence is impossible by construction; a filesystem that refuses them
+  (Windows without Developer Mode) falls back to copies and says so.
+  No new verb: the operator already runs these two.
+- **The one question it asks:** Codex has no project-level prompt
+  directory — its prompts are per-USER, one namespace shared by every
+  clone on the machine. Pointing them at this clone would take `/cs-*`
+  away from another, so when they already belong elsewhere it asks, and
+  a closed stdin resolves to No (the v0.5.2 EOF contract).
+- **Migration note:** an existing clone picks all of this up on its next
+  `cs update`. If its `.opencode/` holds hand-edited copies, they are
+  replaced by links to `.claude/` — the whole point — so lift anything
+  worth keeping into the kernel template first.
+- **Re-collaudo:** **static tier, both clones** — no send path, auth
+  boundary or permission byte changes; the rendered `.claude/` set is
+  byte-identical, only the other surfaces gain links to it. Do look at
+  the Codex question on the SECOND clone stamped: that is the one that
+  gets asked.
+
 ## v0.9.6 — 2026-08-21
 
 ### Changed — the CLASSIFIER default is the model we measured, three weeks late

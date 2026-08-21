@@ -6,6 +6,7 @@ import getpass
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -526,6 +527,100 @@ def _manual_install_lines(dest_dir: Path) -> str:
     )
 
 
+CODEX_PROMPTS = Path("~/.codex/prompts").expanduser()
+
+
+def _link_or_copy(link: Path, target: Path, rel: str) -> str:
+    """Point *link* at *target*, preferring a symlink.
+
+    Symlink, not copy, because a copy is a second source that drifts: this
+    repo shipped `.opencode/commands/` as tracked copies for six weeks and
+    they were still advertising the pre-rename command names long after
+    `.claude/commands/` had been renamed. One content source is the only
+    arrangement in which that cannot recur.
+
+    Windows without Developer Mode refuses `os.symlink` — fall back to a
+    copy there and SAY so, rather than failing a stamp over it.
+    """
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if link.is_symlink() or link.exists():
+        if link.is_symlink() and os.path.realpath(link) == os.path.realpath(target):
+            return "ok"
+        link.unlink() if link.is_symlink() or link.is_file() else shutil.rmtree(link)
+    try:
+        link.symlink_to(rel)
+        return "ok"
+    except OSError:
+        if target.is_dir():
+            shutil.copytree(target, link)
+        else:
+            shutil.copy2(target, link)
+        return "copied"
+
+
+def install_agent_surfaces(dest_dir: Path, *, ask: bool = True) -> None:
+    """Give OpenCode and Codex the SAME commands Claude Code has.
+
+    `.claude/` is the one place the kernel renders; every other agent's
+    surface points back into it:
+
+    - `.opencode/commands/*.md` and `.opencode/skills` → into `.claude/`
+      (OpenCode reads project-level `.opencode/commands/`, plural);
+    - `AGENTS.md` → `CLAUDE.md` (the file BOTH OpenCode and Codex read as
+      their project instructions);
+    - `~/.codex/prompts/*.md` → the clone's commands. Codex has no
+      project-level prompt directory — its prompts are per-USER — so this
+      is a home-global namespace shared by every clone on the machine.
+      That is why it is the one place this function asks: pointing it at
+      this clone silently would hijack another clone's `/cs-review`.
+    """
+    claude_cmds = dest_dir / ".claude" / "commands"
+    if not claude_cmds.is_dir():
+        return
+    copied = False
+
+    for src in sorted(claude_cmds.glob("*.md")):
+        state = _link_or_copy(dest_dir / ".opencode" / "commands" / src.name,
+                              src, f"../../.claude/commands/{src.name}")
+        copied |= state == "copied"
+    if (dest_dir / ".claude" / "skills").is_dir():
+        copied |= _link_or_copy(dest_dir / ".opencode" / "skills",
+                                dest_dir / ".claude" / "skills",
+                                "../.claude/skills") == "copied"
+    if (dest_dir / "CLAUDE.md").is_file():
+        copied |= _link_or_copy(dest_dir / "AGENTS.md",
+                                dest_dir / "CLAUDE.md", "CLAUDE.md") == "copied"
+    print("Wired OpenCode (.opencode/) and AGENTS.md to the same commands"
+          + (" — copied, this filesystem refuses symlinks" if copied else ""))
+
+    # --- Codex: one shared home directory for every clone on this machine ---
+    ours = [p for p in sorted(claude_cmds.glob("*.md"))]
+    foreign = []
+    for src in ours:
+        dst = CODEX_PROMPTS / src.name
+        if dst.exists() or dst.is_symlink():
+            if os.path.realpath(dst) != os.path.realpath(src):
+                foreign.append(dst)
+    if foreign and ask:
+        other = os.path.realpath(foreign[0])
+        try:
+            answer = input(
+                f"Codex prompts (~/.codex/prompts) already point at another "
+                f"project:\n  {other}\nCodex has ONE prompt directory per "
+                f"user, so only one clone can own /cs-*. Point them at "
+                f"{dest_dir.name}? [y/N]: "
+            ).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\nNo answer — leaving Codex pointed where it was.")
+            return
+        if answer not in ("y", "yes"):
+            print(f"Left Codex pointed at {other}.")
+            return
+    for src in ours:
+        _link_or_copy(CODEX_PROMPTS / src.name, src, str(src.resolve()))
+    print(f"Wired Codex prompts (~/.codex/prompts) to {dest_dir.name}.")
+
+
 def offer_project_install(dest_dir: Path) -> None:
     """After `cs init` stamps the project, OFFER to create its venv and
     install the pinned kernel right here — collapsing the manual `cd
@@ -659,6 +754,9 @@ def cmd_init(argv=None) -> int:
     
     # Secrets file — after the stamp so the rendered .env.example exists.
     write_state_env(config, dest_dir)
+
+    # Every agent surface points at the one rendered set (.claude/).
+    install_agent_surfaces(dest_dir)
 
     # Print post-init instructions
     print("\n" + "=" * 60)

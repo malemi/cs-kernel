@@ -34,7 +34,11 @@ from difflib import unified_diff
 from pathlib import Path
 
 from ._version import kernel_version, kernel_version_bare
-from .project_init import is_executable_target, toml_quote
+from .project_init import (
+    install_agent_surfaces,
+    is_executable_target,
+    toml_quote,
+)
 
 
 def _checksum(content: str) -> str:
@@ -614,4 +618,11 @@ def cmd_update(args: list[str]) -> int:
     _write_manifest(clone_root, manifest)
 
     print(f"\nDone: {updated} updated, {skipped} skipped (modified locally), {added} added.")
+
+    # Re-point the other agents' surfaces at the refreshed .claude/ set. Not
+    # optional and not a separate verb: an existing clone's .opencode/ was a
+    # frozen COPY that still advertised pre-rename command names weeks after
+    # the rename — an update that refreshes one agent's commands and leaves
+    # another's stale is how that happened.
+    install_agent_surfaces(clone_root)
     return 0
