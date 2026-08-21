@@ -1,0 +1,58 @@
+---
+description: Orientation for {{ company_prog_name }} — what this project is, which /cs-* commands and skills exist, what to type for the common moves, and where the deeper docs live. Pure presentation, zero tool calls, zero side effects.
+---
+
+# {{ company_prog_name }} — Help
+
+Present the map below — Italian, founders' register: tight, no emoji.
+Do NOT run any command to produce it; this is orientation, not a status
+check (state is `/cs-review`'s job). Adapt phrasing freely, keep the
+content exact.
+
+## What this is
+
+The customer-service operator for **{{ email_address }}**: this session
+drives the mrcall-desktop engine (synced mail, relationship memory,
+tasks, trained voice). It triages, drafts and advances campaigns;
+nothing is sent without the operator's say-so (draft-first; the
+autonomy dial is a deliberate later step).
+
+## The commands (you type these)
+
+| Command | When |
+|---|---|
+| `/cs-review` | sit-down bootstrap: what the operator prepared, what awaits you{% if producer_adapter != 'none' %}, the day's outreach candidates{% endif %} |
+| `/cs-account <name>` | deep-dive on one account (read-only) |
+| `/cs-cron` | the unattended tick: status, install/remove (confirmed), pause/resume |
+| `/cs-campaign` | design a new campaign: pack + wiring, draft-first |
+| `/cs-help` | this map |
+
+## Or just ask
+
+- *"what's new today?"* / *"what's still open in support mail?"*
+- *"load customer X"* (docs + engine memory — before any customer work)
+- *"draft a reply to X"* (a DRAFT lands in Gmail Drafts; you send)
+- *"find the document about Y"*
+
+Behind those sit the operator skills (`cs-triage-mail`,
+`cs-campaign-tick`, `cs-customer`, `cs-find-document`; `cs-operator` is
+the headless cron bootstrap) — they fire on their own when the request
+matches.
+
+## The hard lines (always true)
+
+- Draft-first: every outgoing mail is reviewed until send mode is
+  deliberately enabled. Dedup (Gmail Sent truth), `RATE_CAP` and the
+  dossier-before-contact rule are not negotiable.
+- Kill-switch: `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every
+  automated tick; remove the file to resume.
+
+## Deeper
+
+- `CLAUDE.md` — the operator manual (verbs, RPC shapes, pipeline, safety)
+- `docs/ARCHITECTURE.md` — this clone's as-built configuration
+- `campaigns/README.md` — what a campaign pack is
+- `cs --help` — the CLI, one line per verb
+
+End by asking what they want to do — and if this looks like the start of
+a work session, suggest `/cs-review`.

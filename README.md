@@ -193,8 +193,9 @@ just talk:
 - *"Draft a reply to …"* → grounded draft; **nothing is sent** until you
   review and approve it
 
-The skills are the product surface; the CLI is plumbing the AI (and you,
-if you want) can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
+Lost at any point? **`/cs-help`** shows the whole map. The skills are
+the product surface; the CLI is plumbing the AI (and you, if you want)
+can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
 
 ---
 

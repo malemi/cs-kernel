@@ -144,11 +144,11 @@ campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}
 (`.claude/skills/`): `/cs-customer <name>` (load `docs/projects/<name>/` +
 **engine memory** for that customer — mandatory before customer work),
 `/cs-find-document`. Interactive commands (`.claude/commands/`):
-`/cs-review` (the one review bootstrap) and `/cs-account <name>` — both
-zero side effects — plus the build/manage workflows `/cs-cron` (install,
-pause or remove the operator tick, on explicit confirmation) and
-`/cs-campaign` (design a campaign pack + wire it, draft-first, sends
-nothing).
+`/cs-help` (orientation map), `/cs-review` (the one review bootstrap)
+and `/cs-account <name>` — all zero side effects — plus the build/manage
+workflows `/cs-cron` (install, pause or remove the operator tick, on
+explicit confirmation) and `/cs-campaign` (design a campaign pack +
+wire it, draft-first, sends nothing).
 
 ## 5. Safety (NEVER)
 
