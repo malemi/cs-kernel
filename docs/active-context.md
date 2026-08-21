@@ -48,15 +48,17 @@ what is *current*.
   Propose, never run it for him.
 
 - The kernel runs per-invocation from each clone's venv (no long-running
-  kernel process). The provider side is the mrcall-desktop daemons, deployed
-  at `d239e5f` (2026-08-03).
+  kernel process). The provider side is the mrcall-desktop daemons, running an EDITABLE
+  install of `/home/mrcalld/mrcall-desktop` — so "deployed" is whatever
+  that checkout's HEAD is, `3f8e4f1` (2026-08-18, v0.1.44) as of this
+  writing, not a frozen artifact.
 - Releases follow [`release-procedure.md`](release-procedure.md) — ordered
   steps, the inventory of every file carrying a version claim, and the
   mandatory multi-version sweep. Read it; do not reconstruct it.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
   routing seam is unwired (no call site passes `role=`; the default is the
   engine), but the send guard's register judgment IS a direct provider call:
-  `cs/send_guard.py:337` → `judge_register` → `evaluate` (`:374`), which
+  `cs/send_guard.py:338` → `judge_register` (`:324`) → `evaluate` (`:375`), which
   `cs/send_mail.py:162` runs on the **model-composed** send path (`body_md`)
   — a fixed-template `plain`/`html` send never reaches it. Gated by
   `llm_available()` — anthropic SDK plus a
@@ -85,12 +87,16 @@ what is *current*.
   `@glm` like mrcall-cs) or an explicit `CS_LLM_PROVIDER`/`MODEL_CLASSIFIER`.
   Operator's call; neither its `.env` nor the environment was touched.
 - The `CHANGELOG.md` "Current operational pin" marker trails the clones
-  (`v0.9.4` recorded, both actually at `v0.9.6`); it converges at the next
+  (it records `v0.9.4` for mrcall-cs and `v0.9.1` for 124-cs; both are
+  actually at `v0.9.6`); it converges at the next
   re-pin the operator runs.
 - **A `/cs-operator` tick takes ~4 minutes, and it is all engine LLM.**
   Measured 2026-08-21: a full `cs` RPC round trip is 0.5s (0.38 of it Python
-  import), while one `cs ask` is **29s**; `cs-triage-mail` alone carries up
-  to 5 `ask` + 6 `draft-reply`. The A/B-measured direct path is ~10x faster
+  import), while one `cs ask` is **29s**. `cs-triage-mail` MENTIONS `cs ask`
+  five times and `draft-reply` six, but only ~3 are real call sites (two
+  mentions argue against using `ask`) and `draft-reply` runs once per
+  candidate — so the template bounds nothing; the tick's length scales with
+  the candidate count. The A/B-measured direct path is ~10x faster
   but charter §4 keeps customer-facing prose on the engine — only read-only
   state queries (`cs ask`) are candidates to move, and that is a decision,
   not a cleanup.
@@ -121,7 +127,8 @@ what is *current*.
 2. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
    upgrade prompt still print `re-collaudo: <tier>` and "Every kernel
    upgrade owes a re-collaudo (CLAUDE.md, Versioning & release)"
-   (`cs/project_update.py:252, 256, 304, 347`; README 404/407/439). The
+   (`cs/project_update.py:256, 260, 308, 351`; README 421/424/456 — verify
+   the numbers before acting, they move with every edit). The
    operator has already objected to exactly this vocabulary once. Replace
    with what a tier MEANS for them ("re-test before trusting it unattended")
    or drop it from their surface.

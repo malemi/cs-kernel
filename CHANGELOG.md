@@ -107,7 +107,7 @@ can install end to end.
   `.env.example` gains the block that was missing entirely: what the
   kernel's own model calls are, which key to set
   (`OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY`), what happens without one,
-  and the `cs llm show` / `cs llm test` verbs. The README gains the
+  and the `cs llm` / `cs llm test` verbs. The README gains the
   three-payers table (your session / the engine / the kernel).
 - **Migration note:** re-pinning installs `anthropic` automatically.
   Runtime effect depends on whether that clone already has a provider
