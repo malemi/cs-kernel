@@ -75,13 +75,21 @@ owner. Not before.
 
 ## Upgrade (each clone) — in order
 
-1. `cs update --check` (what exists, its re-collaudo tier).
-2. `cs update --pin <tag>` → `pip install -r requirements.txt` →
-   `cs --version` must print the tag's number.
-3. `cs update` — template refresh. Conflicted prose (`docs/`, `company/`):
-   keep local for as-built files, `diff` when unsure. `settings.json` and
-   the cron wrapper are applied regardless (local saved as `*.local-bak`) —
-   diff them against the pre-update copy as static-collaudo evidence.
+1. **`cs update` — that is the whole upgrade** (since `v0.9.2`). It offers
+   the newest tag (`Found new tag … Update? [y/N]`); on "y" it re-pins,
+   runs `uv pip install`, re-execs on the new kernel and refreshes the
+   templates. `cs --version` must then print the tag's number. Use
+   `cs update --pin <tag>` + `uv pip install -r requirements.txt` ONLY for
+   a specific version — above all a rollback; **never `pip install`**: a
+   venv made per the README (`uv venv`) has no `pip` module in it.
+   `cs update --check` looks and writes nothing.
+2. The template refresh (step 1's tail, or a bare `cs update` when already
+   current). Conflicted prose (`docs/`, `company/`): keep local for
+   as-built files, `diff` when unsure. `settings.json` and the cron wrapper
+   are applied regardless (local saved as `*.local-bak`) — diff them
+   against the pre-update copy as static-collaudo evidence.
+   `requirements.txt` and `manifest.toml` are clone-owned and never
+   touched (`-v` reports them).
 4. Align the clone inventory (table above): `template-manifest.json`
    init_data, `manifest.toml`, `ARCHITECTURE.md`, `active-context.md`.
 5. **Run the sweep** on the clone. Fix every LIVE mismatch now.

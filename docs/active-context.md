@@ -52,9 +52,17 @@ what is *current*.
   untagged and pins the tag's commit id in `IMMUTABLE_TAG_TARGETS`
   (`tests/test_release_consistency.py`). Full procedure + the version-claim
   inventory: [`release-procedure.md`](release-procedure.md).
-- The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
-  site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
-  behavior-neutral for a clone until one call site opts in.
+- The multi-provider LLM path is **partly live, and this file said otherwise
+  until 2026-08-21** (found by the doc-critic, verified in code). Precisely:
+  the `role=`/`CS_LLM_ROUTE` ROUTING seam is unwired — no kernel call site
+  passes `role=`, and `CS_LLM_ROUTE` defaults to the engine. But the send
+  guard's register judgment is a direct provider call
+  (`cs/send_guard.py:337 worker_llm.classify`, reached from
+  `send_guard.check` at `:374`, which `cs/send_mail.py:162` runs on the
+  fixed-template send path). It is gated by `llm_available()` — anthropic
+  SDK present plus a provider credential — NOT by `CS_LLM_ROUTE`. So a clone
+  with a provider key set already spends provider tokens on that path, and
+  degrades loudly to deterministic checks without one.
 - Measured recommendation for that path: `MODEL_CLASSIFIER=@glm` (A/B on the
   live classification task, 2026-07-28; full record in meta-repo
   `docs/briefs/2026-07-28-multi-provider-llm-ab.md` — quotes customer mail,
@@ -93,7 +101,14 @@ what is *current*.
    data rots when the pin verb doesn't own it. Now that the upgrade offer
    re-pins on the operator's behalf, the verb owning that field matters more,
    not less.
-2. Promote the batch-2 loop's reusable parts: the flock'd schedule store
+2. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
+   upgrade prompt still print `re-collaudo: <tier>` and "Every kernel
+   upgrade owes a re-collaudo (CLAUDE.md, Versioning & release)"
+   (`cs/project_update.py:252, 256, 304, 347`; README 404/407/439). The
+   operator has already objected to exactly this vocabulary once. Replace
+   with what a tier MEANS for them ("re-test before trusting it unattended")
+   or drop it from their surface.
+3. Promote the batch-2 loop's reusable parts: the flock'd schedule store
    (`schedule.py`), the deterministic migrator pattern (`migrator.py`), and
    the IMAP attachment reader (`ext/attachments.py` — the engine indexes
    filenames but stores no bytes and exposes no fetch RPC). The attachment

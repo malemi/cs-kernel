@@ -90,8 +90,10 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
    answering the same question is a defect — `/munchausen` was merged into
    `/cs-review` for exactly this); output states what happened, never what
    did not (a file left untouched is not an event — that belongs behind
-   `--verbose`); no internal vocabulary in operator-facing text (*collaudo*,
-   re-collaudo tiers and charter references are ours, not theirs); a guided
+   `--verbose`); no internal vocabulary in operator-facing text — *collaudo*,
+   re-collaudo tiers and charter references are ours, not theirs, and the
+   `cs update --check` / upgrade-prompt strings that still carry them are a
+   known, tracked violation of this rule, not an exemption from it; a guided
    verb prompts and does the work rather than printing the manual steps
    (`cs update` re-pins+installs+re-stamps on one "y"; `cs init` offers to
    create the venv and install). Prompts default to the safe answer, are
