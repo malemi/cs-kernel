@@ -251,6 +251,12 @@ step "16. cs update — EOF-safe conflict prompt (no tty crash); --check / --pin
 # latest, the newer tag's re-collaudo tier read off ITS OWN CHANGELOG.md
 # (never hardcoded), up-to-date and unreachable-origin both write NOTHING,
 # --pin rewrites ONLY the pin line, and bare `cs update` is unaffected.
+# 2026-08-21: a file whose stored checksum is stale but whose CONTENT already
+# matches today's render (brought in sync by something other than cs update
+# itself) used to hit the same "modified locally AND template changed" ask —
+# confirmed live: the operator typed "diff" and saw NOTHING, since the diff
+# is empty by construction. Now recognized and reconciled silently, no
+# prompt at all.
 if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict, or --check/--pin regressed"; FAIL=1; fi
 
 step "17. deny-enumeration gate (six command-text spellings, same deny)"

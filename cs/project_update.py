@@ -527,6 +527,18 @@ def cmd_update(args: list[str]) -> int:
                     _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
                     updated += 1
                     print(f"  ✓ {str_out_rel}")
+                elif clone_checksum == rendered_checksum:
+                    # The file on disk already IS today's render — the stored
+                    # checksum is just stale (content brought in sync by some
+                    # other means: a hand-edit that converged, a one-off
+                    # re-render outside `cs update`). Nothing to ask: the
+                    # "modified locally AND template changed" branch below
+                    # would fire here too, but its diff is empty by
+                    # construction (clone_content == rendered), which is
+                    # confirmed confusing live — the operator sees a conflict
+                    # prompt and a "diff" option that prints nothing. Silently
+                    # re-record the correct checksum instead.
+                    print(f"  ✓ {str_out_rel} (already current)")
                 elif str_out_rel in SECURITY_CRITICAL:
                     # Security-critical: never ask. Apply the new render, and
                     # preserve the operator's local version next to it — the

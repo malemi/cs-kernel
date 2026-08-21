@@ -21,6 +21,25 @@ what is *current*.
   offer, human `cs whoami`, wizard slug + derived pin default, uvx
   quick-start). Static tier, both tags (CHANGELOG entries). `v0.8.0`
   remains the recorded tag→0.7.1 exception (object pinned immutable).
+- On main, untagged (rides the next tag — PATCH: bug fixes, no new
+  surface): two `cs update` conflict-flow fixes found live 2026-08-21.
+  (1) `manifest.toml` is now exempt from the diff/overwrite flow exactly
+  like `requirements.txt` (charter always said clone-owned; code never
+  enforced it) — an operator's "y" had silently replaced a hand-authored
+  manifest with a bare re-render, which was ALSO invalid TOML (account
+  keys rendered as unquoted bare keys; `@` breaks a bare TOML key — fixed
+  with a `toml_quote` jinja filter applied to every account key/value).
+  (2) a file whose content already matches today's render but whose
+  STORED checksum is stale (brought in sync by something other than `cs
+  update` itself) no longer prompts at all — it used to hit "modified
+  locally AND template changed" with an empty diff, confirmed confusing
+  live ("Overwrite? [y/N/diff] diff" printed nothing). Gates 26
+  (`test_toml_quote.py`), extended `test_template_render.py` (email-account
+  fixture + tomllib parse of manifest.toml.j2's render) and
+  `test_project_update.py` (manifest.toml never-touched sibling of the
+  requirements.txt proof; already-current no-prompt proof). Neither clone
+  was touched by this session past the earlier v0.9.1 re-pin (operator
+  asked to finish re-pinning both clones themselves).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.

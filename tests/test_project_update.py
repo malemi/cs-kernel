@@ -186,6 +186,54 @@ def _render_current_template(rel: str, init_data: dict) -> str:
     return env.from_string(tpl_path.read_text()).render(**init_data)
 
 
+def _e2e_already_current_no_prompt_no_diff() -> None:
+    """When the file on disk already IS today's render — content brought in
+    sync by some means other than `cs update` itself (a hand-edit that
+    converged, a one-off re-render) — the stored checksum can still be
+    stale, which used to read as "modified locally AND template changed"
+    and prompt anyway. Confirmed confusing live 2026-08-21: the operator
+    typed "diff" and saw NOTHING (clone_content == rendered, so the diff is
+    empty by construction), left staring at a conflict with no way to tell
+    what to decide. Guards: no "Overwrite?" prompt appears at all, the file
+    is untouched, and the manifest's checksum is refreshed to match. stdin
+    stays closed like every other subprocess test here — if the fix
+    regressed and a prompt reappeared, EOF resolving to "N" would still
+    leave the "Overwrite?"/"already current" assertions telling them apart,
+    without risking a hang on inherited stdin."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        current_render = _render_current_template(CONFLICT_REL, {"company_slug": "acme"})
+        (clone / CONFLICT_REL).write_text(current_render)
+
+        manifest = {
+            "template_version": "1",
+            "init_data": {"company_slug": "acme"},
+            "file_checksums": {CONFLICT_REL: BOGUS_CHECKSUM},
+        }
+        (clone / "template-manifest.json").write_text(json.dumps(manifest))
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=60,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert "Overwrite?" not in out, f"an already-current file must never prompt:\n{out}"
+        assert (clone / CONFLICT_REL).read_text() == current_render, "file must be untouched"
+        assert f"{CONFLICT_REL} (already current)" in out, out
+
+        updated_manifest = json.loads((clone / "template-manifest.json").read_text())
+        assert updated_manifest["file_checksums"].get(CONFLICT_REL) not in (None, BOGUS_CHECKSUM), (
+            "the stale checksum must be refreshed, not left as the bogus stored value:\n"
+            f"{updated_manifest['file_checksums']}"
+        )
+
+
 def _e2e_security_critical_conflict_applies_with_backup() -> None:
     """A SECURITY_CRITICAL file (project_update.SECURITY_CRITICAL) must never
     be gated behind the interactive prompt: on a "modified locally AND
@@ -732,6 +780,7 @@ def main() -> int:
     _e2e_bare_update_offline_offer_skipped()
     _offer_yes_path_repins_installs_reexecs()
     _e2e_conflict_keeps_local_with_closed_stdin()
+    _e2e_already_current_no_prompt_no_diff()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
     _e2e_manifest_toml_never_touched()
