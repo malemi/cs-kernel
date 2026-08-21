@@ -347,8 +347,20 @@ def _e2e_requirements_txt_never_touched() -> None:
         assert (clone / "requirements.txt").read_text() == pinned_content, (
             "requirements.txt must be byte-identical to what it held before the update:\n" + out
         )
-        assert "requirements.txt is the operator's pin — cs update never touches it" in out, (
-            f"the never-touches-it message must be printed:\n{out}"
+        # Silent by default (2026-08-21: a file that was NOT touched is not
+        # an event — the two "· … never touches it" notices were noise on
+        # every single run); the explanation is there under --verbose.
+        assert "requirements.txt" not in out, (
+            f"a left-alone file must not be announced on a normal run:\n{out}"
+        )
+        vproc = subprocess.run(
+            [sys.executable, "-m", "cs", "update", "--verbose"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True,
+        )
+        vout = vproc.stdout + vproc.stderr
+        assert "requirements.txt is yours" in vout, (
+            f"--verbose must explain what it left alone:\n{vout}"
         )
 
         updated_manifest = json.loads((clone / "template-manifest.json").read_text())
@@ -444,8 +456,17 @@ def _e2e_manifest_toml_never_touched() -> None:
         assert (clone / "manifest.toml").read_text() == hand_authored, (
             "manifest.toml must be byte-identical to what it held before the update:\n" + out
         )
-        assert "manifest.toml is clone-owned — cs update never touches it" in out, (
-            f"the never-touches-it message must be printed:\n{out}"
+        assert "manifest.toml" not in out, (
+            f"a left-alone file must not be announced on a normal run:\n{out}"
+        )
+        vproc = subprocess.run(
+            [sys.executable, "-m", "cs", "update", "--verbose"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True,
+        )
+        vout = vproc.stdout + vproc.stderr
+        assert "manifest.toml is yours" in vout, (
+            f"--verbose must explain what it left alone:\n{vout}"
         )
 
         updated_manifest = json.loads((clone / "template-manifest.json").read_text())

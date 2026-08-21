@@ -18,6 +18,22 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.4 — 2026-08-21
+
+### Fixed — `cs update` stops talking to itself
+- **Why:** every run ended with three lines written for the kernel's own
+  maintainers, not for the operator: "Remember the re-collaudo per the
+  new tag's CHANGELOG entry before un-pausing operators" (internal
+  vocabulary — *collaudo* is our verification procedure, meaningless to
+  anyone else), plus two `· … never touches it` notices announcing files
+  that had NOT been touched. A file that was not touched is not an event.
+- **What:** the re-collaudo sentence is gone from the upgrade path. The
+  two "left alone" notices move behind a new `-v` / `--verbose` flag,
+  and say something a reader can act on when asked for
+  ("requirements.txt is yours (the version pin) — left alone").
+  A normal `cs update` now prints only what it actually did.
+- **Re-collaudo:** **static tier, both clones** — output only.
+
 ## v0.9.3 — 2026-08-21
 
 ### Fixed — `cs update --check` recommended the wrong upgrade path

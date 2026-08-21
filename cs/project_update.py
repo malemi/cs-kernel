@@ -381,9 +381,7 @@ def _offer_release_upgrade(clone_root: Path) -> int | None:
             file=sys.stderr,
         )
         return proc.returncode
-    print(f"Installed {latest}. Re-running `cs update` on the new kernel …"
-          "\nRemember the re-collaudo per the new tag's CHANGELOG entry "
-          "before un-pausing operators.")
+    print(f"Installed {latest}. Re-running `cs update` on the new kernel …")
     os.execv(sys.executable, [sys.executable, "-m", "cs", "update"])
     return 0  # unreachable in production; reached only when execv is stubbed
 
@@ -405,6 +403,12 @@ def cmd_update(args: list[str]) -> int:
         "v0.7.0) and print the before/after line. Does not install it — "
         "`uv pip install -r requirements.txt` is a separate, deliberate step.",
     )
+    parser.add_argument(
+        "-v", "--verbose", action="store_true",
+        help="also report the files cs update deliberately leaves alone "
+        "(requirements.txt, manifest.toml) — normally silent, since a file "
+        "that was not touched is not an event.",
+    )
 
     try:
         parsed = parser.parse_args(args)
@@ -413,6 +417,7 @@ def cmd_update(args: list[str]) -> int:
         return code if isinstance(code, int) else (0 if code is None else 1)
 
     clone_root = Path.cwd()
+    verbose = parsed.verbose
 
     if parsed.check:
         return cmd_update_check(clone_root)
@@ -495,7 +500,8 @@ def cmd_update(args: list[str]) -> int:
             # re-pin the clone or overwrite it with whatever `cs init` froze
             # long ago — stale or outright broken. It is the operator's file;
             # cs update only reports that it exists and leaves it alone.
-            print("  · requirements.txt is the operator's pin — cs update never touches it")
+            if verbose:
+                print("  · requirements.txt is yours (the version pin) — left alone")
             continue
 
         if str_out_rel == "manifest.toml":
@@ -510,7 +516,8 @@ def cmd_update(args: list[str]) -> int:
             # account name, the DOCUMENTED recommended shape, made the
             # rendered file fail to parse). cs update only reports that it
             # exists and leaves it alone; `cs init` is the only writer.
-            print("  · manifest.toml is clone-owned — cs update never touches it")
+            if verbose:
+                print("  · manifest.toml is yours (your company settings) — left alone")
             continue
 
         rendered_checksum = _checksum(rendered)
