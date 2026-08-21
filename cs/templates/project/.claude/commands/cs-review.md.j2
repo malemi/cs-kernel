@@ -35,9 +35,10 @@ approval gate.
 .venv/bin/python -m cs whoami
 ```
 
-Expect `signed_in: true`, `email: {{ email_address }}`. If it fails
-(daemon down, token mint failure), note it — threads/tasks/CRM lookups
-are unavailable; say so in the greeting instead of guessing.
+Expect a signed-in confirmation for `{{ email_address }}` (`signed in
+as …`; kernels before v0.9.0 print JSON with `signed_in: true`). If it
+fails (daemon down, token mint failure), note it — threads/tasks/CRM
+lookups are unavailable; say so in the greeting instead of guessing.
 
 ## 3. What the operator prepared — the digest
 

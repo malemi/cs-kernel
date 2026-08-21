@@ -158,17 +158,14 @@ cs whoami
 
 One real call through the engine. Expected:
 
-```json
-{
-  "signed_in": true,
-  "uid": "AbC123dEf456gHi789jKl012mNo3",
-  "email": "support@acme.example",
-  "expires_at_ms": 1787150583000
-}
+```text
+signed in as support@acme.example
+uid: AbC123dEf456gHi789jKl012mNo3
+session valid until 2026-08-21 12:54 CEST (auto-renews)
 ```
 
 `not signed in — run cs login` → redo step 4. Anything else:
-Troubleshooting below.
+Troubleshooting below. (Raw JSON, if you want it: `cs whoami --json`.)
 
 ### 6. Open the TUI and work
 

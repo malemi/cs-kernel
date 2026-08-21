@@ -32,6 +32,7 @@ import os
 import socket
 import sys
 from collections import Counter
+from datetime import datetime
 
 import websockets
 
@@ -115,7 +116,27 @@ def cmd_plan(args) -> int:
 
 def cmd_whoami(args) -> int:
     settings = config.load()
-    _print_json(rpc.call_sync(settings, "account.who_am_i"))
+    res = rpc.call_sync(settings, "account.who_am_i")
+    if getattr(args, "json", False):
+        _print_json(res)
+        return 0
+    # Human-readable by default: braces and colons confuse exactly the
+    # reader the quick-start sends here. `--json` keeps the raw shape.
+    if not isinstance(res, dict) or "signed_in" not in res:
+        _print_json(res)  # unknown shape: show the truth, never re-narrate it
+        return 0
+    if not res.get("signed_in"):
+        print("not signed in — run cs login")
+        return 0
+    print(f"signed in as {res.get('email') or '<unknown email>'}")
+    print(f"uid: {res.get('uid') or '?'}")
+    ms = res.get("expires_at_ms")
+    if ms:
+        dt = datetime.fromtimestamp(ms / 1000).astimezone()
+        print(f"session valid until {dt:%Y-%m-%d %H:%M %Z} (auto-renews)")
+    for k, v in res.items():
+        if k not in ("signed_in", "email", "uid", "expires_at_ms"):
+            print(f"{k}: {v}")
     return 0
 
 
@@ -781,6 +802,8 @@ def main(argv=None) -> int:
     pp.set_defaults(func=cmd_plan)
 
     pw = sub.add_parser("whoami", help="verify the engine session")
+    pw.add_argument("--json", action="store_true",
+                    help="print the raw account.who_am_i response")
     pw.set_defaults(func=cmd_whoami)
 
     pr = sub.add_parser("rpc", help="generic JSON-RPC call to the engine")

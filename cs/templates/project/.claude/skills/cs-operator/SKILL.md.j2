@@ -50,7 +50,8 @@ Do nothing else: no session check, no sub-skills, no report table.
 .venv/bin/python -m cs whoami
 ```
 
-Expect `signed_in: true` and `email: {{ email_address }}`. If either is
+Expect a signed-in confirmation for `{{ email_address }}` (`signed in
+as …`; kernels before v0.9.0 print JSON with `signed_in: true`). If it is
 missing or wrong (daemon down, token mint failure, or — critically — an
 identity that is NOT {{ email_address }}): print
 `cs-operator: engine session unavailable — STOP. <one-line reason>` and
