@@ -4,8 +4,8 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, static tier, 2026-08-19): `v0.8.1`.
-`mrcall-cs` and `124-cs` each pin `@v0.8.1` and have `0.8.1` installed
+**Current operational pin** (both clones, static tier, 2026-08-21): `v0.9.0`.
+`mrcall-cs` and `124-cs` each pin `@v0.9.0` and have `0.9.0` installed
 (`cs --version` verified on both). Static-tier evidence recorded at re-pin:
 `.claude/settings.json` and `bin/cs_operator_cron.sh` byte-identical before
 and after `cs update`, live `cs whoami` proof call OK on both engines.

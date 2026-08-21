@@ -29,8 +29,8 @@ what is *current*.
 
   | Clone | Pinned | Collaudo | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
-  | `124-cs` | `v0.8.1` | static — 2026-08-19 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
+  | `mrcall-cs` | `v0.9.0` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
+  | `124-cs` | `v0.9.0` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, deployed
