@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.0`. Current HEAD status: tagged as `v0.9.0`.**
+- **Latest release tag: `v0.9.0`. Current HEAD status: untagged.**
   The session-surface release (2026-08-21): `/cs-review` merge, `cs-` prefix,
   `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release offer, human
   `cs whoami`, wizard slug + derived pin default, uvx quick-start. Static
