@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.9.3`. Current HEAD status: tagged as `v0.9.3`.**
+- **Latest release tag: `v0.9.3`. Current HEAD status: untagged.**
   `v0.9.3` fixes `cs update --check`, which still recommended the manual
   three-step upgrade v0.9.2 had just replaced. `v0.9.2` makes `cs update` genuinely one command (the offer's install
   used `python -m pip`, absent from uv-made venvs), exempts `manifest.toml`
