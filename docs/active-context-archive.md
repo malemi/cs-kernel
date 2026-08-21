@@ -5,6 +5,36 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-08-21 — the v0.9.x arc, tag by tag (superseded by CHANGELOG.md)
+
+Relocated from `active-context.md`, which had accumulated a release-by-release
+narrative that `CHANGELOG.md` already owns properly:
+
+`v0.9.4` clears the maintainer-facing noise from `cs update`'s output
+(`--verbose` now owns the "left alone" notices). `v0.9.3` fixes `cs update
+--check`, which still recommended the manual three-step upgrade v0.9.2 had
+just replaced. `v0.9.2` makes `cs update` genuinely one command (the offer's
+install used `python -m pip`, absent from uv-made venvs), exempts
+`manifest.toml` from the overwrite flow, and stops the empty-diff conflict
+prompt. `v0.9.1` added the `cs init` install offer (one y, venv+install done)
+on top of `v0.9.0`'s session-surface release (`/cs-review` merge, `cs-`
+prefix, `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release offer,
+human `cs whoami`, wizard slug + derived pin default, uvx quick-start).
+Static tier throughout.
+
+Shipped in `v0.8.0`/`v0.8.1` (MINOR, new CLI surface; static tier): `cs
+init` writes `~/.<slug>-cs/.env` itself (getpass for the mailbox password,
+`FIREBASE_WEB_API_KEY` from the Step-0 descriptor, `CS_ACCOUNTS` from the
+accounts registry; never overwrites, EOF-safe, 0600) — gate 24; the README
+quick-start cut to size, install snippets resolving the newest tag
+dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate failure);
+the wizard's clone-pin default follows the operational pin.
+
+Both live clones were re-stamped in place as the v0.9.0/v0.9.1 surface was
+built (2026-08-19/21: renamed commands, new workflows, checksums), so their
+re-pin changes no stamped file — it makes the installed CLI match the
+surface they already carry.
+
 ## 2026-08-16 — v0.7.1 release: a tag must install as the version it claims
 
 `v0.7.1` (commit `57c2caf`, 2026-08-16, pushed) fixes a package that

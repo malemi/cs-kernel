@@ -4,13 +4,15 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (both clones, static tier, 2026-08-21): `v0.9.0`.
-`mrcall-cs` and `124-cs` each pin `@v0.9.0` and have `0.9.0` installed
-(`cs --version` verified on both). Static-tier evidence recorded at re-pin:
-`.claude/settings.json` and `bin/cs_operator_cron.sh` byte-identical before
-and after `cs update`, live `cs whoami` proof call OK on both engines.
-Operators are un-paused; 124-cs's operator cron is installed and ticking,
-mrcall-cs's is not installed (open item in `docs/active-context.md`).
+**Current operational pin** (static tier, 2026-08-21): `v0.9.4` on
+`mrcall-cs`, `v0.9.1` on `124-cs` — the clones are deliberately split while
+the operator re-pins them one at a time; both pins are verified from inside
+each clone (`requirements.txt` + `cs --version`). Static-tier evidence
+recorded at re-pin: `.claude/settings.json` and `bin/cs_operator_cron.sh`
+byte-identical before and after `cs update`, live `cs whoami` proof call OK
+on both engines. Operators are un-paused; 124-cs's operator cron is
+installed and ticking, mrcall-cs's is deliberately not installed
+(interactive-only — see `docs/active-context.md`).
 
 `v0.5.2` and every earlier tag mint the auth token from a locally-held
 Firebase service-account credential (`firebase-sa.json`) that only the
