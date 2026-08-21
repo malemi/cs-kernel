@@ -84,11 +84,15 @@ Imagine your operator address is `support@acme.example`.
 ### 1. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
 
 **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)** is a separate desktop app: it holds the mailbox sync,
-the memory and the task list, and it runs a local engine that everything below actually talks to.
+the memory and the task list, and it fronts the **engine** — the daemon
+that does the mail work.
 
-`cs` and MrCall Desktop must run on the same machine. 
-
-Launch MrCall Desktop and sign in with the Google account for your support mailbox.
+Launch MrCall Desktop, sign in with the Google account for your support
+mailbox, and click **Activate** in the sidebar: that provisions your
+engine, which then runs continuously — your operator does not stop when
+your laptop sleeps. Run `cs` on a machine where you have signed in to
+the app (that sign-in is what the next step reads its configuration
+from).
 
 ### 2. Create your company project
 
@@ -196,11 +200,28 @@ if you want) can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
 
 ## Day-to-day mental model
 
-```text
-You  →  Claude / OpenCode (in acme-cs/)  →  skills  →  cs CLI  →  mrcall-desktop
-                                                              →  Gmail (when needed)
-         (later) cron → same /cs-operator skill, draft-only by default
-```
+Three pieces:
+
+1. **The engine** — the always-on daemon behind mrcall-desktop. It holds
+   the synced mailbox, the relationship memory, the tasks, and a writing
+   voice trained on your own sent mail. It keeps working when your
+   laptop doesn't.
+2. **Your session** — Claude Code / OpenCode opened in `acme-cs/`, with
+   the pre-built skills (`/cs-review`, `/cs-account`, …) that read and
+   drive the engine. This is where you talk to your customer service —
+   and where you build on it.
+3. **Your automations** — the cron ticks *you* choose to run: the
+   ready-made operator (`cs cron install` — triage + campaigns,
+   unattended) and any recurring job you invent.
+
+Pieces 1 and 2 come ready from this kit; piece 3 is yours — and piece 2
+is how you build it. In a session you can design a new campaign and have
+the session itself produce the whole automation: the **pack**
+(`campaigns/<name>/` — copy, timing, playbook) and its cron line. That
+is how we run our own migration campaigns: designed in a session one
+afternoon, then ticking on their own schedule for weeks — and months
+later "have we ever done something like this?" is answered by
+`cs campaign packs`, and re-running one is copy-and-edit.
 
 | You care about | What happens |
 |---|---|
