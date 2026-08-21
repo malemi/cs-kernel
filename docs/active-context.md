@@ -14,11 +14,12 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.8.1`. Current HEAD status: untagged.**
-  `v0.8.1` is the corrective for `v0.8.0` (2026-08-19), which was tagged and
-  pushed straight from the feature commit and therefore installs as `0.7.1` —
-  the fifth entry in `TAG_VERSION_EXCEPTIONS`, object pinned immutable.
-  `v0.8.1` is the same code under its true number.
+- **Latest release tag: `v0.9.0`. Current HEAD status: tagged as `v0.9.0`.**
+  The session-surface release (2026-08-21): `/cs-review` merge, `cs-` prefix,
+  `/cs-cron` `/cs-campaign` `/cs-help`, the `cs update` release offer, human
+  `cs whoami`, wizard slug + derived pin default, uvx quick-start. Static
+  tier, both clones (CHANGELOG entry). `v0.8.0` remains the recorded
+  tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -47,21 +48,10 @@ what is *current*.
   quick-start cut to size, install snippets resolving the newest tag
   dynamically (a literal `cs-kernel@vX.Y.Z` in README is now a gate
   failure); the wizard's clone-pin default follows the operational pin.
-- On main, untagged (rides the next tag — MINOR): bare `cs update` now
-  OFFERS a pending release (`Found new tag (vX.Y.Z). Update? [y/N]`, default
-  No, EOF-safe; on yes: re-pin → pip install → re-exec on the new kernel);
-  `cs whoami` prints human-readable output (`--json` for the raw shape); new
-  workflow commands `/cs-cron` and `/cs-campaign`; wizard suggests the short
-  slug. Plus, same batch:
-  `/munchausen` merged into `/cs-review` — the ONE review bootstrap
-  (operator-prepared digest + outreach candidates when a producer is
-  wired) — and every stamped skill/command renamed under the `cs-` prefix
-  (`cs-account`, `cs-triage-mail`, `cs-campaign-tick`, `cs-customer`,
-  `cs-find-document`) so tab-complete on `cs` finds them all; README
-  Step 1 rewritten for a non-technical reader; the clone README points at
-  the kernel CLI reference. Both clones were already patched in place
-  2026-08-19 (files re-rendered, checksums updated), so the next re-pin
-  brings no surprise here.
+- Both live clones were re-stamped in place as the v0.9.0 surface was built
+  (2026-08-19/21: renamed commands, new workflows, checksums), so their
+  re-pin to `v0.9.0` changes no stamped file — it makes the installed CLI
+  match the surface they already carry.
 - The multi-provider LLM path (v0.4.0) is still **unwired**: no kernel call
   site passes `role=`, and `CS_LLM_ROUTE` defaults to the engine — it is
   behavior-neutral for a clone until one call site opts in.

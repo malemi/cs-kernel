@@ -18,6 +18,47 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.0 — 2026-08-21
+
+### Added — the session is the product surface, and the surface says so
+- **One review bootstrap:** `/munchausen` is merged into `/cs-review`,
+  which now shows both what the operator prepared (drafts, tasks, flags,
+  last tick) and — where a producer is wired — the day's outreach
+  candidates with a dossier each. Reply-only clones get no dead steps.
+- **`cs-` prefix on every stamped skill and command:** `/cs-account`
+  (was `analyze-account`), `cs-triage-mail`, `cs-campaign-tick`,
+  `cs-customer`, `cs-find-document`. Tab-complete on `cs` surfaces the
+  whole product; the permission files never named the skills, so the
+  permission surface is untouched.
+- **Workflow commands:** `/cs-cron` (manage the unattended tick from a
+  session: status, install/remove on explicit confirmation,
+  pause/resume), `/cs-campaign` (design a campaign in-session — pack per
+  the loader contract, engine wiring, one queued draft to judge, no
+  dedicated cron by default), `/cs-help` (orientation map, zero calls).
+- **`cs update` offers the pending release:** bare `cs update` first
+  checks the pinned origin; a newer tag prompts
+  `Found new tag (vX.Y.Z). Update? [y/N]` — default No, EOF/^C resolves
+  to No with the decision printed; on yes it re-pins, installs into the
+  clone venv and re-execs on the new kernel before refreshing templates.
+  Offline: one skip line, the refresh proceeds. Three hermetic gates in
+  `tests/test_project_update.py`.
+- **`cs whoami` speaks human** (`signed in as … / uid / session valid
+  until …`); `--json` returns the raw `account.who_am_i` response.
+- **Wizard:** suggests the short slug ("ACME Corp" → `acme`); the clone
+  pin default derives from `kernel_version_bare()` instead of a
+  hand-maintained literal (which went stale twice in one day).
+- **README:** quick-start via `uvx` (no bootstrap venv), steps 1–6, the
+  three-piece mental model, capability-first framing.
+- **Migration note:** nothing breaking. The old skill/command names are
+  gone from the stamped surface; both live clones were already
+  re-stamped in place (2026-08-19/21), so their re-pin is a no-op on
+  files. New clones simply stamp the new names.
+- **Re-collaudo:** **static tier, both clones** — nothing here touches a
+  send path, the auth boundary, `gmail_archive`/`send_mail`, or a
+  permission byte. The largest behavior change, the update offer,
+  defaults to No, is EOF-safe by gate, and rewrites nothing without an
+  explicit yes.
+
 ## v0.8.1 — 2026-08-19
 
 ### Fixed — `v0.8.0` installs as `0.7.1` (tag cut without the release commit)
