@@ -314,8 +314,8 @@ engine:
 That third one is small but real. Set `OPENROUTER_API_KEY` (or
 `ANTHROPIC_API_KEY`) in your `.env` and the kernel talks straight to the
 provider; leave it unset and those checks degrade to deterministic rules —
-the guard still refuses, it just judges less. `cs llm` prints what your configuration resolves to, `cs llm test`
-makes one real call.
+the guard still refuses, it just judges less. `cs llm` prints what your
+configuration resolves to; `cs llm test` makes one real call.
 
 ### Optional: run it automatically (cron)
 

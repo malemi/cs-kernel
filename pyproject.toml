@@ -29,7 +29,9 @@ dependencies = [
 # also the OpenRouter / gateway client, since they speak the same wire. It was
 # an EXTRA until v0.9.5, on the theory that a clone making no kernel-side LLM
 # call should not grow one; the send guard's register judgment disproved that
-# (see the base `dependencies` above). worker_llm still imports it lazily.
+# (see the base `dependencies` above). The import stays lazy either way:
+# `cs/llm_client.py` imports anthropic inside `build_client`, not at module
+# load, so a verb that makes no LLM call never pays for it.
 [project.optional-dependencies]
 # Retained as a no-op alias so any `cs-kernel[llm]` install line still
 # resolves; the dependency it used to add is now a base dependency.
