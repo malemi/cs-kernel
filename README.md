@@ -300,6 +300,23 @@ need it, not more onboarding.
 never send), `campaign` (Sent-dedup, rate cap, pause file), `tasks
 create`/`close`; **plumbing**: `rpc`, `project`.
 
+### The kernel's own model calls
+
+Three different things spend model tokens, and only the middle one is the
+engine:
+
+| Who | On what | Paid by |
+|---|---|---|
+| Your session (Claude Code / OpenCode) | your conversation with the project | your own plan |
+| The **engine** (mrcall-desktop) | replies and campaign copy — memory + trained voice | the engine's account |
+| The **`cs` kernel itself** | the send guard's register judgment; classification a skill routes directly | a provider key in `~/.<slug>-cs/.env` |
+
+That third one is small but real. Set `OPENROUTER_API_KEY` (or
+`ANTHROPIC_API_KEY`) in your `.env` and the kernel talks straight to the
+provider; leave it unset and those checks degrade to deterministic rules —
+the guard still refuses, it just judges less. `cs llm show` prints what
+your configuration resolves to, `cs llm test` makes one real call.
+
 ### Optional: run it automatically (cron)
 
 This is where the operator takes over the routine entirely: on a

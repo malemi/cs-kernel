@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cs-kernel"
-version = "0.9.4"
+version = "0.9.5"
 description = "Shared kernel of the <company>-cs customer-service operators: import package `cs` (frozen module path), per-company variance declared in the clone's manifest.toml."
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -16,6 +16,13 @@ dependencies = [
     "google-auth>=2.29",
     "requests>=2.31",
     "jinja2>=3.1",
+    # The client for kernel-owned LLM calls. NOT optional (it was, until
+    # 2026-08-21, and was documented nowhere a reader would look): the send
+    # guard's register judgment calls `worker_llm.classify` on the
+    # model-composed send path, so an install without this ran a SAFETY
+    # check in degraded mode and said so only in a log line. A dependency
+    # a safety path reaches for is a dependency, not an extra.
+    "anthropic>=0.107",
 ]
 
 # Kernel-owned LLM calls (cs/worker_llm.py) need the anthropic SDK — which is
@@ -24,7 +31,9 @@ dependencies = [
 # should not grow one, and worker_llm imports it lazily so every other verb
 # still works without it. Install with `pip install "cs-kernel[llm]"`.
 [project.optional-dependencies]
-llm = ["anthropic>=0.107"]
+# Retained as a no-op alias so any `cs-kernel[llm]` install line still
+# resolves; the dependency it used to add is now a base dependency.
+llm = []
 
 # The README has always described `cs` as a command ("After `cs init`, you
 # have:", "skills → cs CLI"). Until now only `python -m cs` existed, so the

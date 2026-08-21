@@ -305,8 +305,9 @@ def llm_available() -> tuple[bool, str]:
         import importlib.util
 
         if importlib.util.find_spec("anthropic") is None:
-            return False, ("the anthropic SDK is not installed "
-                           "(pip install 'cs-kernel[llm]')")
+            return False, ("the anthropic SDK is missing — it is a base "
+                           "dependency since v0.9.5, so this install is "
+                           "broken: uv pip install -r requirements.txt")
         from .model_config import llm_env
     except Exception as e:  # noqa: BLE001 - availability probe, never fatal
         return False, f"{type(e).__name__}: {e}"

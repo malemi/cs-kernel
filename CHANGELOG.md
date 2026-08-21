@@ -20,6 +20,32 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.5 — 2026-08-21
+
+### Fixed — the LLM client was an undocumented optional extra a safety path depends on
+- **Why:** `anthropic` shipped as the optional extra `cs-kernel[llm]`,
+  named nowhere a reader would look (only in a cold-storage archive
+  entry). Meanwhile `cs/send_guard.py`'s register judgment calls
+  `worker_llm.classify` on the model-composed send path. So every clone
+  installed the normal way ran that SAFETY check in degraded mode, and
+  said so only in a log line nobody reads. A dependency a safety path
+  reaches for is a dependency, not an extra.
+- **What:** `anthropic>=0.107` moves into the base dependencies —
+  installed always. The `[llm]` extra stays as a no-op alias so any
+  existing `cs-kernel[llm]` install line still resolves. `llm_available()`
+  stops advising the extra and says the install is broken. The clone's
+  `.env.example` gains the block that was missing entirely: what the
+  kernel's own model calls are, which key to set
+  (`OPENROUTER_API_KEY` / `ANTHROPIC_API_KEY`), what happens without one,
+  and the `cs llm show` / `cs llm test` verbs. The README gains the
+  three-payers table (your session / the engine / the kernel).
+- **Migration note:** re-pinning installs `anthropic` automatically. With
+  no provider key set nothing changes at runtime — the guard degrades
+  exactly as before. Setting a key turns the register judgment on.
+- **Re-collaudo:** **static tier, both clones** — a new base dependency
+  plus documentation. No code path changes shape; the guard's behaviour
+  with no key is byte-identical to before.
+
 ## v0.9.4 — 2026-08-21
 
 ### Fixed — `cs update` stops talking to itself
