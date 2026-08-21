@@ -29,49 +29,44 @@ what is *current*.
   `cs-find-document`). `/munchausen` no longer exists. Since v0.10.0 every
   agent surface (`.opencode/`, `AGENTS.md`, `~/.codex/prompts`) is a symlink
   into `.claude/` — stamped by init AND update, no second copy to drift.
-- **Upgrading a clone is one command.** Bare `cs update` checks the pinned
-  origin, offers any newer tag (`Found new tag … Update? [y/N]`, default No,
-  EOF-safe), and on "y" re-pins → `uv pip install` → re-execs on the new
-  kernel → re-stamps the templates. `--pin` is the specific-version/rollback
-  hatch; `--check` looks and writes nothing. `requirements.txt` AND
-  `manifest.toml` are clone-owned: `cs update` never touches either.
+- **Upgrading a clone is one command**: bare `cs update` offers any newer
+  tag and on "y" re-pins → installs → re-execs → re-stamps. `--pin` is the
+  rollback hatch, `--check` writes nothing, and `requirements.txt` +
+  `manifest.toml` are clone-owned (never touched).
 - Clone matrix (verified 2026-08-21 from inside each clone —
   `requirements.txt` + `cs --version`; measuring `python -m cs` from another
   cwd reads the local package, not the clone's):
 
-  | Clone | Pinned / installed | Collaudo | Operator |
+  | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.9.4` | static | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
-  | `124-cs` | `v0.9.1` | static — 2026-08-21 (security files byte-identical, whoami OK) | un-paused, ticking (cron installed) |
+  | `mrcall-cs` | `v0.9.6` | OpenRouter → `z-ai/glm-5.3` | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
+  | `124-cs` | `v0.9.6` | Anthropic direct → `claude-sonnet-5` | un-paused, ticking (cron installed) |
+
+  Both are one tag behind `v0.10.0`. **Re-pinning the clones is the
+  operator's own move, not this session's** — stated twice on 2026-08-21,
+  after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
+  Propose, never run it for him.
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, deployed
   at `d239e5f` (2026-08-03).
-- Tagging procedure the release gate imposes: the release commit itself claims
-  `Latest release tag:` + `Current HEAD status: tagged as` for the new
-  vX.Y.Z, so the gate is red in the gap — commit, tag immediately, verify the
-  gates AT the tag. The first post-tag commit flips the HEAD status back to
-  untagged and pins the tag's commit id in `IMMUTABLE_TAG_TARGETS`
-  (`tests/test_release_consistency.py`). Full procedure + the version-claim
-  inventory: [`release-procedure.md`](release-procedure.md).
+- Releases follow [`release-procedure.md`](release-procedure.md) — ordered
+  steps, the inventory of every file carrying a version claim, and the
+  mandatory multi-version sweep. Read it; do not reconstruct it.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
-  ROUTING seam is unwired: no kernel call site passes `role=`, and
-  `CS_LLM_ROUTE` defaults to the engine. But the send guard's register
-  judgment is a direct provider call — `cs/send_guard.py:337
-  worker_llm.classify`, inside `judge_register`, reached from `evaluate`
-  (`:374`) which `send_guard.check` wraps, and `cs/send_mail.py:162` runs
-  that guard on the **model-composed** send path (`body_md`); a genuine
-  fixed-template send passes an authored `plain`/`html` pair and never
-  reaches it. The call is gated by `llm_available()` — anthropic SDK plus a
+  routing seam is unwired (no call site passes `role=`; the default is the
+  engine), but the send guard's register judgment IS a direct provider call:
+  `cs/send_guard.py:337` → `judge_register` → `evaluate` (`:374`), which
+  `cs/send_mail.py:162` runs on the **model-composed** send path (`body_md`)
+  — a fixed-template `plain`/`html` send never reaches it. Gated by
+  `llm_available()` — anthropic SDK plus a
   resolved provider credential — NOT by `CS_LLM_ROUTE`, and degrades loudly
-  to deterministic checks without one. **Measured per clone 2026-08-21**
-  (`llm_available()`, run inside each): `mrcall-cs` → **True**
-  (`OPENROUTER_API_KEY` present in `~/.mrcall-cs/.env`) — its register
-  judgment is LIVE and already spending provider tokens on
-  model-composed sends; `124-cs` → False, SDK absent. Do not infer this
-  state from the packaging: reading the dependency list and concluding
-  "no key configured" is how this file carried the wrong answer for a
-  day. Run the check.
+  to deterministic checks without one. **Measured per clone 2026-08-21,
+  after the v0.9.6 re-pin** (`llm_available()`, run inside each): BOTH
+  clones → **True**, so both register judgments are live and spending.
+  Do not infer this state from the packaging — reading the dependency list
+  and concluding "no key configured" is how this file carried the wrong
+  answer for a day. Run the check.
 - That measurement is now the DEFAULT (v0.9.6): `ROLE_FAMILIES` resolves
   CLASSIFIER to `@glm` on OpenRouter (Anthropic direct keeps
   `@claude-sonnet` — `@glm` is not served there). `MODEL_CLASSIFIER` still
@@ -81,13 +76,24 @@ what is *current*.
 
 ## Unresolved
 
-- **`124-cs` sits at `v0.9.1`, four tags behind `mrcall-cs`.** Re-pinning the
-  clones is the operator's own move (stated 2026-08-21, after a `cs update`
-  overwrite cost him a hand-authored `manifest.toml` — since fixed, but the
-  boundary stands). One `cs update` + "y" in that clone closes it.
-- The `CHANGELOG.md` "Current operational pin" marker names one tag for both
-  clones; the clones are currently split (`v0.9.4` / `v0.9.1`). The marker is
-  written to reflect that until they converge.
+- **`124-cs` bills an undeclared account.** Its `.env` carries no provider
+  key, yet `llm_available()` is True: `ANTHROPIC_API_KEY` reaches it from
+  the PROCESS environment (inherited shell), so its guard runs on Anthropic
+  direct at Sonnet prices, on a credential nobody declared for that clone —
+  and behaves differently under cron, which usually lacks that variable.
+  Fix by giving 124 its own `OPENROUTER_API_KEY` (it would then inherit
+  `@glm` like mrcall-cs) or an explicit `CS_LLM_PROVIDER`/`MODEL_CLASSIFIER`.
+  Operator's call; neither its `.env` nor the environment was touched.
+- The `CHANGELOG.md` "Current operational pin" marker trails the clones
+  (`v0.9.4` recorded, both actually at `v0.9.6`); it converges at the next
+  re-pin the operator runs.
+- **A `/cs-operator` tick takes ~4 minutes, and it is all engine LLM.**
+  Measured 2026-08-21: a full `cs` RPC round trip is 0.5s (0.38 of it Python
+  import), while one `cs ask` is **29s**; `cs-triage-mail` alone carries up
+  to 5 `ask` + 6 `draft-reply`. The A/B-measured direct path is ~10x faster
+  but charter §4 keeps customer-facing prose on the engine — only read-only
+  state queries (`cs ask`) are candidates to move, and that is a decision,
+  not a cleanup.
 - The `cs init` install offer and the secrets writer are gate-proven (gates
   24/25, function level) but the full **interactive `cs init` walk** on a
   fresh machine has never been run end to end. The clean-Mac customer walk

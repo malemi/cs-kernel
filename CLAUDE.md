@@ -127,6 +127,16 @@ Two template roots, and the distinction is load-bearing:
 Each needs its own `package-data` glob in `pyproject.toml` or the verb ships
 without its templates.
 
+**`.claude/` is the ONE rendered agent surface.** OpenCode
+(`.opencode/commands`, `.opencode/skills`), the shared project manual
+(`AGENTS.md` → `CLAUDE.md`) and Codex (`~/.codex/prompts`, per-USER, so
+shared by every clone on a machine) are pointed into it by
+`install_agent_surfaces`, called from BOTH `cs init` and `cs update` —
+symlinks, with copies only where a filesystem refuses them. Never render
+the same command twice: a clone shipped `.opencode/` as tracked copies and
+they were still advertising pre-`cs-` command names weeks after the
+rename. Gate 27 holds this.
+
 Clone-owned, never kernel source (the kernel ships them ONLY as `.j2`
 templates under `cs/templates/project/`, stamped per clone): `.claude/`
 (skills, commands, settings.json), the cron wrapper `bin/cs_operator_cron.sh`
