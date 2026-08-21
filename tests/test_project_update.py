@@ -580,7 +580,17 @@ def _e2e_check_newer_tag_with_tier() -> None:
             f"the newer tag's OWN CHANGELOG.md re-collaudo line must be read "
             f"and printed, not hardcoded:\n{out}"
         )
-        assert "cs update --pin v0.2.0" in out, out
+        # --check must point at the ONE-COMMAND upgrade, not the manual
+        # three-step it used to recommend (`--pin <tag>` + pip install):
+        # since v0.9.2 bare `cs update` re-pins, installs and re-stamps on a
+        # single "y", so telling the operator to do it by hand was actively
+        # wrong advice (caught live 2026-08-21, "istruzione errata").
+        assert "run `cs update` and answer y" in out, (
+            f"--check must recommend the one-command upgrade:\n{out}"
+        )
+        assert "--pin" in out and "rollback" in out, (
+            f"--pin must be presented as the specific-version/rollback hatch:\n{out}"
+        )
         assert (clone / "requirements.txt").read_text() == before, (
             "--check must write NOTHING, ever"
         )

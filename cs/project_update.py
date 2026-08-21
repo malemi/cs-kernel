@@ -13,7 +13,7 @@ Two opt-in discovery/re-pin flags (bare `cs update` is unchanged):
                NOTHING.
   --pin TAG    rewrite ONLY the kernel pin line in requirements.txt to TAG
                and print the before/after line. Deliberately does not
-               install it — `pip install -r requirements.txt` stays a
+               install it — `uv pip install -r requirements.txt` stays a
                separate, deliberate step.
 
 Neither flag auto-bumps the pin: requirements.txt is the operator's own
@@ -254,9 +254,11 @@ def cmd_update_check(clone_root: Path) -> int:
         print(f"\nnewer tag available: {latest}")
     print(
         "Every kernel upgrade owes a re-collaudo (CLAUDE.md, Versioning & "
-        "release) — this only reports the tag, it writes nothing. Re-pin "
-        f"explicitly with `cs update --pin {latest}`, then "
-        "`pip install -r requirements.txt`."
+        "release) — this only reports the tag, it writes nothing.\n"
+        "To upgrade: run `cs update` and answer y — it re-pins, installs "
+        "and re-stamps in one go.\n"
+        f"To pin a DIFFERENT version (a rollback, say): `cs update --pin "
+        f"<tag>` then `uv pip install -r requirements.txt`."
     )
     return 0
 
@@ -264,7 +266,7 @@ def cmd_update_check(clone_root: Path) -> int:
 def cmd_update_pin(clone_root: Path, tag: str, advice: bool = True) -> int:
     """`cs update --pin <tag>`: rewrite ONLY the kernel pin line in
     requirements.txt to `tag`, and print the before/after line. Does not
-    install it — `pip install -r requirements.txt` stays a separate,
+    install it — `uv pip install -r requirements.txt` stays a separate,
     deliberate step, and nothing else `cs update` would otherwise render
     is touched."""
     req_path = clone_root / "requirements.txt"
@@ -299,7 +301,7 @@ def cmd_update_pin(clone_root: Path, tag: str, advice: bool = True) -> int:
     if advice:
         print(
             "\nrequirements.txt updated. Installing it is a separate, deliberate "
-            "step: run `pip install -r requirements.txt`, then re-collaudo per "
+            "step: run `uv pip install -r requirements.txt`, then re-collaudo per "
             "the new tag's CHANGELOG entry before un-pausing operators."
         )
     return 0
@@ -374,7 +376,7 @@ def _offer_release_upgrade(clone_root: Path) -> int | None:
     if proc.returncode != 0:
         print(
             "pip install FAILED — the pin is rewritten but not installed. "
-            "Fix the error, run `pip install -r requirements.txt`, then "
+            "Fix the error, run `uv pip install -r requirements.txt`, then "
             "`cs update` again.",
             file=sys.stderr,
         )
@@ -401,7 +403,7 @@ def cmd_update(args: list[str]) -> int:
         "--pin", metavar="TAG",
         help="rewrite ONLY requirements.txt's kernel pin line to TAG (e.g. "
         "v0.7.0) and print the before/after line. Does not install it — "
-        "`pip install -r requirements.txt` is a separate, deliberate step.",
+        "`uv pip install -r requirements.txt` is a separate, deliberate step.",
     )
 
     try:

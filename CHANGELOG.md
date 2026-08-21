@@ -18,6 +18,23 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.9.3 — 2026-08-21
+
+### Fixed — `cs update --check` recommended the wrong upgrade path
+- **Why:** `--check` still ended with "Re-pin explicitly with `cs update
+  --pin <tag>`, then `pip install -r requirements.txt`" — the manual
+  three-step from before `v0.9.2` made bare `cs update` do the whole
+  upgrade on one "y". The command was telling operators to do by hand
+  what it now does for them (and naming `pip`, which a uv-made venv does
+  not have).
+- **What:** `--check` now says: run `cs update` and answer y (re-pins,
+  installs, re-stamps in one go); `--pin <tag>` is presented as the
+  specific-version / rollback hatch. Every other `pip install` mention in
+  this module's help and messages says `uv pip install`. The `--check`
+  gate asserts the new guidance instead of the old string.
+- **Re-collaudo:** **static tier, both clones** — output strings only, no
+  behavior change.
+
 ## v0.9.2 — 2026-08-21
 
 ### Fixed — `cs update` is now genuinely one command, and stops asking unanswerable questions
