@@ -52,17 +52,18 @@ what is *current*.
   untagged and pins the tag's commit id in `IMMUTABLE_TAG_TARGETS`
   (`tests/test_release_consistency.py`). Full procedure + the version-claim
   inventory: [`release-procedure.md`](release-procedure.md).
-- The multi-provider LLM path is **partly live, and this file said otherwise
-  until 2026-08-21** (found by the doc-critic, verified in code). Precisely:
-  the `role=`/`CS_LLM_ROUTE` ROUTING seam is unwired — no kernel call site
-  passes `role=`, and `CS_LLM_ROUTE` defaults to the engine. But the send
-  guard's register judgment is a direct provider call
-  (`cs/send_guard.py:337 worker_llm.classify`, reached from
-  `send_guard.check` at `:374`, which `cs/send_mail.py:162` runs on the
-  fixed-template send path). It is gated by `llm_available()` — anthropic
-  SDK present plus a provider credential — NOT by `CS_LLM_ROUTE`. So a clone
-  with a provider key set already spends provider tokens on that path, and
-  degrades loudly to deterministic checks without one.
+- The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
+  ROUTING seam is unwired: no kernel call site passes `role=`, and
+  `CS_LLM_ROUTE` defaults to the engine. But the send guard's register
+  judgment is a direct provider call — `cs/send_guard.py:337
+  worker_llm.classify`, inside `judge_register`, reached from `evaluate`
+  (`:374`) which `send_guard.check` wraps, and `cs/send_mail.py:162` runs
+  that guard on the **model-composed** send path (`body_md`); a genuine
+  fixed-template send passes an authored `plain`/`html` pair and never
+  reaches it. The call is gated by `llm_available()` — anthropic SDK plus a
+  resolved provider credential — NOT by `CS_LLM_ROUTE`, and degrades loudly
+  to deterministic checks without one. So a clone with a provider key set
+  already spends provider tokens whenever the engine composed the body.
 - Measured recommendation for that path: `MODEL_CLASSIFIER=@glm` (A/B on the
   live classification task, 2026-07-28; full record in meta-repo
   `docs/briefs/2026-07-28-multi-provider-llm-ab.md` — quotes customer mail,

@@ -5,6 +5,19 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-08-21 — correction: the LLM path was never fully "unwired"
+
+`active-context.md` claimed for weeks that the multi-provider LLM path was
+"unwired — behavior-neutral for a clone until one call site opts in",
+reasoning only about the `role=` / `CS_LLM_ROUTE` routing seam. A doc-critic
+pass found the send guard's register judgment
+(`cs/send_guard.py::judge_register` → `worker_llm.classify`) is a direct
+provider call on the model-composed send path, gated by `llm_available()`
+alone. The claim was materially wrong about when a clone spends provider
+tokens. First repair inverted the send path (said "fixed-template" where the
+code gates precisely the model-composed one) and was corrected in the same
+session. The present-tense fact now lives in `State now`.
+
 ## 2026-08-21 — the v0.9.x arc, tag by tag (superseded by CHANGELOG.md)
 
 Relocated from `active-context.md`, which had accumulated a release-by-release
