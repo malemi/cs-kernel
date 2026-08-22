@@ -101,20 +101,31 @@ def cmd_cron_uninstall(args) -> int:
 
 
 def cmd_cron_status(args) -> int:
-    """Show if the cron entry is installed and the manifest intent."""
+    """Show if the cron entry is installed, the manifest intent, and whether
+    the CS_PAUSE kill-switch is active. Both signals matter and are
+    independent: an installed crontab entry sends nothing while CS_PAUSE is
+    present, and CS_PAUSE alone says nothing about whether cron is even
+    installed."""
     from . import config
-    slug = config.load().slug
+    settings = config.load()
+    slug = settings.slug
     schedule, comment = _read_raw_cron(_clone_root() / "manifest.toml")
-    
+
     existing = _read_crontab()
     installed = [l for l in existing if f"# cs-cron:{slug}" in l]
-    
+
     if installed:
-        print("Installed:")
+        print("Crontab: installed")
         for line in installed:
             print(f"  {line}")
     else:
-        print("Not installed. Run: cs cron install")
-    
+        print("Crontab: not installed. Run: cs cron install")
+
+    paused = settings.pause_path.exists()
+    if paused:
+        print(f"Pause: active ({settings.pause_path} exists — operator will not send). Run: rm {settings.pause_path} to resume")
+    else:
+        print(f"Pause: not active ({settings.pause_path} absent)")
+
     print(f"Manifest schedule: {schedule} ({comment})")
     return 0

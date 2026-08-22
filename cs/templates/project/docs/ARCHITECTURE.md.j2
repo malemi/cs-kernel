@@ -32,7 +32,7 @@ never in a rendered file).
 {% if producer_adapter == 'mrcall-tracking' and producer_mrcall_tracking %}| Producer.mrcall_tracking | script: `{{ producer_mrcall_tracking.script_path }}`, python: `{{ producer_mrcall_tracking.python_path }}` |
 {% endif %}| Excluded campaign | `{{ excluded_campaign }}` (a dedicated process owns it) |
 | Drive scope | `{{ drive_scope }}` (`cs drive search` is pinned here; `all` is a test-only override) |
-| SMS | {% if sms_enabled %}enabled, proxy `{{ sms_proxy_base }}` (env `SMS_BUSINESS_ID`){% else %}disabled{% endif %} |
+| SMS | {% if sms_enabled %}enabled, proxy Vonage via mrcall-desktop (env `SMS_BUSINESS_ID`){% else %}disabled{% endif %} |
 | Knobs | dedup {{ dedup_days }}d · rate_cap {{ rate_cap }} · triage `{{ cs_triage_mode }}` · dry_run {{ 'True' if dry_run else 'False' }} · autonomous {{ 'True' if autonomous else 'False' }} |
 | Time windows | {{ timezone }} · SMS hour {{ sms_hour }} · reminder_max {{ reminder_max }} |
 | Cron (declared intent) | `{{ cron_schedule }}` — cs-operator every 2h, business hours, weekdays. **Verify the live crontab: the schedule here is intent, not proof it is installed.** |

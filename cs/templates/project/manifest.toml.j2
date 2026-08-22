@@ -15,7 +15,9 @@ smtp_port = {{ smtp_port }}
 [engine]
 owner_uid = "{{ engine_owner_uid }}"
 ws_url = "{{ engine_ws_url }}"
-sa_path = "{{ firebase_sa_path }}"
+# Empty on purpose: Settings derives ~/.{{ company_slug }}-cs/firebase-sa.json
+# from the slug the moment this is blank — set it only to override that.
+sa_path = ""
 
 [engine.accounts]
 default = {{ accounts_default | toml_quote }}
@@ -36,16 +38,15 @@ env_prefix = "{{ crm_shopify.env_prefix }}"
 {% endif %}
 
 [producer]
-adapter = "{{ producer_adapter }}"
-{% if producer_adapter == 'mrcall-tracking' and producer_mrcall_tracking %}
-[producer.mrcall_tracking]
-script_path = "{{ producer_mrcall_tracking.script_path }}"
-python_path = "{{ producer_mrcall_tracking.python_path }}"
-{% endif %}
+# mrcall-tracking's script/python paths are literal paths on MrCall's own
+# ops box; `cs init` never wires this for a clone. Add [producer.mrcall_tracking]
+# by hand (script_path, python_path) if this clone genuinely needs it.
+adapter = "none"
 
 [campaigns]
-excluded_campaign = "{{ excluded_campaign }}"
-posture_note = "{{ posture_note }}"
+# Niche, per-campaign prose; `cs init` never asks. Fill in by hand if needed.
+excluded_campaign = ""
+posture_note = ""
 
 [knobs]
 dedup_days = {{ dedup_days }}
@@ -59,12 +60,18 @@ reminder_max = {{ reminder_max }}
 
 [sms]
 enabled = {{ 'true' if sms_enabled else 'false' }}
-proxy_base = "{{ sms_proxy_base }}"
+# The proxy itself is Vonage, hardcoded, run from mrcall-desktop — no
+# per-clone URL to configure; `cs init` never asks.
+proxy_base = ""
 
 [drive]
-scope = "{{ drive_scope }}"
+# Niche; `cs init` never asks. Fill in by hand if this clone needs a
+# non-default Shared Drive scope.
+scope = ""
 
 [cron]
+# Declared intent only ([cron] is template-only, ignored by the kernel at
+# runtime) — `cs cron install` owns the real crontab entry.
 schedule = "{{ cron_schedule }}"
 comment = "{{ cron_comment }}"
 

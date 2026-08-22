@@ -9,13 +9,24 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 import hashlib
 from datetime import datetime
 import jinja2
+from dotenv import dotenv_values
 
 from ._version import kernel_version, kernel_version_bare
 from . import login
+from . import manifest as manifest_mod
+
+# Removed from the interactive wizard entirely (never prompted, in any
+# mode). `cs cron install` will own scheduling; these are inert today —
+# manifest.py's Manifest model has no [cron] table at all ("template-only,
+# tolerated and ignored at runtime") — so a fixed default renders the same
+# valid TOML the prompt used to produce.
+DEFAULT_CRON_SCHEDULE = "0 6-18/2 * * 2-5"
+DEFAULT_CRON_COMMENT = "cs-operator"
 
 def descriptor_defaults() -> dict:
     """Prefill `cs init`'s engine-identity prompts from a mrcall-desktop
@@ -54,6 +65,134 @@ def descriptor_defaults() -> dict:
         # sending the operator to hunt the key down by hand.
         "firebase_web_api_key": d["firebase_web_api_key"],
     }
+
+def load_existing_config(target_dir: Path) -> dict:
+    """Read an existing `manifest.toml` (+ its state-dir `.env`) at
+    `target_dir` — normally the directory `cs init` is invoked FROM — and
+    flatten it into a `collect_config()`-shaped defaults dict.
+
+    `{}` when there is no manifest there: the caller's cue that this is a
+    first-time init with nothing to prefill from, so `cs init` shows every
+    prompt (see `cmd_init`). This is what makes a re-run of `cs init` inside
+    an already-stamped clone read the CURRENT values instead of starting
+    from "Acme Corp" again.
+
+    `manifest.toml` is the primary source. `~/.<slug>-cs/.env`'s
+    `CS_ACCOUNTS` wins for account uids specifically — `cs/config.py`'s own
+    contract is "REAL uids live in the env layer," so the manifest's
+    `[engine.accounts]` table (seeded once at init time) can go stale the
+    moment an account is added or re-keyed by hand afterward.
+
+    `[repo]` and `[cron]` are template-only tables the `Manifest` model
+    does not even define a field for (unknown top-level tables are
+    dropped by `extra="ignore"`) — read straight off the parsed TOML
+    instead, and only for `git_remote`: the one such value worth not
+    resetting to "" on a re-run (`kernel_version`/`docs_shape` are always
+    recomputed fresh — see `collect_config` — and `[cron]` is being
+    retired from this wizard entirely).
+    """
+    manifest_path = target_dir / "manifest.toml"
+    if not manifest_path.exists():
+        return {}
+    try:
+        m = manifest_mod.load_manifest(manifest_path)
+    except manifest_mod.ManifestError:
+        return {}
+    try:
+        with open(manifest_path, "rb") as fh:
+            raw = tomllib.load(fh)
+    except (OSError, tomllib.TOMLDecodeError):
+        raw = {}
+
+    accounts = {k: v for k, v in m.engine.accounts.items() if k != "default"}
+    accounts_default = m.engine.accounts.get("default", "")
+
+    slug = m.company.slug
+    if slug:
+        env_path = Path.home() / f".{slug}-cs" / ".env"
+        if env_path.exists():
+            env_accounts = (dotenv_values(env_path).get("CS_ACCOUNTS") or "").strip()
+            if env_accounts:
+                accounts = {}
+                for pair in env_accounts.split(","):
+                    pair = pair.strip()
+                    if ":" in pair:
+                        name, uid = pair.split(":", 1)
+                        accounts[name] = uid
+
+    out = {
+        "company_name": m.company.name,
+        "company_display_name": m.company.display_name,
+        "company_from_name": m.company.from_name,
+        "company_slug": slug,
+        "company_prog_name": m.company.prog_name,
+        "email_address": m.operator.email_address,
+        "imap_host": m.operator.imap_host,
+        "imap_port": m.operator.imap_port,
+        "smtp_host": m.operator.smtp_host,
+        "smtp_port": m.operator.smtp_port,
+        "engine_owner_uid": m.engine.owner_uid,
+        "engine_ws_url": m.engine.ws_url,
+        "accounts": accounts,
+        "accounts_default": accounts_default,
+        "founder_sweep_enabled": m.engine.founder_sweep.enabled,
+        "founder_sweep_account": m.engine.founder_sweep.account,
+        "crm_adapter": m.crm.adapter,
+        "dedup_days": m.knobs.dedup_days,
+        "rate_cap": m.knobs.rate_cap,
+        "cs_triage_mode": m.knobs.cs_triage_mode,
+        "dry_run": m.knobs.dry_run,
+        "autonomous": m.knobs.autonomous,
+        "timezone": m.knobs.timezone,
+        "sms_hour": m.knobs.sms_hour,
+        "reminder_max": m.knobs.reminder_max,
+        "sms_enabled": m.sms.enabled,
+        "repo_git_remote": raw.get("repo", {}).get("git_remote", ""),
+    }
+    if m.crm.shopify is not None:
+        out["crm_shopify"] = {
+            "api_version": m.crm.shopify.api_version,
+            "env_prefix": m.crm.shopify.env_prefix,
+        }
+    return out
+
+
+def _default(existing: dict, key: str, fallback):
+    """`existing` (an already-stamped clone's own manifest/.env) wins over
+    the generic fallback; `None`/`""` in `existing` count as "not declared"
+    so a sparse or first-time-init `existing` (`{}`) never masks a real
+    default with a blank."""
+    val = existing.get(key)
+    if val is None or val == "":
+        return fallback
+    return val
+
+
+def _prompt_or_default(show_all: bool, prompt: str, value, essential: bool = False):
+    """Ask when this field is currently visible (`essential` or
+    `show_all`); otherwise silently take `value` — the resolved existing
+    manifest/.env value or its generic fallback, already computed by the
+    caller via `_default`."""
+    if essential or show_all:
+        return prompt_input(prompt, value)
+    return value
+
+
+def _prompt_or_default_yn(show_all: bool, prompt: str, value: bool, essential: bool = False):
+    if essential or show_all:
+        return prompt_yes_no(prompt, default=value)
+    return value
+
+
+def _prompt_or_default_int(show_all: bool, prompt: str, value, essential: bool = False):
+    if not (essential or show_all):
+        return int(value)
+    try:
+        return int(prompt_input(prompt, str(value)))
+    except ValueError:
+        print(f"Invalid number, using default {value}")
+        return int(value)
+
 
 def validate_slug(slug: str) -> bool:
     """Validate slug is lowercase alphanumeric with hyphens only."""
@@ -97,34 +236,90 @@ def get_company_slug(name: str) -> str:
     """Convert company name to slug (lowercase, no spaces)."""
     return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
 
-def collect_config() -> dict:
-    """Collect configuration through interactive prompts."""
+def collect_config(advanced: bool = False, existing: dict | None = None) -> dict:
+    """Collect configuration through interactive prompts.
+
+    Two independent things decide what the operator actually sees:
+
+    - `existing` (from `load_existing_config`) supplies DEFAULTS, always,
+      first-time init or not. An already-stamped clone's own
+      `manifest.toml` + state-dir `.env` win over the generic "Acme
+      Corp"-style fallbacks baked into this function, so re-running `cs
+      init` inside one never resets a real value back to a placeholder.
+    - `advanced` alone decides the PROMPT SET: `show_all` is exactly
+      `advanced`. Without it — first-time init or not — only the fields
+      with no safe universal default are asked (identity basics, the
+      mailbox address, the engine identity when nothing else answers it,
+      a chosen CRM adapter, the destination directory); everything else
+      is silently taken from `existing` (or its own hardcoded fallback) —
+      a fast confirm pass instead of thirty re-typed answers. `--advanced`
+      shows every prompt regardless of what is already known.
+
+    The engine identity (WS URL, owner uid, the default account's uid) is
+    the one place "essential" is computed PER FIELD rather than fixed: a
+    unique mrcall-desktop descriptor on this machine, or a value already
+    declared in `existing`, answers it with confidence, so a non-advanced
+    run skips asking (descriptor) or silently reuses the declared value
+    (existing) — but with NEITHER available (a genuinely first-time init,
+    no descriptor, nothing declared yet) there is no safe default at all,
+    so it is asked regardless of `--advanced`. `--advanced` always shows
+    the prompt (prefilled from whichever of the two answered it), even
+    when a unique descriptor would otherwise skip it silently — the whole
+    point of `--advanced` is that nothing is silently assumed.
+
+    Six phases, in order: identity -> mailbox -> engine -> accounts ->
+    integrations (+ knobs) -> repo. Founder sweep is intentionally left
+    exactly as it behaved before this refactor (pending a separate
+    decision on what that feature becomes) — always asked, no
+    existing-manifest prefill, no `--advanced` gating.
+    """
+    existing = existing or {}
+    show_all = advanced
+
     print("Welcome to cs init - Let's set up your new company clone")
     print("=" * 60)
+    if existing and not show_all:
+        print(
+            "Existing manifest.toml found — reusing its values; only asking "
+            "what needs a fresh decision. Re-run with --advanced to see "
+            "every prompt."
+        )
+    elif existing:
+        print("Existing manifest.toml found — using its values as defaults below.")
 
-    # A mrcall-desktop sign-in already on this machine prefills the
+    # A mrcall-desktop sign-in already on this machine prefills (and, when
+    # it is the ONLY one and this is a fast pass, silently ANSWERS) the
     # engine-identity prompts below; the operator still sees and can
-    # override every one of them.
+    # override every one of them under --advanced.
     defaults = descriptor_defaults()
+    descriptor_unique = bool(defaults)
     if defaults:
         print(
             f"Found a mrcall-desktop profile: {defaults['descriptor_email']} "
-            f"({defaults['engine_owner_uid']}) — using it for defaults."
+            f"({defaults['engine_owner_uid']}) — using it for the engine identity."
         )
 
     config = {}
-    
-    # Basic company info
-    config["company_name"] = prompt_input("Company name", "Acme Corp")
-    config["company_display_name"] = prompt_input("Display name", config["company_name"])
-    config["company_from_name"] = prompt_input("From name for emails", config["company_display_name"])
-    
-    # Derived slug
-    # Suggest the first word only: "ACME Corp" → "acme" (project folder
-    # "acme-cs/", state dir "~/.acme-cs/"). The full-name slug ("acme-corp")
-    # made every reader of the old README learn why it was a bad idea.
+
+    # --- Phase 1: identity ---
+    config["company_name"] = prompt_input(
+        "Company name", _default(existing, "company_name", "Acme Corp")
+    )
+    config["company_display_name"] = _prompt_or_default(
+        show_all, "Display name",
+        _default(existing, "company_display_name", config["company_name"]),
+    )
+    config["company_from_name"] = _prompt_or_default(
+        show_all, "From name for emails",
+        _default(existing, "company_from_name", config["company_display_name"]),
+    )
+
+    # Derived slug — suggest the first word only: "ACME Corp" -> "acme"
+    # (project folder "acme-cs/", state dir "~/.acme-cs/"). The full-name
+    # slug ("acme-corp") made every reader of the old README learn why it
+    # was a bad idea.
     full_slug = get_company_slug(config["company_name"])
-    default_slug = full_slug.split("-")[0] or full_slug
+    default_slug = _default(existing, "company_slug", full_slug.split("-")[0] or full_slug)
     while True:
         slug = prompt_input("Program slug for state dir", default_slug)
         if validate_slug(slug):
@@ -132,46 +327,88 @@ def collect_config() -> dict:
             break
         else:
             print("Slug must contain only lowercase letters, numbers, and hyphens.")
-    
-    # Program name
-    default_prog_name = f"{config['company_slug']}-cs"
-    config["company_prog_name"] = prompt_input("Program name", default_prog_name)
-    
-    # Operator email
-    config["email_address"] = prompt_input("Operator email", defaults.get("email_address"))
-    
-    # IMAP/SMTP settings
-    config["imap_host"] = prompt_input("IMAP host", "imap.gmail.com")
-    try:
-        config["imap_port"] = int(prompt_input("IMAP port", "993"))
-    except ValueError:
-        print("Invalid port number, using default 993")
-        config["imap_port"] = 993
-    
-    config["smtp_host"] = prompt_input("SMTP host", "smtp.gmail.com")
-    try:
-        config["smtp_port"] = int(prompt_input("SMTP port", "587"))
-    except ValueError:
-        print("Invalid port number, using default 587")
-        config["smtp_port"] = 587
-    
-    # Engine settings
-    config["engine_ws_url"] = prompt_input(
-        "Engine WS URL", defaults.get("engine_ws_url", "wss://desktop.example.com")
+
+    config["company_prog_name"] = _prompt_or_default(
+        show_all, "Program name",
+        _default(existing, "company_prog_name", f"{config['company_slug']}-cs"),
     )
-    config["engine_owner_uid"] = prompt_input("Engine owner UID", defaults.get("engine_owner_uid"))
+
+    # --- Phase 2: mailbox ---
+    config["email_address"] = prompt_input(
+        "Operator email", _default(existing, "email_address", defaults.get("email_address"))
+    )
+    config["imap_host"] = _prompt_or_default(
+        show_all, "IMAP host", _default(existing, "imap_host", "imap.gmail.com")
+    )
+    config["imap_port"] = _prompt_or_default_int(
+        show_all, "IMAP port", _default(existing, "imap_port", 993)
+    )
+    config["smtp_host"] = _prompt_or_default(
+        show_all, "SMTP host", _default(existing, "smtp_host", "smtp.gmail.com")
+    )
+    config["smtp_port"] = _prompt_or_default_int(
+        show_all, "SMTP port", _default(existing, "smtp_port", 587)
+    )
+
+    # --- Phase 3: engine ---
+    # No safe universal default exists for a company's own engine identity
+    # (unlike imap_host, "wss://desktop.example.com" is not a working
+    # fallback) — so these two are essential (asked regardless of
+    # --advanced) UNLESS something already answers them with confidence:
+    # a unique descriptor, or a value already declared in `existing`.
+    existing_ws = existing.get("engine_ws_url") or ""
+    existing_uid = existing.get("engine_owner_uid") or ""
+    if descriptor_unique:
+        ws_default, uid_default = defaults["engine_ws_url"], defaults["engine_owner_uid"]
+    else:
+        ws_default = existing_ws or "wss://desktop.example.com"
+        uid_default = existing_uid
+
+    if descriptor_unique and not show_all:
+        config["engine_ws_url"] = ws_default
+        config["engine_owner_uid"] = uid_default
+    else:
+        config["engine_ws_url"] = _prompt_or_default(
+            show_all, "Engine WS URL", ws_default,
+            essential=not (descriptor_unique or existing_ws),
+        )
+        # Skippable (blank = fill in manifest.toml by hand later) — matches
+        # the mailbox-password contract; absence is a product state, not
+        # a crash, everywhere downstream (ConfigError, printed once).
+        config["engine_owner_uid"] = _prompt_or_default(
+            show_all, "Engine owner UID", uid_default,
+            essential=not (descriptor_unique or existing_uid),
+        )
     # Not prompted: comes with the Step-0 descriptor (public key), consumed by
     # write_state_env; empty when there was no usable descriptor.
     config["firebase_web_api_key"] = defaults.get("firebase_web_api_key", "")
 
-    # Accounts
-    default_account = prompt_input("Default account name", "support")
-    default_uid = prompt_input(
-        f"Default account UID for '{default_account}'", defaults.get("default_uid")
-    )
+    # --- Phase 4: accounts ---
+    existing_accounts = existing.get("accounts") or {}
+    default_account_value = _default(existing, "accounts_default", "support")
+    existing_default_uid = existing_accounts.get(default_account_value, "")
+    default_uid_value = defaults.get("default_uid") or existing_default_uid
+
+    if descriptor_unique and not show_all:
+        default_account = default_account_value
+        default_uid = defaults["default_uid"]
+    else:
+        default_account = _prompt_or_default(show_all, "Default account name", default_account_value)
+        # Same "essential unless already answered" rule as the engine uid.
+        default_uid = _prompt_or_default(
+            show_all, f"Default account UID for '{default_account}'", default_uid_value,
+            essential=not (descriptor_unique or existing_default_uid),
+        )
     accounts = {default_account: default_uid}
-    
-    additional = prompt_input("Additional accounts (comma-separated name:uid pairs, or empty)", "")
+
+    additional_default = ",".join(
+        f"{n}:{u}" for n, u in existing_accounts.items() if n != default_account
+    )
+    additional = _prompt_or_default(
+        show_all,
+        "Additional accounts (comma-separated name:uid pairs, or empty)",
+        additional_default,
+    )
     if additional:
         for pair in additional.split(","):
             pair = pair.strip()
@@ -186,82 +423,134 @@ def collect_config() -> dict:
                 continue
             name, uid = parts
             accounts[name] = uid
-    
+
     config["accounts"] = accounts
     config["accounts_default"] = default_account
-    
-    # Founder sweep
+
+    # Founder sweep — left exactly as it behaved before this refactor.
     config["founder_sweep_enabled"] = prompt_yes_no("Enable founder sweep?", default=False)
     if config["founder_sweep_enabled"]:
         config["founder_sweep_account"] = prompt_input("Founder sweep account")
     else:
         config["founder_sweep_account"] = ""
-    
-    # CRM adapter
+
+    # --- Phase 5: integrations (+ knobs) ---
+    # CRM adapter stays essential (always asked): a real clone can need a
+    # non-default CRM (e.g. Shopify) wired at init time — unlike producer
+    # below, "none" is not a safe universal assumption.
     while True:
-        adapter = prompt_input("CRM adapter (starchat, shopify, none)", "none").lower()
-        if adapter in ("starchat", "shopify", "none"): 
+        adapter = prompt_input(
+            "CRM adapter (starchat, shopify, none)", _default(existing, "crm_adapter", "none")
+        ).lower()
+        if adapter in ("starchat", "shopify", "none"):
             config["crm_adapter"] = adapter
             break
         else:
             print("Please enter one of: starchat, shopify, none")
-            
+
+    existing_shopify = existing.get("crm_shopify") or {}
     if config["crm_adapter"] == "shopify":
-        shopify_config = {
-            "api_version": prompt_input("Shopify API version", "2025-10"),
-            "env_prefix": prompt_input("Shopify environment prefix (optional)", "")
+        config["crm_shopify"] = {
+            "api_version": _prompt_or_default(
+                show_all, "Shopify API version", existing_shopify.get("api_version") or "2025-10"
+            ),
+            "env_prefix": _prompt_or_default(
+                show_all, "Shopify environment prefix (optional)",
+                existing_shopify.get("env_prefix", ""),
+            ),
         }
-        config["crm_shopify"] = shopify_config
     else:
         config["crm_shopify"] = None
-    
-    # Producer adapter
-    while True:
-        adapter = prompt_input("Producer adapter (mrcall-tracking, none)", "none").lower()
-        if adapter in ("mrcall-tracking", "none"): 
-            config["producer_adapter"] = adapter
-            break
-        else:
-            print("Please enter one of: mrcall-tracking, none")
-            
-    if config["producer_adapter"] == "mrcall-tracking":
-        tracking_config = {
-            "script_path": prompt_input("Producer script path"),
-            "python_path": prompt_input("Producer Python path")
-        }
-        config["producer_mrcall_tracking"] = tracking_config
+
+    # Producer adapter — mrcall-tracking's script/python paths are literal
+    # filesystem paths on MrCall's own ops box; no external clone wires
+    # this itself. Hardcoded off, no prompt in any mode; a clone that
+    # genuinely needs it edits manifest.toml by hand (clone-owned, never
+    # touched by `cs update`).
+    config["producer_adapter"] = "none"
+    config["producer_mrcall_tracking"] = None
+
+    # Campaign posture/carve-out and Drive scope — niche, per-campaign
+    # prose knobs with no interactive default worth asking for at init
+    # time. Hardcoded empty, no prompt in any mode.
+    config["excluded_campaign"] = ""
+    config["posture_note"] = ""
+    config["drive_scope"] = ""
+
+    # SMS — the proxy itself is Vonage, hardcoded, run from mrcall-desktop;
+    # `cs init` never asks for its URL (nothing per-clone to configure).
+    config["sms_enabled"] = _prompt_or_default_yn(
+        show_all, "Enable SMS?", _default(existing, "sms_enabled", False)
+    )
+
+    # Cron — schedule/comment move to `cs cron install`; fixed values keep
+    # manifest.toml and the rendered README self-consistent until then.
+    config["cron_schedule"] = DEFAULT_CRON_SCHEDULE
+    config["cron_comment"] = DEFAULT_CRON_COMMENT
+
+    config["timezone"] = _prompt_or_default(
+        show_all, "Timezone", _default(existing, "timezone", "Europe/Rome")
+    )
+    config["sms_hour"] = _prompt_or_default_int(
+        show_all, "SMS hour", _default(existing, "sms_hour", 18)
+    )
+    config["reminder_max"] = _prompt_or_default_int(
+        show_all, "Reminder max", _default(existing, "reminder_max", 3)
+    )
+    config["dedup_days"] = _prompt_or_default_int(
+        show_all, "Dedup days", _default(existing, "dedup_days", 30)
+    )
+    config["rate_cap"] = _prompt_or_default_int(
+        show_all, "Rate cap", _default(existing, "rate_cap", 25)
+    )
+
+    if show_all:
+        while True:
+            mode = prompt_input(
+                "CS triage mode (draft, send)", _default(existing, "cs_triage_mode", "draft")
+            ).lower()
+            if mode in ("draft", "send"):
+                config["cs_triage_mode"] = mode
+                break
+            else:
+                print("Please enter one of: draft, send")
     else:
-        config["producer_mrcall_tracking"] = None
-    
-    # Campaign settings
-    config["excluded_campaign"] = prompt_input("Excluded campaign name (optional)", "")
-    config["posture_note"] = prompt_input("Posture note (optional)", "")
-    
-    # Drive scope
-    config["drive_scope"] = prompt_input("Drive scope (optional)", "")
-    
-    # SMS settings
-    config["sms_enabled"] = prompt_yes_no("Enable SMS?", default=False)
-    if config["sms_enabled"]:
-        config["sms_proxy_base"] = prompt_input("SMS proxy base URL")
-    else:
-        config["sms_proxy_base"] = ""
-    
-    # Cron schedule
-    config["cron_schedule"] = prompt_input("Cron schedule", "0 6-18/2 * * 2-5")
-    config["cron_comment"] = prompt_input("Cron comment", "cs-operator")
-    
+        config["cs_triage_mode"] = _default(existing, "cs_triage_mode", "draft")
+
+    config["dry_run"] = _prompt_or_default_yn(
+        show_all, "Dry run mode?", _default(existing, "dry_run", True)
+    )
+    config["autonomous"] = _prompt_or_default_yn(
+        show_all, "Autonomous mode?", _default(existing, "autonomous", False)
+    )
+
+    config["platform_env_path"] = _prompt_or_default(
+        show_all, "Platform environment path (optional)", ""
+    )
+
+    # Firebase SA path — Settings derives ~/.<slug>-cs/firebase-sa.json on
+    # its own the moment [engine].sa_path is empty; the prompt only ever
+    # reproduced that same computed default, so it is retired outright
+    # rather than moved behind --advanced.
+    config["firebase_sa_path"] = ""
+
+    # --- Phase 6: repo ---
     # Git remote — empty is a legitimate answer (local-only clone). The sole
     # consumer, manifest.toml.j2's [repo].git_remote, is a template-only field
     # (never parsed back into Settings — see manifest.py's module docstring)
     # and renders an empty string as valid TOML, so no downstream prose needs
     # adapting for the empty case.
-    config["repo_git_remote"] = prompt_input(
-        "Git remote URL (empty = local-only, add one later with `git remote add`)", ""
+    config["repo_git_remote"] = _prompt_or_default(
+        show_all,
+        "Git remote URL (empty = local-only, add one later with `git remote add`)",
+        _default(existing, "repo_git_remote", ""),
     )
-    
-    # Destination directory (runtime only — stripped before template-manifest)
-    default_dest = f"{config['company_slug']}-cs"
+
+    # Destination directory (runtime only — stripped before template-manifest).
+    # Re-running inside an already-stamped clone (`existing` non-empty)
+    # defaults to "." (re-stamp in place); a first-time init still defaults
+    # to a new `<slug>-cs` sibling directory.
+    default_dest = "." if existing else f"{config['company_slug']}-cs"
     while True:
         dest = prompt_input("Destination directory", default_dest)
         dest_path = Path(dest).expanduser()
@@ -279,54 +568,28 @@ def collect_config() -> dict:
         break
     config["dest_dir"] = str(dest_path.resolve())
 
-    # Timezone and SMS settings
-    config["timezone"] = prompt_input("Timezone", "Europe/Rome")
-    try:
-        config["sms_hour"] = int(prompt_input("SMS hour", "18"))
-    except ValueError:
-        print("Invalid hour, using default 18")
-        config["sms_hour"] = 18
-        
-    try:
-        config["reminder_max"] = int(prompt_input("Reminder max", "3"))
-    except ValueError:
-        print("Invalid number, using default 3")
-        config["reminder_max"] = 3
-    
-    # Knobs with defaults
-    config["dedup_days"] = int(prompt_input("Dedup days", "30"))
-    config["rate_cap"] = int(prompt_input("Rate cap", "25"))
-    
-    while True:
-        mode = prompt_input("CS triage mode (draft, send)", "draft").lower()
-        if mode in ("draft", "send"): 
-            config["cs_triage_mode"] = mode
-            break
-        else:
-            print("Please enter one of: draft, send")
-            
-    config["dry_run"] = prompt_yes_no("Dry run mode?", default=True)
-    config["autonomous"] = prompt_yes_no("Autonomous mode?", default=False)
-    
-    # Platform env path
-    config["platform_env_path"] = prompt_input("Platform environment path (optional)", "")
-    
-    # Firebase SA path
-    config["firebase_sa_path"] = prompt_input("Firebase service account path", f"~/.{config['company_slug']}-cs/firebase-sa.json")
-    
     # Repo kernel version — the pin `cs init` stamps into the new clone's
-    # requirements.txt. Default = the version of the kernel RUNNING this
-    # wizard (always true by construction). A hand-maintained literal here
-    # went stale twice in one day (2026-08-19: "0.6.1", then "0.7.1" hours
-    # before v0.8.x shipped); never reintroduce one. On a dev checkout with
-    # no installed metadata the prompt simply has no default.
-    config["repo_kernel_version"] = prompt_input(
-        "Repository kernel version", kernel_version_bare() or None
-    )
+    # requirements.txt. No longer a prompt, any mode: a hand-typed literal
+    # here went stale twice in one day (2026-08-19: "0.6.1", then "0.7.1"
+    # hours before v0.8.x shipped) before this became automatic. The only
+    # correct value is the version of the kernel running this wizard,
+    # always available except on a source checkout with no installed
+    # metadata — that edge case now warns instead of looping forever.
+    version = kernel_version_bare()
+    if not version:
+        print(
+            "Warning: could not determine the installed cs-kernel version — "
+            "requirements.txt will pin an empty version; edit the version "
+            "pin in requirements.txt by hand."
+        )
+    config["repo_kernel_version"] = version
 
-    # Repo docs shape (generic = mother/kernel-canonical; as-built = a stamped clone)
-    config["repo_docs_shape"] = prompt_input("Repository docs shape (generic, as-built)", "generic")
-    
+    # Repo docs shape (generic = mother/kernel-canonical; as-built = a
+    # stamped clone). No longer a prompt: every `cs init` output IS a
+    # stamped clone — "generic" only ever describes the kernel's own
+    # reference copy, which this wizard never produces.
+    config["repo_docs_shape"] = "as-built"
+
     # Show summary and confirm
     print("\n" + "=" * 60)
     print("Configuration Summary")
@@ -606,9 +869,7 @@ def install_agent_surfaces(dest_dir: Path, *, ask: bool = True) -> None:
         try:
             answer = input(
                 f"Codex prompts (~/.codex/prompts) already point at another "
-                f"project:\n  {other}\nCodex has ONE prompt directory per "
-                f"user, so only one clone can own /cs-*. Point them at "
-                f"{dest_dir.name}? [y/N]: "
+                f"project:\n  {other}\nPoint them at {dest_dir.name} instead? [y/N]: "
             ).strip().lower()
         except (EOFError, KeyboardInterrupt):
             print("\nNo answer — leaving Codex pointed where it was.")
@@ -679,13 +940,20 @@ def cmd_init(argv=None) -> int:
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog='cs init')
     parser.add_argument('--version', action='version', version=kernel_version())
-    
+    parser.add_argument(
+        '--advanced', action='store_true',
+        help="show every prompt, even ones with a known-good default (an "
+             "existing manifest.toml's own values, or a unique mrcall-desktop "
+             "descriptor's engine identity). Without it, cs init run inside an "
+             "already-stamped clone only re-asks what has no safe default.",
+    )
+
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
         code = e.code
         return code if isinstance(code, int) else (0 if code is None else 1)
-    
+
     # Import cs to find template directory
     try:
         import cs
@@ -693,14 +961,19 @@ def cmd_init(argv=None) -> int:
     except ImportError:
         print("Error: cannot import cs module to find templates", file=sys.stderr)
         return 1
-    
+
     if not template_root.exists():
         print(f"Error: template directory not found at {template_root}", file=sys.stderr)
         return 1
-    
+
+    # An existing manifest.toml in the CURRENT directory means this is a
+    # re-run inside an already-stamped clone, not a first-time init — see
+    # collect_config's docstring for what that changes.
+    existing = load_existing_config(Path.cwd())
+
     # Collect configuration
     try:
-        config = collect_config()
+        config = collect_config(advanced=args.advanced, existing=existing)
         proceed = prompt_yes_no("Proceed with these settings?", default=True)
     except EOFError:
         print(
