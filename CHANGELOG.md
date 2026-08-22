@@ -20,6 +20,26 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.11.0 — 2026-08-22
+
+### Fixed — `cs cron status` only reported half of what stops a send
+- **Why:** the command printed whether the crontab tag was installed, but
+  said nothing about `CS_PAUSE` — an independent kill-switch that blocks
+  every send even while the crontab entry IS installed. The reverse gap is
+  just as misleading the other way: an installed pause file alone says
+  nothing about whether cron is even wired. An operator reading only one
+  of the two signals could reasonably, and wrongly, conclude the operator
+  is fully idle or fully live.
+- **What:** `cmd_cron_status` now reports both signals, independently:
+  `Crontab: installed` / `Crontab: not installed. Run: cs cron install`,
+  and `Pause: active (<path> exists — operator will not send). Run: rm
+  <path> to resume` / `Pause: not active (<path> absent)`, read directly
+  from `settings.pause_path`. The manifest-schedule line is unchanged.
+- **Migration note:** none — output only; no state or config is touched.
+- **Re-collaudo:** **static tier, both clones (`mrcall-cs`, `124-cs`)** —
+  a UI enhancement to one status verb's printed output; zero behavior
+  change to any send path, campaign lifecycle, or permission surface.
+
 ## v0.10.0 — 2026-08-21
 
 ### Added — every agent reads the same commands; `.claude/` is the one source
