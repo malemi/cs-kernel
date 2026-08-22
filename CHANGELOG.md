@@ -20,6 +20,20 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.11.1 — 2026-08-22
+
+### Added — `cs init` wizard refactor documented (hotfix: omitted from v0.11.0)
+- **What:** `cs init` wizard refactored: 6-phase essential-by-default
+  prompting, `--advanced` flag for full control, existing-manifest prefill,
+  MrCall-managed fields hardcoded (SMS, producer adapter, campaign
+  exclusions, cron schedule, drive scope, Firebase SA path, kernel version,
+  docs shape). Behavior unchanged; UI only.
+- **Scope:** init wizard, templates (`manifest.toml.j2`, `.env.example.j2`,
+  `docs/ARCHITECTURE.md.j2`), `project_init.py`.
+- **Re-collaudo:** **static tier, both clones (`mrcall-cs`, `124-cs`)** — no
+  send paths, campaign, gmail_archive, send_mail, auth, or permissions
+  touched.
+
 ## v0.11.0 — 2026-08-22
 
 ### Fixed — `cs cron status` only reported half of what stops a send
