@@ -73,9 +73,8 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
      `list_by_thread→{emails}`, `tasks/campaign.*/drafts.list→bare arrays`,
      `settings.get→{values}`).
    - The accounts registry never mixes another project's mail domain.
-   - Never auto-commit; **stamp-before-send** for pack senders; RATE_CAP +
-     CS_PAUSE + Sent-dedup-first before any real send; escalate on
-     uncertainty.
+   - Never auto-commit; **stamp-before-send** for pack senders; CS_PAUSE +
+     Sent-dedup-first before any real send; escalate on uncertainty.
 
 5. **Ports, not switches.** CRM (`cs/crm/`) and producer (`cs/ingest/`)
    are explicit registries of one-function adapter modules; an unknown

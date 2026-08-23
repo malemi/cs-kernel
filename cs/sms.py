@@ -6,7 +6,7 @@ send-URL); it authenticates with the SAME engine ID token as the RPC
 the endpoint refuses to guess; the id is validated server-side).
 
 Locks live here as defence-in-depth even though the campaign handler
-already gates: ``[sms].enabled``, the ``CS_PAUSE`` file, ``RATE_CAP``.
+already gates: ``[sms].enabled``, the ``CS_PAUSE`` file.
 Gmail-dedup ("did they reply") is the CALLER's job — this module only
 knows a phone number.
 
@@ -33,11 +33,6 @@ def send(settings, phone: str, message: str) -> None:
         raise SmsError("no phone number")
     if settings.pause_path.exists():
         raise SmsError("CS_PAUSE active — global kill-switch")
-    from . import state as state_mod
-
-    n = state_mod.State(settings.db_path).sent_today()
-    if n >= settings.rate_cap:
-        raise SmsError(f"RATE_CAP reached ({n}/{settings.rate_cap}) — stop, do not partial-blast")
 
     from . import auth
 

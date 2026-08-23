@@ -97,7 +97,6 @@ class Campaigns(_Table):
 
 class Knobs(_Table):
     dedup_days: int = 30
-    rate_cap: int = 25
     cs_triage_mode: str = "draft"   # draft | send — bounded by the send-boundary invariant
     dry_run: bool = True
     autonomous: bool = False
@@ -217,7 +216,6 @@ def settings_overrides(m: Manifest) -> dict:
     put("excluded_campaign", m.campaigns.excluded_campaign)
 
     put("dedup_days", m.knobs.dedup_days)
-    put("rate_cap", m.knobs.rate_cap)
     put("cs_triage_mode", m.knobs.cs_triage_mode)
     put("dry_run", m.knobs.dry_run)
     put("autonomous", m.knobs.autonomous)

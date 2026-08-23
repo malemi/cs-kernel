@@ -14,10 +14,12 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.11.1`. Current HEAD status: untagged.** The
-  `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface; what each
-  tag did is in `CHANGELOG.md`, not here. All static tier. `v0.8.0` remains
-  the recorded tag→0.7.1 exception (object pinned immutable).
+- **Latest release tag: `v0.12.0`. Current HEAD status: tagged as `v0.12.0`.**
+  The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface; what
+  each tag did is in `CHANGELOG.md`, not here — static tier through
+  `v0.11.1`; `v0.12.0` removed the `RATE_CAP` send quota (FULL re-collaudo,
+  both clones — neither clone has re-pinned yet). `v0.8.0` remains the
+  recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.

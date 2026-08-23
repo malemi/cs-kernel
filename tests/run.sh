@@ -492,6 +492,16 @@ step "27. every agent reads the same commands (.claude → .opencode, AGENTS.md,
 # → No, v0.5.2 contract), and a symlink-less filesystem still gets copies.
 if "$VENV/bin/python" "$ROOT/tests/test_agent_surfaces.py"; then echo "OK"; else echo "FAIL: agent surfaces drifted"; FAIL=1; fi
 
+step "28. RATE_CAP fully removed (send_draft no longer blocks on it)"
+# 2026-08-23: a per-day send quota did not prevent the failure it existed for,
+# it scaled it down — at the cap the kernel returned a per-contact refusal and
+# the run carried on, so real contacts were skipped in silence (see mrcall-cs
+# docs/briefs/2026-08-23-rate-cap-silently-drops-customers.md). CS_PAUSE plus
+# contradiction-triggered pause replace it; no volume-based throttle remains
+# on any send path. Guards: send_draft() in CS_TRIAGE_MODE=send returns a
+# clean dry-run with no "blocked" key, and _rate_capped() no longer exists.
+if "$VENV/bin/python" "$ROOT/tests/test_campaign_rate_cap_removed.py"; then echo "OK"; else echo "FAIL: RATE_CAP mechanism regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

@@ -264,15 +264,6 @@ def _pause_active(settings) -> bool:
     return settings.pause_path.exists()
 
 
-def _rate_capped(settings) -> Optional[str]:
-    """Reason string if today's real sends already hit RATE_CAP, else None."""
-    from . import state as state_mod
-    n = state_mod.State(settings.db_path).sent_today()
-    if n >= settings.rate_cap:
-        return f"RATE_CAP reached ({n}/{settings.rate_cap}) — stop, do not partial-blast"
-    return None
-
-
 def _record_send(settings, *, contact_id, email, subject, message_id) -> None:
     from . import state as state_mod
     state_mod.State(settings.db_path).record(
@@ -288,7 +279,7 @@ def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
 
     DEDUP FIRST against the Sent archive — if the mail is already there (the
     contact was mailed, even out-of-band) REFUSE and flag reconcile; never
-    re-mail. CS_PAUSE blocks everything; RATE_CAP blocks the send path."""
+    re-mail. CS_PAUSE blocks everything."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
@@ -330,10 +321,7 @@ def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
             out["guard_warnings"] = guard_warnings
         return out
 
-    # send mode (CS_TRIAGE_MODE=send) — autonomous send, rate-capped
-    cap = _rate_capped(settings)
-    if cap:
-        return {"ok": False, "email": email, "blocked": cap}
+    # send mode (CS_TRIAGE_MODE=send) — autonomous send
     if not commit:
         return {"ok": True, "dry_run": True, "email": email, "mode": "send",
                 "would": "cs-SMTP send + mark sent"}
@@ -438,7 +426,7 @@ def send_reminder(settings, contact_id: str, *, commit: bool = False,
                   now: Optional[datetime] = None) -> dict:
     """Fixed-template reminder from the campaign's PACK (template or builders
     → send_mail). Gates: pack required (loud skip), reply-check on Gmail
-    ground truth, once/day + cap, window hour, CS_PAUSE, RATE_CAP.
+    ground truth, once/day + cap, window hour, CS_PAUSE.
 
     STAMP-BEFORE-SEND: the once-per-day dossier stamp is the ONLY dedup a
     reminder has (there is legitimately prior Sent history with the contact),
@@ -465,9 +453,6 @@ def send_reminder(settings, contact_id: str, *, commit: bool = False,
     if _inbound_since(settings, email, after):
         return {"ok": False, "email": email, "next": "handle_reply",
                 "error": "they replied — handle the reply, do NOT remind"}
-    cap = _rate_capped(settings)
-    if cap:
-        return {"ok": False, "email": email, "blocked": cap}
     row = {**d, "email": email}
     try:
         subject, plain, html = pack.build_reminder(row)
@@ -506,7 +491,7 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
 
     Gates: pack required (loud refusal), contact NOT already `sent` (the
     idempotency guard — once the notice goes out the state flips to `sent` and a
-    re-run refuses), CS_PAUSE, RATE_CAP (send path).
+    re-run refuses), CS_PAUSE.
 
     Unlike composed-draft `send_draft`, this does NOT dedup against the whole
     Sent archive: a fixed-template first notice is a deliberate action to a
@@ -566,10 +551,7 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
                       {"contact_id": contact_id, "dossier": dossier})
         return {"ok": True, "email": email, "mode": "draft", "pushed_to": folder}
 
-    # send mode (CS_TRIAGE_MODE=send) — autonomous send, rate-capped
-    cap = _rate_capped(settings)
-    if cap:
-        return {"ok": False, "email": email, "blocked": cap}
+    # send mode (CS_TRIAGE_MODE=send) — autonomous send
     if not commit:
         return {"ok": True, "dry_run": True, "email": email, "mode": "send",
                 "subject": subject, "would": "cs-SMTP send the first notice + mark 'sent'"}
@@ -586,7 +568,7 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
              now: Optional[datetime] = None) -> dict:
     """Fixed-template SMS nudge from the campaign PACK's sms.txt, via the
     [sms] proxy (cs/sms.py). Same gates as send_reminder (pack required,
-    reply-check, once/day, evening window, CS_PAUSE, RATE_CAP) + the SMS
+    reply-check, once/day, evening window, CS_PAUSE) + the SMS
     capability itself must be on. STAMP-BEFORE-SEND, same rationale."""
     c, pack, err = _pack_send_preamble(settings, contact_id)
     if err:
@@ -612,9 +594,6 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
     if _inbound_since(settings, email, after):
         return {"ok": False, "email": email, "next": "handle_reply",
                 "error": "they replied — handle the reply, do NOT nudge"}
-    cap = _rate_capped(settings)
-    if cap:
-        return {"ok": False, "email": email, "blocked": cap}
     row = {**d, "email": email}
     try:
         text = pack.sms_text(row)

@@ -174,12 +174,12 @@ class Settings(BaseSettings):
 
     # --- behaviour knobs ---
     dedup_days: int = 30
-    rate_cap: int = 25
     dry_run: bool = True
     autonomous: bool = False
     # graduated autonomy: free-form engine sends stay DRAFTS until "send";
-    # fixed-template bulk is autonomous under rate_cap. The global kill-switch
-    # is a FILE (<state_dir>/CS_PAUSE), checked by wrappers and send paths.
+    # fixed-template bulk is autonomous (CS_TRIAGE_MODE=send). The global
+    # kill-switch is a FILE (<state_dir>/CS_PAUSE), checked by wrappers and
+    # send paths.
     cs_triage_mode: str = "draft"  # draft | send
     timezone: str = "Europe/Rome"  # market-local windows (cs/_time.py)
     sms_hour: int = 18

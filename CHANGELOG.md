@@ -20,6 +20,50 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.12.0 — 2026-08-23
+
+### Removed — `RATE_CAP`, the per-day send quota that silently dropped contacts
+- **Why:** a quota does not prevent the failure it exists for — it scales it
+  down. If a send loop is working, there is no reason to stop it helping
+  customers; if it is broken, twenty-five wrong emails is an incident just
+  the same as two hundred, and the quota bought nothing but a smaller number
+  on the incident report. The cost was paid every day: at the cap the kernel
+  returned a per-contact refusal and the run carried on, so real contacts
+  were skipped in silence — worst in a discovery-driven loop, where a
+  contact skipped at the cap does not come back with priority tomorrow, it
+  competes with the same cap again, and once it ages out of a producer's
+  trailing window it is never seen again. The mechanism also lied about
+  itself: its own message said "stop, do not partial-blast" and never
+  stopped anything — stopping was left to a caller with no idea it was
+  supposed to. Full rationale in mrcall-cs
+  `docs/briefs/2026-08-23-rate-cap-silently-drops-customers.md`.
+- **What:** `_rate_capped()` and every call site are gone —
+  `campaign.send_draft`, `send_reminder`, `send_first`, `send_sms`
+  (`cs/campaign.py`), and the separate copy in `cs/sms.py`. `[knobs].rate_cap`
+  is removed from the manifest schema (`cs/manifest.py`) and from `Settings`
+  (`cs/config.py`); a `rate_cap` key surviving in an existing clone's
+  `manifest.toml`, or a `RATE_CAP` value surviving in its env, is now inert —
+  ignored at load (`extra="ignore"`), never validated, never read. Nothing
+  replaces it on the send path: the correct response to something anomalous
+  is the kill-switch (`CS_PAUSE`), not a quota — stop everything and tell a
+  human, rather than continuing at a reduced rate. `State.sent_today()` and
+  `_record_send()` — the send ledger the cap read but never owned — are
+  UNCHANGED; dedup is untouched by this release.
+- **Migration note:** no manifest edit is required for an existing clone —
+  a stale `rate_cap =` line in `manifest.toml`, or `RATE_CAP` in its env, is
+  now harmless and can be removed at leisure, never enforced either way.
+  `cs init`'s "Rate cap" wizard prompt and the `rate_cap` line it still
+  writes into a freshly rendered `manifest.toml` are untouched by this
+  release — they are now fully inert on both new and existing clones and
+  are tracked as follow-up cleanup of the kernel's own templates
+  (`cs/project_init.py`, `manifest.toml.j2`, `docs/ARCHITECTURE.md.j2`, and
+  the `.j2` prose still naming `RATE_CAP` as a live guardrail), not shipped
+  in this release.
+- **Re-collaudo: FULL, both clones (`mrcall-cs`, `124-cs`)** — touches the
+  send paths directly (`cs/campaign.py`, `cs/sms.py`), which is FULL
+  regardless of diff size per the standing rule (CLAUDE.md invariant 4 /
+  Tests section).
+
 ## v0.11.1 — 2026-08-22
 
 ### Added — `cs init` wizard refactor documented (hotfix: omitted from v0.11.0)

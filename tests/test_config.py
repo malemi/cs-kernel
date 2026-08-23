@@ -47,7 +47,6 @@ print(json.dumps({
     "producer_adapter": s.producer_adapter,
     "excluded_campaign": s.excluded_campaign,
     "dedup_days": s.dedup_days,
-    "rate_cap": s.rate_cap,
     "timezone": s.timezone,
     "sms_hour": s.sms_hour,
     "reminder_max": s.reminder_max,
@@ -92,7 +91,6 @@ excluded_campaign = "legacy-campaign"
 
 [knobs]
 dedup_days = 21
-rate_cap = 25
 timezone = "Europe/Madrid"
 sms_hour = 19
 reminder_max = 2
@@ -139,12 +137,11 @@ def main() -> int:
         platform_env = Path(td, "platform.env")
         # platform layer: lowest env layer; `export K=V` lines must parse
         platform_env.write_text(
-            "export RATE_CAP=7\n"
             "export SHOPIFY_ACME_STORE_DOMAIN=acme-prefixed.example\n"
             "SHOPIFY_STORE_DOMAIN=bare-fallback.example\n"
         )
         # home layer: beats platform
-        (state / ".env").write_text("RATE_CAP=9\nEMAIL_PASSWORD=sandbox-pw\n")
+        (state / ".env").write_text("EMAIL_PASSWORD=sandbox-pw\n")
         (repo / "manifest.toml").write_text(
             MANIFEST.format(platform_env=str(platform_env))
         )
@@ -182,13 +179,7 @@ def main() -> int:
         assert d["sms_enabled"] is True
         assert d["sms_proxy_base"] == "https://sms.example/api/send"
 
-        # -- env layering: home .env (9) beats platform (7) beats manifest (25) --
-        assert d["rate_cap"] == 9, f"rate_cap layering broken: {d['rate_cap']}"
         assert d["email_password"] == "sandbox-pw"
-
-        # -- process env beats everything --
-        env2 = dict(env); env2["RATE_CAP"] = "11"
-        assert _dump(repo, env2)["rate_cap"] == 11
 
         # -- prefixed shopify key beats the bare fallback --
         assert d["shopify_env_prefix"] == "SHOPIFY_ACME"

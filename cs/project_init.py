@@ -139,7 +139,6 @@ def load_existing_config(target_dir: Path) -> dict:
         "founder_sweep_account": m.engine.founder_sweep.account,
         "crm_adapter": m.crm.adapter,
         "dedup_days": m.knobs.dedup_days,
-        "rate_cap": m.knobs.rate_cap,
         "cs_triage_mode": m.knobs.cs_triage_mode,
         "dry_run": m.knobs.dry_run,
         "autonomous": m.knobs.autonomous,
