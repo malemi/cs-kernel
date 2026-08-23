@@ -14,12 +14,12 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.12.0`. Current HEAD status: tagged as `v0.12.0`.**
-  The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface; what
-  each tag did is in `CHANGELOG.md`, not here — static tier through
-  `v0.11.1`; `v0.12.0` removed the `RATE_CAP` send quota (FULL re-collaudo,
-  both clones — neither clone has re-pinned yet). `v0.8.0` remains the
-  recorded tag→0.7.1 exception (object pinned immutable).
+- **Latest release tag: `v0.12.0`. Current HEAD status: untagged.** The
+  `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
+  tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
+  `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota (FULL re-collaudo,
+  both clones — neither has re-pinned yet). `v0.8.0` remains the recorded
+  tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -44,8 +44,8 @@ what is *current*.
   | `mrcall-cs` | `v0.9.6` | OpenRouter → `z-ai/glm-5.3` | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
   | `124-cs` | `v0.9.6` | Anthropic direct → `claude-sonnet-5` | un-paused, ticking (cron installed) |
 
-  Both are one tag behind `v0.10.0`. **Re-pinning the clones is the
-  operator's own move, not this session's** — stated twice on 2026-08-21,
+  Both pin `v0.9.6`; `v0.12.0` is now available. **Re-pinning the clones is
+  the operator's own move, not this session's** — stated twice on 2026-08-21,
   after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
   Propose, never run it for him.
 
