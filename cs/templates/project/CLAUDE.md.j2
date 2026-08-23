@@ -99,7 +99,12 @@ a dict, not an array; don't assume the wildcard covers them, corrected
 `business <email>` ({% if crm_adapter == 'shopify' %}Shopify Admin GraphQL{% elif crm_adapter == 'starchat' %}StarChat CRM{% else %}CRM{% endif %}) ·
 `dossier <email>` (thread + contacted + tasks + CRM + verdict) ·
 `ask "<q>"` (read-only engine query) · `draft-reply "<msg>"` (**DRAFT only**,
-send-incapable) · `review` · `drive ls|search|cat` (read-only — no write
+send-incapable) ·
+`draft-delete <uid> [--commit]` (remove ONE bad draft from Gmail Drafts — the
+uid comes from `review --json`; moves it to Trash, recoverable for 30 days;
+dry-run unless `--commit`, and it refuses when the lookup matches anything
+other than exactly one draft) ·
+`review` · `drive ls|search|cat` (read-only — no write
 method exists; only `search`'s default path is code-scoped to `{{ drive_scope }}`, `ls`/`cat`
 have no code-level scope filter and rely on what's actually shared with the
 service account, corrected 2026-07-14 doc-critic pass) ·
@@ -114,7 +119,7 @@ operator's own crontab entry) ·
 `--account <name>`.
 
 **`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
-`contacted`, `unanswered`, `dossier`, `draft-reply` — run on {{ email_address }}'s
+`contacted`, `unanswered`, `dossier`, `draft-reply`, `draft-delete` — run on {{ email_address }}'s
 single mail credential, so on any other account they REFUSE (exit 2) rather than
 answering about the wrong mailbox. Use `thread` / `ask` there; both are
 engine-backed and honour the flag.

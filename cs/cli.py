@@ -555,6 +555,22 @@ def cmd_draft_reply(args) -> int:
     return 0
 
 
+def cmd_draft_delete(args) -> int:
+    # Take ONE bad draft out of the review queue. Destructive, so it follows the
+    # campaign verbs' contract exactly: dry-run unless --commit, and the result
+    # dict is printed verbatim (what matched, what would move where) rather than
+    # re-narrated. Exit 1 on a refusal so a script cannot read "nothing matched"
+    # as "deleted".
+    settings = config.load()
+    from . import gmail_drafts
+
+    out = gmail_drafts.delete_draft(
+        settings, uid=args.uid, message_id=args.message_id, commit=args.commit
+    )
+    _print_json(out)
+    return 0 if out.get("ok") else 1
+
+
 def cmd_review(args) -> int:
     settings = config.load()
     from . import review as review_mod
@@ -906,6 +922,26 @@ def main(argv=None) -> int:
     pdr.add_argument("--timeout", type=float, default=600)
     # APPENDS the composed draft into the operator's own Gmail Drafts
     pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
+
+    pdd = sub.add_parser(
+        "draft-delete",
+        help="remove ONE named draft from Gmail Drafts — moved to Trash "
+        "(recoverable 30 days), never expunged; dry-run unless --commit",
+    )
+    pdd.add_argument(
+        "uid",
+        nargs="?",
+        help="IMAP UID of the draft, as printed by `review --json` (gmail_drafts[].uid)",
+    )
+    pdd.add_argument(
+        "--message-id",
+        help="Message-ID: a cross-check on the uid when both are given, and the "
+        "selector of last resort when it is given alone (drafts written by this "
+        "tool carry no Message-ID)",
+    )
+    pdd.add_argument("--commit", action="store_true", help="apply (default: dry-run)")
+    # Writes the operator's own Gmail over IMAP — --account cannot redirect it.
+    pdd.set_defaults(func=cmd_draft_delete, reads_operator_mailbox=True)
 
     prv = sub.add_parser(
         "review",

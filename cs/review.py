@@ -28,7 +28,8 @@ def gather(settings) -> dict:
     out: dict = {}
 
     # 1a. Gmail Drafts — cs-SMTP outreach queued via `campaign queue-draft`
-    #     (IMAP append-only review surface; you review + send these).
+    #     (IMAP review surface; you review + send these). Each row carries its
+    #     `uid` — the handle `draft-delete` takes to remove a bad one.
     try:
         out["gmail_drafts"] = gmail_drafts.list_drafts(settings)
     except Exception as e:  # noqa: BLE001 — a mailbox hiccup must not kill the digest
@@ -93,7 +94,10 @@ def render(d: dict) -> str:
     gdrafts = d.get("gmail_drafts", [])
     L.append(f"Bozze outreach in Gmail Drafts (cs-SMTP, da rivedere + inviare): {len(gdrafts)}")
     for dr in gdrafts:
-        L.append(f"  - {(dr.get('to') or '?'):32.32} {(dr.get('subject') or '(no subj)')[:60]}")
+        # uid first: it is what `draft-delete <uid>` takes, and a draft the
+        # operator wants gone is unnameable without it.
+        L.append(f"  - [uid {(dr.get('uid') or '?'):>6.6}] "
+                 f"{(dr.get('to') or '?'):32.32} {(dr.get('subject') or '(no subj)')[:60]}")
     if d.get("gmail_drafts_error"):
         L.append(f"  ! lettura Gmail Drafts fallita: {d['gmail_drafts_error']}")
 

@@ -111,7 +111,8 @@ cs/
 ├── sms.py           generic SMS via the manifest [sms] proxy
 ├── send_mail.py     the ONLY module allowed to import smtplib
 ├── gmail_archive.py Gmail IMAP ground truth (sent_to/correspondence/inbound_since)
-├── gmail_drafts.py  append-only Gmail Drafts review surface (SMTP-free)
+├── gmail_drafts.py  Gmail Drafts review surface: append, list, delete-one
+│                    (to Trash, never expunge; SMTP-free)
 ├── crm/             port + adapters: starchat, shopify, none
 ├── ingest/          port + adapters: mrcall-tracking, none
 ├── project_memory.py `cs project new`: stamps a project's written memory

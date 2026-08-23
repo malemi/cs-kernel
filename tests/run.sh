@@ -142,7 +142,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply review drive accounts chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply draft-delete review drive accounts chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -501,6 +501,15 @@ step "28. RATE_CAP fully removed (send_draft no longer blocks on it)"
 # on any send path. Guards: send_draft() in CS_TRIAGE_MODE=send returns a
 # clean dry-run with no "blocked" key, and _rate_capped() no longer exists.
 if "$VENV/bin/python" "$ROOT/tests/test_campaign_rate_cap_removed.py"; then echo "OK"; else echo "FAIL: RATE_CAP mechanism regressed"; FAIL=1; fi
+
+step "29. draft-delete removes ONE named draft, to Trash, or refuses"
+# Deleting a draft deletes a person's mail. Guards: dry-run (the default)
+# selects read-only and writes nothing; zero / several / mismatched matches
+# refuse instead of picking one; no \Drafts folder and no \Trash folder both
+# refuse rather than guess or expunge; a commit issues exactly ONE UID MOVE of
+# the identified uid into Trash (recoverable 30 days) and never \Deleted +
+# EXPUNGE; the CLI verb exits non-zero on a refusal and --account refuses it.
+if "$VENV/bin/python" "$ROOT/tests/test_gmail_draft_delete.py"; then echo "OK"; else echo "FAIL: draft-delete guards regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
