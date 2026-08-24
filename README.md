@@ -58,7 +58,7 @@ A complete customer-service operator, not an autocomplete:
    grounded in each correspondent's history — it answers what it can
    defend and brings you the rest with a recommendation
 2. **Campaigns and follow-ups** advanced on schedule, with hard dedup
-   and rate caps
+   against your own Sent folder and one kill-switch that stops everything
 3. **Memory that compounds**: every mail synced and every session worked
    makes the next answer better — no retraining, no CRM data entry
 4. A **cron wrapper** so all of the above runs unattended, plus the
@@ -296,8 +296,11 @@ need it, not more onboarding.
 `cs <verb> --help`. The map — **setup**: `init`, `update`, `login`,
 `accounts`, `cron`; **read-only**: `review`, `plan`, `dossier`, `ask`,
 `whoami`, `thread`, `contacted`, `unanswered`, `tasks`, `business`,
-`drive`, `llm`; **gated writing**: `draft-reply` / `chat` (drafts only,
-never send), `campaign` (Sent-dedup, rate cap, pause file), `tasks
+`drive`, `llm`, `config` (the settings in force and which file declares
+each — ask it rather than reading the manifest and the `.env` chain);
+**gated writing**: `draft-reply` / `chat` (drafts only,
+never send), `campaign` (Sent-dedup, pause file), `draft-delete` (move
+ONE named draft to Trash), `tasks
 create`/`close`, `handled` (this contact was resolved off-email — by phone,
 WhatsApp, in person — so their mail up to that moment stops being raised);
 **plumbing**: `rpc`, `project`.

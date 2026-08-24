@@ -44,8 +44,8 @@ matches.
 ## The hard lines (always true)
 
 - Draft-first: every outgoing mail is reviewed until send mode is
-  deliberately enabled. Dedup (Gmail Sent truth), `RATE_CAP` and the
-  dossier-before-contact rule are not negotiable.
+  deliberately enabled (`cs config` says which is in force). Dedup (Gmail
+  Sent truth) and the dossier-before-contact rule are not negotiable.
 - Kill-switch: `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every
   automated tick; remove the file to resume.
 

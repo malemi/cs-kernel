@@ -151,7 +151,9 @@ dossier (not just the mechanical verdict). Keep the table honest: if a
   (read-only tools auto-execute; destructive ones denied by default).
 - **Clearing an escalation** after you handle it →
   `cs campaign mark <id> --dossier '{"escalated": false}' --commit`.
-- **`RATE_CAP` and dedup are hard.** On the cap, stop and report.
+- **Dedup is hard**, and Gmail Sent is its ground truth. There is no per-day
+  send quota to respect — `RATE_CAP` was removed in kernel `v0.12.0`; `CS_PAUSE`
+  is the stop.
 - **Suppression** → `state.suppress(email, reason)` when the operator
   says "do not contact again".
 - You do not blast, you do not auto-send, you do not commit repo edits.

@@ -61,7 +61,7 @@ dict, not an array). Then prove the loop **without sending**:
 
 The operator tick **already advances every campaign** (`/cs-operator` →
 `/cs-campaign-tick`): if the cron is installed (`/cs-cron`), this
-campaign runs with it, draft-first, inside `RATE_CAP`/dedup/`CS_PAUSE`.
+campaign runs with it, draft-first, inside dedup + `CS_PAUSE`.
 A dedicated cron for one campaign is the exception (odd cadence, its own
 kill-switch) — propose it only if the windows genuinely don't fit, and
 build it as its own wrapper script next to the pack, never by editing

@@ -499,9 +499,11 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     config["dedup_days"] = _prompt_or_default_int(
         show_all, "Dedup days", _default(existing, "dedup_days", 30)
     )
-    config["rate_cap"] = _prompt_or_default_int(
-        show_all, "Rate cap", _default(existing, "rate_cap", 25)
-    )
+    # No "Rate cap" prompt: the per-day send quota was removed from the code in
+    # v0.12.0 (it dropped contacts silently instead of stopping), and a wizard
+    # that keeps asking for a number nothing reads sells control that does not
+    # exist. CS_PAUSE is the stop; `cs config` is where the operator reads what
+    # is actually in force.
 
     if show_all:
         while True:

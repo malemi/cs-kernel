@@ -212,7 +212,6 @@ wire it, draft-first, sends nothing).
   denies the verb, and an item that looks resolved gets ESCALATED, not closed.
 - **NEVER contact a `SELF_UID`/`SELF_EMAIL`** or a suppressed address.
 - **NEVER re-contact within `DEDUP_DAYS`** — `cs contacted` is the check.
-- **Respect `RATE_CAP`** sends/day — stop + log, don't partial-blast.
 - **Never run an engine on a stale profile copy** (`~mrcalld/.zylch/` is truth).
 - **Never auto-commit** — the operator reviews.
 
@@ -230,18 +229,32 @@ wire it, draft-first, sends nothing).
   value written into this document, or into `.env.example`, is a snapshot from
   the day the clone was stamped; the resolution of six layers is the truth.
 - Autonomy knobs: **`CS_TRIAGE_MODE`** (`draft`|`send`; `cs config` prints
-  which is in force and where it is declared),
-  **`CS_PAUSE`** file (`~/.{{ company_slug }}-cs/CS_PAUSE`) = global kill-switch,
-  `RATE_CAP` = {{ rate_cap }}/day. The cron stays draft-only via its wrapper.
+  which is in force and where it is declared) and the
+  **`CS_PAUSE`** file (`~/.{{ company_slug }}-cs/CS_PAUSE`) = global kill-switch.
+  There is no per-day send quota: `RATE_CAP` was removed in kernel `v0.12.0`
+  because a quota drops the contacts past the cap silently. `CS_PAUSE` is the
+  stop, and it stops everything. The `bin/cs_operator_cron.sh` tick stays
+  draft-only via its wrapper's own deny set, whatever `cs_triage_mode` says.
 
-## 7. Rollout
+## 7. Rollout — two phases, and this file will not tell you which one you are in
 
-- **Phase 1 (now)** — operator-in-the-loop, `CS_TRIAGE_MODE=draft`: the cron
-  prepares drafts; the human reviews (`/cs-review` / Gmail Drafts) and approves
-  each send. Free-form auto-send is blocked by config AND permission.
-- **Phase 2** — flip to autonomous-send **deliberately**: design a
-  confidence+scope gate, then `CS_TRIAGE_MODE=send` + a widening of the headless
-  allow-list (the real trust boundary). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+**Run `cs config` and read `cs_triage_mode`.** That is the only trustworthy
+answer, and it names the file the value comes from. A phase written down here
+is a claim about the day this page was stamped, not about today: this clone has
+been through a `cs update` since, an env layer can override the manifest, and a
+sentence saying "Phase 1 (now)" has already talked two headless ticks out of
+sending mail the operator had deliberately authorised.
+
+- **Draft phase** — `cs_triage_mode = draft`. Free-form replies become drafts;
+  the human reviews (`/cs-review` / Gmail Drafts) and approves each send.
+  Auto-send is blocked by config AND by the permission surface.
+- **Send phase** — `cs_triage_mode = send`, plus a widening of the headless
+  allow-list. That widening is the real trust boundary, and it is a deliberate
+  act, not a drift: the mode alone does not grant a headless tick the tools to
+  send. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+Moving between them is one operator decision, applied in `manifest.toml` and
+verified with `cs config` — never inferred from prose, here or anywhere else.
 
 ## 8. Multi-account — analysing this project's other mailbox
 
