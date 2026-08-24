@@ -14,15 +14,18 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.13.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.14.0`. Current HEAD status: tagged as `v0.14.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
   `v0.13.0` (2026-08-24) adds `cs config`, `cs draft-delete` and `cs handled`,
   puts `handled` in the cron wrapper's deny set, lets
   `[campaigns].excluded_campaign` hold more than one campaign, and finishes the
-  `RATE_CAP` removal in the templates. Both are FULL re-collaudo. `v0.8.0`
-  remains the recorded tag→0.7.1 exception (object pinned immutable).
+  `RATE_CAP` removal in the templates; `v0.14.0` (2026-08-24) makes a FINISHED
+  campaign deliver nothing on any of the five send paths, enforcing
+  `[pack].status` and the new typed `[pack].ends_on`. All three are FULL
+  re-collaudo. `v0.8.0` remains the recorded tag→0.7.1 exception (object
+  pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -55,13 +58,13 @@ what is *current*.
   (`manifest.toml` and `requirements.txt` are never `cs update` targets, and
   every conflicted file defaulted to keeping the local version).
 
-- **Both clones' `requirements.lock` is stale and unusable**, found during the
-  2026-08-24 sweep: each resolves `b2f07b2` (`v0.5.1`) from
-  `hahnbanach/cs-kernel`, the ARCHIVED private repo. A venv rebuilt from the
-  lock gets a kernel eight releases old, or fails outright on a repo it cannot
-  read. This is the harness-backlog's 2026-07-25 entry, now worse than when it
-  was filed. Not fixed here — regenerating a lock captures whatever else is in
-  that venv, so it is its own deliberate step.
+- **Both clones' `requirements.lock` is current again**, regenerated on
+  2026-08-24 from each clone's own collaudo'd venv. Until then each resolved
+  `b2f07b2` (`v0.5.1`) from `hahnbanach/cs-kernel`, the ARCHIVED private repo,
+  so a venv rebuilt from the lock got a kernel eight releases old or failed
+  outright — the harness-backlog's 2026-07-25 entry. Nothing yet ENFORCES the
+  regeneration: it stays a hand step in the upgrade procedure, and the file
+  rots again the first time a pin bump ships without it.
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, running an EDITABLE

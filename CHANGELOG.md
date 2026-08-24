@@ -32,6 +32,99 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.14.0 — 2026-08-24
+
+### Added — a finished campaign delivers NOTHING, on any path
+- **Why:** on 2026-08-23 the autonomous `mrcall-cs` operator was handed 26
+  `send_sms` items for a campaign that had ended on 31 July. The SMS would
+  have told 26 real customers that their phone number changes at a moment
+  three weeks in the past. The pack said the campaign was over twice —
+  `status` was never flipped after the campaign closed, and
+  `dates = "2026-07-22..31"` was documented in the loader as "prose: when it
+  ran" — and **nothing in the kernel read either field**. The tick noticed
+  the contradiction itself and wrote `CS_PAUSE`; the kill switch worked, but
+  the work should never have been offered. The sibling pack had said
+  `status = "done"` since June and would have delivered identically, saved
+  only by being excluded BY NAME in that clone's `manifest.toml` — a
+  per-clone workaround for a runner with no notion of a campaign being over.
+- **What:** two declarations in `[pack]` (`cs/campaign_pack.py`), both now
+  enforced. **`status`** is `active` or `done` and nothing else; an
+  unrecognised value is a `PackError` at LOAD, because a field that decides
+  whether a campaign may deliver at all does not get to be guessed. Only an
+  ABSENT key defaults to `active`. **`ends_on`** is a NEW TYPED field: a date
+  past which the pack refuses to deliver **even while `status = "active"`** —
+  the backstop for the day the human forgets, which is the case that actually
+  bit. It takes a TOML date literal (`ends_on = 2026-07-31`), the same date
+  as an ISO string, or the word `"never"` for a campaign with no end;
+  anything else refuses at load, because "cannot parse it, so assume no
+  limit" is exactly how this class of bug survives.
+- **`dates` is deliberately NOT parsed.** It legitimately holds free prose (a
+  live pack reads `continuous from 2026-08`), so a parser over it would
+  either half-work on a send path or refuse a value never meant to be a date
+  and break a running campaign. Typed field and prose field, one job each.
+- **An undeclared end is an advisory, never an expiry.** A pack with no
+  `ends_on` at all still delivers indefinitely — the open-ended onboarding
+  loop must not acquire an expiry by accident — and carries
+  `Pack.undeclared_end_note()`, surfaced by the worklist as `pack_note`. This
+  keeps "nobody declared an end" distinguishable from "this campaign has no
+  end"; only the second is a decision.
+- **Guarded at every delivery site, not just the worklist.** `pending()`,
+  `send_first`, `_pack_send_preamble` (so `send_reminder` + `send_sms`) and
+  the composed-draft `send_draft` / `queue_draft` — each of the last four is
+  reachable with a contact id **without** going through `pending()`, so a gate
+  only on the worklist would have left every one of them firing. The gate
+  compares against the operator's MARKET calendar day (`_market_today`), the
+  same clock the reminder and SMS windows use: a campaign ends at the close of
+  a business day where the business is, not at midnight UTC. A pack that
+  EXISTS but cannot be LOADED now refuses those paths too — an unreadable pack
+  is not evidence that the campaign is running.
+- **`queue_draft` is gated even though it sends nothing.** What it produces is
+  a message addressed to a customer sitting one keystroke from the wire. That
+  is a delivery path, not a report.
+- **Refusals are visible, never silent drops.** `pending()` reports
+  `delivery_blocked` (reason + date) plus `held` (counts per withheld action)
+  instead of quietly shortening the worklist; each sender returns the same
+  sentence with `finished: true`; and `cs campaign packs` prints the
+  EFFECTIVE status, so a pack past its own `ends_on` reads `ended` rather than
+  the `active` its file still claims — a listing that disagrees with the send
+  paths is a trap. `handle_reply` and `reconcile` deliberately SURVIVE a
+  finished campaign: a customer who wrote to us is owed an answer whether or
+  not the campaign that prompted the mail is over, and reconciling a stale row
+  sends nothing.
+- **Stamped surface:** `/cs-campaign` now ASKS when the campaign ends and
+  writes the answer into `ends_on`; `/cs-campaign-tick` is told that
+  `delivery_blocked` is not to be worked around — report the reason, and a
+  campaign you believe is still running is an escalation, never your own call;
+  `campaigns/README.md` gains a "When the campaign is over" section.
+- **Migration note:** nothing breaks. A pack with no `ends_on` and no
+  `status`, or `status = "active"`, behaves exactly as before and delivers;
+  the only new outcome is the `pack_note` advisory. A pack already saying
+  `status = "done"` STOPS delivering, which is the point. Before upgrading,
+  check each clone's `campaigns/*/campaign.toml` for a `status` value that is
+  neither `active` nor `done` (e.g. `"paused"`, `"draft"`, an empty string) —
+  that is now a load-time refusal, and the fix is to write one of the two
+  words.
+
+### Gates
+- Gate 33 (`tests/test_campaign_finished.py`) covers the whole surface:
+  `status` validation at load, `ends_on` accepting a date literal / an ISO
+  string / `"never"` and refusing everything else, `dates` staying unparsed,
+  the last-day boundary, an active pack delivering on all five paths, `done`
+  and expired refusing on all five, a pack with no end date delivering
+  indefinitely, `pending()` holding the sends while keeping the replies, the
+  advisory for an undeclared end, an unloadable pack refusing every delivery
+  path, and a campaign with NO pack behaving exactly as before. 33 gates, all
+  green at the tag.
+- **Re-collaudo: FULL, both clones (`mrcall-cs`, `124-cs`).** It touches
+  `cs/campaign.py` and every send path, which the standing rule (CLAUDE.md
+  invariant 4 / Tests section) escalates to FULL regardless of diff size. It
+  earns the tier on its own terms too: a bug here fails in the direction of
+  refusing a campaign that should deliver, and `mrcall-cs`'s
+  `new-signup-onboarding` pack is mailing real customers hourly — a false
+  refusal is a silent outage of the only running campaign, and a load-time
+  `PackError` on any pack breaks `cs campaign pending` for the whole tick.
+  Neither is observable except by loading the real packs.
+
 ## v0.13.0 — 2026-08-24
 
 ### Added — `cs config`: the settings actually in force, and which file declares each
