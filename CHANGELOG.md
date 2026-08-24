@@ -4,20 +4,22 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (static tier, 2026-08-24): **`v0.16.0` on both
+**Current operational pin** (static tier, 2026-08-24): **`v0.17.0` on both
 clones**. Verified from inside each clone (`requirements.txt`,
 `[repo].kernel_version`, `template-manifest.json`, the ARCHITECTURE row and
-`cs --version` all `v0.16.0`; both venvs resolve the tag to `81f4a9c`,
+`cs --version` all `v0.17.0`; both venvs resolve the tag to `024a62b`,
 recorded in each clone's regenerated `requirements.lock`). Static-tier
-evidence, which is what this tag's two entries call for: `cs config` resolves
-on both and reports NO duplicate declarations, `cs --help` answers on both, and
-the `cs update` output itself shows the release's own claim holding — not one
-`company/` prompt on either clone, every authored slot byte-identical
-afterwards, the stale `company/` keys gone from both ledgers, and the one slot
-`124-cs` lacked created rather than asked about. **The collaudo suites were
-NOT run and no live engine call was made** — the operator waived them; nothing
-here is a record of a passed collaudo. Neither re-pin is committed: both
-working trees are left for the operator's review.
+evidence, which is what these tags call for: `cs config` resolves on both and
+reports NO duplicate declarations, `cs --help` answers on both, and the
+`cs update` output shows each release's own claim holding — not one `company/`
+prompt on either clone across both upgrades, every authored slot byte-identical
+afterwards, the stale `company/` keys gone from both ledgers, and the slots a
+clone lacked created rather than asked about. On the `v0.17.0` pass
+`docs/ARCHITECTURE.md` applied **silently** on `124-cs` (`✓`, no prompt), which
+is the whole point of that tag: the file is generated all the way down, so
+there is no longer an answer to get wrong. **The collaudo suites were NOT run
+and no live engine call was made** — the operator waived them; nothing here is
+a record of a passed collaudo.
 
 **`mrcall-cs` is PAUSED and the pause was NOT cleared** — `cs config` still
 reports `CS_PAUSE PRESENT` after the re-pin. It stopped itself on 2026-08-24
@@ -29,13 +31,21 @@ in that mailbox. That is a live defect on a send path, untouched by this
 release; resuming is the operator's decision and the pause file carries the
 detail. `124-cs` is not paused.
 
-**One overwrite cost content, and it was recovered.** `docs/ARCHITECTURE.md` is
-template-owned, but its last section is hand-authored by the template's own
+**One overwrite cost content; `v0.17.0` is the fix.** `docs/ARCHITECTURE.md`
+was template-owned with a last section hand-authored by the template's own
 declaration ("This section is NOT stamped"). Taking the new render on `124-cs`
-— the right call for the stamped table above it — deleted 59 authored lines;
-they were restored from git in the same session and the file now carries both
-halves. The prompt on that file is a trap with a correct-looking answer, and it
-will recur at the next release that touches the template.
+during the `v0.16.0` re-pin — the right call for the stamped table above it —
+deleted 59 authored lines. They were restored from git the same session, then
+migrated verbatim into `company/clone-notes.md` when `v0.17.0` removed the
+section from the template. No clone file is half-generated any more.
+
+**A skipped conflict is never offered again.** Answering `N` to
+"modified locally AND template changed" still records today's render checksum
+in `template-manifest.json`, so the next `cs update` compares equal, reports
+nothing, and the clone keeps a stale file for ever with no further prompt.
+Seen live on `mrcall-cs`: one `N`, and the follow-up run said `0 updated, 0
+skipped, 0 added` on a file that was genuinely behind. Not fixed here — the
+file was brought to the current render by hand. Real defect, open.
 
 `v0.5.2` and every earlier tag mint the auth token from a locally-held
 Firebase service-account credential (`firebase-sa.json`) that only the
