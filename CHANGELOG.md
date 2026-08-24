@@ -53,6 +53,166 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.18.0 — 2026-08-24
+
+### Why one release does two opposite things
+
+This tag both DELETES configuration and ADDS it, and that is deliberate.
+
+A manifest field has three lives — it can exist in the schema
+(`cs/manifest.py`), be stamped into a clone's `manifest.toml` by the
+template, and be read by code. Nothing in the kernel forced the three to
+agree, so they drifted in both directions at once. Five fields were stamped
+and read by nothing: a knob the operator can see and turn with no effect is
+the worst kind of interface, because it advertises control that does not
+exist. Three fields were read on every tick and stamped nowhere: working
+machinery the operator cannot discover, because nothing in their
+`manifest.toml` says it is there.
+
+Shipping those as two releases would have described one inconsistency twice
+and left the file half-true in between. The single sentence this release is
+meant to leave with a reader is: **`manifest.toml` is now the list of knobs
+that exist.** Removals and additions are the same edit seen from two sides.
+
+### Removed — five stamped fields that no code path read
+
+- **`[knobs].dry_run` and `[knobs].autonomous`.** Neither ever gated
+  anything. Dry-run is the `commit` argument on every send function, fed by
+  the `--commit` CLI flag; the `dry_run` keys returned throughout
+  `cs/campaign.py` are output labels, not reads of a setting. Autonomy is
+  `cs_triage_mode` plus the clone's `.claude/settings.json` permission
+  surface. An operator who set `dry_run = false` expecting live sends got
+  nothing, and `cs config` reported a control that does not exist.
+- **`[repo].kernel_version`.** The `Manifest` model has no `[repo]` field, so
+  the table is dropped at load; `_load_existing` reaches into the raw TOML for
+  `git_remote` and nothing else. A version claim no code reads and no gate
+  verifies is right only when somebody remembers. `requirements.txt` is the
+  pin and the only answer worth reading. `docs/release-procedure.md` loses the
+  row telling you to maintain it by hand.
+- **`[skills]` and `[extensions]`.** Stamped as fully hardcoded literals —
+  not even a Jinja variable in them — with no field on the model and no
+  reader. `[skills]` in particular read as a live indirection layer pointing
+  at the `company/*.md` slots. It was not one: repointing a path there
+  changed nothing.
+- **`[campaigns].posture_note`.** Prose that reached one rendered line and no
+  code. Its sibling `excluded_campaign` is what actually enforces a carve-out,
+  and that is untouched.
+
+Also gone, invisible to operators: three render variables `cs project new`
+computed that no `project_memory` template consumes
+(`company_display_name`, `email_address`, `accounts_default`), and the
+`firebase_sa_path` **init_data key**, which no `.j2` file reads because
+`manifest.toml.j2` writes `sa_path = ""` as a literal. The **Settings field**
+`firebase_sa_path` is untouched and still loads the service-account
+credential for `cs/drive.py` and `cs/resolve.py`.
+
+### Added — the three knobs the code reads on every tick
+
+`[knobs].system_senders`, `[knobs].send_guard_min_chars` and
+`[knobs].send_guard_banned_phrases` are now stamped, with comments saying
+what they do. All three are read by live code — `cs/unanswered.py` excludes
+system senders from the open-work sweep, `cs/send_guard.py` reads both guard
+knobs — and until now were settable only through their env aliases.
+
+The proof that this was a real gap rather than a tidy-up: **both clones
+already declare `CS_SYSTEM_SENDERS` in their state-dir `.env`** and neither
+had it anywhere in `manifest.toml`. The knob was in use and invisible in the
+file the charter calls the one place values change.
+
+Each is stamped at the kernel default, which means a clone stamped today
+pins that default: if a future release changes it, this clone keeps the old
+value until the operator edits the line. That is the same property
+`dedup_days`, `sms_hour` and `reminder_max` have always had, and it is the
+price of the value being visible at all.
+
+`_load_existing` now carries all three, so re-running `cs init` in an
+existing clone cannot silently reset them. That failure was real:
+`posture_note` held genuine prose on both clones while `collect_config`
+hardcoded it back to `""` and `_load_existing` did not return it at all.
+
+### Not done — two proposals refused, with the reason
+
+Two fields were proposed for removal in the same audit and are **kept**.
+`founder_sweep_enabled` and `platform_env_path` were called dead by grepping
+for attribute access on the settings object. That method stopped being
+sufficient in `v0.13.0`: `cs/config_report.py` reads every field in
+`type(settings).model_fields` in a loop, so no field is reader-less any more
+and the question becomes whether what it reports is TRUE. For these two it
+is — a founder sweep that is really on or off, an env layer `124-cs` really
+loads through `[env].platform_env_path`. For `dry_run` it was not. That is
+the line this release draws, and it is why the two lists differ.
+
+`platform_env_path` additionally must stay in `settings_overrides`:
+`env_file_chain` reads it out of the overrides dictionary, not off Settings,
+and dropping it would silently delete a configuration layer from a live
+clone.
+
+Two further findings from the same audit are refuted and must not be
+re-proposed. **`sms_proxy_base` is not orphaned** — it is read at
+`cs/sms.py:30`, `:43` and `cs/campaign.py:708`, and the mother clone holds a
+real endpoint. **`repo_docs_shape == 'generic'` is not a dead branch** — it
+is the live discriminator between the mother clone and a company instance,
+holds a different value on each of the two fixtures, and branches
+`README.md.j2`, `CLAUDE.md.j2` and `docs/ARCHITECTURE.md.j2`. Acting on
+either would break the mother clone.
+
+There is one real defect nearby, filed and NOT fixed here: `cs init` prompts
+"Enable SMS?" while `manifest.toml.j2` hardcodes `proxy_base = ""`, so
+answering yes produces a manifest whose first send raises
+`SmsError("[sms].proxy_base not set in manifest.toml")`. Loud and
+actionable, but the wizard should not be able to emit it.
+
+### Fixed — `cs update` rendered two files it was about to leave alone
+
+`requirements.txt` and `manifest.toml` are clone-owned; the loop rendered
+each and discarded the result. That render runs against the clone's frozen
+`init_data`, so the moment a template grows a variable an older clone never
+froze — exactly what this release does to `manifest.toml.j2` — it raises,
+and every `cs update` prints `! failed to render manifest.toml.j2` about a
+file it was never going to write. Both skips now sit above the render.
+
+### Migration — no clone needs editing
+
+A `dry_run`, `autonomous`, `posture_note`, `kernel_version`, `[skills]` or
+`[extensions]` line surviving in an existing clone's `manifest.toml` is
+inert: `Settings` and every manifest table are `extra="ignore"`. `cs update`
+never re-renders `manifest.toml`, so nothing rewrites those files; delete
+the dead lines at leisure, or at the next re-pin.
+
+One visible change to existing clones: `docs/ARCHITECTURE.md` is re-rendered,
+so its Knobs row loses the `dry_run` / `autonomous` cells and the
+**Campaign posture** line disappears. On `mrcall-cs` that line was already
+publishing a stale sentence — the frozen `init_data` held an older note than
+`manifest.toml` did — which is the argument against the field rather than for
+it. A clone that wants campaign-governance prose in its docs should put it in
+a clone-authored `company/` slot, which is read by the operator agent, not in
+a manifest key nothing reads.
+
+Frozen `init_data` keys for the removed fields stay in
+`template-manifest.json` and are harmless: Jinja tolerates an unused render
+variable, and no template references them any more.
+
+### Re-collaudo — STATIC on both clones
+
+Not FULL. The six triggers in `CLAUDE.md` are send paths, `campaign`,
+`gmail_archive`, `send_mail`, the auth boundary and the permission surface.
+None is touched: `cs/campaign.py`, `cs/sms.py`, `cs/send_mail.py`,
+`cs/send_guard.py`, `cs/gmail_archive.py`, `cs/auth.py` and
+`.claude/settings.json.j2` are byte-identical in this release. Not `read`
+either — no engine RPC, no live call can differ.
+
+The two send-guard knobs are newly STAMPED but their stamped values are the
+kernel defaults, and the env layer still outranks the manifest, so no
+existing clone's guard changes: existing clones never get a re-rendered
+`manifest.toml` at all.
+
+Static tier here means one thing beyond the usual `cs config` / `cs --help`
+checks, and it is the reason the tier is argued rather than assumed:
+`cs update`'s render-and-skip ORDER changed, so the re-stamp itself must be
+observed — `docs/ARCHITECTURE.md` applied, `manifest.toml` and
+`requirements.txt` reported as clone-owned and left alone, and not one
+`company/` prompt.
+
 ## v0.17.0 — 2026-08-24
 
 ### Fixed — `docs/ARCHITECTURE.md` carried hand-authored prose inside a template-owned file

@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.17.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.18.0`. Current HEAD status: tagged as `v0.18.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -37,7 +37,15 @@ what is *current*.
   `v0.17.0` (2026-08-24) finishes that job on the last file that needed it:
   `docs/ARCHITECTURE.md` is generated all the way down, and the section it used
   to declare "NOT stamped" moves to the new `company/clone-notes.md` slot —
-  **static tier, suites waived by the operator, not run**. `v0.8.0` remains the
+  **static tier, suites waived by the operator, not run**. `v0.18.0`
+  (2026-08-24) makes `manifest.toml` the list of knobs that exist: six stamped
+  fields nothing read are gone (`[knobs].dry_run`, `[knobs].autonomous`,
+  `[repo].kernel_version`, `[skills]`, `[extensions]`,
+  `[campaigns].posture_note`), and the three the code reads on every tick —
+  `system_senders` and both send-guard knobs — are stamped for the first time.
+  `founder_sweep_enabled` and `platform_env_path` were proposed for the same
+  cut and KEPT, because what `cs config` reports for them is true.
+  **Static tier, suites waived by the operator, not run.** `v0.8.0` remains the
   recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
