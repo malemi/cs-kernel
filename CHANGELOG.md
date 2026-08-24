@@ -4,27 +4,33 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (FULL tier, 2026-08-24): **`v0.13.0` on both
-clones** — the split that ran from 2026-08-21 is closed. Verified from inside
-each clone (`requirements.txt`, `[repo].kernel_version`, `cs --version` all
-`v0.13.0`; uv resolved the tag to `b91aeb6` in both venvs). FULL-tier
-evidence recorded in each clone's re-pin commit: live `cs whoami` on both
-engines, `cs config` / `cs plan` / `cs unanswered` / `cs review` / bare
-`cs handled` read-only, `cs draft-delete <bad-uid>` refusing cleanly without
-`--commit`, and `mrcall-cs`'s own 113 `ext/` integration tests green.
-`bin/cs_operator_cron.sh` changed on both by exactly the six `handled` deny
-entries and their comment, removing nothing (`mrcall-cs`'s clone-specific
-`bin/mrcall_business.py` deny was re-applied on top of the new render).
-Nothing was sent on either clone.
+**Current operational pin** (FULL tier, 2026-08-24): **`v0.14.0` on both
+clones**. Verified from inside each clone (`requirements.txt`,
+`[repo].kernel_version`, `cs --version` all `v0.14.0`; both venvs resolve the
+tag to `4cef215`, recorded in each clone's regenerated `requirements.lock`).
+FULL-tier evidence in each clone's re-pin commit: live `cs whoami` on both
+engines, `cs config` reporting NO duplicate declarations on either, `cs plan`
+/ `cs unanswered` / `cs campaign packs` / `cs campaign pending` / bare
+`cs handled` read-only, `cs draft-delete <uid>` dry-run without `--commit`,
+and `mrcall-cs`'s own 113 `ext/` integration tests green. On `mrcall-cs` the
+three live packs load under the new gates: both Centralix packs return a
+dated refusal on every delivery path, `new-signup-onboarding` declares
+`ends_on = "never"` and delivers with no advisory. `bin/cs_operator_cron.sh`
+and `.claude/settings.json` are byte-identical on both clones — this release
+does not touch the permission surface, so `mrcall-cs`'s clone-specific
+`bin/mrcall_business.py` deny needed no re-application. Nothing was sent on
+either clone.
 
-**Both operators are PAUSED and neither pause was cleared by the re-pin.**
-`mrcall-cs`: `~/.mrcall-cs/CS_PAUSE` predates this work — its own tick wrote
-it on 2026-08-23 rather than SMS 26 customers about a date three weeks past,
-which is the incident the `excluded_campaign` list in this release addresses;
-un-pausing a production sender is the operator's decision, so the file was
-left byte-identical. `124-cs`: paused for the venv swap; its collaudo passed
-and the file now says so, but the session could not delete it (no `rm`
-permission), so `rm ~/.124-cs/CS_PAUSE` is owed.
+**`mrcall-cs` is PAUSED and the pause was NOT cleared.** Its own 12:50 tick —
+which had started before the re-pin began, under `v0.13.0` — stopped and wrote
+`~/.mrcall-cs/CS_PAUSE` because `cs chat --allow send_draft` ignored the draft
+id it was given twice and sent a different draft to a different recipient. The
+content that went out was correct for the address that received it, so no
+customer got the wrong mail, but the mechanism picks a draft on its own and
+nine drafts were sitting in that mailbox. That is a live defect on a send path,
+unrelated to this release; resuming is the operator's decision and the pause
+file carries the detail. `124-cs` was paused for the venv swap only; its
+collaudo passed and its pause was cleared.
 
 `v0.5.2` and every earlier tag mint the auth token from a locally-held
 Firebase service-account credential (`firebase-sa.json`) that only the

@@ -47,10 +47,10 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.13.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-23 17:02 by its own tick (stale batch2 campaign about to SMS 26 people); three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.13.0` | Anthropic direct → `claude-sonnet-5` | **PAUSED** for the re-pin; collaudo passed, `rm ~/.124-cs/CS_PAUSE` owed. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.14.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.14.0` | Anthropic direct → `claude-sonnet-5` | Running. Paused for the re-pin only; collaudo passed and the pause was cleared. Cron installed, 2-hourly, draft-only |
 
-  Both pin `v0.13.0` as of 2026-08-24, FULL tier, evidence in each clone's
+  Both pin `v0.14.0` as of 2026-08-24, FULL tier, evidence in each clone's
   re-pin commit and in the CHANGELOG's operational-pin marker. **Re-pinning a
   clone is the operator's own move unless he asks for it** — stated twice on
   2026-08-21, after a `cs update` overwrite cost him a hand-authored
@@ -97,6 +97,20 @@ what is *current*.
 
 ## Unresolved
 
+- **`cs update` asks about a template conflict ONCE and then forgets it for
+  ever.** `cs/project_update.py:528` records the newly rendered checksum into
+  `file_checksums` before any branch runs, so declining the overwrite (or
+  hitting the no-tty default, which keeps the local file) still stores "the
+  clone is in sync with this render". On the next run the `rendered_checksum
+  == old_tpl_checksum` short-circuit at `:535` skips the file entirely and the
+  operator is never asked again — the clone keeps a stale template-owned file
+  with no way for `cs update` to notice. It bit both clones at the `v0.14.0`
+  re-pin: each kept a `campaigns/README.md` that was one release behind AND
+  still carried an untranslated Italian sentence. Recovering it needed the
+  stored checksum to be forced back to the clone file's own hash so the
+  "unmodified, safe to overwrite" branch would fire. The fix is to record the
+  rendered checksum only when the render is actually WRITTEN, and to keep the
+  previous value when the operator declines.
 - **`124-cs` bills an undeclared account.** Its `.env` carries no provider
   key, yet `llm_available()` is True: `ANTHROPIC_API_KEY` reaches it from
   the PROCESS environment (inherited shell), so its guard runs on Anthropic
