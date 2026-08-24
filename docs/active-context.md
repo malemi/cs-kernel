@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.15.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.16.0`. Current HEAD status: tagged as `v0.16.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -28,8 +28,13 @@ what is *current*.
   stamped clone index from 290 to 187 lines so a clone's own doc gate passes
   again, and adds `docs/sessions/` to this repo's `.gitignore` and to the
   clone template's — **static tier, and the suites were waived by the
-  operator, not run**. `v0.8.0` remains the recorded tag→0.7.1 exception
-  (object pinned immutable).
+  operator, not run**. `v0.16.0` (2026-08-24) takes one company's operational
+  facts out of the project templates — the `company/` prose slots are now
+  instructions rather than the mother clone's own internals — extends the grep
+  gate to the bare brand and adds a shape contract on those slots, and makes
+  `company/**` create-if-missing so `cs update` never prompts about authored
+  prose again; **static tier, suites waived by the operator, not run**.
+  `v0.8.0` remains the recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.

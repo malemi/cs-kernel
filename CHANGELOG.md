@@ -38,6 +38,87 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.16.0 — 2026-08-24
+
+### Fixed — one company's operational facts shipped inside the project templates
+- **Why:** the charter forbids a company literal anywhere in `cs/`, and
+  `cs/templates/project/` is inside `cs/`. Its `company/*.md.j2` slots are
+  stamped into every clone and then authored per company — and what they
+  carried was the mother clone's own operational record. `claude-extra.md.j2`
+  was 23 lines of one company's internal configurator API, complete with base
+  URLs, endpoint table and two dated "verified live on production" claims.
+  `operator-out-of-scope.md.j2` told every clone's unattended operator not to
+  touch a legacy migration cron and not to perform a specific Friday
+  `service_number` cutover. `campaign-product-notes.md.j2` was a single
+  Italian line. Two more of the same class sat outside `company/`:
+  `cs-triage-mail`'s two worked examples named four real customers of the
+  mother clone, and the stamped `CLAUDE.md` named that company's engine
+  service-user home. Every clone of every other company received all of it as
+  fact.
+- **What the gate missed, and why:** `cs/templates/` was never excluded from
+  the scan — it is walked, and both existing approvals in
+  `tests/reviewed_literals.txt` are template files. The wordlist simply had no
+  term for any of this. It carried the mailbox *domain* and never the bare
+  brand, so `<brand>-agent`, `/api/<brand>/` and `~<brand>d/` all greped clean;
+  and no wordlist can describe "the Friday cutover". The gate now has two more
+  legs. It greps the **bare brand**, with the charter's own three
+  shared-infrastructure forms (the mrcall-desktop engine, the mrcall-tracking
+  adapter id, the `mrcall.search_businesses` RPC method) stripped **by
+  pattern** before judging — ~50 lines identical for every clone, which line-by
+  -line entries would only bury the real proposals in and which would go stale
+  on the next reword; every other use of the brand still reaches the operator
+  as a proposal. And a new **gate 1b** holds `company/` slots to a shape
+  instead of a vocabulary: each must carry a `## What to write here` section,
+  and none may carry a dated claim, a named weekday, a URL, a mail address, an
+  API path or another user's home. Run against the pre-fix templates, today's
+  gate reports 10 unreviewed literals and 17 slot violations and exits 1.
+- **What else changed:** all eight slots are rewritten as instructions — what
+  to write there, which skill reads it, and what goes wrong while it is empty.
+  Three of them (`operator-out-of-scope`, `campaign-product-notes`,
+  `drive-visible-note`) were orphans that nothing read, so `/cs-operator` step
+  5 and `/cs-campaign-tick` now point at them; that pointer is also what
+  replaced the company facts those two skills had hardcoded. No new per-line
+  approval was needed in `tests/reviewed_literals.txt`: every literal was
+  removed rather than admitted.
+- **Migration:** none to run. `cs update` restamps nothing under `company/`
+  (see the entry below), so a clone that has already authored its slots keeps
+  them untouched; a clone that never authored one now receives instructions
+  where it used to receive another company's facts.
+- **Re-collaudo:** **static tier, every clone.** The only observable change is
+  stamped prose plus the `cs update` output. No send path, no `campaign`, no
+  `gmail_archive`, no `send_mail`, no auth boundary, no permission surface.
+  **The suites were NOT run for this tag** — the operator waived them; the
+  tier above is the requirement, not a record of a passed collaudo.
+
+### Changed — `company/**` is create-if-missing, never overwritten, never prompted about
+- **Why:** the operator is *told* to author those slots, so an authored slot
+  diverges from its stored checksum permanently. They were checksum-tracked
+  like any other render, which meant every release that reworded one asked
+  "modified locally AND template changed. Overwrite? [y/N/diff]" about all of
+  them, in every clone — a prompt whose only correct answer is always No,
+  which is exactly the kind an operator learns to answer without reading, and
+  where one wrong "y" destroys prose no template can regenerate. This release,
+  which rewords all eight, is the one that would have asked eight times per
+  clone: verified against a copy of a live clone's real manifest and authored
+  slots, old logic + new templates gives 8 prompts, the fix gives 0.
+- **What:** `CLONE_AUTHORED_PREFIXES` (`cs/project_init.py`) marks the class.
+  `cs update` creates a slot only when the clone has none, and otherwise leaves
+  it alone silently — `-v` reports what it left, since a file that was not
+  touched is not an event. `cs init` re-run in place (the documented restamp,
+  `dest_dir "."`) no longer overwrites an authored slot either, which it did
+  silently before. Neither writes a `company/` path into `file_checksums`.
+  Same class as `requirements.txt` and `manifest.toml`.
+- **Migration:** none. The stale `company/` checksum entries both clones carry
+  are dropped from `template-manifest.json` on the next `cs update`, and
+  nothing reads them before that — the new branch returns before the stored
+  checksums are consulted at all.
+- **Re-collaudo:** **static tier, every clone** — the evidence is the `cs
+  update` output itself (no `company/` prompt, authored slots byte-identical,
+  no `company/` keys left in `template-manifest.json`). MINOR rather than
+  PATCH because a verb that stops prompting is observable, and an operator
+  reading "patch" is entitled to expect nothing observable changed. **The
+  suites were NOT run for this tag** — the operator waived them.
+
 ## v0.15.0 — 2026-08-24
 
 ### Changed — the clone index is an index again
