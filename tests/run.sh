@@ -270,7 +270,9 @@ step "17. deny-enumeration gate (six command-text spellings, same deny)"
 # settings.json.j2 membership under permissions.deny (and nothing
 # chat/send-draft-shaped under permissions.allow), and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
-# equality against the 24 deny entries + 4 keeps.
+# equality against the 30 deny entries + 4 keeps. `handled` is in that list not
+# because it sends, but because it SILENCES: it declares a contact resolved
+# off-email, and a tick reading untrusted inbound must never be talked into it.
 CRON_TPL="$ROOT/cs/templates/project/bin/cs_operator_cron.sh.j2"
 SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
 if ! python3 - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
@@ -286,7 +288,7 @@ SPELLINGS = [
     "python3 -m cs",
     "cs",
 ]
-VERBS = ["chat", "rpc chat", "campaign send-draft", "rpc settings.update"]
+VERBS = ["chat", "rpc chat", "campaign send-draft", "rpc settings.update", "handled"]
 
 problems = []
 
@@ -352,7 +354,7 @@ if problems:
         print(p)
     sys.exit(1)
 
-print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 28-entry order verified")
+print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 34-entry order verified")
 sys.exit(0)
 PYEOF
 then
