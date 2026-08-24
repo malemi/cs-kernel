@@ -473,31 +473,15 @@ def cmd_update(args: list[str]) -> int:
         str_rel = str(rel)
 
         # Strip .j2 extension for the output path
-        if rel.name.endswith(".j2"):
-            out_name = rel.name[:-3]
-            out_rel = rel.parent / out_name
-            # Render template
-            template_str = tpl_file.read_text()
-            try:
-                env = jinja2.Environment(
-                    undefined=jinja2.StrictUndefined,
-                    trim_blocks=True,
-                    lstrip_blocks=True,
-                )
-                env.filters["toml_quote"] = toml_quote
-                tpl = env.from_string(template_str)
-                # dest_dir is runtime-only; never a template var
-                render_vars = {k: v for k, v in init_data.items() if k != "dest_dir"}
-                rendered = tpl.render(**render_vars)
-            except Exception as e:
-                print(f"  ! failed to render {rel}: {e}", file=sys.stderr)
-                continue
-        else:
-            out_rel = rel
-            rendered = tpl_file.read_text()
-
+        out_rel = rel.parent / rel.name[:-3] if rel.name.endswith(".j2") else rel
         str_out_rel = str(out_rel)
 
+        # The two clone-owned files are decided BEFORE the render, not after.
+        # Rendering a template whose output is discarded is not free: it is
+        # evaluated against the clone's FROZEN init_data, so a template that
+        # grows a variable an older clone never froze fails here — printing
+        # "! failed to render manifest.toml.j2" on every update, about a file
+        # cs update was never going to write.
         if str_out_rel == "requirements.txt":
             # requirements.txt is operational state, not a template render
             # target: "upgrades are a pin bump" (CLAUDE.md, Versioning &
@@ -524,6 +508,26 @@ def cmd_update(args: list[str]) -> int:
             if verbose:
                 print("  · manifest.toml is yours (your company settings) — left alone")
             continue
+
+        if rel.name.endswith(".j2"):
+            # Render template
+            template_str = tpl_file.read_text()
+            try:
+                env = jinja2.Environment(
+                    undefined=jinja2.StrictUndefined,
+                    trim_blocks=True,
+                    lstrip_blocks=True,
+                )
+                env.filters["toml_quote"] = toml_quote
+                tpl = env.from_string(template_str)
+                # dest_dir is runtime-only; never a template var
+                render_vars = {k: v for k, v in init_data.items() if k != "dest_dir"}
+                rendered = tpl.render(**render_vars)
+            except Exception as e:
+                print(f"  ! failed to render {rel}: {e}", file=sys.stderr)
+                continue
+        else:
+            rendered = tpl_file.read_text()
 
         if is_clone_authored(str_out_rel):
             # A company prose slot: create it if the clone has none, then never
