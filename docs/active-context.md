@@ -74,10 +74,11 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.17.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. The pause is still set and was NOT cleared by the re-pin. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.17.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.19.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. The pause is still set and was NOT cleared by the re-pin. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.19.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
-  Both pin `v0.17.0` as of 2026-08-24, static tier. **Re-pinning a
+  Both pin `v0.19.0` as of 2026-08-24; that tag's tier is FULL and its suite
+  was waived, not run. **Re-pinning a
   clone is the operator's own move unless he asks for it** — stated twice on
   2026-08-21, after a `cs update` overwrite cost him a hand-authored
   `manifest.toml`. This round was asked for, with a per-file decision given in

@@ -4,33 +4,44 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (static tier, 2026-08-24): **`v0.18.0` on both
-clones**. Verified from inside each clone: `requirements.txt`,
-`template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.18.0`, and both venvs resolve the tag to
-`f7aafdd`, recorded in each clone's regenerated `requirements.lock`.
-`[repo].kernel_version` is no longer on that list — `v0.18.0` removed the
-field, so the pin is `requirements.txt` and the claims derived from it, and
-there is one fewer hand-maintained number to go stale.
+**Current operational pin** (2026-08-24): **`v0.19.0` on both clones**.
+Verified from inside each clone: `requirements.txt`, `template-manifest.json`
+`init_data`, the ARCHITECTURE "Kernel pin" row and `cs --version` all say
+`v0.19.0`, and both venvs resolve the tag to `13a91f1`, recorded in each
+clone's regenerated `requirements.lock`. `[repo].kernel_version` is no longer
+on that list — `v0.18.0` removed the field, so the pin is `requirements.txt`
+and the claims derived from it, and there is one fewer hand-maintained number
+to go stale.
 
-Static-tier evidence, which is what this tag calls for. `cs config` resolves
-on both clones and reports NO setting declared in more than one place; on
-`124-cs` it still shows `~/124/.env.local` as layer 3 of six, which is the
-check that matters here because the same audit proposed deleting the key that
-builds that layer. The `cs update` output shows this release's own claim
-holding on both: `docs/ARCHITECTURE.md` applied **silently** (`✓`, no
-prompt), `manifest.toml` and `requirements.txt` reported as clone-owned and
-left alone, not one `company/` prompt, and — the point of the render-order
-fix — **no `! failed to render manifest.toml.j2`**, even though neither
-clone's frozen `init_data` carries the three knob keys the template gained.
+**`v0.19.0`'s tier is FULL and the suite was NOT run.** The operator waived
+it. That is a real gap, recorded rather than dressed up: this tag changes send
+capability and shipped without the collaudo its own entry demands. The
+targeted checks that WERE made, on each clone's real manifest through the
+installed kernel: `124-cs` — the clone the change had to not break — still
+reports `sms_enabled = False` and `sms.send` still refuses with "[sms].enabled
+is false"; `mrcall-cs` resolves to the same endpoint it always declared
+explicitly; the pre-`v0.19.0` stamped shape (`enabled = true` with
+`proxy_base = ""`) now resolves to the working endpoint instead of failing;
+and an endpoint blanked in the env layer still trips the guard, with the new
+wording. No live engine call was made, and no SMS was sent.
 
-Both clones also had the six dead fields deleted from their own
+`v0.18.0`'s own static-tier evidence, unchanged: `cs config` resolves on both
+clones with NO setting declared in more than one place, and on `124-cs` still
+shows `~/124/.env.local` as layer 3 of six — the check that matters, because
+the same audit proposed deleting the key that builds that layer. Across both
+upgrades the `cs update` output held: `docs/ARCHITECTURE.md` applied
+**silently** (`✓`, no prompt), `manifest.toml` and `requirements.txt` reported
+as clone-owned and left alone, not one `company/` prompt, and **no
+`! failed to render manifest.toml.j2`** even though neither clone's frozen
+`init_data` carries the knob keys the template gained.
+
+Both clones also had `v0.18.0`'s six dead fields deleted from their own
 `manifest.toml`, with `posture_note` kept as a comment rather than destroyed:
 on `mrcall-cs` that sentence is the only written explanation of why the two
-Centralix campaigns are excluded.
-
-**The collaudo suites were NOT run and no live engine call was made** — the
-operator waived them; nothing here is a record of a passed collaudo.
+Centralix campaigns are excluded. `mrcall-cs` keeps its explicit
+`[sms].proxy_base` declaration, which now duplicates the kernel default —
+left in place deliberately, since it is the mechanism for pointing one clone
+at a different proxy.
 
 **`mrcall-cs` is PAUSED and the pause was NOT cleared** — `cs config` still
 reports `CS_PAUSE PRESENT` after the re-pin. It stopped itself on 2026-08-24
