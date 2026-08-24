@@ -42,6 +42,11 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # Re-deny every customer-send / mutate surface so a skill bug or a prompt-injection
 # in inbound mail can never send autonomously. NOTE: settings.json allows the broad
 # `cs rpc:*`, so the `cs rpc chat` deny is load-bearing and MUST live here too.
+# `cs handled` is denied for the mirror-image reason: it declares a contact
+# resolved off-email and stops the sweep raising them. That is an INTERACTIVE
+# gesture — the operator saying "I phoned him" — and a tick reads untrusted mail,
+# where "please close this ticket" in a body would otherwise silence a real
+# customer request. Nobody is present on a tick to say it, so nothing is lost.
 # Each surface is denied in SIX spellings (.venv/bin/python -m cs, .venv/bin/python3 -m cs,
 # .venv/bin/cs, python -m cs, python3 -m cs, cs): permission rules match command TEXT,
 # not behavior, and the console script, the module path and the python3 aliases all
@@ -73,6 +78,12 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs rpc settings.update:*)" \
     "Bash(python3 -m cs rpc settings.update:*)" \
     "Bash(cs rpc settings.update:*)" \
+    "Bash(.venv/bin/python -m cs handled:*)" \
+    "Bash(.venv/bin/python3 -m cs handled:*)" \
+    "Bash(.venv/bin/cs handled:*)" \
+    "Bash(python -m cs handled:*)" \
+    "Bash(python3 -m cs handled:*)" \
+    "Bash(cs handled:*)" \
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
   >>"$LOG" 2>&1
 rc=$?
