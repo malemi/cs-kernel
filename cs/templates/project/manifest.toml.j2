@@ -71,10 +71,12 @@ send_guard_min_chars = {{ send_guard_min_chars }}
 send_guard_banned_phrases = {{ send_guard_banned_phrases | toml_quote }}
 
 [sms]
+# `enabled` is the whole switch. The send endpoint is a kernel default — the
+# mrcall-desktop engine's SMS proxy, shared by every clone — so there is no
+# URL to configure and `cs init` never asks. Add `proxy_base = "<url>"` here
+# only to point this clone at a different proxy; `cs config` prints the
+# endpoint actually in force.
 enabled = {{ 'true' if sms_enabled else 'false' }}
-# The proxy itself is Vonage, hardcoded, run from mrcall-desktop — no
-# per-clone URL to configure; `cs init` never asks.
-proxy_base = ""
 
 [drive]
 # Niche; `cs init` never asks. Fill in by hand if this clone needs a

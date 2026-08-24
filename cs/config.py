@@ -207,7 +207,17 @@ class Settings(BaseSettings):
 
     # --- SMS capability (optional; manifest [sms]) ---
     sms_enabled: bool = False
-    sms_proxy_base: str = ""      # full send-endpoint URL of the SMS proxy
+    # The send endpoint of the mrcall-desktop engine's SMS proxy. Shared
+    # infrastructure the kernel drives, not a per-clone value: the proxy is
+    # Vonage behind one engine, and the traffic bills against the platform
+    # credit pool whichever clone sent it. It is a KERNEL DEFAULT rather than
+    # a manifest field a clone must supply, because `settings_overrides` skips
+    # empty strings — so a manifest that leaves `[sms].proxy_base` blank, which
+    # is what every clone stamped before v0.19.0 literally contains, lands
+    # here. Declare `[sms].proxy_base` to point a clone somewhere else; declare
+    # it EMPTY in the env layer to turn the endpoint off and make `cs/sms.py`
+    # refuse. Recorded in tests/reviewed_literals.txt (charter rule 1).
+    sms_proxy_base: str = "https://zylch.mrcall.ai/api/desktop/sms/send"
     sms_business_id: str = ""     # env SMS_BUSINESS_ID — which business is billed
 
     # --- exclusions (comma-separated in env) ---

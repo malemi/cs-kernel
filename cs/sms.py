@@ -28,7 +28,15 @@ def send(settings, phone: str, message: str) -> None:
     if not settings.sms_enabled:
         raise SmsError('[sms].enabled is false in manifest.toml — SMS capability is off')
     if not settings.sms_proxy_base:
-        raise SmsError("[sms].proxy_base not set in manifest.toml")
+        # Not reachable by leaving the field alone: the endpoint is a kernel
+        # default since v0.19.0. Getting here means something DECLARED it
+        # empty, so say that instead of telling the operator to set a key the
+        # wizard never asks about.
+        raise SmsError(
+            "the SMS endpoint is declared empty — something set [sms].proxy_base "
+            "or SMS_PROXY_BASE to a blank value, which switches the proxy off. "
+            "Run `cs config` to see which layer declared it."
+        )
     if not phone:
         raise SmsError("no phone number")
     if settings.pause_path.exists():

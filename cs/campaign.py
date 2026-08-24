@@ -705,9 +705,16 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
     phone = d.get("phone")
     if not _is_it_mobile(phone):
         return {"ok": False, "email": email, "error": "no mobile number in the contact dossier"}
-    if not settings.sms_enabled or not settings.sms_proxy_base:
+    if not settings.sms_enabled:
         return {"ok": False, "email": email,
-                "error": "[sms] capability off — enable + proxy_base in manifest.toml"}
+                "error": "[sms] capability off — set [sms].enabled = true in manifest.toml"}
+    if not settings.sms_proxy_base:
+        # The endpoint is a kernel default, so an empty one was declared on
+        # purpose. Naming the two conditions apart keeps the message true:
+        # the old single line told the operator to set a proxy_base that the
+        # wizard does not ask for and that they almost never need.
+        return {"ok": False, "email": email,
+                "error": "[sms] endpoint declared empty — `cs config` names the layer that did it"}
     tz = settings.timezone
     today = _time.local_date(now, tz)
     _rah, smsh, _rmax = _pack_windows(settings, pack)

@@ -115,9 +115,10 @@ class Knobs(_Table):
 
 
 class Sms(_Table):
-    enabled: bool = False
-    proxy_base: str = ""         # full send-endpoint URL of the SMS proxy
-                                 # (env key SMS_BUSINESS_ID iff enabled)
+    enabled: bool = False        # the ONE switch: SMS is on or off for this clone
+    proxy_base: str = ""         # blank = use the kernel's endpoint (cs/config.py).
+                                 # Declare a URL here only to point this clone at a
+                                 # different proxy. (env key SMS_BUSINESS_ID iff enabled)
 
 
 class Drive(_Table):
