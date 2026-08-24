@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.16.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.17.0`. Current HEAD status: tagged as `v0.17.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -34,7 +34,11 @@ what is *current*.
   gate to the bare brand and adds a shape contract on those slots, and makes
   `company/**` create-if-missing so `cs update` never prompts about authored
   prose again; **static tier, suites waived by the operator, not run**.
-  `v0.8.0` remains the recorded tag→0.7.1 exception (object pinned immutable).
+  `v0.17.0` (2026-08-24) finishes that job on the last file that needed it:
+  `docs/ARCHITECTURE.md` is generated all the way down, and the section it used
+  to declare "NOT stamped" moves to the new `company/clone-notes.md` slot —
+  **static tier, suites waived by the operator, not run**. `v0.8.0` remains the
+  recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
@@ -68,14 +72,14 @@ what is *current*.
   joins `manifest.toml` and `requirements.txt` as a file class `cs update`
   cannot overwrite at all.
 
-  **`docs/ARCHITECTURE.md` is the same hazard, still open.** It is
-  template-owned but its last section is hand-authored by contract ("This
-  section is NOT stamped"), so an overwrite that is right for the stamped table
-  destroys the notes underneath it. That happened on `124-cs` in this re-pin —
-  59 authored lines, restored by hand from git in the same session. Either the
-  authored half moves out of the rendered file, or the file joins the
-  create-if-missing class; until one of them happens, the overwrite prompt on
-  that file is a trap with a correct-looking answer.
+  **`docs/ARCHITECTURE.md` was the same hazard, and `v0.17.0` closes it.** It
+  was template-owned with a last section hand-authored by contract ("This
+  section is NOT stamped"), so an overwrite that was right for the stamped table
+  destroyed the notes underneath it — 59 lines on `124-cs`, restored by hand
+  from git. That section no longer exists in the template: the file is generated
+  all the way down and safe to overwrite unconditionally, and the notes live in
+  `company/clone-notes.md`, which the kernel creates once and never touches.
+  No file in a clone is half-generated any more.
 
 - **Both clones' `requirements.lock` is current again**, regenerated on
   2026-08-24 from each clone's own collaudo'd venv. Until then each resolved

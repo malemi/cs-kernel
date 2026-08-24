@@ -43,6 +43,45 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.17.0 — 2026-08-24
+
+### Fixed — `docs/ARCHITECTURE.md` carried hand-authored prose inside a template-owned file
+- **Why:** the template declared its own last section "NOT stamped" and invited
+  the operator to write there — the engine-profile provenance, what was
+  authored into `USER_NOTES`, the send boundary as it actually stands, the
+  checks that exist because something once went wrong, the known gaps. That put
+  a clone's only durable record of how it was really built inside a file every
+  `cs update` offers to replace, where taking the offer is the RIGHT answer for
+  the stamped configuration table above it. That is what makes it a trap rather
+  than a mistake: on `124-cs`, during the `v0.16.0` re-pin, the correct-looking
+  answer deleted 59 authored lines, and they came back only because git had
+  them. Restoring them at each release patches the symptom; a file that is
+  half-generated and half-authored will keep eating the authored half.
+- **What:** the section is gone from `docs/ARCHITECTURE.md.j2`. That file is now
+  100% generated and always safe to overwrite. Its content belongs in
+  `company/`, which since `v0.16.0` is created once and never touched again, so
+  a new slot **`company/clone-notes.md`** holds it — a new slot rather than an
+  existing one because the seven that were there are all skill-facing (what a
+  support mail is about, who replies from where, what the unattended tick must
+  escalate) and this is repo-facing prose about the clone itself.
+  `ARCHITECTURE.md`'s tail now says what it cannot tell you and points at the
+  slot, so a reader who expected the notes there is told where they went. The
+  slot satisfies gate 1b like every other: 9 slots, all instructions.
+- **Migration:** `cs update` creates `company/clone-notes.md` if the clone has
+  none and will never touch it afterwards. **Existing authored content must be
+  moved by hand BEFORE the update** — copy the "Clone-specific notes" section
+  out of `docs/ARCHITECTURE.md` into the new slot, then let the update replace
+  the file. Both live clones were migrated this way: `124-cs`'s eight
+  paragraphs moved verbatim; `mrcall-cs`'s tail was byte-identical to the
+  unfilled stub, so it had nothing to move and receives the instructions.
+- **Re-collaudo:** **static tier, every clone.** Stamped prose and one new
+  stamped file; no `cs/` behaviour changed at all — no send path, no
+  `campaign`, no `gmail_archive`, no `send_mail`, no auth boundary, no
+  permission surface. MINOR rather than PATCH because a clone gains a file and
+  loses a section of another, which is observable. **The suites were NOT run
+  for this tag** — the operator waived them; the tier is the requirement, not a
+  record of a passed collaudo.
+
 ## v0.16.0 — 2026-08-24
 
 ### Fixed — one company's operational facts shipped inside the project templates
