@@ -13,8 +13,8 @@ copy-and-edit — no new one-off script, no dedicated cron.
 Pack layout (in the CLONE repo)::
 
     campaigns/<pack-name>/
-    ├── campaign.toml      # [pack] kind/description/campaign/status/dates/
-    │                      #        confirm_question; [windows] optional
+    ├── campaign.toml      # [pack] kind/description/campaign/status/ends_on/
+    │                      #        dates/confirm_question; [windows] optional
     │                      #        overrides of the [knobs] windows/caps
     ├── mail_first.md      # templates: first line `Subject: …`, blank line,
     ├── mail_reminder.md   # then a markdown body with {placeholders} filled
@@ -36,8 +36,7 @@ never invents copy).
 WHEN A CAMPAIGN IS OVER
 -----------------------
 A campaign that has ended must not be able to deliver anything. Two
-declarations in ``[pack]`` say so, and both are enforced (2026-08-24 —
-before this, neither was read by anything):
+declarations in ``[pack]`` say so, and both are enforced:
 
 ``status``
     ``active`` or ``done``, and nothing else — an unrecognised word is a
@@ -46,16 +45,15 @@ before this, neither was read by anything):
     by hand.
 
 ``ends_on``
-    The backstop for when the human forgets. A date (``ends_on =
-    2026-07-31``, or the ISO string) past which the pack refuses to deliver
-    EVEN WHILE ``status = "active"`` — which is exactly the shape of the
-    2026-08-23 near miss: a July migration pack still declaring itself
-    active in late August, one tick away from telling 26 customers their
-    number changes on a date three weeks past. A campaign with no end
-    declares ``ends_on = "never"`` and delivers indefinitely. Anything else
-    — a malformed date, prose, an empty string — is a :class:`PackError` at
-    load: "cannot read the end date, so assume no limit" is precisely how
-    this class of bug survives.
+    The backstop for when the human forgets to set ``status``, which is the
+    failure that actually reaches customers: a migration pack still calling
+    itself active weeks after the migration, announcing a cutover date in
+    the past. A date (``ends_on = 2026-07-31``, or the ISO string) past
+    which the pack refuses to deliver EVEN WHILE ``status = "active"``. A
+    campaign with no end declares ``ends_on = "never"`` and delivers
+    indefinitely. Anything else — a malformed date, prose, an empty string —
+    is a :class:`PackError` at load: "cannot read the end date, so assume no
+    limit" is precisely how this class of bug survives.
 
 ``dates`` is NOT either of them. It stays free prose for the reader ("first
 notice → decommission"), it is never parsed, and it gates nothing. A
@@ -287,10 +285,9 @@ def _parse_status(toml_path: Path, meta: dict) -> str:
     is a refusal at LOAD, not a silent pass at send time.
 
     Only an ABSENT key defaults to ``active``: a pack nobody has finished is a
-    pack that is running, and every pack written before this gate existed keeps
-    working unchanged. A key that is PRESENT is a declaration, so it has to say
-    something — an emptied-out status is a half-finished edit, not a campaign
-    that is running, and the same rule governs ``ends_on`` below."""
+    pack that is running. A key that is PRESENT is a declaration, so it has to
+    say something — an emptied-out status is a half-finished edit, not a
+    campaign that is running, and the same rule governs ``ends_on`` below."""
     if "status" not in meta:
         return "active"
     status = str(meta["status"]).strip()

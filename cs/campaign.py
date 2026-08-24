@@ -31,9 +31,9 @@ A campaign that is OVER delivers nothing, on any path. Its pack says so —
 — and every delivery site here asks the pack before acting: the worklist, and
 each of `send_first` / `send_reminder` / `send_sms` / `send_draft` /
 `queue_draft`, every one of which is reachable with a contact id WITHOUT
-going through `pending()`. Exclusion by name used to be the only lever, which
-made every finished campaign a manual entry in a clone's manifest; the pack
-now carries the fact where the campaign itself lives.
+going through `pending()`. The pack carries the fact, so that ending a
+campaign is a one-line edit where the campaign lives rather than a manual
+entry in every clone's `excluded_campaign`.
 
 The refusal is loud and dated. Observation actions (`handle_reply`,
 `reconcile`) survive: a human who wrote to us is owed an answer whether or
