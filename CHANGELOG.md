@@ -4,15 +4,27 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (static tier, 2026-08-21): `v0.9.4` on
-`mrcall-cs`, `v0.9.1` on `124-cs` — the clones are deliberately split while
-the operator re-pins them one at a time; both pins are verified from inside
-each clone (`requirements.txt` + `cs --version`). Static-tier evidence
-recorded at re-pin: `.claude/settings.json` and `bin/cs_operator_cron.sh`
-byte-identical before and after `cs update`, live `cs whoami` proof call OK
-on both engines. Operators are un-paused; 124-cs's operator cron is
-installed and ticking, mrcall-cs's is deliberately not installed
-(interactive-only — see `docs/active-context.md`).
+**Current operational pin** (FULL tier, 2026-08-24): **`v0.13.0` on both
+clones** — the split that ran from 2026-08-21 is closed. Verified from inside
+each clone (`requirements.txt`, `[repo].kernel_version`, `cs --version` all
+`v0.13.0`; uv resolved the tag to `b91aeb6` in both venvs). FULL-tier
+evidence recorded in each clone's re-pin commit: live `cs whoami` on both
+engines, `cs config` / `cs plan` / `cs unanswered` / `cs review` / bare
+`cs handled` read-only, `cs draft-delete <bad-uid>` refusing cleanly without
+`--commit`, and `mrcall-cs`'s own 113 `ext/` integration tests green.
+`bin/cs_operator_cron.sh` changed on both by exactly the six `handled` deny
+entries and their comment, removing nothing (`mrcall-cs`'s clone-specific
+`bin/mrcall_business.py` deny was re-applied on top of the new render).
+Nothing was sent on either clone.
+
+**Both operators are PAUSED and neither pause was cleared by the re-pin.**
+`mrcall-cs`: `~/.mrcall-cs/CS_PAUSE` predates this work — its own tick wrote
+it on 2026-08-23 rather than SMS 26 customers about a date three weeks past,
+which is the incident the `excluded_campaign` list in this release addresses;
+un-pausing a production sender is the operator's decision, so the file was
+left byte-identical. `124-cs`: paused for the venv swap; its collaudo passed
+and the file now says so, but the session could not delete it (no `rm`
+permission), so `rm ~/.124-cs/CS_PAUSE` is owed.
 
 `v0.5.2` and every earlier tag mint the auth token from a locally-held
 Firebase service-account credential (`firebase-sa.json`) that only the

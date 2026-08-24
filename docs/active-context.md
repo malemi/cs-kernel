@@ -44,13 +44,24 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.9.6` | OpenRouter → `z-ai/glm-5.3` | un-paused; cron deliberately not installed (interactive-only — operator decision 2026-08-19; `cs cron install` turns it on) |
-  | `124-cs` | `v0.9.6` | Anthropic direct → `claude-sonnet-5` | un-paused, ticking (cron installed) |
+  | `mrcall-cs` | `v0.13.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-23 17:02 by its own tick (stale batch2 campaign about to SMS 26 people); three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.13.0` | Anthropic direct → `claude-sonnet-5` | **PAUSED** for the re-pin; collaudo passed, `rm ~/.124-cs/CS_PAUSE` owed. Cron installed, 2-hourly, draft-only |
 
-  Both pin `v0.9.6`; `v0.12.0` is now available. **Re-pinning the clones is
-  the operator's own move, not this session's** — stated twice on 2026-08-21,
-  after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
-  Propose, never run it for him.
+  Both pin `v0.13.0` as of 2026-08-24, FULL tier, evidence in each clone's
+  re-pin commit and in the CHANGELOG's operational-pin marker. **Re-pinning a
+  clone is the operator's own move unless he asks for it** — stated twice on
+  2026-08-21, after a `cs update` overwrite cost him a hand-authored
+  `manifest.toml`. This round was asked for; the same care applied
+  (`manifest.toml` and `requirements.txt` are never `cs update` targets, and
+  every conflicted file defaulted to keeping the local version).
+
+- **Both clones' `requirements.lock` is stale and unusable**, found during the
+  2026-08-24 sweep: each resolves `b2f07b2` (`v0.5.1`) from
+  `hahnbanach/cs-kernel`, the ARCHIVED private repo. A venv rebuilt from the
+  lock gets a kernel eight releases old, or fails outright on a repo it cannot
+  read. This is the harness-backlog's 2026-07-25 entry, now worse than when it
+  was filed. Not fixed here — regenerating a lock captures whatever else is in
+  that venv, so it is its own deliberate step.
 
 - The kernel runs per-invocation from each clone's venv (no long-running
   kernel process). The provider side is the mrcall-desktop daemons, running an EDITABLE
@@ -91,10 +102,14 @@ what is *current*.
   Fix by giving 124 its own `OPENROUTER_API_KEY` (it would then inherit
   `@glm` like mrcall-cs) or an explicit `CS_LLM_PROVIDER`/`MODEL_CLASSIFIER`.
   Operator's call; neither its `.env` nor the environment was touched.
-- The `CHANGELOG.md` "Current operational pin" marker trails the clones
-  (it records `v0.9.4` for mrcall-cs and `v0.9.1` for 124-cs; both are
-  actually at `v0.9.6`); it converges at the next
-  re-pin the operator runs.
+- **`cs config` reports duplicate declarations on BOTH clones and nobody has
+  acted on them**: 11 on `mrcall-cs`, 9 on `124-cs` — the same value written
+  into `~/.<slug>-cs/.env` and `manifest.toml`. They agree today and the env
+  layer wins in every case, so nothing is broken; the point is that two
+  repositories of truth for one value eventually disagree, and on `124-cs` one
+  of the duplicates is `cs_triage_mode` itself. Deleting the losing
+  declaration is an operator decision (which of the two he wants to keep), so
+  the 2026-08-24 re-pin reported them and changed neither.
 - **A `/cs-operator` tick takes ~4 minutes, and it is all engine LLM.**
   Measured 2026-08-21: a full `cs` RPC round trip is 0.5s (0.38 of it Python
   import), while one `cs ask` is **29s**. `cs-triage-mail` MENTIONS `cs ask`
