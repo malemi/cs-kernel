@@ -38,6 +38,67 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.15.0 — 2026-08-24
+
+### Changed — the clone index is an index again
+- **Why:** a stamped clone's `CLAUDE.md` had grown to 290 lines against a
+  221-line thin-index limit that had already been raised once from the
+  200-line default, so the doc-harness gate failed inside the clone. Raising
+  the limit a second time would have conceded the point: the file had drifted
+  from an index into a manual — a verb catalogue restating `cs --help`, the
+  auth chain's internals, the three-move `handled` procedure, the
+  customer-load steps.
+- **What:** the index now routes instead of restating. The verb catalogue
+  defers to `cs --help` (a list copied into prose goes stale on the next
+  kernel pin), the auth-chain internals to the installed kernel's
+  `cs/auth.py` docstring, the `handled` procedure to
+  `.claude/commands/cs-review.md` § Posture, the customer-load detail to the
+  `cs-customer` skill — which already owns the memory write-back path too.
+  Kept verbatim, because nothing else reachable from a clone says them: the
+  safety NEVERs, the template-owned/clone-owned split, the dossier-mandatory
+  pipeline step, `--account`'s exit-2 refusal on the Gmail-IMAP verbs, and
+  `cs config`'s primacy over any value written into a document. The RPC
+  wrapper-key table stays for the same reason — two of its four shapes
+  (`emails.list_by_thread` → `{emails}`, and the `campaign.*` writes that
+  return a dict rather than the bare array their siblings return) have no
+  other owner a clone can reach, and a wrong key returns 0 rows silently.
+  `cs/templates/project/CLAUDE.md.j2` goes 301 → 192 lines; a stamped clone
+  renders 290 → 187 by the gate's own `len(text.splitlines())` counter.
+- **Migration:** none to run — `cs update` applies it. A clone whose
+  `CLAUDE.md` still matches what it was stamped with takes the new file
+  silently; a clone that edited its own copy is asked before anything is
+  overwritten, and that file is template-owned anyway, so the edit belongs in
+  the kernel template.
+- **Re-collaudo:** **static tier, every clone** — stamped prose only. No
+  `cs/` code changed: no send path, no `campaign`, no `gmail_archive`, no
+  `send_mail`, no auth boundary, no permission surface. MINOR rather than
+  PATCH because 103 lines leaving every clone's stamped index is observable,
+  and an operator reading "patch" is entitled to expect nothing observable
+  changed. **The suites were NOT run for this tag** — the operator waived
+  them; the tier above is the requirement, not a record of a passed collaudo.
+
+### Fixed — per-session agent memory was committable, here and in every clone
+- **Why:** `docs/sessions/<session-id>.md` is per-machine, per-session agent
+  memory that names clones, hosts and absolute paths. The doc-harness writes
+  its `docs/sessions/` ignore line only when it BOOTSTRAPS a repo
+  (`/doc-create` step 3); no later command adds it. So a repo bootstrapped
+  before that step existed never received the line — this repo did not, and
+  one session file had already been committed into a public tree. No stamped
+  clone received it either: a clone's `.gitignore` is rendered from
+  `cs/templates/project/.gitignore.j2`, which carried no such line, and the
+  file is template-owned — a line added inside a clone is a local edit to a
+  file the next template change offers to overwrite, so it is not the durable
+  place for the fix.
+- **What:** the `docs/sessions/` entry is now in this repo's `.gitignore` and
+  in `.gitignore.j2`, each with the reason written beside it. The one session
+  file that had been committed here is untracked and kept on disk.
+- **Migration:** none. Existing session files stay where they are and leave
+  `git status`; nothing is deleted.
+- **Re-collaudo:** **static tier, every clone** — a `.gitignore` line. It
+  reaches a clone on its next `cs update` and touches no `cs/` code, no send
+  path and no permission surface. **The suites were NOT run for this tag**
+  (see above).
+
 ## v0.14.0 — 2026-08-24
 
 ### Added — a finished campaign delivers NOTHING, on any path

@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.14.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.15.0`. Current HEAD status: tagged as `v0.15.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -23,9 +23,13 @@ what is *current*.
   `[campaigns].excluded_campaign` hold more than one campaign, and finishes the
   `RATE_CAP` removal in the templates; `v0.14.0` (2026-08-24) makes a FINISHED
   campaign deliver nothing on any of the five send paths, enforcing
-  `[pack].status` and the new typed `[pack].ends_on`. All three are FULL
-  re-collaudo. `v0.8.0` remains the recorded tag→0.7.1 exception (object
-  pinned immutable).
+  `[pack].status` and the new typed `[pack].ends_on`. Those three are FULL
+  re-collaudo. `v0.15.0` (2026-08-24) touches no `cs/` code: it cuts the
+  stamped clone index from 290 to 187 lines so a clone's own doc gate passes
+  again, and adds `docs/sessions/` to this repo's `.gitignore` and to the
+  clone template's — **static tier, and the suites were waived by the
+  operator, not run**. `v0.8.0` remains the recorded tag→0.7.1 exception
+  (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
