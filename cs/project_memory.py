@@ -141,9 +141,10 @@ def cmd_project_new(args) -> int:
         "project_name": name,
         "project_title": (args.title or "").strip() or title_from_slug(name),
         "today": _time.local_date(_time.now_utc(), settings.timezone),
-        "company_display_name": settings.company_display_name or settings.company_name,
-        "email_address": settings.email_address,
-        "accounts_default": settings.accounts_default,
+        # Only what a template in `cs/templates/project_memory/` actually
+        # consumes. The renderer uses StrictUndefined, so a MISSING variable is
+        # a loud failure and an unused one is silent weight — which is how
+        # three of these went unnoticed until v0.18.0.
         # The mailbox that actually owns business relationships. On most clones
         # that is the founder inbox, not the autonomous operator's default.
         "owner_account": settings.founder_sweep_account or settings.email_address,

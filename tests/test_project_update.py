@@ -516,15 +516,16 @@ _FULL_INIT_DATA = {
     "founder_sweep_enabled": False, "founder_sweep_account": "",
     "crm_adapter": "none", "crm_shopify": False,
     "producer_adapter": "none", "producer_mrcall_tracking": False,
-    "excluded_campaign": "", "posture_note": "",
-    "dedup_days": "30", "rate_cap": "25", "cs_triage_mode": "draft",
-    "dry_run": True, "autonomous": False, "timezone": "Europe/Rome",
+    "excluded_campaign": "",
+    "dedup_days": "30", "cs_triage_mode": "draft", "timezone": "Europe/Rome",
+    "system_senders": "", "send_guard_min_chars": 40,
+    "send_guard_banned_phrases": "",
     "sms_hour": "18", "reminder_max": "2",
     "sms_enabled": False, "sms_proxy_base": "",
     "drive_scope": "", "cron_schedule": "0 8 * * *", "cron_comment": "acme-cs",
     "platform_env_path": "", "repo_git_remote": "git@example.com:acme/acme-cs.git",
     "repo_kernel_version": "0.5.2", "repo_docs_shape": "generic",
-    "posture_note": "", "name": "Acme", "dest_dir": "acme-cs",
+    "name": "Acme", "dest_dir": "acme-cs",
 }
 
 

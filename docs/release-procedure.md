@@ -53,7 +53,7 @@ owner. Not before.
 |---|---|
 | `requirements.txt` pin | `cs update --pin <tag>` — **this is the truth; every other clone claim must agree with it** |
 | `template-manifest.json` `init_data.repo_kernel_version` | bare number, no `v`. Today: fixed by hand at re-pin; a pending kernel change makes `cs update --pin` own it (active-context Next) |
-| `manifest.toml` `[repo].kernel_version` | hand, at re-pin (template-only field, never parsed into Settings) |
+| `manifest.toml` `[repo].kernel_version` | NONE — removed from the template in `v0.18.0`. Nothing parsed it and no gate checked it, so it was right only when somebody remembered. Delete the line from an existing clone at the next re-pin; `requirements.txt` is the pin |
 | `docs/ARCHITECTURE.md` "Kernel pin" row | stamped clones: re-render; as-built clones (124-cs): edit the row at re-pin |
 | `docs/active-context.md` pin claims (where present) | hand, at re-pin |
 

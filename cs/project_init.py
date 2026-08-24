@@ -87,9 +87,15 @@ def load_existing_config(target_dir: Path) -> dict:
     does not even define a field for (unknown top-level tables are
     dropped by `extra="ignore"`) — read straight off the parsed TOML
     instead, and only for `git_remote`: the one such value worth not
-    resetting to "" on a re-run (`kernel_version`/`docs_shape` are always
-    recomputed fresh — see `collect_config` — and `[cron]` is being
-    retired from this wizard entirely).
+    resetting to "" on a re-run (`docs_shape` is always recomputed fresh
+    — see `collect_config` — and `[cron]` is being retired from this
+    wizard entirely).
+
+    Everything the template stamps but the wizard does not prompt for must
+    still be carried here, or the wizard destroys it on a re-run. That is
+    not hypothetical: `posture_note` held real prose on both clones while
+    `collect_config` hardcoded it back to "" and this function did not
+    return it at all.
     """
     manifest_path = target_dir / "manifest.toml"
     if not manifest_path.exists():
@@ -140,11 +146,12 @@ def load_existing_config(target_dir: Path) -> dict:
         "crm_adapter": m.crm.adapter,
         "dedup_days": m.knobs.dedup_days,
         "cs_triage_mode": m.knobs.cs_triage_mode,
-        "dry_run": m.knobs.dry_run,
-        "autonomous": m.knobs.autonomous,
         "timezone": m.knobs.timezone,
         "sms_hour": m.knobs.sms_hour,
         "reminder_max": m.knobs.reminder_max,
+        "system_senders": m.knobs.system_senders,
+        "send_guard_min_chars": m.knobs.send_guard_min_chars,
+        "send_guard_banned_phrases": m.knobs.send_guard_banned_phrases,
         "sms_enabled": m.sms.enabled,
         "repo_git_remote": raw.get("repo", {}).get("git_remote", ""),
     }
@@ -469,11 +476,11 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     config["producer_adapter"] = "none"
     config["producer_mrcall_tracking"] = None
 
-    # Campaign posture/carve-out and Drive scope — niche, per-campaign
-    # prose knobs with no interactive default worth asking for at init
-    # time. Hardcoded empty, no prompt in any mode.
+    # Campaign carve-out and Drive scope — niche knobs with no interactive
+    # default worth asking for at init time. Hardcoded empty, no prompt in any
+    # mode. (`posture_note` used to sit here; it was prose nothing read, and
+    # the wizard reset it on every re-run — removed in v0.18.0.)
     config["excluded_campaign"] = ""
-    config["posture_note"] = ""
     config["drive_scope"] = ""
 
     # SMS — the proxy itself is Vonage, hardcoded, run from mrcall-desktop;
@@ -518,22 +525,37 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     else:
         config["cs_triage_mode"] = _default(existing, "cs_triage_mode", "draft")
 
-    config["dry_run"] = _prompt_or_default_yn(
-        show_all, "Dry run mode?", _default(existing, "dry_run", True)
+    # No "Dry run" / "Autonomous" prompts: neither knob ever gated anything
+    # (removed in v0.18.0). Dry-run is `--commit` on the send verbs; autonomy
+    # is CS_TRIAGE_MODE plus the clone's own `.claude/settings.json`.
+
+    # The two send-guard knobs and the system-sender exclusions are read by
+    # live code (`cs/send_guard.py`, `cs/unanswered.py`) but are niche enough
+    # that `cs init` does not ask. They are stamped at the kernel default so
+    # the operator can SEE them in their own manifest.toml, and carried
+    # through `existing` so a re-run of the wizard cannot silently reset an
+    # operator's edit.
+    _knob_defaults = manifest_mod.Knobs()
+    config["system_senders"] = _default(
+        existing, "system_senders", _knob_defaults.system_senders
     )
-    config["autonomous"] = _prompt_or_default_yn(
-        show_all, "Autonomous mode?", _default(existing, "autonomous", False)
+    config["send_guard_min_chars"] = _default(
+        existing, "send_guard_min_chars", _knob_defaults.send_guard_min_chars
+    )
+    config["send_guard_banned_phrases"] = _default(
+        existing, "send_guard_banned_phrases", _knob_defaults.send_guard_banned_phrases
     )
 
     config["platform_env_path"] = _prompt_or_default(
         show_all, "Platform environment path (optional)", ""
     )
 
-    # Firebase SA path — Settings derives ~/.<slug>-cs/firebase-sa.json on
-    # its own the moment [engine].sa_path is empty; the prompt only ever
-    # reproduced that same computed default, so it is retired outright
-    # rather than moved behind --advanced.
-    config["firebase_sa_path"] = ""
+    # No `firebase_sa_path` key: Settings derives ~/.<slug>-cs/firebase-sa.json
+    # on its own the moment [engine].sa_path is empty, and manifest.toml.j2
+    # writes that blank as a literal. The init_data key reached no template at
+    # all, so it was pure weight in the frozen render input (removed v0.18.0).
+    # The Settings field of the same name is very much alive — `cs/drive.py`
+    # and `cs/resolve.py` load the service-account credential from it.
 
     # --- Phase 6: repo ---
     # Git remote — empty is a legitimate answer (local-only clone). The sole

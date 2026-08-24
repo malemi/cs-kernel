@@ -180,8 +180,10 @@ class Settings(BaseSettings):
 
     # --- behaviour knobs ---
     dedup_days: int = 30
-    dry_run: bool = True
-    autonomous: bool = False
+    # No `dry_run` / `autonomous` field: neither ever gated anything. Dry-run
+    # is the `commit` argument on every send function, fed by the `--commit`
+    # CLI flag; autonomy is `cs_triage_mode` plus the clone's
+    # `.claude/settings.json` permission surface. Both were removed in v0.18.0.
     # graduated autonomy: free-form engine sends stay DRAFTS until "send";
     # fixed-template bulk is autonomous (CS_TRIAGE_MODE=send). The global
     # kill-switch is a FILE (<state_dir>/CS_PAUSE), checked by wrappers and

@@ -16,9 +16,11 @@ engine RPC shapes, the module path `cs` (`prog_name` is display-only),
 USER_NOTES policy (engine-side), and secret VALUES (the manifest names
 required env KEYS only).
 
-Template-only tables ([skills], [extensions], [repo], [cron]) are
-tolerated and ignored at runtime — they are consumed by the stamping
-template, not by the kernel.
+Template-only tables ([repo], [cron]) are tolerated and ignored at
+runtime — they are consumed by the stamping template, not by the kernel.
+[skills] and [extensions] were stamped until v0.18.0 and are still
+tolerated so an existing clone needs no edit, but nothing reads them and
+the template no longer emits them.
 """
 from __future__ import annotations
 
@@ -95,14 +97,11 @@ class Campaigns(_Table):
     # single bare name is the one-element case, so clones written before the
     # list existed need no edit. Matching is exact per name, never by prefix.
     excluded_campaign: str = ""
-    posture_note: str = ""       # prose for humans, not code-consumed
 
 
 class Knobs(_Table):
     dedup_days: int = 30
     cs_triage_mode: str = "draft"   # draft | send — bounded by the send-boundary invariant
-    dry_run: bool = True
-    autonomous: bool = False
     timezone: str = "Europe/Rome"
     sms_hour: int = 18
     reminder_max: int = 3
@@ -220,8 +219,6 @@ def settings_overrides(m: Manifest) -> dict:
 
     put("dedup_days", m.knobs.dedup_days)
     put("cs_triage_mode", m.knobs.cs_triage_mode)
-    put("dry_run", m.knobs.dry_run)
-    put("autonomous", m.knobs.autonomous)
     put("timezone", m.knobs.timezone)
     put("sms_hour", m.knobs.sms_hour)
     put("reminder_max", m.knobs.reminder_max)

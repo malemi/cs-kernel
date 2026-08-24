@@ -45,23 +45,30 @@ env_prefix = "{{ crm_shopify.env_prefix }}"
 adapter = "none"
 
 [campaigns]
-# Niche, per-campaign prose; `cs init` never asks. Fill in by hand if needed.
+# Niche; `cs init` never asks. Fill in by hand if needed.
 # excluded_campaign: campaign names a dedicated process owns, so the general
 # operator leaves them alone. Comma-separated for more than one
 # ("first-campaign, second-campaign"); matched by EXACT name, never by prefix,
 # so an excluded "x" does not also exclude "x-batch2" — list both if you mean
 # both. `cs config` prints what is actually in force.
 excluded_campaign = ""
-posture_note = ""
 
 [knobs]
 dedup_days = {{ dedup_days }}
 cs_triage_mode = "{{ cs_triage_mode }}"
-dry_run = {{ 'true' if dry_run else 'false' }}
-autonomous = {{ 'true' if autonomous else 'false' }}
 timezone = "{{ timezone }}"
 sms_hour = {{ sms_hour }}
 reminder_max = {{ reminder_max }}
+# Comma-separated no-reply/system addresses the `unanswered` sweep ignores,
+# so a notification robot never looks like a customer waiting for an answer.
+system_senders = {{ system_senders | toml_quote }}
+# The model-output send guard (cs/send_guard.py). These two are the only part
+# of it that is per-company: how short a composed body may be before the guard
+# refuses it, and extra phrases this company never wants to send. The banned
+# list EXTENDS the kernel's, it never replaces it. The tells themselves are
+# code — a guard with an off switch is a guard that is off.
+send_guard_min_chars = {{ send_guard_min_chars }}
+send_guard_banned_phrases = {{ send_guard_banned_phrases | toml_quote }}
 
 [sms]
 enabled = {{ 'true' if sms_enabled else 'false' }}
@@ -83,17 +90,6 @@ comment = "{{ cron_comment }}"
 [env]
 platform_env_path = "{{ platform_env_path }}"
 
-[skills]
-triage_domain_examples = "company/triage-domain-examples.md"
-team_conventions       = "company/team-conventions.md"
-campaign_product_notes = "company/campaign-product-notes.md"
-operator_out_of_scope  = "company/operator-out-of-scope.md"
-
-[extensions]
-modules = []
-retired_when_done = false
-
 [repo]
 git_remote = "{{ repo_git_remote }}"
 docs_shape = "as-built"
-kernel_version = "{{ repo_kernel_version }}"

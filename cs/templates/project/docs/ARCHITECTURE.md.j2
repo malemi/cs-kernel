@@ -33,7 +33,7 @@ never in a rendered file).
 {% endif %}| Excluded campaigns | `{{ excluded_campaign }}` (a dedicated process owns them; comma-separated, matched by exact name) |
 | Drive scope | `{{ drive_scope }}` (`cs drive search` is pinned here; `all` is a test-only override) |
 | SMS | {% if sms_enabled %}enabled, proxy Vonage via mrcall-desktop (env `SMS_BUSINESS_ID`){% else %}disabled{% endif %} |
-| Knobs | dedup {{ dedup_days }}d · triage `{{ cs_triage_mode }}` · dry_run {{ 'True' if dry_run else 'False' }} · autonomous {{ 'True' if autonomous else 'False' }} |
+| Knobs | dedup {{ dedup_days }}d · triage `{{ cs_triage_mode }}` |
 | Time windows | {{ timezone }} · SMS hour {{ sms_hour }} · reminder_max {{ reminder_max }} |
 | Cron (declared intent) | `{{ cron_schedule }}` — cs-operator every 2h, business hours, weekdays. **Verify the live crontab: the schedule here is intent, not proof it is installed.** |
 | Platform env layer | {% if platform_env_path %}via `{{ platform_env_path }}`{% else %}none (2-tuple loader: `~/.{{ company_slug }}-cs/.env` + repo `.env`){% endif %} |
@@ -45,8 +45,6 @@ of them, and a knob absent from the manifest falls back to a kernel default.
 Run **`cs config`** for the value actually IN FORCE and the file that declares
 it (it also flags anything declared in two places). Never act on a number read
 off this table.
-
-{% if posture_note %}**Campaign posture:** {{ posture_note }}{% endif %}
 
 ## Outside this repo (referenced, never stamped)
 

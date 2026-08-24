@@ -116,8 +116,6 @@ MANIFEST_KEYS: dict[str, tuple[str, ...]] = {
     "excluded_campaign": ("campaigns", "excluded_campaign"),
     "dedup_days": ("knobs", "dedup_days"),
     "cs_triage_mode": ("knobs", "cs_triage_mode"),
-    "dry_run": ("knobs", "dry_run"),
-    "autonomous": ("knobs", "autonomous"),
     "timezone": ("knobs", "timezone"),
     "sms_hour": ("knobs", "sms_hour"),
     "reminder_max": ("knobs", "reminder_max"),
