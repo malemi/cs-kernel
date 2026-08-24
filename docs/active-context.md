@@ -14,12 +14,15 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.12.0`. Current HEAD status: untagged.** The
-  `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
+- **Latest release tag: `v0.13.0`. Current HEAD status: tagged as `v0.13.0`.**
+  The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
-  `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota (FULL re-collaudo,
-  both clones — neither has re-pinned yet). `v0.8.0` remains the recorded
-  tag→0.7.1 exception (object pinned immutable).
+  `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
+  `v0.13.0` (2026-08-24) adds `cs config`, `cs draft-delete` and `cs handled`,
+  puts `handled` in the cron wrapper's deny set, lets
+  `[campaigns].excluded_campaign` hold more than one campaign, and finishes the
+  `RATE_CAP` removal in the templates. Both are FULL re-collaudo. `v0.8.0`
+  remains the recorded tag→0.7.1 exception (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.

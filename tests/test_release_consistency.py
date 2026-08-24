@@ -96,6 +96,10 @@ IMMUTABLE_TAG_TARGETS = {
     "v0.10.0": "6dc6cda098db1ae3c391841751fadfe144e4f877",
     "v0.11.0": "16f25f3e4b4afa143977b58e5d9005683a0c2c27",
     "v0.11.1": "ef03ec1072eeb0a566beae7aff3e821ff5811bee",
+    # v0.12.0 was published without being pinned here — the post-tag step was
+    # skipped, and this dict only checks the tags it lists, so nothing went red.
+    # Recorded now, at the first release that noticed.
+    "v0.12.0": "1817fbf346c91a8523719732d5992d00f16d11bd",
 }
 
 # A published tag must install as the version it claims: `git show

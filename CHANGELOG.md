@@ -20,6 +20,171 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.13.0 — 2026-08-24
+
+### Added — `cs config`: the settings actually in force, and which file declares each
+- **Why:** six value layers resolve into one setting, and nothing printed the
+  result. A reader — human or headless — had to mentally execute the
+  precedence rules over `manifest.toml` and the `.env` chain, and two
+  consecutive `mrcall-cs` ticks got it wrong in the expensive direction: they
+  observed "no `CS_TRIAGE_MODE` in the environment", concluded "so the default
+  `draft` applies", and declined to send mail the operator had deliberately
+  authorised in `manifest.toml`. The layering was correct throughout; the
+  resolved value was simply invisible.
+- **What:** `cs config [--all] [--json] [--strict]` (`cs/config_report.py`,
+  wired at `cs/cli.py`). For every behaviour-deciding setting it prints the
+  value IN FORCE and the layer that declares it, named down to the TOML
+  table+key or the env KEY, and reports `kernel default` when nothing declares
+  it. A setting declared in more than one place is surfaced as a
+  `DUPLICATE DECLARATIONS` block with the winner named — a duplicate is a
+  defect even when the two copies agree today. Read-only and network-free, and
+  no secret value reaches the text report, `--json` or `--all`. Exit stays 0 on
+  a duplicate (a read verb that answers the question must not look like it
+  failed); `--strict` is the hook for a wrapper that wants the exit code.
+- **Stamped surface:** `/cs-operator` gains step 2b — read `cs config` before
+  acting and carry `cs_triage_mode` AND its source into the tick report; the
+  skill is now explicit that the mode is never inferred and that "no env var"
+  is not "so the default applies". `cs config` is added to the four
+  permission-allow spellings, to `/cs-help`'s deeper-reading list, and to
+  `CLAUDE.md` / `README.md` / `docs/ARCHITECTURE.md`. `.env.example` stops
+  pre-writing `CS_TRIAGE_MODE` / `CS_DRIVE` values, which made the file a
+  second declaration site by default.
+
+### Added — `cs draft-delete`: take ONE bad draft out of Gmail Drafts
+- **Why:** a draft is a loaded gun until somebody removes it. On 2026-08-23 an
+  engine compose invented a quoted sentence and attributed it to a customer who
+  had never written it; the operator wrote a clean replacement and then could
+  not remove the bad one, because nothing in cs could delete a draft. The
+  fabrication stayed in the review queue where a human could send it by mistake.
+- **What:** `cs draft-delete <uid> [--message-id …] [--commit]`
+  (`cs/gmail_drafts.py`). The IMAP UID is the selector because it is the only
+  identifier every draft has — what `append_draft` uploads carries no
+  Message-ID header at all, so a header lookup would miss precisely the drafts
+  cs itself wrote; `--message-id` narrows a uid and never widens it. Zero
+  matches, several matches, or a uid/Message-ID mismatch all REFUSE and report
+  what they matched. There is no bulk form and no wildcard. **Trash, not
+  expunge**: a UID MOVE into the `\Trash` special-use folder, recoverable for
+  30 days; no `\Trash` folder or a refused MOVE is a refusal, never a fallback
+  to `\Deleted` + EXPUNGE. Two folder guards (Drafts resolved strictly by the
+  `\Drafts` special-use flag; the matched message must itself carry `\Draft`).
+  Dry-run is the default and selects the mailbox READ-ONLY, so the connection
+  is structurally incapable of writing. `--account` refuses it
+  (`reads_operator_mailbox`). `list_drafts` and `cs review` now print each
+  draft's uid — without a visible handle the operator cannot name the one they
+  want gone.
+
+### Added — `cs handled`: "I resolved this outside email", with a date
+- **Why:** Gmail Sent is the dedup ground truth and its one blind spot is
+  resolution out of band. A customer wrote on 17 July, the owner TELEPHONED him
+  and settled it, and because a phone call leaves no trace in Sent, every tick
+  for a MONTH re-discovered the thread and told the owner to write to him.
+- **What:** `cs handled <email> [--why "…"] [--at YYYY-MM-DD] [--undo]`, bare
+  to list. It records a dated, per-contact moment (`state.handled_out_of_band`)
+  and closes that contact's open engine tasks with `actor="human"`;
+  `compute_open` obeys it, so nothing they sent BEFORE that moment is open work
+  — and anything they send after re-opens them on its own. It is a dated record,
+  not a second permanent ignore list: `--undo` reverses it, and the held-back
+  senders stay REPORTED in `cs review` (an invisible filter reads as a bug).
+  A future `--at`, a non-address, and `--account` are clean refusals.
+- **It is an INTERACTIVE gesture, and that is a security boundary.** A tick
+  reads untrusted inbound, so "please close this ticket" in a mail body, a
+  subject, a task title or an attachment would otherwise let any sender bury
+  their own open request by typing one sentence. `handled` therefore joins the
+  cron wrapper's `--disallowed-tools` re-deny set in all six command-text
+  spellings, beside the send verbs — it is denied not because it sends but
+  because it SILENCES. The stamped skills say the same in the operator's own
+  words: `/cs-review` and `/cs-triage-mail` accept "I called him, close this
+  one" from the operator, live, resolve "this" to ONE address, say the address
+  and the waiting time back before running it, and escalate rather than close
+  anything that merely LOOKS resolved.
+
+### Removed — `RATE_CAP` out of the interface (the code half shipped in v0.12.0)
+- **Why:** `v0.12.0` removed the quota from the send path and explicitly
+  deferred the templates. The deferral had a cost: `cs init` kept prompting for
+  a "Rate cap" nothing reads, `manifest.toml.j2` kept writing the key, and the
+  stamped prose kept naming it as an enforced guardrail — including
+  `CLAUDE.md` §5, which is what the operator agent reads. `mrcall-cs` had
+  already deleted the key from its own manifest, so template and clone were
+  disagreeing in front of the operator.
+- **What:** the "Rate cap" prompt is gone from `cs/project_init.py`,
+  `rate_cap = {{ rate_cap }}` is gone from `manifest.toml.j2` and from the
+  knobs row of `docs/ARCHITECTURE.md.j2`, and the guardrail claim is gone from
+  `CLAUDE.md.j2` §5/§6, `/cs-review`, `/cs-help`, `/cs-campaign` and
+  `campaigns/README.md.j2` — replaced by what is true: dedup is hard, `CS_PAUSE`
+  is the stop, there is no per-day quota. The kernel's own `README.md` loses its
+  "rate caps" claim and gains `config` and `draft-delete` in the verb map.
+- **Migration note:** unchanged from `v0.12.0` — a `rate_cap` line surviving in
+  an existing clone's `manifest.toml`, or `RATE_CAP` in its env, is inert
+  (`extra="ignore"`) and can be deleted at leisure. `cs update` will simply
+  stop re-stamping it. A clone's frozen `template-manifest.json` may still
+  carry a `rate_cap` init_data key; it is now an unused render variable, which
+  Jinja tolerates, so no clone needs editing for this release.
+
+### Changed — §7 Rollout no longer tells a clone which phase it is in
+- **Why:** the stamped `CLAUDE.md` §7 asserted "Phase 1 (now) —
+  operator-in-the-loop, `CS_TRIAGE_MODE=draft`". False on `mrcall-cs` since
+  2026-08-23, and an agent reads a stamped sentence as ground truth: it is part
+  of why two headless ticks declined to send. No rollout narrative can know
+  which phase its reader is in — a `cs update`, an env layer or one manifest
+  edit moves it and the prose does not follow.
+- **What:** §7 now describes the draft phase and the send phase, asserts
+  neither, and directs the reader to `cs config` for the resolved
+  `cs_triage_mode` and the file it comes from. `README.md.j2` and
+  `docs/ARCHITECTURE.md.j2` get the same treatment: the architecture table is
+  labelled "Declared, not resolved", because every cell in it is stamped from
+  `manifest.toml`, which is one layer of six.
+
+### Changed — `[campaigns].excluded_campaign` holds MORE THAN ONE campaign
+- **Why:** a clone finished two related campaigns — one and its `-batch2`
+  sibling — and the field was a single string matched with `==`. Only the
+  first was excluded, so for a month the general operator kept picking up the
+  second one's `handle_reply` actions on a campaign nobody was running. There
+  is no way to close a campaign instead: the engine registers `create`,
+  `list`, `add_contact`, `contacts` and `update_contact` and no
+  `campaign.close`, and the kernel filters on no `status` anywhere. The
+  exclusion list is the only lever, so it has to hold more than one name.
+- **What:** the field is now comma-separated, parsed by
+  `Settings.excluded_campaign_set` — the same shape as every other
+  multi-value knob in `cs/config.py` (`self_emails`, `system_senders`,
+  `send_guard_banned_phrases`). All three call sites move together
+  (`campaign.pending`, `_pack_send_preamble`, `send_first`): a contact reached
+  by id never passes through `pending`, so a list honoured only there would
+  leave both pack senders firing into a finished campaign. `cs config` prints
+  several names with a space after each comma.
+- **Matching stays EXACT, per name.** A prefix rule would be a shorter diff
+  and would then silently swallow every future `<name>-anything` campaign —
+  this bug, inverted. Two explicit names is the honest configuration.
+- **Migration note: none. Nothing to edit in any clone.** A single bare name
+  is the one-element case and behaves exactly as before; the key is not
+  renamed, so no stamped clone breaks and no alias is needed. Empty,
+  whitespace and `","` all mean "exclude nothing" — `""` is never a member of
+  the set, so a contact whose campaign-name lookup comes back blank is still
+  not treated as excluded. A clone that wants two campaigns excluded writes
+  them into its own `manifest.toml`; `cs update` never touches that file.
+
+### Gates
+- Gate 32 covers the exclusion list: one bare name (the old shape), several
+  names, empty/whitespace/`","`, the prefix trap at all three call sites, the
+  manifest→override→single-parse path, and the `cs config` rendering.
+- `tests/run.sh` grows gate 30 (`handled`: dated suppression, re-open on a
+  newer inbound, held-back senders still reported, idempotent + undoable,
+  `actor="human"` task close reading `id` and not `task_id`, and `sweep()`
+  actually feeding the ledger into the open-logic) and gate 31 (`cs config`:
+  the winning layer named down to table+key / env KEY, an env override
+  reported as winner with BOTH declarations surfaced, "kernel default" for an
+  undeclared knob, alias-spelling duplicates flagged, and no secret in the
+  text report / `--json` / `--all`). Gate 29 covers `draft-delete`. Gate 17,
+  the deny-enumeration gate, now compares 30 deny entries + 4 keeps for exact,
+  order-preserving equality across the six spellings. `cs config` joins the
+  full `--help` tree in gate 4. 32 gates, all green at the tag.
+- **Re-collaudo: FULL, both clones (`mrcall-cs`, `124-cs`)** — this changes
+  the **permission surface**: `bin/cs_operator_cron.sh.j2`'s
+  `--disallowed-tools` set and `.claude/settings.json.j2`'s allow list both
+  move, which the standing rule (CLAUDE.md invariant 4 / Tests section)
+  escalates to FULL regardless of diff size. `cs/campaign.py` changes too
+  (the exclusion list), which is on the same list independently. `124-cs` is
+  on `v0.9.6` and crosses four minor versions to get here.
+
 ## v0.12.0 — 2026-08-23
 
 ### Removed — `RATE_CAP`, the per-day send quota that silently dropped contacts
