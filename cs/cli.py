@@ -14,6 +14,9 @@ Code is the brain. These verbs are thin transport:
              the engine task ledger (upsert on event_id / complete).
   business   CRM lookup by email (adapter from manifest [crm]).
   dossier    thread + contacted + tasks + CRM for one address, in one shot.
+  config     the settings actually IN FORCE and which layer declares each —
+             the answer to "is this operator in draft or send mode", so it
+             never has to be re-derived from the files.
   chat       one engine-chat turn (drafting surface; destructive tools
              denied unless --allow'ed).
   project    `project new <slug>` stamps a project's written memory under
@@ -604,6 +607,26 @@ def cmd_accounts(args) -> int:
     return 0
 
 
+def cmd_config(args) -> int:
+    # What this operator is ACTUALLY configured to do, and which file declares
+    # each value. Six value layers resolve into one setting, and reading the
+    # files cannot answer the question without mentally executing the
+    # precedence rules — which is where readers, human and headless, get it
+    # wrong. Read-only, network-free, and it never prints a secret value, so
+    # it is safe to run first thing in any tick and to paste into a report.
+    from . import config_report
+
+    rep = config_report.build(config.load(), include_all=args.all)
+    _print_json(rep) if args.json else print(config_report.render(rep))
+    # Exit 0 even when a setting is declared twice: this is a READ verb, and a
+    # reader (human or agent) who asked "what am I configured to do" and got a
+    # non-zero exit reads it as "the question failed", not as "here is your
+    # answer plus a defect". The duplicate is loud in the output and in
+    # `--json`; `--strict` is the hook for a wrapper or a CI step that wants
+    # the failure as an exit code.
+    return 1 if (args.strict and rep["duplicates"]) else 0
+
+
 def cmd_llm(args) -> int:
     # The kernel's own LLM configuration: what it resolves to now, what else is
     # on offer, and how to change it. Non-interactive on purpose — the same
@@ -960,6 +983,23 @@ def main(argv=None) -> int:
 
     pac = sub.add_parser("accounts", help="list configured multi-account names (CS_ACCOUNTS)")
     pac.set_defaults(func=cmd_accounts)
+
+    pcf = sub.add_parser(
+        "config",
+        help="the settings actually in force + which file declares each one",
+    )
+    pcf.add_argument("--json", action="store_true", help="the report as data")
+    pcf.add_argument(
+        "--all",
+        action="store_true",
+        help="every setting, not just the ones that decide behaviour",
+    )
+    pcf.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 1 when a setting is declared in more than one place",
+    )
+    pcf.set_defaults(func=cmd_config)
 
     pcm = sub.add_parser("campaign", help="campaign follow-up verbs")
     csub = pcm.add_subparsers(dest="caction", required=True)

@@ -39,6 +39,13 @@ never in a rendered file).
 | Platform env layer | {% if platform_env_path %}via `{{ platform_env_path }}`{% else %}none (2-tuple loader: `~/.{{ company_slug }}-cs/.env` + repo `.env`){% endif %} |
 | Kernel pin | `cs-kernel@v{{ repo_kernel_version }}` (requirements.txt) |
 
+**Declared, not resolved.** Every cell above is stamped from `manifest.toml`,
+which is only one of six value layers — an env layer above it can override any
+of them, and a knob absent from the manifest falls back to a kernel default.
+Run **`cs config`** for the value actually IN FORCE and the file that declares
+it (it also flags anything declared in two places). Never act on a number read
+off this table.
+
 {% if posture_note %}**Campaign posture:** {{ posture_note }}{% endif %}
 
 ## Outside this repo (referenced, never stamped)

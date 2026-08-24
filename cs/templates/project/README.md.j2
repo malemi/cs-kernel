@@ -43,11 +43,12 @@ accounts are never mixed in (different repos, config, registries).
 
 ## What runs (cron is opt-in)
 
-The operator tick is `claude -p "/cs-operator"` (triage + cs-campaign-tick,
-draft-only). Turn it on from any session with **`/cs-cron`** (or by hand:
+The operator tick is `claude -p "/cs-operator"` (triage + cs-campaign-tick).
+Turn it on from any session with **`/cs-cron`** (or by hand:
 `cs cron install`; declared intent `{{ cron_schedule }}` — verify the live
-crontab). Each tick sends nothing
-(`CS_TRIAGE_MODE={{ cs_triage_mode }}` + draft-only permissions) and
+crontab). Whether a tick may send a free-form reply or only draft it is
+`cs_triage_mode`: run **`cs config`** for the value in force and the file that
+declares it, rather than believing a value written on this page. Every tick
 escalates on uncertainty. New campaigns are designed in a session too —
 **`/cs-campaign`** builds the pack and the tick advances it.
 

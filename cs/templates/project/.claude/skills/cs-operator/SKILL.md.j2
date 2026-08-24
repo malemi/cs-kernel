@@ -26,9 +26,11 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 - **No customer is contacted except through the sub-skills below.** This
   bootstrap itself sends nothing, drafts nothing, marks nothing. It only
   decides-to-run and delegates.
-- **Nothing is sent autonomously while `CS_TRIAGE_MODE=draft`** (the
-  default). Free-form replies become engine drafts for the operator to review;
-  the sub-skills enforce this, you do not override it.
+- **Whether free-form replies are sent or only drafted is `cs_triage_mode`,
+  and step 2b is the ONLY place you learn its value.** While it resolves to
+  `draft`, replies become engine drafts for the operator to review. The
+  sub-skills enforce whatever it resolves to; you do not override it, and you
+  never infer it.
 - **You do not self-authorize the out-of-scope actions in step 6.**
 
 ## 1. Kill-switch — `~/.{{ company_slug }}-cs/CS_PAUSE`
@@ -58,6 +60,34 @@ identity that is NOT {{ email_address }}): print
 **STOP**. Do **not** run the sub-skills, do **not** guess, do **not** act
 on a partial or wrong-identity session. A failed session is a clean no-op
 for this tick.
+
+## 2b. Read the effective configuration — never infer it
+
+```bash
+.venv/bin/python -m cs config
+```
+
+This prints every behaviour-deciding setting with the value **in force** and
+the file that declares it. **Its answer is the answer.** Specifically:
+
+- Take `cs_triage_mode` from this output and from nowhere else. Do **not** go
+  looking for a `CS_TRIAGE_MODE` environment variable, and — this is the
+  failure that made this step exist — **never read "no environment variable
+  is set" as "so the default `draft` applies"**. The value is the resolution
+  of six layers; `manifest.toml` is one of them, and two consecutive ticks
+  have already concluded `draft` while the manifest declared `send`.
+- Carry the mode AND its source into the report (step 6), so the next reader
+  does not have to re-derive it either.
+- If the output carries a `DUPLICATE DECLARATIONS` block, one setting is
+  declared in two places. Do not try to fix it and do not choose between them
+  — the command already tells you which one is in force; put it under
+  **Escalations** and carry on with the value it reports.
+- Read-only and network-free: it sends nothing and changes nothing.
+
+If the command fails outright, print
+`cs-operator: cannot read the configuration — STOP. <one-line reason>` and
+**STOP**. Acting on a configuration you could not read is exactly the guess
+this step exists to prevent.
 
 ## 3. Recurring job — triage inbound {{ email_address }} mail
 
@@ -156,6 +186,7 @@ jargon, no emoji, no "fammi sapere". Fold both sub-skill results into a
 cs-operator — <UTC timestamp>
 
 Engine:  {{ email_address }} ✓
+Modo:    cs_triage_mode = <valore in forza> (dichiarato in: <file da cs config>)
 Triage:  <una riga: bozze N / escalate N / nulla da fare>
 Campagne: <una riga: riconciliati N / promemoria N / SMS N / ack-bozza N / nulla da fare>
 {% if founder_sweep_enabled %}
@@ -167,6 +198,10 @@ Escalations (need you):
 ```
 
 Rules for the report:
+- The `Modo:` line is copied from step 2b's output — the value AND the file
+  that declares it, verbatim. It is never guessed, never softened to "default",
+  and never omitted: it is what tells the next reader (operator or agent)
+  whether this tick could send, without them re-deriving it from the files.
 - If both sub-skills had nothing to do, say so plainly (e.g.
   `Triage: nulla da fare`, `Campagne: nulla da fare`) — an idempotent
   no-op tick is a correct, expected result, not a problem.
