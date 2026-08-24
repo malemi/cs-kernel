@@ -117,7 +117,12 @@ service account, corrected 2026-07-14 doc-critic pass) ·
 `campaign list|pending|reconcile|mark|queue-draft|send-draft` ·
 `campaign packs|send-reminder|send-sms` (fixed-template lifecycle) ·
 `chat "<msg>" [--allow …]` (supervised SEND path — DENIED to the headless
-operator) · `accounts` · `cron install|uninstall|status` (manage the
+operator) · `accounts` ·
+`config [--all] [--json] [--strict]` (the settings actually IN FORCE and which
+file declares each — **the** answer to "draft or send?", so it is never
+re-derived from `manifest.toml` and the `.env` chain; read-only, network-free,
+never prints a secret value, and flags any setting declared in two places) ·
+`cron install|uninstall|status` (manage the
 operator's own crontab entry) ·
 `project new <slug> [--title …]` (stamp a project's written memory under
 `docs/projects/`: index + status + timeline + meetings/) ·
@@ -185,7 +190,13 @@ wire it, draft-first, sends nothing).
 - Outreach copy rules live in the profile's `USER_NOTES`, not here.
 - Suppression + dedup ledger in SQLite `~/.{{ company_slug }}-cs/cs.db`; dedup truth is
   Gmail's own Sent folder, not the engine archive.
-- Autonomy knobs: **`CS_TRIAGE_MODE`** (`draft`|`send`, default `{{ cs_triage_mode }}`),
+- **Never read the effective configuration out of the files — ask
+  `cs config`.** It prints each behaviour-deciding setting with the value in
+  force and the layer that declares it, and flags anything declared twice. A
+  value written into this document, or into `.env.example`, is a snapshot from
+  the day the clone was stamped; the resolution of six layers is the truth.
+- Autonomy knobs: **`CS_TRIAGE_MODE`** (`draft`|`send`; `cs config` prints
+  which is in force and where it is declared),
   **`CS_PAUSE`** file (`~/.{{ company_slug }}-cs/CS_PAUSE`) = global kill-switch,
   `RATE_CAP` = {{ rate_cap }}/day. The cron stays draft-only via its wrapper.
 

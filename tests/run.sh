@@ -142,7 +142,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered handled tasks business dossier ask draft-reply draft-delete review drive accounts chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered handled tasks business dossier ask draft-reply draft-delete review drive accounts config chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -522,6 +522,18 @@ step "30. handled out of band — dated suppression, and every surface obeys it"
 # tasks.list (NOT the `task_id` tasks.complete wants), a mistyped address is a
 # clean refusal, and sweep() actually feeds the ledger into the open-logic.
 if "$VENV/bin/python" "$ROOT/tests/test_handled.py"; then echo "OK"; else echo "FAIL: out-of-band handling regressed"; FAIL=1; fi
+
+step "31. cs config — resolved value + provenance, duplicate flag, no secret printed"
+# Two consecutive headless ticks read "no CS_TRIAGE_MODE env var" as "so the
+# default draft applies" while manifest.toml declared send — the layering was
+# sound, the RESOLVED value was invisible. Guards: the winning layer is named
+# down to the TOML table+key / the env KEY; an env layer that overrides the
+# manifest is reported as the winner and BOTH declarations are surfaced (a
+# duplicate is a defect even when the two agree today); a knob absent from
+# manifest.toml reports "kernel default", never the manifest; two alias
+# spellings in one file are flagged; and no secret value reaches the text
+# report, --json or --all.
+if "$VENV/bin/python" "$ROOT/tests/test_config_report.py"; then echo "OK"; else echo "FAIL: cs config provenance regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
