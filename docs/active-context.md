@@ -56,16 +56,26 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.14.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.14.0` | Anthropic direct → `claude-sonnet-5` | Running. Paused for the re-pin only; collaudo passed and the pause was cleared. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.16.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. The pause is still set and was NOT cleared by the re-pin. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.16.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
-  Both pin `v0.14.0` as of 2026-08-24, FULL tier, evidence in each clone's
-  re-pin commit and in the CHANGELOG's operational-pin marker. **Re-pinning a
+  Both pin `v0.16.0` as of 2026-08-24, static tier, and neither re-pin is
+  committed yet — the working trees are the operator's to review. **Re-pinning a
   clone is the operator's own move unless he asks for it** — stated twice on
   2026-08-21, after a `cs update` overwrite cost him a hand-authored
-  `manifest.toml`. This round was asked for; the same care applied
-  (`manifest.toml` and `requirements.txt` are never `cs update` targets, and
-  every conflicted file defaulted to keeping the local version).
+  `manifest.toml`. This round was asked for, with a per-file decision given in
+  advance for every prompt. That care is now partly structural: `company/**`
+  joins `manifest.toml` and `requirements.txt` as a file class `cs update`
+  cannot overwrite at all.
+
+  **`docs/ARCHITECTURE.md` is the same hazard, still open.** It is
+  template-owned but its last section is hand-authored by contract ("This
+  section is NOT stamped"), so an overwrite that is right for the stamped table
+  destroys the notes underneath it. That happened on `124-cs` in this re-pin —
+  59 authored lines, restored by hand from git in the same session. Either the
+  authored half moves out of the rendered file, or the file joins the
+  create-if-missing class; until one of them happens, the overwrite prompt on
+  that file is a trap with a correct-looking answer.
 
 - **Both clones' `requirements.lock` is current again**, regenerated on
   2026-08-24 from each clone's own collaudo'd venv. Until then each resolved
