@@ -36,6 +36,7 @@ from pathlib import Path
 from ._version import kernel_version, kernel_version_bare
 from .project_init import (
     install_agent_surfaces,
+    is_clone_authored,
     is_executable_target,
     toml_quote,
 )
@@ -522,6 +523,21 @@ def cmd_update(args: list[str]) -> int:
             # exists and leaves it alone; `cs init` is the only writer.
             if verbose:
                 print("  · manifest.toml is yours (your company settings) — left alone")
+            continue
+
+        if is_clone_authored(str_out_rel):
+            # A company prose slot: create it if the clone has none, then never
+            # touch it again. See CLONE_AUTHORED_PREFIXES for why this is not a
+            # conflict to resolve but a file class that must not be tracked.
+            clone_file = clone_root / out_rel
+            if clone_file.exists():
+                if verbose:
+                    print(f"  · {str_out_rel} is yours (company prose) — left alone")
+            else:
+                clone_file.parent.mkdir(parents=True, exist_ok=True)
+                _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
+                added += 1
+                print(f"  + {str_out_rel}")
             continue
 
         rendered_checksum = _checksum(rendered)

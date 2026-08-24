@@ -1,3 +1,23 @@
-    - `cs drive ls` (no arg) lists the Shared Drives the SA can see — `{{ drive_scope }}`
-      for {{ company_name }}, plus any others explicitly shared with it. A different
-      company's drive is NOT shared here and must NOT be searched from this project.
+# Shared Drives this project may search
+
+## What to write here
+
+Which Google Shared Drives the service account can actually see, and which of
+them `/cs-find-document` is allowed to search for {{ company_name }}.
+
+`cs drive search` is pinned to one scope (`CS_DRIVE`, `cs config` prints the
+value in force){% if drive_scope %} — here, `{{ drive_scope }}`{% endif %}. But a service account often ends up
+shared on more drives than that: a partner's folder, an archive, a personal
+drive somebody added it to. List them, and for each say plainly whether it may
+be searched from this project or must never be.
+
+Also worth a line: where the documents customers ask for actually live, so the
+skill starts in the right place instead of crawling.
+
+## Why it matters
+
+`/cs-find-document` searches on behalf of {{ email_address }} and quotes what it
+finds back to a customer. A drive belonging to somebody else that nobody wrote
+down here is a drive it may search in good faith — and a leak that looks, from
+the outside, exactly like {{ company_name }} sending a stranger's document to a
+customer.

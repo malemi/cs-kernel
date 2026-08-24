@@ -1,4 +1,26 @@
-- touching the {{ excluded_campaign }} campaign, retiring the legacy migration cron, or
-  removing the migration-campaign exclusion;
-- installing / cutting over crontab lines;
-- the Friday `service_number` cutover.
+# Out of scope for the unattended operator
+
+## What to write here
+
+The actions the headless tick must **escalate and never perform** at
+{{ company_name }}. `/cs-operator` step 5 already refuses the kernel's own list —
+widening the autonomy mode, any mass send, editing the crontab. This file adds
+the ones that only exist in your operation, and step 5 tells the tick to read
+it.
+
+Write raw markdown bullets, one action per line, ending in `;` — they are read
+as a continuation of the skill's own list. Say the action, not the reason:
+
+-
+-
+
+Good candidates: anything with a deadline somebody else owns, anything that
+touches a system outside {{ company_prog_name }}, anything a colleague is in the
+middle of, and any campaign or process that has its own operator.
+
+## Why it matters
+
+The tick is unattended and it reads untrusted inbound mail. A step it can
+plausibly justify is a step it will eventually take at three in the morning, on
+a day nobody is watching, on the strength of a sentence a stranger wrote. What
+you list here is what it stops and asks about instead.

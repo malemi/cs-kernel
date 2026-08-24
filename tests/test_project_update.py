@@ -234,6 +234,126 @@ def _e2e_already_current_no_prompt_no_diff() -> None:
         )
 
 
+def _e2e_company_slot_authored_never_prompts_never_overwrites() -> None:
+    """`company/**` is prose the operator is TOLD to author, so an authored
+    slot differs from its stored checksum permanently. Tracking it in
+    `file_checksums` therefore produced a conflict that could never be
+    resolved: every clone was asked "modified locally AND template changed.
+    Overwrite? [y/N/diff]" about every slot, at every single update, for ever
+    — and one wrong "y" destroys prose no template can regenerate.
+
+    This runs against the shape BOTH existing clones are actually in: a
+    manifest that still carries the stale `company/…` checksum entries `cs
+    init` wrote before the fix, plus authored files on disk. It must need no
+    migration — no prompt, no write, and the stale entries gone from the
+    ledger afterwards. Stdin closed, like every other subprocess test here:
+    if a prompt reappeared, EOF would resolve it to "keep local" and the file
+    assertions alone would not tell the two behaviours apart, so the
+    "Overwrite?" assertion is the one that matters.
+    """
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        authored_rel = "company/team-conventions.md"
+        untouched_rel = "company/triage-domain-examples.md"
+        missing_rel = "company/campaign-product-notes.md"
+
+        authored = (
+            "# Team conventions — who answers from where\n\n"
+            "Jane answers billing from billing@acme.example; the Sent archive\n"
+            "of the support box never sees those threads.\n"
+        )
+        (clone / "company").mkdir()
+        (clone / authored_rel).write_text(authored)
+        # A slot still holding exactly what the OLD template stamped: it must
+        # be left alone too. "Unmodified" is not a licence to re-stamp — the
+        # operator may simply not have written it yet, and a silent rewrite
+        # would move a file they are about to open.
+        old_stamp = "Examples of domain-specific topics for Acme Corp:\n"
+        (clone / untouched_rel).write_text(old_stamp)
+
+        manifest = {
+            "template_version": "1",
+            "init_data": {
+                "company_slug": "acme", "company_name": "Acme Corp",
+                "company_prog_name": "acme-cs", "company_display_name": "Acme",
+                "email_address": "support@acme.example",
+                "accounts_default": "support", "drive_scope": "",
+            },
+            # Exactly what a pre-fix `cs init` left behind, and what both live
+            # clones' manifests carry today.
+            "file_checksums": {
+                authored_rel: BOGUS_CHECKSUM,
+                untouched_rel: BOGUS_CHECKSUM,
+                missing_rel: BOGUS_CHECKSUM,
+            },
+        }
+        (clone / "template-manifest.json").write_text(json.dumps(manifest))
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert "Overwrite?" not in out, (
+            f"a company/ slot must never reach the conflict prompt:\n{out}"
+        )
+        for present in (authored_rel, untouched_rel):
+            assert present not in out, (
+                "a slot the clone already has is not an event: it must not "
+                f"appear in the default output at all ({present}):\n{out}"
+            )
+        assert (clone / authored_rel).read_text() == authored, (
+            f"authored company prose must be byte-identical after the update:\n{out}"
+        )
+        assert (clone / untouched_rel).read_text() == old_stamp, (
+            f"an unmodified slot must not be re-stamped either:\n{out}"
+        )
+        # Create-if-missing: the slot the clone did not have is stamped, so a
+        # new slot added by a kernel release still reaches every clone.
+        assert (clone / missing_rel).exists(), (
+            f"a missing company slot must be created by cs update:\n{out}"
+        )
+
+        updated = json.loads((clone / "template-manifest.json").read_text())
+        stale = [k for k in updated["file_checksums"] if k.startswith("company/")]
+        assert not stale, (
+            "the stale company/ entries must be dropped from the ledger, not "
+            f"refreshed: {stale}"
+        )
+
+        # Second run, now that the ledger is clean and one more slot exists on
+        # disk: still silent, still no prompt. This is the state every clone
+        # lands in, and it is the one the operator sees at every future update.
+        proc2 = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out2 = proc2.stdout + proc2.stderr
+        assert proc2.returncode == 0, f"expected exit 0 on the second run:\n{out2}"
+        assert "Overwrite?" not in out2, f"second run must not prompt either:\n{out2}"
+        assert (clone / authored_rel).read_text() == authored, (
+            f"authored prose must survive a second update too:\n{out2}"
+        )
+
+        # -v is where a non-event is allowed to be reported (CLAUDE.md rule 6).
+        proc3 = subprocess.run(
+            [sys.executable, "-m", "cs", "update", "-v"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out3 = proc3.stdout + proc3.stderr
+        assert f"{authored_rel} is yours" in out3, (
+            f"-v must account for the slots it deliberately left alone:\n{out3}"
+        )
+
+
 def _e2e_security_critical_conflict_applies_with_backup() -> None:
     """A SECURITY_CRITICAL file (project_update.SECURITY_CRITICAL) must never
     be gated behind the interactive prompt: on a "modified locally AND
@@ -819,6 +939,7 @@ def main() -> int:
     _offer_yes_path_repins_installs_reexecs()
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_already_current_no_prompt_no_diff()
+    _e2e_company_slot_authored_never_prompts_never_overwrites()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
     _e2e_manifest_toml_never_touched()

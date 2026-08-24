@@ -28,13 +28,28 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
    ```bash
    grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centralix|/home/mal|\bmario\b|alemi|hahnbanach' cs/
    grep -rEn --exclude-dir=__pycache__ '\bHB\b' cs/
+   grep -rEin --exclude-dir=__pycache__ 'mrcall' cs/   # bare brand — see below
    ```
 
    Platform names are allowed where they name shared infrastructure the
    kernel drives (the mrcall-desktop *engine*, the `mrcall.search_businesses`
    RPC method, the `mrcall-tracking` *adapter id*) — those are the same for
    every clone. Company *hosts/domains/values* are not: they live in the
-   manifest.
+   manifest. The third grep is the BARE brand, and those three blessed forms
+   are the only ones the gate strips before judging: `<brand>-agent`,
+   `/api/<brand>/`, `~<brand>d/`, a bare possessive — all reach the operator
+   as proposals. The wordlist carried only the mailbox *domain* until
+   2026-08-24, which is how a whole page of one company's internal API access
+   shipped inside a project template and greped clean.
+
+   `cs/templates/project/company/` is the one directory whose stamped content
+   is meant to be REPLACED by each clone's operator, which is exactly why it
+   leaked: it held the mother clone's own operational facts and no wordlist
+   describes "the Friday cutover". Its slots are held to a shape instead —
+   each must carry a `## What to write here` section, and none may carry a
+   dated claim, a named weekday, a URL, a mail address, an API path or
+   another user's home. A slot says what to write; it never says what one
+   company happens to do.
 
 2. **Everything company-shaped comes from `Settings`** (← `manifest.toml`
    ← env layers). About to write `if company == …`? Stop: it is a manifest
@@ -153,6 +168,15 @@ templates under `cs/templates/project/`, stamped per clone): `.claude/`
 (its deny body is an invariant baked by the template), `company/*.md` prose
 slots, `manifest.toml` itself. Not in this repo in ANY form: `campaigns/`
 pack content, docs/customers, `ext/`.
+
+`company/**` is **create-if-missing and never overwritten** — `cs init` and
+`cs update` write a slot only when the clone has none, never prompt about one,
+and never checksum it (`CLONE_AUTHORED_PREFIXES`, `cs/project_init.py`). The
+operator is told to author these files, so an authored slot diverges from any
+stored checksum permanently; tracking them meant every release that reworded a
+slot asked "Overwrite? [y/N/diff]" about all of them, in every clone, with one
+wrong "y" destroying prose no template can regenerate. Same class as
+`requirements.txt` and `manifest.toml`.
 
 ## Versioning & release
 

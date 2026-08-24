@@ -1,10 +1,33 @@
-This directory contains prose templates and company-specific notes used by the operator and AI.
+# company/ — the per-company prose slots
 
-Files:
-- `campaign-product-notes.md` — product/campaign notes for the AI
-- `claude-extra.md` — additional context for the AI
-- `drive-visible-note.md` — note about visible Google Drive scopes
-- `operator-out-of-scope.md` — operator responsibilities considered out of scope
-- `triage-answerable.md` — guidelines for answerable support questions
-- `triage-domain-examples.md` — examples of domain-specific topics for triage
-- `team-conventions.md` — who replies from which mailbox, i.e. what the Sent-archive checks cannot see
+Every file in this directory is **yours to author**. The kernel stamps a blank
+starting point once, when the clone is created, and never touches these files
+again: `cs update` adds a slot only if it is missing, so nothing you write here
+is overwritten, and you are never asked about it.
+
+They hold the variance `manifest.toml` cannot express. The manifest carries
+values — addresses, adapters, knobs. These files carry the sentences somebody
+has to write down, and the skills read them at run time to know what is true of
+{{ company_name }}.
+
+| File | Read by | Holds |
+|---|---|---|
+| `triage-domain-examples.md` | `/cs-triage-mail` | what an ordinary mail to {{ email_address }} is about |
+| `triage-answerable.md` | `/cs-triage-mail` | which asks may be answered without a human |
+| `team-conventions.md` | `/cs-triage-mail` | who replies from where — what the Sent-archive checks cannot see |
+| `campaign-product-notes.md` | `/cs-campaign-tick` | your own automatic replies, so they are never read as a human answer |
+| `operator-out-of-scope.md` | `/cs-operator` | what the unattended tick must escalate and never do itself |
+| `drive-visible-note.md` | `/cs-find-document` | which Shared Drives this project may search |
+| `claude-extra.md` | `CLAUDE.md` | other systems this operator may reach, and how |
+
+Rules for all of them:
+
+- **Prose only, and no secrets.** Voice, signature and reply policy are not here
+  either: they live in the engine profile's `USER_NOTES`
+  (`cs rpc settings.update`), outside every repo.
+- **Write what is true of {{ company_name }} and of nobody else.** An agent
+  reads these files as fact. Another company's habits pasted in here become
+  {{ company_name }}'s habits.
+- **A slot left as delivered teaches the agent nothing.** Each file opens with
+  "What to write here" and closes with what goes wrong while it is empty. Start
+  from those two sections and delete them once the file says something real.

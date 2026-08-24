@@ -38,9 +38,10 @@ env_prefix = "{{ crm_shopify.env_prefix }}"
 {% endif %}
 
 [producer]
-# mrcall-tracking's script/python paths are literal paths on MrCall's own
-# ops box; `cs init` never wires this for a clone. Add [producer.mrcall_tracking]
-# by hand (script_path, python_path) if this clone genuinely needs it.
+# A producer adapter's paths are literal filesystem paths on the host that
+# runs it, so `cs init` never wires one for a clone. Add the adapter's own
+# table by hand (for mrcall-tracking: [producer.mrcall_tracking] with
+# script_path and python_path) if this clone genuinely needs it.
 adapter = "none"
 
 [campaigns]

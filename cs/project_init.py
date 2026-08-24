@@ -461,9 +461,9 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     else:
         config["crm_shopify"] = None
 
-    # Producer adapter — mrcall-tracking's script/python paths are literal
-    # filesystem paths on MrCall's own ops box; no external clone wires
-    # this itself. Hardcoded off, no prompt in any mode; a clone that
+    # Producer adapter — a producer's script/python entries are literal
+    # filesystem paths on the host that runs it, so no clone can be wired
+    # for one at init time. Hardcoded off, no prompt in any mode; a clone that
     # genuinely needs it edits manifest.toml by hand (clone-owned, never
     # touched by `cs update`).
     config["producer_adapter"] = "none"
@@ -627,6 +627,36 @@ def is_executable_target(rel_dir: Path, template_name: str) -> bool:
     return "bin" in rel_dir.parts or template_name.endswith(".sh.j2")
 
 
+# Stamped paths whose CONTENT is meant to diverge per company. The kernel writes
+# one only when the clone has none; from then on it is the operator's prose and
+# nothing here touches it again — no overwrite, no prompt, no checksum.
+#
+# `company/` was tracked like every other render until 2026-08-24, and the
+# arithmetic of that is unforgiving: the operator is TOLD to author these files,
+# so every authored slot differs from its stored checksum permanently. Any
+# release that reworded a slot then asked "modified locally AND template
+# changed. Overwrite? [y/N/diff]" about each of them, at every single update,
+# for ever — a prompt whose only correct answer is always No, which is exactly
+# the kind of prompt an operator learns to answer without reading. And answering
+# it wrong once destroys prose no template can regenerate.
+#
+# Consequence for the checksum ledger: a path under here is never written into
+# `file_checksums`. A clone whose manifest still lists one (both existing clones
+# do) drops that stale entry on its next `cs update`, and nothing reads it in
+# the meantime — `cs update` returns from this class before it consults the
+# stored checksums at all. Same treatment `requirements.txt` and `manifest.toml`
+# already get.
+CLONE_AUTHORED_PREFIXES = ("company/",)
+
+
+def is_clone_authored(out_rel) -> bool:
+    """True for a stamped path whose content belongs to the clone operator.
+
+    `out_rel` is the path RELATIVE to the clone root, as a string or a Path.
+    """
+    return str(out_rel).replace(os.sep, "/").startswith(CLONE_AUTHORED_PREFIXES)
+
+
 def toml_quote(value) -> str:
     """Render `value` as a TOML basic string, quotes included — safe as
     either a key or a value.
@@ -676,7 +706,16 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
         
         # Ensure destination directory exists
         dest_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
+        # A company prose slot the operator has already authored is never
+        # re-stamped and never checksummed — `cs init` re-run in place (the
+        # documented restamp, dest_dir "." on an existing clone) would
+        # otherwise overwrite it with the blank template, silently.
+        rel_dest = dest_path.relative_to(dest_dir)
+        if is_clone_authored(rel_dest) and dest_path.exists():
+            print(f"Kept: {rel_dest} (yours — company prose, never re-stamped)")
+            continue
+
         try:
             if template_path.suffix == '.j2':
                 # Render template
@@ -699,12 +738,14 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
             if is_executable_target(rel_path.parent, template_path.name):
                 dest_path.chmod(0o755)
 
-            # Calculate checksum for rendered/copy file
-            file_content = dest_path.read_bytes()
-            file_hash = hashlib.sha256(file_content).hexdigest()
-            # Use relative path from dest_dir
-            rel_dest_path = dest_path.relative_to(dest_dir)
-            file_checksums[str(rel_dest_path)] = f"sha256:{file_hash}"
+            # Calculate checksum for rendered/copy file. Clone-authored slots
+            # are deliberately absent from the ledger: their content is meant
+            # to diverge, so a stored checksum only ever produces a permanent
+            # false conflict at `cs update` time.
+            if not is_clone_authored(rel_dest):
+                file_content = dest_path.read_bytes()
+                file_hash = hashlib.sha256(file_content).hexdigest()
+                file_checksums[str(rel_dest)] = f"sha256:{file_hash}"
         except jinja2.TemplateError as e:
             print(f"Template error rendering {rel_path}: {e}", file=sys.stderr)
             success = False

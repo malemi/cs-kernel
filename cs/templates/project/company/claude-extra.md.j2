@@ -1,24 +1,35 @@
-## 1b. mrcall-agent (assistant configurator) — verified access
+# Other systems this operator may reach
 
-The SAME Firebase session (cs/auth.py mint for support@) authenticates
-against `mrcall-agent`, whose StarChat role for support@ spans
-businesses cross-owner. **Verified live 2026-06-11** on production:
+## What to write here
 
-- Base: `https://agent.example.com` (test realm: `https://agent-test.example.com`)
-- Header: `Authorization: Bearer <id-token>` (the deployed dependency
-  requires this exact header; the in-code `auth:` docstrings are stale)
-- Probes that returned 200: `GET /api/chat/sessions`,
-  `GET /api/mrcall/training/status?business_id=<id>`
+Anything {{ company_prog_name }} can call that is not the mail engine and is not
+already in `CLAUDE.md`: an internal API, an admin console, a back-office that
+the {{ email_address }} identity happens to be authorised for. `CLAUDE.md`
+points here from its engine section, so whatever you write becomes part of the
+operator manual an agent reads at the start of every session.
 
-Configure surface (the dashboard's ConfigureAI, drivable headless):
+For each system, four things — and if you cannot give all four, leave it out
+rather than half-document it:
 
-| Endpoint | Role |
-|---|---|
-| `POST /api/chat/message` (or `/message/stream`) | agentic configurator loop, 10 configure tools; use `session_id=mrcall_config_{businessId}`; edits accumulate as **pending changes (dry-run)** |
-| `GET /api/chat/history?session_id=…` | review the session + `pending_changes` |
-| `POST /api/mrcall/apply-changes` | **applies pending changes — MUTATES the business**; operator's explicit ok required, per business |
-| `POST /api/mrcall/training/start` / `GET …/status` / `POST …/reset` | (re)train the linked assistant |
+- **What it is**, in one sentence, and what it is good for.
+- **How the operator authenticates.** If it rides on an existing session
+  (the same Firebase identity, a shared token), say so; never paste a credential
+  here — secrets live in `~/.{{ company_slug }}-cs/.env`.
+- **The exact base URL of each realm**, and which one is production.
+- **Which calls only read, and which mutate.** Mark every mutating call as
+  needing the operator's explicit go, per action.
 
-Untested as of 2026-06-11: a full message → pending → apply round (it
-mutates a real business; run it first on a sacrificial business or the
-test realm, on the operator's instruction).
+Put the date you last checked each claim next to it, in `YYYY-MM-DD` form, and
+say what you actually called to check it.
+
+## Why it matters
+
+An agent reads this file as a description of the present. A base URL that moved,
+an endpoint that used to be read-only, a permission that was revoked — none of
+that announces itself, and an undated "verified, works" is indistinguishable
+from a claim somebody guessed. The dates are what let the next session tell a
+fact from a fossil.
+
+If nothing outside the engine is reachable from this clone, say exactly that in
+one line and delete the rest. An empty file and "there is nothing else" read very
+differently to whoever comes next.

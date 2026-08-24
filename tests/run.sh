@@ -3,6 +3,8 @@
 # Run from anywhere: resolves the repo root itself. CI runs exactly this.
 #
 #   1. grep gate           zero company literals in the package (charter §)
+#   1b. slot contract      company/ slots say what to write, never what one
+#                          company does (the wordlist cannot see that class)
 #   2. boundary greps      SMTP only in send_mail.py; drafts path SMTP-free
 #   3. clean install       pip install into a FRESH venv; `python -m cs`
 #                          resolves from site-packages with NO source dir
@@ -40,20 +42,67 @@ CI_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall\.ai|cafe124|124-cs|centr
 # a filesystem path, not the drive token. Same registry, same judgment pass as the
 # case-insensitive wordlist above: an HB hit is a proposal too, not an auto-fail.
 CS_HITS="$(grep -rEn --exclude-dir=__pycache__ '\bHB\b' cs/ || true)"
+# The BARE BRAND, separately. Until 2026-08-24 the wordlist carried only the
+# mailbox DOMAIN (`mrcall.ai`), so the brand on its own walked straight past it:
+# a project template shipped a whole page of one company's internal API access,
+# another named that company's engine service-user home, and both greped clean.
+# The brand cannot simply be added to the wordlist above, because the charter
+# blesses it where it names shared infrastructure the kernel drives (the
+# mrcall-desktop engine, the mrcall-tracking adapter id, the
+# mrcall.search_businesses RPC method) — ~50 lines that are identical for every
+# clone and are not clone data. Those FORMS are blessed by pattern here rather
+# than line by line in the registry: copying 50 exact lines into
+# reviewed_literals.txt would bury the handful of real proposals in them, and
+# every one of the 50 would go stale on the next reword. Anything else carrying
+# the brand — `<brand>-agent`, `/api/<brand>/`, `~<brand>d/`, a bare possessive
+# — survives the strip and reaches the operator as a proposal like any other.
+BRAND_HITS="$(grep -rEin --exclude-dir=__pycache__ 'mrcall' cs/ || true)"
 ALL_HITS="$(printf '%s\n%s\n' "$CI_HITS" "$CS_HITS")"
-if ! ALL_HITS="$ALL_HITS" REVIEWED_LITERALS="$ROOT/tests/reviewed_literals.txt" python3 - <<'PYEOF'
+if ! ALL_HITS="$ALL_HITS" BRAND_HITS="$BRAND_HITS" \
+     REVIEWED_LITERALS="$ROOT/tests/reviewed_literals.txt" python3 - <<'PYEOF'
 import os
+import re
 
 hits_raw = os.environ.get("ALL_HITS", "")
+brand_raw = os.environ.get("BRAND_HITS", "")
 reviewed_path = os.environ["REVIEWED_LITERALS"]
 
-hits = []
-for line in hits_raw.splitlines():
-    if not line:
-        continue
+# Shared-infrastructure forms of the platform brand, blessed by the charter
+# (CLAUDE.md rule 1): the engine, the producer adapter id, the CRM RPC method.
+BLESSED_BRAND = re.compile(
+    r"mrcall[-_]?desktop|mrcall[-_]?tracking|mrcall\.search_businesses", re.I
+)
+
+
+def _split(line):
     path, _, rest = line.partition(":")
     _lineno, _, content = rest.partition(":")
-    hits.append((path, content))
+    return path, content
+
+
+hits = []
+seen = set()
+
+
+def _add(path, content):
+    # One line can match two patterns; report it once.
+    key = (path, content.strip())
+    if key not in seen:
+        seen.add(key)
+        hits.append((path, content))
+
+
+for line in hits_raw.splitlines():
+    if line:
+        _add(*_split(line))
+
+for line in brand_raw.splitlines():
+    if not line:
+        continue
+    path, content = _split(line)
+    # Strip every blessed form, then ask whether the brand is STILL there.
+    if re.search("mrcall", BLESSED_BRAND.sub("", content), re.I):
+        _add(path, content)
 
 approvals = []  # (path, content_stripped, raw_line)
 try:
@@ -106,6 +155,81 @@ print(
     "OK: no unreviewed company-shaped literals (%d approved hits in "
     "tests/reviewed_literals.txt)" % approved_hits
 )
+PYEOF
+then
+  FAIL=1
+fi
+
+step "1b. company slot contract: cs/templates/project/company/ is instructions, not content"
+# The slots under company/ are the ONE directory whose stamped content is meant
+# to be replaced by each clone's own operator. That made them the blind spot:
+# they carried the mother clone's real operational facts — a named weekday
+# cutover, a legacy cron to retire, a dated "verified live on production" page
+# of one company's internal API — and every one of them got stamped into every
+# other company's clone as if it were true there. No wordlist catches that
+# class: "the Friday cutover" contains no brand, no domain and no slug.
+#
+# So the gate holds the SHAPE instead. A slot is an instruction to its operator,
+# and an instruction has two properties a leaked fact does not:
+#   (A) it says what to write, under a literal "## What to write here" heading —
+#       a file that is content rather than instructions simply does not have one;
+#   (B) it carries no dated claim, no named weekday, no URL, no mail address, no
+#       API path and no other user's home — the shapes an operational fact takes
+#       when it is true of exactly one company on exactly one day.
+# README.md.j2 is the directory index, not a slot, so (A) does not apply to it.
+# Neither test is a proof of genericity; both are cheap, and both would have
+# failed loudly on what shipped.
+if ! python3 - "$ROOT" <<'PYEOF'
+import re
+import sys
+from pathlib import Path
+
+slot_dir = Path(sys.argv[1]) / "cs" / "templates" / "project" / "company"
+MARKER = "## What to write here"
+NOT_INDEX = {"README.md.j2"}
+
+FACT_SHAPES = [
+    (re.compile(r"\b20\d\d-\d\d-\d\d\b"), "a dated claim"),
+    (re.compile(r"\b(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day\b"), "a named weekday"),
+    (re.compile(r"https?://"), "a URL"),
+    (re.compile(r"[\w.%+-]+@[\w-]+\.[A-Za-z]{2,}"), "a mail address"),
+    (re.compile(r"/api/"), "an API path"),
+    (re.compile(r"(?<![\w~])~[A-Za-z][\w.-]*/|/home/|/Users/"), "another user's home"),
+]
+
+problems = []
+slots = sorted(slot_dir.glob("*.j2"))
+if not slots:
+    print("FAIL: no slot templates found under %s" % slot_dir)
+    raise SystemExit(1)
+
+for slot in slots:
+    text = slot.read_text()
+    rel = slot.relative_to(slot_dir.parents[3])
+    if slot.name not in NOT_INDEX and MARKER not in text:
+        problems.append(
+            "%s: no '%s' section — a slot must tell its operator what belongs "
+            "in it and why" % (rel, MARKER)
+        )
+    for lineno, line in enumerate(text.splitlines(), 1):
+        for pattern, what in FACT_SHAPES:
+            if pattern.search(line):
+                problems.append(
+                    "%s:%d: %s — that is one company's fact, not an instruction: "
+                    "%s" % (rel, lineno, what, line.strip())
+                )
+
+if problems:
+    for p in problems:
+        print("  " + p)
+    print(
+        "FAIL: %d company-slot violation(s). A slot under company/ is stamped "
+        "into EVERY clone: it may describe what to write, never what one "
+        "company happens to do." % len(problems)
+    )
+    raise SystemExit(1)
+
+print("OK: %d company slots are instructions (no dated/company facts)" % len(slots))
 PYEOF
 then
   FAIL=1

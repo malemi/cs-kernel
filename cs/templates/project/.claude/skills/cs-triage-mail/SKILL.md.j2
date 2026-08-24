@@ -72,9 +72,9 @@ It enumerates every inbound of the last 14 days (Gmail All Mail, Date-header
 windowed) and subtracts every sender {{ accounts_default }}@ has since written to (Gmail Sent =
 dedup ground truth), returning only senders with NO reply after their last
 message, oldest-first. This **replaced** an LLM `cs ask` discovery query that was
-NON-DETERMINISTIC — two runs of the same query returned different sets and missed
-real unanswered client mail 6–13 days old that had no engine task (incident
-2026-07-16, Privacar/Bonometto pre-sales 10 Jul plus four others 3–10 Jul).
+NON-DETERMINISTIC — two runs of the same query returned different sets, and it
+missed five real client mails 6–13 days old, a pre-sales enquiry among them,
+because none of them had an engine task (incident 2026-07-16).
 
 ```bash
 .venv/bin/python -m cs unanswered --days 14 --json    # PRIMARY — deterministic Sent-anchored sweep
@@ -98,9 +98,10 @@ Then for EACH candidate, the authoritative unanswered-check — across threads:
 ```
 
 - If {{ email_address }} already sent a message to that contact AFTER their inbound →
-  **ANSWERED. Drop it.** Do not flag, do not draft. (This is where the bad
-  report went wrong: it flagged Bistrot + MADEA as urgent-open when {{ email_address }}
-  had already replied — MADEA's confirmation was in a sibling thread.)
+  **ANSWERED. Drop it.** Do not flag, do not draft. (This is where a real report
+  went wrong: it called two contacts urgent-open when {{ email_address }} had
+  already replied to both — and one of those replies was in a sibling thread,
+  which is why the check is across threads and not within one.)
 - Only what survives the Sent-archive check is genuinely open. (Forwarded mail
   with NO {{ email_address }} reply to the original sender is the real catch — e.g. a
   `Fwd:` from the operator where nobody answered the customer.)

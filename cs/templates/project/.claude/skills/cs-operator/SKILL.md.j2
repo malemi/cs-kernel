@@ -164,14 +164,15 @@ performed**, even if a sub-skill surfaces them or it looks convenient:
 - any mass send, or any customer-visible send beyond what the sub-skills
   do under their own guardrails;
 {% if excluded_campaign %}
-- touching the migration campaign, retiring the legacy migration cron, or
-  removing the migration-campaign exclusion;
-- installing / cutting over crontab lines;
-- the Friday `service_number` cutover.
-{% else %}
-- changing campaign exclusions (`EXCLUDED_CAMPAIGN`) or other operator config;
-- installing / cutting over crontab lines.
+- touching the `{{ excluded_campaign }}` campaign, or removing its exclusion —
+  a dedicated process owns it;
 {% endif %}
+- changing campaign exclusions (`[campaigns].excluded_campaign`) or any other
+  operator configuration;
+- installing / cutting over crontab lines;
+- anything listed in `company/operator-out-of-scope.md`. Read that file and
+  treat each of its bullets as one more line of this list — it is where this
+  company records the actions an unattended tick must never take on its own.
 
 If you believe one of these is needed, put it under "Escalations" in the
 report and STOP — do not do it.
