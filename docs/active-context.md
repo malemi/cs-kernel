@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.18.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.19.0`. Current HEAD status: tagged as `v0.19.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -45,8 +45,14 @@ what is *current*.
   `system_senders` and both send-guard knobs — are stamped for the first time.
   `founder_sweep_enabled` and `platform_env_path` were proposed for the same
   cut and KEPT, because what `cs config` reports for them is true.
-  **Static tier, suites waived by the operator, not run.** `v0.8.0` remains the
-  recorded tag→0.7.1 exception (object pinned immutable).
+  **Static tier, suites waived by the operator, not run.** `v0.19.0`
+  (2026-08-24) makes the SMS send endpoint a kernel default, so
+  `[sms].enabled` is the whole switch and `cs init` can no longer emit an SMS
+  configuration that cannot send — **FULL tier by what it touches (`sms.py`,
+  `campaign.py`, and send capability itself); the suites were waived by the
+  operator and NOT run, so this tag shipped without the collaudo its own tier
+  calls for.** `v0.8.0` remains the recorded tag→0.7.1 exception (object
+  pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.

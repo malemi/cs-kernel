@@ -64,6 +64,91 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.19.0 — 2026-08-24
+
+### Fixed — `cs init` could produce an SMS configuration that cannot send
+
+`cs init` asks "Enable SMS?" and the template hardcoded `proxy_base = ""`, on
+the reasoning that the proxy is fixed infrastructure with nothing per-clone to
+configure. That reasoning was right and the conclusion was wrong: it left the
+operator answering yes to a capability whose endpoint nobody supplies, so the
+first send raised `SmsError`. A wizard should not be able to emit a
+configuration that is dead on arrival.
+
+The endpoint is now a **kernel default**:
+`https://zylch.mrcall.ai/api/desktop/sms/send`, the mrcall-desktop engine's
+SMS send path. `[sms].enabled` is the whole switch. A clone that never touches
+the field gets a working endpoint, and the `enabled = true` +
+`proxy_base = ""` combination can no longer be produced.
+
+**The seam is the Settings default, not the `Sms` manifest model's.**
+`settings_overrides` skips empty strings, so a manifest that declares
+`proxy_base = ""` — which is what every clone stamped to date literally
+contains — falls through to the Settings default and lands on the working
+endpoint. Defaulting the manifest model would not have fixed those clones: an
+explicit `""` in the file still resolves to `""`. This is the only seam where
+"left blank" and "never mentioned" both reach the same working value.
+
+`manifest.toml.j2` stops emitting the key entirely. Emitting `proxy_base = ""`
+would make `cs config` flag every clone, because it reads declaration presence
+from the raw TOML: a declared `""` against a resolved URL is a winner that
+does not explain the resolved value, printed as `?` with a provenance note.
+
+**Both guards stay, and both were reworded.** `cs/sms.py` and
+`cs/campaign.py`'s `send_sms` still refuse on an empty endpoint — a clone can
+deliberately blank it in the env layer and must still fail loudly rather than
+post nowhere. What changed is what they say: telling an operator to set
+`[sms].proxy_base` was correct when the field was required and is misleading
+now that the wizard never asks about it. Reaching either guard means something
+DECLARED the endpoint empty, so the messages say that and point at `cs config`
+to name the layer. `send_sms`'s single compound condition is split in two so
+the message names which of the two actually fired.
+
+**Charter.** This puts a MrCall host inside `cs/`, and the rule-1 grep gate
+caught it as a proposal, which is the gate working. It is recorded in
+`tests/reviewed_literals.txt` as shared infrastructure the kernel drives — the
+same category the charter already blesses for the mrcall-desktop engine and
+the `mrcall.search_businesses` RPC. SMS bills against the platform credit pool
+whichever clone sent it, so there is nothing per-company in the value. The
+gate was not weakened.
+
+### Migration — one clone-visible change, and it is not automatic
+
+No clone's SMS state flips by itself. `[sms].enabled` is unchanged everywhere
+and is still the only switch.
+
+An existing clone whose manifest carries `proxy_base = ""` now resolves to the
+kernel endpoint instead of an empty string. That is the fix, and it is only
+observable if that clone ALSO has `enabled = true` — in which case it could
+not send before and can now. Both current clones are unaffected: `mrcall-cs`
+declares the real endpoint explicitly and resolves to the same value it always
+did, and `124-cs` has `enabled = false`, verified after the upgrade.
+
+To turn the endpoint off deliberately, declare it empty in the env layer
+(`SMS_PROXY_BASE=`); the manifest layer can no longer express "blank" because
+an empty string there means "not declared".
+
+### Re-collaudo — FULL on both clones
+
+This one is FULL and the tier is not softened to match what was actually run.
+
+Two of the six triggers are touched by name: `cs/sms.py` and `cs/campaign.py`.
+More importantly the release changes **send capability** — a clone with
+`enabled = true` and a blank endpoint was inert and is now able to send. That
+is precisely the class of change FULL exists to catch, and no argument from
+"the control flow is identical" survives it. Every refusal that existed still
+exists and only two message strings and one compound condition changed, but
+the resolved VALUE of a send-path setting is different, which is the part that
+matters.
+
+**The collaudo suites were NOT run — the operator waived them.** Recording
+the tier honestly means recording that this tag shipped without the suite its
+own tier calls for. What was verified instead is stated in the operational-pin
+note above: static-tier evidence plus four targeted checks on the real clone
+manifests — `124-cs` stays off, `mrcall-cs` resolves unchanged, the previously
+broken combination now resolves to a working endpoint, and a deliberately
+blanked endpoint still trips the guard.
+
 ## v0.18.0 — 2026-08-24
 
 ### Why one release does two opposite things
