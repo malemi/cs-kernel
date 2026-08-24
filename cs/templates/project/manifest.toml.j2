@@ -45,6 +45,11 @@ adapter = "none"
 
 [campaigns]
 # Niche, per-campaign prose; `cs init` never asks. Fill in by hand if needed.
+# excluded_campaign: campaign names a dedicated process owns, so the general
+# operator leaves them alone. Comma-separated for more than one
+# ("first-campaign, second-campaign"); matched by EXACT name, never by prefix,
+# so an excluded "x" does not also exclude "x-batch2" — list both if you mean
+# both. `cs config` prints what is actually in force.
 excluded_campaign = ""
 posture_note = ""
 

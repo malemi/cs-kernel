@@ -61,6 +61,11 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("Campaigns", ("excluded_campaign",)),
 )
 
+# Comma-separated settings. Printed with a space after each comma so several
+# values stay readable on one line — a reader scanning for "is batch2 excluded?"
+# must not have to parse `a,b` by eye. The stored value is untouched.
+LIST_FIELDS: frozenset[str] = frozenset({"excluded_campaign"})
+
 # Never print the value of these — presence only. `firebase_web_api_key` is a
 # public Firebase key and `firebase_sa_path` is only a path, but presence is
 # all a reader needs from either, and a value that turns out to be sensitive
@@ -435,6 +440,9 @@ def _cell(f: dict) -> str:
     v = f["value"]
     if isinstance(v, bool):
         return "true" if v else "false"
+    if f["name"] in LIST_FIELDS and isinstance(v, str) and v.strip():
+        parts = [p.strip() for p in v.split(",") if p.strip()]
+        return ", ".join(parts)
     return str(v) if v != "" else "(empty)"
 
 

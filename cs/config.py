@@ -170,7 +170,13 @@ class Settings(BaseSettings):
     agent_prompt_python: str = ""   # manifest [producer.mrcall_tracking].python_path
 
     # --- campaigns ---
-    excluded_campaign: str = ""   # one campaign a dedicated process owns; "" = none
+    # Campaigns a dedicated process owns, so the general operator leaves them
+    # alone. Comma-separated, like every other multi-value knob here
+    # (self_emails, system_senders, send_guard_banned_phrases); "" = none, and a
+    # single bare name is the one-element case, so a clone written before the
+    # list existed keeps working with no edit. Matching is EXACT per name — see
+    # excluded_campaign_set.
+    excluded_campaign: str = ""
 
     # --- behaviour knobs ---
     dedup_days: int = 30
@@ -287,6 +293,15 @@ class Settings(BaseSettings):
     @property
     def system_sender_set(self) -> set[str]:
         return {e.strip().lower() for e in self.system_senders.split(",") if e.strip()}
+
+    @property
+    def excluded_campaign_set(self) -> set[str]:
+        """Campaign names the general operator must not touch. EXACT names, never
+        prefixes: an excluded `<name>` would otherwise swallow `<name>-batch2`,
+        and a substring rule silently excludes campaigns nobody meant to
+        exclude. List both if you mean both. Case is preserved — engine
+        campaign names are identifiers, not prose."""
+        return {c.strip() for c in self.excluded_campaign.split(",") if c.strip()}
 
     @property
     def account_map(self) -> dict:

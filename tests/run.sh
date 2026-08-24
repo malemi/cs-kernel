@@ -537,6 +537,17 @@ step "31. cs config — resolved value + provenance, duplicate flag, no secret p
 # report, --json or --all.
 if "$VENV/bin/python" "$ROOT/tests/test_config_report.py"; then echo "OK"; else echo "FAIL: cs config provenance regressed"; FAIL=1; fi
 
+step "32. [campaigns].excluded_campaign holds MORE THAN ONE campaign"
+# A clone finished two related campaigns and the field held one string matched
+# with ==; the second kept reaching the general operator for a month, and the
+# engine offers no campaign.close to fall back on. Guards: one bare name still
+# works (the old shape, so no stamped clone breaks), several names all exclude,
+# empty/whitespace/"," exclude NOTHING (never an empty-named member, which would
+# match a blank campaign lookup), and a name sharing a PREFIX with an excluded
+# one is NOT excluded — at pending() and at both contact-level gates. Plus:
+# cs config prints several names readably.
+if "$VENV/bin/python" "$ROOT/tests/test_excluded_campaigns.py"; then echo "OK"; else echo "FAIL: excluded-campaign list regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

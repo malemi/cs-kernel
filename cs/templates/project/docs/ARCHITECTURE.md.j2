@@ -30,7 +30,7 @@ never in a rendered file).
 {% if crm_adapter == 'shopify' and crm_shopify %}| CRM.shopify | API v{{ crm_shopify.api_version }}, env prefix `{{ crm_shopify.env_prefix }}` |
 {% endif %}| Producer adapter | `{{ producer_adapter }}` |
 {% if producer_adapter == 'mrcall-tracking' and producer_mrcall_tracking %}| Producer.mrcall_tracking | script: `{{ producer_mrcall_tracking.script_path }}`, python: `{{ producer_mrcall_tracking.python_path }}` |
-{% endif %}| Excluded campaign | `{{ excluded_campaign }}` (a dedicated process owns it) |
+{% endif %}| Excluded campaigns | `{{ excluded_campaign }}` (a dedicated process owns them; comma-separated, matched by exact name) |
 | Drive scope | `{{ drive_scope }}` (`cs drive search` is pinned here; `all` is a test-only override) |
 | SMS | {% if sms_enabled %}enabled, proxy Vonage via mrcall-desktop (env `SMS_BUSINESS_ID`){% else %}disabled{% endif %} |
 | Knobs | dedup {{ dedup_days }}d · triage `{{ cs_triage_mode }}` · dry_run {{ 'True' if dry_run else 'False' }} · autonomous {{ 'True' if autonomous else 'False' }} |

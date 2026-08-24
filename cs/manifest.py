@@ -91,7 +91,10 @@ class Producer(_Table):
 
 
 class Campaigns(_Table):
-    excluded_campaign: str = ""  # one campaign a dedicated process owns; "" = none
+    # Comma-separated campaign names a dedicated process owns; "" = none. A
+    # single bare name is the one-element case, so clones written before the
+    # list existed need no edit. Matching is exact per name, never by prefix.
+    excluded_campaign: str = ""
     posture_note: str = ""       # prose for humans, not code-consumed
 
 

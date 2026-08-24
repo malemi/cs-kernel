@@ -21,8 +21,10 @@ campaign state and NEVER the engine archive — the state goes stale whenever
 mail is sent out-of-band, and the engine search is blind to hand-sent mail
 and drops a thread out of 'sent' the moment the customer replies last.
 
-Any `settings.excluded_campaign` is skipped by the general operator — a
-campaign owned by a dedicated process outside this module.
+Every name in `settings.excluded_campaign_set` is skipped by the general
+operator — campaigns owned by a dedicated process outside this module. The
+manifest field is comma-separated, matching is by EXACT name, and a campaign
+that merely shares a prefix with an excluded one is NOT excluded.
 """
 from __future__ import annotations
 
@@ -181,7 +183,7 @@ def _fixed_template_items(settings, contacts, now,
 def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] = None,
             now: Optional[datetime] = None) -> dict:
     """Per-campaign worklist for the skills. DATA ONLY — sends nothing, mutates
-    nothing. Any settings.excluded_campaign is skipped. Fixed-template entries
+    nothing. Every settings.excluded_campaign_set name is skipped. Fixed-template entries
     carry their PACK name (or null + pack_error): an action with no pack is
     visible here and will be refused by the handlers."""
     now = now or _time.now_utc()
@@ -191,7 +193,7 @@ def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] =
         camps = [c for c in camps if c["name"] == name]
     out = []
     for camp in camps:
-        if settings.excluded_campaign and camp["name"] == settings.excluded_campaign:
+        if camp["name"] in settings.excluded_campaign_set:
             continue
         contacts = rpc.call_sync(settings, "campaign.contacts", {"campaign_id": camp["id"]})
         kind = kind_of(contacts)
@@ -399,7 +401,7 @@ def _pack_send_preamble(settings, contact_id: str):
         return None, None, {"ok": False, "error": "contact not found"}
     email = c["email"]
     camp_name = c.get("_campaign_name") or ""
-    if settings.excluded_campaign and camp_name == settings.excluded_campaign:
+    if camp_name in settings.excluded_campaign_set:
         return c, None, {"ok": False, "email": email,
                          "error": f"campaign '{camp_name}' is excluded from the general operator"}
     try:
@@ -505,7 +507,7 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
         return {"ok": False, "error": "contact not found"}
     email = c["email"]
     camp_name = c.get("_campaign_name") or ""
-    if settings.excluded_campaign and camp_name == settings.excluded_campaign:
+    if camp_name in settings.excluded_campaign_set:
         return {"ok": False, "email": email,
                 "error": f"campaign '{camp_name}' is excluded from the general operator"}
     try:
