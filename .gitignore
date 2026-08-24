@@ -17,3 +17,9 @@ ab/
 # must never ride into the published repo on a careless `git add .`.
 AB-REPORT.md
 TASK-multiprovider.md
+# Per-session agent memory: one `<session-id>.md` per Claude Code session,
+# holding that run's local handoff notes. It is per-machine, per-session state
+# — no other machine can use it, and it names clones, hosts and absolute paths,
+# which this public repo must never carry (same reason as the entries above).
+# Kept on disk so a successor session can read its predecessor.
+docs/sessions/

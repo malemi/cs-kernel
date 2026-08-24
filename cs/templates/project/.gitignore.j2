@@ -29,3 +29,9 @@ drafts/
 # local fixtures: an underscore prefix marks a file that must never be mistaken
 # for real state (acceptance-test schedules and the like).
 _*.csv
+# Per-session agent memory: one `<session-id>.md` per Claude Code session,
+# holding that run's local handoff notes. It is per-machine, per-session state
+# — no other machine can use it, and it names mailboxes, hosts and absolute
+# paths. In the template because `cs update` rewrites this file wholesale: a
+# clone that adds the line itself has it stripped on the next update.
+docs/sessions/
