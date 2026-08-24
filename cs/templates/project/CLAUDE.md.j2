@@ -2,9 +2,9 @@
 
 `{{ company_prog_name }}` — **a CLI front-end to the {{ email_address }} mrcall-desktop
 engine**, driven by Claude Code. The engine is the body: synced mail, entity
-memory, tasks, a writing voice trained on {{ email_address }}'s own sent
-mail, draft/send machinery. Claude Code is the brain. `cs` itself is thin
-transport + operator discipline.
+memory, tasks, a writing voice trained on {{ email_address }}'s own sent mail,
+draft/send machinery. Claude Code is the brain. `cs` itself is thin transport +
+operator discipline.
 {% if repo_docs_shape == 'generic' %}
 Built to be **cloned for other companies** — the generic skeleton is the shared
 kernel; this is the mother clone.
@@ -12,128 +12,81 @@ kernel; this is the mother clone.
 The **{{ company_name }}** instance of the shared `cs-kernel` operator — stamped
 from the kernel and parameterised by this repo's `manifest.toml`.
 {% endif %}
-> **Source of truth: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the
-> as-built config (stamped from `manifest.toml`) + the generic design. Read it
-> first; it wins over this file where they differ. The kernel charter
-> (`cs-kernel` `CLAUDE.md`) owns the machinery; this repo owns only the
-> declared variance.
+> **Source of truth: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the as-built
+> config (stamped from `manifest.toml`) + the generic design. It wins over this
+> file where they differ. The kernel charter (`cs-kernel` `CLAUDE.md`) owns the
+> machinery; this repo owns only the declared variance.
+>
+> **This file is an index: it routes, it does not teach.** Verbs are `cs --help`,
+> values in force are `cs config`, procedures are in each skill/command file.
 
 ## Editing this clone — template-owned vs clone-owned
 
-This repo is a **stamped clone of `cs-kernel`**. The files below are **generated
-from the kernel template** (`cs-kernel/cs/templates/project/…`) and re-rendered by
-`cs update` — **edit them in the kernel template, never here**, or the change
-drifts and is overwritten on the next update:
+This repo is a **stamped clone of `cs-kernel`**. **Template-owned — edit them in
+the kernel template (`cs-kernel/cs/templates/project/…`), never here**, or the
+change drifts and `cs update` overwrites it: `CLAUDE.md` · `README.md` ·
+`docs/ARCHITECTURE.md` · `docs/projects/README.md` · `.claude/settings.json` ·
+`.claude/skills/*` · `.claude/commands/*` · `bin/cs_operator_cron.sh` ·
+`.env.example` · `.gitignore` · `requirements.txt`.
 
-- `CLAUDE.md`, `README.md`, `docs/ARCHITECTURE.md`, `docs/projects/README.md`
-- `.claude/settings.json`, `.claude/skills/*`, `.claude/commands/*`
-- `bin/cs_operator_cron.sh`, `.env.example`, `.gitignore`, `requirements.txt`
-
-**Clone-owned — edit freely here:**
-
-- `manifest.toml` — the declared per-company variance (the ONE place values change)
-- `company/*.md` — prose slots: the *file* is templated, its **content is yours** to author for this company
-- `campaigns/<name>/` — campaign pack content
-- `docs/projects/<name>/` — per-project working folders (dossiers, plans, working files)
-- `.env`, `ext/`
+**Clone-owned — edit freely here:** `manifest.toml` (the declared per-company
+variance, the ONE place values change) · `company/*.md` (the *file* is templated,
+its **content is yours** to author) · `campaigns/<name>/` (pack content) ·
+`docs/projects/<name>/` (per-project working folders) · `.env` · `ext/`.
 
 Rule of thumb: **behavior/shape → kernel template; company data → clone.** A change
 that would help every clone belongs in `cs-kernel` (rule of two + anti-fork charter).
 
 ## 0. Operator profile
 
-The operator wants this to run by itself **once trusted**: prepare the
-day's mail in the right voice, review, send, let replies return to
-{{ email_address }}. Course corrections are cheap; an unwanted blast — or a
-tone-deaf mail to someone we already talk to — is not.
+The operator wants this to run by itself **once trusted**: the day's mail
+prepared in the right voice, reviewed, sent. Course corrections are cheap; an
+unwanted blast — or a tone-deaf mail to someone we already talk to — is not.
 
 ## 1. The engine daemon (the body)
 
-On the engine host a dedicated service user runs one engine per profile
-as systemd units `zylch-server@<uid>`, each on a unix socket,
-fronted by a reverse proxy at `{{ engine_ws_url }}/ws/<uid>`.
-The {{ email_address }} profile is `{{ engine_owner_uid }}`
-(config `CS_ENGINE_OWNER_UID`).
+On the engine host a dedicated service user runs one engine per profile as
+systemd units `zylch-server@<uid>`, each on a unix socket behind a reverse proxy
+at `{{ engine_ws_url }}/ws/<uid>`; this profile is `{{ engine_owner_uid }}` (`CS_ENGINE_OWNER_UID`).
 
-Auth chain (headless): the mrcall-desktop app owns interactive sign-in and
-writes a profile descriptor (`~/.zylch/profiles/<uid>/cs-descriptor.json`);
-`cs login` reads it and stores the Firebase **refresh token** locally
-(`~/.{{ company_slug }}-cs/refresh_token-<uid>.json`, mode `0600`). Every verb
-then exchanges that refresh token via Google's Secure Token API for a
-short-lived **ID token** (~1h, cached at
-`~/.{{ company_slug }}-cs/id_token-<uid>.json`); the WS handshake carries it
-as `Authorization: Bearer` and the daemon verifies RS256 and gates
-`token.sub == OWNER_ID` — unchanged. Sessions are per account uid:
-`cs --account <name> …` uses that account's own session files, and
-`cs --account <name> login` stores that account's session without
-touching any other account's. The service-account key
-(`firebase-sa.json`) plays no part in this chain: it is used only for
-the optional Drive / lead-resolution surfaces (`cs drive`,
-`cs/resolve.py`).
+**Auth is headless and per account**: `cs login` once per account (it reads the
+descriptor the mrcall-desktop app writes at sign-in), then every verb mints a
+short-lived ID token the daemon gates on `token.sub == OWNER_ID`. Steps:
+[README.md](README.md) § Setup / config; mechanics: the installed kernel's
+`cs/auth.py` docstring. The service-account key is NOT part of this chain — it
+serves only `cs drive` and lead resolution.
 
 **Outreach/reply policy lives in the profile, not this repo.** The declared-AI
 identity (if any), signature, recipient-language rule and the LLM-ism ban list
-are in `USER_NOTES` of the {{ email_address }} profile — read/edit via the
-engine's own `settings.get` / `settings.update` RPC, never via ad-hoc prompt
-files. **`USER_NOTES` is the biggest per-company artifact.**
+are in `USER_NOTES` of the {{ email_address }} profile — read/edit via the engine's
+own `settings.get` / `settings.update` RPC, never via ad-hoc prompt files.
+**`USER_NOTES` is the biggest per-company artifact.**
 
-**RPC response shapes — the wrapper key is NOT uniform (wrong key → 0 rows):**
-`emails.search`/`list_inbox`/`list_sent` → `{"threads":[…]}`;
-`emails.list_by_thread` → `{"emails":[…]}` (note: `emails`, not `threads`);
-`tasks.list`/`campaign.list`/`campaign.contacts`/`drafts.list` → a bare array
-(other `campaign.*` writes — `create`/`add_contact`/`update_contact` — return
-a dict, not an array; don't assume the wildcard covers them, corrected
-2026-07-14 doc-critic pass);
-`settings.get` → `{"values":{…}}`; `account.who_am_i` → `{signed_in,uid,email,…}`.
+**RPC wrapper keys are NOT uniform — a wrong key silently returns 0 rows:**
+`emails.search`/`list_inbox`/`list_sent` → `{"threads":[…]}` ·
+`emails.list_by_thread` → `{"emails":[…]}` · `tasks.list`/`campaign.list`/
+`campaign.contacts`/`drafts.list` → bare arrays, but the `campaign.*` writes
+(`create`/`add_contact`/`update_contact`) return a dict · `settings.get` →
+`{"values":{…}}` · `account.who_am_i` → `{signed_in,uid,email,…}`.
 
 > Company-specific engine/API access (e.g. the mrcall-agent configurator) lives in [company/claude-extra.md](company/claude-extra.md).
 
-## 2. CLI verbs (thin transport)
+## 2. CLI (thin transport)
 
-```bash
-.venv/bin/python -m cs <verb>
-```
+Run every verb as `.venv/bin/python -m cs <verb>`. **The verb reference is
+`cs --help`** (one line each; `cs <verb> --help` for its flags and whether it is
+dry-run until `--commit`) — a list copied into prose goes stale on the next
+kernel pin, so this file does not keep one. Two things `--help` will not say:
 
-`plan` (producer worklist) · `whoami` · `rpc <method> ['{json}']` ·
-`thread <email>` · `contacted <email>` (dedup truth = Gmail Sent) · `tasks` ·
-`handled <email> [--why "…"] [--at YYYY-MM-DD] [--undo]` (the contact was
-resolved OUT OF BAND — phone, WhatsApp, in person. Gmail Sent cannot know
-about a phone call, so without this record `unanswered` re-raises that thread
-for ever. It stores the moment, closes their open engine tasks `actor=human`,
-and anything they send AFTER it re-opens them on its own. Bare `handled` lists
-the records; `--undo` removes one) ·
-`business <email>` ({% if crm_adapter == 'shopify' %}Shopify Admin GraphQL{% elif crm_adapter == 'starchat' %}StarChat CRM{% else %}CRM{% endif %}) ·
-`dossier <email>` (thread + contacted + tasks + CRM + verdict) ·
-`ask "<q>"` (read-only engine query) · `draft-reply "<msg>"` (**DRAFT only**,
-send-incapable) ·
-`draft-delete <uid> [--commit]` (remove ONE bad draft from Gmail Drafts — the
-uid comes from `review --json`; moves it to Trash, recoverable for 30 days;
-dry-run unless `--commit`, and it refuses when the lookup matches anything
-other than exactly one draft) ·
-`review` · `drive ls|search|cat` (read-only — no write
-method exists; only `search`'s default path is code-scoped to `{{ drive_scope }}`, `ls`/`cat`
-have no code-level scope filter and rely on what's actually shared with the
-service account, corrected 2026-07-14 doc-critic pass) ·
-`campaign list|pending|reconcile|mark|queue-draft|send-draft` ·
-`campaign packs|send-reminder|send-sms` (fixed-template lifecycle) ·
-`chat "<msg>" [--allow …]` (supervised SEND path — DENIED to the headless
-operator) · `accounts` ·
-`config [--all] [--json] [--strict]` (the settings actually IN FORCE and which
-file declares each — **the** answer to "draft or send?", so it is never
-re-derived from `manifest.toml` and the `.env` chain; read-only, network-free,
-never prints a secret value, and flags any setting declared in two places) ·
-`cron install|uninstall|status` (manage the
-operator's own crontab entry) ·
-`project new <slug> [--title …]` (stamp a project's written memory under
-`docs/projects/`: index + status + timeline + meetings/) ·
-`llm [models|set|test]` (the kernel's own provider/model config) ·
-`--account <name>`.
-
-**`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
-`contacted`, `unanswered`, `dossier`, `draft-reply`, `draft-delete` — run on {{ email_address }}'s
-single mail credential, so on any other account they REFUSE (exit 2) rather than
-answering about the wrong mailbox. Use `thread` / `ask` there; both are
-engine-backed and honour the flag.
+- **`cs config` is the answer to "draft or send?"** It prints every
+  behaviour-deciding setting, the value actually in force and the file that
+  declares it, and flags anything declared twice. Never re-derive that from
+  `manifest.toml` and the `.env` chain.
+- **`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
+  `contacted`, `unanswered`, `dossier`, `draft-reply`, `draft-delete` — run on
+  {{ email_address }}'s single mail credential, so on any other account they
+  REFUSE (exit 2) rather than answering about the wrong mailbox. Use `thread` /
+  `ask` there; both are engine-backed and honour the flag.
 
 ## 3. Pipeline (one daily run)
 
@@ -144,54 +97,31 @@ engine-backed and honour the flag.
 3. **Decide**: thread exists → reply in it; prior relationship → informed
    outreach; genuinely cold → cold template, flagged; contacted within
    `DEDUP_DAYS` / suppressed / self → **stop**.
-4. **Draft via the engine** (`cs draft-reply` / `cs chat "compose …"`) — never
-   from scratch in cs.
-5. **Review** (desktop app or Gmail Drafts). 6. **Send** — only through the
-   engine's approval gate (`cs chat … --allow send_draft`), after review.
-7. **Replies** land in {{ email_address }}, re-ingested as tasks.
+4. **Draft via the engine** (`cs draft-reply` / `cs chat "compose …"`), never
+   from scratch in cs. **Review** in the desktop app or Gmail Drafts, then
+   **send** only through the engine's approval gate (`cs chat … --allow
+   send_draft`). Replies land in {{ email_address }} and re-ingest as tasks.
 
-**"I dealt with it myself" — the off-email close.** When the operator says so —
-any words, any language: *"close this one"*, *"I phoned him, it's sorted"*,
-*"I handled that one myself"* — that is `cs handled`, not just a task close. A
-phone call leaves nothing in Gmail Sent, so with the task closed and no record
-the sweep re-raises the thread on the next tick; that is how one customer stayed
-on the list for a MONTH after the owner had already phoned him. Do it in three
-moves:
+**"I dealt with it myself" — the off-email close.** When the operator says so,
+in any words and any language, that is `cs handled <email> --why "<their own
+words>"` and not just a task close: a phone call leaves nothing in Gmail Sent,
+so without the record the sweep re-raises the thread for ever (one customer
+stayed on the list a MONTH after the owner had phoned him). Resolve "this" to
+ONE address — ask if two could be meant — and say the address and subject back
+before running it. Full gesture and `--undo`: `.claude/commands/cs-review.md`
+§ Posture.
 
-1. **Resolve "this" to ONE address.** It is relative to what is on the screen —
-   the row being discussed, the dossier just read, the draft under review. If
-   more than one candidate fits, ASK; never guess an address.
-2. **Say it back before running anything**: the address, the subject, and how
-   long it had been waiting. Closing the wrong contact silently is worse than
-   not closing anything.
-3. **Run it with the operator's OWN words as the reason**, in the language they
-   were said in — "called him Tuesday, he's fine now" is what makes the record
-   readable in three months; a generic "resolved out of band" is not:
+## 4. Skills + commands — each file carries its own procedure
 
-```bash
-.venv/bin/python -m cs handled <email> --why "<their words>" [--at YYYY-MM-DD]
-```
-
-Then report what it printed: the moment recorded, how many engine tasks it
-closed, and that `cs handled <email> --undo` puts the contact straight back.
-Anything they send after that moment re-opens them on its own — this is a dated
-record, not an ignore list.
-
-## 4. Skills + commands
-
-Autonomous operator (`.claude/skills/`, cron `claude -p "/cs-operator"`):
-`/cs-operator` (bootstrap: CS_PAUSE → session → `/cs-triage-mail` →
+Autonomous (`.claude/skills/`, cron `claude -p "/cs-operator"`): `/cs-operator`
+(bootstrap: CS_PAUSE → session → `/cs-triage-mail` →
 `/cs-campaign-tick`{% if founder_sweep_enabled %} → read-only `{{ founder_sweep_account }}` sweep{% endif %} → report → STOP),
 `/cs-triage-mail` (inbound → grounded DRAFT), `/cs-campaign-tick` (advance
-campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}). Interactive skills
-(`.claude/skills/`): `/cs-customer <name>` (load `docs/projects/<name>/` +
-**engine memory** for that customer — mandatory before customer work),
-`/cs-find-document`. Interactive commands (`.claude/commands/`):
-`/cs-help` (orientation map), `/cs-review` (the one review bootstrap)
-and `/cs-account <name>` — all zero side effects — plus the build/manage
-workflows `/cs-cron` (install, pause or remove the operator tick, on
-explicit confirmation) and `/cs-campaign` (design a campaign pack +
-wire it, draft-first, sends nothing).
+campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}). Interactive skills: `/cs-customer <name>`
+(mandatory before customer work), `/cs-find-document`. Commands
+(`.claude/commands/`, zero side effects): `/cs-review` (the one review
+bootstrap), `/cs-account <name>`, `/cs-help` (the map) — plus `/cs-cron` and
+`/cs-campaign`, which build things on explicit confirmation and send nothing.
 
 ## 5. Safety (NEVER)
 
@@ -219,83 +149,44 @@ wire it, draft-first, sends nothing).
 
 - Config: `manifest.toml` (non-secret variance) + layered env
   ({% if platform_env_path %}`{{ platform_env_path }}` → {% endif %}`~/.{{ company_slug }}-cs/.env` → repo `.env`, later wins). Secrets and
-  `SELF_*` never in the repo (`.env.example`).
-- Outreach copy rules live in the profile's `USER_NOTES`, not here.
-- Suppression + dedup ledger in SQLite `~/.{{ company_slug }}-cs/cs.db`; dedup truth is
-  Gmail's own Sent folder, not the engine archive.
-- **Never read the effective configuration out of the files — ask
-  `cs config`.** It prints each behaviour-deciding setting with the value in
-  force and the layer that declares it, and flags anything declared twice. A
-  value written into this document, or into `.env.example`, is a snapshot from
-  the day the clone was stamped; the resolution of six layers is the truth.
-- Autonomy knobs: **`CS_TRIAGE_MODE`** (`draft`|`send`; `cs config` prints
-  which is in force and where it is declared) and the
-  **`CS_PAUSE`** file (`~/.{{ company_slug }}-cs/CS_PAUSE`) = global kill-switch.
-  There is no per-day send quota: `RATE_CAP` was removed in kernel `v0.12.0`
-  because a quota drops the contacts past the cap silently. `CS_PAUSE` is the
-  stop, and it stops everything. The `bin/cs_operator_cron.sh` tick stays
-  draft-only via its wrapper's own deny set, whatever `cs_triage_mode` says.
+  `SELF_*` never in the repo (`.env.example`). Any value written into a document
+  is a snapshot from the day it was stamped; only `cs config` resolves the layers.
+- Suppression + dedup ledger in SQLite `~/.{{ company_slug }}-cs/cs.db`.
+- Autonomy knobs: **`CS_TRIAGE_MODE`** (`draft`|`send`) and the **`CS_PAUSE`**
+  file (`~/.{{ company_slug }}-cs/CS_PAUSE`) = global kill-switch. There is no per-day
+  send quota: `RATE_CAP` was removed in kernel `v0.12.0` because a quota drops
+  the contacts past the cap silently. `CS_PAUSE` is the stop, and it stops
+  everything. The `bin/cs_operator_cron.sh` tick stays draft-only via its
+  wrapper's own deny set, whatever `cs_triage_mode` says.
 
-## 7. Rollout — two phases, and this file will not tell you which one you are in
+## 7. Rollout — this file will not tell you which phase you are in
 
-**Run `cs config` and read `cs_triage_mode`.** That is the only trustworthy
-answer, and it names the file the value comes from. A phase written down here
-is a claim about the day this page was stamped, not about today: this clone has
-been through a `cs update` since, an env layer can override the manifest, and a
-sentence saying "Phase 1 (now)" has already talked two headless ticks out of
-sending mail the operator had deliberately authorised.
-
-- **Draft phase** — `cs_triage_mode = draft`. Free-form replies become drafts;
-  the human reviews (`/cs-review` / Gmail Drafts) and approves each send.
-  Auto-send is blocked by config AND by the permission surface.
-- **Send phase** — `cs_triage_mode = send`, plus a widening of the headless
-  allow-list. That widening is the real trust boundary, and it is a deliberate
-  act, not a drift: the mode alone does not grant a headless tick the tools to
-  send. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-Moving between them is one operator decision, applied in `manifest.toml` and
-verified with `cs config` — never inferred from prose, here or anywhere else.
+**Run `cs config` and read `cs_triage_mode`.** A phase written down here is a
+claim about the day this page was stamped: an env layer can override the
+manifest, and a sentence saying "Phase 1 (now)" has already talked two headless
+ticks out of sending mail the operator had deliberately authorised. Draft phase
+= every free-form reply is a draft the human approves. Send phase = that mode
+**plus** a deliberate widening of the headless allow-list — and the widening,
+not the mode, is the real trust boundary. Moving between them is one operator
+decision, made in `manifest.toml`, never inferred from prose.
 
 ## 8. Multi-account — analysing this project's other mailbox
 
 `cs accounts` lists the registry ({% for name, uid in accounts.items() %}`{{ name }}`{% if not loop.last %} · {% endif %}{% endfor %};
 `CS_ACCOUNTS` in `~/.{{ company_slug }}-cs/.env`). Account **names are mailbox addresses**
-(or unambiguous roles like `{{ accounts_default }}`) — never a bare first name. It holds
-**ONLY this project's own mail domain** — never another company's mailboxes or
-another project's uid. To analyse a non-default account, open a session and ask
-(*"analyse mailbox <name>"*) or run **`/cs-account <name>`** — read-only
-verbs with `--account <name>`, no drafts/sends/memory writes. The autonomous
-draft/triage loop always runs on the **default** account only
-(`{{ accounts_default }}`).
+(or unambiguous roles like `{{ accounts_default }}`) — never a bare first name. The registry
+holds **ONLY this project's own mail domain** — never another company's mailboxes,
+never another project's uid. A non-default account is read-only work:
+**`/cs-account <name>`**. The autonomous draft/triage loop always runs on the
+**default** account only (`{{ accounts_default }}`).
 
 ## 9. Customer knowledge — engine memory first (do not be a goldfish)
 
-{% set other_accounts = accounts.keys() | reject('equalto', accounts_default) | list %}
-{# `| first` on the raw reject crashed `cs init` under StrictUndefined for any
-   clone with a single account and no founder sweep — the minimal clone could
-   not render its own CLAUDE.md. With one account, the default account IS the
-   only place to look, so it is also the fallback. #}
-{% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
-When the operator asks about a **customer / prospect / integration** (or you need
-customer state to act), **load both layers before answering**:
-
-1. **Engine memory (primary, live)** — `cs ask "…"` on the account that owns
-   the relationship. Many customer threads live on **`{{ nondefault_account }}`**,
-   not on the default `{{ accounts_default }}@` operator box:
-   - `.venv/bin/python -m cs --account {{ nondefault_account }} ask "<customer / contacts / status>"`
-   - also try default `cs ask "…"` if the relationship might be on {{ accounts_default }}@
-   - key contacts: `cs --account {{ nondefault_account }} thread <email>` — on a
-     non-default account use `thread` (engine-backed); `dossier` refuses there,
-     because its `contacted` half reads {{ email_address }}'s own Gmail. On
-     {{ accounts_default }}@ itself, `cs dossier <email>` is the fuller check.
-2. **Dossier files (secondary, human-readable)** — `docs/projects/<name>/`
-   (see [`docs/projects/README.md`](docs/projects/README.md)). These are
-   artefacts; **the engine memory is the recall brain**. A file-only answer is
-   incomplete.
-
-Do **not** answer from `docs/projects/` alone and claim "that's what we know."
-If the engine has nothing on `{{ accounts_default }}@` but the dossier cites
-`{{ nondefault_account }}` / a thread on that mailbox, query that account. After
-working a customer, keep engine memory and the dossier aligned (write path:
-mail sync, or supervised `cs chat --allow create_memory,update_memory` —
-verify with `cs ask`).
+A question about a **customer / prospect / integration** needs BOTH layers, in
+this order: **engine memory** (primary, live — `cs ask` on the account that owns
+the relationship, often not the default `{{ accounts_default }}@` box), then the **dossier
+files** under `docs/projects/<name>/` (secondary — see
+[`docs/projects/README.md`](docs/projects/README.md)). Never answer from
+`docs/projects/` alone and call it "what we know". **`/cs-customer <name>` does
+the whole load** and is mandatory before customer work; it also owns the
+write-back path that keeps memory and dossier aligned.
