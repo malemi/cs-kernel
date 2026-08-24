@@ -15,7 +15,8 @@ campaigns/<pack-name>/
 ├── campaign.toml      # [pack] kind (fixed-template | composed-draft) /
 │                      #        description (what the discovery search reads) /
 │                      #        campaign (the engine campaign name) / status
-│                      #        (active | done) / dates / confirm_question;
+│                      #        (active | done) / ends_on (a date, or "never") /
+│                      #        dates (prose) / confirm_question;
 │                      #        [windows] optional overrides of [knobs]
 │                      #        (reminder_after_hour, sms_hour, reminder_max)
 ├── mail_first.md      # first line `Subject: …`, blank line, then a markdown
@@ -33,6 +34,30 @@ campaigns/<pack-name>/
 Gates (all kernel-enforced, unchanged): stamp-before-send,
 `CS_PAUSE`, Sent-archive dedup first. A fixed-template action whose campaign has
 **no pack** is refused loudly — the kernel never invents copy.
+
+## When the campaign is over
+
+**A finished campaign delivers nothing** — no first notice, no reminder, no
+SMS, no composed draft — on every path, including the ones reached with a
+contact id directly. Two fields say when it is over, and both are enforced:
+
+- **`status`** — `active` or `done`, and nothing else (an unrecognised word
+  refuses at load). `done` stops every delivery. **Flip it the day the
+  campaign ends**; this is the field a human owns.
+- **`ends_on`** — the backstop for the day nobody remembers to flip `status`.
+  A date (`ends_on = 2026-07-31`) past which the pack refuses to deliver
+  **even while `status = "active"`**. A campaign with no end says so
+  explicitly: `ends_on = "never"`. Anything unreadable refuses at load — an
+  end date that cannot be parsed is never read as "no limit".
+
+`dates` is neither of those. It stays prose for whoever reads this pack in a
+year ("first notice → cutover"), and it gates nothing.
+
+A refusal is always visible: `cs campaign pending` reports
+`delivery_blocked` with the reason and the date plus a `held` count of what
+was withheld, and each sender returns the same sentence. Replies still come
+through — a customer who wrote to you is owed an answer whether or not the
+campaign is finished.
 
 To reuse a past campaign for new numbers/dates:
 `cp -r campaigns/<old> campaigns/<new>` → edit `campaign.toml` + templates →

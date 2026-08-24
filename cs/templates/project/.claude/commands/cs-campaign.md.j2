@@ -23,6 +23,11 @@ Ask only what the pack needs:
   {{ reminder_max }}); {% if sms_enabled %}an SMS fallback?{% else %}(SMS is disabled for this clone){% endif %}
 - **Timing** — windows and caps; defaults come from `manifest.toml`
   `[knobs]` and only need overriding if this campaign differs.
+- **When it ends** — ASK, and write the answer into `ends_on`: a date, or
+  `"never"` for an open-ended loop. It is the backstop that stops a
+  finished campaign delivering on the day nobody remembers to set
+  `status = "done"`. Do not leave it out; "I'll decide later" is the
+  state that mails people about a date three weeks past.
 - **The confirm question** — the one-line question a human is asked
   before a send in supervised runs (`confirm_question`).
 
@@ -35,7 +40,7 @@ broken copy):
 
 ```
 campaigns/<name>/
-├── campaign.toml      # [pack] kind/description/campaign/status/dates/confirm_question; [windows] optional overrides
+├── campaign.toml      # [pack] kind/description/campaign/status/ends_on/dates/confirm_question; [windows] optional overrides
 ├── mail_first.md      # `Subject: …`, blank line, markdown body with {placeholders} from the contact row
 ├── mail_reminder.md
 {% if sms_enabled %}├── sms.txt            # same {placeholders}

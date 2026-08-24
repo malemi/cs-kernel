@@ -38,7 +38,7 @@ import re
 import socket
 import sys
 from collections import Counter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import websockets
 
@@ -657,8 +657,12 @@ def cmd_campaign_packs(args) -> int:
         print("no campaign packs (campaigns/<name>/campaign.toml). "
               "Past-campaign precedent lives there — see cs/campaign_pack.py.")
         return 0
+    # The EFFECTIVE status, not the declared one: a pack still saying "active"
+    # past its own ends_on prints "ended", because that is what the send paths
+    # will do with it and a listing that disagrees with them is a trap.
+    today = datetime.now(timezone.utc).date()
     for p in packs:
-        print(f"  {p.name:34.34} {p.kind:15.15} {p.status:8.8} "
+        print(f"  {p.name:34.34} {p.kind:15.15} {p.effective_status(today):8.8} "
               f"{(p.dates or ''):18.18} {p.description}")
     return 0
 

@@ -548,6 +548,22 @@ step "32. [campaigns].excluded_campaign holds MORE THAN ONE campaign"
 # cs config prints several names readably.
 if "$VENV/bin/python" "$ROOT/tests/test_excluded_campaigns.py"; then echo "OK"; else echo "FAIL: excluded-campaign list regressed"; FAIL=1; fi
 
+step "33. a finished campaign delivers NOTHING, on any path"
+# 2026-08-23: a tick was handed 26 send_sms items for a campaign that ended on
+# 31 July. Its pack said so twice — status never flipped, dates = "2026-07-22..31"
+# — and nothing read either field. The SMS would have told 26 real customers
+# their number changes at a moment three weeks past; CS_PAUSE caught it. Guards:
+# status is active|done and an unknown value refuses at LOAD; the new typed
+# ends_on refuses delivery past its date EVEN while status says active (the case
+# that bit), takes "never" for an open-ended campaign, and refuses any
+# unparseable value rather than reading it as "no limit"; a pack with NO ends_on
+# still delivers for ever (the onboarding loop) and is reported instead; all
+# five delivery paths refuse — send_first / send_reminder / send_sms /
+# send_draft / queue_draft, each reachable by contact id WITHOUT pending(); and
+# the refusal is visible everywhere (reason + date, held counts), with
+# handle_reply still coming through because a reply is not a delivery.
+if "$VENV/bin/python" "$ROOT/tests/test_campaign_finished.py"; then echo "OK"; else echo "FAIL: a finished campaign can still deliver"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

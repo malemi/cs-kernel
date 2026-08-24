@@ -48,6 +48,13 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
   `[campaigns].excluded_campaign`, `cs campaign pending` drops it automatically.
   None is excluded for {{ company_display_name }} today.
 {% endif %}
+- **A finished campaign is finished.** When an entry carries
+  `delivery_blocked`, its pack says the campaign is over (`status = "done"`,
+  or past its `ends_on`). The kernel has already withheld every send —
+  `held` counts what. Do NOT work around it, do NOT reach for the contact ids
+  by hand: report the reason in your summary and move on. If you believe the
+  campaign is genuinely still running, that is an escalation for the operator
+  (someone must edit `campaigns/<name>/campaign.toml`), never your own call.
 - **Free-form replies go through the engine** via `cs draft-reply …`, never
   cs-SMTP, never `cs chat --allow` (denied to you by permission). It stores a
   DRAFT and CANNOT send — sending is the operator's job. You only ever draft.
@@ -83,7 +90,10 @@ For each active campaign:
 Returns JSON: `campaigns[].items[]`, each item carrying an `action`
 (`reconcile` / `send_draft` / `handle_reply`), a `contact_id`, the `email`,
 and (for replies) a `thread_id` anchor. The verb sends nothing and mutates
-nothing — it is the worklist only.{% if excluded_campaign %} The excluded campaign will not appear; if
+nothing — it is the worklist only. An entry may also carry
+`delivery_blocked` (the campaign is over: reason + date, with `held` counting
+the sends withheld) or `pack_note` (an active campaign that never declared an
+`ends_on`) — carry both into your report verbatim.{% if excluded_campaign %} The excluded campaign will not appear; if
 it somehow does, skip it.{% else %} Any excluded campaign will not appear here.{% endif +%}
 
 ## 3. Work each item — branch on `action`

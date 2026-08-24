@@ -25,10 +25,24 @@ Every name in `settings.excluded_campaign_set` is skipped by the general
 operator — campaigns owned by a dedicated process outside this module. The
 manifest field is comma-separated, matching is by EXACT name, and a campaign
 that merely shares a prefix with an excluded one is NOT excluded.
+
+A campaign that is OVER delivers nothing, on any path. Its pack says so —
+`[pack].status = "done"`, or an `ends_on` date now past (cs/campaign_pack.py)
+— and every delivery site here asks the pack before acting: the worklist, and
+each of `send_first` / `send_reminder` / `send_sms` / `send_draft` /
+`queue_draft`, every one of which is reachable with a contact id WITHOUT
+going through `pending()`. Exclusion by name used to be the only lever, which
+made every finished campaign a manual entry in a clone's manifest; the pack
+now carries the fact where the campaign itself lives.
+
+The refusal is loud and dated. Observation actions (`handle_reply`,
+`reconcile`) survive: a human who wrote to us is owed an answer whether or
+not the campaign that prompted the mail is finished, and reconciling a stale
+row sends nothing.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from . import _time, campaign_pack, rpc
@@ -37,6 +51,12 @@ from . import _time, campaign_pack, rpc
 # reminder_after_hour overrides it per campaign; it is deliberately not a
 # manifest knob (the campaign, not the company, owns its windows).
 REMINDER_AFTER_HOUR_DEFAULT = 12
+
+# Worklist actions that put a message in front of a customer — the ones a
+# finished campaign is refused. Everything else `pending()` can emit
+# (`handle_reply`, `reconcile`) is an observation, and observations are not
+# suppressed by a campaign being over.
+DELIVERY_ACTIONS = ("send_draft", "send_first", "send_reminder", "send_sms")
 
 
 # ------------------------------------------------------------------ helpers
@@ -112,6 +132,39 @@ def _get_contact(settings, contact_id: str) -> Optional[dict]:
     return None
 
 
+def _market_today(settings, now: Optional[datetime]) -> date:
+    """The operator's market calendar day — the unit the end-of-campaign gate
+    compares against, for the same reason the reminder/SMS windows are
+    market-local: a campaign ends at the end of a business day where the
+    business is, not at midnight UTC."""
+    return date.fromisoformat(
+        _time.local_date(now or _time.now_utc(), settings.timezone)
+    )
+
+
+def _finished_refusal(settings, pack: Optional[campaign_pack.Pack],
+                      now: Optional[datetime] = None) -> Optional[str]:
+    """Why `pack`'s campaign may not deliver right now, or None.
+
+    A campaign with NO pack declares nothing about its own lifetime, so it is
+    not refused here — the pack senders already refuse it, louder, for having
+    no copy at all."""
+    if pack is None:
+        return None
+    return pack.delivery_refusal(_market_today(settings, now))
+
+
+def _resolve_pack(camp_name: str) -> tuple[Optional[campaign_pack.Pack], Optional[str]]:
+    """(pack, load_error). A pack that cannot be LOADED is an error, never a
+    None pack: "the pack is broken" must not be read as "there is no pack and
+    therefore no end date", which would let a campaign whose status line is the
+    broken part keep delivering."""
+    try:
+        return campaign_pack.find_pack(camp_name), None
+    except campaign_pack.PackError as e:
+        return None, str(e)
+
+
 def _pack_windows(settings, pack: Optional[campaign_pack.Pack]) -> tuple[int, int, int]:
     """Effective (reminder_after_hour, sms_hour, reminder_max): the pack's
     [windows] override the [knobs] defaults."""
@@ -180,12 +233,36 @@ def _fixed_template_items(settings, contacts, now,
     return items
 
 
+def _hold_deliveries(entry: dict, items: list[dict], reason: str) -> list[dict]:
+    """Strip the delivery actions out of a finished campaign's worklist and say
+    so, with the reason and the date, on the entry itself.
+
+    Held items are reported as counts per action, never dropped in silence: a
+    contact that simply vanishes from a worklist is the failure mode this whole
+    gate exists to stop. Observation actions pass through untouched."""
+    kept, held = [], {}
+    for item in items:
+        if item.get("action") in DELIVERY_ACTIONS:
+            held[item["action"]] = held.get(item["action"], 0) + 1
+        else:
+            kept.append(item)
+    entry["delivery_blocked"] = reason
+    if held:
+        entry["held"] = held
+    return kept
+
+
 def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] = None,
             now: Optional[datetime] = None) -> dict:
     """Per-campaign worklist for the skills. DATA ONLY — sends nothing, mutates
     nothing. Every settings.excluded_campaign_set name is skipped. Fixed-template entries
     carry their PACK name (or null + pack_error): an action with no pack is
-    visible here and will be refused by the handlers."""
+    visible here and will be refused by the handlers.
+
+    A campaign whose pack says it is OVER (status done, or past `ends_on`)
+    yields NO delivery items — the entry carries `delivery_blocked` with the
+    reason and the date, plus `held` counting what was withheld. Its
+    `handle_reply` / `reconcile` items still come through."""
     now = now or _time.now_utc()
     dd = settings.dedup_days if dedup_days is None else dedup_days
     camps = list_campaigns(settings)
@@ -199,16 +276,24 @@ def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] =
         kind = kind_of(contacts)
         entry = {"campaign": camp["name"], "id": camp["id"], "kind": kind,
                  "counts": camp.get("contacts_by_state")}
+        # Resolved for BOTH lifecycles: a composed-draft campaign ends too, and
+        # `send_draft`/`queue_draft` are delivery paths like any other.
+        pack, pack_error = _resolve_pack(camp["name"])
+        if pack_error:
+            entry["pack_error"] = pack_error
         if kind == "composed-draft":
-            entry["items"] = _composed_draft_items(settings, contacts, dd)
+            items = _composed_draft_items(settings, contacts, dd)
         else:
-            pack = None
-            try:
-                pack = campaign_pack.find_pack(camp["name"])
-            except campaign_pack.PackError as e:
-                entry["pack_error"] = str(e)
             entry["pack"] = pack.name if pack else None
-            entry["items"] = _fixed_template_items(settings, contacts, now, pack)
+            items = _fixed_template_items(settings, contacts, now, pack)
+        blocked = _finished_refusal(settings, pack, now)
+        if blocked:
+            items = _hold_deliveries(entry, items, blocked)
+        elif pack is not None:
+            note = pack.undeclared_end_note()
+            if note:
+                entry["pack_note"] = note
+        entry["items"] = items
         out.append(entry)
     return {"now": now.isoformat(), "dedup_days": dd, "campaigns": out}
 
@@ -274,18 +359,41 @@ def _record_send(settings, *, contact_id, email, subject, message_id) -> None:
     )
 
 
-def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
+def _finished_send_refusal(settings, c: dict, now: Optional[datetime]) -> Optional[dict]:
+    """The composed-draft paths' end-of-campaign gate.
+
+    They reach a contact by id and never touch `pending()`, so without this a
+    finished campaign still mails through them. Unlike the fixed-template
+    senders they do NOT require a pack (their copy is on the contact row), so a
+    campaign with no pack passes — but a pack that exists and cannot be LOADED
+    refuses: an unreadable pack is not evidence that the campaign is running."""
+    camp_name = c.get("_campaign_name") or ""
+    pack, pack_error = _resolve_pack(camp_name)
+    if pack_error:
+        return {"ok": False, "email": c["email"], "error": f"pack error: {pack_error}"}
+    finished = _finished_refusal(settings, pack, now)
+    if finished:
+        return {"ok": False, "email": c["email"], "finished": True, "error": finished}
+    return None
+
+
+def send_draft(settings, contact_id: str, *, commit: bool = False,
+               now: Optional[datetime] = None) -> dict:
     """Composed-draft outreach: surface the pre-written mail for review
     (CS_TRIAGE_MODE=draft → the operator's Gmail Drafts) or send it (=send →
     cs-SMTP).
 
     DEDUP FIRST against the Sent archive — if the mail is already there (the
     contact was mailed, even out-of-band) REFUSE and flag reconcile; never
-    re-mail. CS_PAUSE blocks everything."""
+    re-mail. A campaign whose pack says it is over refuses before any of that.
+    CS_PAUSE blocks everything."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
     email = c["email"]
+    over = _finished_send_refusal(settings, c, now)
+    if over:
+        return over
     if not _has_draft(c):
         return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
     # dedup truth: never re-mail what is already in Sent
@@ -349,17 +457,25 @@ def send_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
     return {"ok": True, "email": email, "mode": "send", "message_id": mid}
 
 
-def queue_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
+def queue_draft(settings, contact_id: str, *, commit: bool = False,
+                now: Optional[datetime] = None) -> dict:
     """Headless-SAFE outreach: surface a composed-draft contact's pre-written
     mail in the operator's Gmail Drafts for review. NEVER sends — not via SMTP,
     not regardless of CS_TRIAGE_MODE. (The send-capable path is `send_draft`,
     deliberately kept out of the headless allow-list.)
     Dedup-first: refuses + flags reconcile if the address is already in Sent.
-    Idempotent per contact (won't push a second Gmail draft)."""
+    Idempotent per contact (won't push a second Gmail draft).
+
+    A finished campaign is refused here too. This verb sends nothing, but what
+    it produces is a message addressed to a customer sitting one keystroke from
+    the wire — that is a delivery path, not a report."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
     email = c["email"]
+    over = _finished_send_refusal(settings, c, now)
+    if over:
+        return over
     if not _has_draft(c):
         return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
     if c["state"] == "sent" or _sent_threads_to(settings, email, settings.dedup_days):
@@ -393,7 +509,7 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False) -> dict:
 # --------------------------------------------- fixed-template pack senders
 
 
-def _pack_send_preamble(settings, contact_id: str):
+def _pack_send_preamble(settings, contact_id: str, *, now: Optional[datetime] = None):
     """Shared gates for the pack senders. Returns (contact, pack, error_dict);
     error_dict is None when clear to proceed."""
     c = _get_contact(settings, contact_id)
@@ -404,10 +520,9 @@ def _pack_send_preamble(settings, contact_id: str):
     if camp_name in settings.excluded_campaign_set:
         return c, None, {"ok": False, "email": email,
                          "error": f"campaign '{camp_name}' is excluded from the general operator"}
-    try:
-        pack = campaign_pack.find_pack(camp_name)
-    except campaign_pack.PackError as e:
-        return c, None, {"ok": False, "email": email, "error": f"pack error: {e}"}
+    pack, pack_error = _resolve_pack(camp_name)
+    if pack_error:
+        return c, None, {"ok": False, "email": email, "error": f"pack error: {pack_error}"}
     if pack is None:
         # The loud skip: a fixed-template action with NO pack never sends.
         return c, None, {
@@ -416,6 +531,11 @@ def _pack_send_preamble(settings, contact_id: str):
                       "campaigns/<pack>/ (campaign.toml + templates or builders.py); "
                       "REFUSING to send. See cs/campaign_pack.py."),
         }
+    # The campaign is over: refuse before any window/cap gate, so the reason the
+    # operator reads is "this campaign ended", not "it is before the SMS hour".
+    finished = _finished_refusal(settings, pack, now)
+    if finished:
+        return c, pack, {"ok": False, "email": email, "finished": True, "error": finished}
     if c["state"] != "sent":
         return c, pack, {"ok": False, "email": email,
                          "error": f"contact state '{c['state']}' — pack senders apply to contacts in 'sent'"}
@@ -427,18 +547,19 @@ def _pack_send_preamble(settings, contact_id: str):
 def send_reminder(settings, contact_id: str, *, commit: bool = False,
                   now: Optional[datetime] = None) -> dict:
     """Fixed-template reminder from the campaign's PACK (template or builders
-    → send_mail). Gates: pack required (loud skip), reply-check on Gmail
-    ground truth, once/day + cap, window hour, CS_PAUSE.
+    → send_mail). Gates: pack required (loud skip), campaign not finished
+    (pack status / ends_on), reply-check on Gmail ground truth, once/day +
+    cap, window hour, CS_PAUSE.
 
     STAMP-BEFORE-SEND: the once-per-day dossier stamp is the ONLY dedup a
     reminder has (there is legitimately prior Sent history with the contact),
     so it is written BEFORE the SMTP send — a crash in between skips one
     reminder (safe); send-then-stamp would double-send on the next run."""
-    c, pack, err = _pack_send_preamble(settings, contact_id)
+    now = now or _time.now_utc()
+    c, pack, err = _pack_send_preamble(settings, contact_id, now=now)
     if err:
         return err
     email = c["email"]
-    now = now or _time.now_utc()
     tz = settings.timezone
     today = _time.local_date(now, tz)
     d = dict(c.get("dossier") or {})
@@ -479,7 +600,8 @@ def send_reminder(settings, contact_id: str, *, commit: bool = False,
             "reminders": d["reminders"]}
 
 
-def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
+def send_first(settings, contact_id: str, *, commit: bool = False,
+               now: Optional[datetime] = None) -> dict:
     """First-notice fixed-template send from the campaign's PACK
     (builders.build → send_mail HTML). The counterpart to send_reminder for the
     INITIAL contact: the fixed-template lifecycle otherwise assumes contacts are
@@ -491,9 +613,9 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
     CS_TRIAGE_MODE=draft → push the rendered mail to the operator's Gmail Drafts
     for review (idempotent, never sends); =send → cs-SMTP send then mark 'sent'.
 
-    Gates: pack required (loud refusal), contact NOT already `sent` (the
-    idempotency guard — once the notice goes out the state flips to `sent` and a
-    re-run refuses), CS_PAUSE.
+    Gates: pack required (loud refusal), campaign not finished (pack status /
+    ends_on), contact NOT already `sent` (the idempotency guard — once the
+    notice goes out the state flips to `sent` and a re-run refuses), CS_PAUSE.
 
     Unlike composed-draft `send_draft`, this does NOT dedup against the whole
     Sent archive: a fixed-template first notice is a deliberate action to a
@@ -510,16 +632,18 @@ def send_first(settings, contact_id: str, *, commit: bool = False) -> dict:
     if camp_name in settings.excluded_campaign_set:
         return {"ok": False, "email": email,
                 "error": f"campaign '{camp_name}' is excluded from the general operator"}
-    try:
-        pack = campaign_pack.find_pack(camp_name)
-    except campaign_pack.PackError as e:
-        return {"ok": False, "email": email, "error": f"pack error: {e}"}
+    pack, pack_error = _resolve_pack(camp_name)
+    if pack_error:
+        return {"ok": False, "email": email, "error": f"pack error: {pack_error}"}
     if pack is None:
         # The loud skip: a fixed-template action with NO pack never sends.
         return {"ok": False, "email": email, "skipped": True,
                 "error": (f"NO CAMPAIGN PACK for '{camp_name}' — fixed-template sends need "
                           "campaigns/<pack>/ (campaign.toml + templates or builders.py); "
                           "REFUSING to send. See cs/campaign_pack.py.")}
+    finished = _finished_refusal(settings, pack, now)
+    if finished:
+        return {"ok": False, "email": email, "finished": True, "error": finished}
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
     # idempotency: once the first notice has gone out the state is 'sent' — never re-send
@@ -570,9 +694,10 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
              now: Optional[datetime] = None) -> dict:
     """Fixed-template SMS nudge from the campaign PACK's sms.txt, via the
     [sms] proxy (cs/sms.py). Same gates as send_reminder (pack required,
-    reply-check, once/day, evening window, CS_PAUSE) + the SMS
-    capability itself must be on. STAMP-BEFORE-SEND, same rationale."""
-    c, pack, err = _pack_send_preamble(settings, contact_id)
+    campaign not finished, reply-check, once/day, evening window, CS_PAUSE) +
+    the SMS capability itself must be on. STAMP-BEFORE-SEND, same rationale."""
+    now = now or _time.now_utc()
+    c, pack, err = _pack_send_preamble(settings, contact_id, now=now)
     if err:
         return err
     email = c["email"]
@@ -583,7 +708,6 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
     if not settings.sms_enabled or not settings.sms_proxy_base:
         return {"ok": False, "email": email,
                 "error": "[sms] capability off — enable + proxy_base in manifest.toml"}
-    now = now or _time.now_utc()
     tz = settings.timezone
     today = _time.local_date(now, tz)
     _rah, smsh, _rmax = _pack_windows(settings, pack)
