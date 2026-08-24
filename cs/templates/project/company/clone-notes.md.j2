@@ -1,0 +1,42 @@
+# How this clone is really built
+
+## What to write here
+
+Everything true of {{ company_name }}'s operator that `manifest.toml` cannot
+express, and that therefore exists only because somebody wrote it down.
+`docs/ARCHITECTURE.md` stamps the declared configuration — addresses, adapters,
+scopes, knobs — and then points here for the rest. This file is the rest.
+
+Write a short titled paragraph per subject. The ones that usually matter:
+
+- **Provenance.** Where this clone came from, what was removed when it was
+  re-based onto the shared kernel, and which files are template-owned rather
+  than yours.
+- **What was authored in `USER_NOTES`.** The voice, the signature, the
+  recipient-language rule, the product mechanics. It lives in the engine
+  profile, outside every repo, so a reader has no way to see it from here —
+  say what is in it and how to read it (`cs rpc settings.get`).
+- **The send boundary as it actually stands.** Which paths can reach a
+  customer, what denies them today, and what a human still has to do.
+- **Mechanisms with a history.** A check that exists because something went
+  wrong once, and would look arbitrary without that sentence.
+- **Anything surprising about accounts, Drive scope, or per-project memory** —
+  the places where the obvious reading of a verb is not what it does.
+- **Known gaps.** What is unfinished, unfilled or unverified right now, and
+  what nobody should assume works.
+
+Date a claim whose truth could expire, and say what you actually ran to check
+it.
+
+## Why it matters
+
+This is the only durable place for it. `docs/ARCHITECTURE.md` and `CLAUDE.md`
+are rendered from the kernel template and are replaced wholesale on every
+`cs update` — anything written into them is content living in a file the next
+release overwrites. Files under `company/` are the opposite: the kernel creates
+one only if it is missing and never touches it again, so what you write here
+survives every upgrade. That difference is exactly why this file exists.
+
+An agent opening this repo reads the stamped configuration and believes it.
+What it cannot infer is why the configuration is that shape — and that is the
+part a new session, or a colleague, or you in six months, will actually need.
