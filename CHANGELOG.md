@@ -4,22 +4,33 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (static tier, 2026-08-24): **`v0.17.0` on both
-clones**. Verified from inside each clone (`requirements.txt`,
-`[repo].kernel_version`, `template-manifest.json`, the ARCHITECTURE row and
-`cs --version` all `v0.17.0`; both venvs resolve the tag to `024a62b`,
-recorded in each clone's regenerated `requirements.lock`). Static-tier
-evidence, which is what these tags call for: `cs config` resolves on both and
-reports NO duplicate declarations, `cs --help` answers on both, and the
-`cs update` output shows each release's own claim holding — not one `company/`
-prompt on either clone across both upgrades, every authored slot byte-identical
-afterwards, the stale `company/` keys gone from both ledgers, and the slots a
-clone lacked created rather than asked about. On the `v0.17.0` pass
-`docs/ARCHITECTURE.md` applied **silently** on `124-cs` (`✓`, no prompt), which
-is the whole point of that tag: the file is generated all the way down, so
-there is no longer an answer to get wrong. **The collaudo suites were NOT run
-and no live engine call was made** — the operator waived them; nothing here is
-a record of a passed collaudo.
+**Current operational pin** (static tier, 2026-08-24): **`v0.18.0` on both
+clones**. Verified from inside each clone: `requirements.txt`,
+`template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
+`cs --version` all say `v0.18.0`, and both venvs resolve the tag to
+`f7aafdd`, recorded in each clone's regenerated `requirements.lock`.
+`[repo].kernel_version` is no longer on that list — `v0.18.0` removed the
+field, so the pin is `requirements.txt` and the claims derived from it, and
+there is one fewer hand-maintained number to go stale.
+
+Static-tier evidence, which is what this tag calls for. `cs config` resolves
+on both clones and reports NO setting declared in more than one place; on
+`124-cs` it still shows `~/124/.env.local` as layer 3 of six, which is the
+check that matters here because the same audit proposed deleting the key that
+builds that layer. The `cs update` output shows this release's own claim
+holding on both: `docs/ARCHITECTURE.md` applied **silently** (`✓`, no
+prompt), `manifest.toml` and `requirements.txt` reported as clone-owned and
+left alone, not one `company/` prompt, and — the point of the render-order
+fix — **no `! failed to render manifest.toml.j2`**, even though neither
+clone's frozen `init_data` carries the three knob keys the template gained.
+
+Both clones also had the six dead fields deleted from their own
+`manifest.toml`, with `posture_note` kept as a comment rather than destroyed:
+on `mrcall-cs` that sentence is the only written explanation of why the two
+Centralix campaigns are excluded.
+
+**The collaudo suites were NOT run and no live engine call was made** — the
+operator waived them; nothing here is a record of a passed collaudo.
 
 **`mrcall-cs` is PAUSED and the pause was NOT cleared** — `cs config` still
 reports `CS_PAUSE PRESENT` after the re-pin. It stopped itself on 2026-08-24
