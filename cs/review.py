@@ -3,6 +3,8 @@
 Read-only aggregation, run when you open a session (`cs review`):
   - DRAFTS waiting in the operator's Gmail Drafts (the queue you review + send);
   - open ENGINE TASKS needing a human answer (triage escalations live here);
+  - contacts recorded as HANDLED OUT OF BAND (`cs handled`) — why some mail
+    stopped being raised, with the date and the reason;
   - per-CAMPAIGN state + contacts flagged escalated / engaged / declined;
   - the last cron tick from the log.
 
@@ -13,7 +15,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from . import campaign, gmail_drafts, rpc
+from . import _time, campaign, gmail_drafts, rpc
 
 
 def _last_log_lines(settings, n: int = 6) -> list[str]:
@@ -60,6 +62,31 @@ def gather(settings) -> dict:
     except Exception as e:  # noqa: BLE001
         out["tasks"] = []
         out["tasks_error"] = f"{type(e).__name__}: {e}"
+
+    # 2b. Contacts resolved OUT OF BAND (`cs handled`) — the reason some mail
+    #     is no longer raised anywhere. Shown so the operator can SEE the
+    #     decision and undo it; an invisible filter is indistinguishable from a
+    #     bug, and gets reported as one.
+    try:
+        from .state import State
+
+        recs = State(settings.db_path).handled_out_of_band()
+        out["handled_out_of_band"] = [
+            {
+                "email": e,
+                "handled_at": r["handled_at"],
+                # the operator's own calendar day: render() has no timezone,
+                # and a late-evening record would print yesterday in UTC
+                "handled_on": _time.local_date(r["handled_at"], settings.timezone),
+                "reason": r["reason"],
+            }
+            for e, r in sorted(
+                recs.items(), key=lambda kv: kv[1]["handled_at"], reverse=True
+            )
+        ]
+    except Exception as e:  # noqa: BLE001
+        out["handled_out_of_band"] = []
+        out["handled_out_of_band_error"] = f"{type(e).__name__}: {e}"
 
     # 3. Campaigns + flagged contacts (escalated / outcome)
     camps = []
@@ -117,6 +144,19 @@ def render(d: dict) -> str:
         L.append(f"  - [{(t.get('urgency') or '?'):6.6}] {(t.get('email') or '?'):28.28} {t.get('title') or ''}")
     if d.get("tasks_error"):
         L.append(f"  ! tasks.list fallita: {d['tasks_error']}")
+
+    # Localized digest (see the docstring): this block follows the surrounding
+    # Italian, it is not a second language creeping into the kernel.
+    handled = d.get("handled_out_of_band", [])
+    if handled:
+        L.append(f"\nGestiti fuori mail — non più segnalati ({len(handled)}), "
+                 f"i più recenti:")
+        for h in handled[:5]:
+            L.append(f"  - {(h.get('email') or '?'):30.30} {h.get('handled_on') or '?'}  "
+                     f"{h.get('reason') or ''}")
+        L.append("  (per rimetterne uno in lista: `cs handled <email> --undo`)")
+    if d.get("handled_out_of_band_error"):
+        L.append(f"  ! lettura dei gestiti fuori mail fallita: {d['handled_out_of_band_error']}")
 
     L.append("\nCampagne:")
     for c in d.get("campaigns", []):

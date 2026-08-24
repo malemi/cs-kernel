@@ -61,6 +61,11 @@ kernel change must keep `kernel + manifest(X) ≡ X` on observable surfaces
    - **Gmail Sent/All Mail is the dedup ground truth** — never the engine
      archive (`emails.search folder:sent` misses hand-sent mail and drops
      threads when the customer replies last). No dedup-source knob exists.
+     Its one blind spot is resolution OUT OF BAND (phone, WhatsApp, in
+     person), which leaves no Sent message: that is a DATED per-contact
+     record (`cs handled` → `state.handled_out_of_band`), never a second
+     permanent ignore list, and a later inbound re-opens the contact by
+     itself.
    - **Module path `cs` is frozen**; the console script `cs` is a second door
      onto the same `cs.cli:main`. Permission rules match command TEXT, so
      clone permission strings must enumerate every spelling that reaches it:

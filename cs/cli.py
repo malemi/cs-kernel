@@ -10,6 +10,8 @@ Code is the brain. These verbs are thin transport:
   thread     all email threads exchanged with one address (both directions).
   contacted  did the operator write to this address in the last N days? (dedup)
   unanswered inbound still awaiting a human reply (deterministic, Sent-anchored).
+  handled    record that a contact was resolved OUT OF BAND (phone, WhatsApp,
+             in person) — their mail up to that moment stops being open work.
   tasks      open tasks on the engine; `tasks create` / `tasks close` write
              the engine task ledger (upsert on event_id / complete).
   business   CRM lookup by email (adapter from manifest [crm]).
@@ -29,14 +31,15 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import socket
 import sys
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import websockets
 
-from . import config, crm, ingest, rpc
+from . import _time, config, crm, ingest, rpc
 from ._version import kernel_version
 from . import campaign as campaign_mod
 from . import filter as filt
@@ -56,6 +59,13 @@ def _self_label(settings) -> str:
     """The operator identity used in human-readable prints — ALWAYS derived
     from Settings (manifest → env), never a literal."""
     return settings.email_address or "the operator"
+
+
+def _fmt_local(dt: datetime, tz_name: str) -> str:
+    """A stored instant as the operator's own clock reads it (market timezone
+    from the manifest) — a UTC string here would be read as local and be wrong
+    by an hour or two exactly when it matters."""
+    return f"{_time.to_local(dt, tz_name):%Y-%m-%d %H:%M %Z}"
 
 
 # ---------------------------------------------------------------------- plan
@@ -211,17 +221,33 @@ def cmd_unanswered(args) -> int:
     settings = config.load()
     from . import unanswered as unanswered_mod
 
-    rows = unanswered_mod.open_threads(settings, days=args.days)
+    d = unanswered_mod.sweep(settings, days=args.days)
+    rows, held = d["open"], d["handled"]
     if args.json:
+        # The open list, exactly as before: this is the triage skill's PRIMARY
+        # candidate feed and its shape is a contract. The out-of-band section
+        # below is for the human — a machine reader wants the work, not the
+        # explanation of what was left out.
         _print_json(rows)
         return 0
     if not rows:
         print(f"no unanswered inbound in the last {args.days} days")
-        return 0
-    print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
-    for r in rows:
-        print(f"{r['email']:38.38} {r['days_waiting']:>4}d  {(r['subject'] or '')[:60]}")
-    print(f"\ntotal: {len(rows)} unanswered (oldest first)")
+    else:
+        print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
+        for r in rows:
+            print(f"{r['email']:38.38} {r['days_waiting']:>4}d  {(r['subject'] or '')[:60]}")
+        print(f"\ntotal: {len(rows)} unanswered (oldest first)")
+    if held:
+        # Say WHY these are not in the list. A contact that silently stops being
+        # raised looks like a bug and gets reported as one.
+        print(f"\nhandled out of band — not raised ({len(held)}):")
+        for r in held:
+            why = f" — {r['handled_reason']}" if r.get("handled_reason") else ""
+            print(
+                f"  {r['email']:38.38} resolved "
+                f"{_fmt_local(r['handled_at'], settings.timezone)}{why}"
+            )
+        print(f"  (put one back: {settings.prog_name or 'cs'} handled <email> --undo)")
     return 0
 
 
@@ -304,6 +330,143 @@ def cmd_tasks_close(args) -> int:
     return 0
 
 
+# ---------------------------------------------------------------- handled
+#
+# THE MISSING CONCEPT (2026-08). A customer wrote on 17 July; the owner
+# telephoned him and resolved it. Gmail Sent — the dedup ground truth, and
+# rightly so — has no record of a phone call, so `cs unanswered` re-discovered
+# that thread on every single tick and told the owner to write to him, daily,
+# for over a month. The only filter the sweep had was `ignore`: permanent and
+# undated, i.e. exactly wrong for a customer we want to keep talking to.
+#
+# `cs handled <email>` records the resolution WITH A TIMESTAMP: nothing they
+# sent before that moment is open work, and a later message re-opens them by
+# itself, with nothing to remember. `--undo` removes the record: this is a
+# judgment an operator can type by mistake, so it must not be a one-way door.
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _print_handled_records(settings, records: dict) -> None:
+    for email, r in sorted(records.items(), key=lambda kv: kv[1]["handled_at"], reverse=True):
+        why = f" — {r['reason']}" if r.get("reason") else ""
+        print(f"  {email:38.38} {_fmt_local(r['handled_at'], settings.timezone)}{why}")
+
+
+def cmd_handled(args) -> int:
+    settings = config.load()
+    st = state_mod.State(settings.db_path)
+    records = st.handled_out_of_band()
+
+    if not args.email:  # bare `cs handled` = what is currently on record
+        if not records:
+            print("nothing recorded as handled out of band")
+            return 0
+        print(f"handled out of band ({len(records)}) — their mail up to that "
+              f"moment is not open work:")
+        _print_handled_records(settings, records)
+        return 0
+
+    # `--account` switches the ENGINE profile only, but this record is read by
+    # surfaces that are all about the operator's OWN mailbox — recording it
+    # against another account's engine would file the truth in the wrong place.
+    if getattr(args, "account_switched", False):
+        print(
+            f"`handled` records against {_self_label(settings)}'s own open-work "
+            f"ledger, which is what `unanswered` / `dossier` / `review` read; "
+            f"--account switches only the engine profile, so the record would "
+            f"not mean what it says. Run it without --account.",
+            file=sys.stderr,
+        )
+        return 2
+
+    email = (args.email or "").strip().lower()
+    if not _EMAIL_RE.match(email):
+        # A clean refusal, not a traceback: this verb takes one address and
+        # nothing else, and a typo must not write a row nobody will ever match.
+        print(f"not an email address: {args.email!r}", file=sys.stderr)
+        return 2
+    existing = records.get(email)
+
+    if args.undo:
+        if not existing:
+            print(f"no out-of-band record for {email} — nothing to undo")
+            return 1
+        st.unmark_handled(email)
+        print(f"removed the out-of-band record for {email} "
+              f"(was {_fmt_local(existing['handled_at'], settings.timezone)}"
+              f"{' — ' + existing['reason'] if existing['reason'] else ''}).")
+        print("  their earlier mail is open work again. Engine tasks closed at "
+              "the time stay closed — reopen those in the desktop app if needed.")
+        return 0
+
+    if args.at:
+        try:
+            moment = _time.parse_moment(args.at, settings.timezone)
+        except ValueError as e:
+            print(f"--at: {e}", file=sys.stderr)
+            return 2
+        # A moment in the future would settle mail they have not sent yet —
+        # a permanent ignore wearing a date, which is exactly what this is not
+        # (that is `do_not_contact`). Today is legitimate: a date-only value
+        # resolves to the END of its day, so allow a day of headroom and refuse
+        # the mistyped year that would silently retire a customer.
+        if moment > _time.now_utc() + timedelta(days=1):
+            print(
+                f"--at: {_fmt_local(moment, settings.timezone)} is in the future. "
+                f"That would settle mail they have not sent yet — record when it "
+                f"was ACTUALLY resolved, or leave --at out for now.",
+                file=sys.stderr,
+            )
+            return 2
+    else:
+        moment = _time.now_utc()
+    reason = (args.why or "").strip()
+
+    st.mark_handled(email, reason=reason, handled_at=moment)
+    when = _fmt_local(moment, settings.timezone)
+    if existing:
+        # Idempotent by design: re-running is a no-op-shaped update, never an
+        # error — the operator should not have to remember whether he already did it.
+        print(f"updated: {email} handled out of band on {when}"
+              f"{' — ' + reason if reason else ''} "
+              f"(was {_fmt_local(existing['handled_at'], settings.timezone)})")
+    else:
+        print(f"recorded: {email} handled out of band on {when}"
+              f"{' — ' + reason if reason else ''}")
+    print("  nothing they sent before that moment is open work; a later "
+          "message re-opens them on its own.")
+
+    # The task ledger is the OTHER place stale work piles up, so close it here
+    # too — one command per real-world event, not two. actor="human" because a
+    # human really did resolve it, and the rest of the system treats a human
+    # close as final, which is exactly the intent.
+    why = f"handled out of band — {reason}" if reason else \
+        "handled out of band (resolved outside email)"
+    res = rpc.call_sync(
+        settings, "tasks.list", {"include_completed": False, "limit": 500}, timeout=120
+    )
+    rows = res if isinstance(res, list) else res.get("tasks", [])
+    mine = [t for t in rows if (t.get("contact_email") or "").strip().lower() == email]
+    closed = 0
+    for t in mine:
+        # `tasks.list` returns `id`; `tasks.complete` takes `task_id`. That
+        # mismatch has already cost one bug — read both, skip a row with neither
+        # rather than send the engine a null id.
+        tid = t.get("id") or t.get("task_id")
+        if not tid:
+            continue
+        rpc.call_sync(
+            settings,
+            "tasks.complete",
+            {"task_id": tid, "actor": "human", "why": why, "note": why},
+            timeout=120,
+        )
+        closed += 1
+    print(f"engine tasks closed for this contact (actor=human): {closed}")
+    return 0
+
+
 def cmd_business(args) -> int:
     # CRM lookup through the port (cs/crm): the adapter is chosen by the
     # manifest ([crm].adapter), never by an if-company switch. Never raises.
@@ -355,6 +518,24 @@ def cmd_dossier(args) -> int:
     )
     for m in recent:
         print(f"  {m['date']}: {m['subject']}")
+
+    # --- resolved off-email? The one thing Gmail cannot know (cs handled). ---
+    rec = state_mod.State(settings.db_path).handled_out_of_band().get(email.strip().lower())
+    print("\n-- handled out of band (phone / WhatsApp / in person) --")
+    if not rec:
+        print("  no record")
+    else:
+        why = f" — {rec['reason']}" if rec.get("reason") else ""
+        print(f"  YES — {_fmt_local(rec['handled_at'], settings.timezone)}{why}")
+        # These rows carry the RAW Date header, so parse with the same module's
+        # parser (tz-aware, naive read as UTC) before comparing with the record.
+        dates = [d for d in (gmail_archive._parse_date(m.get("date")) for m in inbound) if d]
+        last_in = max(dates, default=None)
+        if last_in is not None and last_in <= rec["handled_at"]:
+            print("  → their last message predates it: NOT open work "
+                  "(the sweeps stop raising it; a newer message re-opens them)")
+        elif last_in is not None:
+            print("  → they have written SINCE: open work again")
 
     res = rpc.call_sync(settings, "tasks.list", {"limit": 500}, timeout=120)
     rows = res if isinstance(res, list) else res.get("tasks", [])
@@ -848,6 +1029,34 @@ def main(argv=None) -> int:
     pun.add_argument("--days", type=int, default=14)
     pun.add_argument("--json", action="store_true")
     pun.set_defaults(func=cmd_unanswered, reads_operator_mailbox=True)
+
+    phd = sub.add_parser(
+        "handled",
+        help="record that a contact was resolved OUT OF BAND (phone, WhatsApp, "
+        "in person): their mail up to that moment stops being raised as open "
+        "work, a later message re-opens them. Bare `handled` lists the records.",
+    )
+    phd.add_argument(
+        "email", nargs="?", help="the contact; omit to list every record on file"
+    )
+    phd.add_argument(
+        "--why",
+        help="how/where it was resolved — printed wherever the record is surfaced",
+    )
+    phd.add_argument(
+        "--at",
+        metavar="ISO",
+        help="when it was resolved (default: now). YYYY-MM-DD means the END of "
+        "that day in the operator's timezone; a time may be given as "
+        "YYYY-MM-DDTHH:MM",
+    )
+    phd.add_argument(
+        "--undo",
+        action="store_true",
+        help="remove the record — the contact's earlier mail becomes open work "
+        "again (engine tasks closed at the time stay closed)",
+    )
+    phd.set_defaults(func=cmd_handled)
 
     pk = sub.add_parser(
         "tasks",

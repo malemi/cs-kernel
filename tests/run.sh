@@ -142,7 +142,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered tasks business dossier ask draft-reply draft-delete review drive accounts chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered handled tasks business dossier ask draft-reply draft-delete review drive accounts chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -510,6 +510,18 @@ step "29. draft-delete removes ONE named draft, to Trash, or refuses"
 # the identified uid into Trash (recoverable 30 days) and never \Deleted +
 # EXPUNGE; the CLI verb exits non-zero on a refusal and --account refuses it.
 if "$VENV/bin/python" "$ROOT/tests/test_gmail_draft_delete.py"; then echo "OK"; else echo "FAIL: draft-delete guards regressed"; FAIL=1; fi
+
+step "30. handled out of band — dated suppression, and every surface obeys it"
+# 2026-08: a customer wrote on 17 July, the owner TELEPHONED him and resolved it,
+# and because a phone call leaves no trace in Gmail Sent (the dedup ground truth)
+# every tick for a MONTH re-discovered the thread and told the owner to write to
+# him. Guards: an inbound before the handled moment is not open work, a NEWER one
+# re-opens the contact, the held-back senders are still REPORTED (an invisible
+# filter reads as a bug), the record is idempotent and undoable, recording closes
+# the contact's open engine tasks with actor="human" reading `id` from
+# tasks.list (NOT the `task_id` tasks.complete wants), a mistyped address is a
+# clean refusal, and sweep() actually feeds the ledger into the open-logic.
+if "$VENV/bin/python" "$ROOT/tests/test_handled.py"; then echo "OK"; else echo "FAIL: out-of-band handling regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

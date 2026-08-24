@@ -11,7 +11,7 @@ not this file.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
 from zoneinfo import ZoneInfo
 
 _ZONES: dict[str, ZoneInfo] = {}
@@ -55,3 +55,36 @@ def local_date(dt: datetime, tz_name: str) -> str:
 def past_local_noon(dt: datetime, tz_name: str) -> bool:
     """True once it is >= 12:00 in the market timezone at instant `dt`."""
     return local_hour(dt, tz_name) >= 12
+
+
+def parse_moment(text: str, tz_name: str) -> datetime:
+    """An operator-typed ISO instant -> tz-aware UTC. Raises ValueError.
+
+    A bare 'YYYY-MM-DD' means the END of that market-local day. Someone
+    back-dating "I called him on the 18th" cannot be asked at what hour, and
+    reading it as midnight would leave that same day's earlier mail looking
+    open — precisely the false alarm the caller is trying to stop. A naive
+    datetime is read in the market timezone (the clock the operator is looking
+    at, not UTC); an aware one is taken as given.
+    """
+    t = (text or "").strip()
+    if not t:
+        raise ValueError("empty timestamp")
+    try:  # date-only first: fromisoformat() would accept it as midnight
+        d = date.fromisoformat(t)
+    except ValueError:
+        pass
+    else:
+        return datetime.combine(
+            d, time(23, 59, 59), tzinfo=_zone(tz_name)
+        ).astimezone(timezone.utc)
+    try:
+        dt = datetime.fromisoformat(t)
+    except ValueError:
+        raise ValueError(
+            f"{text!r} is not an ISO date/time (expected YYYY-MM-DD or "
+            "YYYY-MM-DDTHH:MM)"
+        ) from None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_zone(tz_name))
+    return dt.astimezone(timezone.utc)

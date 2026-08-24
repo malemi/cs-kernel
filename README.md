@@ -298,7 +298,9 @@ need it, not more onboarding.
 `whoami`, `thread`, `contacted`, `unanswered`, `tasks`, `business`,
 `drive`, `llm`; **gated writing**: `draft-reply` / `chat` (drafts only,
 never send), `campaign` (Sent-dedup, rate cap, pause file), `tasks
-create`/`close`; **plumbing**: `rpc`, `project`.
+create`/`close`, `handled` (this contact was resolved off-email — by phone,
+WhatsApp, in person — so their mail up to that moment stops being raised);
+**plumbing**: `rpc`, `project`.
 
 ### The kernel's own model calls
 
