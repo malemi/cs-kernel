@@ -4,7 +4,7 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-25): **`v0.20.0` on both clones**.
+**Current operational pin** (2026-08-25): **`v0.22.0` on both clones**.
 Verified from inside each clone: `requirements.txt`, `template-manifest.json`
 `init_data`, the ARCHITECTURE "Kernel pin" row and `cs --version` all say
 `v0.20.0`, and both venvs resolve the tag to `612b5d3`, recorded in each
