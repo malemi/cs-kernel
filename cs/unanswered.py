@@ -32,11 +32,22 @@ Scope is intentionally narrow: it answers ONLY "did we send them anything after
 their last message". It does NOT classify intent or detect autoresponders — that
 stays the LLM's job downstream. Over-including an autoresponder sender is
 acceptable; the skill filters those with judgment.
+
+The ignore list is matched as LITERALS PLUS fnmatch PATTERNS (`cs/addr_match.py`,
+shared with the suppression list), because the loudest robots cannot be
+enumerated: a bounce daemon's sending host rotates per message, so one customer's
+undeliverable address produced seven distinct `mail-daemon@<host-NN>.<domain>`
+senders in six days and an exact list was stale on the next bounce. `fnmatch`
+keeps the decision deterministic and offline — no LLM decides who is a person.
+What it must never do is widen: a pattern is a pattern only when the entry
+carries a wildcard, so an address written before patterns existed still takes the
+exact-match path.
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from .addr_match import AddrSet
 from .config import Settings
 
 
@@ -53,7 +64,13 @@ def _partition(
     over) — one pass, so the public views below never disagree about who is
     where. Every inbound sender lands in exactly one of the three."""
     self_addrs = {a.strip().lower() for a in self_addrs if a}
-    ignore = {a.strip().lower() for a in ignore if a}
+    # `self_addrs` stays exact on purpose: it is a list of identities we own,
+    # not of robots we recognise, and a wildcard there would silently hide a
+    # customer whose address resembles one of ours.
+    # Idempotent: callers that already hold an AddrSet re-split a set of the
+    # same entries, and a plain set (every unit test, every older caller) is
+    # upgraded here rather than at each call site.
+    ignore = AddrSet(ignore)
     handled_at: dict[str, datetime] = {}
     for a, d in (handled or {}).items():
         a = (a or "").strip().lower()
@@ -151,7 +168,10 @@ def compute_open(
     - group `inbound` by `email`, keep each sender's LATEST message (max date);
     - a sender is OPEN if NO `sent` message addressed to that email has
       date > that latest inbound date;
-    - drop any sender whose email is in `self_addrs` or `ignore`;
+    - drop any sender whose email is in `self_addrs`, or matches `ignore` —
+      whose entries are literal addresses AND fnmatch patterns such as
+      `mail-daemon@*` (an entry without a wildcard is matched exactly, as it
+      always was);
     - drop any sender whose latest inbound is at or before their `handled`
       moment (resolved out of band — see the module docstring);
     - drop any sender in `escalated` (a human took the thread over; the row
@@ -216,6 +236,10 @@ def sweep(settings: Settings, days: int) -> dict:
         from .state import State
 
         st = State(settings.db_path)
+        # Suppression joins the ignore list, and both halves read a typed entry
+        # the same way (`cs/addr_match.py`): a wildcard suppression that quietens
+        # this sweep also blocks the outreach runner, which is the only version
+        # of "do not contact" worth having.
         ignore |= st.do_not_contact_set()
         records = st.handled_out_of_band()
         taken = st.escalated_to_human()

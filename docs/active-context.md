@@ -14,7 +14,13 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.22.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.23.0`. Current HEAD status: tagged as `v0.23.0`.**
+  `v0.23.0` lets a `CS_SYSTEM_SENDERS` entry be an fnmatch pattern, because a
+  bounce daemon's sending host rotates per message and an exact list is stale on
+  the next bounce; the same matcher (`cs/addr_match.py`) now reads the
+  `do_not_contact` table, which had kept comparing exactly and would have made a
+  wildcard suppression quieten the queue while outreach still went out. FULL
+  tier — the failure class is "a rule hides a real customer's mail".
   `v0.21.0` changes no code: it drops the clone index template to 162 rendered
   lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
   and deletes three passages that recounted history rather than describing the

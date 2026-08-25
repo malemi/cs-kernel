@@ -61,6 +61,11 @@ sms_hour = {{ sms_hour }}
 reminder_max = {{ reminder_max }}
 # Comma-separated no-reply/system addresses the `unanswered` sweep ignores,
 # so a notification robot never looks like a customer waiting for an answer.
+# An entry is a literal address UNLESS it contains `*`, `?` or `[`, and then it
+# is an fnmatch pattern — `mail-daemon@*`. Patterns exist because bounce daemons
+# cannot be listed: the sending host rotates per bounce, so one undeliverable
+# address emits a new sender name every time. Write them as narrowly as the
+# noise allows; this list decides who is never a customer.
 system_senders = {{ system_senders | toml_quote }}
 # The model-output send guard (cs/send_guard.py). These two are the only part
 # of it that is per-company: how short a composed body may be before the guard

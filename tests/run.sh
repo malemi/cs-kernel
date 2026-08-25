@@ -712,6 +712,16 @@ step "34. escalated to a human — still open, still visible, nobody else writes
 # counted reason and the campaign senders + pending() refuse on their own.
 if "$VENV/bin/python" "$ROOT/tests/test_escalated.py"; then echo "OK"; else echo "FAIL: escalated-to-a-human regressed"; FAIL=1; fi
 
+step "35. the ignore list matches patterns, and only what a pattern should reach"
+# Seven rows of one sweep were the SAME bounce: the provider's mail daemon
+# answers from a rotating host, so an exact-match ignore list is stale on the
+# next bounce and the operator is handed a robot to answer. Guards: one
+# `mail-daemon@*` catches every rotation, in every bucket (never resurfacing as
+# `handled` or `escalated`); a list with NO wildcard produces the identical set
+# it always did, with no prefix effects; no daemon pattern reaches an address a
+# human writes from; and Sent-anchoring is untouched.
+if "$VENV/bin/python" "$ROOT/tests/test_system_sender_patterns.py"; then echo "OK"; else echo "FAIL: ignore-list pattern matching regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

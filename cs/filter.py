@@ -4,9 +4,17 @@
 leads        -> key = firebase uid (email resolved later, via Firebase SA)
 signups      -> key = business_id (email already in payload)
 cancellations-> key = business_id (email already in payload)
+
+Suppression is matched through `cs/addr_match.py`, the same matcher the
+`unanswered` sweep uses, so an entry means one thing wherever it is read. The
+alternative is not a style preference: while this gate matched exactly and the
+sweep matched patterns, `cs suppress '*@<domain>'` produced a quieter queue AND
+kept mailing the domain — protection the operator could see working and that
+was not there.
 """
 from __future__ import annotations
 
+from .addr_match import AddrSet
 from .config import Settings
 from .state import State
 
@@ -49,7 +57,9 @@ def _filter_business(rows, category, settings, state, dnc, taken, seen_emails, o
 
 
 def build_worklist(payload: dict, settings: Settings, state: State) -> dict:
-    dnc = state.do_not_contact_set()
+    # AddrSet, not the raw set: `email in dnc` below then honours a wildcard
+    # entry instead of quietly missing it.
+    dnc = AddrSet(state.do_not_contact_set())
     # Leads are keyed by uid with no email yet, so this gate can only apply to
     # the two business categories — which is also where it matters: a lead a
     # human has taken over is by definition already a conversation, so it has

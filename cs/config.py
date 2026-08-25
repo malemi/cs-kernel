@@ -224,8 +224,9 @@ class Settings(BaseSettings):
     self_uids: str = ""
     self_emails: str = ""
     # System / no-reply senders to ignore in the `unanswered` sweep (notifications,
-    # transactional, internal tooling). NEVER hardcode company addresses in the
-    # kernel — the clone declares them in its own env/manifest (charter grep gate).
+    # transactional, internal tooling). An entry may be a literal address or an
+    # fnmatch pattern — see system_sender_set. NEVER hardcode company addresses in
+    # the kernel — the clone declares them in its own env/manifest (charter gate).
     system_senders: str = Field(
         default="", validation_alias=AliasChoices("CS_SYSTEM_SENDERS")
     )
@@ -304,6 +305,19 @@ class Settings(BaseSettings):
 
     @property
     def system_sender_set(self) -> set[str]:
+        """Senders the `unanswered` sweep must not raise as people waiting.
+
+        Each entry is EITHER a literal address OR an fnmatch pattern —
+        `mail-daemon@*`, `mailer-daemon@*`, `postmaster@*`, `*@notify.<domain>`.
+        Patterns exist because bounce daemons cannot be enumerated: the sending
+        host rotates per bounce, so one undeliverable address emits a new
+        `mail-daemon@<host-NN>…` sender every time and a literal list is never
+        finished. An entry carrying no wildcard is matched exactly, exactly as
+        before patterns existed; the matcher is `cs/unanswered._is_ignored`.
+
+        Write patterns as narrowly as the noise allows. This list decides who is
+        never a customer, and nothing downstream re-checks it.
+        """
         return {e.strip().lower() for e in self.system_senders.split(",") if e.strip()}
 
     @property

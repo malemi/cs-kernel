@@ -84,6 +84,78 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.23.0 — 2026-08-25
+
+**MINOR**: `CS_SYSTEM_SENDERS` entries may be fnmatch patterns, and the
+`do_not_contact` suppression table is matched the same way — so a typed entry
+means the same thing on both lists. Re-collaudo **FULL on both clones**. The
+tier is not about diff size: every change here decides who the operator is
+never shown and who is never written to, and the failure it can produce is a
+rule hiding a real customer's mail. That is the one outcome this operator
+exists to prevent, so it gets the tier that matches the consequence.
+
+### The bounce daemon that cannot be listed
+
+`cs unanswered` matched its ignore list by exact address. One customer's
+undeliverable address made the provider's mail daemon answer from a **rotating
+host** — seven distinct `mail-daemon@<host-NN>.<domain>` senders in six days,
+all the same bounce — so the list was stale on the next bounce and the operator
+was handed a robot to answer. Measured on a live 45-day sweep: 8 of 22 open
+rows were not a person waiting.
+
+An ignore entry is now a literal address **unless it contains `*`, `?` or `[`**,
+and then it is an `fnmatch` pattern: `mail-daemon@*`, `mailer-daemon@*`,
+`postmaster@*`, `*@notify.<domain>`. Deterministic and offline — no LLM decides
+who is a person.
+
+The wildcard test is what makes this safe to ship onto lists already in
+production: no existing entry contains one, so every list splits entirely into
+literals and computes the identical set. Verified rather than argued — a
+differential harness ran the old and new partition over 3000 randomised
+literal-only cases (blank entries, self addresses, handled and escalated
+records included) and they agree exactly. `SELF_EMAILS` deliberately stays
+exact: it is a list of identities we own, and a wildcard there would hide a
+customer whose address resembles one of ours.
+
+### The same change made suppression fail OPEN, and that is the real fix
+
+Teaching operators to type wildcards while `cs/filter.py` still compared
+suppression exactly would have made `cs suppress '*@<domain>'` do half its job:
+the domain disappears from the queue, the producer worklist keeps mailing it,
+and the operator can see protection that is not there. A suppression that fails
+open is worse than no suppression.
+
+Both lists now read a typed entry through one matcher, `cs/addr_match.py`
+(`AddrSet`, a `__contains__` type — so `email in dnc` at every call site was
+upgraded rather than each site having to remember to ask differently). Proved
+on the send side, not only in the sweep: with `*@blocked.example` suppressed,
+the pre-change worklist still offered the address for outreach and the new one
+does not.
+
+**Scope, stated precisely:** suppression gates the producer worklist (`cs plan`
+→ `cs/filter.py`). Campaign packs never consulted `do_not_contact` at all —
+pre-existing, unchanged here, and worth its own decision.
+
+### Not built: autoresponder detection
+
+Considered and deferred with a reason. No address rule can express it — the
+three autoresponder rows in the same sweep are real customer addresses that
+also write real mail. The cheap deterministic signal is four headers
+(`AUTO-SUBMITTED`, `X-AUTOREPLY`, `X-AUTORESPOND`, `PRECEDENCE`) added to the
+single FETCH list in `gmail_archive._fetch_headers`, at no extra round trip —
+but the rule it must obey is **tag, never drop**: a vacation notice can arrive
+on the same thread as a real request, and dropping it would bury the request.
+
+### Clone-side
+
+Nothing is required. Patterns are opt-in: a clone that adds none behaves
+exactly as before. `manifest.toml.j2` documents the syntax, so `cs update` will
+offer that comment on an existing clone's `manifest.toml` — a real conflict
+prompt for a comment-only change, accepted deliberately, because a capability
+nobody can discover is a capability nobody uses.
+
+Gate 35 in `tests/run.sh`.
+
 ## v0.22.0 — 2026-08-25
 
 **MINOR**: `cs update` starts asking again about a file it had stopped asking
