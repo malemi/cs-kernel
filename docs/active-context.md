@@ -21,12 +21,6 @@ what is *current*.
   system. `v0.22.0` fixes `cs update`: declining an overwrite no longer
   advances the stored checksum, so a declined conflict is offered again
   instead of vanishing. Both are static tier.
-- **A clone that declined a conflict before `v0.22.0` still has a poisoned
-  ledger.** `mrcall-cs` is one: `CLAUDE.md` and `docs/ARCHITECTURE.md` were
-  declined once under `v0.21.0`, so both carry today's render as their stored
-  checksum and `cs update` reports nothing to do. The fix stops the bleeding;
-  it does not clean up. Removing the two entries from `template-manifest.json`'s
-  `file_checksums` is what makes the conflict visible again.
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -72,6 +66,13 @@ what is *current*.
   **FULL tier by what it touches (the campaign delivery paths and the
   permission surface).** `v0.8.0` remains the recorded tag→0.7.1 exception
   (object pinned immutable).
+- **A clone that declined a `cs update` conflict before `v0.22.0` still has a
+  poisoned ledger, and the fix does not clean it up.** `mrcall-cs` is one:
+  `CLAUDE.md` and `docs/ARCHITECTURE.md` were declined once under `v0.21.0`, so
+  both carry that render as their stored checksum and `cs update` now reports
+  nothing to do about them. Removing the two entries from
+  `template-manifest.json`'s `file_checksums` is what makes the conflict visible
+  again.
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
