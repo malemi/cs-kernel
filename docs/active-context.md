@@ -14,9 +14,8 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.20.0`. Current HEAD status: untagged.**
-  `pyproject.toml` already declares **`v0.21.0`**, which is cut but not yet
-  tagged: it changes no code, drops the clone index template to 162 rendered
+- **Latest release tag: `v0.21.0`. Current HEAD status: untagged.**
+  `v0.21.0` changes no code: it drops the clone index template to 162 rendered
   lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
   and deletes three passages that recounted history rather than describing the
   system. Static tier.
