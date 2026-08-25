@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.20.0`. Current HEAD status: tagged as `v0.20.0`.**
+- **Latest release tag: `v0.20.0`. Current HEAD status: untagged.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
