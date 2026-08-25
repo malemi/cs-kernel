@@ -84,6 +84,71 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.21.0 — 2026-08-25
+
+**MINOR**: no code changes at all. Two templates change the documents every
+clone renders, and an operator reading "patch" would be entitled to expect
+nothing observable changed. The tier below is **static** — the only surface
+this touches is stamped prose.
+
+### Changed — the clone index stops teaching, and the architecture doc stops recounting
+
+`mrcall-cs`'s rendered `CLAUDE.md` had reached 220 lines against its own
+`index_max_lines = 221`. One line of headroom is not a margin: the next edit to
+that index would have failed its own gate. The cause was not that clone's — the
+template had been accumulating mechanism prose for releases, and every clone
+rendered the same overweight index.
+
+`CLAUDE.md.j2` is now the slim index it claims to be, at 162 rendered lines. It
+routes and it does not teach: the engine daemon, headless per-account auth, the
+RPC wrapper-key table, the `--account` engine-versus-Gmail-IMAP split, the
+daily pipeline, and why the two mailbox records exist all move to
+`docs/ARCHITECTURE.md` § How it works, which is where an as-built description
+belongs. Every `NEVER` rule stays in the index, which is what an index is for,
+and one was **restored**: "dedup ground truth is Gmail's own Sent folder, never
+the engine archive" is charter invariant 4 and had survived only inside the
+prose that moved out.
+
+The first attempt at this fix was made in the clone rather than the template,
+and it is worth recording why that was wrong, because it is the trap this
+release closes. `docs/ARCHITECTURE.md` declares in its own header that every
+`cs update` replaces it wholesale. Prose hand-written there is destroyed at the
+next render. A clone is not where a template's shape is decided.
+
+### Changed — `## How it works` describes the system, and nothing else
+
+Three passages did not survive the move, and were deleted rather than
+relocated. Why `RATE_CAP` was removed in `v0.12.0`; the account of a phase
+sentence that "already talked two headless ticks out of sending mail"; and a
+parenthetical about one customer who stayed on a list a month after the owner
+had phoned him. All three recount what happened. This file is a CHANGELOG and
+it already holds them, which is the point: an architecture document says what
+the system **is**, and a document that accumulates history has become a log
+whatever its title says.
+
+Two smaller edits followed from the move. The section's old opening described
+itself as hand-written and asked the reader to mirror edits into the template —
+false once the section is generated — and is replaced by two lines saying what
+the section is. The closing paragraph's "The declared configuration above is
+generated" reverts to "Everything above is generated", true again now that
+nothing in the file is hand-written.
+
+### Re-collaudo — both clones, tier **static**
+
+No code path changed: no send surface, no `campaign`, no `gmail_archive`, no
+`send_mail`, no auth boundary, no permission surface. What must be checked on
+each clone is that `cs update` renders the two documents and that the rendered
+index is the slim one. `cs --version` and `cs config` confirm the pin.
+
+Guards run before the tag: `bash tests/run.sh` — 35 gates green. The company-
+literal guard reports no unreviewed company-shaped literals, with the same
+three approved hits already in `tests/reviewed_literals.txt` and no new
+approvals. Gate 12 renders 32 templates against 3 configs clean. Both render
+paths were exercised — `cs init`'s FileSystemLoader and `cs update`'s
+`from_string` — into a directory outside every repository. No new Jinja
+variable is introduced by either template, so an older clone's frozen
+`init_data` cannot fail `StrictUndefined`.
+
 ## v0.20.0 — 2026-08-25
 
 Written at implementation time so the release did not have to reconstruct it.

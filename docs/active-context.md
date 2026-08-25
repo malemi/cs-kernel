@@ -15,6 +15,11 @@ what is *current*.
 ## State now
 
 - **Latest release tag: `v0.20.0`. Current HEAD status: untagged.**
+  `pyproject.toml` already declares **`v0.21.0`**, which is cut but not yet
+  tagged: it changes no code, drops the clone index template to 162 rendered
+  lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
+  and deletes three passages that recounted history rather than describing the
+  system. Static tier.
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
