@@ -149,10 +149,18 @@ on the same thread as a real request, and dropping it would bury the request.
 ### Clone-side
 
 Nothing is required. Patterns are opt-in: a clone that adds none behaves
-exactly as before. `manifest.toml.j2` documents the syntax, so `cs update` will
-offer that comment on an existing clone's `manifest.toml` — a real conflict
-prompt for a comment-only change, accepted deliberately, because a capability
-nobody can discover is a capability nobody uses.
+exactly as before. `manifest.toml.j2` documents the syntax.
+
+**Correction, made the moment the code was read rather than left standing:**
+this entry first said `cs update` would offer that comment on an existing
+clone's `manifest.toml` as a conflict prompt. It does not. `manifest.toml` is
+decided *before* the render and skipped outright (`cs/project_update.py`, next
+to `requirements.txt`) — written once by `cs init` and never a render target
+again. So the comment costs existing clones no prompt, and reaches only clones
+stamped from `v0.23.0` onward. For an existing clone the discoverable surface
+is this entry and the `Settings.system_sender_set` docstring; a clone that
+wants the syntax written next to the value must paste the comment into its own
+`manifest.toml`, which is a clone-owned file it may edit freely.
 
 Gate 35 in `tests/run.sh`.
 
