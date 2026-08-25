@@ -100,12 +100,14 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.22.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. The pause is still set and was NOT cleared by the re-pin. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.22.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.23.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:03 by its own tick: `cs chat --allow send_draft` ignored the draft id it was asked for, twice, and sent a different draft. The pause is still set and was NOT cleared by the re-pin. Three crons installed and live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.23.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
-  Both pin `v0.22.0` as of 2026-08-25, installed and verified from inside each
-  clone (`cs --version` reports `0.22.0`). Both tags in that step are static
-  tier. `mrcall-cs` needed its `template-manifest.json` repaired first — two
+  Both pin `v0.23.0` as of 2026-08-25, installed and verified from inside each
+  clone (`cs --version` reports `0.23.0`), with `v0.23.0`'s FULL collaudo run
+  on both — not waived. The re-pin also repaired two stale claims per clone:
+  `template-manifest.json` and the ARCHITECTURE row were still on `0.20.0`,
+  and both locks still resolved `v0.19.0`'s commit. `mrcall-cs` needed its `template-manifest.json` repaired first — two
   entries removed — because it had hit the declined-overwrite bug the same day,
   under `v0.21.0`. `124-cs` took both documents cleanly: its copies were
   unmodified since init, so no conflict was raised. **Re-pinning a

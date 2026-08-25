@@ -4,15 +4,24 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-25): **`v0.22.0` on both clones**.
-Verified from inside each clone: `requirements.txt`, `template-manifest.json`
-`init_data`, the ARCHITECTURE "Kernel pin" row and `cs --version` all say
-`v0.20.0`, and both venvs resolve the tag to `612b5d3`, recorded in each
-clone's regenerated `requirements.lock` — and each lock was proved to install
-alone into a fresh venv, not assumed to. `[repo].kernel_version` is no longer
-on that list — `v0.18.0` removed the field, so the pin is `requirements.txt`
-and the claims derived from it, and there is one fewer hand-maintained number
-to go stale.
+**Current operational pin** (2026-08-25): **`v0.23.0` on both clones**.
+Verified from inside each clone after the re-pin: `requirements.txt`,
+`template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
+`cs --version` all say `v0.23.0`; both venvs resolve the tag to `d1b4518`,
+recorded in each clone's regenerated `requirements.lock`, and each lock was
+installed alone into a fresh `uv venv` — resolving `cs-kernel 0.23.0` — rather
+than assumed to. `[repo].kernel_version` is no longer on that list —
+`v0.18.0` removed the field, so the pin is `requirements.txt` and the claims
+derived from it, and there is one fewer hand-maintained number to go stale.
+
+Two claims this re-pin found false in the paragraph it replaces, both worth
+naming because they are the drift class the sweep exists to catch. The `v0.22.0`
+marker said the derived claims "all say `v0.20.0`" — they did, and that was the
+defect, not the verification: on **both** clones `template-manifest.json` and
+the ARCHITECTURE row were still on `0.20.0` while `requirements.txt` said
+`v0.22.0`. And both `requirements.lock` files still resolved `13a91f1`, which is
+**`v0.19.0`**, not the `612b5d3` the marker claimed — the lock had gone stale
+through two re-pins. All five claims are aligned on both clones now.
 
 **`v0.20.0`'s tier is FULL and the suite WAS run**, on both clones: `whoami`,
 `config` (zero duplicate declarations on each), `plan`, `unanswered`, `campaign
