@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.23.0`. Current HEAD status: tagged as `v0.23.0`.**
+- **Latest release tag: `v0.23.0`. Current HEAD status: untagged.**
   `v0.23.0` lets a `CS_SYSTEM_SENDERS` entry be an fnmatch pattern, because a
   bounce daemon's sending host rotates per message and an exact list is stale on
   the next bounce; the same matcher (`cs/addr_match.py`) now reads the
