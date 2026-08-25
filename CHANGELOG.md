@@ -4,14 +4,23 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-24): **`v0.19.0` on both clones**.
+**Current operational pin** (2026-08-25): **`v0.20.0` on both clones**.
 Verified from inside each clone: `requirements.txt`, `template-manifest.json`
 `init_data`, the ARCHITECTURE "Kernel pin" row and `cs --version` all say
-`v0.19.0`, and both venvs resolve the tag to `13a91f1`, recorded in each
-clone's regenerated `requirements.lock`. `[repo].kernel_version` is no longer
+`v0.20.0`, and both venvs resolve the tag to `612b5d3`, recorded in each
+clone's regenerated `requirements.lock` — and each lock was proved to install
+alone into a fresh venv, not assumed to. `[repo].kernel_version` is no longer
 on that list — `v0.18.0` removed the field, so the pin is `requirements.txt`
 and the claims derived from it, and there is one fewer hand-maintained number
 to go stale.
+
+**`v0.20.0`'s tier is FULL and the suite WAS run**, on both clones: `whoami`,
+`config` (zero duplicate declarations on each), `plan`, `unanswered`, `campaign
+packs`, `campaign pending`, bare `handled`, bare `escalated`, a dry-run
+`escalated` that wrote nothing, `draft-delete` without `--commit`, `review`,
+plus `mrcall-cs`'s own 191-test extension suite. `cs update` clobbered
+`mrcall-cs`'s clone-owned deny line for `bin/mrcall_business.py` again — the
+known trap — and it was restored.
 
 **`v0.19.0`'s tier is FULL and the suite was NOT run.** The operator waived
 it. That is a real gap, recorded rather than dressed up: this tag changes send
