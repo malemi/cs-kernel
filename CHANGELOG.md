@@ -84,6 +84,54 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.22.0 — 2026-08-25
+
+**MINOR**: `cs update` starts asking again about a file it had stopped asking
+about. No prose, no template, no send path. The tier below is **static**, with
+one specific check named.
+
+### Fixed — declining an overwrite no longer means never being asked again
+
+`cs update` recorded the freshly-rendered checksum for every template at the
+top of its loop, before deciding anything. For a file in the "modified locally
+AND template changed" state, answering `N` therefore stored today's render as
+the file's checksum anyway. The next run compared that stored value with the
+same render, concluded "template unchanged", and skipped the file without a
+word. The conflict was never offered again, and the clone kept a stale copy in
+silence — permanently, and with no output anywhere saying so.
+
+A decision to skip once is not a decision to stop being asked. Both decline
+branches — a plain `N`, and `N` after `diff` — now put the OLD checksum back,
+so the same conflict is offered on the next run and every run after it until
+someone resolves it.
+
+**Reproduced live on `mrcall-cs` before the fix**, which is how it was found:
+two declines printed `2 skipped`, and the run immediately after printed
+`0 updated, 0 skipped, 0 added`.
+
+Guarded by three new end-to-end scenarios in `tests/test_project_update.py`,
+each driving a real `python -m cs update` subprocess: plain decline, decline
+after `diff`, and — the property that must not regress — accept, which still
+records the new checksum so the file is *not* re-offered. The suite was proved
+non-vacuous rather than assumed to be: with the fix removed in a scratch copy
+of `cs/`, the decline tests fail with the exact live symptom.
+
+### Existing clones need a repair this fix does not perform
+
+The fix prevents new corruption. It does not repair a ledger already advanced:
+a file that was declined under `v0.21.0` or earlier has today's render stored
+against it, so `cs update` still considers it unchanged. On a clone where that
+happened, the entry must be removed from `template-manifest.json`'s
+`file_checksums`, or the file brought in sync by hand, before `cs update` can
+see the conflict again.
+
+### Re-collaudo — both clones, tier **static**
+
+No send surface, no `campaign`, no `gmail_archive`, no `send_mail`, no auth
+boundary, no permission surface. The check that matters is behavioural: on each
+clone, put a template-owned file into conflict, decline, and confirm the very
+next `cs update` offers the same conflict rather than reporting nothing to do.
+
 ## v0.21.0 — 2026-08-25
 
 **MINOR**: no code changes at all. Two templates change the documents every

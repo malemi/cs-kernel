@@ -59,9 +59,27 @@ faking git's own output format. Guards:
     every other line of requirements.txt byte-identical.
   - bare `cs update` (no flags): unaffected — still walks the template
     tree exactly as before Task 3.
+
+2026-08-25: what a DECLINED overwrite leaves in the ledger. The walk recorded
+today's render as the file's stored checksum before deciding anything, so
+answering N stored a value the operator had just refused; the next run then
+computed `rendered == stored`, called the template unchanged, and never
+offered the conflict again — the clone kept a stale file in silence, for
+ever. Confirmed live that day: two declines printed `2 skipped`, and the very
+next run printed `0 updated, 0 skipped`. Three scenarios, each running the
+real `python -m cs update` TWICE against the same clone with answers piped in
+(the rest of this file closes stdin; here the typed answer IS the subject):
+
+  - decline with a plain `n`, then run again: same prompt, same one skip.
+  - decline with `diff` then `n` — a separate branch in cmd_update, so a fix
+    to only one of the two leaves half the operators silently stuck.
+  - accept with `y`: the opposite property, which a careless fix breaks. The
+    NEW render's checksum is stored, and the following run has nothing to say
+    about the file.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -231,6 +249,201 @@ def _e2e_already_current_no_prompt_no_diff() -> None:
         assert updated_manifest["file_checksums"].get(CONFLICT_REL) not in (None, BOGUS_CHECKSUM), (
             "the stale checksum must be refreshed, not left as the bogus stored value:\n"
             f"{updated_manifest['file_checksums']}"
+        )
+
+
+def _run_update_answering(answers: list[str], clone: Path, env: dict) -> subprocess.CompletedProcess:
+    """`cs update` with REAL answers typed at the conflict prompts, instead of
+    the closed stdin the rest of this file uses. One answer per prompt, in
+    order; a prompt beyond the last answer reads EOF and takes the declared
+    default, so a mis-counted fixture degrades to "keep the local file"
+    instead of hanging the suite."""
+    return subprocess.run(
+        [sys.executable, "-m", "cs", "update"],
+        cwd=clone, env=env, input="".join(a + "\n" for a in answers),
+        capture_output=True, text=True, timeout=120,
+    )
+
+
+def _stage_local_conflict(clone: Path) -> str:
+    """Put CONFLICT_REL in the exact "modified locally AND template changed"
+    state and return the local content. Same manufacture as the scenarios
+    above: the stored checksum matches neither the local edit nor today's
+    render. BOGUS_CHECKSUM stands in for "the render of an older template" —
+    cmd_update only ever compares stored checksums for equality, so a value no
+    render can ever produce is indistinguishable from a real older one AND
+    lets a test assert that the stored value came back untouched."""
+    local_content = "# locally edited — the operator's own line\ndist/\n"
+    (clone / CONFLICT_REL).write_text(local_content)
+    (clone / "template-manifest.json").write_text(json.dumps({
+        "template_version": "1",
+        "init_data": {"company_slug": "acme"},
+        "file_checksums": {CONFLICT_REL: BOGUS_CHECKSUM},
+    }))
+    return local_content
+
+
+def _stored_checksum(clone: Path, rel: str) -> str | None:
+    return json.loads(
+        (clone / "template-manifest.json").read_text()
+    )["file_checksums"].get(rel)
+
+
+def _assert_conflict_survives_decline(clone: Path, env: dict, answers: list[str],
+                                      local_content: str, label: str) -> None:
+    """The property the whole scenario exists for: after a DECLINED overwrite,
+    the SECOND `cs update` must offer the very same conflict again. Asserted on
+    the run's own output (the prompt reappears, one skip is reported), on the
+    file (still the operator's bytes, never silently overwritten) and on the
+    ledger (the stored checksum is still the old one)."""
+    second = _run_update_answering(answers, clone, env)
+    out = second.stdout + second.stderr
+    assert second.returncode == 0, f"[{label}] expected exit 0 on the second run:\n{out}"
+    assert f"? {CONFLICT_REL}: modified locally AND template changed." in out, (
+        f"[{label}] declining once is not declining for ever: the second `cs update` "
+        f"must offer the SAME conflict again, and this run never prompted:\n{out}"
+    )
+    assert "0 updated, 1 skipped (modified locally)" in out, (
+        f"[{label}] the second run must still report the file as skipped, not report "
+        f"nothing to do:\n{out}"
+    )
+    assert f"✓ {CONFLICT_REL}" not in out, (
+        f"[{label}] a declined file must never be quietly overwritten on the next run "
+        f"(that is what recording the LOCAL checksum instead of the old template one "
+        f"would do):\n{out}"
+    )
+    assert (clone / CONFLICT_REL).read_text() == local_content, (
+        f"[{label}] the locally-modified file must still hold the operator's bytes:\n{out}"
+    )
+    assert _stored_checksum(clone, CONFLICT_REL) == BOGUS_CHECKSUM, (
+        f"[{label}] the second decline must leave the stored checksum alone too — "
+        f"otherwise the THIRD run goes silent:\n{_stored_checksum(clone, CONFLICT_REL)}"
+    )
+
+
+def _e2e_declined_conflict_is_offered_again_next_run() -> None:
+    """Declining `Overwrite? [y/N/diff]` must not silence the conflict.
+
+    Reproduced live 2026-08-25 on a real clone: the walk recorded
+    `new_checksums[rel] = rendered_checksum` at the top of the iteration,
+    before any decision. Declining left TODAY's render stored as the file's
+    checksum, so the next `cs update` computed `rendered == stored`, took the
+    "template unchanged — skip" branch, and never asked again. Two declines
+    printed `2 skipped`; the run right after printed `0 updated, 0 skipped`,
+    and the clone kept a stale file for ever, in silence.
+
+    A decision to skip once is not a decision to stop being asked — so the
+    stored checksum must stay the OLD template's, and the second run must
+    reach the same prompt."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        local_content = _stage_local_conflict(clone)
+
+        first = _run_update_answering(["n"], clone, env)
+        out = first.stdout + first.stderr
+        assert first.returncode == 0, f"expected exit 0 on the first run:\n{out}"
+        assert f"? {CONFLICT_REL}: modified locally AND template changed." in out, (
+            f"the manufactured conflict must actually be hit:\n{out}"
+        )
+        assert "0 updated, 1 skipped (modified locally)" in out, (
+            f"a plain `n` must be counted as one skip:\n{out}"
+        )
+        assert (clone / CONFLICT_REL).read_text() == local_content, (
+            f"a declined overwrite must not touch the file:\n{out}"
+        )
+        assert _stored_checksum(clone, CONFLICT_REL) == BOGUS_CHECKSUM, (
+            "a declined overwrite must leave the OLD checksum stored — recording "
+            "today's render is exactly what silenced the conflict for ever; got "
+            f"{_stored_checksum(clone, CONFLICT_REL)!r}"
+        )
+
+        _assert_conflict_survives_decline(clone, env, ["n"], local_content, "plain n")
+
+
+def _e2e_declined_after_diff_is_offered_again_next_run() -> None:
+    """The same property through the OTHER decline branch: `diff` first, then
+    `n` at the second prompt. It is a separate `else:` in cmd_update, so a fix
+    applied to only one of the two leaves half the operators silently stuck."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        local_content = _stage_local_conflict(clone)
+
+        first = _run_update_answering(["diff", "n"], clone, env)
+        out = first.stdout + first.stderr
+        assert first.returncode == 0, f"expected exit 0 on the first run:\n{out}"
+        assert f"--- clone/{CONFLICT_REL}" in out and f"+++ template/{CONFLICT_REL}" in out, (
+            f"the run must actually have taken the `diff` branch:\n{out}"
+        )
+        assert "0 updated, 1 skipped (modified locally)" in out, (
+            f"declining after a diff must be counted as one skip:\n{out}"
+        )
+        assert (clone / CONFLICT_REL).read_text() == local_content, (
+            f"declining after a diff must not touch the file:\n{out}"
+        )
+        assert _stored_checksum(clone, CONFLICT_REL) == BOGUS_CHECKSUM, (
+            "declining after a diff must leave the OLD checksum stored, exactly like "
+            f"a plain decline; got {_stored_checksum(clone, CONFLICT_REL)!r}"
+        )
+
+        _assert_conflict_survives_decline(
+            clone, env, ["diff", "n"], local_content, "diff then n"
+        )
+
+
+def _e2e_accepted_overwrite_is_not_offered_again() -> None:
+    """The property that must NOT regress while fixing the one above: an
+    ACCEPTED overwrite records the NEW render's checksum, so the file is
+    settled and the next run says nothing about it. A "fix" that put the old
+    checksum back unconditionally would leave every clone permanently
+    conflicted — and would still pass a test that only checked that declining
+    keeps asking.
+
+    The expected checksum is computed here from the template render, with
+    hashlib directly, rather than read back from the code under test."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        _stage_local_conflict(clone)
+        new_render = _render_current_template(CONFLICT_REL, {"company_slug": "acme"})
+        expected = "sha256:" + hashlib.sha256(new_render.encode()).hexdigest()
+
+        first = _run_update_answering(["y"], clone, env)
+        out = first.stdout + first.stderr
+        assert first.returncode == 0, f"expected exit 0 on the first run:\n{out}"
+        assert "→ overwritten" in out, f"the accepted overwrite must be reported:\n{out}"
+        assert "1 updated, 0 skipped (modified locally)" in out, (
+            f"an accepted overwrite is an update, not a skip:\n{out}"
+        )
+        assert (clone / CONFLICT_REL).read_text() == new_render, (
+            f"the file must hold the NEW template render after `y`:\n{out}"
+        )
+        assert _stored_checksum(clone, CONFLICT_REL) == expected, (
+            "an accepted overwrite must record the NEW render's checksum:\n"
+            f"expected {expected}, stored {_stored_checksum(clone, CONFLICT_REL)}"
+        )
+
+        # Answering "y" again on purpose: if the settled file were still offered,
+        # this run would overwrite it and report an update instead of nothing.
+        second = _run_update_answering(["y"], clone, env)
+        out2 = second.stdout + second.stderr
+        assert second.returncode == 0, f"expected exit 0 on the second run:\n{out2}"
+        assert "Overwrite?" not in out2, (
+            f"a file settled by an accepted overwrite must never be offered again:\n{out2}"
+        )
+        assert "0 updated, 0 skipped (modified locally), 0 added" in out2, (
+            f"the run after an accepted overwrite has nothing to do:\n{out2}"
+        )
+        assert (clone / CONFLICT_REL).read_text() == new_render, "file must be untouched"
+        assert _stored_checksum(clone, CONFLICT_REL) == expected, (
+            f"the settled checksum must stay put:\n{_stored_checksum(clone, CONFLICT_REL)}"
         )
 
 
@@ -940,6 +1153,9 @@ def main() -> int:
     _offer_yes_path_repins_installs_reexecs()
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_already_current_no_prompt_no_diff()
+    _e2e_declined_conflict_is_offered_again_next_run()
+    _e2e_declined_after_diff_is_offered_again_next_run()
+    _e2e_accepted_overwrite_is_not_offered_again()
     _e2e_company_slot_authored_never_prompts_never_overwrites()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()

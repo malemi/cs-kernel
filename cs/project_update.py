@@ -545,6 +545,13 @@ def cmd_update(args: list[str]) -> int:
             continue
 
         rendered_checksum = _checksum(rendered)
+        # Provisional: this is the right value for every path that ends with the
+        # clone holding today's render. A declined overwrite is the exception and
+        # puts the OLD checksum back, because recording today's render for a file
+        # the operator refused would make the next run compute
+        # `rendered == stored` and report "template unchanged" — the conflict is
+        # never offered again and the clone keeps a stale file in silence. A
+        # decision to skip once is not a decision to stop being asked.
         new_checksums[str_out_rel] = rendered_checksum
 
         clone_file = clone_root / out_rel
@@ -617,8 +624,10 @@ def cmd_update(args: list[str]) -> int:
                             updated += 1
                             print(f"    → overwritten after diff")
                         else:
+                            new_checksums[str_out_rel] = old_tpl_checksum
                             skipped += 1
                     else:
+                        new_checksums[str_out_rel] = old_tpl_checksum
                         skipped += 1
             else:
                 # Clone doesn't have this file yet — add it

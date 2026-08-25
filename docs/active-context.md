@@ -18,7 +18,16 @@ what is *current*.
   `v0.21.0` changes no code: it drops the clone index template to 162 rendered
   lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
   and deletes three passages that recounted history rather than describing the
-  system. Static tier.
+  system. `pyproject.toml` already declares **`v0.22.0`**, cut but not yet
+  tagged: declining an overwrite in `cs update` no longer advances the stored
+  checksum, so a declined conflict is offered again instead of vanishing.
+  Both are static tier.
+- **A clone that declined a conflict before `v0.22.0` still has a poisoned
+  ledger.** `mrcall-cs` is one: `CLAUDE.md` and `docs/ARCHITECTURE.md` were
+  declined once under `v0.21.0`, so both carry today's render as their stored
+  checksum and `cs update` reports nothing to do. The fix stops the bleeding;
+  it does not clean up. Removing the two entries from `template-manifest.json`'s
+  `file_checksums` is what makes the conflict visible again.
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
