@@ -1,5 +1,12 @@
 # CLAUDE.md — cs-kernel
 
+**Stack**: Python 3.11 (import package `cs`)
+**Entry point**: `cs.cli:main` (console script `cs`)
+**Test**: `bash tests/run.sh`
+**Do not break**: No company literal anywhere in `cs/` (wordlist-gated); everything company-shaped comes from `Settings`/`manifest.toml` — never `if company == …`
+
+<!-- orientation ends -->
+
 The shared KERNEL of the `<company>-cs` customer-service operators.
 Distribution **`cs-kernel`**, import package **`cs`**. A stamped clone has
 **no `cs/` source directory**: it pip-installs this kernel from a git tag
