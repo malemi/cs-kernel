@@ -14,14 +14,13 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.21.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.22.0`. Current HEAD status: untagged.**
   `v0.21.0` changes no code: it drops the clone index template to 162 rendered
   lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
   and deletes three passages that recounted history rather than describing the
-  system. `pyproject.toml` already declares **`v0.22.0`**, cut but not yet
-  tagged: declining an overwrite in `cs update` no longer advances the stored
-  checksum, so a declined conflict is offered again instead of vanishing.
-  Both are static tier.
+  system. `v0.22.0` fixes `cs update`: declining an overwrite no longer
+  advances the stored checksum, so a declined conflict is offered again
+  instead of vanishing. Both are static tier.
 - **A clone that declined a conflict before `v0.22.0` still has a poisoned
   ledger.** `mrcall-cs` is one: `CLAUDE.md` and `docs/ARCHITECTURE.md` were
   declined once under `v0.21.0`, so both carry today's render as their stored
