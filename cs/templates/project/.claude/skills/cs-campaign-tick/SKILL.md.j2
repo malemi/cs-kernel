@@ -94,8 +94,12 @@ Returns JSON: `campaigns[].items[]`, each item carrying an `action`
 and (for replies) a `thread_id` anchor. The verb sends nothing and mutates
 nothing — it is the worklist only. An entry may also carry
 `delivery_blocked` (the campaign is over: reason + date, with `held` counting
-the sends withheld) or `pack_note` (an active campaign that never declared an
-`ends_on`) — carry both into your report verbatim.{% if excluded_campaign %} The excluded campaign will not appear; if
+the sends withheld), `escalated_hold` (deliveries withheld because a human has
+personally taken those contacts over — `cs escalated`) or `pack_note` (an
+active campaign that never declared an `ends_on`) — carry all three into your
+report verbatim. An item tagged **`escalated_to`** is a contact somebody is
+writing to himself: report it, never answer it, and never try to deliver to it
+by contact id — the senders refuse on their own.{% if excluded_campaign %} The excluded campaign will not appear; if
 it somehow does, skip it.{% else %} Any excluded campaign will not appear here.{% endif +%}
 
 ## 3. Work each item — branch on `action`
@@ -128,7 +132,12 @@ or reach for SMTP. Record the outcome.
 
 ### 3c. `action: handle_reply`
 
-A customer thread has a reply after our send. **Read the FULL thread, bodies
+A customer thread has a reply after our send. **If the item carries
+`escalated_to`, stop here**: a human is writing to that contact, so the reply
+is his to answer. Say so in the report — with the address and who has it — and
+work the next item.
+
+**Read the FULL thread, bodies
 not snippets** — snippets routinely show {{ company_display_name }}'s OWN autoresponder, not the
 human:
 
@@ -179,7 +188,11 @@ judgment and route:
   ```
   Also list it under "Escalations (need you):" in the report. The operator
   handles it and clears the flag when done. Default whenever judgment is
-  uncertain.
+  uncertain. This dossier flag is what "escalate" means for you: it keeps the
+  contact IN the work list until a human clears it. It is **not** the
+  `cs escalated` verb, which says a named human is already writing to that
+  contact and takes them OUT — you cannot claim that on his behalf, and the
+  cron denies you the verb.
 
 When you do classify a fresh human reply, you may stamp
 `classified_upto` to the reply's ISO timestamp via the same `mark
@@ -203,6 +216,9 @@ Campagne lavorate: <names>{% if excluded_campaign %} ({{ excluded_campaign }} es
 
 Escalations (need you):
 - <email> — <campagna> — <perché: ambiguo / fuori scope / arrabbiato / incerto>
+
+Te ne stai occupando tu (non li ho toccati):
+- <email> — <campagna> — <con chi>
 
 Anomalie: <una riga per nota; ometti se nessuna>
 ```

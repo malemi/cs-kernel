@@ -3,6 +3,9 @@
 Read-only aggregation, run when you open a session (`cs review`):
   - DRAFTS waiting in the operator's Gmail Drafts (the queue you review + send);
   - open ENGINE TASKS needing a human answer (triage escalations live here);
+  - contacts a HUMAN HAS TAKEN OVER (`cs escalated`) — still open, still owed
+    an answer, but yours: shown with the age of the takeover, so the answer to
+    "what is there to do" says "you are on these" instead of handing them back;
   - contacts recorded as HANDLED OUT OF BAND (`cs handled`) — why some mail
     stopped being raised, with the date and the reason;
   - per-CAMPAIGN state + contacts flagged escalated / engaged / declined;
@@ -62,6 +65,32 @@ def gather(settings) -> dict:
     except Exception as e:  # noqa: BLE001
         out["tasks"] = []
         out["tasks_error"] = f"{type(e).__name__}: {e}"
+
+    # 2a2. Contacts a human has TAKEN OVER (`cs escalated`). Read from the
+    #      ledger rather than from the mail sweep, so a takeover on a thread
+    #      with no recent inbound is here too: this list is the promise that an
+    #      escalation cannot rot unseen, and a list that only shows the noisy
+    #      ones does not keep it. Oldest first — the top row is the one most
+    #      likely to have been forgotten.
+    try:
+        from .state import State
+
+        taken = State(settings.db_path).escalated_to_human()
+        now = _time.now_utc()
+        out["escalated"] = [
+            {
+                "email": e,
+                "owner": r["owner"],
+                "reason": r["reason"],
+                "escalated_at": r["escalated_at"],
+                "escalated_on": _time.local_date(r["escalated_at"], settings.timezone),
+                "days": (now - r["escalated_at"]).days,
+            }
+            for e, r in sorted(taken.items(), key=lambda kv: kv[1]["escalated_at"])
+        ]
+    except Exception as e:  # noqa: BLE001
+        out["escalated"] = []
+        out["escalated_error"] = f"{type(e).__name__}: {e}"
 
     # 2b. Contacts resolved OUT OF BAND (`cs handled`) — the reason some mail
     #     is no longer raised anywhere. Shown so the operator can SEE the
@@ -145,8 +174,30 @@ def render(d: dict) -> str:
     if d.get("tasks_error"):
         L.append(f"  ! tasks.list fallita: {d['tasks_error']}")
 
-    # Localized digest (see the docstring): this block follows the surrounding
+    # Localized digest (see the docstring): these blocks follow the surrounding
     # Italian, it is not a second language creeping into the kernel.
+    #
+    # Printed right after the open tasks and BEFORE the resolved ones: it is the
+    # counterweight to "servono te" — the same question ("what is there to do")
+    # answered with "these are already yours". Never omitted while a record
+    # exists, and always with the age.
+    taken = d.get("escalated", [])
+    if taken:
+        # "presi in carico" and a per-row name: most rows are the operator's
+        # own, but one can name a colleague, and a header saying "tu" would be
+        # wrong for exactly the row he did not expect to see.
+        L.append(f"\nPresi in carico — aperti, ma non li lavoro io "
+                 f"({len(taken)}), dal più vecchio:")
+        for t in taken:
+            who = t.get("owner") or "te"
+            why = f"  {t.get('reason')}" if t.get("reason") else ""
+            L.append(f"  - {(t.get('email') or '?'):30.30} con {who} da "
+                     f"{t.get('days')}g ({t.get('escalated_on') or '?'}){why}")
+        L.append("  (per rimetterne uno in lavorazione: "
+                 "`cs escalated <email> --undo --commit`)")
+    if d.get("escalated_error"):
+        L.append(f"  ! lettura dei presi in carico fallita: {d['escalated_error']}")
+
     handled = d.get("handled_out_of_band", [])
     if handled:
         L.append(f"\nGestiti fuori mail — non più segnalati ({len(handled)}), "

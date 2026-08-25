@@ -15,7 +15,7 @@ def _norm(s) -> str:
     return (s or "").strip().lower()
 
 
-def _filter_business(rows, category, settings, state, dnc, seen_emails, out, skipped):
+def _filter_business(rows, category, settings, state, dnc, taken, seen_emails, out, skipped):
     for b in rows:
         bid = b.get("business_id")
         email = _norm(b.get("email_address"))
@@ -31,6 +31,13 @@ def _filter_business(rows, category, settings, state, dnc, seen_emails, out, ski
         if email in dnc:
             skipped.append({"category": category, "key": bid, "reason": "suppressed"})
             continue
+        if email in taken:
+            # A human is mid-conversation with them (`cs escalated`). Outreach
+            # on top of that is the same two-hands failure as a second reply,
+            # and it arrives as a template, which is worse. Skipped, never
+            # silently: the reason is counted in `cs plan`'s skip table.
+            skipped.append({"category": category, "key": bid, "reason": "escalated"})
+            continue
         if state.already_contacted(bid, category, settings.dedup_days):
             skipped.append({"category": category, "key": bid, "reason": "dedup"})
             continue
@@ -43,6 +50,11 @@ def _filter_business(rows, category, settings, state, dnc, seen_emails, out, ski
 
 def build_worklist(payload: dict, settings: Settings, state: State) -> dict:
     dnc = state.do_not_contact_set()
+    # Leads are keyed by uid with no email yet, so this gate can only apply to
+    # the two business categories — which is also where it matters: a lead a
+    # human has taken over is by definition already a conversation, so it has
+    # an address and reaches the same check one step later, in the dossier.
+    taken = state.escalated_set()
     out = {"lead": [], "signup": [], "cancellation": []}
     skipped: list[dict] = []
     seen_emails: set[str] = set()
@@ -58,7 +70,8 @@ def build_worklist(payload: dict, settings: Settings, state: State) -> dict:
         out["lead"].append(l)
 
     _filter_business(
-        payload.get("signups", []), "signup", settings, state, dnc, seen_emails, out, skipped
+        payload.get("signups", []), "signup", settings, state, dnc, taken,
+        seen_emails, out, skipped
     )
     _filter_business(
         payload.get("cancellations", []),
@@ -66,6 +79,7 @@ def build_worklist(payload: dict, settings: Settings, state: State) -> dict:
         settings,
         state,
         dnc,
+        taken,
         seen_emails,
         out,
         skipped,

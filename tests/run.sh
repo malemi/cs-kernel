@@ -266,7 +266,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered handled tasks business dossier ask draft-reply draft-delete review drive accounts config chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered handled escalated tasks business dossier ask draft-reply draft-delete review drive accounts config chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -394,9 +394,13 @@ step "17. deny-enumeration gate (six command-text spellings, same deny)"
 # settings.json.j2 membership under permissions.deny (and nothing
 # chat/send-draft-shaped under permissions.allow), and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
-# equality against the 30 deny entries + 4 keeps. `handled` is in that list not
+# equality against the 36 deny entries + 4 keeps. `handled` is in that list not
 # because it sends, but because it SILENCES: it declares a contact resolved
 # off-email, and a tick reading untrusted inbound must never be talked into it.
+# `escalated` is there for the sharper version of the same reason: it asserts
+# that a named HUMAN is personally handling a contact, which no machine can
+# claim on that human's behalf, and which the review then repeats back to him
+# as "you are on this one".
 CRON_TPL="$ROOT/cs/templates/project/bin/cs_operator_cron.sh.j2"
 SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
 if ! python3 - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
@@ -412,7 +416,10 @@ SPELLINGS = [
     "python3 -m cs",
     "cs",
 ]
-VERBS = ["chat", "rpc chat", "campaign send-draft", "rpc settings.update", "handled"]
+VERBS = [
+    "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
+    "handled", "escalated",
+]
 
 problems = []
 
@@ -478,7 +485,7 @@ if problems:
         print(p)
     sys.exit(1)
 
-print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 34-entry order verified")
+print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 40-entry order verified")
 sys.exit(0)
 PYEOF
 then
@@ -687,6 +694,23 @@ step "33. a finished campaign delivers NOTHING, on any path"
 # the refusal is visible everywhere (reason + date, held counts), with
 # handle_reply still coming through because a reply is not a delivery.
 if "$VENV/bin/python" "$ROOT/tests/test_campaign_finished.py"; then echo "OK"; else echo "FAIL: a finished campaign can still deliver"; FAIL=1; fi
+
+step "34. escalated to a human — still open, still visible, nobody else writes"
+# The owner was mid-conversation with two customers, writing to them himself.
+# Nothing in Gmail Sent said so, so the sweep counted both as unanswered work
+# and the two-hourly operator — which answers customers itself — kept preparing
+# a second reply. The only states on offer were "resolved" (a lie) and
+# "nothing" (the collision). Guards: an escalated sender leaves the open list
+# and comes back in its OWN bucket with owner, reason and the AGE of the
+# takeover; a NEWER inbound does NOT release it (the deliberate asymmetry with
+# `handled`, whose expiry would re-arm the collision on the very event that
+# causes it); `handled` wins and clears it; the verb is dry-run until --commit
+# in both directions and NEVER touches the engine (the task stays open — the
+# work is not done); refusals write nothing; and every surface that hides the
+# contact also prints it — unanswered, review, dossier (verdict STOP) — while
+# no automated outbound reaches them: the producer worklist skips with a
+# counted reason and the campaign senders + pending() refuse on their own.
+if "$VENV/bin/python" "$ROOT/tests/test_escalated.py"; then echo "OK"; else echo "FAIL: escalated-to-a-human regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

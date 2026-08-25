@@ -75,6 +75,89 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.20.0 — 2026-08-25
+
+Written at implementation time so the release did not have to reconstruct it.
+**MINOR**: a new CLI verb, a new skip reason in `cs plan`, a new refusal on
+four campaign delivery paths, and a permission surface that grows by six
+entries. The tier below is FULL.
+
+### Added — `cs escalated`: NOT resolved, but a human has taken it over
+
+The owner was personally mid-conversation with two customers. Gmail Sent — the
+dedup ground truth — showed no reply from us yet, correctly, so `cs unanswered`
+counted both as unanswered work and the two-hourly headless operator, which
+answers customers itself, kept preparing a second reply to each. Two hands
+writing to the same customer is the tone-deaf failure this operator exists to
+avoid, and the only two states on offer were `handled` (a lie — nothing was
+resolved) and nothing at all (the collision).
+
+`cs escalated <email> --why "…" [--who NAME] --commit` records that a named
+human owns the thread. Its sibling `cs handled` says the conversation is over;
+this one says the opposite — still open, still owed an answer — and the three
+properties that follow are the design:
+
+- **No expiry.** `handled` is scoped by a timestamp because a later message is
+  a NEW conversation. Here a later message is the SAME conversation, the
+  customer replying to the human who took it over, so an expiry would re-arm
+  the collision on the very event that causes it. The record holds until a
+  human releases it (`--undo --commit`) or closes it (`cs handled`, which
+  clears it in the store, so no caller can leave a "with you" label ageing on
+  a thread that is over).
+- **It may never become invisible.** An un-expiring suppression that shows
+  nothing is the silent drop the whole ledger was built to end, so every
+  surface that takes an escalated contact out of open work also PRINTS it, aged
+  and re-labelled: `cs unanswered` gains a "with a human — still open, not the
+  operator's to answer" section, `cs review` a "Presi in carico — aperti, ma non
+  li lavoro io" block sorted oldest-first, `cs dossier` a section
+  plus a `verdict: STOP`, `cs plan` a counted `escalated` skip reason, and
+  `campaign pending` an `escalated_hold` count with `escalated_to` on the
+  observation items it keeps.
+- **Only a human may write it, and the cron denies the verb** in all six
+  command-text spellings. `handled` is interactive-only because honouring
+  "consider this closed" from an inbound mail would let anyone bury their own
+  request; this is the sharper version of that rule, because the sentence
+  recorded is an assertion ABOUT A HUMAN which the review then repeats back to
+  him as "you are on this one". A false one is worse than a false close: it
+  does not merely hide the item, it tells him he already has it.
+
+**The skills' own "DEFAULT ON UNCERTAINTY = ESCALATE" is a different state and
+stays where it was.** A machine-written escalation is legitimate and expected,
+and it already has a home: an OPEN engine task plus a line in the tick report
+for triage, and the contact's `escalated` dossier flag for campaigns. Both mean
+"somebody must look at this" and both correctly keep the contact IN the work
+list. This ledger means "somebody IS looking at it" and takes the contact OUT.
+Modelling them as one field with a `source` column would put the two facts on
+one row and make every reader responsible for branching on it — the first
+reader that forgot would hand a machine's guess the authority of the owner's
+word. Different facts, different stores. The stamped skills, `CLAUDE.md` and
+`/cs-review` now say which is which at every point the word appears.
+
+**Dry-run until `--commit`, where `handled` writes straight away.** Not
+decoration: a handled record expires itself the moment the contact writes
+again, so a wrong address there costs one tick, while this record has no expiry
+and a wrong address silences a real customer until somebody notices. `--undo`
+is gated the same way, and its dry run says so loudly; a forgotten `--commit`
+is self-correcting because the contact stays listed either way.
+
+**No engine write.** `handled` closes the contact's open tasks because the work
+is done. Here it is not, and closing the task would delete the only durable
+trace that somebody still owes this customer an answer.
+
+`send_draft`, `queue_draft`, `send_first` and `_pack_send_preamble` (covering
+`send_reminder` / `send_sms`) refuse independently of the worklist, because a
+caller can reach a sender with a contact id it got anywhere.
+
+- **Re-collaudo: FULL on both clones.** It touches the campaign delivery paths
+  and the permission surface (the cron deny set grows from 34 to 40 entries),
+  which is the list invariant 4 escalates on.
+- New gate 34 (`tests/test_escalated.py`) and gate 17's deny enumeration now
+  covers `escalated`; gate 4's help tree covers the verb.
+- A clone picks the verb up on `cs update` for `bin/cs_operator_cron.sh`,
+  `CLAUDE.md`, `.claude/commands/cs-review.md`, `.claude/commands/cs-help.md`
+  and the two operator skills. The SQLite table is created by the additive
+  `CREATE TABLE IF NOT EXISTS` replay on the next command — no migration step.
+
 ## v0.19.0 — 2026-08-24
 
 ### Fixed — `cs init` could produce an SMS configuration that cannot send

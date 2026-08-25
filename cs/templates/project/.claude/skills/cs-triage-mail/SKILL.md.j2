@@ -38,7 +38,16 @@ follow-up is `/cs-campaign-tick`'s job, not this one.
   isn't one, by design.
 - **DEFAULT ON UNCERTAINTY = ESCALATE.** Never auto-send a free-form
   reply. In draft mode every reply is a draft the operator approves; a
-  judgment call gets left for the operator, not answered.
+  judgment call gets left for the operator, not answered. **Escalating means
+  leaving the engine task OPEN and naming the item in your report — it is NOT
+  the `cs escalated` verb**, which asserts that a named human is personally
+  writing to that contact. You cannot know that and cannot claim it on his
+  behalf; the cron denies you the verb for exactly that reason.
+- **A contact a human has TAKEN OVER is not yours.** `cs escalated` records
+  that the operator (or a colleague) is writing to them himself. Such a contact
+  is already out of your candidate feed, and `cs dossier` says so — with a
+  verdict of `STOP` — for any address you look up. If you meet one anyway:
+  do not draft, do not write, report it as his.
 - **NEVER invent facts.** Use only what is in the thread + engine memory.
   If the answer is not grounded there → ESCALATE, do not guess.
 - **"Have we already replied to X?" = the SENT ARCHIVE, across threads.**
@@ -84,9 +93,10 @@ because none of them had an engine task (incident 2026-07-16).
 `cs unanswered` does NOT classify intent — it can over-include autoresponders and
 system/no-reply senders (unless they are listed in `CS_SYSTEM_SENDERS`); filter
 those with judgment. It DOES exclude a contact recorded via `cs handled` (resolved
-off-email) whose last message predates that moment — the human-readable output
-lists those separately, with the date and the reason, so nothing disappears
-silently. It also cannot see mail **the operator FORWARDED** to {{ accounts_default }}@ (the
+off-email) whose last message predates that moment, and one recorded via
+`cs escalated` (a human is writing to them) for as long as the record stands —
+the human-readable output lists both separately, with the date and the reason,
+so nothing disappears silently. It also cannot see mail **the operator FORWARDED** to {{ accounts_default }}@ (the
 `Fwd:` sender is the operator, a SELF address, so it is excluded): for those keep the
 `cs tasks` signal and treat a `Fwd:` / `from:<operator's personal address>` with NO {{ accounts_default }}@ reply
 to the ORIGINAL sender as a real catch.
@@ -120,7 +130,11 @@ is where we record that a contact is handled, so for every survivor, match by
 .venv/bin/python -m cs rpc tasks.list '{"include_completed":true}'   # includes CLOSED (cs tasks --json = OPEN only)
 ```
 
-- **OPEN task for that contact** → work it (draft / escalate as below).
+- **OPEN task for that contact** → work it (draft / escalate as below) —
+  UNLESS `cs dossier <email>` reports the contact as taken over by a human.
+  The task feed is not filtered by that record (deliberately: the work is real
+  and still owed), so this is the one place a taken-over contact can reach you.
+  Report it as his and move on.
 - **CLOSED (completed) task for that mail** → **SKIP** — already handled
   (possibly answered from another mailbox / a personal account the Sent sweep
   can't see). This is the fix for "handled elsewhere but the sweep still flags
@@ -214,7 +228,9 @@ this skill's job**.
 billing-sensitive, angry, an unclear ask, OR an answer you cannot ground
 in the thread + memory → **do NOT auto-answer**. Leave the engine task
 **open** (do not mark it handled) and list it for the operator in the
-report. **When in doubt, this branch.**
+report. That is the whole gesture: no verb, no record, nothing silenced —
+the item stays in the work list until a human deals with it. **When in doubt,
+this branch.**
 
 ## 4. Idempotency — do not re-draft on the next tick
 
@@ -255,6 +271,10 @@ Bozze pronte (da rivedere e inviare):
 
 Escalation (servono te):
 - <email> — "<oggetto>" — <motivo: fuori scope / dubbio / sensibile / non fondato>
+- …
+
+Te ne stai occupando tu (non li ho toccati):
+- <email> — "<oggetto>" — da <n>g
 - …
 
 Note: <una riga per nota; ometti se nessuna>

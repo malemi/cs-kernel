@@ -12,6 +12,8 @@ Code is the brain. These verbs are thin transport:
   unanswered inbound still awaiting a human reply (deterministic, Sent-anchored).
   handled    record that a contact was resolved OUT OF BAND (phone, WhatsApp,
              in person) — their mail up to that moment stops being open work.
+  escalated  record that a HUMAN has personally taken a contact over — still
+             open, still owed an answer, but nobody else writes to them.
   tasks      open tasks on the engine; `tasks create` / `tasks close` write
              the engine task ledger (upsert on event_id / complete).
   business   CRM lookup by email (adapter from manifest [crm]).
@@ -225,21 +227,46 @@ def cmd_unanswered(args) -> int:
     from . import unanswered as unanswered_mod
 
     d = unanswered_mod.sweep(settings, days=args.days)
-    rows, held = d["open"], d["handled"]
+    rows, held, mine = d["open"], d["handled"], d["escalated"]
     if args.json:
         # The open list, exactly as before: this is the triage skill's PRIMARY
-        # candidate feed and its shape is a contract. The out-of-band section
-        # below is for the human — a machine reader wants the work, not the
-        # explanation of what was left out.
+        # candidate feed and its shape is a contract. The out-of-band and
+        # taken-over sections below are for the human — a machine reader wants
+        # the work it may do, not the explanation of what was left out (and for
+        # the taken-over rows the whole point is that it may NOT do them).
         _print_json(rows)
         return 0
     if not rows:
-        print(f"no unanswered inbound in the last {args.days} days")
+        # The re-labelled rows below ARE unanswered inbound, so an unqualified
+        # "none" above a list of them would read as a contradiction.
+        extra = len(mine) + len(held)
+        print(f"no unanswered inbound in the last {args.days} days"
+              + (f" beyond the {extra} listed below" if extra else ""))
     else:
         print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
         for r in rows:
             print(f"{r['email']:38.38} {r['days_waiting']:>4}d  {(r['subject'] or '')[:60]}")
         print(f"\ntotal: {len(rows)} unanswered (oldest first)")
+    if mine:
+        # NOT filtered away: re-labelled. These are open threads a human owns,
+        # so they are still work — printed with the age of the takeover, which
+        # is the number that says whether one has been forgotten.
+        # "a human", not "you": most of these are the operator's own, but a row
+        # can name a colleague, and a header that says otherwise would be wrong
+        # for exactly the row he did not expect to see.
+        print(f"\nwith a human — still open, not the operator's to answer "
+              f"({len(mine)}):")
+        for r in mine:
+            who = r.get("escalated_owner") or "you"
+            why = f" — {r['escalated_reason']}" if r.get("escalated_reason") else ""
+            days = r.get("days_escalated")
+            since = "" if days is None else f" for {days}d"
+            print(
+                f"  {r['email']:38.38} waiting {r['days_waiting']:>3}d  "
+                f"with {who}{since}{why}"
+            )
+        print(f"  (hand one back: {settings.prog_name or 'cs'} escalated <email> "
+              f"--undo --commit)")
     if held:
         # Say WHY these are not in the list. A contact that silently stops being
         # raised looks like a bug and gets reported as one.
@@ -426,6 +453,11 @@ def cmd_handled(args) -> int:
         moment = _time.now_utc()
     reason = (args.why or "").strip()
 
+    # Read before the write: mark_handled clears any takeover record (a thread
+    # cannot be both over and still being written), and a state change the
+    # operator is not told about is the same invisible-filter problem this
+    # ledger exists to solve.
+    was_escalated = st.escalated_to_human().get(email)
     st.mark_handled(email, reason=reason, handled_at=moment)
     when = _fmt_local(moment, settings.timezone)
     if existing:
@@ -439,6 +471,10 @@ def cmd_handled(args) -> int:
               f"{' — ' + reason if reason else ''}")
     print("  nothing they sent before that moment is open work; a later "
           "message re-opens them on its own.")
+    if was_escalated:
+        print(f"  the takeover record is cleared "
+              f"(they were with {was_escalated.get('owner') or 'you'} since "
+              f"{_fmt_local(was_escalated['escalated_at'], settings.timezone)}).")
 
     # The task ledger is the OTHER place stale work piles up, so close it here
     # too — one command per real-world event, not two. actor="human" because a
@@ -467,6 +503,142 @@ def cmd_handled(args) -> int:
         )
         closed += 1
     print(f"engine tasks closed for this contact (actor=human): {closed}")
+    return 0
+
+
+# --------------------------------------------------------------- escalated
+#
+# THE SIBLING OF `handled`, and the difference is the whole point. `handled`
+# says RESOLVED — off-email, thread over. This one says NOT resolved: still
+# open, still owed an answer, but a named human has personally taken it over.
+#
+# What went wrong without it: the owner was mid-conversation with two customers
+# — writing to them himself, one of them a case he wanted to finish before
+# answering — and both the two-hourly headless operator (which answers
+# customers itself) and `cs unanswered` still counted them as unanswered work.
+# Two hands writing to the same customer is the tone-deaf failure this operator
+# is built to avoid, and the only states on offer were "resolved" (a lie) and
+# "nothing" (the collision).
+#
+# WHO MAY WRITE IT. Same rule as `handled`, for a sharper reason. `handled` is
+# interactive-only because honouring "consider this closed" in an inbound mail
+# would let anyone bury their own request. Here the sentence recorded is an
+# assertion ABOUT A HUMAN — "he is personally handling this" — which no machine
+# can make on that human's behalf, and which the review then repeats back to
+# him as "you are on this one". A false one is worse than a false close: it
+# does not merely hide the item, it tells the owner he has already got it.
+#
+# The asymmetry with the skills' own "DEFAULT ON UNCERTAINTY = ESCALATE" is
+# real and is resolved by observing that the machine's escalation ALREADY has a
+# home, so this verb does not need to serve both: a triage escalation is an
+# OPEN engine task plus a line in the tick report, and a campaign escalation is
+# the contact's `escalated` dossier flag (`cs campaign mark`). Both mean
+# "somebody must look at this" and both correctly stay in the work list. This
+# ledger means the opposite — "somebody IS looking at it" — and takes the
+# contact OUT of the machine's work. One field with a `source` column would put
+# the two on one row and make every reader responsible for branching on it;
+# the first reader that forgot would hand a machine's guess the authority of
+# the owner's word. They are different facts, so they are different stores.
+#
+# `--commit`, where `handled` writes straight away: a handled record is scoped
+# by a timestamp and expires itself the moment the contact writes again, so a
+# wrong address there costs one tick. This record has NO expiry by design, so a
+# wrong address silences a real customer until a human notices — the one thing
+# worth a preview.
+
+
+def _print_escalated_records(settings, records: dict) -> None:
+    now = _time.now_utc()
+    for email, r in sorted(
+        records.items(), key=lambda kv: kv[1]["escalated_at"]  # oldest first: the rotting ones
+    ):
+        who = r.get("owner") or "you"
+        why = f" — {r['reason']}" if r.get("reason") else ""
+        days = (now - r["escalated_at"]).days
+        print(
+            f"  {email:38.38} with {who} for {days}d "
+            f"(since {_fmt_local(r['escalated_at'], settings.timezone)}){why}"
+        )
+
+
+def cmd_escalated(args) -> int:
+    settings = config.load()
+    st = state_mod.State(settings.db_path)
+    records = st.escalated_to_human()
+
+    if not args.email:  # bare `cs escalated` = who is with a human right now
+        if not records:
+            print("nobody is recorded as taken over by a human")
+            return 0
+        print(f"taken over by a human ({len(records)}) — still open, not the "
+              f"operator's to answer:")
+        _print_escalated_records(settings, records)
+        return 0
+
+    # Same reasoning as `handled`: the surfaces that read this ledger are all
+    # about the operator's OWN mailbox, so recording it against another
+    # account's engine profile would file the truth where nothing reads it.
+    if getattr(args, "account_switched", False):
+        print(
+            f"`escalated` records against {_self_label(settings)}'s own open-work "
+            f"ledger, which is what `unanswered` / `dossier` / `review` read; "
+            f"--account switches only the engine profile, so the record would "
+            f"not mean what it says. Run it without --account.",
+            file=sys.stderr,
+        )
+        return 2
+
+    email = (args.email or "").strip().lower()
+    if not _EMAIL_RE.match(email):
+        print(f"not an email address: {args.email!r}", file=sys.stderr)
+        return 2
+    existing = records.get(email)
+    who = (args.who or "").strip()
+    reason = (args.why or "").strip()
+
+    if args.undo:
+        if not existing:
+            print(f"no escalation record for {email} — nothing to release")
+            return 1
+        held = _fmt_local(existing["escalated_at"], settings.timezone)
+        if not args.commit:
+            print(f"DRY RUN — would release {email} back to the operator "
+                  f"(taken over {held}). Nothing written; re-run with --commit.")
+            return 0
+        st.unmark_escalated(email)
+        print(f"released {email} — the operator may work them again "
+              f"(was taken over {held}).")
+        return 0
+
+    if not args.commit:
+        # The preview names the address back, which is the check that matters:
+        # this verb is typed about "these two", and resolving the wrong "these"
+        # is how a customer goes quiet.
+        print(f"DRY RUN — would record {email} as taken over by "
+              f"{who or 'you'}{' — ' + reason if reason else ''}.")
+        if existing:
+            print(f"  (replaces the record of "
+                  f"{_fmt_local(existing['escalated_at'], settings.timezone)})")
+        print("  they would stop being offered as work to answer, and would be "
+              "listed as yours, with an age, in `unanswered` / `review` / "
+              "`dossier`. Nothing written; re-run with --commit.")
+        if not reason:
+            print("  no --why given: the record would carry only the date.")
+        return 0
+
+    st.mark_escalated(email, owner=who, reason=reason)
+    print(f"recorded: {email} is with {who or 'you'}"
+          f"{' — ' + reason if reason else ''}")
+    print("  the operator will not draft or write to them, and no campaign "
+          "will deliver to them, until you release it:")
+    print(f"  release with `{settings.prog_name or 'cs'} escalated {email} "
+          f"--undo --commit`, or close it with `{settings.prog_name or 'cs'} "
+          f"handled {email} --why \"…\"` once it is resolved.")
+    # Deliberately NO engine write. `handled` closes the contact's tasks
+    # because the work is over; here it is not, and closing the task would
+    # delete the only durable trace that somebody still owes this customer an
+    # answer. The task stays open and the contact stays visible — re-labelled,
+    # not removed.
     return 0
 
 
@@ -522,8 +694,24 @@ def cmd_dossier(args) -> int:
     for m in recent:
         print(f"  {m['date']}: {m['subject']}")
 
+    # --- is a human already writing to them? (cs escalated) The dossier is the
+    # mandatory step before any contact, so this is the chokepoint where an
+    # agent that never heard of the verb still learns to keep its hands off. ---
+    st_ = state_mod.State(settings.db_path)
+    taken = st_.escalated_to_human().get(email.strip().lower())
+    print("\n-- taken over by a human (still open, not ours to answer) --")
+    if not taken:
+        print("  no record")
+    else:
+        who = taken.get("owner") or "you"
+        why = f" — {taken['reason']}" if taken.get("reason") else ""
+        days = (_time.now_utc() - taken["escalated_at"]).days
+        print(f"  YES — with {who} since "
+              f"{_fmt_local(taken['escalated_at'], settings.timezone)} ({days}d){why}")
+        print("  → do NOT draft, do NOT write, do NOT deliver a campaign to them")
+
     # --- resolved off-email? The one thing Gmail cannot know (cs handled). ---
-    rec = state_mod.State(settings.db_path).handled_out_of_band().get(email.strip().lower())
+    rec = st_.handled_out_of_band().get(email.strip().lower())
     print("\n-- handled out of band (phone / WhatsApp / in person) --")
     if not rec:
         print("  no record")
@@ -549,7 +737,14 @@ def cmd_dossier(args) -> int:
 
     _print_crm_section(settings, email)
 
-    if recent:
+    if taken:
+        # First, ahead of the dedup window: this one is not a timing rule that
+        # will lapse, it is somebody else's conversation.
+        verdict = (
+            f"STOP — taken over by {taken.get('owner') or 'you'}; still open, "
+            f"but a human is answering it"
+        )
+    elif recent:
         verdict = f"STOP — {me} already wrote within dedup window (Gmail Sent)"
     elif sent_us or inbound:
         verdict = "REPLY IN THREAD — real history exists (not cold)"
@@ -1084,6 +1279,35 @@ def main(argv=None) -> int:
         "again (engine tasks closed at the time stay closed)",
     )
     phd.set_defaults(func=cmd_handled)
+
+    pes = sub.add_parser(
+        "escalated",
+        help="record that a HUMAN has personally taken this contact over: NOT "
+        "resolved (that is `handled`) — still open and still owed an answer, but "
+        "nobody else drafts, writes or delivers to them until it is released. "
+        "Bare `escalated` lists who is with a human, and for how long.",
+    )
+    pes.add_argument(
+        "email", nargs="?", help="the contact; omit to list every record on file"
+    )
+    pes.add_argument(
+        "--why",
+        help="why it was taken over, in the operator's own words — printed "
+        "wherever the record is surfaced",
+    )
+    pes.add_argument(
+        "--who",
+        metavar="NAME",
+        help="the human who has it (default: the operator running this, shown "
+        "as 'you')",
+    )
+    pes.add_argument(
+        "--undo",
+        action="store_true",
+        help="release the contact — they become ordinary open work again",
+    )
+    pes.add_argument("--commit", action="store_true", help="apply (default: dry-run)")
+    pes.set_defaults(func=cmd_escalated)
 
     pk = sub.add_parser(
         "tasks",

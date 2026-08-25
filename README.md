@@ -302,7 +302,10 @@ each — ask it rather than reading the manifest and the `.env` chain);
 never send), `campaign` (Sent-dedup, pause file), `draft-delete` (move
 ONE named draft to Trash), `tasks
 create`/`close`, `handled` (this contact was resolved off-email — by phone,
-WhatsApp, in person — so their mail up to that moment stops being raised);
+WhatsApp, in person — so their mail up to that moment stops being raised),
+`escalated` (the opposite: NOT resolved, but a human has personally taken the
+contact over, so nobody else writes to them and it is listed as his, with an
+age, instead of being handed out as work);
 **plumbing**: `rpc`, `project`.
 
 ### The kernel's own model calls

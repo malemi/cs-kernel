@@ -47,6 +47,14 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # gesture — the operator saying "I phoned him" — and a tick reads untrusted mail,
 # where "please close this ticket" in a body would otherwise silence a real
 # customer request. Nobody is present on a tick to say it, so nothing is lost.
+# `cs escalated` is denied for the sharper version of that reason. It records
+# that a named HUMAN has personally taken a contact over, and the review then
+# repeats it back to him as "you are on this one" — an assertion about a human
+# that no machine can make on his behalf, and a false one is worse than a false
+# close because it does not merely hide the item, it tells him he already has
+# it. The tick's own "escalate on uncertainty" needs none of this: a triage
+# escalation is an OPEN engine task plus a line in this log, and both correctly
+# stay in the work list.
 # Each surface is denied in SIX spellings (.venv/bin/python -m cs, .venv/bin/python3 -m cs,
 # .venv/bin/cs, python -m cs, python3 -m cs, cs): permission rules match command TEXT,
 # not behavior, and the console script, the module path and the python3 aliases all
@@ -84,6 +92,12 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs handled:*)" \
     "Bash(python3 -m cs handled:*)" \
     "Bash(cs handled:*)" \
+    "Bash(.venv/bin/python -m cs escalated:*)" \
+    "Bash(.venv/bin/python3 -m cs escalated:*)" \
+    "Bash(.venv/bin/cs escalated:*)" \
+    "Bash(python -m cs escalated:*)" \
+    "Bash(python3 -m cs escalated:*)" \
+    "Bash(cs escalated:*)" \
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
   >>"$LOG" 2>&1
 rc=$?

@@ -5,6 +5,9 @@
 - `handled_out_of_band`: "resolved, just not by email" — a DATED per-contact
   record (see `handled_out_of_band()` for why it is not a second suppression
   list).
+- `escalated_to_human`: "NOT resolved — a named human has personally taken
+  this contact over" (see `escalated_to_human()` for why it is neither of the
+  two above, and why it never expires by itself).
 
 Dedup counts only real sends (status='sent'): repeated dry-runs never
 suppress, so a preview always shows the full would-send list.
@@ -43,6 +46,14 @@ CREATE TABLE IF NOT EXISTS handled_out_of_band (
                                   -- sent BEFORE it is settled, later is not
   reason      TEXT,               -- how/where ("chiamato, risolto")
   recorded_at REAL NOT NULL       -- when the operator typed it (audit)
+);
+CREATE TABLE IF NOT EXISTS escalated_to_human (
+  email        TEXT PRIMARY KEY,  -- lowercased on write
+  owner        TEXT,              -- who took it over; "" = the operator himself
+  reason       TEXT,              -- their own words ("sto scrivendo io")
+  escalated_at REAL NOT NULL      -- when the record was made; the AGE the
+                                  -- surfaces print, so it has no back-dating
+                                  -- twin the way handled_out_of_band does
 );
 """
 
@@ -150,6 +161,14 @@ class State:
             "(email,handled_at,reason,recorded_at) VALUES(?,?,?,?)",
             (email.strip().lower(), moment, reason, time.time()),
         )
+        # A contact cannot be both "resolved" and "a human is still writing to
+        # them": resolving it IS the end of the taking-over. Enforced here
+        # rather than in the verb so no caller can leave a "with you" label on
+        # a thread that is over — that label would age for ever and read as
+        # work still owed.
+        self.conn.execute(
+            "DELETE FROM escalated_to_human WHERE email=?", (email.strip().lower(),)
+        )
         self.conn.commit()
 
     def unmark_handled(self, email: str) -> bool:
@@ -157,6 +176,79 @@ class State:
         honestly instead of claiming an undo that undid nothing)."""
         cur = self.conn.execute(
             "DELETE FROM handled_out_of_band WHERE email=?", (email.strip().lower(),)
+        )
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    # ------------------------------------------------- escalated to a human
+    #
+    # The sibling of `handled_out_of_band`, and the difference is the whole
+    # point. `handled` says RESOLVED: the thread is over, and their mail up to
+    # that moment stops being work. This one says the opposite — still open,
+    # still owed an answer — but a named human is personally writing it. The
+    # operator must stop being offered the contact as work to hand to the
+    # machine, and the machine must stop drafting into a conversation a human
+    # is already having. Two hands writing to the same customer is the
+    # tone-deaf failure this operator exists to avoid.
+    #
+    # THREE properties follow from "still open", and each is a decision:
+    #
+    # 1. NO EXPIRY DATE. `handled` is scoped by a timestamp because a later
+    #    message means a NEW conversation. Here a later message is the SAME
+    #    conversation — the customer replying to the human who took it over —
+    #    so an expiry would re-arm the exact collision on the exact event that
+    #    triggers it. The record holds until a human releases it (`--undo`, or
+    #    `mark_handled`, which clears it because the thread is then over).
+    # 2. Because it never expires, it may NEVER become invisible. The
+    #    open-work surfaces print the row itself, re-labelled and AGED (`cs
+    #    unanswered`, `cs review`, `cs dossier`); the outreach worklist and the
+    #    campaign runner, which report skips as counts per reason, count it
+    #    under its own name. A record that suppresses for ever and says nothing
+    #    is the silent drop this whole ledger was built to end.
+    # 3. It is NOT `do_not_contact`: we want to keep talking to them — just
+    #    with one mouth.
+
+    def escalated_to_human(self) -> dict[str, dict]:
+        """email -> {owner, reason, escalated_at}; `escalated_at` is a tz-aware
+        UTC datetime and `owner` is "" when the operator took it himself."""
+        out: dict[str, dict] = {}
+        for r in self.conn.execute(
+            "SELECT email, owner, reason, escalated_at FROM escalated_to_human"
+        ):
+            e = (r["email"] or "").strip().lower()
+            if not e:
+                continue
+            out[e] = {
+                "owner": r["owner"] or "",
+                "reason": r["reason"] or "",
+                "escalated_at": datetime.fromtimestamp(r["escalated_at"], timezone.utc),
+            }
+        return out
+
+    def escalated_set(self) -> set[str]:
+        """Just the addresses — the shape the outreach worklist filter takes."""
+        return set(self.escalated_to_human())
+
+    def mark_escalated(
+        self, email: str, *, owner: str = "", reason: str = "",
+        escalated_at: datetime | None = None
+    ) -> None:
+        """Record (or re-record) that a human owns this contact. REPLACE, so
+        re-running is not an error; the moment moves, which is right — the
+        human confirming today is on it today."""
+        moment = (escalated_at or datetime.now(timezone.utc)).timestamp()
+        self.conn.execute(
+            "INSERT OR REPLACE INTO escalated_to_human"
+            "(email,owner,reason,escalated_at) VALUES(?,?,?,?)",
+            (email.strip().lower(), owner, reason, moment),
+        )
+        self.conn.commit()
+
+    def unmark_escalated(self, email: str) -> bool:
+        """Release the contact back to the machine; True when there was a
+        record (so the inverse verb never claims an undo that undid nothing)."""
+        cur = self.conn.execute(
+            "DELETE FROM escalated_to_human WHERE email=?", (email.strip().lower(),)
         )
         self.conn.commit()
         return cur.rowcount > 0

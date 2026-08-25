@@ -252,6 +252,45 @@ def _hold_deliveries(entry: dict, items: list[dict], reason: str) -> list[dict]:
     return kept
 
 
+def _escalated_map(settings) -> dict[str, dict]:
+    """Contacts a human has personally taken over (`cs escalated`). Best-effort
+    like every other read of the local ledger: a missing db must degrade to "no
+    records", never break a worklist."""
+    try:
+        from . import state as state_mod
+
+        return state_mod.State(settings.db_path).escalated_to_human()
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def _hold_escalated(entry: dict, items: list[dict], taken: dict[str, dict]) -> list[dict]:
+    """Take the DELIVERIES to taken-over contacts out of a campaign worklist,
+    and TAG what is left with who owns the conversation.
+
+    A campaign mail landing on a customer the owner is personally writing to is
+    the same two-hands failure as a second reply, arriving as a template. The
+    observation actions (`handle_reply`, `reconcile`) stay — the reply is real
+    and must still be seen — but they carry `escalated_to`, so the tick reports
+    them instead of answering them. Held deliveries are counted on the entry;
+    nothing vanishes."""
+    if not taken:
+        return items
+    kept, held = [], {}
+    for item in items:
+        rec = taken.get((item.get("email") or "").strip().lower())
+        if rec is None:
+            kept.append(item)
+            continue
+        if item.get("action") in DELIVERY_ACTIONS:
+            held[item["action"]] = held.get(item["action"], 0) + 1
+            continue
+        kept.append({**item, "escalated_to": rec.get("owner") or "the operator"})
+    if held:
+        entry["escalated_hold"] = held
+    return kept
+
+
 def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] = None,
             now: Optional[datetime] = None) -> dict:
     """Per-campaign worklist for the skills. DATA ONLY — sends nothing, mutates
@@ -262,9 +301,14 @@ def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] =
     A campaign whose pack says it is OVER (status done, or past `ends_on`)
     yields NO delivery items — the entry carries `delivery_blocked` with the
     reason and the date, plus `held` counting what was withheld. Its
-    `handle_reply` / `reconcile` items still come through."""
+    `handle_reply` / `reconcile` items still come through.
+
+    A contact a human has TAKEN OVER (`cs escalated`) yields no delivery item
+    either — counted in `escalated_hold` — and its observation items carry
+    `escalated_to`, naming who owns the conversation."""
     now = now or _time.now_utc()
     dd = settings.dedup_days if dedup_days is None else dedup_days
+    taken = _escalated_map(settings)
     camps = list_campaigns(settings)
     if name:
         camps = [c for c in camps if c["name"] == name]
@@ -293,6 +337,7 @@ def pending(settings, name: Optional[str] = None, *, dedup_days: Optional[int] =
             note = pack.undeclared_end_note()
             if note:
                 entry["pack_note"] = note
+        items = _hold_escalated(entry, items, taken)
         entry["items"] = items
         out.append(entry)
     return {"now": now.isoformat(), "dedup_days": dd, "campaigns": out}
@@ -351,6 +396,22 @@ def _pause_active(settings) -> bool:
     return settings.pause_path.exists()
 
 
+def _escalation_block(settings, email: str) -> Optional[dict]:
+    """Refusal when a human has personally taken this contact over.
+
+    `pending()` already withholds the delivery item, but a caller can reach a
+    sender with a contact_id it got anywhere — so the check lives on the send
+    path too, where it cannot be routed around. Same shape as the CS_PAUSE
+    refusal: a `blocked` string, so every existing caller already reports it."""
+    rec = _escalated_map(settings).get((email or "").strip().lower())
+    if rec is None:
+        return None
+    who = rec.get("owner") or "the operator"
+    return {"ok": False, "email": email,
+            "blocked": f"escalated — {who} has taken this contact over "
+                       f"(release it with `escalated <email> --undo --commit`)"}
+
+
 def _record_send(settings, *, contact_id, email, subject, message_id) -> None:
     from . import state as state_mod
     state_mod.State(settings.db_path).record(
@@ -385,8 +446,9 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
 
     DEDUP FIRST against the Sent archive — if the mail is already there (the
     contact was mailed, even out-of-band) REFUSE and flag reconcile; never
-    re-mail. A campaign whose pack says it is over refuses before any of that.
-    CS_PAUSE blocks everything."""
+    re-mail. A campaign whose pack says it is over refuses before any of that,
+    and so does a contact a human has taken over (`cs escalated`). CS_PAUSE
+    blocks everything."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
@@ -400,6 +462,9 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
     if c["state"] == "sent" or _sent_threads_to(settings, email, settings.dedup_days):
         return {"ok": False, "email": email, "next": "reconcile",
                 "error": "already in Sent archive — reconcile, do NOT re-send"}
+    taken = _escalation_block(settings, email)
+    if taken:
+        return taken
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
 
@@ -463,7 +528,9 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False,
     mail in the operator's Gmail Drafts for review. NEVER sends — not via SMTP,
     not regardless of CS_TRIAGE_MODE. (The send-capable path is `send_draft`,
     deliberately kept out of the headless allow-list.)
-    Dedup-first: refuses + flags reconcile if the address is already in Sent.
+    Dedup-first: refuses + flags reconcile if the address is already in Sent,
+    and refuses outright for a contact a human has taken over (`cs escalated`)
+    — a draft one keystroke from the wire is a delivery path.
     Idempotent per contact (won't push a second Gmail draft).
 
     A finished campaign is refused here too. This verb sends nothing, but what
@@ -481,6 +548,9 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False,
     if c["state"] == "sent" or _sent_threads_to(settings, email, settings.dedup_days):
         return {"ok": False, "email": email, "next": "reconcile",
                 "error": "already in Sent archive — reconcile, do NOT re-send"}
+    taken = _escalation_block(settings, email)
+    if taken:
+        return taken
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
     dossier = dict(c.get("dossier") or {})
@@ -539,6 +609,9 @@ def _pack_send_preamble(settings, contact_id: str, *, now: Optional[datetime] = 
     if c["state"] != "sent":
         return c, pack, {"ok": False, "email": email,
                          "error": f"contact state '{c['state']}' — pack senders apply to contacts in 'sent'"}
+    taken = _escalation_block(settings, email)
+    if taken:
+        return c, pack, taken
     if _pause_active(settings):
         return c, pack, {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
     return c, pack, None
@@ -614,8 +687,9 @@ def send_first(settings, contact_id: str, *, commit: bool = False,
     for review (idempotent, never sends); =send → cs-SMTP send then mark 'sent'.
 
     Gates: pack required (loud refusal), campaign not finished (pack status /
-    ends_on), contact NOT already `sent` (the idempotency guard — once the
-    notice goes out the state flips to `sent` and a re-run refuses), CS_PAUSE.
+    ends_on), contact NOT taken over by a human (`cs escalated`), contact NOT
+    already `sent` (the idempotency guard — once the notice goes out the state
+    flips to `sent` and a re-run refuses), CS_PAUSE.
 
     Unlike composed-draft `send_draft`, this does NOT dedup against the whole
     Sent archive: a fixed-template first notice is a deliberate action to a
@@ -644,6 +718,9 @@ def send_first(settings, contact_id: str, *, commit: bool = False,
     finished = _finished_refusal(settings, pack, now)
     if finished:
         return {"ok": False, "email": email, "finished": True, "error": finished}
+    taken = _escalation_block(settings, email)
+    if taken:
+        return taken
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
     # idempotency: once the first notice has gone out the state is 'sent' — never re-send

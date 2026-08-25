@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.19.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.20.0`. Current HEAD status: tagged as `v0.20.0`.**
   The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
   tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
   `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
@@ -51,8 +51,15 @@ what is *current*.
   configuration that cannot send — **FULL tier by what it touches (`sms.py`,
   `campaign.py`, and send capability itself); the suites were waived by the
   operator and NOT run, so this tag shipped without the collaudo its own tier
-  calls for.** `v0.8.0` remains the recorded tag→0.7.1 exception (object
-  pinned immutable).
+  calls for.** `v0.20.0` (2026-08-25) adds `cs escalated`: the sibling of
+  `handled` that says NOT resolved — still open, still owed an answer, but a
+  named human has personally taken the contact over, so the machine stops
+  offering them as work and no campaign path delivers to them. Every surface
+  that hides them also prints them, aged; the cron denies the verb in all six
+  command-text spellings, taking the wrapper's deny set from 34 to 40 entries.
+  **FULL tier by what it touches (the campaign delivery paths and the
+  permission surface).** `v0.8.0` remains the recorded tag→0.7.1 exception
+  (object pinned immutable).
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
