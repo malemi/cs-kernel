@@ -4,12 +4,21 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-26): **`v0.24.0` on both clones**.
+**Current operational pin** (2026-08-26): **`v0.25.0` on both clones**.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.24.0`; both `requirements.lock` files resolve the tag
-to `a376a23`, and each lock was installed ALONE into a fresh `uv venv` —
-resolving `cs-kernel 0.24.0` — rather than assumed to. `[repo].kernel_version`
+`cs --version` all say `v0.25.0`; both `requirements.lock` files resolve the tag
+to `f0a416e`, and each lock was installed ALONE into a fresh `uv venv` —
+resolving `cs-kernel 0.25.0` — rather than assumed to. The FULL collaudo the
+entry demands was RUN, on both: `cs whoami` signs in on each profile, and
+`cs unanswered` was exercised live on both mailboxes — `mrcall-cs` partitions
+its 45-day queue 11 open / 22 answered-then-replied / 3 automatic (from 15 open
+before), and `124-cs` reaches all three sections at 90 days on its own engine
+profile and its own CRM, which is the `kernel + manifest(X) ≡ X` check.
+`cs update` re-rendered `CLAUDE.md` on both clones and the diff is EXACTLY the
+new § 0b, nothing else; `bin/cs_operator_cron.sh` and `.claude/settings.json`
+are byte-identical to their pre-update copies on both, so `mrcall-cs` keeps its
+clone-owned `bin/mrcall_business.py` deny line and nothing needed restoring. `[repo].kernel_version`
 is no longer on that list: `v0.18.0` removed the field, so the pin is
 `requirements.txt` and the claims derived from it, and there is one fewer
 hand-maintained number to go stale.
