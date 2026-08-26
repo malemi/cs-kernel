@@ -4,21 +4,41 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-26): **`v0.25.0` on both clones**.
+**Current operational pin** (2026-08-26): **`v0.26.0` on both clones**.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.25.0`; both `requirements.lock` files resolve the tag
-to `f0a416e`, and each lock was installed ALONE into a fresh `uv venv` —
-resolving `cs-kernel 0.25.0` — rather than assumed to. The FULL collaudo the
-entry demands was RUN, on both: `cs whoami` signs in on each profile, and
-`cs unanswered` was exercised live on both mailboxes — `mrcall-cs` partitions
-its 45-day queue 11 open / 22 answered-then-replied / 3 automatic (from 15 open
-before), and `124-cs` reaches all three sections at 90 days on its own engine
-profile and its own CRM, which is the `kernel + manifest(X) ≡ X` check.
-`cs update` re-rendered `CLAUDE.md` on both clones and the diff is EXACTLY the
-new § 0b, nothing else; `bin/cs_operator_cron.sh` and `.claude/settings.json`
-are byte-identical to their pre-update copies on both, so `mrcall-cs` keeps its
-clone-owned `bin/mrcall_business.py` deny line and nothing needed restoring. `[repo].kernel_version`
+`cs --version` all say `v0.26.0`; both `requirements.lock` files resolve the tag
+to `46f2648`, and each lock was installed ALONE into a fresh `uv venv` —
+resolving `cs-kernel 0.26.0` — rather than assumed to. The FULL collaudo the
+entry demands was RUN, on both: `cs whoami` signs in on each profile
+(`support@mrcall.ai`, `production@cafe124.it`), `cs config` reports zero
+duplicate declarations on each, and `cs unanswered` was exercised live on both
+mailboxes — `mrcall-cs` at 45 days, `124-cs` at 90 days on its own engine
+profile and its own Shopify CRM, which is the `kernel + manifest(X) ≡ X`
+check. `cs plan`, `cs campaign packs` and the two bare ledger verbs were run on
+both; nothing was written and nothing was sent.
+
+**Both clones are running `v0.26.0` against an engine that does NOT yet carry
+`emails.needs_reply`, and this is the state the operator should expect to see.**
+The engine change (`mrcall-desktop` `1139da2`, pushed, on `main`) is committed
+but deliberately NOT deployed — that is the owner's call. Until the five
+`zylch-server@` units run it, `cs unanswered` on both clones answers exactly as
+`v0.25.0` did and prints `engine non consultabile: … Method not found:
+emails.needs_reply … ogni messaggio risulta da rispondere`. Verified live on
+both, not reasoned about: `mrcall-cs`'s 45-day output under `v0.26.0` is
+identical to its `v0.25.0` output apart from that line. **The new section is
+inert until the deploy.**
+
+`cs update` clobbered NOTHING on either clone and the reason is not luck:
+`v0.26.0` changes no template, so `bin/cs_operator_cron.sh`, `.claude/
+settings.json` and `CLAUDE.md` were never render targets and are byte-identical
+to their pre-update copies on both — `mrcall-cs` keeps its clone-owned
+`bin/mrcall_business.py` deny line and nothing needed restoring, and `ext/` is
+unchanged. `docs/ARCHITECTURE.md` re-rendered cleanly on `124-cs`; on
+`mrcall-cs` it still reports as locally modified against its stored checksum
+(the poisoned-ledger case from `v0.21.0`, still not cleaned up), so its prompt
+resolved to keep-local under a closed stdin and its pin row was edited by hand.
+`[repo].kernel_version`
 is no longer on that list: `v0.18.0` removed the field, so the pin is
 `requirements.txt` and the claims derived from it, and there is one fewer
 hand-maintained number to go stale.
