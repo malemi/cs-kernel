@@ -3,9 +3,9 @@
 cs-kernel is an agentic platform that runs your customer service.
 It reads your inbox(es), whatsapp, or any other channel, answers in
 your company's voice, runs periodic loops, and manages campaigns end
-to end — with a memory of every relationship that no human team keeps.
+to end — with a memory of every relationship.
 
-What it actually does is adding a powerful harness on top of **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, leveraging also on external platforms like Claude Code or Open Code. 
+What it actually does is adding a powerful harness on top of **[mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop)**, leveraging also on external platforms like OpenCode, Claude Code or Codex. 
 
 One real requirement: you must be able to use the terminal. CS is terminal-based. 
 
@@ -79,7 +79,7 @@ What you need:
 
 ## Setup example: ACME
 
-Imagine your operator address is `support@acme.example`.
+Say your operator address is `support@acme.example`.
 
 ### 1. Install [mrcall-desktop](https://github.com/hahnbanach/mrcall-desktop) and sign in
 
