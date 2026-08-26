@@ -4,15 +4,30 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-25): **`v0.23.0` on both clones**.
+**Current operational pin** (2026-08-26): **`v0.24.0` on both clones**.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.23.0`; both venvs resolve the tag to `d1b4518`,
-recorded in each clone's regenerated `requirements.lock`, and each lock was
-installed alone into a fresh `uv venv` — resolving `cs-kernel 0.23.0` — rather
-than assumed to. `[repo].kernel_version` is no longer on that list —
-`v0.18.0` removed the field, so the pin is `requirements.txt` and the claims
-derived from it, and there is one fewer hand-maintained number to go stale.
+`cs --version` all say `v0.24.0`; both `requirements.lock` files resolve the tag
+to `a376a23`, and each lock was installed ALONE into a fresh `uv venv` —
+resolving `cs-kernel 0.24.0` — rather than assumed to. `[repo].kernel_version`
+is no longer on that list: `v0.18.0` removed the field, so the pin is
+`requirements.txt` and the claims derived from it, and there is one fewer
+hand-maintained number to go stale.
+
+**`cs update` clobbered NOTHING this time, and the reason is worth writing
+down rather than counting as luck.** `bin/cs_operator_cron.sh` is
+`SECURITY_CRITICAL`, so its render is applied without asking and the local file
+is kept as `*.local-bak` — which is how `mrcall-cs`'s clone-owned
+`bin/mrcall_business.py` deny line has been lost at three previous re-pins. This
+release does not change that template, so the file was never a render target;
+it is byte-identical to its pre-update copy and still carries the deny line.
+The other `SECURITY_CRITICAL` file, `.claude/settings.json`, WAS re-rendered on
+both clones, and diffing each against its pre-update copy shows exactly the
+fourteen added read-only allow entries and nothing removed. On `mrcall-cs`
+`docs/ARCHITECTURE.md` still reports as locally modified against its stored
+checksum (the poisoned-ledger case from `v0.21.0`), so its conflict prompt
+resolved to keep-local under a closed stdin and its "Kernel pin" row was
+edited by hand.
 
 Two claims this re-pin found false in the paragraph it replaces, both worth
 naming because they are the drift class the sweep exists to catch. The `v0.22.0`
