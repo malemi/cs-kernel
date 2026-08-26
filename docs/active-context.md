@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.26.0`. Current HEAD status: tagged as `v0.26.0`.**
+- **Latest release tag: `v0.26.0`. Current HEAD status: untagged.**
   `v0.26.0` stops `cs unanswered` showing a closing courtesy as work. The
   judgement — *does this message need a reply* — was BUILT IN THE ENGINE
   (`zylch/utils/reply_need.py`, RPC `emails.needs_reply`, mrcall-desktop
