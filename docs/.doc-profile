@@ -1,4 +1,4 @@
-harness_version = 3
+harness_version = 4
 schema_version = 1
 mode = leaf
 index_file = CLAUDE.md

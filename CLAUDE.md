@@ -7,6 +7,12 @@
 
 <!-- orientation ends -->
 
+<!-- doc-scope:start -->
+Scope: the thin index and anti-fork charter of this kernel — the rules a change must
+obey and who owns what. Per-tag detail is `CHANGELOG.md`, volatile state
+`docs/active-context.md`, the release steps `docs/release-procedure.md`.
+<!-- doc-scope:end -->
+
 The shared KERNEL of the `<company>-cs` customer-service operators.
 Distribution **`cs-kernel`**, import package **`cs`**. A stamped clone has
 **no `cs/` source directory**: it pip-installs this kernel from a git tag
@@ -46,30 +52,27 @@ Where a subject has an owner, the owner is named inline — go there.
    third grep is the BARE brand; only `<brand>-agent`, `/api/<brand>/`,
    `~<brand>d/` and a bare possessive are stripped before judging.
 
-   **The wordlist alone is not sufficient, and the rest of this rule is
-   why.** It carried only the mailbox *domain* until 2026-08-24, which is how
-   a whole page of one company's internal API access shipped inside a project
-   template and greped clean. `cs/templates/project/company/` is the one
-   directory whose stamped content is MEANT to be replaced by each clone's
-   operator, which is exactly why it leaked: it held the mother clone's own
-   operational facts, and no wordlist can describe "the Friday cutover". Its
-   slots are held to a SHAPE instead — each carries a `## What to write here`
-   section, and none may carry a dated claim, a named weekday, a URL, a mail
-   address, an API path or another user's home. A slot says what to write; it
-   never says what one company happens to do. Gate 1b enforces the shape.
+   **The wordlist alone is not sufficient**, because no wordlist can describe
+   "the Friday cutover" (a whole page of one company's internal API access once
+   greped clean inside a project template — CHANGELOG `v0.16.0`).
+   `cs/templates/project/company/` is the one directory whose stamped content is
+   MEANT to be replaced by each clone's operator, so its slots are held to a
+   SHAPE instead: each carries a `## What to write here` section, and none may
+   carry a dated claim, a named weekday, a URL, a mail address, an API path or
+   another user's home. A slot says what to write; it never says what one
+   company happens to do. Gate 1b enforces the shape.
 
-2. **Everything company-shaped comes from `Settings`** (← `manifest.toml` ←
-   env layers). About to write `if company == …`? Stop: it is a manifest
-   field or an adapter. Identity prints, the SELF cc, state paths, the
-   drive-scope message, the From display name — all derive from Settings.
-   (Firebase app names are the one deliberate exception: fixed neutral kernel
-   constants — the per-clone swap was proven pointless.)
+2. **Everything company-shaped comes from `Settings`** (← `manifest.toml` ← env
+   layers). About to write `if company == …`? Stop: it is a manifest field or an
+   adapter. Identity prints, the SELF cc, state paths, the drive-scope message, the
+   From display name — all derive from Settings. (Firebase app names are the one
+   deliberate exception: fixed neutral kernel constants — the per-clone swap was
+   proven pointless.)
 
-3. **Rule of two.** A capability enters the kernel only when ≥2 companies
-   need it; a single company's need lives in that clone's `ext/` (which the
-   kernel tolerates and NEVER imports). Campaign packs follow the same split:
-   pack CONTENT is company data in the clone, the RUNNER is kernel code
-   (`cs/campaign_pack.py`).
+3. **Rule of two.** A capability enters the kernel only when ≥2 companies need it; a
+   single company's need lives in that clone's `ext/` (which the kernel tolerates and
+   NEVER imports). Campaign packs follow the same split: pack CONTENT is company data
+   in the clone, the RUNNER is kernel code (`cs/campaign_pack.py`).
 
 4. **The invariants are code, not config** (never manifest fields):
    - Identity is always the company's own support mailbox (daemon gates
@@ -79,34 +82,29 @@ Where a subject has an owner, the owner is named inline — go there.
    - The headless cron is draft-only via the wrapper's `--disallowed-tools`
      re-deny set (template-side, baked verbatim) — not a knob.
    - Policy/voice/signature live in engine `USER_NOTES`, outside every repo.
-   - **Gmail Sent/All Mail is the dedup ground truth** — never the engine
-     archive (`emails.search folder:sent` misses hand-sent mail and drops
-     threads when the customer replies last). No dedup-source knob exists.
-     Its one blind spot is resolution OUT OF BAND: that is a DATED
-     per-contact record (`cs handled`), never a second permanent ignore
-     list, and a later inbound re-opens the contact by itself. **It is an
-     INTERACTIVE gesture** — honoured only when the human says it in the
-     session, never inferred from anything the agent read, and denied in the
-     cron wrapper because it SILENCES. Why that is a security boundary and
-     not a preference: CHANGELOG `v0.13.0`. No clone needs it headless.
-   - **The engine is AUTHORITATIVE for what it owns.**
-     **When it is wrong, fix the engine.** Synced mail, entity memory, the
-     task ledger, reply and auto-reply classification, whether a message needs an answer —
-     the engine's judgements. The kernel asks (`cs/engine_view.py`); it does
-     not re-derive them, and a clone does not paper over them in `ext/` or in
-     a skill. Two implementations of the same judgement disagree, and nobody
-     can say which is right. Written from a measured failure:
-     `cs unanswered` decided "answered or not" from IMAP headers although the
-     engine had already classified those same messages, so a customer's
-     thank-you on a finished job was raised as open work, and our OWN
-     autoresponder — in Gmail Sent 17 seconds after four product questions —
-     counted as a human answer and hid that customer for 70 days. The rule
-     ships to every clone in `templates/project/CLAUDE.md.j2` § 0b, because a
-     charter only one repo can read is not a charter. Its ONE exception is the
-     dedup rule directly above, and that exception has a measurement behind it
-     rather than a preference — which is the standard any further one must
-     meet. In short: *does this message exist* → Gmail; *what kind of message
-     is it* → the engine.
+   - **Gmail Sent/All Mail is the dedup ground truth** — never the engine archive
+     (`emails.search folder:sent` misses hand-sent mail and drops threads when the
+     customer replies last). No dedup-source knob exists. Its one blind spot is
+     resolution OUT OF BAND: that is a DATED per-contact record (`cs handled`), never
+     a second permanent ignore list, and a later inbound re-opens the contact by
+     itself. **It is an INTERACTIVE gesture** — honoured only when the human says it
+     in the session, never inferred from anything the agent read, and denied in the
+     cron wrapper because it SILENCES. Why that is a security boundary and not a
+     preference: CHANGELOG `v0.13.0`. No clone needs it headless.
+   - **The engine is AUTHORITATIVE for what it owns. When it is wrong, fix the
+     engine.** Synced mail, entity memory, the task ledger, reply and auto-reply
+     classification, whether a message needs an answer — the engine's judgements. The
+     kernel asks (`cs/engine_view.py`); it does not re-derive them, and a clone does
+     not paper over them in `ext/` or in a skill. Two implementations of the same
+     judgement disagree, and nobody can say which is right. Written from a measured
+     failure, where re-deriving "answered or not" from IMAP headers let our OWN
+     autoresponder count as a human answer and hide a customer for 70 days: CHANGELOG
+     `v0.25.0`. The rule ships to every clone in `templates/project/CLAUDE.md.j2`
+     § 0b, because a charter only one repo can read is not a charter. Its ONE
+     exception is the dedup rule directly above, and that exception has a measurement
+     behind it rather than a preference — which is the standard any further one must
+     meet. In short: *does this message exist* → Gmail; *what kind of message is it*
+     → the engine.
    - **Module path `cs` is frozen**; the console script `cs` is a second
      door onto the same `cs.cli:main`. Permission rules match command TEXT,
      so a clone's permission strings must enumerate every spelling that
@@ -126,32 +124,30 @@ Where a subject has an owner, the owner is named inline — go there.
    degrade with an actionable note that the CLI surfaces. The dossier VERDICT
    stays CRM-agnostic.
 
-6. **The surface speaks to the operator, not to us** (2026-08-21, rebuilt
-   under the operator's own review). Every stamped command and skill carries
-   the `cs-` prefix, so tab-complete on `cs` surfaces the whole product. ONE
-   command per job — two answering the same question is a defect
-   (`/munchausen` was merged into `/cs-review` for exactly this). Output
+6. **The surface speaks to the operator, not to us.** Every stamped command
+   and skill carries the `cs-` prefix, so tab-complete on `cs` surfaces the
+   whole product. ONE command per job — two answering the same question is a
+   defect (`/munchausen` was merged into `/cs-review` for exactly this). Output
    states what happened, never what did not: a file left untouched is not an
    event and belongs behind `--verbose`. No internal vocabulary in
-   operator-facing text — *collaudo*, re-collaudo tiers and charter
-   references are ours, not theirs; the `cs update` strings still carrying
-   them are a tracked violation, not an exemption. A guided verb prompts and
-   does the work rather than printing the manual steps. Prompts default to
-   the safe answer, are EOF-safe, and never act without an explicit "y".
-   When docs must explain a flag whose behaviour is confusing, fix the
-   behaviour first.
+   operator-facing text — *collaudo*, re-collaudo tiers and charter references
+   are ours, not theirs, and the `cs update` strings still carrying them are a
+   tracked violation, not an exemption. A guided verb prompts and does the work
+   rather than printing the manual steps; prompts default to the safe answer,
+   are EOF-safe, and never act without an explicit "y". When docs must explain
+   a flag whose behaviour is confusing, fix the behaviour first.
 
 ## Layout — who owns what
 
-Every module in `cs/` carries its own docstring saying what it is and why;
-read those, not a tree duplicated here. `cs/crm/` and `cs/ingest/` are the
-two adapter registries (rule 5), and each registry module IS the list of
-valid adapter names.
+Every module in `cs/` carries its own docstring saying what it is and why; read
+those, not a tree duplicated here. `cs/crm/` and `cs/ingest/` are the two
+adapter registries (rule 5), and each registry module IS the list of valid
+adapter names.
 
-**Two template roots**, and the distinction is load-bearing:
-`templates/project/` is stamped once per CLONE by `cs init` / `cs update`,
-`templates/project_memory/` once per PROJECT by `cs project new`. Each needs
-its own `package-data` glob; the reason sits at that glob in `pyproject.toml`.
+**Two template roots**, and the distinction is load-bearing: `templates/project/`
+is stamped once per CLONE by `cs init` / `cs update`, `templates/project_memory/`
+once per PROJECT by `cs project new`. Each needs its own `package-data` glob;
+the reason sits at that glob in `pyproject.toml`.
 
 **`.claude/` is the ONE rendered agent surface** — OpenCode, `AGENTS.md` and
 Codex are pointed into it by `install_agent_surfaces`, whose docstring owns
@@ -173,24 +169,22 @@ content, `docs/customers`, `ext/`.
 and clone-upgrade steps, the version-claim inventory and the mandatory sweep.
 Two rules stay here, because that file points back at this one for them.
 
-Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches. The
-version describes the INTERFACE: PATCH = behavior-identical fix; MINOR = new
-manifest field / adapter / new or changed CLI surface. A verb that stops
-prompting, or a flag that did not exist, is a MINOR even when the diff is
-small — an operator reading "patch" is entitled to expect nothing observable
-changed.
+Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches. The version
+describes the INTERFACE: PATCH = behavior-identical fix; MINOR = new manifest field /
+adapter / new or changed CLI surface. A verb that stops prompting, or a flag that did
+not exist, is a MINOR even when the diff is small — an operator reading "patch" is
+entitled to expect nothing observable changed.
 
-**The re-collaudo tier is a separate judgement, decided by what the release
-TOUCHES — never inferred from the version digit.** FULL on both clones when
-it touches send paths, `campaign`, `gmail_archive`, `send_mail`, the auth
-boundary or the permission surface (the same list invariant 4 escalates on),
-and FULL means the collaudo suite runs on BOTH clones before the tag ships.
-Otherwise declared per entry — static when the only observable surface is the
-help tree or stamped prose, `read` when a live engine call could plausibly
-differ. Every tag gets a CHANGELOG entry naming what changed, **which clones
-must re-collaudo**, at which tier, and — when the tier is below FULL for a
-MINOR — one line of why that is safe (brief §6.6). Bending this rule silently
-rots it; bending it in writing does not. Never push without the operator's
+**The re-collaudo tier is a separate judgement, decided by what the release TOUCHES —
+never inferred from the version digit.** FULL on both clones when it touches send
+paths, `campaign`, `gmail_archive`, `send_mail`, the auth boundary or the permission
+surface (the same list invariant 4 escalates on), and FULL means the collaudo suite
+runs on BOTH clones before the tag ships. Otherwise declared per entry — static when
+the only observable surface is the help tree or stamped prose, `read` when a live
+engine call could plausibly differ. Every tag gets a CHANGELOG entry naming what
+changed, **which clones must re-collaudo**, at which tier, and — when the tier is
+below FULL for a MINOR — one line of why that is safe (brief §6.6). Bending this rule
+silently rots it; bending it in writing does not. Never push without the operator's
 explicit ok.
 
 ## Tests
@@ -201,7 +195,6 @@ repo. Semantic tests only, no mock theatre.
 
 ## Work traces
 
-Orchestrated or multi-session work starts by creating
-`docs/briefs/YYYY-MM-DD-<slug>.md` (what/why) +
-`docs/execution-plans/YYYY-MM-DD-<slug>.md` (status frontmatter) before
+Orchestrated or multi-session work starts by creating `docs/briefs/YYYY-MM-DD-<slug>.md`
+(what/why) + `docs/execution-plans/YYYY-MM-DD-<slug>.md` (status frontmatter) before
 execution.

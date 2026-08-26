@@ -5,6 +5,148 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-08-26 — two `Unresolved` items closed, verified against the code
+
+Relocated verbatim from `active-context.md`. Both were still listed as open
+when they had already been fixed.
+
+**The `cs update` conflict amnesia is fixed in `v0.22.0`**: declining an
+overwrite now restores the OLD stored checksum (`cs/project_update.py:627` and
+`:630`), so the conflict is offered again on the next run. What survives is the
+poisoned ledger on a clone that declined BEFORE that tag — `mrcall-cs`
+`docs/ARCHITECTURE.md` — which is in `State now`.
+
+**The duplicate declarations are gone**: `cs config` run inside each clone on
+2026-08-26 ends with `No setting is declared in more than one place.` on BOTH.
+
+- **`cs update` asks about a template conflict ONCE and then forgets it for
+  ever.** `cs/project_update.py:528` records the newly rendered checksum into
+  `file_checksums` before any branch runs, so declining the overwrite (or
+  hitting the no-tty default, which keeps the local file) still stores "the
+  clone is in sync with this render". On the next run the `rendered_checksum
+  == old_tpl_checksum` short-circuit at `:535` skips the file entirely and the
+  operator is never asked again — the clone keeps a stale template-owned file
+  with no way for `cs update` to notice. It bit both clones at the `v0.14.0`
+  re-pin: each kept a `campaigns/README.md` that was one release behind AND
+  still carried an untranslated Italian sentence. Recovering it needed the
+  stored checksum to be forced back to the clone file's own hash so the
+  "unmodified, safe to overwrite" branch would fire. The fix is to record the
+  rendered checksum only when the render is actually WRITTEN, and to keep the
+  previous value when the operator declines.
+- **`cs config` reports duplicate declarations on BOTH clones and nobody has
+  acted on them**: 11 on `mrcall-cs`, 9 on `124-cs` — the same value written
+  into `~/.<slug>-cs/.env` and `manifest.toml`. They agree today and the env
+  layer wins in every case, so nothing is broken; the point is that two
+  repositories of truth for one value eventually disagree, and on `124-cs` one
+  of the duplicates is `cs_triage_mode` itself. Deleting the losing
+  declaration is an operator decision (which of the two he wants to keep), so
+  the 2026-08-24 re-pin reported them and changed neither.
+
+## 2026-08-26 — the v0.12.0 … v0.26.0 arc, tag by tag (superseded by CHANGELOG.md)
+
+Relocated verbatim from `active-context.md`, which had again accumulated a
+release-by-release narrative that `CHANGELOG.md` owns properly. The
+present-tense summary of what the surface IS now lives in `State now`.
+
+- **Latest release tag: `v0.26.0`. Current HEAD status: untagged.**
+  `v0.26.0` stops `cs unanswered` showing a closing courtesy as work. The
+  judgement — *does this message need a reply* — was BUILT IN THE ENGINE
+  (`zylch/utils/reply_need.py`, RPC `emails.needs_reply`, mrcall-desktop
+  `1139da2`) rather than guessed here, because it is a judgement about what a
+  person meant, in four languages, and a gratitude keyword list in `cs/` would
+  have been a second source of truth drifting from the engine's. The kernel
+  asks once per sweep (`cs/engine_view.settled`) and only ever moves a row into
+  its own printed section, with the engine's own reason on the line. It keeps
+  its own precondition: a verdict can re-label only a conversation Gmail says WE
+  answered. An out-of-band `handled` record is no longer expired by a thank-you
+  — the record is dated against the contact's newest message that actually owes
+  something, which is what put `cinziacamorali.er@gmail.com` back on the queue
+  the morning after a phone call closed her. Live 45-day queue: headline 11 → 11
+  byte-identical, *answered then they wrote again* 22 → 9, new *closing
+  courtesy* 11; at 90 days the headline is 30 → 30 and `direzione@acquos.it`
+  stays at 71d. Against an engine without the method the verb degrades to
+  exactly the `v0.25.0` reading and says so. FULL tier.
+  `v0.25.0` makes `cs unanswered` read CONVERSATIONS instead of addresses, and
+  ask the ENGINE what kind of message something is instead of re-deriving it
+  from IMAP headers. Three rules the engine settled months ago now reach the
+  sweep: our own auto-acknowledgement is not an answer (it was closing a
+  customer's four product questions 17 seconds after he asked them, and had
+  hidden him for 70 days), an inbound autoresponder is not a customer waiting,
+  and a conversation we already answered — the one a closing "thank you" lands
+  on — is not the same job as one nobody has touched. The queue keeps every row
+  and re-labels: `open` / `answered, then they wrote again` / `automatic, per
+  the engine`. The charter gains the rule behind it — **the engine is
+  authoritative for what it owns; when it is wrong, fix the engine** — in the
+  kernel AND in the clone template, so a clone inherits it. FULL tier: it
+  touches `gmail_archive`. `v0.24.0` makes `/cs-review` the ONE command an operator types when he sits
+  down: `cs config` (the switch and the triage mode, read rather than inferred
+  from a log tail), `cs unanswered --days 45 --crm` (the support queue, with
+  customers as their own group via the CRM port), `cs --version` + `git log`
+  (the pin actually installed, and what changed), a digest of
+  `docs/owner-actions.md`, per-draft uids and the out-of-band records — paid
+  for by a campaign block that had become 31 identical `[engaged]` rows. Its
+  tone rule is a gate, not a preference: the kill-switch is the operator's
+  standing decision and appears exactly once, as neutral state, with no alarm
+  and no suggestion to lift it (gate 36). FULL tier — the operator's primary
+  surface. `cs config` also gained the `system_senders` section.
+  `v0.23.0` lets a `CS_SYSTEM_SENDERS` entry be an fnmatch pattern, because a
+  bounce daemon's sending host rotates per message and an exact list is stale on
+  the next bounce; the same matcher (`cs/addr_match.py`) now reads the
+  `do_not_contact` table, which had kept comparing exactly and would have made a
+  wildcard suppression quieten the queue while outreach still went out. FULL
+  tier — the failure class is "a rule hides a real customer's mail".
+  `v0.21.0` changes no code: it drops the clone index template to 162 rendered
+  lines, moves its mechanism prose to `docs/ARCHITECTURE.md` § How it works,
+  and deletes three passages that recounted history rather than describing the
+  system. `v0.22.0` fixes `cs update`: declining an overwrite no longer
+  advances the stored checksum, so a declined conflict is offered again
+  instead of vanishing. Both are static tier.
+  The `v0.9.x` train (2026-08-21) rebuilt the operator-facing surface. What each
+  tag did is in `CHANGELOG.md`, not here — static tier through `v0.11.1`;
+  `v0.12.0` (2026-08-23) removed the `RATE_CAP` send quota from the code;
+  `v0.13.0` (2026-08-24) adds `cs config`, `cs draft-delete` and `cs handled`,
+  puts `handled` in the cron wrapper's deny set, lets
+  `[campaigns].excluded_campaign` hold more than one campaign, and finishes the
+  `RATE_CAP` removal in the templates; `v0.14.0` (2026-08-24) makes a FINISHED
+  campaign deliver nothing on any of the five send paths, enforcing
+  `[pack].status` and the new typed `[pack].ends_on`. Those three are FULL
+  re-collaudo. `v0.15.0` (2026-08-24) touches no `cs/` code: it cuts the
+  stamped clone index from 290 to 187 lines so a clone's own doc gate passes
+  again, and adds `docs/sessions/` to this repo's `.gitignore` and to the
+  clone template's — **static tier, and the suites were waived by the
+  operator, not run**. `v0.16.0` (2026-08-24) takes one company's operational
+  facts out of the project templates — the `company/` prose slots are now
+  instructions rather than the mother clone's own internals — extends the grep
+  gate to the bare brand and adds a shape contract on those slots, and makes
+  `company/**` create-if-missing so `cs update` never prompts about authored
+  prose again; **static tier, suites waived by the operator, not run**.
+  `v0.17.0` (2026-08-24) finishes that job on the last file that needed it:
+  `docs/ARCHITECTURE.md` is generated all the way down, and the section it used
+  to declare "NOT stamped" moves to the new `company/clone-notes.md` slot —
+  **static tier, suites waived by the operator, not run**. `v0.18.0`
+  (2026-08-24) makes `manifest.toml` the list of knobs that exist: six stamped
+  fields nothing read are gone (`[knobs].dry_run`, `[knobs].autonomous`,
+  `[repo].kernel_version`, `[skills]`, `[extensions]`,
+  `[campaigns].posture_note`), and the three the code reads on every tick —
+  `system_senders` and both send-guard knobs — are stamped for the first time.
+  `founder_sweep_enabled` and `platform_env_path` were proposed for the same
+  cut and KEPT, because what `cs config` reports for them is true.
+  **Static tier, suites waived by the operator, not run.** `v0.19.0`
+  (2026-08-24) makes the SMS send endpoint a kernel default, so
+  `[sms].enabled` is the whole switch and `cs init` can no longer emit an SMS
+  configuration that cannot send — **FULL tier by what it touches (`sms.py`,
+  `campaign.py`, and send capability itself); the suites were waived by the
+  operator and NOT run, so this tag shipped without the collaudo its own tier
+  calls for.** `v0.20.0` (2026-08-25) adds `cs escalated`: the sibling of
+  `handled` that says NOT resolved — still open, still owed an answer, but a
+  named human has personally taken the contact over, so the machine stops
+  offering them as work and no campaign path delivers to them. Every surface
+  that hides them also prints them, aged; the cron denies the verb in all six
+  command-text spellings, taking the wrapper's deny set from 34 to 40 entries.
+  **FULL tier by what it touches (the campaign delivery paths and the
+  permission surface).** `v0.8.0` remains the recorded tag→0.7.1 exception
+  (object pinned immutable).
+
 ## 2026-08-21 — correction: the LLM path was never fully "unwired"
 
 `active-context.md` claimed for weeks that the multi-provider LLM path was

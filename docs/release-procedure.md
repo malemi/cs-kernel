@@ -54,6 +54,7 @@ owner. Not before.
 | `requirements.txt` pin | `cs update --pin <tag>` — **this is the truth; every other clone claim must agree with it** |
 | `template-manifest.json` `init_data.repo_kernel_version` | bare number, no `v`. Today: fixed by hand at re-pin; a pending kernel change makes `cs update --pin` own it (active-context Next) |
 | `manifest.toml` `[repo].kernel_version` | NONE — removed from the template in `v0.18.0`. Nothing parsed it and no gate checked it, so it was right only when somebody remembered. Delete the line from an existing clone at the next re-pin; `requirements.txt` is the pin |
+| `requirements.lock` resolved commit | regenerate from the collaudo'd venv at every re-pin, and install it ALONE into a throwaway `uv venv` to prove it. Nothing enforces this: both clones' locks once resolved `v0.19.0`'s commit while `requirements.txt` said `v0.22.0`, so a venv rebuilt from the lock would have run a kernel three releases old |
 | `docs/ARCHITECTURE.md` "Kernel pin" row | stamped clones: re-render; as-built clones (124-cs): edit the row at re-pin |
 | `docs/active-context.md` pin claims (where present) | hand, at re-pin |
 

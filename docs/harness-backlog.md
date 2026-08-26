@@ -41,4 +41,19 @@ would prevent. Delete an entry as the enforcement lands.
   worked around it with a machine-detector in its own campaign prompt, which is
   clone-local prompt text, not a kernel capability. The fix belongs here:
   LLM-classify the newest inbound (human vs autoresponder/NDR) before treating it
-  as a reply.
+  as a reply. Verified still open on 2026-08-26 — `_inbound_since`
+  (`cs/campaign.py:113`) returns `gmail_archive.inbound_since` unfiltered. The
+  classification no longer has to be built: the engine answers it
+  (`is_auto_reply` on `emails.list_by_thread`, and `emails.needs_reply` since
+  `v0.26.0`), which is also the only place charter invariant 4 allows it to live.
+
+## Oversized docs — reviewed
+
+Verdicts recorded for every document the gate's size advisory names. `split` is
+work and gets its own `OPEN` entry above; `keep whole` carries its reason.
+
+| doc | lines at review | verdict | date |
+|---|---|---|---|
+| docs/execution-plans/2026-07-28-eternal-operator-loop.md | 631 | keep whole — one argument, read start to finish when the plan is unblocked | 2026-08-26 |
+| docs/sessions/5df6e400-9157-4214-8267-426c0ebea560.md | 560 | keep whole — gitignored per-session scratch, not repository knowledge | 2026-08-26 |
+| README.md | 465 | keep whole — the clone-onboarding manual, read by section | 2026-08-26 |
