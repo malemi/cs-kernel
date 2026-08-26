@@ -230,6 +230,7 @@ def cmd_unanswered(args) -> int:
     d = unanswered_mod.sweep(settings, days=args.days)
     rows, held, mine = d["open"], d["handled"], d["escalated"]
     resumed, automatic = d.get("resumed") or [], d.get("automatic") or []
+    courtesy = d.get("courtesy") or []
     crm_note = None
     if getattr(args, "crm", False):
         # One lookup per open sender through the CRM port. Opt-in because it
@@ -248,7 +249,7 @@ def cmd_unanswered(args) -> int:
     if not rows:
         # The re-labelled rows below ARE unanswered inbound, so an unqualified
         # "none" above a list of them would read as a contradiction.
-        extra = len(mine) + len(held) + len(resumed) + len(automatic)
+        extra = len(mine) + len(held) + len(resumed) + len(automatic) + len(courtesy)
         print(f"no unanswered inbound in the last {args.days} days"
               + (f" beyond the {extra} listed below" if extra else ""))
     elif crm_note is not None or not getattr(args, "crm", False):
@@ -330,12 +331,27 @@ def cmd_unanswered(args) -> int:
         for r in automatic:
             print(f"  {r['email']:38.38} {r['days_waiting']:>4}d  "
                   f"{(r['subject'] or '')[:52]}")
+    if courtesy:
+        # We answered, they said thank you. The ENGINE decided that, per
+        # message, and its own words for why ride on the row — so a verdict the
+        # operator disagrees with is both VISIBLE and reportable where the
+        # judgement lives. Printed last and never dropped: this is the section
+        # whose whole purpose is that the queue above it stopped carrying them.
+        print(f"\nclosing courtesy, per the engine — nothing owed "
+              f"({len(courtesy)}):")
+        for r in courtesy:
+            why = (r.get("reason") or "").strip()
+            print(f"  {r['email']:38.38} {r['days_waiting']:>4}d  "
+                  f"{(r['subject'] or '')[:36]}"
+                  + (f"  — {why[:44]}" if why else ""))
     if d.get("note"):
         # Say it. A sweep whose engine was asleep read every conversation the
-        # way it did before it could ask — which silently re-hides exactly the
-        # rows the two sections above exist to separate.
+        # way it did before it could ask — every message needing a reply, no
+        # autoresponder recognised — which silently re-merges exactly the rows
+        # the sections above exist to separate.
         print(f"\n  (engine non consultabile: {d['note']} — "
-              f"le risposte automatiche non sono state riconosciute)")
+              f"le risposte automatiche non sono state riconosciute e "
+              f"ogni messaggio risulta da rispondere)")
     return 0
 
 

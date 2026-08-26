@@ -54,25 +54,38 @@ existence it IS "a message from us, after theirs". The engine knows it is not an
 answer. Now the sweep does too, and an outbound the engine flags automatic no
 longer closes a conversation.
 
-Scope stays narrow: it does NOT read intent. It cannot tell a question from
-"thank you, that's sorted" and it does not try — a keyword list for gratitude is
-exactly the kind of local heuristic the charter forbids. What it CAN say without
-judging anybody's words is whether a human of ours ever answered in this
-conversation at all, and that turns out to separate the queue cleanly. So an
-open conversation goes to one of three places:
+Scope stays narrow: it does NOT read intent, and it never learned to. Whether
+"Va bene, la ringrazio tanto" closes a job or opens one is a judgement about
+what a person MEANT, in whatever language they wrote it, and a gratitude keyword
+list here would be exactly the local heuristic the charter forbids — a second
+opinion, in the wrong repo, drifting from the engine's. So that question is
+asked, not answered: `emails.needs_reply` (engine `zylch/utils/reply_need.py`),
+through `cs/engine_view.py`, once per sweep. The engine decides; this module
+decides only what to do with the answer, which is to move the row into its own
+section and keep printing it. An open conversation goes to one of four places:
 
   open      nobody of ours ever wrote a real answer here. This is the queue.
-  resumed   we DID answer, and they wrote again afterwards. Somebody who
-            replies to a completed job is not the same event as somebody nobody
-            has answered, and printing the two together is how a queue of
-            fifteen turns out to be one item of work.
+  resumed   we DID answer, they wrote again, and the engine says that message
+            still needs something from us. A real follow-up on a thread that
+            already has history — not the headline, but work.
+  courtesy  we answered, they wrote again, and the ENGINE says nothing is owed:
+            a closing thank-you on a finished job. Twenty-two of these once sat
+            in `resumed`, which is how a queue of eleven real jobs arrived
+            thirty-three rows long.
   automatic the engine classified their newest message as machine-generated.
 
-None of the three is dropped. All three print, each with its reason, because a
-contact that silently stops being raised looks like a bug and gets reported as
-one — and because `resumed` and `automatic` are the two buckets that would cost
-a real customer if the classification were wrong. A row in the wrong bucket is
-one line further down the page; a row deleted is gone.
+Nothing is dropped. All four print, each with its reason, because a contact that
+silently stops being raised looks like a bug and gets reported as one — and
+because `resumed`, `courtesy` and `automatic` are the buckets that would cost a
+real customer if the classification were wrong. A row in the wrong bucket is one
+line further down the page; a row deleted is gone. A NEW message from the same
+person is a new message: it is judged on its own and the previous verdict never
+covers it, which is what makes the whole thing reversible without a ledger.
+
+The default everywhere is NEEDS A REPLY. An engine that is asleep, that predates
+the method, that cannot classify one conversation, or that returns a verdict this
+module cannot pin to a specific message, all produce the same reading the sweep
+gave before it could ask — loud, and with a note saying so.
 
 The ignore list is matched as LITERALS PLUS fnmatch PATTERNS (`cs/addr_match.py`,
 shared with the suppression list), because the loudest robots cannot be
@@ -94,18 +107,22 @@ from .config import Settings
 
 #: Bucket precedence when one address has several open conversations. An
 #: address is reported at the strongest thing true of it: a conversation nobody
-#: answered outranks one they merely came back to, which outranks a robot. The
-#: ordering is the whole safety property of the roll-up — a customer with one
-#: unanswered thread and five courtesies must be reported as unanswered.
-_RANK = {"open": 0, "resumed": 1, "automatic": 2}
+#: answered outranks one they came back to, which outranks a robot, which
+#: outranks a thank-you. The ordering is the whole safety property of the
+#: roll-up — a customer with one unanswered thread and five courtesies must be
+#: reported as unanswered.
+_RANK = {"open": 0, "resumed": 1, "automatic": 2, "courtesy": 3}
 
 
-def _thread_state(msgs: list[dict], outs: list[dict], view) -> tuple[str, dict] | None:
+def _thread_state(msgs: list[dict], outs: list[dict], view, settled=None
+                  ) -> tuple[str, dict] | None:
     """State of ONE conversation: `(bucket, latest inbound)` or None if answered.
 
     `msgs` are its inbound messages, `outs` ours, `view` the engine's reading of
     it (or None when the engine could not be asked — in which case no message is
-    treated as automatic, which is exactly the behaviour before this existed).
+    treated as automatic, which is exactly the behaviour before this existed),
+    `settled` the engine's verdict that this conversation's newest inbound needs
+    no reply (or None, which means one is owed).
 
     An outbound the engine calls automatic is not an answer. That single line is
     the difference between a customer's four questions being closed by our own
@@ -122,6 +139,16 @@ def _thread_state(msgs: list[dict], outs: list[dict], view) -> tuple[str, dict] 
     # A human of ours did write here, just not last. They came back afterwards:
     # still open, but a different kind of open, and not the queue's headline.
     if human_out:
+        # TWO independent preconditions have to hold before a message may be
+        # called a closing courtesy, and they are checked in different places on
+        # purpose. Here: a real, non-automatic message of ours precedes it in
+        # THIS conversation, computed from Gmail. There: the engine ran its own
+        # `answered_before` over its own archive before it would even consider
+        # the question. Either one alone can be wrong; both wrong the same way
+        # on the same thread is the case this does not defend against, and it is
+        # the reason the row still prints.
+        if settled is not None and not settled.needs_reply(last.get("date")):
+            return ("courtesy", last)
         return ("resumed", last)
     return ("open", last)
 
@@ -135,14 +162,18 @@ def _partition(
     handled: dict[str, datetime] | None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
-) -> tuple[list[dict], list[dict], list[dict], list[dict], list[dict]]:
-    """(open, held out of band, taken over by a human, resumed, automatic) — one
-    pass, so the public views below never disagree about who is where. Every
-    sender that still has an open conversation lands in exactly one of the five.
+    settled: dict | None = None,
+) -> tuple[list[dict], list[dict], list[dict], list[dict], list[dict], list[dict]]:
+    """(open, held out of band, taken over by a human, resumed, automatic,
+    courtesy) — one pass, so the public views below never disagree about who is
+    where. Every sender that still has an open conversation lands in exactly one
+    of the six.
 
     `views` maps a thread key to the engine's reading of that conversation
     (`cs/engine_view.py`). Absent or empty, every message is treated as written
-    by a person, which is what the sweep assumed before it could ask.
+    by a person, which is what the sweep assumed before it could ask. `settled`
+    maps a thread key to the engine's verdict that its newest inbound needs no
+    reply; absent or empty, every message needs one — again the older reading.
     """
     self_addrs = {a.strip().lower() for a in self_addrs if a}
     # `self_addrs` stays exact on purpose: it is a list of identities we own,
@@ -172,14 +203,26 @@ def _partition(
     # plain dicts with no headers at all.
     inbound_by_thread: dict[tuple[str, str], list[dict]] = {}
     threads_of: dict[str, set[tuple[str, str]]] = {}
-    # The sender's NEWEST message, across every conversation. The two operator
-    # ledgers are keyed to this and not to whichever thread the split below
-    # picks: `handled` means "resolved out of band, and a later message re-opens
-    # them", and the message that re-opens them can arrive on any thread. Reading
-    # an OLDER thread's date there let a record written last night hold back a
-    # customer who wrote again this morning — the one direction that loses a
-    # customer, caught on the live queue rather than reasoned about.
-    latest_overall: dict[str, dict] = {}
+    # The sender's newest message that still OWES something, across every
+    # conversation. The two operator ledgers are keyed to this and not to
+    # whichever thread the split below picks: `handled` means "resolved out of
+    # band, and a later message re-opens them", and the message that re-opens
+    # them can arrive on any thread. Reading an OLDER thread's date there let a
+    # record written last night hold back a customer who wrote again this
+    # morning — the one direction that loses a customer, caught on the live
+    # queue rather than reasoned about.
+    #
+    # "That owes something" is the correction the engine made possible, and it
+    # is the same bug in its other costume. The record said the operator had
+    # phoned this customer and closed it; she then wrote "Va bene, la ringrazio
+    # tanto", and a thank-you re-opened a resolved contact for ever. A record is
+    # a statement about the CONTACT, so only a message that actually asks us for
+    # something may overturn it. When the engine says every message since is a
+    # courtesy the record stands; when it says nothing (asleep, older build,
+    # unclassifiable) every message owes something and the record expires
+    # exactly as it used to.
+    latest_overall: dict[str, dict] = {}  # newest of theirs, whatever it says
+    latest_owed: dict[str, dict] = {}  # newest of theirs that needs an answer
     for m in inbound:
         e = (m.get("email") or "").strip().lower()
         if not e or e in self_addrs or e in ignore:
@@ -192,6 +235,12 @@ def _partition(
         cur = latest_overall.get(e)
         if cur is None or m["date"] > cur["date"]:
             latest_overall[e] = m
+        sv = (settled or {}).get(key)
+        if sv is not None and not sv.needs_reply(m.get("date")):
+            continue
+        cur = latest_owed.get(e)
+        if cur is None or m["date"] > cur["date"]:
+            latest_owed[e] = m
 
     # Ours, keyed the same way. A Sent message with a thread key belongs to that
     # conversation and to no other — deliberately NOT also to each recipient's
@@ -219,7 +268,7 @@ def _partition(
     picked: dict[str, tuple[int, dict, str]] = {}
     for (e, key), msgs in inbound_by_thread.items():
         state = _thread_state(msgs, outs_by_thread.get((e, key), []),
-                              (views or {}).get(key))
+                              (views or {}).get(key), (settled or {}).get(key))
         if state is None:
             continue
         bucket, last_msg = state
@@ -235,6 +284,7 @@ def _partition(
     mine: list[dict] = []
     resumed: list[dict] = []
     automatic: list[dict] = []
+    courtesy: list[dict] = []
     for e, (_rank, m, bucket) in picked.items():
         last = m["date"]
         row = {
@@ -245,11 +295,17 @@ def _partition(
             "days_waiting": (now - last).days,
             "thread_key": (m.get("thread_key") or "").strip() or e,
             "state": bucket,
+            "reason": (
+                getattr((settled or {}).get((m.get("thread_key") or "").strip() or e), "reason", "")
+                if bucket == "courtesy" else ""
+            ),
         }
         # The ledger rows answer a question about the CONTACT, not about one of
         # their conversations, so they are dated by the contact's newest message
-        # — the same number these rows have always carried.
-        newest = latest_overall.get(e) or m
+        # that still owes an answer — which is the message a `handled` record is
+        # about. With no engine verdict that is the newest message full stop, the
+        # number these rows have always carried.
+        newest = latest_owed.get(e) or latest_overall.get(e) or m
         ledger_row = {
             **row,
             "last_inbound_date": newest["date"],
@@ -259,9 +315,11 @@ def _partition(
         }
         h = handled_at.get(e)
         if h is not None and newest["date"] <= h:
-            # Resolved off-email BEFORE they last wrote → not open work. The
-            # comparison is against their LATEST message, on ANY thread: one
-            # sent after the call is new, and lands in `out` on its own.
+            # Resolved off-email BEFORE they last asked for anything → not open
+            # work. The comparison is against their latest OWED message, on ANY
+            # thread: one sent after the call is new, and lands in `out` on its
+            # own; a thank-you sent after the call is not a new request and
+            # leaves the record standing.
             held.append({**ledger_row, "handled_at": h})
             continue
         # Checked AFTER handled, and the order is a decision: "resolved" beats
@@ -290,13 +348,15 @@ def _partition(
         # because the customer's mailer answered it last.
         if bucket == "automatic":
             automatic.append(row)
+        elif bucket == "courtesy":
+            courtesy.append(row)
         elif bucket == "resumed":
             resumed.append(row)
         else:
             out.append(row)
-    for bucket_rows in (out, held, mine, resumed, automatic):
+    for bucket_rows in (out, held, mine, resumed, automatic, courtesy):
         bucket_rows.sort(key=lambda r: r["last_inbound_date"])  # oldest first
-    return out, held, mine, resumed, automatic
+    return out, held, mine, resumed, automatic, courtesy
 
 
 def compute_open(
@@ -308,6 +368,7 @@ def compute_open(
     handled: dict[str, datetime] | None = None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
+    settled: dict | None = None,
 ) -> list[dict]:
     """Pure open-logic — no IMAP, unit-testable on plain dicts.
 
@@ -322,10 +383,10 @@ def compute_open(
       moment (resolved out of band — see the module docstring);
     - drop any sender in `escalated` (a human took the thread over; the row
       comes back from `compute_escalated`, never merged in here);
-    - drop any sender whose only open conversations are `resumed` or
-      `automatic` — those come back from `compute_resumed` / `compute_automatic`,
-      never merged in here, for the same reason `escalated` does not merge:
-      re-labelled, not deleted;
+    - drop any sender whose only open conversations are `resumed`, `automatic`
+      or `courtesy` — those come back from `compute_resumed` /
+      `compute_automatic` / `compute_courtesy`, never merged in here, for the
+      same reason `escalated` does not merge: re-labelled, not deleted;
     - return OPEN senders oldest-first (by latest_inbound date), each row
       {email, name, last_inbound_date, subject, days_waiting, thread_key, state}.
 
@@ -334,7 +395,7 @@ def compute_open(
     before threading existed.
     """
     return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
-                      views)[0]
+                      views, settled)[0]
 
 
 def compute_handled(
@@ -346,6 +407,7 @@ def compute_handled(
     handled: dict[str, datetime] | None = None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
+    settled: dict | None = None,
 ) -> list[dict]:
     """The senders `compute_open` held back BECAUSE of an out-of-band record —
     the same rows plus `handled_at`. The other half of the pair, so a caller
@@ -353,7 +415,7 @@ def compute_handled(
     a bug gets reported as one. (`sweep()` returns both in one pass; this is
     for a caller that already has the plain dicts.)"""
     return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
-                      views)[1]
+                      views, settled)[1]
 
 
 def compute_escalated(
@@ -365,13 +427,14 @@ def compute_escalated(
     handled: dict[str, datetime] | None = None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
+    settled: dict | None = None,
 ) -> list[dict]:
     """The senders a HUMAN has taken over — the same rows plus `escalated_at`,
     `escalated_owner`, `escalated_reason` and `days_escalated`. Still open work,
     still owed an answer; just not the machine's to answer. A caller that
     prints `compute_open` and not this one has re-created the silent drop."""
     return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
-                      views)[2]
+                      views, settled)[2]
 
 
 def compute_resumed(
@@ -383,6 +446,7 @@ def compute_resumed(
     handled: dict[str, datetime] | None = None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
+    settled: dict | None = None,
 ) -> list[dict]:
     """Senders we DID answer in this conversation, who then wrote again.
 
@@ -392,7 +456,7 @@ def compute_resumed(
     Printed, never dropped: this bucket is where a real follow-up question lands
     if it arrives after a reply, so nobody may treat it as noise."""
     return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
-                      views)[3]
+                      views, settled)[3]
 
 
 def compute_automatic(
@@ -404,6 +468,7 @@ def compute_automatic(
     handled: dict[str, datetime] | None = None,
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
+    settled: dict | None = None,
 ) -> list[dict]:
     """Senders whose newest message the ENGINE classified as machine-generated.
 
@@ -414,16 +479,42 @@ def compute_automatic(
     operator disagrees with is a bug report for the ENGINE, which he can only
     file if he can see the row."""
     return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
-                      views)[4]
+                      views, settled)[4]
+
+
+def compute_courtesy(
+    inbound: list[dict],
+    sent: list[dict],
+    self_addrs: set[str],
+    ignore: set[str],
+    now: datetime,
+    handled: dict[str, datetime] | None = None,
+    escalated: dict[str, dict] | None = None,
+    views: dict | None = None,
+    settled: dict | None = None,
+) -> list[dict]:
+    """Senders we answered, who wrote back, and whose message the ENGINE says
+    needs nothing from us — a closing thank-you on a finished job.
+
+    The verdict is the engine's and the reason it gave rides on the row, because
+    an operator who disagrees needs to see WHICH message was read this way and
+    file it where the judgement lives. Printed like every other re-labelled
+    bucket and never dropped: the whole point of the split is that the queue's
+    headline stops carrying these, not that they disappear. A `settled` mapping
+    that is absent or empty makes this list empty and puts every row back in
+    `compute_resumed`, which is the reading before the engine could be asked."""
+    return _partition(inbound, sent, self_addrs, ignore, now, handled, escalated,
+                      views, settled)[5]
 
 
 def sweep(settings: Settings, days: int) -> dict:
     """IMAP-backed sweep: {"open", "handled", "escalated", "resumed",
-    "automatic", "note"}. `handled` rows carry `handled_at` + `handled_reason`;
-    `escalated` rows carry `escalated_at`, `escalated_owner`, `escalated_reason`
-    and `days_escalated`; `note` is non-None only when the engine could not
-    classify some conversation, in which case those threads are read exactly as
-    they were before the engine was ever asked."""
+    "automatic", "courtesy", "note"}. `handled` rows carry `handled_at` +
+    `handled_reason`; `escalated` rows carry `escalated_at`, `escalated_owner`,
+    `escalated_reason` and `days_escalated`; `courtesy` rows carry the engine's
+    own `reason`; `note` is non-None only when the engine could not answer for
+    some conversation, in which case those threads are read exactly as they were
+    before the engine was ever asked — every message needing a reply."""
     from . import engine_view, gmail_archive
 
     inbound = gmail_archive.inbound_recent(settings, days)
@@ -462,9 +553,17 @@ def sweep(settings: Settings, days: int) -> dict:
         and (m.get("email") or "").strip().lower() not in ignore_set
     }
     keys.discard("")
-    views, note = engine_view.classify(settings, sorted(keys))
+    ordered = sorted(keys)
+    views, note = engine_view.classify(settings, ordered)
+    # The second question, in ONE call for the whole sweep: which of these
+    # conversations owes nothing. Asked about the same set — the engine screens
+    # the structural cases itself and only adjudicates what is left, so asking
+    # about a conversation nobody answered is free.
+    settled, owed_note = engine_view.settled(settings, ordered)
+    if owed_note:
+        note = f"{note}; {owed_note}" if note else owed_note
 
-    open_rows, held, mine, resumed, automatic = _partition(
+    open_rows, held, mine, resumed, automatic, courtesy = _partition(
         inbound,
         sent,
         self_addrs,
@@ -473,11 +572,13 @@ def sweep(settings: Settings, days: int) -> dict:
         {e: r["handled_at"] for e, r in records.items()},
         taken,
         views,
+        settled,
     )
     for row in held:
         row["handled_reason"] = (records.get(row["email"]) or {}).get("reason", "")
     return {"open": open_rows, "handled": held, "escalated": mine,
-            "resumed": resumed, "automatic": automatic, "note": note}
+            "resumed": resumed, "automatic": automatic, "courtesy": courtesy,
+            "note": note}
 
 
 def open_threads(settings: Settings, days: int) -> list[dict]:

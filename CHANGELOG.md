@@ -117,6 +117,123 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.26.0 — 2026-08-26
+
+**MINOR**: `cs unanswered` gains a fourth section — **closing courtesy, per the
+engine — nothing owed** — and an out-of-band `handled` record is no longer
+expired by a thank-you. Rows move between sections; nothing is dropped; the
+headline queue is unchanged. **Re-collaudo: FULL, both clones** — it touches
+`gmail_archive`'s consumer and the `handled` ledger, and the failure class is a
+real customer's mail. **Requires engine `mrcall-desktop` `1139da2` or later**;
+against an older engine the verb degrades to exactly the `v0.25.0` reading and
+says so.
+
+**Why.** `v0.25.0` split the queue and put twenty-two rows in *answered, then
+they wrote again*, which the operator was then expected to read in full. He
+read one and asked the question this release answers: *"l'ultimo messaggio suo
+è 'Va bene, la ringrazio tanto'. Da quando si risponde ai ringraziamenti per
+un task completato?"* A bucket of twenty-two somebody must eyeball is the same
+failure the split was supposed to fix, wearing a different label.
+
+**Where the fix went, and why not here.** The kernel could see that we had
+already answered in that conversation. It could not see that nothing was left
+to say, because that is a judgement about what a person MEANT — in Italian,
+Spanish, French or English — and the charter forbids the kernel from having an
+opinion about it. A gratitude keyword list in `cs/` would have been a second
+source of truth, in the wrong repo, drifting from the engine's. So the
+capability was BUILT IN THE ENGINE (`zylch/utils/reply_need.py`, RPC
+`emails.needs_reply`, mrcall-desktop `1139da2`) and the kernel only asks —
+`cs/engine_view.settled`, one batched call per sweep. That is the
+engine-authority rule from `v0.25.0` being obeyed rather than restated.
+
+**What the engine decides and what stays here.** *Does this message exist* →
+Gmail, unchanged. *What KIND of message is it* → the engine, both for
+autoresponders and now for "does this need a reply". *What to do with the
+answer* → here, and it is only ever to move a row into its own section and keep
+printing it, with the engine's own reason on the line so a verdict the operator
+disagrees with is visible AND traceable to where it can be fixed.
+
+**The kernel keeps its own precondition, deliberately.** A verdict can only
+re-label a conversation the kernel has independently established that WE
+answered, from Gmail. The engine has its own `answered_before` over its own
+archive; either can be wrong, and requiring both is what makes a single mistake
+survivable. A conversation nobody of ours ever answered stays in the headline
+queue whatever the verdict says (gate 39 pins it).
+
+**A stale verdict cannot reach a newer message.** The engine's archive can be
+BEHIND Gmail: it may have judged the thank-you that was newest when it synced
+while a real request has since arrived on the same thread. The verdict is joined
+to its message by whole-second timestamp — the same join `ThreadView.is_auto`
+already uses — so the stale case falls back to "needs a reply" by itself. A
+thread-level "settled" flag would have silenced that request.
+
+**`handled` no longer expires on a thank-you, and that is the same bug in its
+other costume.** The record means "resolved out of band", and any later inbound
+re-opened it. The operator phoned `cinziacamorali.er@gmail.com` and recorded it
+at 19:58; she wrote *"Va bene, la ringrazio tanto"* the next morning, and the
+record expired on a courtesy — putting her back on the queue the day after it
+was closed. A record is a statement about the CONTACT, so it is now dated
+against the contact's newest message that actually OWES something. A real
+request still re-opens the contact exactly as before, and with no engine answer
+every message owes something, so the rule reverts to the old one on its own.
+
+**Measured on the live 45-day queue, read-only, with a same-moment control**
+(the mailbox is live; a before/after taken minutes apart is not an experiment
+unless the control is re-run against the same snapshot):
+
+- headline **11 → 11**, byte-identical rows. Nothing entered the queue and
+  nothing left it.
+- *answered, then they wrote again* **22 → 9**. Eleven moved to the new
+  section — `studioconsulenza.pusceddu`, `info@guitaracademy.it`,
+  `dantonioordinazioni`, `spedicato1986`, `studiodentisticofoli`,
+  `info@maxpho.com`, `valerio.tavolazzi`, `andrea.inverardi`, `lucianobaldetti`,
+  `direzione@acquos.it`, `info@mediaship.it` — each one a bare "ok" or a
+  thank-you after our answer. `stefanoappiano@gmail.com` moved to *automatic*
+  instead: his courtesy thread stopped being his strongest, and an
+  `Auto-Submitted` holiday notice on another thread took its place, which is the
+  roll-up working. `cinziacamorali.er@gmail.com` moved to *handled out of band*,
+  where the operator's own phone call had put her.
+- the rows that DESERVE an answer did not move, and the ones kept in *resumed*
+  are kept for a stated reason: a question mark (`studiocasavecchia`,
+  `info@labaitacase`), a request with a date (`avv.vincenzorusso`,
+  `luragoderba`, `info@clinicaborgarello`), a body over the length bound
+  (`amministrazioni.lamonica`, `info@gildapotenza`, `studiominozzi`), an
+  attachment (`amedeo.lauritano`). The last two classes include courtesies the
+  screen refuses to judge — a false POSITIVE, which costs a glance.
+- at `--days 90` the headline is **30 → 30**, also byte-identical, and
+  `direzione@acquos.it` stays at **71d** on "Richiesta informazioni sulle nuove
+  funzionalità". His June thread is decided by the deterministic screen, reason
+  `no_prior_answer`, with no model involved: our own autoresponder is not an
+  answer, so nothing there is eligible to be called a courtesy. At `--days 45`
+  that thread is outside the window and his only in-window conversation IS the
+  August courtesy, so he moves — the window, not the classifier, is what decides
+  which acquos row you see.
+
+**Cost.** The classification measured **15.4 s** at `--days 45` (121
+conversations, 93 of them decided by the engine's deterministic screen and never
+sent to a model, 28 in ONE batched call) and **21.6 s** at `--days 90` (207
+conversations, 39 adjudicated). It is one extra RPC round trip, not one per
+thread. End to end the sweep should go from 18.0 s to roughly the mid-thirties
+at `--days 45`; that figure is an ESTIMATE and is marked as one — it cannot be
+measured until the engine change is deployed. An operator who wants it cheaper
+pins the engine's `MODEL_REPLY_NEED` to a smaller model; unset, it uses the
+engine default.
+
+**Degradation is the `v0.25.0` behaviour, deliberately.** An engine that is
+asleep, that predates the method (`-32601 Method not found`), that cannot read
+a conversation, or that returns a verdict this kernel cannot pin to a message,
+all produce the same reading as before — every message needing a reply — and
+the verb prints `engine non consultabile: … ogni messaggio risulta da
+rispondere`. Verified live against the currently deployed engine, which does not
+carry the method: the output is identical to the `v0.25.0` output apart from
+that one line.
+
+**Migration.** None for a clone. `cs unanswered --json` is unchanged in shape
+(still the open list, the triage skill's contract). `compute_courtesy` is new
+alongside the four existing `compute_*` views; `_partition` returns six lists
+where it returned five, and every public wrapper takes one new optional
+`settled=` argument, so an existing caller keeps its behaviour.
+
 ## v0.25.0 — 2026-08-26
 
 **MINOR**: `cs unanswered` reads CONVERSATIONS, not addresses, and ASKS the

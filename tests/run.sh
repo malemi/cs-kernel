@@ -768,6 +768,21 @@ for f in "$ROOT/CLAUDE.md" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
 done
 if [ "$GATE38" -eq 0 ]; then echo "OK"; else echo "FAIL: the engine-authority rule is not inherited by clones"; FAIL=1; fi
 
+step "39. a closing courtesy is the ENGINE's call, and the kernel only files it"
+# "l'ultimo messaggio suo è 'Va bene, la ringrazio tanto'. Da quando si risponde
+# ai ringraziamenti per un task completato?" — twenty-two of those sat in the
+# queue's second section, which the operator was expected to read in full. The
+# sweep could see that we had answered; it could not see that nothing was left
+# to say, and it must not learn to: that is meaning, and meaning is the engine's
+# (`emails.needs_reply`). Guards, in order: a settled courtesy leaves the
+# headline and keeps printing with the engine's own reason; NO engine answer
+# reads exactly as before, never quieter; a verdict cannot settle a conversation
+# we never answered; a STALE verdict cannot reach a newer message on the same
+# thread; an unanswered conversation still outranks the same contact's
+# thank-you; an autoresponder stays `automatic`; a thank-you no longer re-opens
+# a contact closed by phone, while a real request still does; nothing dropped.
+if "$VENV/bin/python" "$ROOT/tests/test_unanswered_courtesy.py"; then echo "OK"; else echo "FAIL: the closing-courtesy split regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

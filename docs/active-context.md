@@ -14,7 +14,24 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.25.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.26.0`. Current HEAD status: tagged as `v0.26.0`.**
+  `v0.26.0` stops `cs unanswered` showing a closing courtesy as work. The
+  judgement — *does this message need a reply* — was BUILT IN THE ENGINE
+  (`zylch/utils/reply_need.py`, RPC `emails.needs_reply`, mrcall-desktop
+  `1139da2`) rather than guessed here, because it is a judgement about what a
+  person meant, in four languages, and a gratitude keyword list in `cs/` would
+  have been a second source of truth drifting from the engine's. The kernel
+  asks once per sweep (`cs/engine_view.settled`) and only ever moves a row into
+  its own printed section, with the engine's own reason on the line. It keeps
+  its own precondition: a verdict can re-label only a conversation Gmail says WE
+  answered. An out-of-band `handled` record is no longer expired by a thank-you
+  — the record is dated against the contact's newest message that actually owes
+  something, which is what put `cinziacamorali.er@gmail.com` back on the queue
+  the morning after a phone call closed her. Live 45-day queue: headline 11 → 11
+  byte-identical, *answered then they wrote again* 22 → 9, new *closing
+  courtesy* 11; at 90 days the headline is 30 → 30 and `direzione@acquos.it`
+  stays at 71d. Against an engine without the method the verb degrades to
+  exactly the `v0.25.0` reading and says so. FULL tier.
   `v0.25.0` makes `cs unanswered` read CONVERSATIONS instead of addresses, and
   ask the ENGINE what kind of message something is instead of re-deriving it
   from IMAP headers. Three rules the engine settled months ago now reach the
