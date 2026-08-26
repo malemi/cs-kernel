@@ -14,8 +14,20 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.24.0`. Current HEAD status: untagged.**
-  `v0.24.0` makes `/cs-review` the ONE command an operator types when he sits
+- **Latest release tag: `v0.25.0`. Current HEAD status: tagged as `v0.25.0`.**
+  `v0.25.0` makes `cs unanswered` read CONVERSATIONS instead of addresses, and
+  ask the ENGINE what kind of message something is instead of re-deriving it
+  from IMAP headers. Three rules the engine settled months ago now reach the
+  sweep: our own auto-acknowledgement is not an answer (it was closing a
+  customer's four product questions 17 seconds after he asked them, and had
+  hidden him for 70 days), an inbound autoresponder is not a customer waiting,
+  and a conversation we already answered — the one a closing "thank you" lands
+  on — is not the same job as one nobody has touched. The queue keeps every row
+  and re-labels: `open` / `answered, then they wrote again` / `automatic, per
+  the engine`. The charter gains the rule behind it — **the engine is
+  authoritative for what it owns; when it is wrong, fix the engine** — in the
+  kernel AND in the clone template, so a clone inherits it. FULL tier: it
+  touches `gmail_archive`. `v0.24.0` makes `/cs-review` the ONE command an operator types when he sits
   down: `cs config` (the switch and the triage mode, read rather than inferred
   from a log tail), `cs unanswered --days 45 --crm` (the support queue, with
   customers as their own group via the CRM port), `cs --version` + `git log`

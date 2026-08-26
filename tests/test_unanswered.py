@@ -6,12 +6,21 @@ their last inbound" — from plain dicts, no IMAP. This guards the invariants th
 verb relies on: Sent-after-inbound closes a sender; Sent-before-inbound does not;
 no Sent at all stays open; self/ignore excluded; oldest-first ordering;
 days_waiting computed.
+
+One of those invariants got SHARPER, and this file says how. "Sent-before-inbound
+does not close a sender" still holds exactly — they are still reported, still
+with their age — but they are reported in `compute_resumed` rather than in the
+headline queue, because "we answered and they came back" and "nobody has ever
+answered them" are different jobs and printing them together is what made a
+queue of fifteen read as fifteen tasks. The test asserts BOTH halves: the sender
+leaves `open`, and the sender is still somewhere. A silent disappearance would
+be the failure this whole module exists to prevent.
 """
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from cs.unanswered import compute_open
+from cs.unanswered import compute_open, compute_resumed
 
 NOW = datetime(2026, 7, 16, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -59,7 +68,15 @@ def run() -> None:
     assert "answered@example.com" not in emails, "sender replied-after must be closed"
     assert "me@example.com" not in emails, "self must be excluded"
     assert "noreply@system.example" not in emails, "ignore must be excluded"
-    assert "stale-reply@example.com" in emails, "reply-before-inbound must stay OPEN"
+    assert "stale-reply@example.com" not in emails, \
+        "a sender we already answered once does not head the queue"
+    resumed = compute_resumed(
+        inbound, sent,
+        self_addrs={"me@example.com"}, ignore={"noreply@system.example"}, now=NOW,
+    )
+    # ...and is NOT dropped: same row, same age, one section further down.
+    assert [r["email"] for r in resumed] == ["stale-reply@example.com"], resumed
+    assert resumed[0]["days_waiting"] == 3, resumed[0]
     assert "cold@example.com" in emails, "never-replied must stay OPEN"
     assert emails == sorted(
         emails, key=lambda e: {r["email"]: r["last_inbound_date"] for r in rows}[e]

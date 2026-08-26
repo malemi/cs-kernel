@@ -43,6 +43,33 @@ its **content is yours** to author) · `campaigns/<name>/` (pack content) ·
 Rule of thumb: **behavior/shape → kernel template; company data → clone.** A change
 that would help every clone belongs in `cs-kernel` (rule of two + anti-fork charter).
 
+## 0b. The engine is authoritative for what it owns
+
+We do not call it the engine for fun. **Synced mail, entity memory, the task
+ledger, reply and auto-reply classification, whether a message needs an answer
+— those are the ENGINE's judgements.** Not the kernel's, not this clone's.
+Ask it; do not re-derive it.
+
+**When the engine is wrong, fix the engine.** Not a second reading in `cs`, not
+a heuristic in `ext/`, not a keyword list in a skill. A patch outside the engine
+to compensate for the engine leaves two implementations that disagree, and
+nobody able to say which is right — and the wrong one keeps a customer waiting.
+
+The failure this rule is written from: `cs unanswered` decided "answered or not"
+from IMAP headers while the engine had already classified the same messages. So
+a customer's *"Va bene, la ringrazio tanto"* — a thank-you on a finished job —
+was raised as open work, and our own English autoresponder, landing in Gmail
+Sent seventeen seconds after four product questions, counted as a human answer
+and hid that customer for seventy days.
+
+**One deliberate exception, and it earned its place with a measurement:** dedup
+truth is Gmail's own Sent folder, never the engine archive — the archive was
+observed asserting a send (2026-07-28) that Gmail Sent does not contain, and
+believing it would mean never writing to somebody we never wrote to. So:
+*does this message exist* → Gmail. *What kind of message is it* → the engine.
+An exception with evidence behind it is not a licence for the next one; anything
+else claiming exception status needs the same standard of proof.
+
 ## 1. Where the machinery is written down
 
 - **Engine daemon, headless auth, RPC response shapes, the daily pipeline** —

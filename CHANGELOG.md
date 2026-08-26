@@ -108,6 +108,86 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.25.0 — 2026-08-26
+
+**MINOR**: `cs unanswered` reads CONVERSATIONS, not addresses, and ASKS the
+engine what kind of message something is instead of re-deriving it from IMAP
+headers. Two new output sections; rows move between sections; nothing is
+dropped. **Re-collaudo: FULL, both clones** — it touches `gmail_archive`, and
+the failure class either way is a real customer's mail.
+
+**Why.** The operator, on finding a customer's *"Va bene, la ringrazio tanto"*
+raised as work needing an answer: *"guarda che questa cosa è stata risolta in
+Desktop all'inizio… che facciamo, continuiamo con le stesse cazzate?"* He is
+right. The engine has classified auto-replies since the auto-ack incidents of
+2026-06/07 — `zylch/utils/auto_reply_detector.py`, and every consumer already
+treats a user-from auto-reply as NOT engagement (`task_creation_email.py`,
+`thread_presenter.py`, `task_hygiene.py`). The kernel was re-deriving that
+judgement from headers, badly, and getting a different answer.
+
+**Measured on the live queue, and each of the four is a named row.**
+
+- *Our own autoresponder counted as an answer.* An English auto-acknowledgement
+  landed in Gmail Sent **17 seconds** after a customer's four product questions
+  (2026-06-15 18:06:33 → 18:06:50 UTC). By pure existence it is "a message from
+  us, after theirs", so the sweep called him answered for **71 days**. The
+  engine's `is_auto_reply` on that exact message is `True`. Now an outbound the
+  engine flags automatic does not close a conversation, and he surfaces at 71d
+  with the right subject.
+- *Answered in the thread, to somebody else.* A colleague who was only in Cc sat
+  on the queue **28 days** while the thread's principal had been answered on
+  2026-07-28. Per-thread grouping closes him. No extra IMAP work: `_fetch_headers`
+  already asked for MESSAGE-ID, REFERENCES and IN-REPLY-TO on both sides.
+- *A later thread closed an older one.* Helping somebody today marked an older,
+  never-answered conversation of theirs as done. On the live mailbox this was
+  hiding genuine work at 19–36 days from four contacts, one of them a "richiesta
+  contatto telefonico" nobody ever replied to.
+- *A closing courtesy headed the queue.* Reported now under **answered, then
+  they wrote again** — and this is NOT intent detection. There is no keyword
+  list for gratitude and there must not be: the sweep only asks whether a human
+  of ours ever answered in this conversation, which it can see without reading a
+  word.
+
+**The division of labour, and it is the point of the release.** *Does this
+message exist* → Gmail, unchanged, because the engine archive was measured
+asserting a 2026-07-28 send that Gmail Sent does not contain. *What KIND of
+message is it* → the engine, through the new `cs/engine_view.py`. The thread key
+(`cs/thread_key.py`) is the engine's own rule transcribed — an ADDRESS, not a
+judgement — and it is what lets the kernel ask about the same conversation: on
+today's queue it resolved **39 of 39** threads to an engine thread with messages.
+
+**Charter.** New invariant, in `CLAUDE.md` AND in
+`cs/templates/project/CLAUDE.md.j2` § 0b so every clone inherits it through
+`cs update`: **the engine is authoritative for what it owns; when it is wrong,
+fix the engine** — not a second reading in `cs`, not a heuristic in `ext/`. Its
+one exception is the Gmail-Sent dedup rule, which has a measurement behind it
+rather than a preference. Gate 38 checks both files carry it.
+
+**Degradation is the old behaviour, deliberately.** An engine that cannot be
+reached leaves every conversation read exactly as before, and the verb SAYS so
+on its last line. Nothing here fails closed.
+
+**What did NOT change, and why.** Two live autoresponders (`gildains@…`,
+`info@stufasmart.it`) stay in the headline: their mail carries **no**
+`Auto-Submitted` / `X-Autoreply` / `Precedence` / `Return-Path` — verified
+against raw Gmail headers — so there is nothing for the engine to classify and
+nothing the kernel may invent. Per the charter that is an ENGINE question
+(content classification; `detect_vacation_responder` exists at
+`auto_reply_detector.py:175` with **zero** production callers, and would not
+have caught either of these). No `mrcall-desktop` change ships in this tag.
+
+**Known limitation, named rather than discovered later.** A sender whose client
+strips `Message-ID`/`References` (Gmail rewrites these as
+`…SMTPIN_ADDED_BROKEN@mx.google.com`) cannot be threaded to the message it
+replies to, so such a reply reads as `open` rather than `resumed`. That is
+over-inclusion — the safe direction — but it is why a bulk-outreach reply wave
+appears in the queue rather than beside its own broadcast.
+
+**Migration**: none. `cs unanswered --json` is unchanged (still the open list,
+the triage skill's contract); rows gain `thread_key` and `state`. Callers of
+`compute_open` see senders they already answered once move to `compute_resumed`
+— `tests/test_unanswered.py` pins both halves of that.
+
 ## v0.24.0 — 2026-08-26
 
 **MINOR**: `/cs-review` becomes the ONE command an operator types when he sits

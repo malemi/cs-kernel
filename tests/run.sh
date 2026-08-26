@@ -739,6 +739,35 @@ step "36. /cs-review — the ONE command, and the kill-switch is state, not news
 # verbs it runs are allowed, so the one command does not stop on a prompt.
 if "$VENV/bin/python" "$ROOT/tests/test_review_bootstrap.py"; then echo "OK"; else echo "FAIL: the review bootstrap regressed"; FAIL=1; fi
 
+step "37. unanswered reads CONVERSATIONS, and asks the engine what a message IS"
+# The address-keyed sweep was wrong four ways at once on the live queue: a
+# colleague only Cc'd on an answered thread sat open 28 days; a later helpful
+# reply closed an older untouched conversation; our OWN auto-acknowledgement,
+# in Gmail Sent 17 seconds after four product questions, counted as an answer
+# and hid them for 70 days; and a customer's "thank you" headed the queue as
+# open work. Guards, in order: the thread key closes a participant the reply
+# was not addressed to; a new thread does not close an old one; an outbound the
+# ENGINE flags automatic does not close a conversation, while an ABSENT engine
+# view degrades to exactly the old behaviour; a courtesy after our answer is
+# re-labelled and still printed; `automatic` is the engine's call and never the
+# kernel's; an autoresponder on one thread cannot bury a real request on
+# another; and an operator's own `handled` record still outranks all of it.
+if "$VENV/bin/python" "$ROOT/tests/test_unanswered_threads.py"; then echo "OK"; else echo "FAIL: the conversation-level sweep regressed"; FAIL=1; fi
+
+step "38. the engine is authoritative — the charter rule reaches every clone"
+# "se l'engine non fa il suo lavoro, si corregge l'engine, non si rappezza
+# altro" (operator, 2026-08-26). The rule is only worth writing down if a CLONE
+# inherits it, so it must be in the rendered project CLAUDE.md and not only in
+# the kernel's own charter. Both files are checked, plus the measured exception
+# that keeps it honest (Gmail Sent, not the engine archive, is dedup truth).
+GATE38=0
+for f in "$ROOT/CLAUDE.md" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
+  grep -qi "authoritative" "$f" || { echo "MISSING: engine-authority rule in $f"; GATE38=1; }
+  grep -qi "fix the engine" "$f" || { echo "MISSING: 'fix the engine' in $f"; GATE38=1; }
+  grep -qi "Sent" "$f" || { echo "MISSING: the dedup-truth exception in $f"; GATE38=1; }
+done
+if [ "$GATE38" -eq 0 ]; then echo "OK"; else echo "FAIL: the engine-authority rule is not inherited by clones"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

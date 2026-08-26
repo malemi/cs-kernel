@@ -22,6 +22,7 @@ from html.parser import HTMLParser
 
 from .config import Settings
 from .gmail_drafts import _imap
+from .thread_key import thread_key
 
 
 def _parse_date(raw):
@@ -209,7 +210,12 @@ def inbound_recent(settings: Settings, days: int) -> list[dict]:
     runs — same caveat as `sent_to`). Messages FROM the operator itself (i.e. our
     own sends, which All Mail also holds) are dropped here. Read-only.
 
-    Each row: {email, name, date (tz-aware), subject, message_id}."""
+    Each row: {email, name, date (tz-aware), subject, message_id, thread_key}.
+    `thread_key` is the conversation this message belongs to (`cs/thread_key.py`)
+    and costs nothing: REFERENCES and IN-REPLY-TO are already in the one FETCH
+    above. It is what lets the sweep ask "was this CONVERSATION answered"
+    instead of "was this ADDRESS written to", which are different questions
+    whenever a thread has more than one participant."""
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
     self_addr = (settings.email_address or "").strip().lower()
@@ -235,6 +241,9 @@ def inbound_recent(settings: Settings, days: int) -> list[dict]:
                     "date": dt,
                     "subject": h.get("Subject") or "",
                     "message_id": h.get("Message-ID") or "",
+                    "thread_key": thread_key(
+                        h.get("Message-ID"), h.get("References"), h.get("In-Reply-To")
+                    ),
                 }
             )
         return out
@@ -432,7 +441,11 @@ def sent_recent(settings: Settings, days: int) -> list[dict]:
     """Every Sent message whose Date HEADER is within the last `days`. Same
     Date-header windowing + SINCE margin as `inbound_recent`. Read-only.
 
-    Each row: {to (list of bare lowercased addresses from To+Cc), date}."""
+    Each row: {to (list of bare lowercased addresses from To+Cc), date,
+    thread_key}. `thread_key` is the conversation the message answers — the
+    same key `inbound_recent` puts on the other side, so the two join without a
+    round trip. It is what makes an answer sent to a thread's PRINCIPAL count
+    for the colleague who was only in Cc."""
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
     M = _imap(settings)
@@ -451,7 +464,15 @@ def sent_recent(settings: Settings, days: int) -> list[dict]:
                 for _, a in getaddresses([h.get("To") or "", h.get("Cc") or ""])
                 if a and a.strip()
             ]
-            out.append({"to": addrs, "date": dt})
+            out.append(
+                {
+                    "to": addrs,
+                    "date": dt,
+                    "thread_key": thread_key(
+                        h.get("Message-ID"), h.get("References"), h.get("In-Reply-To")
+                    ),
+                }
+            )
         return out
     finally:
         try:

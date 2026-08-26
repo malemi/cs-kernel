@@ -220,14 +220,16 @@ def cmd_contacted(args) -> int:
 def cmd_unanswered(args) -> int:
     # DETERMINISTIC replacement for the flaky LLM discovery query. Enumerate
     # recent inbound (Gmail All Mail, Date-header windowed) and subtract every
-    # sender we've since written to (Gmail Sent = dedup ground truth). No LLM in
-    # the discovery loop — see cs/unanswered.py. Over-inclusion of an
-    # autoresponder is acceptable; the skill filters with judgment downstream.
+    # CONVERSATION we've since answered (Gmail Sent = dedup ground truth). No LLM
+    # in the discovery loop — see cs/unanswered.py. What KIND of message it is
+    # (autoresponder or not) is the engine's judgement, asked for, never
+    # re-derived here.
     settings = config.load()
     from . import unanswered as unanswered_mod
 
     d = unanswered_mod.sweep(settings, days=args.days)
     rows, held, mine = d["open"], d["handled"], d["escalated"]
+    resumed, automatic = d.get("resumed") or [], d.get("automatic") or []
     crm_note = None
     if getattr(args, "crm", False):
         # One lookup per open sender through the CRM port. Opt-in because it
@@ -246,7 +248,7 @@ def cmd_unanswered(args) -> int:
     if not rows:
         # The re-labelled rows below ARE unanswered inbound, so an unqualified
         # "none" above a list of them would read as a contradiction.
-        extra = len(mine) + len(held)
+        extra = len(mine) + len(held) + len(resumed) + len(automatic)
         print(f"no unanswered inbound in the last {args.days} days"
               + (f" beyond the {extra} listed below" if extra else ""))
     elif crm_note is not None or not getattr(args, "crm", False):
@@ -308,6 +310,32 @@ def cmd_unanswered(args) -> int:
                 f"{_fmt_local(r['handled_at'], settings.timezone)}{why}"
             )
         print(f"  (put one back: {settings.prog_name or 'cs'} handled <email> --undo)")
+    if resumed:
+        # NOT filtered away: re-labelled, like every other section here. We
+        # answered in this conversation and they wrote again after — usually a
+        # thank-you closing a finished job, which is not work and must not head
+        # the queue. Sometimes a real follow-up, which is why it is printed with
+        # its age and subject and not swallowed.
+        print(f"\nanswered, then they wrote again — read, do not assume "
+              f"({len(resumed)}):")
+        for r in resumed:
+            print(f"  {r['email']:38.38} {r['days_waiting']:>4}d  "
+                  f"{(r['subject'] or '')[:52]}")
+    if automatic:
+        # The ENGINE classified their newest message as machine-generated; this
+        # verb does not have an opinion about it. Named as the engine's call, so
+        # a row the operator disagrees with is reported where it can be fixed.
+        print(f"\nautomatic reply, per the engine — nobody is waiting "
+              f"({len(automatic)}):")
+        for r in automatic:
+            print(f"  {r['email']:38.38} {r['days_waiting']:>4}d  "
+                  f"{(r['subject'] or '')[:52]}")
+    if d.get("note"):
+        # Say it. A sweep whose engine was asleep read every conversation the
+        # way it did before it could ask — which silently re-hides exactly the
+        # rows the two sections above exist to separate.
+        print(f"\n  (engine non consultabile: {d['note']} — "
+              f"le risposte automatiche non sono state riconosciute)")
     return 0
 
 

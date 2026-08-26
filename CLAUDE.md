@@ -89,6 +89,24 @@ Where a subject has an owner, the owner is named inline — go there.
      session, never inferred from anything the agent read, and denied in the
      cron wrapper because it SILENCES. Why that is a security boundary and
      not a preference: CHANGELOG `v0.13.0`. No clone needs it headless.
+   - **The engine is AUTHORITATIVE for what it owns.**
+     **When it is wrong, fix the engine.** Synced mail, entity memory, the
+     task ledger, reply and auto-reply classification, whether a message needs an answer —
+     the engine's judgements. The kernel asks (`cs/engine_view.py`); it does
+     not re-derive them, and a clone does not paper over them in `ext/` or in
+     a skill. Two implementations of the same judgement disagree, and nobody
+     can say which is right. Written from a measured failure:
+     `cs unanswered` decided "answered or not" from IMAP headers although the
+     engine had already classified those same messages, so a customer's
+     thank-you on a finished job was raised as open work, and our OWN
+     autoresponder — in Gmail Sent 17 seconds after four product questions —
+     counted as a human answer and hid that customer for 70 days. The rule
+     ships to every clone in `templates/project/CLAUDE.md.j2` § 0b, because a
+     charter only one repo can read is not a charter. Its ONE exception is the
+     dedup rule directly above, and that exception has a measurement behind it
+     rather than a preference — which is the standard any further one must
+     meet. In short: *does this message exist* → Gmail; *what kind of message
+     is it* → the engine.
    - **Module path `cs` is frozen**; the console script `cs` is a second
      door onto the same `cs.cli:main`. Permission rules match command TEXT,
      so a clone's permission strings must enumerate every spelling that
