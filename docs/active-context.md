@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.24.0`. Current HEAD status: tagged as `v0.24.0`.**
+- **Latest release tag: `v0.24.0`. Current HEAD status: untagged.**
   `v0.24.0` makes `/cs-review` the ONE command an operator types when he sits
   down: `cs config` (the switch and the triage mode, read rather than inferred
   from a log tail), `cs unanswered --days 45 --crm` (the support queue, with
@@ -94,8 +94,10 @@ what is *current*.
   The old private `hahnbanach/cs-kernel` is archived; the clone guide points
   at the public one.
 - **The surface a clone now gets:** five `cs-`-prefixed commands —
-  `/cs-review` (the ONE sit-down bootstrap: what the operator prepared, plus
-  the day's outreach candidates where a producer is wired), `/cs-account`,
+  `/cs-review` (the ONE sit-down bootstrap — settings in force, every draft by
+  uid, open tasks and escalations, the 45-day support queue with customers
+  apart, the day's outreach candidates where a producer is wired, repo state
+  and what is blocked on the owner), `/cs-account`,
   `/cs-cron`, `/cs-campaign`, `/cs-help` — over the operator skills
   (`cs-operator`, `cs-triage-mail`, `cs-campaign-tick`, `cs-customer`,
   `cs-find-document`). `/munchausen` no longer exists. Since v0.10.0 every
