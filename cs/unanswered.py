@@ -263,3 +263,50 @@ def sweep(settings: Settings, days: int) -> dict:
 def open_threads(settings: Settings, days: int) -> list[dict]:
     """Just the open senders (the sweep's headline list)."""
     return sweep(settings, days)["open"]
+
+
+def crm_annotate(settings, rows: list[dict], lookup=None) -> str | None:
+    """Attach a compact CRM label to each row, IN PLACE, and return the first
+    degradation note (or None).
+
+    WHY: the queue's size is not its workload. A sweep that prints a paying
+    customer's outage next to a conference invitation and a bounce gives the
+    same weight to both, and the operator re-does that separation by hand every
+    morning. The CRM already knows which sender is a customer, so the sweep can
+    say it — through the port (`cs/crm`), never a company switch, so a clone on
+    a different backend gets the same column from its own adapter.
+
+    Each row gains `crm` (the adapter's own facts for that address, rendered
+    through its `render_hints` — never a lowest-common-denominator label the
+    kernel invents) and `crm_known` (a record exists). No record and a degraded
+    backend both leave `crm` empty, but only the second sets `crm_known` False
+    for a reason worth printing — hence the returned note: ONE line in the
+    caller, not one per address.
+
+    `lookup` is injectable so the grouping is testable without a backend; the
+    default is the port's own, which NEVER raises.
+    """
+    if lookup is None:
+        from . import crm as _crm
+
+        lookup = _crm.lookup
+    note: str | None = None
+    for row in rows:
+        try:
+            res = lookup(settings, row["email"])
+        except Exception as e:  # noqa: BLE001 — the port promises not to, belt and braces
+            row["crm"], row["crm_known"] = "", False
+            note = note or f"{type(e).__name__}: {e}"
+            continue
+        if not res.ok and note is None and res.note:
+            note = res.note
+        if not res.rows:
+            row["crm"], row["crm_known"] = "", False
+            continue
+        first = res.rows[0]
+        facts = [str(first.facts.get(k, "")).strip() for k in (res.render_hints or [])]
+        label = "/".join(f for f in facts if f) or (first.label or res.source)
+        if len(res.rows) > 1:
+            label = f"{label} (+{len(res.rows) - 1})"
+        row["crm"], row["crm_known"] = label, True
+    return note

@@ -228,6 +228,13 @@ def cmd_unanswered(args) -> int:
 
     d = unanswered_mod.sweep(settings, days=args.days)
     rows, held, mine = d["open"], d["handled"], d["escalated"]
+    crm_note = None
+    if getattr(args, "crm", False):
+        # One lookup per open sender through the CRM port. Opt-in because it
+        # costs a round trip per row and the triage skill does not need it;
+        # the review bootstrap does, because "who here is a paying customer"
+        # is the first thing a human re-derives by hand otherwise.
+        crm_note = unanswered_mod.crm_annotate(settings, rows)
     if args.json:
         # The open list, exactly as before: this is the triage skill's PRIMARY
         # candidate feed and its shape is a contract. The out-of-band and
@@ -242,10 +249,33 @@ def cmd_unanswered(args) -> int:
         extra = len(mine) + len(held)
         print(f"no unanswered inbound in the last {args.days} days"
               + (f" beyond the {extra} listed below" if extra else ""))
-    else:
+    elif crm_note is not None or not getattr(args, "crm", False):
+        # Plain sweep — the shape the triage skill has always parsed. A CRM
+        # lookup that degraded prints here too: a half-filled column would
+        # read as "these are not customers", which is the one wrong answer.
         print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
         for r in rows:
             print(f"{r['email']:38.38} {r['days_waiting']:>4}d  {(r['subject'] or '')[:60]}")
+        print(f"\ntotal: {len(rows)} unanswered (oldest first)")
+        if crm_note:
+            print(f"  (CRM non consultabile: {crm_note})")
+    else:
+        # Customers first, and SEPARATELY — same rows, same order, grouped by
+        # the one fact that decides whose morning this is.
+        known = [r for r in rows if r.get("crm_known")]
+        rest = [r for r in rows if not r.get("crm_known")]
+        if known:
+            print(f"clienti (in CRM) — {len(known)}:")
+            print(f"{'EMAIL':38} {'WAIT':>5}  {'CRM':22} SUBJECT")
+            for r in known:
+                print(f"{r['email']:38.38} {r['days_waiting']:>4}d  "
+                      f"{(r.get('crm') or ''):22.22} {(r['subject'] or '')[:42]}")
+        if rest:
+            print(f"{chr(10) if known else ''}non in CRM — {len(rest)}:")
+            print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
+            for r in rest:
+                print(f"{r['email']:38.38} {r['days_waiting']:>4}d  "
+                      f"{(r['subject'] or '')[:60]}")
         print(f"\ntotal: {len(rows)} unanswered (oldest first)")
     if mine:
         # NOT filtered away: re-labelled. These are open threads a human owns,
@@ -1250,6 +1280,12 @@ def main(argv=None) -> int:
     )
     pun.add_argument("--days", type=int, default=14)
     pun.add_argument("--json", action="store_true")
+    pun.add_argument(
+        "--crm",
+        action="store_true",
+        help="group the open rows by CRM record (customers first) and show each "
+        "one's CRM facts — one lookup per row through the [crm] adapter",
+    )
     pun.set_defaults(func=cmd_unanswered, reads_operator_mailbox=True)
 
     phd = sub.add_parser(

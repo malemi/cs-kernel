@@ -59,12 +59,18 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     ),
     ("Ports (adapters)", ("crm_adapter", "producer_adapter")),
     ("Campaigns", ("excluded_campaign",)),
+    # `system_senders` decides who is never a customer — it removes senders
+    # from the support queue and from the outreach worklist alike. Since
+    # v0.23.0 an entry may be an fnmatch PATTERN, so one line can hide a whole
+    # domain, and the verb whose entire job is "the settings actually in force"
+    # was silent about it: an invisible filter is indistinguishable from a bug.
+    ("Never a customer", ("system_senders",)),
 )
 
 # Comma-separated settings. Printed with a space after each comma so several
 # values stay readable on one line — a reader scanning for "is batch2 excluded?"
 # must not have to parse `a,b` by eye. The stored value is untouched.
-LIST_FIELDS: frozenset[str] = frozenset({"excluded_campaign"})
+LIST_FIELDS: frozenset[str] = frozenset({"excluded_campaign", "system_senders"})
 
 # Never print the value of these — presence only. `firebase_web_api_key` is a
 # public Firebase key and `firebase_sa_path` is only a path, but presence is

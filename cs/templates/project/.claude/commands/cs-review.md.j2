@@ -1,23 +1,31 @@
 ---
-description: The ONE review bootstrap — run it when you sit down. Verifies the {{ email_address }} engine session, shows what the headless operator prepared and left for you (drafts in Gmail Drafts, open tasks/escalations, campaign flags, last tick){% if producer_adapter != 'none' %}, then runs the producer worklist and builds a dossier + verdict for every outreach candidate{% endif %}. ZERO side effects — no drafting, no sending, no memory writes; YOU review and authorise.
+description: The ONE command you type when you sit down. Verifies the {{ email_address }} engine session, states the settings in force, shows what the headless operator prepared and left for you (every draft by uid, open tasks/escalations, what is deliberately out of the queue, campaign flags, last tick), the support queue with the customers separated out{% if producer_adapter != 'none' %}, the producer worklist with a dossier + verdict per candidate{% endif %}, and what changed in the repo plus what is waiting on you. ZERO side effects — no drafting, no sending, no memory writes; YOU review and authorise.
 ---
 
 # {{ company_prog_name }} — Operator Review
 
-The bootstrap you run when you sit down. Two halves, one command:
-what the headless operator **prepared** for you (it is draft-only by
-permission — it never sent anything){% if producer_adapter == 'none' %}. No producer (lead source) is
-wired for {{ company_slug }} — reply-only, so there is no outreach half; when one
-is added (`cs/ingest/`), this same command grows the day's candidate
-table{% else %}, and the day's **outreach candidates**
-from the `{{ producer_adapter }}` producer, each with a dossier and a
-verdict{% endif %}.
+**This is the only command he has to type.** He opens Claude Code, runs
+`/cs-review`, and everything he needs is on the screen — he never has to
+say where to look. If a question a returning operator has is answerable
+from a read-only verb, it is answered HERE rather than left for him to
+ask.
+
+Six things, one command: what is **in force**, what the headless operator
+**prepared** (it is draft-only by permission — it never sent anything),
+what is **deliberately out of the queue**, the **support queue**{% if producer_adapter == 'none' %}, and what
+changed in the **repo** plus what is blocked on **him**. No producer (lead
+source) is wired for {{ company_slug }} — reply-only, so there is no outreach half;
+when one is added (`cs/ingest/`), this same command grows the day's
+candidate table{% else %}, the day's **outreach candidates** from the
+`{{ producer_adapter }}` producer with a dossier and a verdict each, and what
+changed in the **repo** plus what is blocked on **him**{% endif %}.
 
 Execute ALL steps silently — tool calls are fine, narration is not; the
 first user-visible text is the greeting in the final step. **ZERO side
 effects**: no `cs chat` (it spins the engine LLM), no drafts, no sends,
-no memory writes, no commits. If a step fails, capture a one-line note
-and continue; the greeting has a `Note:` slot.
+no memory writes, no commits, no `git` write of any kind. If a step
+fails, capture a one-line note and continue; the greeting has a `Note:`
+slot.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
@@ -40,19 +48,75 @@ as …`; kernels before v0.9.0 print JSON with `signed_in: true`). If it
 fails (daemon down, token mint failure), note it — threads/tasks/CRM
 lookups are unavailable; say so in the greeting instead of guessing.
 
-## 3. What the operator prepared — the digest
+## 3. The settings in force — the authoritative answer
+
+```bash
+.venv/bin/python -m cs config
+```
+
+Costs well under a second and is the ONLY source for two facts the
+greeting states: `cs_triage_mode` (draft or send) and whether the
+kill-switch file is present. **Never infer either from anything else** —
+not from the cron log tail, not from `manifest.toml`, not from a
+sentence in a doc. A tick log that happens to be quiet is not a reading
+of the switch, and a manifest value can be overridden by an env layer.
+
+## 4. What changed, and what is waiting on him
+
+Three cheap reads, no network:
+
+```bash
+.venv/bin/python -m cs --version
+git log -12 --date=short --format='%h %ad %s'
+git status --porcelain
+```
+
+`cs --version` is the kernel pin **actually installed** — the only
+trustworthy source for it. Then, if the file exists:
+
+```bash
+test -f docs/owner-actions.md && echo present
+```
+
+When it is there, Read it and keep the **item headings that are still
+open** — skip anything the file itself marks done. A handful of lines, a
+digest, never the file. If it is absent, take the open items from
+`docs/active-context.md`'s own unresolved section instead, under the same
+rule.
+
+## 5. What the operator prepared — the digest
 
 ```bash
 .venv/bin/python -m cs review
 ```
 
 Read-only aggregation: drafts waiting in {{ email_address }}'s Gmail
-Drafts, open engine tasks (where triage escalations live), per-campaign
-state + contacts flagged escalated / engaged / declined, and the last
-cron tick from the log.
+Drafts **each with its uid**, engine-composed drafts, open engine tasks
+(where triage escalations live), contacts a human has taken over,
+contacts recorded as resolved out of band, per-campaign state with its
+escalations, and the last cron tick from the log.
+
+Everything in that output has a slot in the greeting. In particular the
+per-draft rows and the out-of-band records: a count is not a substitute
+for either — see the greeting rules.
+
+## 6. The support queue — who is still waiting
+
+```bash
+.venv/bin/python -m cs unanswered --days 45 --crm
+```
+
+Deterministic, Gmail-Sent-anchored: inbound nobody has answered, forty-five
+days back, with the CRM record attached so **customers are separated from
+everyone else**. The window is deliberately wider than the sweep the
+headless tick uses: this is the list that quietly grows, and a fortnight's
+window hides exactly the rows that have been waiting longest.
+
+Its `with a human` and `handled out of band` sections repeat what step 5
+already gave you — take those from step 5 and do not print them twice.
 {% if producer_adapter != 'none' %}
 
-## 4. The day's candidates — producer worklist
+## 7. The day's candidates — producer worklist
 
 ```bash
 .venv/bin/python -m cs plan -v --period 7d
@@ -62,7 +126,7 @@ Live prod data via the `{{ producer_adapter }}` producer: lead / signup /
 cancellation candidates after self-filter and suppression. Leads show as
 `uid_prefix` + behavioural hint (no email yet).
 
-## 5. Resolve lead emails
+## 8. Resolve lead emails
 
 For each lead candidate, resolve UID → email with the Firebase SA
 (read-only, one call per lead):
@@ -77,7 +141,7 @@ print(resolve.resolve_email('<uid>', s))"
 No email → the lead is unreachable: mark `skip (no email)`. If the
 resolved email is in `SELF_EMAILS` → mark `self` and drop.
 
-## 6. Dossier every candidate
+## 9. Dossier every candidate
 
 For EVERY remaining candidate (signups and cancellations already carry
 their email):
@@ -98,34 +162,107 @@ human reply; surface the distinction to the operator.
 
 Now — and only now — present yourself. Italian, founders' register:
 tight, complete sentences, no jargon, no emoji, no "fammi sapere".
-Lead with the numbers, then the lists{% if producer_adapter != 'none' %}, then the candidate table{% endif %}:
+
+### Four rules that decide whether this greeting is any good
+
+**1. Every number is COPIED, never recomputed and never rounded.** If a
+verb printed `da 0g`, the greeting says `0g` — not `1g`. If it printed
+`15 unanswered`, the greeting says 15. You are transcribing, not
+estimating. The same rule bans derived claims the data cannot support:
+the tick log is a six-line tail, so it can tell you WHEN the last tick
+ran and nothing whatsoever about how many ran, or over what span.
+
+**2. The kill-switch is his standing decision, not news, and it appears
+exactly once.** `cs config` says whether the file is present. Put it in
+the `Stato:` line as one neutral field, in the same register as the
+kernel version — `invii: in pausa (decisione tua)` when present, `invii:
+attivi` when not — and then drop the subject entirely:
+
+- once, in the header. Never restated in a second section, never in
+  `Note:`, never in the closing list;
+- never as a warning or an alarm. No `⚠`, no emoji, no "attenzione", no
+  "problema", "bloccato", "fermo", "non sta girando";
+- **never suggest clearing it.** Not as a next step, not as an option,
+  not as "quando vuoi ripartire…", not conditionally. He decides when
+  the loops run; he does not need to be asked twice;
+- `ultimo tick` is a timestamp. If the tail says the ticks skipped, that
+  is the same fact you already reported in one word — do not repeat it.
+
+**3. Prose is quoted as prose; state comes from a live verb.** The
+kernel pin is `cs --version`, the settings in force are `cs config`, what
+changed is `git log`. `docs/owner-actions.md` and `docs/active-context.md`
+are his own notes and can be older than the tree: quote them only as the
+TITLE of something waiting on him, never as a fact about the present. If
+one of them contradicts a live value, print the live value and put the
+contradiction in `Note:` — one line, no lecture.
+
+**4. Nothing gets collapsed into a count that he would have to open
+something to recover.** Every draft gets its own row with its uid: a
+draft to a contact outside the candidate table is invisible as a `+1`,
+and the uid is what `draft-delete` takes. Contacts recorded as handled
+out of band get their own line too — they are deliberately NOT in the
+queue, and saying so is what stops him re-raising them from memory.
+Escalations from campaigns are listed; plain campaign outcomes are the
+one thing that IS a count.
+
+### The shape
 
 ```
 {{ company_prog_name }} — review
 
 Engine:  {{ email_address }} ✓ (o: NON raggiungibile — <nota>)
-Preparato: <N> bozze in Gmail Drafts · <M> task/escalation aperti · ultimo tick <quando>
-Te ne stai occupando tu: <K> — <email> (con <chi>, da <n>g), … (ometti la riga se K = 0)
-{% if producer_adapter != 'none' %}Finestra: <window> · candidati: lead <n> / signup <n> / cancellation <n>
+Stato:   kernel <cs --version> · invii: <in pausa (decisione tua)|attivi> · modo: <cs_triage_mode>
+Preparato: <N> bozze Gmail · <E> bozze engine · <M> task aperti · ultimo tick <timestamp>
 
-| candidato | cat | thread? | contattato ≤30g | task | CRM | verdetto |
+Bozze in Gmail Drafts (le rivedi e invii tu):
+  [uid <uid>] <destinatario> — <oggetto>        ← una riga per bozza, tutte
+Bozze engine: <E> (<n> reply, <n> compose) — le più recenti: <2-3 destinatari>
+
+Presi in carico da te: <K> — <email> (con <chi>, da <n>g), … (ometti se K = 0)
+Fuori coda, gestiti da te fuori mail: <H> — <email> (<data>), … (ometti se H = 0)
+
+Coda support, 45 giorni: <T> aperti — <C> clienti, <R> altri
+| contatto | attesa | CRM | oggetto |
+|---|---|---|---|
+| … | …g | … | … |                              ← una riga per CLIENTE
+Non clienti: <indirizzo (Ng)>, … su una riga sola
+
+Campagne: <nome> <stato>, … (una riga)
+Escalation campagne: <email> — <motivo>, … (ometti la riga se nessuna)
+{% if producer_adapter != 'none' %}
+
+Finestra: <window> · candidati: lead <n> / signup <n> / cancellation <n>
+
+| candidato | cat | thread? | contattato ≤{{ dedup_days }}g | task | CRM | verdetto |
 |---|---|---|---|---|---|---|
 | … | … | … | … | … | … | rispondi-in-thread / outreach informato / cold (serve ok) / STOP |
 
 Scartati a monte: <reason xN, …>
 {% endif %}
+
+Repo: <n> commit dal <data> — <oggetti, max 4> (+ <n> file non committati)
+In attesa di te: <voce>, <voce>, … (da docs/owner-actions.md, max 5 titoli)
+
 Note: <una riga per nota; ometti se nessuna>
 
 Da dove partiamo?
-- rivedere/inviare una bozza (sono nei Gmail Drafts);
+- rivedere/inviare una bozza (dimmi l'uid);
+- rispondere a uno della coda support;
 - gestire un'escalation o un task aperto;
 - chiudere una voce che hai già risolto tu (telefono, WhatsApp, di persona):
   dimmelo e la registro, così non ti viene più riproposta;
 - segnarne una come "la seguo io": resta aperta, ma non ci scrive nessun altro
-  finché non la rilasci;{% if producer_adapter != 'none' %}
-- partire da un candidato della tabella;{% endif %}
+  finché non la rilasci;
+{% if producer_adapter != 'none' %}
+- partire da un candidato della tabella;
+{% endif %}
 - preparare una risposta a X (te la metto in bozza, la rivedi e invii tu).
 ```
+
+Adapt the wording freely; the content is what is fixed. Omit a block
+whose list is empty rather than printing a zero — except `Stato:`, which
+is always present in full. **The closing list never mentions the
+kill-switch, the cron, or restarting anything.**
 {% if producer_adapter != 'none' %}
 One row per candidate; the verdict column is YOUR synthesis of the
 dossier (not just the mechanical verdict). Keep the table honest: if a
@@ -172,8 +309,8 @@ dossier (not just the mechanical verdict). Keep the table honest: if a
   dossier flag a tick sets when it wants a human to look) →
   `cs campaign mark <id> --dossier '{"escalated": false}' --commit`.
 - **Dedup is hard**, and Gmail Sent is its ground truth. There is no per-day
-  send quota to respect — `RATE_CAP` was removed in kernel `v0.12.0`; `CS_PAUSE`
-  is the stop.
+  send quota to respect — `RATE_CAP` was removed in kernel `v0.12.0`; the
+  kill-switch is the stop, and when to lift it is his call alone.
 - **Suppression** → `state.suppress(email, reason)` when the operator
   says "do not contact again".
 - You do not blast, you do not auto-send, you do not commit repo edits.

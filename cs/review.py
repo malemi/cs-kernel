@@ -118,22 +118,38 @@ def gather(settings) -> dict:
         out["handled_out_of_band_error"] = f"{type(e).__name__}: {e}"
 
     # 3. Campaigns + flagged contacts (escalated / outcome)
+    #
+    # Escalations are listed one by one; plain outcomes are COUNTED, not
+    # listed. A contact flagged `engaged` is a fact about work already done,
+    # and a pack mid-run produces dozens of them — thirty-one identical
+    # `[engaged]` lines pushed everything else off the operator's screen and
+    # bought him nothing. An escalation is the opposite: it exists because a
+    # human is wanted, so it keeps its address and its reason.
+    excluded = getattr(settings, "excluded_campaign_set", set()) or set()
     camps = []
     try:
         for c in campaign.list_campaigns(settings):
             contacts = rpc.call_sync(settings, "campaign.contacts", {"campaign_id": c["id"]})
             flagged = []
+            outcomes: dict[str, int] = {}
             for ct in contacts:
                 d = ct.get("dossier") or {}
-                if d.get("escalated") or d.get("outcome"):
+                if d.get("escalated"):
                     flagged.append({
                         "email": ct["email"], "state": ct["state"],
-                        "escalated": bool(d.get("escalated")),
+                        "escalated": True,
                         "reason": d.get("escalate_reason"),
                         "outcome": d.get("outcome"),
                     })
+                elif d.get("outcome"):
+                    o = str(d["outcome"])
+                    outcomes[o] = outcomes.get(o, 0) + 1
             camps.append({"campaign": c["name"], "counts": c.get("contacts_by_state"),
-                          "flagged": flagged})
+                          "flagged": flagged, "outcomes": outcomes,
+                          # A campaign a dedicated process owns is still shown —
+                          # hiding it would make its escalations invisible — but
+                          # labelled, so nobody works it by mistake.
+                          "excluded": c["name"] in excluded})
     except Exception as e:  # noqa: BLE001
         out["campaigns_error"] = f"{type(e).__name__}: {e}"
     out["campaigns"] = camps
@@ -211,7 +227,11 @@ def render(d: dict) -> str:
 
     L.append("\nCampagne:")
     for c in d.get("campaigns", []):
-        L.append(f"  {c['campaign']}: {c.get('counts')}")
+        tail = "  [esclusa — la gestisce un processo dedicato]" if c.get("excluded") else ""
+        outcomes = c.get("outcomes") or {}
+        esiti = ("  esiti: " + ", ".join(f"{k} {v}" for k, v in sorted(outcomes.items()))
+                 if outcomes else "")
+        L.append(f"  {c['campaign']}: {c.get('counts')}{esiti}{tail}")
         for f in c.get("flagged", []):
             tag = "ESCALATION" if f.get("escalated") else (f.get("outcome") or "?")
             L.append(f"    · {f['email']:30.30} [{tag}] {f.get('reason') or ''}")

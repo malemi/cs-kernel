@@ -14,7 +14,18 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.23.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.24.0`. Current HEAD status: tagged as `v0.24.0`.**
+  `v0.24.0` makes `/cs-review` the ONE command an operator types when he sits
+  down: `cs config` (the switch and the triage mode, read rather than inferred
+  from a log tail), `cs unanswered --days 45 --crm` (the support queue, with
+  customers as their own group via the CRM port), `cs --version` + `git log`
+  (the pin actually installed, and what changed), a digest of
+  `docs/owner-actions.md`, per-draft uids and the out-of-band records — paid
+  for by a campaign block that had become 31 identical `[engaged]` rows. Its
+  tone rule is a gate, not a preference: the kill-switch is the operator's
+  standing decision and appears exactly once, as neutral state, with no alarm
+  and no suggestion to lift it (gate 36). FULL tier — the operator's primary
+  surface. `cs config` also gained the `system_senders` section.
   `v0.23.0` lets a `CS_SYSTEM_SENDERS` entry be an fnmatch pattern, because a
   bounce daemon's sending host rotates per message and an exact list is stale on
   the next bounce; the same matcher (`cs/addr_match.py`) now reads the

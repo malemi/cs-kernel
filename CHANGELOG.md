@@ -93,6 +93,93 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.24.0 — 2026-08-26
+
+**MINOR**: `/cs-review` becomes the ONE command an operator types when he sits
+down — it answers the questions he used to have to ask, and it stops treating
+his own kill-switch as an incident. New `cs unanswered --crm`; `cs config`
+gains the `system_senders` section; `cs review`'s campaign block counts plain
+outcomes instead of listing them; the project permission set allows the
+read-only verbs the bootstrap runs. Re-collaudo **FULL on both clones**: this
+is the operator's primary surface, and the failure it produces is not a
+traceback — it is a morning where a real reply waiting for a named customer is
+invisible because it was folded into a number.
+
+### It answered three of eight questions, and warned him about his own decision
+
+Measured on a real morning: `6m38s`, 44 lines, zero side effects. What it left
+out was not obscure — the support queue, what changed in the repo, what is
+blocked on the owner, the contacts deliberately taken OUT of the queue, and
+every draft's identity. And what it *did* say about the kill-switch it said by
+accident: no step read the switch, but the six-line cron log tail happened to
+be all `paused … skip`, so the greeting inferred a warning from it — including
+the span "all the ticks of the last twelve hours", which was wrong by 4x
+because six lines of a two-hourly log ARE twelve hours whatever the real gap.
+Then it offered clearing the switch as the first suggested next step, without
+mentioning that `cs_triage_mode` is `send`: it proposed resuming an operator
+that answers customers by itself, and did not say so.
+
+**The kill-switch is a standing decision, not news.** The operator's own
+ruling, and the rule the command now follows: it appears exactly once, as one
+neutral field of state in the header (`invii: in pausa (decisione tua) · modo:
+send`), in the same register as the kernel version — never an alarm word, never
+`⚠`, never repeated in a second section, and **never with a suggestion to lift
+it**. Gate 36 asserts all four mechanically against the rendered command,
+including that the closing options mention neither the pause nor the tick, and
+that the file never contains a command to remove the switch file.
+
+### What the one command now covers
+
+- **`cs config` is a step** (0.4s). It is the only source for the triage mode
+  and the switch; nothing may be inferred from a log tail again. A derived
+  claim a fixed-length tail cannot support is banned outright.
+- **`cs unanswered --days 45 --crm`** — the support queue was never run. The
+  new `--crm` flag attaches each open sender's CRM record through the port
+  (`cs/crm`, so a clone on another backend gets its own adapter's facts) and
+  prints customers as their own group: the queue's size is not its workload,
+  and separating it is what the operator otherwise re-does by hand every
+  morning. Opt-in, because it costs one lookup per row (`+4.5s` on 15 rows) and
+  the triage skill does not need it — without the flag the table is byte-for-
+  byte what it always was. A degraded backend labels **nothing** and prints one
+  note: a half-filled column reads as "these are not customers".
+- **`cs --version` + `git log`** — the kernel pin actually installed, and what
+  changed since he last sat down. Live values beat prose everywhere: the
+  clone's own notes may be older than the tree, so they are quoted as the TITLE
+  of something waiting on him, never as a fact about the present.
+- **`docs/owner-actions.md`**, digested to a handful of open headings when the
+  file exists — the "without me saying where to look" half of the ask. A clone
+  without that file falls back to its unresolved section.
+- **Per-draft rows with their uid**, and the out-of-band records. Both were
+  already in `cs review`'s output and the greeting threw them away: a draft to
+  a contact outside the candidate table cannot be recovered from `+1`, and a
+  contact deliberately out of the queue gets re-raised from memory unless the
+  greeting says why it is missing.
+
+### Paid for by a campaign block that had stopped earning its lines
+
+37 lines, 31 of them identical `[engaged]` rows for one pack. An escalation
+exists to fetch a human and keeps its address and its reason; a plain outcome
+is a fact about work already done and is now a count (`esiti: engaged 31`). A
+campaign a dedicated process owns is labelled `esclusa`, not hidden — hiding it
+would hide its escalations too. Same information, 37 lines → 5.
+
+### `cs config` prints `system_senders`
+
+The verb whose whole job is "the settings actually in force" was silent about
+the list that decides who is never a customer — and since `v0.23.0` one entry
+can be a pattern hiding a whole domain. An invisible filter is
+indistinguishable from a bug, and gets reported as one.
+
+### Migration
+
+Nothing to do beyond `cs update`. `.claude/settings.json` is applied
+regardless (local kept as `*.local-bak`) and now allows `cs review`,
+`cs unanswered`, `cs --version`, `git log` and `git status` — all read-only,
+none send-capable, and gate 17's allow-purity check still passes. On
+`mrcall-cs`, `cs update` is known to drop the clone-owned deny line for
+`bin/mrcall_business.py` from `bin/cs_operator_cron.sh`; restore it after the
+update, as at every re-pin.
+
 ## v0.23.0 — 2026-08-25
 
 **MINOR**: `CS_SYSTEM_SENDERS` entries may be fnmatch patterns, and the

@@ -722,6 +722,23 @@ step "35. the ignore list matches patterns, and only what a pattern should reach
 # human writes from; and Sent-anchoring is untouched.
 if "$VENV/bin/python" "$ROOT/tests/test_system_sender_patterns.py"; then echo "OK"; else echo "FAIL: ignore-list pattern matching regressed"; FAIL=1; fi
 
+step "36. /cs-review — the ONE command, and the kill-switch is state, not news"
+# Measured against a real morning: the bootstrap answered three of the eight
+# questions a returning operator has, and surfaced the kill-switch only BY
+# ACCIDENT (the cron log tail happened to be all `paused … skip`), framed it as
+# a fault, and offered clearing it as the FIRST next step — without mentioning
+# that the triage mode is `send`, i.e. proposing to resume real sending without
+# saying it was a sending mode. Guards: the steps that answer the rest exist
+# (`cs config` for what is in force, `cs --version` for the pin actually
+# installed, `git log` for what changed, the 45-day CRM-grouped sweep, the
+# owner-actions digest); the greeting names the pause exactly ONCE, as the
+# operator's own decision, with no alarm word, and neither the file nor the
+# closing options offer to lift it; nothing that would send him elsewhere is
+# collapsed into a count (per-draft uids, out-of-band records); plain campaign
+# outcomes ARE counted (31 identical rows earned nothing); and the read-only
+# verbs it runs are allowed, so the one command does not stop on a prompt.
+if "$VENV/bin/python" "$ROOT/tests/test_review_bootstrap.py"; then echo "OK"; else echo "FAIL: the review bootstrap regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"
