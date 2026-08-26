@@ -14,7 +14,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.25.0`. Current HEAD status: tagged as `v0.25.0`.**
+- **Latest release tag: `v0.25.0`. Current HEAD status: untagged.**
   `v0.25.0` makes `cs unanswered` read CONVERSATIONS instead of addresses, and
   ask the ENGINE what kind of message something is instead of re-deriving it
   from IMAP headers. Three rules the engine settled months ago now reach the
