@@ -137,6 +137,62 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.27.0 — 2026-08-27
+
+**MINOR**: the stamped clone `CLAUDE.md` now carries a `doc-scope` declaration —
+the routing statement the `/doc-*` documentation harness requires of an index
+file from `harness_version = 4` on. Stamped prose only: no verb, no flag, no
+manifest field, no default changes. **Re-collaudo: static, both clones.** It is
+a MINOR because a stamped file an operator reads is observably different, and
+static is safe for it because the release touches no send path, no `campaign`,
+no `gmail_archive`, no `send_mail`, no auth boundary and no permission surface —
+`git show v0.26.0..v0.27.0 --stat` reaches exactly one template, one gate script
+and this file, and nothing under `cs/` that runs.
+
+**Why the kernel has to ship this at all.** A clone's `CLAUDE.md` is
+template-owned: it is rendered from `cs/templates/project/CLAUDE.md.j2` and a
+local edit is silently reverted by the next `cs update`. The harness's v4 gate
+requires a `doc-scope` block in the configured index file, so a clone that
+edited its own copy would pass the gate once and fail it again after the next
+re-pin, with no diff to explain why. The block therefore belongs where every
+other line of that file belongs, and both clones inherit it from one place.
+
+**What the block says, and why it is not company-specific.** It states what the
+index is FOR — the thin router: what the clone is, which files are template-owned
+versus clone-owned, the safety NEVERs, and where every other subject is written
+down — and then names the four places it routes to (`cs --help`, `cs config`,
+`docs/ARCHITECTURE.md`, the per-skill/command files), plus the rule that volatile
+state lives in `docs/active-context.md`. The only interpolation is
+`{{ company_prog_name }}`; there is no company literal, so charter rule 1 is
+unaffected and the same text is correct for a clone that is not the mother clone.
+
+**Gate 38 no longer greps line by line, and that is a real defect it was hiding.**
+The gate proves the engine-authority rule reaches every clone by looking for
+`authoritative`, `fix the engine` and the Gmail-Sent exception in both charter
+files. It used `grep -qi`, which matches within ONE line — so on 2026-08-27 a
+documentation consolidation reflowed the kernel's own `CLAUDE.md`, split *fix
+the engine* across a line break, and the gate reported the rule as MISSING while
+the rule itself was untouched. The suite was red at `HEAD` before this release
+began. A gate a rewrap can defeat does not measure whether a rule is written
+down, so the three checks now run against the file with all whitespace collapsed
+to single spaces. Verified in both directions: green on the current files, and
+still FAIL when *fix the engine* is actually removed from the template.
+
+**One more claim the same consolidation broke.**
+`docs/active-context.md` must carry the sentences *Latest release tag:* and
+*Current HEAD status:* verbatim — `tests/test_release_consistency.py` parses
+those two sentences as the release inventory's anchor. The consolidation
+rephrased them into prose and gate 15 went red. The sentences are restored, with
+a line next to them saying they are machine-read and that only the value may
+change. Neither of these two repairs alters kernel behaviour; they are what makes
+the suite able to certify this tag at all.
+
+**Migration for a clone**: none beyond the normal re-pin. `cs update` re-renders
+`CLAUDE.md`; on both clones the file matched its stored checksum beforehand, so
+the render applied without a conflict prompt. A clone that has locally edited its
+`CLAUDE.md` will be asked, and should take the new render — the local edit was
+already going to be lost.
+
 ## v0.26.0 — 2026-08-26
 
 **MINOR**: `cs unanswered` gains a fourth section — **closing courtesy, per the

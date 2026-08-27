@@ -760,11 +760,28 @@ step "38. the engine is authoritative — the charter rule reaches every clone"
 # inherits it, so it must be in the rendered project CLAUDE.md and not only in
 # the kernel's own charter. Both files are checked, plus the measured exception
 # that keeps it honest (Gmail Sent, not the engine archive, is dedup truth).
+# The phrases are matched against the file with all whitespace collapsed to
+# single spaces, NOT line by line. A prose rule wraps wherever the paragraph
+# happens to end, and a line-bound grep reports the rule as MISSING the moment
+# somebody reflows the sentence — which is what happened on 2026-08-27, when a
+# doc consolidation split "fix the engine" across a line break and turned this
+# gate red while the rule itself was untouched. A gate that a rewrap can defeat
+# does not measure whether the rule is written down.
 GATE38=0
 for f in "$ROOT/CLAUDE.md" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
-  grep -qi "authoritative" "$f" || { echo "MISSING: engine-authority rule in $f"; GATE38=1; }
-  grep -qi "fix the engine" "$f" || { echo "MISSING: 'fix the engine' in $f"; GATE38=1; }
-  grep -qi "Sent" "$f" || { echo "MISSING: the dedup-truth exception in $f"; GATE38=1; }
+  flat=$(tr '\n' ' ' < "$f" | tr -s '[:space:]' ' ')
+  case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
+    *authoritative*) ;;
+    *) echo "MISSING: engine-authority rule in $f"; GATE38=1 ;;
+  esac
+  case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
+    *"fix the engine"*) ;;
+    *) echo "MISSING: 'fix the engine' in $f"; GATE38=1 ;;
+  esac
+  case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
+    *sent*) ;;
+    *) echo "MISSING: the dedup-truth exception in $f"; GATE38=1 ;;
+  esac
 done
 if [ "$GATE38" -eq 0 ]; then echo "OK"; else echo "FAIL: the engine-authority rule is not inherited by clones"; FAIL=1; fi
 

@@ -16,10 +16,13 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag `v0.26.0`; `HEAD` is past it and untagged** — `git
-  describe` is the live answer, so no commit count is written down here (one
-  would be stale the moment this file is committed). Seven tags on 2026-08-25/26,
-  `v0.20.0` → `v0.26.0`, each with a CHANGELOG entry naming its re-collaudo
+- **Latest release tag: `v0.27.0`. Current HEAD status: tagged as `v0.27.0`.** Those two
+  sentences are a machine-readable claim the release gate parses verbatim
+  (`tests/test_release_consistency.py`), so rephrasing them turns the suite red —
+  keep the wording and change only the value. `git describe` is the live answer
+  for how far past a tag HEAD is, so no commit count is written down here (one
+  would be stale the moment this file is committed). Eight tags on 2026-08-25/27,
+  `v0.20.0` → `v0.27.0`, each with a CHANGELOG entry naming its re-collaudo
   tier; the tag-by-tag narrative this section used to carry is in the archive.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
