@@ -162,21 +162,22 @@ Mail-sourced facts reach memory via the normal sync pipeline
 
 ## 6. Report, then stay on this customer
 
-Print a compact Italian founder-register brief (no jargon, no emoji):
+Print a compact brief in {{ operator_voice }} (no jargon, no emoji). The
+labels are the content, not the wording:
 
 ```
-customer/<nome> — contesto caricato
+customer/<name> — context loaded
 
-Stato:     <una riga dal reconcile>
-Account:   <quali caselle hanno memoria; quale è owner>
-Contatti:  <nome <email> · …>
-Aperti:    <blocchi / scadenze / prossimi passi, 1–3 bullet>
-Drift:     <file stale vs engine, o "allineati", o "engine vuoto">
-Memoria:   <pronto a lavorare su engine memory di <nome>>
+State:    <one line from the reconcile>
+Accounts: <which mailboxes hold memory; which one owns it>
+Contacts: <name <email> · …>
+Open:     <blockers / deadlines / next steps, 1–3 bullets>
+Drift:    <files stale vs the engine, or "in step", or "engine empty">
+Memory:   <ready to work on <name>'s engine memory>
 ```
 
-Then **stay in this frame**: subsequent questions about "loro / il cliente /
-la call" refer to this customer. Prefer engine verbs
+Then **stay in this frame**: subsequent questions about "them / the customer /
+the call" refer to this customer. Prefer engine verbs
 (`cs ask`, `cs dossier`, `cs thread`, `cs draft-reply` when asked) over
 re-reading the markdown. If the operator asks to update the dossier, write the file
 **and** mirror non-mail facts into engine memory (step 5).

@@ -8,7 +8,7 @@ description: Advance every active {{ company_prog_name }} campaign{% if excluded
 Execute ALL steps below silently. **Do not address the operator until the
 tick is complete** — the next user-visible text is the final report in
 step 4. "Silently" means tool calls are fine, narration is not. If a step
-fails, capture a one-line note and continue; the report has an `Anomalie:`
+fails, capture a one-line note and continue; the report has an `Anomalies:`
 slot.
 
 Your job: advance every active campaign one step, per the worklist the
@@ -201,30 +201,31 @@ so the next tick does not re-classify the same message.
 
 ## 4. Report
 
-Now — and only now — address the operator. Italian, founders' register:
-tight, complete sentences, no jargon, no emoji, no "fammi sapere". A compact
-table of what was done per contact, then an explicit escalation list:
+Now — and only now — address the operator. Write in **{{ operator_voice }}**:
+tight, complete sentences, no jargon, no emoji, no "let me know". A compact
+table of what was done per contact, then an explicit escalation list — the
+labels are the content, not the wording:
 
 ```
 {{ company_prog_name }} — campaign tick
 
-Campagne lavorate: <names>{% if excluded_campaign %} ({{ excluded_campaign }} esclusa){% endif +%}
+Campaigns worked: <names>{% if excluded_campaign %} ({{ excluded_campaign }} excluded){% endif +%}
 
-| campagna | contatto | azione | esito |
+| campaign | contact | action | result |
 |---|---|---|---|
-| … | … | reconcile / send-draft / risposta-in-bozza / chiuso(declined) / autoresponder / lasciato | … |
+| … | … | reconcile / send-draft / reply-drafted / closed(declined) / autoresponder / left alone | … |
 
 Escalations (need you):
-- <email> — <campagna> — <perché: ambiguo / fuori scope / arrabbiato / incerto>
+- <email> — <campaign> — <why: ambiguous / out of scope / angry / unsure>
 
-Te ne stai occupando tu (non li ho toccati):
-- <email> — <campagna> — <con chi>
+You are handling these (I left them alone):
+- <email> — <campaign> — <with whom>
 
-Anomalie: <una riga per nota; ometti se nessuna>
+Anomalies: <one line per note; omit if none>
 ```
 
 The action column reflects what the verbs actually did (read their JSON
 results — e.g. a `send-draft` that flipped to `reconcile`, a draft already in
-Gmail). If "Escalations (need you):" is empty, write `nessuna`. Surface every
+Gmail). If "Escalations (need you):" is empty, write `none`. Surface every
 contact you touched and every one you deliberately left.
 

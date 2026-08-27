@@ -88,6 +88,17 @@ enabled = {{ 'true' if sms_enabled else 'false' }}
 # non-default Shared Drive scope.
 scope = ""
 
+[surface]
+# The voice every stamped command and skill addresses YOU in. Free text,
+# pasted straight into the greeting instruction: name a language, a register,
+# or both ("American English, professional and direct" · "German, plain and
+# formal"). It changes how the agent writes TO you and nothing else — never
+# what it writes to a customer, which is the trained voice in the engine.
+# Template-only, like [cron] and [repo]: the kernel reads it when it stamps,
+# not at runtime. Edit it here and run `cs update`; re-running `cs init` is
+# not needed.
+operator_voice = "{{ operator_voice }}"
+
 [cron]
 # Declared intent only ([cron] is template-only, ignored by the kernel at
 # runtime) — `cs cron install` owns the real crontab entry.

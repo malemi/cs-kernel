@@ -1,5 +1,5 @@
 {
-  "_comment": "Scoped permissions for the headless cs-operator tick (claude -p '/cs-operator'). HARD RULE: not one allowed command can send mail to a customer. Drafting goes through the structurally-send-incapable verbs `draft-reply` (engine, allow_tools always empty) and `campaign queue-draft` (Gmail Drafts only, never SMTP). The send-capable surfaces — `cs chat` (can carry --allow send_email) and `cs campaign send-draft` (send mode) — are DENIED here; going autonomous-send later is a deliberate widening of THIS file, the real trust boundary. Still verify with a supervised headless run that it neither halts nor over-grants before installing the cron. Every cs rule is enumerated in multiple spellings (module path and console script, venv-prefixed and bare) because permission rules match command text, not behavior; the deny block additionally carries the python3 spellings. tests/run.sh asserts the deny enumeration — do not collapse the spellings back to one.",
+  "_comment": "Scoped permissions for the headless cs-operator tick (claude -p '/cs-operator'). HARD RULE: not one allowed command can send mail to a customer. Drafting goes through the structurally-send-incapable verbs `draft-reply` (engine, allow_tools always empty) and `campaign queue-draft` (Gmail Drafts only, never SMTP). The send-capable surfaces — `cs chat` (can carry --allow send_email) and `cs campaign send-draft` (send mode) — are DENIED here; going autonomous-send later is a deliberate widening of THIS file, the real trust boundary. Still verify with a supervised headless run that it neither halts nor over-grants before installing the cron. Every cs rule is enumerated in multiple spellings (module path and console script, venv-prefixed and bare) because permission rules match command text, not behavior; the deny block additionally carries the python3 spellings. tests/run.sh asserts the deny enumeration — do not collapse the spellings back to one. One allow entry is deliberately narrower than a verb: `cs catchup --check` is allowed (it reads, and /cs-review runs it every time) while bare `cs catchup` is NOT, so the pass that spends real LLM budget stops for an explicit human yes.",
   "permissions": {
     "allow": [
       "Bash(.venv/bin/python -m cs whoami:*)",
@@ -18,6 +18,14 @@
       "Bash(.venv/bin/cs review:*)",
       "Bash(python -m cs review:*)",
       "Bash(cs review:*)",
+      "Bash(.venv/bin/python -m cs cron status:*)",
+      "Bash(.venv/bin/cs cron status:*)",
+      "Bash(python -m cs cron status:*)",
+      "Bash(cs cron status:*)",
+      "Bash(.venv/bin/python -m cs catchup --check:*)",
+      "Bash(.venv/bin/cs catchup --check:*)",
+      "Bash(python -m cs catchup --check:*)",
+      "Bash(cs catchup --check:*)",
       "Bash(.venv/bin/python -m cs unanswered:*)",
       "Bash(.venv/bin/cs unanswered:*)",
       "Bash(python -m cs unanswered:*)",

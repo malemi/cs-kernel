@@ -28,6 +28,21 @@ from . import manifest as manifest_mod
 DEFAULT_CRON_SCHEDULE = "0 6-18/2 * * 2-5"
 DEFAULT_CRON_COMMENT = "cs-operator"
 
+# The voice the stamped surfaces address the operator in — free text, pasted
+# straight into the greeting instruction of every command and skill. It is a
+# per-clone value (`[surface] operator_voice` in manifest.toml); this is only
+# what a clone that declares nothing gets. The kernel default is US English,
+# because a kernel default that named one company's language was that company's
+# preference frozen into shared code — charter rule 2.
+DEFAULT_OPERATOR_VOICE = "American English, professional and direct"
+
+# Variables newer templates read that an older clone's frozen `init_data` was
+# never asked for. `cs update` renders against that frozen dict, so a template
+# growing a variable would fail under StrictUndefined on every existing clone;
+# these are the floor under it. A value the clone DOES declare (its manifest,
+# or its own init_data) always wins — see `cs/project_update.py`.
+TEMPLATE_DEFAULTS = {"operator_voice": DEFAULT_OPERATOR_VOICE}
+
 def descriptor_defaults() -> dict:
     """Prefill `cs init`'s engine-identity prompts from a mrcall-desktop
     sign-in already on this machine.
@@ -154,6 +169,11 @@ def load_existing_config(target_dir: Path) -> dict:
         "send_guard_banned_phrases": m.knobs.send_guard_banned_phrases,
         "sms_enabled": m.sms.enabled,
         "repo_git_remote": raw.get("repo", {}).get("git_remote", ""),
+        # `[surface]` is template-only, exactly like `[repo]` and `[cron]`:
+        # nothing in the runtime `Settings` model reads it, so it comes off the
+        # raw TOML. A clone that declares nothing greets in the kernel default.
+        "operator_voice": (raw.get("surface", {}).get("operator_voice")
+                           or DEFAULT_OPERATOR_VOICE),
     }
     if m.crm.shopify is not None:
         out["crm_shopify"] = {
@@ -550,6 +570,17 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
         show_all, "Platform environment path (optional)", ""
     )
 
+    # The voice every stamped command and skill addresses this operator in.
+    # Free text: it may name a language, a register, or both. Asked only under
+    # --advanced — the kernel default is a working answer for a US clone, and
+    # editing `[surface] operator_voice` in manifest.toml reaches the stamp
+    # without re-running the wizard.
+    config["operator_voice"] = _prompt_or_default(
+        show_all,
+        "Voice the surfaces address the operator in",
+        _default(existing, "operator_voice", DEFAULT_OPERATOR_VOICE),
+    )
+
     # No `firebase_sa_path` key: Settings derives ~/.<slug>-cs/firebase-sa.json
     # on its own the moment [engine].sa_path is empty, and manifest.toml.j2
     # writes that blank as a literal. The init_data key reached no template at
@@ -707,15 +738,40 @@ def toml_quote(value) -> str:
     return f'"{s}"'
 
 
-def render_templates(config: dict, template_dir: Path, dest_dir: Path):
-    """Render Jinja2 templates and copy other files to destination."""
-    jinja_env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(template_dir),
+def partials_root() -> Path:
+    """The shared template fragments, `{% include %}`d by the stamped surfaces.
+
+    A SIBLING of `templates/project/`, never a subdirectory of it, because
+    `render_templates` stamps everything it walks: a partial living inside would
+    land in every clone as an orphan `.claude/` file and be checksummed as if it
+    were a surface of its own.
+    """
+    return Path(__file__).parent / "templates" / "partials"
+
+
+def build_jinja_env(template_dir: Path) -> jinja2.Environment:
+    """The ONE Jinja environment every stamping path uses.
+
+    `cs init`, `cs update` and the render gates must agree on the loader, the
+    whitespace flags, `StrictUndefined` and the `toml_quote` filter, or a
+    template renders in one path and fails in another — which is exactly how a
+    shared `{% include %}` could pass `cs init` and break `cs update` on every
+    clone. The search path carries the template root AND the partials root, so
+    an include resolves by bare name from either.
+    """
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader([str(template_dir), str(partials_root())]),
         trim_blocks=True,
         lstrip_blocks=True,
-        undefined=jinja2.StrictUndefined
+        undefined=jinja2.StrictUndefined,
     )
-    jinja_env.filters["toml_quote"] = toml_quote
+    env.filters["toml_quote"] = toml_quote
+    return env
+
+
+def render_templates(config: dict, template_dir: Path, dest_dir: Path):
+    """Render Jinja2 templates and copy other files to destination."""
+    jinja_env = build_jinja_env(template_dir)
 
     # Create destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)

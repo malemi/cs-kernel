@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cs-kernel"
-version = "0.30.0"
+version = "0.31.0"
 description = "Shared kernel of the <company>-cs customer-service operators: import package `cs` (frozen module path), per-company variance declared in the clone's manifest.toml."
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -73,4 +73,10 @@ cs = [
     # hence a template root of its own, which needs its own glob here or the
     # verb ships without its templates and fails on a clean install.
     "templates/project_memory/**/*",
+    # Shared fragments `{% include %}`d by the stamped surfaces — a third root,
+    # never stamped on its own (see `project_init.partials_root`). Without this
+    # glob the partial ships absent and EVERY stamp fails on a clean install,
+    # which is a worse failure than the missing-template one above: it takes
+    # `cs init` and `cs update` down together.
+    "templates/partials/**/*",
 ]

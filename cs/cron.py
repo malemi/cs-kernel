@@ -11,8 +11,10 @@ The crontab line looks like:
 The tag `# cs-cron:<slug>` lets us find/replace/remove it safely.
 """
 
+import re
 import subprocess
 import tomllib
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -100,32 +102,166 @@ def cmd_cron_uninstall(args) -> int:
     return 0
 
 
+#: Fallback interval when the schedule's hour field declares no step. A daily
+#: entry is the widest thing a `<company>-cs` crontab reasonably says, so a
+#: schedule this cannot read is judged against a day rather than called stale.
+DEFAULT_INTERVAL_HOURS = 24
+
+#: How many missed runs before the tick is reported as not ticking. One skipped
+#: run is a machine that was asleep; two is a failure to report.
+STALE_FACTOR = 2
+
+#: Timestamp shape the wrapper writes at the head of every log line
+#: (`date -u +%FT%TZ` in `bin/cs_operator_cron.sh`).
+_TS = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})Z")
+
+
+def _interval_hours(schedule: str) -> int:
+    """Hours between two scheduled runs, read off the crontab HOUR field.
+
+    Handles the two shapes a `<company>-cs` schedule takes — `*/N` and a range
+    with a step, `6-18/2` — and falls back to a day for anything else. This is
+    deliberately not a cron parser: the only question asked of it is "roughly
+    how long before the next run", and a wrong answer in the safe direction
+    (too long) reports a stale tick late rather than crying wolf.
+    """
+    fields = (schedule or "").split()
+    if len(fields) < 2:
+        return DEFAULT_INTERVAL_HOURS
+    hour = fields[1]
+    if "/" in hour:
+        try:
+            step = int(hour.rsplit("/", 1)[1])
+        except ValueError:
+            return DEFAULT_INTERVAL_HOURS
+        return step if step > 0 else DEFAULT_INTERVAL_HOURS
+    if hour == "*":
+        return 1
+    return DEFAULT_INTERVAL_HOURS
+
+
+def _last_tick(log_path) -> tuple[str | None, str | None]:
+    """`(ISO timestamp, what that run did)` of the newest line in the tick log.
+
+    The second value is the fact the greeting has already been misread without:
+    a bare timestamp reads as "the run did its work then", which is false when
+    the run skipped. `ran` / `skipped`, or None when the log says neither.
+    """
+    try:
+        lines = log_path.read_text(errors="replace").splitlines()
+    except OSError:
+        return None, None
+    for line in reversed(lines):
+        m = _TS.match(line.strip())
+        if not m:
+            continue
+        action = "skipped" if "skip" in line.lower() else "ran"
+        return f"{m.group(1)}Z", action
+    return None, None
+
+
+def cron_state(settings, clone_root=None) -> dict:
+    """The three facts about the unattended operator, as data.
+
+    `installed` (is there a crontab entry at all), `paused` (the kill-switch
+    file) and `last_tick_at` are INDEPENDENT, and their remedies differ, which
+    is why they are three fields and not one status word:
+
+    - **absent** — nothing will run until `/cs-cron` installs it;
+    - **paused** — the operator's standing decision. Neutral state, never a
+      fault, and nothing in this kernel offers to lift it;
+    - **stale** — installed, not paused, and the newest log line is older than
+      the schedule implies. A failure to report.
+
+    `state` is the strongest of those that holds, so a caller that wants one
+    word has one; the booleans stay so a caller that needs the combination is
+    not forced to re-derive it.
+    """
+    slug = settings.slug
+    schedule, comment = "", ""
+    try:
+        root = Path(clone_root) if clone_root else _clone_root()
+        schedule, comment = _read_raw_cron(root / "manifest.toml")
+    except (OSError, ValueError, RuntimeError):
+        pass
+
+    lines = [line for line in _read_crontab() if f"# cs-cron:{slug}" in line]
+    installed = bool(lines)
+    paused = settings.pause_path.exists()
+    last_tick_at, last_tick_action = _last_tick(settings.log_path)
+    interval = _interval_hours(schedule)
+
+    stale = False
+    if installed and not paused:
+        if last_tick_at is None:
+            stale = True
+        else:
+            try:
+                when = datetime.fromisoformat(last_tick_at.replace("Z", "+00:00"))
+                age_h = (datetime.now(timezone.utc) - when).total_seconds() / 3600
+                stale = age_h > STALE_FACTOR * interval
+            except ValueError:
+                stale = False
+
+    state = ("absent" if not installed
+             else "paused" if paused
+             else "stale" if stale
+             else "ticking")
+    return {
+        "installed": installed,
+        "crontab_lines": lines,
+        "paused": paused,
+        "pause_path": str(settings.pause_path),
+        "schedule": schedule,
+        "comment": comment,
+        "interval_hours": interval,
+        "last_tick_at": last_tick_at,
+        "last_tick_action": last_tick_action,
+        "stale": stale,
+        "state": state,
+    }
+
+
 def cmd_cron_status(args) -> int:
-    """Show if the cron entry is installed, the manifest intent, and whether
-    the CS_PAUSE kill-switch is active. Both signals matter and are
-    independent: an installed crontab entry sends nothing while CS_PAUSE is
-    present, and CS_PAUSE alone says nothing about whether cron is even
-    installed."""
+    """Show if the cron entry is installed, the manifest intent, whether the
+    CS_PAUSE kill-switch is active, and when the last run actually happened.
+
+    Those signals are independent: an installed crontab entry sends nothing
+    while CS_PAUSE is present, CS_PAUSE alone says nothing about whether cron
+    is even installed, and an entry that exists while the log has gone quiet is
+    a third state again. `--json` is the machine-readable shape `/cs-review`
+    reads, so the greeting states the same facts this verb prints instead of
+    inferring them from a log tail."""
+    import json
+
     from . import config
     settings = config.load()
-    slug = settings.slug
-    schedule, comment = _read_raw_cron(_clone_root() / "manifest.toml")
+    st = cron_state(settings)
 
-    existing = _read_crontab()
-    installed = [l for l in existing if f"# cs-cron:{slug}" in l]
+    if getattr(args, "json", False):
+        print(json.dumps(st, ensure_ascii=False, indent=2, default=str))
+        return 0
 
-    if installed:
+    if st["installed"]:
         print("Crontab: installed")
-        for line in installed:
+        for line in st["crontab_lines"]:
             print(f"  {line}")
     else:
         print("Crontab: not installed. Run: cs cron install")
 
-    paused = settings.pause_path.exists()
-    if paused:
-        print(f"Pause: active ({settings.pause_path} exists — operator will not send). Run: rm {settings.pause_path} to resume")
+    if st["paused"]:
+        print(f"Pause: active ({st['pause_path']} exists — operator will not "
+              f"send). Run: rm {st['pause_path']} to resume")
     else:
-        print(f"Pause: not active ({settings.pause_path} absent)")
+        print(f"Pause: not active ({st['pause_path']} absent)")
 
-    print(f"Manifest schedule: {schedule} ({comment})")
+    if st["last_tick_at"]:
+        print(f"Last run: {st['last_tick_at']} — {st['last_tick_action']}")
+    else:
+        print("Last run: no entry in the tick log yet")
+    if st["stale"]:
+        print(f"State: installed but not ticking — nothing newer than "
+              f"{st['interval_hours']}h x {STALE_FACTOR} in the log")
+
+    print(f"Manifest schedule: {st['schedule']} ({st['comment']})")
     return 0

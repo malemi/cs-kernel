@@ -55,6 +55,18 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # it. The tick's own "escalate on uncertainty" needs none of this: a triage
 # escalation is an OPEN engine task plus a line in this log, and both correctly
 # stay in the work list.
+# `cs draft-delete` is denied on the same principle, from the other end. The
+# tick DOES compute draft verdicts now (`cs review` marks a draft the
+# conversation has moved past), and the tempting next step — retiring the ones
+# it just called stale — is precisely the one it may not take: removing a draft
+# destroys a prepared answer no human ever saw, on a judgement made while
+# reading untrusted mail. The tick reports such drafts under Escalations and
+# the operator retires them by name, in a session, exactly like `cs handled`.
+# `cs rpc drafts.discard` is the ENGINE half of the same door and is denied for
+# the same reason — and, like `cs rpc chat`, the deny is load-bearing because
+# settings.json allows the broad `cs rpc:*`. It is the sharper half, too: the
+# engine DELETES the row, where `draft-delete` only moves the Gmail copy to
+# Trash, so this is the one with nothing to recover.
 # Each surface is denied in SIX spellings (.venv/bin/python -m cs, .venv/bin/python3 -m cs,
 # .venv/bin/cs, python -m cs, python3 -m cs, cs): permission rules match command TEXT,
 # not behavior, and the console script, the module path and the python3 aliases all
@@ -98,6 +110,18 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs escalated:*)" \
     "Bash(python3 -m cs escalated:*)" \
     "Bash(cs escalated:*)" \
+    "Bash(.venv/bin/python -m cs draft-delete:*)" \
+    "Bash(.venv/bin/python3 -m cs draft-delete:*)" \
+    "Bash(.venv/bin/cs draft-delete:*)" \
+    "Bash(python -m cs draft-delete:*)" \
+    "Bash(python3 -m cs draft-delete:*)" \
+    "Bash(cs draft-delete:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.discard:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.discard:*)" \
+    "Bash(.venv/bin/cs rpc drafts.discard:*)" \
+    "Bash(python -m cs rpc drafts.discard:*)" \
+    "Bash(python3 -m cs rpc drafts.discard:*)" \
+    "Bash(cs rpc drafts.discard:*)" \
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
   >>"$LOG" 2>&1
 rc=$?

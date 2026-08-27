@@ -154,6 +154,151 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.31.0 — 2026-08-27
+
+**MINOR**: `cs review`'s output shape changes, two CLI surfaces are new
+(`cs catchup`, `cs cron status --json`), a new `manifest.toml` field decides
+what language the stamped surfaces speak, and the cron wrapper's deny set grows
+two verbs. It touches the review surface, the permission surface and the draft
+path.
+**Re-collaudo: FULL, both clones.**
+
+### Fixed — a draft had no lifecycle, and `/cs-review` presented stale ones as ready
+
+`cs review` enumerated two draft stores and annotated neither: Gmail Drafts as
+a raw IMAP header listing, the engine's as an `owner_id + status='draft'`
+filter. Neither reads the thread the draft answers, so a reply written for a
+question the customer has since withdrawn — or already had answered another way
+— was listed as ready to send. `/cs-triage-mail` could not correct it either:
+its candidate feed (`cs unanswered`) drops a conversation the moment a real
+message of ours follows the customer's last one, so a resolved-and-thanked
+thread is, by construction, not a candidate anywhere.
+
+`cs/draft_state.py` now gives every draft a verdict, computed at read time and
+stored nowhere. Two signals are Gmail-anchored and cannot degrade — `overtaken`
+(the contact wrote after the draft was composed) and `superseded` (we wrote to
+them after it was composed) — and one is the engine's own reading of the
+conversation, `settled`, via `emails.needs_reply`. A draft with no signal is
+`ready`. The charter split holds: *does this message exist* → Gmail, *what kind
+of message is it* → the engine; an engine that cannot be asked costs a note and
+the two Gmail comparisons still fire.
+
+One logical draft can exist twice — `cs draft-reply` has the engine compose and
+mirrors the result into Gmail Drafts — so copies are paired by thread key plus
+recipient and reported as ONE row carrying both handles, compared against the
+EARLIER of the two timestamps. `cs review --json` carries `drafts[]` with the
+verdict, the signal and its date; the digest prints two blocks, ready and
+to-re-decide. The raw store listings stay in the JSON for the callers that
+read them.
+
+**Nothing is ever retired automatically.** Removing a draft destroys a prepared
+answer no human has seen, on a judgement made while reading untrusted mail —
+the class of `cs handled`, which this kernel already holds to be an interactive
+gesture. The cron wrapper now denies BOTH halves of it in all six command-text
+spellings: `cs draft-delete` (the Gmail copy, moved to Trash) and
+`cs rpc drafts.discard` (the engine's, which DELETES the row). The second is
+load-bearing for the same reason as the `cs rpc chat` deny — the stamped
+`settings.json` allows the broad `cs rpc:*`.
+
+### New — `cs catchup`, and a review that knows whether anything is running
+
+Everything the engine owns is only as fresh as its last pass, and a review that
+computes verdicts from a stale ledger moves the cost onto the reader.
+`cs catchup` drives the engine's own surfaces and re-implements none of them:
+`sync.run`, then `update.run`, printing the task diff so the caller reports what
+the pass CHANGED rather than that it ran. It drafts nothing and sends nothing,
+and therefore runs while `CS_PAUSE` is present: the switch stops customer-facing
+work, and refusing a read-and-classify pass would leave a paused clone
+permanently unable to show fresh state. When the engine is already running that
+same pipeline it answers `busy`, which this verb reports as the clean outcome it
+is — no wait, no retry.
+
+`cs catchup --check` answers whether the pass is WARRANTED and writes nothing:
+it compares the newest inbound in the mailbox against what the engine can show
+for that conversation. The engine exposes neither the timestamp of its last pass
+nor the interval it is configured for, so freshness is MEASURED rather than
+inferred from a clock — and every unanswerable case (no recent inbound, an
+engine that will not talk, an unthreadable message) answers "not stale", because
+the only thing `stale` triggers is an offer to spend LLM budget.
+
+`cs cron status --json` reports `installed` / `paused` / `last_tick_at` /
+`last_tick_action` / `schedule` / `state`, where `state` distinguishes the three
+situations whose remedies differ — `absent`, `paused`, `stale` (installed, not
+paused, and the log quiet for longer than the schedule implies) — from
+`ticking`. The staleness threshold is read off the crontab schedule; no interval
+constant enters the kernel. `/cs-review` states those facts on the
+last-scheduled-run line that already existed, asks ONE question when the state
+warrants it ("want me to run the catch-up now?"), and never offers to lift the
+pause. The stamped permissions allow `cs catchup --check` and leave bare
+`cs catchup` to ask — the human gate is a permission prompt, not a convention.
+
+### Changed — the kernel default speaks English, and each clone declares its voice
+
+Eight literals across seven stamped surfaces instructed the agent to address the
+operator in "Italian, founders' register", the greeting shapes carried Italian
+copy inline, and `cs review`'s digest was Italian in kernel Python. That is one
+company's preference frozen into shared code, which charter rule 2 forbids, and
+the product is sold into the US.
+
+The voice is now `[surface] operator_voice` in each clone's own
+`manifest.toml` — free text pasted into the greeting instruction, defaulting to
+`"American English, professional and direct"`. `[surface]` is template-only,
+exactly like `[cron]` and `[repo]`: no `Settings` field, read off the raw TOML
+when the kernel stamps. Every stamped shape now labels its slots in English and
+tells the agent to render them in the declared voice; `cs review`'s digest is
+English like every other line of kernel code, and so are `cs unanswered`'s CRM
+grouping headers.
+
+Two mechanics make that reach an existing clone, and both were required before
+any template could read the variable: `cs update` now merges the clone's own
+`manifest.toml` over the `init_data` frozen at `cs init` time (so editing the
+manifest reaches the stamp without re-running the wizard), and a
+`TEMPLATE_DEFAULTS` floor answers a variable no older clone ever froze.
+
+### New — one role-framing preamble, included three times
+
+`/cs-review` and the `cs-triage-mail` / `cs-operator` skills open with one
+shared text: the agent is taking over a desk other assistants worked at, the
+world moved while nobody was there, and its first duty is to orient before
+acting on what it inherited. It steers the judgement the pipeline does not
+enumerate — a `re-decide` row whose right answer is neither "send" nor "delete"
+— and it never replaces a computed verdict.
+
+It lives in a new template root, `cs/templates/partials/`, a SIBLING of
+`templates/project/` because `render_templates` stamps everything it walks: a
+partial inside would land in every clone as an orphan `.claude/` file and be
+checksummed. Three things had to land with it, and all three are gated:
+`cs init`'s loader takes both roots; `cs update` — which built its Jinja
+environment with NO loader and rendered from a string — now loads by name
+through the same environment, or every existing clone would fail on the first
+`{% include %}` while a fresh `cs init` succeeded; and `pyproject.toml` grows
+the `templates/partials/**/*` package-data glob, without which the partial ships
+absent and every stamp fails on a clean install.
+
+### Engine surfaces this release assumes
+
+`drafts.discard` (owner-scoped, one id per call, deletes the row — a `sending`
+or `sent` draft is refused, a `failed` one is discardable) and the pipeline's
+single-flight guard (`update.run` answering `{busy: true}` instead of running a
+second pass) are mrcall-desktop's, landed alongside this tag. A kernel running
+against an older engine degrades rather than breaks: `drafts.discard` answers
+"method not found" and the Gmail half of a retirement still works, and an engine
+with no guard simply never answers `busy`.
+
+### Re-collaudo — FULL, both clones
+
+It touches the review surface, the permission surface (two new denies) and the
+draft path — the list the release rules escalate on. Per clone: `cs --version`
+reports the tag · `cs whoami` signs in as that clone's own mailbox ·
+`cs cron status --json` reports the fields and matches `crontab -l` ·
+`cs review --json` carries a `verdict` on every draft row · `cs catchup` returns
+a task diff and leaves Gmail Drafts byte-identical · the preamble is present in
+all three stamped files · the stamped greeting reads in the declared voice · a
+`/cs-review` run prints the scheduled-run line and asks the single question.
+Before `cs update` on `mrcall-cs`, add its `[surface] operator_voice` line —
+the update reads the manifest, so the line must be there first; `124-cs`
+declares none and takes the US-English default.
+
 ## v0.30.0 — 2026-08-27
 
 **MINOR**: one stamped file changes class. `docs/active-context.md` stops

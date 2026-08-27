@@ -54,13 +54,11 @@ import types
 from contextlib import redirect_stdout
 from pathlib import Path
 
-import jinja2
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cs import cli, review, unanswered  # noqa: E402
 from cs.crm import CrmResult, CrmRow  # noqa: E402
-from cs.project_init import toml_quote  # noqa: E402
+from cs.project_init import DEFAULT_OPERATOR_VOICE, build_jinja_env  # noqa: E402
 
 TPL = Path(__file__).resolve().parent.parent / "cs" / "templates" / "project"
 
@@ -130,13 +128,13 @@ def _campaigns() -> None:
           "a campaign nobody else owns is not excluded")
 
     out = review.render(d)
-    block = out.split("Campagne:", 1)[1]
+    block = out.split("Campaigns:", 1)[1]
     check(block.count("[engaged]") == 0,
           "no per-contact row for a plain outcome — that is the 31-line regression")
     check("engaged 31" in block, f"the count must be printed:\n{block}")
     check("help@example.test" in block and "chiede il rimborso" in block,
           f"the escalation keeps address + reason:\n{block}")
-    check("esclusa" in block,
+    check("excluded" in block,
           f"the excluded campaign must say so, not disappear:\n{block}")
     # The whole block, for a pack mid-run, is now a handful of lines.
     check(len(block.strip().splitlines()) <= 6,
@@ -241,10 +239,10 @@ def _cli_grouping() -> None:
     p, g = plain.getvalue(), grouped.getvalue()
     check(p.splitlines()[0].startswith("EMAIL"),
           f"without --crm the table is unchanged, got:\n{p}")
-    check("clienti" not in p and "CRM" not in p,
+    check("customers" not in p and "CRM" not in p,
           f"without --crm nothing about the CRM appears:\n{p}")
-    check("clienti (in CRM) — 1:" in g, f"customers get their own group:\n{g}")
-    check("non in CRM — 1:" in g, f"the rest get theirs:\n{g}")
+    check("customers (in CRM) — 1:" in g, f"customers get their own group:\n{g}")
+    check("not in CRM — 1:" in g, f"the rest get theirs:\n{g}")
     check(g.index("cust@example.test") < g.index("robot@example.test"),
           f"customers come first:\n{g}")
     check("ACTIVE/essential" in g, f"the CRM facts are shown:\n{g}")
@@ -274,18 +272,18 @@ BASE = dict(
     repo_git_remote="git@example.com:acme/acme-cs.git", repo_kernel_version="v0.4.0",
     name="Acme", dest_dir="acme-cs",
     accounts={"support": "UID123"}, accounts_default="support",
+    operator_voice=DEFAULT_OPERATOR_VOICE,
 )
 
 # Words that turn a standing decision into an accusation. The operator's own
 # ruling: "SONO IO CHE DECIDO CHE NON DEVE ANDARE, FINE. BASTA DIRMELO UNA
 # VOLTA." A greeting that scolds him for his own switch is a defect.
-ALARM_WORDS = ("⚠", "attenzione", "problema", "bloccato", "warning", "alert", "!!")
+ALARM_WORDS = ("⚠", "attention", "problem", "blocked", "warning", "alert", "!!",
+               "stopped", "not running")
 
 
 def _rendered_command() -> None:
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(TPL), trim_blocks=True,
-                             lstrip_blocks=True, undefined=jinja2.StrictUndefined)
-    env.filters["toml_quote"] = toml_quote
+    env = build_jinja_env(TPL)
     for label, ctx in (("reply-only", BASE),
                        ("with-producer", {**BASE, "producer_adapter": "acme-leads",
                                           "crm_adapter": "shopify"})):
@@ -299,17 +297,21 @@ def _rendered_command() -> None:
             ("cs unanswered --days 45 --crm", "the support queue, customers apart"),
             ("docs/owner-actions.md", "what is blocked on him"),
             ("cs review", "what the headless operator prepared"),
+            ("cs cron status --json", "whether the unattended operator runs at "
+             "all is READ, never inferred from a log tail"),
+            ("cs catchup --check", "and whether the engine is behind is asked "
+             "before anything is offered"),
         ):
             check(needle in out, f"[{label}] the command must run/read `{needle}` — {why}")
 
         # The greeting shape: the fenced block the model fills in.
         shape = out.split("### The shape", 1)[1].split("```", 2)[1]
 
-        # Rule 2, mechanically. `pausa` is one neutral field of state.
-        check(shape.count("pausa") == 1,
+        # Rule 2, mechanically. The switch is one neutral field of state.
+        check(shape.count("on hold") == 1,
               f"[{label}] the pause appears exactly ONCE in the greeting shape, "
-              f"got {shape.count('pausa')}:\n{shape}")
-        check("in pausa (decisione tua)" in shape,
+              f"got {shape.count('on hold')}:\n{shape}")
+        check("on hold (your call)" in shape,
               f"[{label}] and it is framed as his decision:\n{shape}")
         check("CS_PAUSE" not in shape,
               f"[{label}] the greeting names a state, not a file:\n{shape}")
@@ -320,21 +322,34 @@ def _rendered_command() -> None:
         # clear the switch — a review is not the place that decision is made.
         check("rm ~/." not in out and "rm -f ~/." not in out,
               f"[{label}] /cs-review must never offer to remove the kill-switch file")
-        closing = shape.split("Da dove partiamo?", 1)[1]
-        for w in ("pausa", "CS_PAUSE", "cron", "tick", "ripart"):
+        closing = shape.split("Where do we start?", 1)[1]
+        for w in ("on hold", "pause", "CS_PAUSE", "cron", "tick", "resume",
+                  "restart", "scheduled"):
             check(w not in closing.lower(),
                   f"[{label}] the closing options must not mention {w!r}:\n{closing}")
 
         # Rule 4: nothing that would make him open something else.
-        check("[uid <uid>]" in shape,
-              f"[{label}] every draft is a row with its uid, not a count:\n{shape}")
-        check("Fuori coda" in shape,
+        check("[uid <uid> | engine <id>]" in shape,
+              f"[{label}] every draft is a row with the handles it is retired "
+              f"by, not a count:\n{shape}")
+        check("Out of the queue" in shape,
               f"[{label}] out-of-band records get their own line:\n{shape}")
-        check("Coda support" in shape,
+        check("Support queue" in shape,
               f"[{label}] the support queue has a slot:\n{shape}")
-        check("Repo:" in shape and "In attesa di te:" in shape,
+        check("Repo:" in shape and "Waiting on you:" in shape,
               f"[{label}] repo state + what is blocked on him have slots:\n{shape}")
-        check("modo:" in shape,
+        # Rule 5: the two draft blocks are separate, and a re-decide row says why.
+        check("Drafts ready to send" in shape and "Drafts to re-decide" in shape,
+              f"[{label}] ready and to-re-decide are SEPARATE blocks:\n{shape}")
+        check("<overtaken|superseded|settled>" in shape,
+              f"[{label}] a re-decide row transcribes the computed verdict:\n{shape}")
+        # The cron fact rides the line that already existed for the last run —
+        # no parallel line, no second place to keep true.
+        check(shape.count("Scheduled run:") == 1
+              and "<ran|skipped>" in shape
+              and "<configured|not configured>" in shape,
+              f"[{label}] one line carries schedule + timestamp + outcome:\n{shape}")
+        check("mode:" in shape,
               f"[{label}] cs_triage_mode is stated next to the pause — resuming a "
               f"send-mode operator is not the same decision as resuming a draft one")
 
@@ -344,9 +359,7 @@ def _rendered_command() -> None:
 def _permissions() -> None:
     import json
 
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(TPL), trim_blocks=True,
-                             lstrip_blocks=True, undefined=jinja2.StrictUndefined)
-    env.filters["toml_quote"] = toml_quote
+    env = build_jinja_env(TPL)
     settings = json.loads(env.get_template(".claude/settings.json.j2").render(**BASE))
     allow = settings["permissions"]["allow"]
     for entry in ("Bash(.venv/bin/python -m cs review:*)",

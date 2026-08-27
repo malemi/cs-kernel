@@ -16,16 +16,16 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.30.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.31.0`. Current HEAD status: tagged as `v0.31.0`.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
   the live answer for how far past a tag HEAD is, so no commit count is
   written down here (one would be stale the moment this file is committed).
-  Eleven tags on 2026-08-25/27, `v0.20.0` → `v0.30.0`, each with a CHANGELOG
+  Twelve tags on 2026-08-25/27, `v0.20.0` → `v0.31.0`, each with a CHANGELOG
   entry naming its re-collaudo tier; the tag-by-tag narrative this section
-  used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`
-  and `v0.30.0` are tagged and pinned nowhere, and re-pinning is the
+  used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`,
+  `v0.30.0` and `v0.31.0` are tagged and pinned nowhere, and re-pinning is the
   operator's own move.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
@@ -55,10 +55,27 @@ what is *current*.
 - **`/cs-review` is the ONE command an operator types when he sits down**
   (`v0.24.0`): settings from `cs config`, the support queue with customers
   grouped by the CRM port, the pin from `cs --version` and the changes from
-  `git log`, a digest of `docs/owner-actions.md`, per-draft uids and the
+  `git log`, a digest of `docs/owner-actions.md`, per-draft handles and the
   out-of-band records. Its tone rule is a gate: the kill-switch is the
   operator's standing decision and appears exactly once, as neutral state, with
   no alarm and no suggestion to lift it.
+- **Every draft carries a verdict, and it is computed, not narrated**
+  (`v0.31.0`, `cs/draft_state.py`): `overtaken` / `superseded` from Gmail,
+  `settled` from the engine, `ready` when nothing fired. The two copies of a
+  mirrored draft are one row with both handles. Nothing retires a draft
+  automatically — the cron denies `cs draft-delete` AND `cs rpc drafts.discard`
+  in all six spellings, and the engine's discard deletes the row outright.
+  `/cs-review` says whether the unattended operator is running
+  (`cs cron status --json`: absent / paused / stale / ticking) and offers
+  `cs catchup` — the engine's own `sync.run` + `update.run` — only when the
+  mailbox holds mail the engine has not ingested.
+- **The stamped surfaces speak the voice the clone declares** (`v0.31.0`):
+  `[surface] operator_voice` in its own `manifest.toml`, kernel default
+  `"American English, professional and direct"`. `cs update` merges the
+  manifest over the frozen `init_data`, so editing that line reaches the stamp
+  without re-running `cs init`. The three agent-facing surfaces share one
+  role-framing preamble from `cs/templates/partials/`, a third template root
+  with its own package-data glob.
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin;
   the old private `hahnbanach/cs-kernel` is archived. What a clone gets and how
   it upgrades is `README.md`; the five `cs-` commands and the five operator

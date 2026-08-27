@@ -1,7 +1,12 @@
 """Operator review digest — what the headless operator prepared / left for you.
 
 Read-only aggregation, run when you open a session (`cs review`):
-  - DRAFTS waiting in the operator's Gmail Drafts (the queue you review + send);
+  - DRAFTS, each with a VERDICT computed at read time (`cs/draft_state.py`):
+    `ready`, or one of `overtaken` / `superseded` / `settled`, which mean the
+    conversation moved on and the draft has to be re-decided before it is sent.
+    Both stores are reconciled into one list, so the two copies of a mirrored
+    draft are one row carrying both handles;
+  - the same drafts as the two RAW store listings (the queue you review + send);
   - open ENGINE TASKS needing a human answer (triage escalations live here);
   - contacts a HUMAN HAS TAKEN OVER (`cs escalated`) — still open, still owed
     an answer, but yours: shown with the age of the takeover, so the answer to
@@ -18,7 +23,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from . import _time, campaign, gmail_drafts, rpc
+from . import _time, campaign, draft_state, gmail_drafts, rpc
 
 
 def _last_log_lines(settings, n: int = 6) -> list[str]:
@@ -27,6 +32,77 @@ def _last_log_lines(settings, n: int = 6) -> list[str]:
         return []
     lines = log.read_text(errors="replace").splitlines()
     return lines[-n:]
+
+
+def engine_freshness(settings, days: int = 3) -> dict:
+    """Has the newest mail in the mailbox reached the engine yet?
+
+    Everything the engine owns — the task ledger, entity memory, the
+    `needs_reply` verdict — is only as fresh as its last pass, and the engine
+    exposes neither the timestamp of that pass nor the interval it is
+    configured for. What it does answer is whether it holds a given
+    conversation, so freshness is measured directly instead of inferred from a
+    clock: take the newest inbound Gmail has (`gmail_archive.inbound_recent`,
+    the same Date-header-windowed read the sweep uses), and ask the engine for
+    that conversation (`emails.list_by_thread`, keyed by the RFC-5322 thread
+    key both sides already agree on). A message the engine cannot show is a
+    message it has not ingested, and `cs catchup` is what fixes that.
+
+    The join is by whole-second UTC timestamp — the engine returns its own
+    UUIDs, never the `Message-ID` header — which is the convention
+    `cs/engine_view.py` already uses for the same reason.
+
+    Returns `{stale, reason, newest_inbound_at, newest_subject, note}`.
+    `stale` is False whenever the question cannot be answered (no recent
+    inbound, an engine that will not talk, an unthreadable message): the only
+    thing `stale` triggers is an offer to spend real LLM budget, so an
+    unanswerable question must never produce one.
+    """
+    from datetime import timezone
+
+    from . import gmail_archive
+
+    out = {"stale": False, "reason": "", "newest_inbound_at": None,
+           "newest_subject": None, "note": None}
+    try:
+        recent = gmail_archive.inbound_recent(settings, days=days)
+    except Exception as e:  # noqa: BLE001 — a mailbox hiccup is never an offer
+        out["note"] = f"could not read the mailbox: {type(e).__name__}: {e}"
+        return out
+    if not recent:
+        out["reason"] = f"no inbound mail in the last {days} day(s) to ingest"
+        return out
+
+    newest = max(recent, key=lambda m: m["date"])
+    out["newest_inbound_at"] = newest["date"].isoformat()
+    out["newest_subject"] = newest.get("subject") or ""
+    key = newest.get("thread_key")
+    if not key:
+        out["reason"] = "the newest message carries no usable thread key"
+        return out
+
+    try:
+        res = rpc.call_sync(settings, "emails.list_by_thread", {"thread_id": key},
+                            timeout=60)
+    except Exception as e:  # noqa: BLE001
+        out["note"] = f"could not ask the engine: {type(e).__name__}: {e}"
+        return out
+
+    from .engine_view import _parse as _parse_engine_date
+
+    want = int(newest["date"].astimezone(timezone.utc).timestamp())
+    seen = set()
+    for m in ((res or {}).get("emails") or []):
+        when = _parse_engine_date(m.get("date"))
+        if when is not None:
+            seen.add(int(when.timestamp()))
+    if want in seen:
+        out["reason"] = "the engine holds the newest message in the mailbox"
+        return out
+    out["stale"] = True
+    out["reason"] = (f"the newest message in the mailbox "
+                     f"({out['newest_inbound_at']}) has not reached the engine")
+    return out
 
 
 def gather(settings) -> dict:
@@ -51,6 +127,22 @@ def gather(settings) -> dict:
     except Exception as e:  # noqa: BLE001
         out["engine_drafts"] = []
         out["engine_drafts_error"] = f"{type(e).__name__}: {e}"
+
+    # 1c. The two stores reconciled into ONE list, every row carrying a verdict
+    #     computed from Gmail (and, when the engine answers, its reading of the
+    #     conversation). This is what makes the digest say "this draft answers a
+    #     question the customer has already withdrawn" instead of listing it as
+    #     ready. Never raises: a mailbox hiccup is a note, and the raw listings
+    #     above are still there.
+    try:
+        rows, notes = draft_state.reconcile(
+            settings, out["gmail_drafts"], out["engine_drafts"]
+        )
+        out["drafts"] = rows
+        out["drafts_notes"] = notes
+    except Exception as e:  # noqa: BLE001
+        out["drafts"] = []
+        out["drafts_notes"] = [f"{type(e).__name__}: {e}"]
 
     # 2. Open engine tasks (triage escalations + general inbound needing a human)
     try:
@@ -159,88 +251,105 @@ def gather(settings) -> dict:
     return out
 
 
-def render(d: dict) -> str:
-    """Human digest (Italian, founders' register). Skimmable; the numbers are
-    the point, not prose."""
-    L = []
-    gdrafts = d.get("gmail_drafts", [])
-    L.append(f"Bozze outreach in Gmail Drafts (cs-SMTP, da rivedere + inviare): {len(gdrafts)}")
-    for dr in gdrafts:
-        # uid first: it is what `draft-delete <uid>` takes, and a draft the
-        # operator wants gone is unnameable without it.
-        L.append(f"  - [uid {(dr.get('uid') or '?'):>6.6}] "
-                 f"{(dr.get('to') or '?'):32.32} {(dr.get('subject') or '(no subj)')[:60]}")
-    if d.get("gmail_drafts_error"):
-        L.append(f"  ! lettura Gmail Drafts fallita: {d['gmail_drafts_error']}")
+def _handles(row: dict) -> str:
+    """Both handles of one logical draft, in the form the operator retires it
+    by. A row with two copies needs both; a count needs neither, which is why
+    neither is ever collapsed into one."""
+    parts = []
+    if row.get("gmail_uid"):
+        parts.append(f"uid {row['gmail_uid']}")
+    if row.get("engine_id"):
+        parts.append(f"engine {str(row['engine_id'])[:8]}")
+    return ", ".join(parts) or "no handle"
 
-    edrafts = d.get("engine_drafts", [])
-    L.append(f"\nBozze engine (risposta/compose, store engine + desktop app): {len(edrafts)}")
-    for dr in edrafts:
-        to = (dr.get("to_addresses") or [])
-        to = to[0] if to else "?"
-        kind = "reply" if (dr.get("in_reply_to") or dr.get("thread_id")) else "compose"
-        L.append(f"  - [{kind:7.7}] {to:32.32} {(dr.get('subject') or '(no subj)')[:55]}")
+
+def render(d: dict) -> str:
+    """Human digest — English, like every other line of kernel code.
+
+    The clone's own voice is a STAMPED-SURFACE property (`operator_voice` in
+    its `manifest.toml`), and it applies to what the agent writes to the
+    operator, never to what a kernel verb prints. Skimmable; the numbers are the
+    point, not prose."""
+    L = []
+    rows = d.get("drafts", [])
+    ready, re_decide = draft_state.split(rows)
+
+    L.append(f"Drafts ready to send ({len(ready)}) — you review and send:")
+    for r in ready:
+        L.append(f"  - [{_handles(r)}] {(r.get('to') or '?'):32.32} "
+                 f"{(r.get('subject') or '(no subject)')[:60]}")
+    L.append(f"\nDrafts to re-decide ({len(re_decide)}) — the conversation "
+             f"moved on since they were written:")
+    for r in re_decide:
+        L.append(f"  - [{_handles(r)}] {(r.get('to') or '?'):32.32} "
+                 f"{(r.get('subject') or '(no subject)')[:50]}")
+        L.append(f"      {r.get('verdict')}: {r.get('signal') or '?'}"
+                 f"{'  (' + r['signal_at'] + ')' if r.get('signal_at') else ''}")
+    for note in d.get("drafts_notes") or []:
+        L.append(f"  ! {note}")
+    L.append(f"  (stores: {len(d.get('gmail_drafts', []))} in Gmail Drafts, "
+             f"{len(d.get('engine_drafts', []))} in the engine)")
+    if d.get("gmail_drafts_error"):
+        L.append(f"  ! reading Gmail Drafts failed: {d['gmail_drafts_error']}")
     if d.get("engine_drafts_error"):
-        L.append(f"  ! drafts.list fallita: {d['engine_drafts_error']}")
+        L.append(f"  ! drafts.list failed: {d['engine_drafts_error']}")
 
     tasks = d.get("tasks", [])
-    L.append(f"\nTask engine aperti (servono te): {len(tasks)}")
+    L.append(f"\nOpen engine tasks ({len(tasks)}) — these need you:")
     for t in tasks:
         L.append(f"  - [{(t.get('urgency') or '?'):6.6}] {(t.get('email') or '?'):28.28} {t.get('title') or ''}")
     if d.get("tasks_error"):
-        L.append(f"  ! tasks.list fallita: {d['tasks_error']}")
+        L.append(f"  ! tasks.list failed: {d['tasks_error']}")
 
-    # Localized digest (see the docstring): these blocks follow the surrounding
-    # Italian, it is not a second language creeping into the kernel.
-    #
     # Printed right after the open tasks and BEFORE the resolved ones: it is the
-    # counterweight to "servono te" — the same question ("what is there to do")
-    # answered with "these are already yours". Never omitted while a record
+    # counterweight to "these need you" — the same question ("what is there to
+    # do") answered with "these are already yours". Never omitted while a record
     # exists, and always with the age.
     taken = d.get("escalated", [])
     if taken:
-        # "presi in carico" and a per-row name: most rows are the operator's
-        # own, but one can name a colleague, and a header saying "tu" would be
-        # wrong for exactly the row he did not expect to see.
-        L.append(f"\nPresi in carico — aperti, ma non li lavoro io "
-                 f"({len(taken)}), dal più vecchio:")
+        # A per-row name: most rows are the operator's own, but one can name a
+        # colleague, and a header saying "you" would be wrong for exactly the
+        # row he did not expect to see.
+        L.append(f"\nTaken over by a human — open, but not ours to answer "
+                 f"({len(taken)}), oldest first:")
         for t in taken:
-            who = t.get("owner") or "te"
+            who = t.get("owner") or "you"
             why = f"  {t.get('reason')}" if t.get("reason") else ""
-            L.append(f"  - {(t.get('email') or '?'):30.30} con {who} da "
-                     f"{t.get('days')}g ({t.get('escalated_on') or '?'}){why}")
-        L.append("  (per rimetterne uno in lavorazione: "
+            L.append(f"  - {(t.get('email') or '?'):30.30} with {who} for "
+                     f"{t.get('days')}d ({t.get('escalated_on') or '?'}){why}")
+        L.append("  (to put one back in the queue: "
                  "`cs escalated <email> --undo --commit`)")
     if d.get("escalated_error"):
-        L.append(f"  ! lettura dei presi in carico fallita: {d['escalated_error']}")
+        L.append(f"  ! reading the taken-over records failed: {d['escalated_error']}")
 
     handled = d.get("handled_out_of_band", [])
     if handled:
-        L.append(f"\nGestiti fuori mail — non più segnalati ({len(handled)}), "
-                 f"i più recenti:")
+        L.append(f"\nResolved out of band — no longer raised ({len(handled)}), "
+                 f"most recent first:")
         for h in handled[:5]:
             L.append(f"  - {(h.get('email') or '?'):30.30} {h.get('handled_on') or '?'}  "
                      f"{h.get('reason') or ''}")
-        L.append("  (per rimetterne uno in lista: `cs handled <email> --undo`)")
+        L.append("  (to put one back on the list: `cs handled <email> --undo`)")
     if d.get("handled_out_of_band_error"):
-        L.append(f"  ! lettura dei gestiti fuori mail fallita: {d['handled_out_of_band_error']}")
+        L.append(f"  ! reading the out-of-band records failed: "
+                 f"{d['handled_out_of_band_error']}")
 
-    L.append("\nCampagne:")
+    L.append("\nCampaigns:")
     for c in d.get("campaigns", []):
-        tail = "  [esclusa — la gestisce un processo dedicato]" if c.get("excluded") else ""
+        tail = "  [excluded — a dedicated process owns it]" if c.get("excluded") else ""
         outcomes = c.get("outcomes") or {}
-        esiti = ("  esiti: " + ", ".join(f"{k} {v}" for k, v in sorted(outcomes.items()))
-                 if outcomes else "")
-        L.append(f"  {c['campaign']}: {c.get('counts')}{esiti}{tail}")
+        results = ("  outcomes: " + ", ".join(f"{k} {v}" for k, v in sorted(outcomes.items()))
+                   if outcomes else "")
+        L.append(f"  {c['campaign']}: {c.get('counts')}{results}{tail}")
         for f in c.get("flagged", []):
             tag = "ESCALATION" if f.get("escalated") else (f.get("outcome") or "?")
             L.append(f"    · {f['email']:30.30} [{tag}] {f.get('reason') or ''}")
     if d.get("campaigns_error"):
-        L.append(f"  ! campagne fallite: {d['campaigns_error']}")
+        L.append(f"  ! reading the campaigns failed: {d['campaigns_error']}")
 
     tick = d.get("last_tick", [])
     if tick:
-        L.append("\nUltimo tick:")
+        L.append("\nLast scheduled run:")
         for ln in tick:
             L.append(f"  {ln}")
     return "\n".join(L)

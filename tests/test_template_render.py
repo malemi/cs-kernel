@@ -27,10 +27,8 @@ import sys
 import tomllib
 from pathlib import Path
 
-import jinja2
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from cs.project_init import toml_quote  # noqa: E402
+from cs.project_init import build_jinja_env  # noqa: E402
 
 TPL = Path(__file__).resolve().parent.parent / "cs" / "templates" / "project"
 
@@ -53,6 +51,7 @@ BASE = dict(
     excluded_campaign="", repo_docs_shape="generic",
     repo_git_remote="git@example.com:acme/acme-cs.git", repo_kernel_version="v0.4.0",
     name="Acme", dest_dir="acme-cs",
+    operator_voice="American English, professional and direct",
 )
 SINGLE = {**BASE, "accounts": {"support": "UID123"}, "accounts_default": "support"}
 MULTI = {**BASE, "accounts": {"support": "UID123", "founder": "UID999"},
@@ -63,9 +62,10 @@ EMAIL_ACCOUNT = {
     "accounts_default": "support",
 }
 
-env = jinja2.Environment(loader=jinja2.FileSystemLoader(TPL), trim_blocks=True,
-                         lstrip_blocks=True, undefined=jinja2.StrictUndefined)
-env.filters["toml_quote"] = toml_quote
+# cs init's OWN environment, partials root included: a template that
+# `{% include %}`s a shared fragment must render here exactly as it renders
+# during a real stamp, or this gate proves nothing about the stamp.
+env = build_jinja_env(TPL)
 
 BAD = ("mrcall.ai", "mario", "eva fani", "cafe124", "centralix", "/home/mal")
 fails = 0

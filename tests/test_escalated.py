@@ -349,8 +349,8 @@ def _review(db_path: str) -> None:
     text = review.render(d)
     assert "mine@example.test" in text and "sto scrivendo io" in text, text
     assert "Andrea" in text, text
-    assert "da 12g" in text, "the digest must carry the age of the takeover"
-    assert "con te" in text, "the operator's own rows read as his, not 'con tu'"
+    assert "for 12d" in text, "the digest must carry the age of the takeover"
+    assert "with you" in text, "the operator's own rows read as his"
     assert "--undo" in text, "the digest must say how to put one back in play"
     print("OK: cs review answers 'what is there to do' with 'these are yours'")
 

@@ -266,7 +266,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered handled escalated tasks business dossier ask draft-reply draft-delete review drive accounts config chat campaign project; do
+for v in init update login plan whoami rpc thread contacted unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -394,13 +394,19 @@ step "17. deny-enumeration gate (six command-text spellings, same deny)"
 # settings.json.j2 membership under permissions.deny (and nothing
 # chat/send-draft-shaped under permissions.allow), and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
-# equality against the 36 deny entries + 4 keeps. `handled` is in that list not
+# equality against the 48 deny entries + 4 keeps. `handled` is in that list not
 # because it sends, but because it SILENCES: it declares a contact resolved
 # off-email, and a tick reading untrusted inbound must never be talked into it.
 # `escalated` is there for the sharper version of the same reason: it asserts
 # that a named HUMAN is personally handling a contact, which no machine can
 # claim on that human's behalf, and which the review then repeats back to him
-# as "you are on this one".
+# as "you are on this one". `draft-delete` and `rpc drafts.discard` are the two
+# halves of retiring a draft — Gmail's copy and the engine's — and the tick now
+# COMPUTES the verdict that would tempt it to use them: a draft the conversation
+# has moved past is a prepared answer no human has seen yet, so the tick reports
+# it and the operator retires it by name. `rpc drafts.discard` is spelled out
+# for the same reason as `rpc chat`: settings.json allows the broad `cs rpc:*`,
+# and the engine's discard DELETES the row — there is no Trash to recover from.
 CRON_TPL="$ROOT/cs/templates/project/bin/cs_operator_cron.sh.j2"
 SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
 if ! python3 - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
@@ -418,7 +424,7 @@ SPELLINGS = [
 ]
 VERBS = [
     "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
-    "handled", "escalated",
+    "handled", "escalated", "draft-delete", "rpc drafts.discard",
 ]
 
 problems = []
@@ -485,7 +491,7 @@ if problems:
         print(p)
     sys.exit(1)
 
-print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 40-entry order verified")
+print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 52-entry order verified")
 sys.exit(0)
 PYEOF
 then
@@ -799,6 +805,52 @@ step "39. a closing courtesy is the ENGINE's call, and the kernel only files it"
 # thank-you; an autoresponder stays `automatic`; a thank-you no longer re-opens
 # a contact closed by phone, while a real request still does; nothing dropped.
 if "$VENV/bin/python" "$ROOT/tests/test_unanswered_courtesy.py"; then echo "OK"; else echo "FAIL: the closing-courtesy split regressed"; FAIL=1; fi
+
+step "40. every draft carries a verdict, computed from the mailbox"
+# A reply sat in the queue while the customer had already written again, and
+# /cs-review presented it as ready to send: `cs review` listed both draft stores
+# raw, and the triage skill's candidate feed (`cs unanswered`) drops a thread as
+# soon as a real message of ours follows the customer's last one — so the thread
+# was a candidate nowhere. Guards: a LATER inbound is `overtaken` and an earlier
+# one is not; a later send of ours is `superseded`; the engine's own verdict
+# lands as `settled` and only on ITS thread; the customer having written since
+# outranks both; the two copies of one mirrored draft are ONE row with BOTH
+# handles and the EARLIER timestamp; every degradation (mailbox, engine, a draft
+# with no date) is a note that leaves the row `ready` — nothing is ever retired
+# by a failure to read; and `cs review` carries the verdict into --json and
+# prints the two blocks.
+if "$VENV/bin/python" "$ROOT/tests/test_draft_state.py"; then echo "OK"; else echo "FAIL: draft verdicts regressed"; FAIL=1; fi
+
+step "41. cs cron status --json + cs catchup (the review's freshness half)"
+# The review used to infer the state of the unattended operator from a six-line
+# log tail: it read a quiet log as a fault and a bare timestamp as work done
+# when the run had skipped. Guards: `absent` / `paused` / `stale` / `ticking`
+# are distinguished, the pause outranks staleness and an absent entry outranks
+# both, the staleness threshold comes from the SCHEDULE (the same log is fresh
+# daily and stale 2-hourly) and the last run says what it did. For `cs catchup`:
+# the engine's own two passes in order, the task DIFF reported rather than the
+# fact it ran, a failed first pass exits non-zero instead of reading as done,
+# the engine's `busy` answer is a clean exit (it is the single-flight guard
+# working, not a failure), and `--check` runs NO pass and never offers one on a
+# question it could not answer.
+if "$VENV/bin/python" "$ROOT/tests/test_catchup_cron.py"; then echo "OK"; else echo "FAIL: cron status / catchup regressed"; FAIL=1; fi
+
+step "42. one shared preamble, both stamping paths, and no Italian in a clone"
+# Two properties of what a clone RECEIVES. (1) The desk preamble is one text
+# included three times from a partials root that is a SIBLING of the project
+# templates — a partial inside would be stamped into every clone as an orphan
+# file. Its failure mode is invisible at `cs init`: the update path built its
+# Jinja env with NO loader, so the first {% include %} rendered fine for a new
+# clone and raised "no loader for this environment specified" on every existing
+# one — both paths are exercised, the update one as a REAL `cs update`
+# subprocess against a clone whose frozen init_data predates both the include
+# and `operator_voice`. Under this venv that subprocess runs the INSTALLED
+# package, which is also what proves the templates/partials package-data glob.
+# (2) The kernel default is a US-English product: the rendered .claude/ tree
+# from the DEFAULT manifest carries no Italian, `cs review`'s digest is English
+# kernel code, and the voice a clone declares in its own manifest.toml reaches
+# the stamp without re-running `cs init`.
+if "$VENV/bin/python" "$ROOT/tests/test_stamped_surfaces.py"; then echo "OK"; else echo "FAIL: stamped surfaces regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

@@ -57,6 +57,7 @@ BASE = dict(
     repo_git_remote="git@example.com:acme/acme-cs.git", repo_kernel_version="v0.6.1",
     name="Acme",
     accounts={"support": "UID123"}, accounts_default="support",
+    operator_voice=project_init.DEFAULT_OPERATOR_VOICE,
 )
 
 TEMPLATE_ROOT = Path(project_init.__file__).parent / "templates" / "project"

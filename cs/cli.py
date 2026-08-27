@@ -261,20 +261,20 @@ def cmd_unanswered(args) -> int:
             print(f"{r['email']:38.38} {r['days_waiting']:>4}d  {(r['subject'] or '')[:60]}")
         print(f"\ntotal: {len(rows)} unanswered (oldest first)")
         if crm_note:
-            print(f"  (CRM non consultabile: {crm_note})")
+            print(f"  (CRM unavailable: {crm_note})")
     else:
         # Customers first, and SEPARATELY — same rows, same order, grouped by
         # the one fact that decides whose morning this is.
         known = [r for r in rows if r.get("crm_known")]
         rest = [r for r in rows if not r.get("crm_known")]
         if known:
-            print(f"clienti (in CRM) — {len(known)}:")
+            print(f"customers (in CRM) — {len(known)}:")
             print(f"{'EMAIL':38} {'WAIT':>5}  {'CRM':22} SUBJECT")
             for r in known:
                 print(f"{r['email']:38.38} {r['days_waiting']:>4}d  "
                       f"{(r.get('crm') or ''):22.22} {(r['subject'] or '')[:42]}")
         if rest:
-            print(f"{chr(10) if known else ''}non in CRM — {len(rest)}:")
+            print(f"{chr(10) if known else ''}not in CRM — {len(rest)}:")
             print(f"{'EMAIL':38} {'WAIT':>5}  SUBJECT")
             for r in rest:
                 print(f"{r['email']:38.38} {r['days_waiting']:>4}d  "
@@ -349,9 +349,8 @@ def cmd_unanswered(args) -> int:
         # way it did before it could ask — every message needing a reply, no
         # autoresponder recognised — which silently re-merges exactly the rows
         # the sections above exist to separate.
-        print(f"\n  (engine non consultabile: {d['note']} — "
-              f"le risposte automatiche non sono state riconosciute e "
-              f"ogni messaggio risulta da rispondere)")
+        print(f"\n  (engine unavailable: {d['note']} — no autoresponder was "
+              f"recognised, so every message reads as needing a reply)")
     return 0
 
 
@@ -1028,6 +1027,96 @@ def cmd_draft_delete(args) -> int:
     return 0 if out.get("ok") else 1
 
 
+def cmd_catchup(args) -> int:
+    """Bring the ENGINE's state up to date, and report what changed.
+
+    Everything the engine owns — synced mail, entity memory, the task ledger,
+    the `needs_reply` verdict — is only as fresh as the last pass of its own
+    headless auto-update loop. Reading a stale ledger is how a review shows work
+    that is already done, so `/cs-review` offers this pass when the last one is
+    older than the interval that engine is configured for.
+
+    It DRIVES the engine's own surfaces and re-implements none of them:
+    `sync.run` fetches new mail, then `update.run` runs memory extraction plus
+    task detection — the same pipeline the scheduled loop runs, including the
+    pass that CLOSES a task when an inbound message resolves it. That loop and
+    this verb are the same single-flight pipeline, so a pass already in progress
+    answers `busy` and this one reports that instead of waiting or retrying.
+
+    It drafts nothing and sends nothing. It is the engine pass, not the operator
+    pass, and it therefore runs while `CS_PAUSE` is present: the switch stops
+    customer-facing work, and refusing a read-and-classify pass would leave a
+    paused clone permanently unable to show fresh state.
+
+    A NAMED verb rather than two `cs rpc` calls, because permission rules match
+    command TEXT: the stamped settings allow `cs rpc:*` broadly, so a pass that
+    spends real LLM budget has to be its own gateable command.
+
+    Prints the task diff `update.run` returns — created / closed / updated ids —
+    so the caller reports what the pass CHANGED instead of narrating that it
+    ran.
+
+    `--check` answers whether the pass is WARRANTED and writes nothing: it
+    compares the newest inbound in the mailbox against what the engine holds
+    (`review.engine_freshness`). It is the read a review runs every time, which
+    is why it is a flag on this verb and not a second one — and why the stamped
+    permissions allow `catchup --check` while leaving the pass itself to ask."""
+    settings = config.load()
+    if getattr(args, "check", False):
+        from . import review as review_mod
+
+        st = review_mod.engine_freshness(settings)
+        if args.json:
+            _print_json(st)
+        else:
+            print(("catch-up warranted: " if st["stale"] else "engine is current: ")
+                  + (st.get("reason") or ""))
+            if st.get("note"):
+                print(f"  ! {st['note']}")
+        return 0
+
+    out: dict = {}
+    try:
+        res = rpc.call_sync(settings, "sync.run", {}, timeout=args.timeout)
+        out["sync"] = res if isinstance(res, dict) else {"result": res}
+    except Exception as e:  # noqa: BLE001 — the second pass is still worth running
+        out["sync"] = {"success": False, "error": f"{type(e).__name__}: {e}"}
+    try:
+        res = rpc.call_sync(settings, "update.run", {}, timeout=args.timeout)
+        out["update"] = res if isinstance(res, dict) else {"result": res}
+    except Exception as e:  # noqa: BLE001
+        out["update"] = {"success": False, "error": f"{type(e).__name__}: {e}"}
+
+    # The engine runs the SAME pipeline on its own schedule and answers a
+    # second caller with `{"busy": true, "success": false}` and an empty diff
+    # rather than queueing. That is a correct outcome, not a failure: the pass
+    # this verb wanted is already happening. Say so, exit 0, and never retry —
+    # a loop here would spend the budget the single-flight guard exists to save.
+    busy = bool(out["update"].get("busy"))
+    if args.json:
+        _print_json(out)
+    else:
+        sync = out["sync"]
+        print(f"sync.run: {sync.get('summary') or sync.get('error') or 'done'}")
+        upd = out["update"]
+        diff = upd.get("updated_tasks") or {}
+        if busy:
+            print("update.run: engine busy — a pass is already running; "
+                  "nothing to report from this one")
+        elif upd.get("error"):
+            print(f"update.run: {upd['error']}")
+        else:
+            print(f"update.run: {len(diff.get('created') or [])} task(s) created, "
+                  f"{len(diff.get('closed') or [])} closed, "
+                  f"{len(diff.get('updated') or [])} updated")
+        for label in ("created", "closed", "updated"):
+            for tid in (diff.get(label) or []):
+                print(f"  {label}: {tid}")
+    ok = out["sync"].get("success") is not False and (
+        busy or out["update"].get("success") is not False)
+    return 0 if ok else 1
+
+
 def cmd_review(args) -> int:
     settings = config.load()
     from . import review as review_mod
@@ -1485,10 +1574,32 @@ def main(argv=None) -> int:
 
     prv = sub.add_parser(
         "review",
-        help="operator digest: drafts waiting + open tasks + campaign flags + last tick (read-only)",
+        help="operator digest: every draft with a verdict + open tasks + "
+        "campaign flags + last tick (read-only)",
     )
     prv.add_argument("--json", action="store_true")
     prv.set_defaults(func=cmd_review)
+
+    pcu = sub.add_parser(
+        "catchup",
+        help="bring the engine up to date (sync.run then update.run) and print "
+        "the task diff — drafts nothing, sends nothing, runs while paused",
+    )
+    pcu.add_argument(
+        "--check",
+        action="store_true",
+        help="say whether the engine is behind the mailbox and exit — reads "
+        "only, runs no pass, spends nothing",
+    )
+    pcu.add_argument("--json", action="store_true")
+    # Well above the 60s default of `cs rpc`: this is a mail fetch plus the
+    # engine's extraction/detection pipeline, minutes on a real mailbox, and a
+    # timeout mid-pass leaves the operator unable to tell what ran.
+    pcu.add_argument("--timeout", type=float, default=1800)
+    # `--check` reads the operator's own Gmail over IMAP, and the pass ingests
+    # into that same identity's engine profile, so --account cannot redirect
+    # either half without answering about a different mailbox.
+    pcu.set_defaults(func=cmd_catchup, reads_operator_mailbox=True)
 
     pdrv = sub.add_parser(
         "drive",
@@ -1628,7 +1739,17 @@ def main(argv=None) -> int:
         cri.set_defaults(func=cron_mod.cmd_cron_install)
         cru = crsub.add_parser("uninstall", help="remove the crontab entry")
         cru.set_defaults(func=cron_mod.cmd_cron_uninstall)
-        crs = crsub.add_parser("status", help="show if the cron entry is installed + manifest intent")
+        crs = crsub.add_parser(
+            "status",
+            help="is the entry installed, is the switch on, when did it last "
+            "run — and, with --json, the same as data",
+        )
+        crs.add_argument(
+            "--json",
+            action="store_true",
+            help="machine-readable state (installed / paused / last_tick_at / "
+            "schedule / state) — what /cs-review reads",
+        )
         crs.set_defaults(func=cron_mod.cmd_cron_status)
     except Exception:
         # If manifest is missing or invalid, cron commands will fail later with a clear error

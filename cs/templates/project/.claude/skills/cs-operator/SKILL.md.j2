@@ -1,6 +1,6 @@
 ---
 name: cs-operator
-description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then runs /cs-triage-mail and /cs-campaign-tick in order and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
+description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then runs /cs-triage-mail and /cs-campaign-tick in order, reconciles the drafts already waiting, and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
 ---
 
 # {{ company_prog_name }} — General Operator Bootstrap
@@ -18,6 +18,8 @@ emits a STOP, do exactly that — STOP, after printing the stated line. Do
 sub-skills don't already do.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
+
+{% include "desk-preamble.md.j2" %}
 
 ## 0. The invariant (state it, then hold to it the whole run)
 
@@ -153,6 +155,32 @@ Hold these rules:
   is a valid outcome.
 
 {% endif %}
+## 4c. Reconcile the drafts already waiting
+
+The two sub-skills above CREATE work. This step checks the work that was
+already there — the drafts previous runs left in the queue — because a
+conversation moves on whether or not anybody is at the desk.
+
+```bash
+.venv/bin/python -m cs review --json     # drafts[] — one row per logical draft
+```
+
+Every row carries a `verdict` computed by the verb: `ready`, or one of
+`overtaken` (the contact wrote after it was composed), `superseded` (we wrote
+after it was composed), `settled` (the engine reads the conversation as owing
+nothing). Take the rows that are not `ready` and put each one under
+**Escalations** in the report, with its handles, its verdict and when the
+signal fired. Transcribe the verdict; do not re-derive it and do not argue
+with it.
+
+**Retire nothing.** Not a draft, on any verdict, on any path — the cron denies
+both halves of that, `cs draft-delete` and `cs rpc drafts.discard`, in every
+spelling. A draft the mailbox has moved past is a
+prepared answer a human has not seen yet, and deciding it is worthless is the
+operator's call in a session, not an unattended tick's while it reads
+untrusted mail. A tick that leaves a draft contradicting the mailbox and says
+so has done its job; one that quietly removes it has not.
+
 ## 5. Do not exceed the sub-skills
 
 This run's authority ends at what steps 3–4 normally do. The following
@@ -179,35 +207,38 @@ report and STOP — do not do it.
 
 ## 6. Report, then STOP
 
-Print one compact summary — Italian, founders' register: tight, no
-jargon, no emoji, no "fammi sapere". Fold both sub-skill results into a
-**single** consolidated escalations list. Structure:
+Print one compact summary — write in **{{ operator_voice }}**: tight, no
+jargon, no emoji, no "let me know". Fold both sub-skill results into a
+**single** consolidated escalations list. The labels below are the content,
+not the wording:
 
 ```
 cs-operator — <UTC timestamp>
 
 Engine:  {{ email_address }} ✓
-Modo:    cs_triage_mode = <valore in forza> (dichiarato in: <file da cs config>)
-Triage:  <una riga: bozze N / escalate N / nulla da fare>
-Campagne: <una riga: riconciliati N / promemoria N / SMS N / ack-bozza N / nulla da fare>
+Mode:    cs_triage_mode = <value in force> (declared in: <file from cs config>)
+Triage:  <one line: N drafted / N escalated / nothing to do>
+Campaigns: <one line: N reconciled / N reminders / N SMS / N ack drafts / nothing to do>
 {% if founder_sweep_enabled %}
-{{ founder_sweep_account }}:   <una riga, SOLA SEGNALAZIONE (mai bozze): aperti N da gestire a mano / nulla>
+{{ founder_sweep_account }}:   <one line, SURFACING ONLY (never drafts): N open to handle by hand / nothing>
 {% endif %}
+Waiting drafts: <one line: N ready / N to re-decide>
 
 Escalations (need you):
-- <una riga per item; ometti la sezione se vuota>
+- <one line per item; omit the section if empty>
 ```
 
 Rules for the report:
-- The `Modo:` line is copied from step 2b's output — the value AND the file
+- The `Mode:` line is copied from step 2b's output — the value AND the file
   that declares it, verbatim. It is never guessed, never softened to "default",
   and never omitted: it is what tells the next reader (operator or agent)
   whether this tick could send, without them re-deriving it from the files.
 - If both sub-skills had nothing to do, say so plainly (e.g.
-  `Triage: nulla da fare`, `Campagne: nulla da fare`) — an idempotent
+  `Triage: nothing to do`, `Campaigns: nothing to do`) — an idempotent
   no-op tick is a correct, expected result, not a problem.
 - The escalations list is the union of: triage escalations, campaign
-  escalations, and any out-of-scope item from step 5 you declined to do.
+  escalations, every draft step 4c found to re-decide (with its handles and
+  its verdict), and any out-of-scope item from step 5 you declined to do.
   If there are none, omit the `Escalations` section entirely.
 - Report anomalies (an RPC error, an unexpected campaign state, a
   classification you were unsure about) as escalation lines — surface,

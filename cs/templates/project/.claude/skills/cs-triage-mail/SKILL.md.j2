@@ -14,6 +14,8 @@ final report (step 6).** This is the genuinely-agentic capability of the
 user-visible text is the report in step 6.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
+
+{% include "desk-preamble.md.j2" %}
 {% if excluded_campaign %}
 This skill is **general** — it is NOT about the {{ excluded_campaign }} campaign or any
 campaign; campaign follow-up is `/cs-campaign-tick`'s job, not this one.
@@ -260,6 +262,47 @@ The handled-signal comes from the ENGINE, not a raw thread re-read:
 - Escalations are deliberately NOT drafted/closed — they resurface until the
   operator deals with them.
 
+## 4b. Re-decide the drafts already waiting — the ones step 1 can never reach
+
+Skipping is not the only thing that can be true of an existing draft. A draft
+written two days ago may answer a question the customer has since withdrawn,
+answered themselves, or thanked us for — and **no candidate feed will ever
+bring it back to you**: `cs unanswered` drops a conversation once a real
+message of ours follows the customer's last one, and routes a settled courtesy
+into a bucket that is not the open feed. A thread that is resolved-and-thanked
+is by construction NOT a candidate, so § 1 cannot see it and § 4 above can only
+decline to duplicate it. This step is where it is looked at.
+
+```bash
+.venv/bin/python -m cs review --json     # drafts[] — one row per logical draft
+```
+
+Take every row whose `verdict` is NOT `ready`. The verb computed it from Gmail
+(and, when the engine answered, from its reading of the conversation), so
+**transcribe the verdict, never re-derive it**:
+
+- `overtaken` — the contact wrote after the draft was composed;
+- `superseded` — {{ email_address }} already wrote to them after it was composed;
+- `settled` — the engine reads that conversation as owing nothing.
+
+For each such row, apply § 2's judgement — read the thread, and ask whether
+their own last message still asks what the draft answers. It is the same
+question, applied to a row § 1 never returns. Then, exactly one of:
+
+- **The draft is still right** — leave it and say nothing about it.
+- **The answer has changed** — draft the reply the conversation asks for NOW
+  (`cs draft-reply`, § 3a) and report BOTH: the new draft and the old one that
+  now contradicts it, by its handles.
+- **Nothing is owed any more** — list it under the report's re-decide section
+  with its handles, its verdict and the date the signal fired.
+
+**You may not retire a draft.** No deletion, on any path, for any verdict: the
+cron denies both halves of it — `cs draft-delete` for the Gmail copy and
+`cs rpc drafts.discard` for the engine's, which deletes its row outright — in
+every spelling, and for the same reason it denies `cs handled` — removing a prepared answer nobody has seen is a silencing
+act, and this run reads untrusted mail. Report it; the operator retires it by
+name, in a session.
+
 ## 5. Honour the safety gates throughout
 
 - {{ email_address }} identity is never dropped.
@@ -272,26 +315,31 @@ The handled-signal comes from the ENGINE, not a raw thread re-read:
 
 ## 6. Report
 
-Now — and only now — report to the operator. Italian, founders'
-register: tight, complete sentences, no jargon, no emoji, no "fammi
-sapere". Compact and skimmable:
+Now — and only now — report to the operator. Write in
+**{{ operator_voice }}**: tight, complete sentences, no jargon, no emoji, no
+"let me know". Compact and skimmable — the labels below are the content, not
+the wording:
 
 ```
-cs-triage-mail — <n> candidati
+cs-triage-mail — <n> candidates
 
-Bozze pronte (da rivedere e inviare):
-- <email> — "<oggetto>"
+Drafts ready (for you to review and send):
+- <email> — "<subject>"
 - …
 
-Escalation (servono te):
-- <email> — "<oggetto>" — <motivo: fuori scope / dubbio / sensibile / non fondato>
+Drafts to re-decide (the conversation moved on; I touched nothing):
+- <email> — "<subject>" — <overtaken|superseded|settled>, <when> — [uid <uid> | engine <id>]
 - …
 
-Te ne stai occupando tu (non li ho toccati):
-- <email> — "<oggetto>" — da <n>g
+Escalations (these need you):
+- <email> — "<subject>" — <why: out of scope / unclear / sensitive / ungrounded>
 - …
 
-Note: <una riga per nota; ometti se nessuna>
+You are handling these (I left them alone):
+- <email> — "<subject>" — <n>d
+- …
+
+Note: <one line per note; omit if none>
 ```
 
 Omit a section if it is empty. The report is the only place this skill

@@ -34,6 +34,7 @@ from email.message import EmailMessage
 from email.utils import formatdate
 
 from .config import Settings
+from .thread_key import thread_key
 
 
 def _imap(settings: Settings) -> imaplib.IMAP4_SSL:
@@ -153,7 +154,15 @@ def list_drafts(settings: Settings) -> list[dict]:
     without it the operator has no way to NAME the draft they want gone. UID
     commands (not sequence numbers) for exactly that reason — a sequence number
     shifts the moment any other message leaves the folder, so it can never be
-    quoted back as an identifier."""
+    quoted back as an identifier.
+
+    Each row also carries the CONVERSATION it belongs to: `references`,
+    `in_reply_to` and the `thread_key` derived from them (`cs/thread_key.py`,
+    the same string the engine stores as `thread_id`). `append_draft` already
+    writes both headers, so this costs two more header fields in a FETCH that
+    was happening anyway — and without the key a draft cannot be reconciled
+    against the thread it answers (`cs/draft_state.py`) nor paired with the
+    engine's own copy of itself."""
     import email as _email
 
     M = _imap(settings)
@@ -166,14 +175,22 @@ def list_drafts(settings: Settings) -> list[dict]:
         out = []
         for uid in data[0].split():
             typ, md = M.uid(
-                "FETCH", uid, "(BODY.PEEK[HEADER.FIELDS (TO SUBJECT DATE MESSAGE-ID)])"
+                "FETCH",
+                uid,
+                "(BODY.PEEK[HEADER.FIELDS (TO SUBJECT DATE MESSAGE-ID "
+                "REFERENCES IN-REPLY-TO)])",
             )
             if typ != "OK" or not md or not md[0]:
                 continue
             hdr = _email.message_from_bytes(md[0][1])
             out.append({"uid": uid.decode(), "to": hdr.get("To"),
                         "subject": hdr.get("Subject"), "date": hdr.get("Date"),
-                        "message_id": hdr.get("Message-ID")})
+                        "message_id": hdr.get("Message-ID"),
+                        "references": hdr.get("References"),
+                        "in_reply_to": hdr.get("In-Reply-To"),
+                        "thread_key": thread_key(hdr.get("Message-ID"),
+                                                 hdr.get("References"),
+                                                 hdr.get("In-Reply-To"))})
         return out
     finally:
         try:

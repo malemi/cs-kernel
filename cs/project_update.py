@@ -37,11 +37,43 @@ from pathlib import Path
 
 from ._version import kernel_version, kernel_version_bare
 from .project_init import (
+    TEMPLATE_DEFAULTS,
+    build_jinja_env,
     install_agent_surfaces,
     is_clone_authored,
     is_executable_target,
-    toml_quote,
+    load_existing_config,
 )
+
+
+def _render_vars(clone_root: Path, init_data: dict) -> dict:
+    """The variables today's templates render against, for THIS clone.
+
+    Three layers, weakest first:
+
+    1. `TEMPLATE_DEFAULTS` — the floor. A template that grows a variable an
+       older clone's frozen `init_data` never carried would otherwise fail
+       under `StrictUndefined` on every existing clone, and `cs update` is
+       exactly where that failure lands.
+    2. `init_data` — what `cs init` froze into `template-manifest.json`.
+    3. The clone's own `manifest.toml`, re-derived here rather than trusted from
+       the freeze. `manifest.toml` is the ONE place a clone's values change
+       (charter, "Editing this clone"), and `cs init` is not re-run to change
+       one: without this layer a value edited there reaches the runtime
+       `Settings` but never the stamped surfaces, which then keep rendering
+       whatever was true on the day the clone was created.
+
+    Only keys the manifest actually supplies win; a missing or blank one leaves
+    the frozen value standing, so a manifest that declares less than the freeze
+    never blanks a rendered file.
+    """
+    merged = {**TEMPLATE_DEFAULTS, **init_data}
+    for key, value in (load_existing_config(clone_root) or {}).items():
+        if value is None or value == "":
+            continue
+        merged[key] = value
+    merged.pop("dest_dir", None)  # runtime-only; never a template var
+    return merged
 
 
 def _checksum(content: str) -> str:
@@ -499,9 +531,10 @@ def cmd_update(args: list[str]) -> int:
         print(f"error: template directory not found at {template_root}", file=sys.stderr)
         return 1
 
-    import jinja2
+    env = build_jinja_env(template_root)
 
     init_data = manifest.get("init_data", {})
+    render_vars = _render_vars(clone_root, init_data)
     old_checksums: dict = manifest.get("file_checksums", {})
     new_checksums: dict[str, str] = {}
 
@@ -529,10 +562,10 @@ def cmd_update(args: list[str]) -> int:
 
         # The two clone-owned files are decided BEFORE the render, not after.
         # Rendering a template whose output is discarded is not free: it is
-        # evaluated against the clone's FROZEN init_data, so a template that
-        # grows a variable an older clone never froze fails here — printing
-        # "! failed to render manifest.toml.j2" on every update, about a file
-        # cs update was never going to write.
+        # evaluated against this clone's own variables, so a template that grows
+        # a variable nothing answers fails here — printing "! failed to render
+        # manifest.toml.j2" on every update, about a file cs update was never
+        # going to write.
         if str_out_rel == "requirements.txt":
             # requirements.txt is operational state, not a template render
             # target: "upgrades are a pin bump" (CLAUDE.md, Versioning &
@@ -561,18 +594,14 @@ def cmd_update(args: list[str]) -> int:
             continue
 
         if rel.name.endswith(".j2"):
-            # Render template
-            template_str = tpl_file.read_text()
+            # Render through the SAME environment `cs init` uses — loader
+            # included, and the template loaded BY NAME rather than from a
+            # string. An env built with no loader raises "no loader for this
+            # environment specified" on the first `{% include %}`, which would
+            # mean a shared partial renders at `cs init` and breaks every
+            # clone's next `cs update`.
             try:
-                env = jinja2.Environment(
-                    undefined=jinja2.StrictUndefined,
-                    trim_blocks=True,
-                    lstrip_blocks=True,
-                )
-                env.filters["toml_quote"] = toml_quote
-                tpl = env.from_string(template_str)
-                # dest_dir is runtime-only; never a template var
-                render_vars = {k: v for k, v in init_data.items() if k != "dest_dir"}
+                tpl = env.get_template(str(rel).replace(os.sep, "/"))
                 rendered = tpl.render(**render_vars)
             except Exception as e:
                 print(f"  ! failed to render {rel}: {e}", file=sys.stderr)
