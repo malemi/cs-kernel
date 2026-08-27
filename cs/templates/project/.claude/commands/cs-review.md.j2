@@ -163,7 +163,7 @@ human reply; surface the distinction to the operator.
 Now — and only now — present yourself. Italian, founders' register:
 tight, complete sentences, no jargon, no emoji, no "fammi sapere".
 
-### Four rules that decide whether this greeting is any good
+### Five rules that decide whether this greeting is any good
 
 **1. Every number is COPIED, never recomputed and never rounded.** If a
 verb printed `da 0g`, the greeting says `0g` — not `1g`. If it printed
@@ -185,8 +185,11 @@ attivi` when not — and then drop the subject entirely:
 - **never suggest clearing it.** Not as a next step, not as an option,
   not as "quando vuoi ripartire…", not conditionally. He decides when
   the loops run; he does not need to be asked twice;
-- `ultimo tick` is a timestamp. If the tail says the ticks skipped, that
-  is the same fact you already reported in one word — do not repeat it.
+- the last scheduled run is a timestamp plus, in ONE neutral word, what
+  that run did (`ha girato` / `saltato`). A bare timestamp reads as "the
+  analysis ran then", which is false when the run skipped — the operator
+  has already misread it that way. State the outcome as flat fact, never
+  as a second complaint about the switch.
 
 **3. Prose is quoted as prose; state comes from a live verb.** The
 kernel pin is `cs --version`, the settings in force are `cs config`, what
@@ -205,6 +208,17 @@ queue, and saying so is what stops him re-raising them from memory.
 Escalations from campaigns are listed; plain campaign outcomes are the
 one thing that IS a count.
 
+**5. Every label the operator reads is a plain Italian noun for the thing
+itself.** Not our internal vocabulary, not a coined word, not an English
+term of art carried over from the code. He reads this greeting to know
+what happened; a label he has to ask about has failed, however precise it
+is to us. `tick`, `sweep`, `dossier` as a bare heading, `producer`,
+`escalation` used as a verb — all of them name a mechanism the reader
+does not have to know exists. Say what it IS: the scheduled run, the
+mail queue, what we know about a contact, the day's candidates, what
+needs him. Where the shape below still prints one of our words, the
+shape is what to fix.
+
 ### The shape
 
 ```
@@ -212,7 +226,8 @@ one thing that IS a count.
 
 Engine:  {{ email_address }} ✓ (o: NON raggiungibile — <nota>)
 Stato:   kernel <cs --version> · invii: <in pausa (decisione tua)|attivi> · modo: <cs_triage_mode>
-Preparato: <N> bozze Gmail · <E> bozze engine · <M> task aperti · ultimo tick <timestamp>
+Preparato: <N> bozze Gmail · <E> bozze engine · <M> task aperti
+Ultima esecuzione automatica: <timestamp> — <ha girato|saltato>
 
 Bozze in Gmail Drafts (le rivedi e invii tu):
   [uid <uid>] <destinatario> — <oggetto>        ← una riga per bozza, tutte

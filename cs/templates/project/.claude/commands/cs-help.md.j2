@@ -23,7 +23,7 @@ autonomy dial is a deliberate later step).
 |---|---|
 | `/cs-review` | **the one you type when you sit down.** Settings in force, every draft by uid, open tasks and escalations, the 45-day support queue with customers separated out{% if producer_adapter != 'none' %}, the day's outreach candidates{% endif %}, what changed in the repo and what is waiting on you |
 | `/cs-account <name>` | deep-dive on one account (read-only) |
-| `/cs-cron` | the unattended tick: status, install/remove (confirmed), pause/resume |
+| `/cs-cron` | the scheduled unattended run: status, install/remove (confirmed), pause/resume |
 | `/cs-campaign` | design a new campaign: pack + wiring, draft-first |
 | `/cs-help` | this map |
 
@@ -49,7 +49,7 @@ matches.
   deliberately enabled (`cs config` says which is in force). Dedup (Gmail
   Sent truth) and the dossier-before-contact rule are not negotiable.
 - Kill-switch: `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every
-  automated tick; remove the file to resume.
+  scheduled run; remove the file to resume.
 
 ## Deeper
 
