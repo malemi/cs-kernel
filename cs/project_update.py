@@ -581,13 +581,13 @@ def cmd_update(args: list[str]) -> int:
             rendered = tpl_file.read_text()
 
         if is_clone_authored(str_out_rel):
-            # A company prose slot: create it if the clone has none, then never
+            # A clone-authored file: create it if the clone has none, then never
             # touch it again. See CLONE_AUTHORED_PREFIXES for why this is not a
             # conflict to resolve but a file class that must not be tracked.
             clone_file = clone_root / out_rel
             if clone_file.exists():
                 if verbose:
-                    print(f"  · {str_out_rel} is yours (company prose) — left alone")
+                    print(f"  · {str_out_rel} is yours (clone-authored) — left alone")
             else:
                 clone_file.parent.mkdir(parents=True, exist_ok=True)
                 _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)

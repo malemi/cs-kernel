@@ -662,13 +662,24 @@ def is_executable_target(rel_dir: Path, template_name: str) -> bool:
 # the kind of prompt an operator learns to answer without reading. And answering
 # it wrong once destroys prose no template can regenerate.
 #
-# Consequence for the checksum ledger: a path under here is never written into
+# `docs/active-context.md` is the same class arrived at from the other end. Its
+# template is a seven-line SEED — three empty headings and
+# `doc_baseline_commit: INITIAL` — whose entire purpose is to be replaced by the
+# clone's own live state on day one. A checksum for it therefore asserts a match
+# that can never hold again on any clone, and it left one prompt on the table
+# whose "y" deletes the clone's state document. The kernel has nothing to push
+# into that file; it only has to make sure a new clone starts with one.
+#
+# Consequence for the checksum ledger: a path matched here is never written into
 # `file_checksums`. A clone whose manifest still lists one (both existing clones
 # do) drops that stale entry on its next `cs update`, and nothing reads it in
 # the meantime — `cs update` returns from this class before it consults the
 # stored checksums at all. Same treatment `requirements.txt` and `manifest.toml`
 # already get.
-CLONE_AUTHORED_PREFIXES = ("company/",)
+#
+# Entries are matched with `startswith`, so a member is either a directory
+# prefix (`company/`) or one whole path (`docs/active-context.md`).
+CLONE_AUTHORED_PREFIXES = ("company/", "docs/active-context.md")
 
 
 def is_clone_authored(out_rel) -> bool:
@@ -729,13 +740,13 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
         # Ensure destination directory exists
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # A company prose slot the operator has already authored is never
-        # re-stamped and never checksummed — `cs init` re-run in place (the
-        # documented restamp, dest_dir "." on an existing clone) would
-        # otherwise overwrite it with the blank template, silently.
+        # A clone-authored file the operator already has is never re-stamped and
+        # never checksummed — `cs init` re-run in place (the documented restamp,
+        # dest_dir "." on an existing clone) would otherwise overwrite it with
+        # the blank template, silently.
         rel_dest = dest_path.relative_to(dest_dir)
         if is_clone_authored(rel_dest) and dest_path.exists():
-            print(f"Kept: {rel_dest} (yours — company prose, never re-stamped)")
+            print(f"Kept: {rel_dest} (yours — clone-authored, never re-stamped)")
             continue
 
         try:

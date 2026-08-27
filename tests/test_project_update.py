@@ -783,6 +783,85 @@ def _e2e_company_slot_authored_never_prompts_never_overwrites() -> None:
         )
 
 
+def _e2e_active_context_is_clone_authored() -> None:
+    """`docs/active-context.md` is the clone's own state document, not a
+    template the kernel maintains.
+
+    Its template is a seven-line seed — three empty headings and
+    `doc_baseline_commit: INITIAL` — whose whole purpose is to be replaced by
+    the clone's live state on day one. Tracked in `file_checksums` it asserted
+    a match no clone can ever hold again: the `v0.29.0` drift report named it
+    on `mrcall-cs` on a plain run, and the conflict prompt behind it had a "y"
+    that deletes the operator's state document.
+
+    Same treatment as `company/`: created when the clone has none, then never
+    written, never prompted about, never checksummed."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+        rel = "docs/active-context.md"
+
+        live_state = (
+            "---\ndoc_baseline_commit: 4872645\n---\n\n"
+            "# What Is Built\n\nThe operator's own live state — no template can "
+            "regenerate this.\n"
+        )
+        (clone / "docs").mkdir()
+        (clone / rel).write_text(live_state)
+
+        (clone / "template-manifest.json").write_text(json.dumps({
+            "template_version": "1",
+            "init_data": {"company_slug": "acme"},
+            # What every clone stamped before this release carries: a checksum
+            # for a file whose content diverged the day it was written.
+            "file_checksums": {rel: BOGUS_CHECKSUM},
+        }))
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert (clone / rel).read_text() == live_state, (
+            f"the clone's state document must be byte-identical after an update:\n{out}"
+        )
+        assert "Overwrite?" not in out, (
+            f"it must never reach the conflict prompt — that prompt's 'y' deletes "
+            f"the operator's state document:\n{out}"
+        )
+        assert rel not in out, (
+            f"a file the update does not touch is not an event, and must not be "
+            f"reported as drift either:\n{out}"
+        )
+        stored = json.loads((clone / "template-manifest.json").read_text())
+        assert rel not in stored["file_checksums"], (
+            f"the stale entry must be dropped, not carried: a checksum for this "
+            f"file asserts a match no clone can hold:\n{stored['file_checksums']}"
+        )
+
+        # The other half of the class: a clone that has none still gets one, so
+        # a fresh clone starts with the seed rather than with nothing.
+        fresh = Path(td, "fresh"); fresh.mkdir()
+        (fresh / "template-manifest.json").write_text(json.dumps({
+            "template_version": "1",
+            "init_data": {"company_slug": "acme"},
+            "file_checksums": {},
+        }))
+        proc2 = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=fresh, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out2 = proc2.stdout + proc2.stderr
+        assert (fresh / rel).exists(), (
+            f"a clone without the file must still be seeded with it:\n{out2}"
+        )
+
+
 def _e2e_security_critical_conflict_applies_with_backup() -> None:
     """A SECURITY_CRITICAL file (project_update.SECURITY_CRITICAL) must never
     be gated behind the interactive prompt: on a "modified locally AND
@@ -1376,6 +1455,7 @@ def main() -> int:
     _e2e_declined_after_diff_is_offered_again_next_run()
     _e2e_accepted_overwrite_is_not_offered_again()
     _e2e_company_slot_authored_never_prompts_never_overwrites()
+    _e2e_active_context_is_clone_authored()
     _e2e_security_critical_conflict_applies_with_backup()
     _e2e_requirements_txt_never_touched()
     _e2e_manifest_toml_never_touched()
