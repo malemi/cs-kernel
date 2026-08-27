@@ -139,6 +139,103 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.28.0 — 2026-08-27
+
+**MINOR**: `cs-triage-mail`'s § 2 body-read is no longer conditional on draft
+intent — every candidate that survives step 1/1b, escalate-bound or
+draft-bound, gets its thread read before the operator ever sees its name, and
+a task `reason` field is named explicitly as non-provenance. `/cs-review` and
+`/cs-help` drop the operator greeting's last two internal-vocabulary spots
+(`tick` becomes the scheduled run, in plain Italian) and gain a fifth greeting
+rule requiring every label the operator reads to be a plain Italian noun for
+the thing itself, plus a "Preparato:" line that states whether the last
+scheduled run actually ran or was skipped instead of a bare timestamp.
+**Re-collaudo: static + live read-only, both clones.**
+
+### Fixed — an escalation named a customer without ever reading their thread
+
+A `/cs-triage-mail` run (session `ae8b19cc`, 15:24) read a stale unsent draft
+that *quoted* a customer's five-day-old symptom
+(`INBOUND_WELCOME_MESSAGE_PROMPT`, 22/8) and wrote it into a new engine task's
+`reason` field as present-tense state, without ever calling
+`emails.list_by_thread` on that customer's thread. A later run (session
+`65df4f07`, 15:54) inherited that task, treated its `reason` as evidence,
+grafted an unrelated same-day fix (given to a *different* customer,
+`pcrapide.be`) onto the inherited clause, and escalated
+`info@fortunatoassicurazioni.it` to the operator on a claim his own mail never
+made. The 22/8 thread was only opened at 16:22 — after the operator
+challenged the escalation — and it was closed: our 22/8 11:16 reply was the
+last message in it, the customer never re-raised it, and both engine tasks on
+it were completed by `detect.email.user_replied`. The customer's live, open
+ask (a call-transfer question, 25/8) was real; the reasoning attached to the
+escalation was not.
+
+Root cause was `.claude/skills/cs-triage-mail/SKILL.md` § 2's own gate: "For a
+candidate that survived the Sent-archive check (genuinely unanswered) **AND
+you intend to draft**, read the real bodies." An item headed for ESCALATE sat
+outside that condition, so the skill permitted naming a customer to the
+operator on a task title alone. The asymmetry is provable in the same run:
+the other candidate that day (GB Dental) *was* draft-bound, so the skill
+called `emails.list_by_thread` three times, read the bodies, and judged
+correctly — the gate is what made the difference, not the model or the
+customer. The rewritten § 2 removes the condition: every survivor gets its
+thread read before the draft/escalate fork, and the section now says plainly
+that a `reason` field carries no provenance — it may have been typed by an
+earlier tick of this same skill, so reading it back is confirming the skill's
+own prior output, not corroborating it. This closes the § 2 gate that let the
+error through; § 1b's "OPEN task → work it" amplifier (no re-validation of a
+task's `reason` against the thread's current state) is unchanged by this
+release, and a candidate reached through it is covered by the same new rule:
+the reason it carries is not a source to read the thread from.
+
+### `cs-review`/`cs-help` stop teaching the operator our own words
+
+Rule 5 in `/cs-review`'s greeting instructions: every label the operator
+reads is a plain Italian noun for the thing itself, never internal
+vocabulary, a coined word, or an English term of art carried over from the
+code — `tick`, `sweep`, `dossier` as a bare heading, `producer`, `escalation`
+used as a verb all name a mechanism the reader does not have to know exists.
+`cs-help.md.j2` and `cs-review.md.j2` apply it at the two remaining `tick`
+spots: the command map now reads "the scheduled unattended run", and the
+kill-switch line reads "stops every scheduled run". The "Preparato:" line
+splits the last scheduled run onto its own line and states the outcome in one
+neutral word (`ha girato` / `saltato`) instead of a bare timestamp — a bare
+timestamp reads as "the run happened", which is false on a skipped run, and
+the operator has already misread it that way once.
+
+### Why the tier is static + live read-only, not full
+
+Design brief §6.6 ties the tier to what the release TOUCHES, not to diff
+size. This release touches zero send paths, `campaign`, dedup,
+`gmail_archive`, `send_mail`, permissions or the cron wrapper — the six
+triggers that force FULL — so FULL is not warranted. It is not bare static
+either: both changed files are rendered skills/commands (§6.2 item 4 on its
+own), but § 2's entire content is a mandate to make MORE live engine reads
+before naming a candidate, which is exactly the "read paths" row of the
+tier table. Certifying a fix whose whole point is "read the live thread
+before you act" with a check that never talks to the live engine would be
+the same failure this release exists to close. **Static** (§6.2): the
+rendered templates hunk only at the declared prose, `cs config` resolves
+with no setting declared twice, the CLI surface is unchanged. **+ live
+read-only** (§6.3): `cs whoami` against the real engine, proving the sign-in
+path the fix depends on still works. No campaign/dedup/send collaudo is
+owed, and none was run.
+
+### Migration
+
+`cs update` re-renders three templates:
+`.claude/skills/cs-triage-mail/SKILL.md.j2`,
+`.claude/commands/cs-help.md.j2` and `.claude/commands/cs-review.md.j2`. A
+clone with no local edits to any of the three takes the new render with no
+conflict prompt. Confirm after the update that § 2's heading reads "Read the
+customer's own words before you decide anything" and that no literal Jinja
+survives the render — `{{ email_address }}` must resolve to the clone's own
+address. No manifest field, no CLI verb, no permission-surface change; the
+cron wrapper and `.claude/settings.json` are untouched.
+
+Guards run before the tag: `bash tests/run.sh` — 39 gates green, unchanged
+from the state the § 2 fix (`6386bf0`) already reached.
+
 ## v0.27.0 — 2026-08-27
 
 **MINOR**: the stamped clone `CLAUDE.md` now carries a `doc-scope` declaration —
