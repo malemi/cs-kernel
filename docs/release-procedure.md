@@ -52,7 +52,7 @@ owner. Not before.
 | Location | Owner step |
 |---|---|
 | `requirements.txt` pin | `cs update --pin <tag>` — **this is the truth; every other clone claim must agree with it** |
-| `template-manifest.json` `init_data.repo_kernel_version` | bare number, no `v`. Today: fixed by hand at re-pin; a pending kernel change makes `cs update --pin` own it (active-context Next) |
+| `template-manifest.json` `init_data.repo_kernel_version` | `cs update --pin <tag>` (since `v0.29.0`) — bare number, no `v`, re-stamped in the same call that rewrites the pin line, and printed. On an upgrade TO `v0.29.0` the old pin verb runs, so re-run `cs update --pin` once on the new kernel |
 | `manifest.toml` `[repo].kernel_version` | NONE — removed from the template in `v0.18.0`. Nothing parsed it and no gate checked it, so it was right only when somebody remembered. Delete the line from an existing clone at the next re-pin; `requirements.txt` is the pin |
 | `requirements.lock` resolved commit | regenerate from the collaudo'd venv at every re-pin, and install it ALONE into a throwaway `uv venv` to prove it. Nothing enforces this: both clones' locks once resolved `v0.19.0`'s commit while `requirements.txt` said `v0.22.0`, so a venv rebuilt from the lock would have run a kernel three releases old |
 | `docs/ARCHITECTURE.md` "Kernel pin" row | stamped clones: re-render; as-built clones (124-cs): edit the row at re-pin |
@@ -90,9 +90,14 @@ owner. Not before.
    are applied regardless (local saved as `*.local-bak`) — diff them
    against the pre-update copy as static-collaudo evidence.
    `requirements.txt` and `manifest.toml` are clone-owned and never
-   touched (`-v` reports them).
-4. Align the clone inventory (table above): `template-manifest.json`
-   init_data, `manifest.toml`, `ARCHITECTURE.md`, `active-context.md`.
+   touched (`-v` reports them). A closing `! N file(s) on disk differ from
+   the checksum template-manifest.json records` block names every stamped
+   file the clone has hand-edited; each one becomes a conflict prompt at the
+   next release that touches its template, so decide it now — move the edit
+   into the kernel template, or accept the render.
+4. Align the clone inventory (table above): `manifest.toml`,
+   `ARCHITECTURE.md`, `active-context.md`. `template-manifest.json`
+   init_data is `--pin`'s since `v0.29.0`; verify rather than edit it.
 5. **Run the sweep** on the clone. Fix every LIVE mismatch now.
 6. `cs whoami` proof call; re-collaudo per the tag's CHANGELOG tier.
 7. Commit by explicit path; after BOTH clones: update the CHANGELOG

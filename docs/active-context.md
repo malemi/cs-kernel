@@ -16,15 +16,17 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.28.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.29.0`. Current HEAD status: tagged as `v0.29.0`.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
   the live answer for how far past a tag HEAD is, so no commit count is
   written down here (one would be stale the moment this file is committed).
-  Nine tags on 2026-08-25/27, `v0.20.0` → `v0.28.0`, each with a CHANGELOG
+  Ten tags on 2026-08-25/27, `v0.20.0` → `v0.29.0`, each with a CHANGELOG
   entry naming its re-collaudo tier; the tag-by-tag narrative this section
-  used to carry is in the archive.
+  used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`
+  is tagged and not yet pinned anywhere, and re-pinning is the operator's own
+  move.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
   `Message-ID` already being FETCHed (`v0.25.0`); the engine's
@@ -82,16 +84,18 @@ what is *current*.
   from a same-session commit that only catches its git history up to the
   `v0.27.0` it was already running (CHANGELOG has the detail); an unrelated
   business-dossier edit on `124-cs` predates this release and is untouched.
-- **`mrcall-cs`'s poisoned `docs/ARCHITECTURE.md` ledger is CLEARED** (`v0.27.0`
-  re-pin): declined once under `v0.21.0`, it reported as locally modified for
-  five releases; this run the clone content and the fresh render agreed, so
-  `cs update` printed `already current` and re-recorded the checksum. The file
-  matches again. Its "Kernel pin" row is still hand-edited at every
-  re-pin (currently `cs-kernel@v0.28.0`, correct).
-  `init_data.repo_kernel_version` in the same file is likewise hand-bumped
-  (currently `0.28.0`) — see `Next` 1. The `v0.28.0` re-pin recreated the same
-  drift for one commit (the hand-edit landed before a second `cs update` pass
-  reconciled the checksum) — `Next` 1 now has a second, fresher instance.
+- **The poisoned-ledger class is closed at `v0.29.0`, at both its levels.** A
+  stored checksum may still fail to describe its file — the manifest holds ONE
+  value per path and answers both "did the template change" and "did the clone
+  change" with it — but no run can now leave such an entry silently: the
+  "template unchanged" fast path reads the clone file, restores it when it is
+  missing, and lists it when it differs. And the hand edit that produced the
+  divergence is gone one level up: `cs update --pin` owns
+  `template-manifest.json`'s `init_data.repo_kernel_version`, so
+  `docs/ARCHITECTURE.md`'s "Kernel pin" row re-renders instead of being typed.
+  Both clones are still on `v0.28.0`, where neither half exists yet; the
+  `v0.29.0` entry carries the one-time migration step (re-run `cs update --pin`
+  on the NEW kernel, then bare `cs update`).
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
   routing seam is unwired (no call site passes `role=`; the default is the
   engine), but the send guard's register judgment IS a direct provider call:
@@ -139,27 +143,14 @@ what is *current*.
 
 ## Next
 
-1. `cs update --pin <tag>` must also refresh `template-manifest.json`'s
-   `init_data.repo_kernel_version` (bare number, no `v`). Found 2026-08-19:
-   mrcall-cs's init_data still said `"v0.3.0"` five releases later, so the
-   ARCHITECTURE re-stamp would have rendered `cs-kernel@vv0.3.0` — stamped data
-   rots when the pin verb doesn't own it. Now that the upgrade offer re-pins on
-   the operator's behalf, the verb owning that field matters more, not less.
-   Second instance, `v0.28.0` re-pin: hand-editing `docs/ARCHITECTURE.md`'s
-   "Kernel pin" row (as-built clones still need it by hand) *before* the next
-   `cs update` pass leaves `template-manifest.json` holding the PRE-edit
-   checksum — the same poisoned-ledger shape as `v0.21.0`, self-inflicted this
-   time. A second `cs update` run afterward reconciles it (the render already
-   matches, so it just re-stamps the checksum), but the safe order is: hand
-   edits first, `cs update` last, every time — never the other way round.
-2. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
+1. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
    upgrade prompt still print `re-collaudo: <tier>` and "Every kernel upgrade
    owes a re-collaudo (CLAUDE.md, Versioning & release)"
-   (`cs/project_update.py:257, 261, 309` — verify the numbers before acting,
+   (`cs/project_update.py:259, 263, 353` — verify the numbers before acting,
    they move with every edit). The operator has already objected to exactly this
    vocabulary once. Replace with what a tier MEANS for them ("re-test before
    trusting it unattended") or drop it from their surface.
-3. Promote the batch-2 loop's reusable parts: the flock'd schedule store
+2. Promote the batch-2 loop's reusable parts: the flock'd schedule store
    (`schedule.py`), the deterministic migrator pattern (`migrator.py`), and the
    IMAP attachment reader (`ext/attachments.py` — the engine indexes filenames
    but stores no bytes and exposes no fetch RPC). The attachment reader is the

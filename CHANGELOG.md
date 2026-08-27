@@ -154,6 +154,110 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.29.0 — 2026-08-27
+
+**MINOR**: `cs update` prints a report it never printed, restores a stamped
+file it used to skip for ever, and `cs update --pin` writes a second file. All
+three are observable, and an operator reading "patch" is entitled to expect
+that none of them are. No send path, no `campaign`, no `gmail_archive`, no
+`send_mail`, no auth boundary, no permission surface.
+**Re-collaudo: static, both clones.**
+
+### Fixed — a stored checksum that describes nothing on disk is no longer silent
+
+`template-manifest.json`'s `file_checksums` records, per stamped path, the
+render `cs update` last left in the clone. One branch of the walk wrote such an
+entry without ever reading the file it names: when today's render equals the
+stored value — "template unchanged" — it skipped straight to the next path. A
+hand edit to a stamped file therefore left the ledger describing content nobody
+had, while the run reported `0 updated, 0 skipped, 0 added` and exited 0.
+
+Nothing downstream can tell that entry from a true one. At the next release
+that changes that template, the divergence surfaces as "modified locally AND
+template changed"; a headless run answers the declared `N`; the old checksum is
+put back; and the file has left template maintenance without anyone deciding
+that it should. `v0.21.0` is that failure with a measurement attached —
+`mrcall-cs`'s `docs/ARCHITECTURE.md` reported as locally modified for five
+releases. `v0.21.0` added the recovery (a clone whose content already matches
+today's render is reconciled silently) and that is why the file healed at
+`v0.27.0`, but recovery is not prevention: the same shape reappeared on BOTH
+clones at the `v0.28.0` re-pin, on the same file, whose "Kernel pin" row is
+hand-edited every time.
+
+That branch now reads the file, and answers both states it can be in:
+
+- **Missing** — restored from the render its own stored checksum already
+  blesses. There is no operator content to lose (the render *is* that content),
+  and every other branch of the walk already re-adds a template file the clone
+  lacks. Only this one did not, and only a template CHANGE could ever have
+  brought the file back.
+- **Present but different** — nothing is written and the stored checksum stays
+  the TEMPLATE's. Recording the local content instead would make the next real
+  template change read as "clone is original" and overwrite the operator's edit
+  with no prompt at all. What changes is that the path is listed at the end of
+  the run, under what the divergence means for the next release.
+
+The ledger holds ONE checksum per path and answers two different questions with
+it — *did the template change* and *did the clone change*. Those questions
+have the same answer only while the clone equals the render, so a divergence
+can legitimately exist (a declined conflict deliberately keeps the template's
+value, or the conflict is never offered again). The contract this release
+establishes is therefore not "the ledger always matches disk" but the one that
+is achievable without changing the manifest format: **every entry that does not
+describe its file was reported by the run that left it that way.**
+
+### Fixed — `cs update --pin` owns `init_data.repo_kernel_version`
+
+`docs/ARCHITECTURE.md.j2` renders its "Kernel pin" row from that field
+(`cs-kernel@v{{ repo_kernel_version }}`). While `--pin` rewrote only
+`requirements.txt`, the field stayed on the previous release, and every re-pin
+required the operator to hand-edit a GENERATED file to state the version he had
+just pinned — which is where the hand edits above come from. `--pin` now
+re-stamps it, prints the before/after, and is a silent no-op outside a stamped
+clone (`--pin` still works against a bare `requirements.txt`). The value is the
+bare number: every template that reads the field writes the `v` itself, and a
+stored `"v0.3.0"` — a real clone carried one for five releases — renders
+`cs-kernel@vv0.3.0`, so the prefix is stripped whatever the caller passes.
+
+The accepted upgrade offer inside bare `cs update` goes through the same
+function, so the re-exec'd walk renders the new row itself and records its
+checksum in the same pass.
+
+### Migration — one hand step at THIS re-pin, none after it
+
+The pin verb that runs during an upgrade TO `v0.29.0` is still the old one, so
+this release cannot bump its own `init_data`. Once `v0.29.0` is installed, run
+`cs update --pin v0.29.0` again — now on the new kernel — and then bare
+`cs update`: the first re-stamps the field, the second re-renders the "Kernel
+pin" row and records its checksum. From the next release on, the ordinary
+upgrade does both by itself.
+
+Expect the new report on a first run against an existing clone. It lists what
+was already true and unreported — on `mrcall-cs`, `bin/cs_operator_cron.sh`
+carries a clone-owned `bin/mrcall_business.py` deny line that is re-applied
+after each `SECURITY_CRITICAL` overwrite, so it diverges from its render by
+design. Naming it is the point: that is the file whose local edit has been lost
+at three previous re-pins.
+
+### Re-collaudo — both clones, tier **static**
+
+Nothing in the FULL list is touched. The whole change is inside `cs update`,
+which is the upgrade verb itself: no live engine call behaves differently, so
+`live read-only` earns nothing here either. What must be checked on each clone
+is the re-pin it is already doing — `cs update --pin` reports the
+`repo_kernel_version` before/after, the following `cs update` re-renders
+`docs/ARCHITECTURE.md`'s pin row rather than leaving it to a hand edit, and
+`template-manifest.json`'s checksum for that file agrees with the file
+afterwards. `cs --version` and `cs config` confirm the pin.
+
+Guards run before the tag: `bash tests/run.sh` — 39 gates, `RESULT: all gates
+green`. Gate 16 carries three new scenarios, each verified to FAIL against the
+preceding commit: the hand edit is named by the run, the lost file is restored,
+and `--pin` re-stamps the field including the legacy `v`-prefixed shape. The
+first two assert the invariant rather than a message — for every path in the
+manifest, the stored checksum either matches the file on disk or the run named
+it — so a fix that only changed the wording would not pass them.
+
 ## v0.28.0 — 2026-08-27
 
 **MINOR**: `cs-triage-mail`'s § 2 body-read is no longer conditional on draft
