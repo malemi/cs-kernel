@@ -154,6 +154,53 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.30.0 — 2026-08-27
+
+**MINOR**: one stamped file changes class. `docs/active-context.md` stops
+being a template `cs update` maintains and becomes what it has always been in
+practice — the clone's own document. A verb that stops prompting about a file
+is a MINOR whatever the diff size. No send path, no `campaign`, no
+`gmail_archive`, no `send_mail`, no auth boundary, no permission surface.
+**Re-collaudo: static, both clones.**
+
+### Fixed — the kernel stops claiming a checksum for the clone's state document
+
+`docs/active-context.md.j2` is a seven-line SEED: three empty headings and
+`doc_baseline_commit: INITIAL`. Its entire purpose is to be replaced by the
+clone's live state on day one, which means a checksum recorded for it asserts
+a match no clone can ever hold again. Two consequences, one old and one new:
+
+- Old, and the sharper of the two: the divergence was a conflict, so any
+  release that reworded the seed asked "modified locally AND template changed.
+  Overwrite? [y/N/diff]" about it — a prompt whose `y` deletes the operator's
+  state document.
+- New: `v0.29.0`'s drift report named it, on a plain run, on every clone, for
+  ever. A report that always contains the same untrue-in-spirit line is a
+  report an operator learns to skip, which is exactly the mechanism the
+  `company/` slots were pulled out of tracking to avoid (`v0.16.0`).
+
+It joins `CLONE_AUTHORED_PREFIXES`: created when the clone has none, then never
+written, never prompted about, never checksummed, with the stale entry dropped
+on the next `cs update`. The kernel has nothing to push into that file; it only
+has to make sure a new clone starts with one. Members are matched with
+`startswith`, so the set now holds either a directory prefix (`company/`) or
+one whole path (`docs/active-context.md`), and the two "company prose" messages
+read "clone-authored", which is what the class is.
+
+### Re-collaudo — both clones, tier **static**
+
+Measured before the tag, against a copy of a real clone's tree rather than a
+fixture: `cs update` now names exactly ONE file in its drift report,
+`bin/cs_operator_cron.sh` — the clone-owned `bin/mrcall_business.py` deny line
+that `v0.28.0`'s entry records as lost at three previous re-pins. That is the
+report's whole content on a clone that is otherwise in step, and it is true.
+
+On each clone the check is the update itself: `docs/active-context.md` is
+byte-identical afterwards, absent from the drift report, and gone from
+`template-manifest.json`'s `file_checksums`. `bash tests/run.sh` — 39 gates,
+`RESULT: all gates green`. Gate 16 carries the scenario, verified to FAIL
+against `v0.29.0` on the prompt assertion.
+
 ## v0.29.0 — 2026-08-27
 
 **MINOR**: `cs update` prints a report it never printed, restores a stamped

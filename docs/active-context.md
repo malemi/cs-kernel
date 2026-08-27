@@ -16,17 +16,17 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.29.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.30.0`. Current HEAD status: tagged as `v0.30.0`.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
   the live answer for how far past a tag HEAD is, so no commit count is
   written down here (one would be stale the moment this file is committed).
-  Ten tags on 2026-08-25/27, `v0.20.0` → `v0.29.0`, each with a CHANGELOG
+  Eleven tags on 2026-08-25/27, `v0.20.0` → `v0.30.0`, each with a CHANGELOG
   entry naming its re-collaudo tier; the tag-by-tag narrative this section
   used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`
-  is tagged and not yet pinned anywhere, and re-pinning is the operator's own
-  move.
+  and `v0.30.0` are tagged and pinned nowhere, and re-pinning is the
+  operator's own move.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
   `Message-ID` already being FETCHed (`v0.25.0`); the engine's
@@ -96,6 +96,12 @@ what is *current*.
   Both clones are still on `v0.28.0`, where neither half exists yet; the
   `v0.29.0` entry carries the one-time migration step (re-run `cs update --pin`
   on the NEW kernel, then bare `cs update`).
+- **`docs/active-context.md` is clone-authored** (`v0.30.0`), alongside
+  `company/`: a seed the kernel writes only when the clone has none, then never
+  writes, never prompts about and never checksums. Measured on a copy of a real
+  clone before the tag, the drift report then names exactly one file —
+  `bin/cs_operator_cron.sh`, whose clone-owned deny line has been lost at three
+  re-pins — and nothing else.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
   routing seam is unwired (no call site passes `role=`; the default is the
   engine), but the send guard's register judgment IS a direct provider call:

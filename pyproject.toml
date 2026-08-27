@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cs-kernel"
-version = "0.29.0"
+version = "0.30.0"
 description = "Shared kernel of the <company>-cs customer-service operators: import package `cs` (frozen module path), per-company variance declared in the clone's manifest.toml."
 license = { text = "MIT" }
 requires-python = ">=3.11"
