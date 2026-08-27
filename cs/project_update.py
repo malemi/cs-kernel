@@ -11,10 +11,12 @@ Two opt-in discovery/re-pin flags (bare `cs update` is unchanged):
                — for its tags, and print installed-vs-latest plus (when
                determinable) the newer tag's re-collaudo tier. Writes
                NOTHING.
-  --pin TAG    rewrite ONLY the kernel pin line in requirements.txt to TAG
-               and print the before/after line. Deliberately does not
-               install it — `uv pip install -r requirements.txt` stays a
-               separate, deliberate step.
+  --pin TAG    rewrite the kernel pin line in requirements.txt to TAG, and
+               with it the ONE derived copy of that number the templates
+               render from — `template-manifest.json`'s
+               `init_data.repo_kernel_version`. Prints the before/after of
+               both. Deliberately does not install it — `uv pip install -r
+               requirements.txt` stays a separate, deliberate step.
 
 Neither flag auto-bumps the pin: requirements.txt is the operator's own
 pin (v0.5.2 decision — "cs update never touches it"), and every kernel
@@ -268,12 +270,53 @@ def cmd_update_check(clone_root: Path) -> int:
     return 0
 
 
+def _sync_manifest_kernel_version(clone_root: Path, tag: str) -> None:
+    """Bring `template-manifest.json`'s `init_data.repo_kernel_version` in
+    step with the pin `requirements.txt` now carries.
+
+    That field is not decoration: `docs/ARCHITECTURE.md.j2` renders its
+    "Kernel pin" row straight out of it (`cs-kernel@v{{ repo_kernel_version
+    }}`). A re-pin that left it behind made the operator hand-edit a
+    GENERATED file to state the version he had just pinned — and that hand
+    edit is what leaves the checksum ledger describing content nobody has on
+    disk (see `cmd_update`'s "template unchanged" branch). Owning the field
+    here removes the hand edit entirely: the next `cs update` renders the new
+    row itself, writes it, and records its checksum in the same pass.
+
+    Bare number, no `v` — every template that reads this field writes the `v`
+    itself. A stored `"v0.3.0"` (a real clone carried one for five releases)
+    renders `cs-kernel@vv0.3.0`, so the prefix is stripped whatever the
+    caller passes.
+
+    Silent no-op when the cwd is not a stamped clone: `--pin` must keep
+    working against a bare requirements.txt.
+    """
+    manifest = _read_manifest(clone_root)
+    if manifest is None:
+        return
+    init_data = manifest.get("init_data")
+    if not isinstance(init_data, dict):
+        return
+    bare = tag[1:] if tag.startswith("v") else tag
+    old = init_data.get("repo_kernel_version")
+    if old == bare:
+        return
+    init_data["repo_kernel_version"] = bare
+    _write_manifest(clone_root, manifest)
+    print(
+        f"  · template-manifest.json init_data.repo_kernel_version: "
+        f"{old if old is not None else '(absent)'} -> {bare}"
+    )
+
+
 def cmd_update_pin(clone_root: Path, tag: str, advice: bool = True) -> int:
-    """`cs update --pin <tag>`: rewrite ONLY the kernel pin line in
-    requirements.txt to `tag`, and print the before/after line. Does not
-    install it — `uv pip install -r requirements.txt` stays a separate,
-    deliberate step, and nothing else `cs update` would otherwise render
-    is touched."""
+    """`cs update --pin <tag>`: rewrite the kernel pin line in
+    requirements.txt to `tag`, print the before/after line, and re-stamp the
+    one derived copy of that number the templates render from
+    (`template-manifest.json`'s `init_data.repo_kernel_version` — see
+    `_sync_manifest_kernel_version`). Does not install it — `uv pip install
+    -r requirements.txt` stays a separate, deliberate step, and no rendered
+    file is written here: `cs update` is what re-renders them."""
     req_path = clone_root / "requirements.txt"
     if not req_path.exists():
         print(
@@ -303,6 +346,7 @@ def cmd_update_pin(clone_root: Path, tag: str, advice: bool = True) -> int:
 
     print(f"  - {old_line.rstrip(chr(10))}")
     print(f"  + {new_line.rstrip(chr(10))}")
+    _sync_manifest_kernel_version(clone_root, tag)
     if advice:
         print(
             "\nrequirements.txt updated. Installing it is a separate, deliberate "
@@ -404,9 +448,11 @@ def cmd_update(args: list[str]) -> int:
     )
     checkpin.add_argument(
         "--pin", metavar="TAG",
-        help="rewrite ONLY requirements.txt's kernel pin line to TAG (e.g. "
-        "v0.7.0) and print the before/after line. Does not install it — "
-        "`uv pip install -r requirements.txt` is a separate, deliberate step.",
+        help="rewrite requirements.txt's kernel pin line to TAG (e.g. "
+        "v0.7.0), and with it template-manifest.json's derived "
+        "init_data.repo_kernel_version; print the before/after of both. "
+        "Does not install it — `uv pip install -r requirements.txt` is a "
+        "separate, deliberate step.",
     )
     parser.add_argument(
         "-v", "--verbose", action="store_true",
@@ -462,6 +508,11 @@ def cmd_update(args: list[str]) -> int:
     updated = 0
     skipped = 0
     added = 0
+    # Paths whose stored checksum does NOT describe the file on disk, and
+    # which this run had no update to offer for. The ledger is left as it is
+    # (see the branch that fills this list); what may not happen is that the
+    # run ends without saying so.
+    drifted: list[str] = []
 
     # Walk template files
     for tpl_file in sorted(template_root.rglob("*")):
@@ -560,7 +611,40 @@ def cmd_update(args: list[str]) -> int:
             # Template existed before
             old_tpl_checksum = old_checksums[str_out_rel]
             if rendered_checksum == old_tpl_checksum:
-                # Template unchanged — skip
+                # The TEMPLATE is unchanged. That is not the same statement as
+                # "the clone file is unchanged", and this branch used to make
+                # the second one for free: it skipped without ever reading the
+                # file, re-recording a checksum nothing had compared against
+                # disk. That is how a ledger entry comes to describe content
+                # that is not there — an operator hand-edits a stamped file,
+                # today's render happens to equal the stored value, and
+                # `cs update` walks past in silence. Releases later the
+                # template finally changes, the divergence surfaces as
+                # "modified locally AND template changed", a headless run
+                # answers the declared N, and the file drops out of template
+                # maintenance for good (`v0.21.0`: five releases). So the file
+                # is read here too, and the two cases it can be in are both
+                # answered rather than assumed away.
+                if not clone_file.exists():
+                    # The ledger claims a checksum for a file the clone does
+                    # not have. Nothing of the operator's can be lost by
+                    # writing the render the stored checksum already blesses —
+                    # it IS that content — and every other branch of this walk
+                    # restores a missing template file. Only this one did not.
+                    clone_file.parent.mkdir(parents=True, exist_ok=True)
+                    _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
+                    added += 1
+                    print(f"  + {str_out_rel} (restored — the clone no longer had it)")
+                elif _checksum(clone_file.read_text()) != rendered_checksum:
+                    # Locally modified, and today's template has nothing to
+                    # offer it: there is no conflict to resolve, so nothing is
+                    # written and the stored checksum stays the TEMPLATE's.
+                    # Recording the local content instead would make the next
+                    # real template change read as "clone is original" and
+                    # overwrite the edit without asking. Reported at the end of
+                    # the run: a ledger entry that does not describe its file is
+                    # exactly the thing that must never be silent.
+                    drifted.append(str_out_rel)
                 continue
 
             # Template changed. Check if clone was modified.
@@ -647,6 +731,23 @@ def cmd_update(args: list[str]) -> int:
     _write_manifest(clone_root, manifest)
 
     print(f"\nDone: {updated} updated, {skipped} skipped (modified locally), {added} added.")
+
+    if drifted:
+        print(
+            f"\n! {len(drifted)} file(s) on disk differ from the checksum "
+            f"template-manifest.json records for them:"
+        )
+        for rel_path in drifted:
+            print(f"    {rel_path}")
+        print(
+            "  Today's template renders exactly what the ledger already holds, so\n"
+            "  there was nothing to apply and nothing was written — these carry local\n"
+            "  edits. A template-owned file is edited in the KERNEL TEMPLATE, never in\n"
+            "  the clone (CLAUDE.md, \"Editing this clone\"). Left as they are, the next\n"
+            "  release that changes one of these templates arrives as a conflict prompt,\n"
+            "  and a headless run answers it \"keep local\" — which is how a file leaves\n"
+            "  template maintenance without anyone deciding that it should."
+        )
 
     # Re-point the other agents' surfaces at the refreshed .claude/ set. Not
     # optional and not a separate verb: an existing clone's .opencode/ was a

@@ -76,6 +76,30 @@ real `python -m cs update` TWICE against the same clone with answers piped in
   - accept with `y`: the opposite property, which a careless fix breaks. The
     NEW render's checksum is stored, and the following run has nothing to say
     about the file.
+
+2026-08-27: the rest of that class — a stored checksum that does not describe
+the file it names, written by a run that said nothing. `rendered == stored`
+("template unchanged") skipped without ever reading the clone file, so a hand
+edit to a stamped file, or a stamped file the clone had lost, both passed
+under `cs update` in complete silence. Hit on BOTH clones at the `v0.28.0`
+re-pin, on `docs/ARCHITECTURE.md`, whose "Kernel pin" row is hand-edited every
+time. Three scenarios, at the two levels the defect has:
+
+  - the hand edit: the run must NAME the divergence, leave the operator's
+    bytes alone, and keep the TEMPLATE's checksum stored (recording the local
+    content would license a silent overwrite at the next real template
+    change). Asserted through `_assert_ledger_describes_disk_or_says_so`,
+    which is the invariant rather than a string: every recorded checksum
+    either matches the file on disk or was reported by the run that left it.
+  - the lost file: a stamped file the clone no longer has is restored from the
+    render its own stored checksum already blesses — every other branch of the
+    walk restores a missing template file; only this one did not.
+  - the cause, one level up: `cs update --pin` owns
+    `template-manifest.json`'s `init_data.repo_kernel_version`, the field
+    `docs/ARCHITECTURE.md.j2` renders the "Kernel pin" row from. While the pin
+    verb did not, every re-pin required the operator to hand-edit a GENERATED
+    file to state the version he had just pinned — which is where the hand
+    edits above come from.
 """
 from __future__ import annotations
 
@@ -252,6 +276,51 @@ def _e2e_already_current_no_prompt_no_diff() -> None:
         )
 
 
+def _checksum(content: str) -> str:
+    """The same value `cs update` stores, computed independently of the code
+    under test — a test that asked cs/project_update.py to hash for it could
+    not tell a wrong ledger from a wrong hasher."""
+    return "sha256:" + hashlib.sha256(content.encode()).hexdigest()
+
+
+def _stamp_clean_clone(clone: Path, rel: str, init_data: dict) -> str:
+    """Put `clone` in the state `cs init` leaves behind for `rel`: the file
+    holds today's render and the ledger holds that render's checksum. Returns
+    the render. This is the state a re-pin starts from — every scenario about
+    a ledger going wrong has to start from a ledger that is right."""
+    rendered = _render_current_template(rel, init_data)
+    (clone / rel).parent.mkdir(parents=True, exist_ok=True)
+    (clone / rel).write_text(rendered)
+    (clone / "template-manifest.json").write_text(json.dumps({
+        "template_version": "1",
+        "init_data": init_data,
+        "file_checksums": {rel: _checksum(rendered)},
+    }, indent=2))
+    return rendered
+
+
+def _assert_ledger_describes_disk_or_says_so(clone: Path, out: str, label: str) -> None:
+    """The invariant this whole class of bug violates: after `cs update`, every
+    checksum in template-manifest.json either describes the file on disk, or
+    the run that left it that way NAMED the path. Both halves matter — the
+    ledger may legitimately hold a value the file does not match (a declined
+    conflict deliberately keeps the template's checksum, so the conflict is
+    offered again), but a divergence nobody was told about is indistinguishable
+    from a true entry for every later run and every later reader."""
+    stored = json.loads((clone / "template-manifest.json").read_text())["file_checksums"]
+    for rel, checksum in sorted(stored.items()):
+        path = clone / rel
+        actual = _checksum(path.read_text()) if path.exists() else "(the file is not there)"
+        if actual == checksum:
+            continue
+        assert rel in out, (
+            f"[{label}] template-manifest.json records {checksum} for {rel}, the file "
+            f"holds {actual}, and the run never mentioned it. A stored checksum that "
+            f"describes nothing on disk is the poisoned-ledger state; it may exist, it "
+            f"may not be silent.\n{out}"
+        )
+
+
 def _run_update_answering(answers: list[str], clone: Path, env: dict) -> subprocess.CompletedProcess:
     """`cs update` with REAL answers typed at the conflict prompts, instead of
     the closed stdin the rest of this file uses. One answer per prompt, in
@@ -319,6 +388,153 @@ def _assert_conflict_survives_decline(clone: Path, env: dict, answers: list[str]
         f"[{label}] the second decline must leave the stored checksum alone too — "
         f"otherwise the THIRD run goes silent:\n{_stored_checksum(clone, CONFLICT_REL)}"
     )
+
+
+def _e2e_hand_edit_under_an_unchanged_template_is_reported() -> None:
+    """A hand edit to a stamped file must not leave `cs update` silent.
+
+    Hit on BOTH clones during the `v0.28.0` re-pin, on `docs/ARCHITECTURE.md`:
+    its "Kernel pin" row is hand-edited at every re-pin, that release did not
+    change the ARCHITECTURE template, so the walk took its `rendered == stored`
+    fast path — which skipped without ever reading the file. The run printed
+    `0 updated, 0 skipped, 0 added`, exited 0, and left template-manifest.json
+    holding the checksum of the PRE-edit content. Nothing downstream can tell
+    that entry from a true one: at the next release that changes the template
+    the divergence surfaces as "modified locally AND template changed", a
+    headless run answers the declared N, and the file leaves template
+    maintenance — `v0.21.0` did exactly that, for five releases.
+
+    The fix is detection, not repair: the local content is deliberately NOT
+    recorded (that would read as "clone is original" next time and overwrite
+    the operator's edit without asking), so what has to change is that the run
+    says so."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        init_data = {"company_slug": "acme"}
+        rendered = _stamp_clean_clone(clone, CONFLICT_REL, init_data)
+        hand_edited = rendered + "\n# the operator's own line, added by hand\n"
+        (clone / CONFLICT_REL).write_text(hand_edited)
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert (clone / CONFLICT_REL).read_text() == hand_edited, (
+            f"the hand-edited file must be untouched — there is no update to apply:\n{out}"
+        )
+        assert _stored_checksum(clone, CONFLICT_REL) == _checksum(rendered), (
+            "the stored checksum must stay the TEMPLATE's: recording the local content "
+            "makes the next real template change read as 'clone is original' and "
+            "overwrite the operator's edit with no prompt at all"
+        )
+        assert CONFLICT_REL in out, (
+            f"the run must NAME the file whose stored checksum no longer describes it. "
+            f"Silence here is the whole defect — the divergence then surfaces releases "
+            f"later, as a conflict a headless run declines:\n{out}"
+        )
+        assert "differ from the checksum" in out, (
+            f"the report must say what the divergence IS, not just print a path:\n{out}"
+        )
+        _assert_ledger_describes_disk_or_says_so(clone, out, "hand edit")
+
+
+def _e2e_unchanged_template_restores_a_file_the_clone_lost() -> None:
+    """The other half of the same fast path: a stamped file the clone no longer
+    has. Its stored checksum then describes nothing at all, and because the
+    template is unchanged the walk skipped it — for ever, since only a template
+    CHANGE could ever bring it back. Every other branch of the walk re-adds a
+    missing template file; this one has to as well, and it can do it safely:
+    the render is byte-for-byte the content the stored checksum already
+    blesses, so there is no operator content to lose."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "clone"); clone.mkdir()
+        env = _clean_env(home)
+
+        init_data = {"company_slug": "acme"}
+        rendered = _stamp_clean_clone(clone, CONFLICT_REL, init_data)
+        (clone / CONFLICT_REL).unlink()
+
+        proc = subprocess.run(
+            [sys.executable, "-m", "cs", "update"],
+            cwd=clone, env=env, stdin=subprocess.DEVNULL,
+            capture_output=True, text=True, timeout=120,
+        )
+        out = proc.stdout + proc.stderr
+
+        assert proc.returncode == 0, f"expected exit 0:\n{out}"
+        assert (clone / CONFLICT_REL).exists(), (
+            f"a stamped file the clone lost must be restored, not skipped for ever "
+            f"because the template happens not to have changed:\n{out}"
+        )
+        assert (clone / CONFLICT_REL).read_text() == rendered, (
+            "the restored file must be today's render — the exact content its own "
+            "stored checksum records"
+        )
+        assert CONFLICT_REL in out, f"the restore must be reported:\n{out}"
+        _assert_ledger_describes_disk_or_says_so(clone, out, "lost file")
+
+
+def _e2e_pin_restamps_the_manifest_kernel_version() -> None:
+    """`cs update --pin <tag>` owns `init_data.repo_kernel_version`.
+
+    `docs/ARCHITECTURE.md.j2` renders its "Kernel pin" row from that field
+    (`cs-kernel@v{{ repo_kernel_version }}`). While `--pin` rewrote only
+    requirements.txt, the field stayed on the previous release and every re-pin
+    required the operator to hand-edit a GENERATED file to state the version he
+    had just pinned — which is where the hand edits the scenarios above guard
+    against come from. Owned here, the next `cs update` renders the new row
+    itself and records its checksum in the same pass: no hand edit, nothing to
+    diverge.
+
+    Bare number, no `v`: both templates that read the field write the `v`
+    themselves, and a stored `"v0.3.0"` (a real clone carried one for five
+    releases) renders `cs-kernel@vv0.3.0`. The legacy shape must normalise, not
+    survive."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        env = _clean_env(home)
+        origin_url = "https://github.com/malemi/cs-kernel"
+
+        for stored_before, label in (("0.6.1", "bare"), ("v0.3.0", "legacy v-prefixed")):
+            clone = Path(td, f"clone-{label.split()[0]}"); clone.mkdir()
+            (clone / "requirements.txt").write_text(
+                f"cs-kernel @ git+{origin_url}@v0.6.1\n"
+            )
+            (clone / "template-manifest.json").write_text(json.dumps({
+                "template_version": "1",
+                "init_data": {"company_slug": "acme",
+                              "repo_kernel_version": stored_before},
+                "file_checksums": {},
+            }, indent=2))
+
+            proc = _run_update(["--pin", "v0.7.0"], clone, env)
+            out = proc.stdout + proc.stderr
+            assert proc.returncode == 0, f"[{label}] expected exit 0:\n{out}"
+
+            manifest = json.loads((clone / "template-manifest.json").read_text())
+            assert manifest["init_data"]["repo_kernel_version"] == "0.7.0", (
+                f"[{label}] --pin must re-stamp init_data.repo_kernel_version to the "
+                f"BARE number of the tag it just pinned, got "
+                f"{manifest['init_data']['repo_kernel_version']!r}. A leading 'v' here "
+                f"renders 'cs-kernel@vv0.7.0' into every clone's ARCHITECTURE.md.\n{out}"
+            )
+            assert "repo_kernel_version" in out, (
+                f"[{label}] a second file was written — the run must say so:\n{out}"
+            )
+            assert manifest["init_data"]["company_slug"] == "acme", (
+                f"[{label}] --pin must touch that ONE field and nothing else in init_data"
+            )
+            assert f"@v0.7.0" in (clone / "requirements.txt").read_text(), (
+                f"[{label}] the pin line itself must still be rewritten:\n{out}"
+            )
 
 
 def _e2e_declined_conflict_is_offered_again_next_run() -> None:
@@ -1153,6 +1369,9 @@ def main() -> int:
     _offer_yes_path_repins_installs_reexecs()
     _e2e_conflict_keeps_local_with_closed_stdin()
     _e2e_already_current_no_prompt_no_diff()
+    _e2e_hand_edit_under_an_unchanged_template_is_reported()
+    _e2e_unchanged_template_restores_a_file_the_clone_lost()
+    _e2e_pin_restamps_the_manifest_kernel_version()
     _e2e_declined_conflict_is_offered_again_next_run()
     _e2e_declined_after_diff_is_offered_again_next_run()
     _e2e_accepted_overwrite_is_not_offered_again()
