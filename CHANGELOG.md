@@ -4,44 +4,46 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-26): **`v0.26.0` on both clones**.
+**Current operational pin** (2026-08-27): **`v0.27.0` on both clones**.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.26.0`; both `requirements.lock` files resolve the tag
-to `46f2648`, and each lock was installed ALONE into a fresh `uv venv` —
-resolving `cs-kernel 0.26.0` — rather than assumed to. The FULL collaudo the
-entry demands was RUN, on both: `cs whoami` signs in on each profile
-(`support@mrcall.ai`, `production@cafe124.it`), `cs config` reports zero
-duplicate declarations on each, and `cs unanswered` was exercised live on both
-mailboxes — `mrcall-cs` at 45 days, `124-cs` at 90 days on its own engine
-profile and its own Shopify CRM, which is the `kernel + manifest(X) ≡ X`
-check. `cs plan`, `cs campaign packs` and the two bare ledger verbs were run on
-both; nothing was written and nothing was sent.
+`cs --version` all say `v0.27.0`; both `requirements.lock` files resolve the tag
+to `430c679`, and each lock was installed ALONE into a fresh `uv venv` —
+resolving `cs-kernel 0.27.0` — rather than assumed to. The static collaudo the
+entry demands was run on both: `cs whoami` signs in on each profile
+(`support@mrcall.ai`, `production@cafe124.it`), `cs config` reports **no setting
+declared in more than one place** on either, and the rendered `CLAUDE.md` was
+read on each to confirm the new `doc-scope` block interpolates that clone's own
+name. Nothing was written and nothing was sent.
 
-**Both clones are running `v0.26.0` against an engine that does NOT yet carry
-`emails.needs_reply`, and this is the state the operator should expect to see.**
-The engine change (`mrcall-desktop` `1139da2`, pushed, on `main`) is committed
-but deliberately NOT deployed — that is the owner's call. Until the five
-`zylch-server@` units run it, `cs unanswered` on both clones answers exactly as
-`v0.25.0` did and prints `engine non consultabile: … Method not found:
-emails.needs_reply … ogni messaggio risulta da rispondere`. Verified live on
-both, not reasoned about: `mrcall-cs`'s 45-day output under `v0.26.0` is
-identical to its `v0.25.0` output apart from that line. **The new section is
-inert until the deploy.**
+**The engine now carries `emails.needs_reply` and the paragraph this replaces
+said it did not.** That claim was true when it was written and false by the next
+morning, which is why it is corrected here rather than left to age: the deployed
+checkout `/home/mrcalld/mrcall-desktop` is at `810d7a4`, all five
+`zylch-server@` units are active, and
+`cs rpc emails.needs_reply '{"thread_ids": []}'` answers
+`{"threads": {}, "asked": 0, "note": null}` instead of `-32601 Method not
+found`. Measured on the live host, not inferred from a git log. So `v0.26.0`'s
+fourth section is no longer inert: `cs unanswered` gets real verdicts.
 
-`cs update` clobbered NOTHING on either clone and the reason is not luck:
-`v0.26.0` changes no template, so `bin/cs_operator_cron.sh`, `.claude/
-settings.json` and `CLAUDE.md` were never render targets and are byte-identical
-to their pre-update copies on both — `mrcall-cs` keeps its clone-owned
-`bin/mrcall_business.py` deny line and nothing needed restoring, and `ext/` is
-unchanged. `docs/ARCHITECTURE.md` re-rendered cleanly on `124-cs`; on
-`mrcall-cs` it still reports as locally modified against its stored checksum
-(the poisoned-ledger case from `v0.21.0`, still not cleaned up), so its prompt
-resolved to keep-local under a closed stdin and its pin row was edited by hand.
-`[repo].kernel_version`
-is no longer on that list: `v0.18.0` removed the field, so the pin is
-`requirements.txt` and the claims derived from it, and there is one fewer
-hand-maintained number to go stale.
+`cs update` clobbered NOTHING on either clone. `v0.27.0` changes exactly one
+template, `CLAUDE.md.j2`, and `CLAUDE.md` matched its stored checksum on both
+clones beforehand — so the render applied with no conflict prompt, and the two
+`SECURITY_CRITICAL` files were never render targets at all.
+`bin/cs_operator_cron.sh` and `.claude/settings.json` are byte-identical to
+their pre-update copies on both; `mrcall-cs` keeps its clone-owned
+`bin/mrcall_business.py` deny line and nothing needed restoring, and its
+`ext/cs_operator_send_cron.sh` — the wrapper its live crontab actually runs, and
+which the kernel does not own — is byte-identical too.
+
+**`mrcall-cs`'s poisoned `docs/ARCHITECTURE.md` ledger entry is GONE**, after
+five releases of reporting that file as locally modified. It was declined once
+under `v0.21.0`, which recorded the stale template checksum; this run the clone's
+content and the fresh render agreed, so `cs update` printed `already current` and
+re-recorded the correct checksum. The file now matches its stored checksum, and
+the next template change to it will produce a real prompt instead of a phantom
+conflict. Its "Kernel pin" row is still hand-edited at re-pin — that is by
+design for a row stamped from the manifest.
 
 **`cs update` clobbered NOTHING this time, and the reason is worth writing
 down rather than counting as luck.** `bin/cs_operator_cron.sh` is

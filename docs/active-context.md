@@ -62,28 +62,29 @@ what is *current*.
   skills are one rendered `.claude/` set, with every other agent surface
   (`.opencode/`, `AGENTS.md`, `~/.codex/prompts`) symlinked into it since
   `v0.10.0` — no second copy to drift.
-- Clone matrix (verified 2026-08-26 from inside each clone — `requirements.txt`
+- Clone matrix (verified 2026-08-27 from inside each clone — `requirements.txt`
   + `.venv/bin/python -m cs --version`; measuring from another cwd reads the
   local package, not the clone's):
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.26.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.26.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.27.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.27.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
-  `v0.26.0`'s FULL collaudo was RUN on both, not waived, and `cs config` now
-  reports **no setting declared in more than one place** on either. Each
-  `requirements.lock` resolves the tag to `46f2648` and was installed ALONE into
+  `v0.27.0`'s static collaudo was run on both, and `cs config` reports **no
+  setting declared in more than one place** on either. Each
+  `requirements.lock` resolves the tag to `430c679` and was installed ALONE into
   a fresh `uv venv` rather than assumed to. **Re-pinning a clone is the
   operator's own move unless he asks for it** — stated twice on 2026-08-21,
   after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
-- **`mrcall-cs` still carries the pre-`v0.22.0` poisoned ledger on
-  `docs/ARCHITECTURE.md`**: declined once under `v0.21.0`, so it reports as
-  locally modified for ever and its "Kernel pin" row is hand-edited at every
-  re-pin (currently `cs-kernel@v0.26.0`, correct). Removing that entry from
-  `template-manifest.json`'s `file_checksums` makes the conflict visible again.
+- **`mrcall-cs`'s poisoned `docs/ARCHITECTURE.md` ledger is CLEARED** (`v0.27.0`
+  re-pin): declined once under `v0.21.0`, it reported as locally modified for
+  five releases; this run the clone content and the fresh render agreed, so
+  `cs update` printed `already current` and re-recorded the checksum. The file
+  matches again. Its "Kernel pin" row is still hand-edited at every
+  re-pin (currently `cs-kernel@v0.27.0`, correct).
   `init_data.repo_kernel_version` in the same file is likewise hand-bumped
-  (currently `0.26.0`) — see `Next` 1.
+  (currently `0.27.0`) — see `Next` 1.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
   routing seam is unwired (no call site passes `role=`; the default is the
   engine), but the send guard's register judgment IS a direct provider call:
