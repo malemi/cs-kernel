@@ -115,6 +115,7 @@ IMMUTABLE_TAG_TARGETS = {
     "v0.25.0": "f0a416efc8c49556fde4df30aeb91b1d346e42c2",
     "v0.26.0": "46f2648c805cb201c65f417149dcb8d96faa3f20",
     "v0.27.0": "430c6796dfb301c43078386c167f95c394bc09a6",
+    "v0.28.0": "76f665654254244ed84860094325f6637b59733a",
 }
 
 # A published tag must install as the version it claims: `git show

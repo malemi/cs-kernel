@@ -16,7 +16,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.28.0`. Current HEAD status: tagged as `v0.28.0`.**
+- **Latest release tag: `v0.28.0`. Current HEAD status: untagged.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
@@ -69,23 +69,29 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.27.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
-  | `124-cs` | `v0.27.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
+  | `mrcall-cs` | `v0.28.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `124-cs` | `v0.28.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
-  `v0.27.0`'s static collaudo was run on both, and `cs config` reports **no
-  setting declared in more than one place** on either. Each
-  `requirements.lock` resolves the tag to `430c679` and was installed ALONE into
-  a fresh `uv venv` rather than assumed to. **Re-pinning a clone is the
-  operator's own move unless he asks for it** — stated twice on 2026-08-21,
-  after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
+  `v0.28.0`'s static + live read-only collaudo was run on both — `cs whoami`
+  signs in on each profile and `cs config` reports **no setting declared in
+  more than one place** on either. Each `requirements.lock` resolves the tag
+  to `76f6656` and was installed ALONE into a fresh `uv venv` rather than
+  assumed to. **Re-pinning a clone is the operator's own move unless he asks
+  for it** — stated twice on 2026-08-21, after a `cs update` overwrite cost
+  him a hand-authored `manifest.toml`. `124-cs`'s re-pin commit is separate
+  from a same-session commit that only catches its git history up to the
+  `v0.27.0` it was already running (CHANGELOG has the detail); an unrelated
+  business-dossier edit on `124-cs` predates this release and is untouched.
 - **`mrcall-cs`'s poisoned `docs/ARCHITECTURE.md` ledger is CLEARED** (`v0.27.0`
   re-pin): declined once under `v0.21.0`, it reported as locally modified for
   five releases; this run the clone content and the fresh render agreed, so
   `cs update` printed `already current` and re-recorded the checksum. The file
   matches again. Its "Kernel pin" row is still hand-edited at every
-  re-pin (currently `cs-kernel@v0.27.0`, correct).
+  re-pin (currently `cs-kernel@v0.28.0`, correct).
   `init_data.repo_kernel_version` in the same file is likewise hand-bumped
-  (currently `0.27.0`) — see `Next` 1.
+  (currently `0.28.0`) — see `Next` 1. The `v0.28.0` re-pin recreated the same
+  drift for one commit (the hand-edit landed before a second `cs update` pass
+  reconciled the checksum) — `Next` 1 now has a second, fresher instance.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
   routing seam is unwired (no call site passes `role=`; the default is the
   engine), but the send guard's register judgment IS a direct provider call:
@@ -139,6 +145,13 @@ what is *current*.
    ARCHITECTURE re-stamp would have rendered `cs-kernel@vv0.3.0` — stamped data
    rots when the pin verb doesn't own it. Now that the upgrade offer re-pins on
    the operator's behalf, the verb owning that field matters more, not less.
+   Second instance, `v0.28.0` re-pin: hand-editing `docs/ARCHITECTURE.md`'s
+   "Kernel pin" row (as-built clones still need it by hand) *before* the next
+   `cs update` pass leaves `template-manifest.json` holding the PRE-edit
+   checksum — the same poisoned-ledger shape as `v0.21.0`, self-inflicted this
+   time. A second `cs update` run afterward reconciles it (the render already
+   matches, so it just re-stamps the checksum), but the safe order is: hand
+   edits first, `cs update` last, every time — never the other way round.
 2. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
    upgrade prompt still print `re-collaudo: <tier>` and "Every kernel upgrade
    owes a re-collaudo (CLAUDE.md, Versioning & release)"

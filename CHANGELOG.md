@@ -4,17 +4,32 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-27): **`v0.27.0` on both clones**.
+**Current operational pin** (2026-08-27): **`v0.28.0` on both clones**.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.27.0`; both `requirements.lock` files resolve the tag
-to `430c679`, and each lock was installed ALONE into a fresh `uv venv` —
-resolving `cs-kernel 0.27.0` — rather than assumed to. The static collaudo the
-entry demands was run on both: `cs whoami` signs in on each profile
-(`support@mrcall.ai`, `production@cafe124.it`), `cs config` reports **no setting
-declared in more than one place** on either, and the rendered `CLAUDE.md` was
-read on each to confirm the new `doc-scope` block interpolates that clone's own
-name. Nothing was written and nothing was sent.
+`cs --version` all say `v0.28.0`; both `requirements.lock` files resolve the tag
+to `76f6656`, and each lock was installed ALONE into a fresh `uv venv` —
+resolving `cs-kernel 0.28.0` — rather than assumed to. The static + live
+read-only collaudo the entry demands was run on both: `cs whoami` signs in on
+each profile (`support@mrcall.ai`, `production@cafe124.it`), `cs config`
+reports **no setting declared in more than one place** on either, and the
+rendered `CLAUDE.md` was read on each to confirm it still interpolates that
+clone's own identity rather than the other's. `.claude/skills/cs-triage-mail/
+SKILL.md` § 2 carries the new heading ("Read the customer's own words before
+you decide anything") on both, with no literal Jinja left in any of the three
+re-rendered files. Nothing was written and nothing was sent.
+
+**`124-cs`'s own git history had fallen four minor releases behind what was
+actually installed and rendered on it.** Its last committed re-pin was
+`v0.23.0`; `v0.24.0` through `v0.27.0` had each been applied and verified live
+on the clone by earlier sessions — this file's own entries record the
+collaudo — but the corresponding commits on the `124-cs` side were never made.
+`cs --version` and every stamped file already agreed on `v0.27.0` before this
+release touched anything, so nothing was lost; the gap is closed as its own
+commit on `124-cs`, kept separate from the `v0.27.0 → v0.28.0` commit this
+release owns, so the two are not laundered into one. `124-cs` also still
+carries an unrelated, pre-existing uncommitted business-dossier edit; this
+release does not touch it.
 
 **The engine now carries `emails.needs_reply` and the paragraph this replaces
 said it did not.** That claim was true when it was written and false by the next
