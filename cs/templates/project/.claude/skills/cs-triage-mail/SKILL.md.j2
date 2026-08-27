@@ -169,20 +169,34 @@ is where we record that a contact is handled, so for every survivor, match by
 .venv/bin/python -m cs tasks close <task_id> --note "<how/where resolved>"   # one task, nothing else
 ```
 
-## 2. Pull exact text ONLY to ground a draft
+## 2. Read the customer's own words before you decide anything
 
-For a candidate that survived the Sent-archive check (genuinely unanswered)
-AND you intend to draft, read the real bodies to ground the reply in the
-customer's exact words:
+Every candidate that survived step 1/1b gets its thread read — the one you
+intend to draft AND the one you intend to escalate. Naming an item in the
+report is telling the operator what a customer is waiting for, and you cannot
+know that from a task title, a task `reason`, a search snippet, or a line
+quoted inside an older draft. Read the thread:
 
 ```bash
 .venv/bin/python -m cs rpc emails.list_by_thread '{"thread_id":"<thread_id>"}'
 ```
 
 ⚠️ Returns **`{"emails":[…]}`** (a dict). Read **bodies**, not the snippet
-(snippets often show {{ email_address }}'s own autoresponder). Use this for CONTENT —
-the wording you reply to — never to decide handled-state (step 1 settled
-that via the engine).
+(snippets often show {{ email_address }}'s own autoresponder).
+
+- **The source is the thread itself.** A `reason` field carries no provenance —
+  it may have been typed by an earlier tick of this same skill, so re-reading it
+  is confirming your own output, not corroborating it. A symptom quoted inside a
+  draft is that symptom on the day it was quoted, never the customer's position
+  now.
+- **What you read here does NOT decide handled-state.** Step 1 settled that
+  against the Sent archive, across threads; a single thread read has answered
+  that binary wrong before. This read decides what the person is actually asking
+  and whether their own last message still asks it — the CONTENT of § 3's
+  branch, never the branch's precondition.
+- **An escalation quotes the ask and dates it.** If you cannot say what they
+  asked, in their words, and when, you have not read enough to put their name in
+  front of the operator.
 
 ## 2b. When unsure HOW to answer — search past mail, don't guess
 
