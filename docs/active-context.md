@@ -82,11 +82,10 @@ what is *current*.
   cannot reach its engine. `DEFAULT_ENGINE_WS_URL` is the WS default when no
   descriptor answers.
 - **The deployed engine is mrcall-desktop `1194434`** at
-  `/home/mrcalld/mrcall-desktop`, pulled 2026-08-28. Only the
-  `C06xHKoRcfdz94FaLPKuJuo0xVo1` (124) unit was restarted onto it; the other
-  four `zylch-server@` units still run the previous build in memory, so
-  `settings.get_secret` answers on 124 and `-32601` on the rest until they are
-  restarted. The kernel degrades to the password prompt on those, by design.
+  `/home/mrcalld/mrcall-desktop`, pulled 2026-08-28, and **all five
+  `zylch-server@` units run it** — that install is editable, so deployed means
+  the checkout's HEAD plus a restart. Verified by asking each profile for its
+  own secret: all five serve `settings.get_secret`.
 - Rollout still open from `v0.31.0`: re-pin both clones + FULL collaudo, plus
   `mrcall-cs`'s `[surface] operator_voice = "Italian, founders' register"`
   manifest line — sequenced in the meta-repo plan
