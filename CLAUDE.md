@@ -6,28 +6,23 @@
 **Do not break**: No company literal anywhere in `cs/` (wordlist-gated); everything company-shaped comes from `Settings`/`manifest.toml` — never `if company == …`
 
 <!-- orientation ends -->
-
 <!-- doc-scope:start -->
 Scope: the thin index and anti-fork charter of this kernel — the rules a change must
 obey and who owns what. Per-tag detail is `CHANGELOG.md`, volatile state
 `docs/active-context.md`, the release steps `docs/release-procedure.md`.
 <!-- doc-scope:end -->
-
 The shared KERNEL of the `<company>-cs` customer-service operators.
 Distribution **`cs-kernel`**, import package **`cs`**. A stamped clone has
 **no `cs/` source directory**: it pip-installs this kernel from a git tag
 (`requirements.txt` pin), so `.venv/bin/python -m cs …` resolves from
 site-packages and a clone *cannot* drift a package whose source it does not
 hold. Upgrades are a pin bump + `pip install`, never a cherry-pick.
-
 Design source of truth: the brief `cs-kernel-manifest-separation.md` (in the
 meta-repo, `docs/briefs/`). The two existing clones are the permanent test
 fixture: every kernel change must keep `kernel + manifest(X) ≡ X` on
 observable surfaces (collaudo, brief §6).
-
 **This file is a thin index: it carries the charter and routes the rest.**
 Where a subject has an owner, the owner is named inline — go there.
-
 ## The charter (anti-fork rules — enforced by review + CI)
 
 1. **No company literal anywhere in `cs/`** — no mailbox, slug, drive scope,

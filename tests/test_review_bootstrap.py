@@ -278,7 +278,7 @@ BASE = dict(
 # Words that turn a standing decision into an accusation. The operator's own
 # ruling: "SONO IO CHE DECIDO CHE NON DEVE ANDARE, FINE. BASTA DIRMELO UNA
 # VOLTA." A greeting that scolds him for his own switch is a defect.
-ALARM_WORDS = ("⚠", "attention", "problem", "blocked", "warning", "alert", "!!",
+ALARM_WORDS = ("⚠", "problem", "blocked", "warning", "alert", "!!",
                "stopped", "not running")
 
 
@@ -294,9 +294,11 @@ def _rendered_command() -> None:
             ("cs config", "the settings in force must be READ, never inferred"),
             ("cs --version", "the kernel pin comes from the installed package"),
             ("git log", "what changed since he last sat down"),
-            ("cs unanswered --days 45 --crm", "the support queue, customers apart"),
+            ("cs unanswered --days 45 --crm --json --all-buckets",
+             "every support bucket is evidence, customers annotated"),
             ("docs/owner-actions.md", "what is blocked on him"),
-            ("cs review", "what the headless operator prepared"),
+            ("cs review --json", "draft/task evidence stays structured"),
+            ("cs thread <email> --json --full", "current full messages are read"),
             ("cs cron status --json", "whether the unattended operator runs at "
              "all is READ, never inferred from a log tail"),
             ("cs catchup --check", "and whether the engine is behind is asked "
@@ -304,8 +306,10 @@ def _rendered_command() -> None:
         ):
             check(needle in out, f"[{label}] the command must run/read `{needle}` — {why}")
 
-        # The greeting shape: the fenced block the model fills in.
-        shape = out.split("### The shape", 1)[1].split("```", 2)[1]
+        # The report shape: the fenced block the model fills in only AFTER it
+        # has made one attention decision per candidate.
+        shape = out.split("## 8. Present the operator's agenda", 1)[1]
+        shape = shape.split("```text", 1)[1].split("```", 1)[0]
 
         # Rule 2, mechanically. The switch is one neutral field of state.
         check(shape.count("on hold") == 1,
@@ -322,36 +326,32 @@ def _rendered_command() -> None:
         # clear the switch — a review is not the place that decision is made.
         check("rm ~/." not in out and "rm -f ~/." not in out,
               f"[{label}] /cs-review must never offer to remove the kill-switch file")
-        closing = shape.split("Where do we start?", 1)[1]
-        for w in ("on hold", "pause", "CS_PAUSE", "cron", "tick", "resume",
-                  "restart", "scheduled"):
-            check(w not in closing.lower(),
-                  f"[{label}] the closing options must not mention {w!r}:\n{closing}")
-
-        # Rule 4: nothing that would make him open something else.
-        check("[uid <uid> | engine <id>]" in shape,
-              f"[{label}] every draft is a row with the handles it is retired "
-              f"by, not a count:\n{shape}")
-        check("Out of the queue" in shape,
+        # The output answers attention, not source inventory.
+        check("Needs you now" in shape and "Needs judgement" in shape,
+              f"[{label}] action and uncertainty are separate:\n{shape}")
+        check("Not on today's agenda" in shape,
+              f"[{label}] excluded work is counted explicitly:\n{shape}")
+        check("include draft handles when present" in shape,
+              f"[{label}] an actionable draft keeps its retirement handle:\n{shape}")
+        check("Resolved outside email" in shape,
               f"[{label}] out-of-band records get their own line:\n{shape}")
-        check("Support queue" in shape,
-              f"[{label}] the support queue has a slot:\n{shape}")
+        check("Drafts ready to send" not in shape and "Support queue" not in shape,
+              f"[{label}] raw source labels are not agenda headings:\n{shape}")
         check("Repo:" in shape and "Waiting on you:" in shape,
               f"[{label}] repo state + what is blocked on him have slots:\n{shape}")
-        # Rule 5: the two draft blocks are separate, and a re-decide row says why.
-        check("Drafts ready to send" in shape and "Drafts to re-decide" in shape,
-              f"[{label}] ready and to-re-decide are SEPARATE blocks:\n{shape}")
-        check("<overtaken|superseded|settled>" in shape,
-              f"[{label}] a re-decide row transcribes the computed verdict:\n{shape}")
         # The cron fact rides the line that already existed for the last run —
         # no parallel line, no second place to keep true.
-        check(shape.count("Scheduled run:") == 1
-              and "<ran|skipped>" in shape
+        check(shape.count("Scheduled run:") == 1 and "<ran|skipped|none>" in shape
               and "<configured|not configured>" in shape,
               f"[{label}] one line carries schedule + timestamp + outcome:\n{shape}")
         check("mode:" in shape,
               f"[{label}] cs_triage_mode is stated next to the pause — resuming a "
               f"send-mode operator is not the same decision as resuming a draft one")
+        check("End the review after the report" in out,
+              f"[{label}] review and repair are separate turns")
+        if label == "with-producer":
+            check("cs plan -v --period 7d" in out and "cs dossier <email>" in out,
+                  "producer candidates still receive their evidence")
 
 
 # ----------------------------------------------- E. it runs without prompts
@@ -376,13 +376,14 @@ def _permissions() -> None:
                   f"only read-only git is allowed, found {entry}")
 
 
-_campaigns()
-_crm_annotate()
-_cli_grouping()
-_rendered_command()
-_permissions()
+if __name__ == "__main__":
+    _campaigns()
+    _crm_annotate()
+    _cli_grouping()
+    _rendered_command()
+    _permissions()
 
-if fails:
-    print(f"test_review_bootstrap: {fails} assertion(s) FAILED")
-    sys.exit(1)
-print("test_review_bootstrap: all assertions passed")
+    if fails:
+        print(f"test_review_bootstrap: {fails} assertion(s) FAILED")
+        sys.exit(1)
+    print("test_review_bootstrap: all assertions passed")

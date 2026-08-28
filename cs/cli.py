@@ -182,8 +182,36 @@ def _threads_for(settings, email: str, limit: int = 50) -> list[dict]:
 
 
 def cmd_thread(args) -> int:
+    if getattr(args, "full", False) and not args.json:
+        print("--full requires --json", file=sys.stderr)
+        return 2
     settings = config.load()
     threads = _threads_for(settings, args.email, args.limit)
+    if getattr(args, "full", False):
+        enriched = []
+        for summary in threads:
+            row = dict(summary)
+            thread_id = summary.get("thread_id") or summary.get("id")
+            if not thread_id:
+                row["emails"] = []
+                row["emails_error"] = "thread summary carries no thread_id"
+            else:
+                try:
+                    res = rpc.call_sync(
+                        settings,
+                        "emails.list_by_thread",
+                        {"thread_id": thread_id},
+                        timeout=120,
+                    )
+                    row["emails"] = (
+                        res.get("emails", []) if isinstance(res, dict) else []
+                    )
+                except Exception as e:  # noqa: BLE001 — one thread may degrade
+                    row["emails"] = []
+                    row["emails_error"] = f"{type(e).__name__}: {e}"
+            enriched.append(row)
+        _print_json(enriched)
+        return 0
     if args.json:
         _print_json(threads)
         return 0
@@ -224,6 +252,9 @@ def cmd_unanswered(args) -> int:
     # in the discovery loop — see cs/unanswered.py. What KIND of message it is
     # (autoresponder or not) is the engine's judgement, asked for, never
     # re-derived here.
+    if getattr(args, "all_buckets", False) and not args.json:
+        print("--all-buckets requires --json", file=sys.stderr)
+        return 2
     settings = config.load()
     from . import unanswered as unanswered_mod
 
@@ -239,6 +270,10 @@ def cmd_unanswered(args) -> int:
         # is the first thing a human re-derives by hand otherwise.
         crm_note = unanswered_mod.crm_annotate(settings, rows)
     if args.json:
+        if getattr(args, "all_buckets", False):
+            d["crm_note"] = crm_note
+            _print_json(d)
+            return 0
         # The open list, exactly as before: this is the triage skill's PRIMARY
         # candidate feed and its shape is a contract. The out-of-band and
         # taken-over sections below are for the human — a machine reader wants
@@ -1398,6 +1433,11 @@ def main(argv=None) -> int:
     pt.add_argument("email")
     pt.add_argument("--limit", type=int, default=50)
     pt.add_argument("--json", action="store_true")
+    pt.add_argument(
+        "--full",
+        action="store_true",
+        help="with --json, resolve every thread summary to its full chronological messages",
+    )
     pt.set_defaults(func=cmd_thread)
 
     pc = sub.add_parser("contacted", help="did the operator write to this address recently?")
@@ -1413,6 +1453,11 @@ def main(argv=None) -> int:
     )
     pun.add_argument("--days", type=int, default=14)
     pun.add_argument("--json", action="store_true")
+    pun.add_argument(
+        "--all-buckets",
+        action="store_true",
+        help="with --json, return open/resumed/automatic/courtesy/handled/escalated plus notes; bare --json stays the open list",
+    )
     pun.add_argument(
         "--crm",
         action="store_true",

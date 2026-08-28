@@ -26,6 +26,24 @@ from typing import Optional
 from . import _time, campaign, draft_state, gmail_drafts, rpc
 
 
+def _task_row(task: dict) -> dict:
+    """One engine task as review evidence, without throwing context away.
+
+    ``render`` only needs email/title/urgency, but ``review --json`` is also the
+    headless operator's evidence feed. The previous three-field projection
+    discarded the task id, the detector's reason, its proposed action, source
+    conversation, and timestamps — precisely what a current-attention
+    judgement needs in order to disagree with a stale ledger item honestly.
+
+    Keep the engine fields intact and add the two normalized display aliases.
+    This is read-only data shaping; no task state is changed.
+    """
+    row = dict(task)
+    row["email"] = task.get("contact_email") or task.get("contact_phone")
+    row["title"] = (task.get("title") or task.get("summary") or "")[:90]
+    return row
+
+
 def _last_log_lines(settings, n: int = 6) -> list[str]:
     log = settings.log_path  # ~/.<slug>-cs/cs_operator.log (derived from Settings)
     if not log.exists():
@@ -148,12 +166,7 @@ def gather(settings) -> dict:
     try:
         res = rpc.call_sync(settings, "tasks.list", {"limit": 200}, timeout=120)
         tasks = res if isinstance(res, list) else res.get("tasks", [])
-        out["tasks"] = [
-            {"email": t.get("contact_email") or t.get("contact_phone"),
-             "title": (t.get("title") or t.get("summary") or "")[:90],
-             "urgency": t.get("urgency")}
-            for t in tasks
-        ]
+        out["tasks"] = [_task_row(t) for t in tasks]
     except Exception as e:  # noqa: BLE001
         out["tasks"] = []
         out["tasks_error"] = f"{type(e).__name__}: {e}"

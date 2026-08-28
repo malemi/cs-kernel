@@ -1,0 +1,51 @@
+[
+  {
+    "id": "bank-newsletter",
+    "sources": ["unanswered"],
+    "subject": "Business trends this year",
+    "current_evidence": "A bank newsletter summarizes aggregated small-business statistics. It asks no question and offers a link to read the report.",
+    "expected": "informational"
+  },
+  {
+    "id": "commerce-invoice-paid",
+    "sources": ["unanswered"],
+    "subject": "Your monthly commerce-platform bill",
+    "current_evidence": "The platform confirms that the monthly bill was issued and paid successfully by the configured automatic payment method. It says no action is required.",
+    "expected": "informational"
+  },
+  {
+    "id": "export-complete",
+    "sources": ["unanswered"],
+    "subject": "Your order export is ready",
+    "current_evidence": "An automated notification says a requested export finished and can be downloaded. It contains no failure, deadline, question, or request to reply.",
+    "expected": "informational"
+  },
+  {
+    "id": "ancient-empty-draft",
+    "sources": ["draft"],
+    "subject": "",
+    "current_evidence": "The draft was composed in 2020, has no recipient, no subject, no body, and no resolvable conversation.",
+    "expected": "stale"
+  },
+  {
+    "id": "insurance-questionnaire",
+    "sources": ["task", "unanswered"],
+    "subject": "Product liability questionnaire",
+    "current_evidence": "The broker directly asks the operator to complete and return the attached product-liability questionnaire. No later answer or completion is present.",
+    "expected": "act_now"
+  },
+  {
+    "id": "current-customer-question",
+    "sources": ["task", "resumed"],
+    "subject": "Private-label production timing",
+    "current_evidence": "The customer asks whether the proposed minimum volume can be produced in September. Their question is the latest human message and has no answer.",
+    "expected": "act_now"
+  },
+  {
+    "id": "settled-outside-email",
+    "sources": ["task", "unanswered", "handled"],
+    "subject": "Supplier invoice",
+    "current_evidence": "The operator recorded after the latest inbound that the invoice was paid and the supplier was notified on WhatsApp. There is no newer message.",
+    "expected": "stale"
+  }
+]

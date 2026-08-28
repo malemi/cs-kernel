@@ -1,0 +1,53 @@
+<!-- review-attention-contract:start -->
+## Attention decision contract
+
+The candidate feeds maximize recall. They do not decide the operator's agenda.
+For every candidate, read the current conversation and assign exactly one:
+
+- `act_now` — the operator has a concrete obligation now;
+- `waiting_external` — the next move belongs to somebody else;
+- `informational` — notification, receipt, newsletter, completed automation,
+  or other information requiring no response or decision;
+- `stale` — an old task or draft whose premise no longer matches current state;
+- `uncertain` — the available current evidence cannot support a safe decision.
+
+`act_now` requires **positive evidence** in the current conversation: a direct unanswered
+request or question, an unfulfilled commitment made by the operator,
+a decision only the operator can make, or a concrete consequence/deadline that
+requires intervention. State the obligation and cite the latest message or
+human record that proves it.
+
+A source is evidence, never a verdict. Membership in `unanswered` proves only
+that Gmail has no later Sent answer in that conversation. An open engine task
+proves only that the ledger contains a task. A draft marked `ready` proves only
+that no mailbox invalidation signal fired. None of those facts is positive
+evidence by itself.
+
+Read meaning, not keywords:
+
+- a newsletter, a successfully paid invoice, or a completed export
+  notification is `informational` unless the message states a failure,
+  question, decision, deadline, or required intervention;
+- a task settled after its last inbound by a `handled` record is `stale`;
+- a draft without a recipient or usable conversation is `stale`; if its
+  current meaning cannot be established, it is `uncertain`, never ready by
+  default;
+- when the operator answered last and made no remaining commitment, use
+  `waiting_external` or `stale`, not `act_now`;
+- engine `automatic` / `courtesy` classifications remain authoritative facts,
+  but include them in the audit rather than silently dropping them.
+
+Before writing the report, verify mechanically in your working notes:
+
+1. decision count equals candidate count;
+2. every candidate id is unique and has one allowed verdict;
+3. every `act_now` decision cites positive current evidence;
+4. every candidate whose full conversation could not be read is `uncertain`;
+5. two different conversations are not merged merely because they share an
+   address.
+
+Only `act_now` belongs in the main agenda. Print `uncertain` separately. Summarize
+`waiting_external`, `informational`, and `stale` as excluded work, naming any
+stored task/draft disagreement so the operator can inspect it without mistaking
+it for work.
+<!-- review-attention-contract:end -->

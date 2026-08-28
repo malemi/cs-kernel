@@ -950,6 +950,18 @@ step "42. one shared preamble, both stamping paths, and no Italian in a clone"
 # the stamp without re-running `cs init`.
 if "$VENV/bin/python" "$ROOT/tests/test_stamped_surfaces.py"; then echo "OK"; else echo "FAIL: stamped surfaces regressed"; FAIL=1; fi
 
+step "43. /cs-review adjudicates attention instead of formatting candidate feeds"
+# The 2026-08-28 operator review put bank marketing, successful billing/export
+# notifications, and an empty 2020 draft into the work surface. The sources had
+# answered narrower questions; no component owned "does this deserve attention
+# today?". Guards: JSON evidence keeps full task reasons/sources, the detailed
+# sweep keeps every semantic bucket without breaking bare --json, thread reads
+# resolve summaries to full messages, one shared prompt contract requires a
+# positive current obligation and partitions every candidate exactly once, and
+# the rendered command stops before any repair path. The seven-case incident
+# fixture is the input to the separate opt-in live semantic replay.
+if "$VENV/bin/python" "$ROOT/tests/test_review_attention.py"; then echo "OK"; else echo "FAIL: attention-agenda contract regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

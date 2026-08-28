@@ -154,6 +154,71 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.35.0 — 2026-08-28
+
+**MINOR.** `/cs-review` now owns the final attention decision instead of
+presenting every draft, engine task, and unanswered-mail candidate as work.
+The two new CLI flags are backward-compatible structured read surfaces:
+`cs unanswered --json --all-buckets` and `cs thread --json --full`.
+**Re-collaudo: static + live read-only, both clones.**
+
+### Fixed — high-recall sources were mistaken for the operator's agenda
+
+A live mario124 review called a bank newsletter, successful billing/export
+notifications, and an empty 2020 draft work for the operator. None of the
+underlying sources promised that: `unanswered` proves only that Gmail has no
+later Sent reply in that conversation, a task proves only that a ledger row
+exists, and draft `ready` proves only that no invalidation signal fired.
+
+The rendered command now builds one candidate ledger, reads the current full
+conversation for every reachable email candidate, and assigns exactly one of
+`act_now`, `waiting_external`, `informational`, `stale`, or `uncertain`. Only
+`act_now` enters the main agenda, and it requires positive current evidence: a
+direct unanswered request, an unfulfilled operator commitment, a decision only
+the operator can make, or a concrete consequence/deadline. Missing evidence is
+`uncertain`, never work by default. Review ends after the report; repair,
+retirement, task closure, drafting, and sending require a new named operator
+instruction.
+
+`cs review --json` now retains each task's id, reason, suggested action,
+timestamps, and sources. Bare `cs unanswered --json` and bare
+`cs thread --json` keep their previous shapes; the detailed forms are opt-in.
+The decision contract is one packaged Jinja partial shared by the stamped
+command and the live semantic replay, so the two cannot silently drift.
+
+### Why this is read-only rather than FULL
+
+The release changes no send path, campaign code, Gmail deduplication,
+`gmail_archive`, `send_mail`, authentication, `.claude/settings.json`, or cron
+wrapper. It adds only read-side JSON evidence and stamped adjudication prose;
+there is no new mutation tool in the review. That is below every mandatory
+FULL trigger in the charter, while the new live engine/thread reads make bare
+static insufficient.
+
+Static evidence: all 43 kernel gates pass; three neutral renders are clean; a
+disposable copy of `mario124-cs` updates only
+`.claude/commands/cs-review.md`, leaving `company/`, `manifest.toml`, and its
+clone-authored active context byte-identical. The no-tools Claude Opus replay
+classifies all seven incident cases correctly (7/7).
+
+Live read-only evidence used the candidate source directly through each
+clone's existing environment, without installing or stamping either clone.
+Both profiles passed `cs whoami`; both resolved `cs config` without duplicate
+declarations. On mario124, the detailed review, all unanswered buckets, and a
+full-thread read completed against the real engine/mailbox. On mrcall, the
+existing aggregate `cs review --json` path exceeded its explicit 300-second
+timeout after authentication; that known engine-latency defect is recorded,
+not reported as a pass. The changed task-row projection adds no RPC, and its
+shape is covered by gate 43. Nothing was written or sent during these reads.
+
+### Migration
+
+Run `cs update` from each clone and accept `v0.35.0`. It re-pins, installs,
+and stamps the new review command. No manifest field is added. Confirm
+`cs --version` reports `0.35.0`, then run the clone's read-only re-test before
+trusting the new agenda. The real mario124 mailbox remains the final operator
+acceptance surface; this release does not upgrade it automatically.
+
 ## v0.34.0 — 2026-08-28
 
 **MINOR, and it depends on an engine.** `cs init` no longer asks for the
