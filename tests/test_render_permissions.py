@@ -58,6 +58,7 @@ BASE = dict(
     name="Acme",
     accounts={"support": "UID123"}, accounts_default="support",
     operator_voice=project_init.DEFAULT_OPERATOR_VOICE,
+    local_scripts_cron_denied=[],
 )
 
 TEMPLATE_ROOT = Path(project_init.__file__).parent / "templates" / "project"

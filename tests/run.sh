@@ -383,7 +383,7 @@ step "16. cs update — EOF-safe conflict prompt (no tty crash); --check / --pin
 # prompt at all.
 if "$VENV/bin/python" "$ROOT/tests/test_project_update.py"; then echo "OK"; else echo "FAIL: cs update crashes on closed stdin at a template conflict, or --check/--pin regressed"; FAIL=1; fi
 
-step "17. deny-enumeration gate (six command-text spellings, same deny)"
+step "17. deny-enumeration gate (every command-text spelling of a denied surface)"
 # Claude Code permission rules match command TEXT, not behaviour: the console
 # script `cs` and the `python3` aliases invoke the exact same cs.cli:main as
 # `.venv/bin/python -m cs`, so a deny-listed verb spelled only one way leaves
@@ -407,10 +407,24 @@ step "17. deny-enumeration gate (six command-text spellings, same deny)"
 # it and the operator retires it by name. `rpc drafts.discard` is spelled out
 # for the same reason as `rpc chat`: settings.json allows the broad `cs rpc:*`,
 # and the engine's discard DELETES the row — there is no Trash to recover from.
+#
+# The wrapper's deny list is no longer a fixed text, so this gate reads the
+# RENDER and not the template source: a clone may name executables of its own
+# in `[local_scripts] cron_denied`, and the wrapper expands each into every
+# interpreter and both path forms. Two renders are checked, and the EMPTY one
+# is not an afterthought — declaring nothing is what almost every clone does,
+# and it must produce exactly the kernel's own list, byte for byte. The second
+# render passes one invented path and asserts all fourteen entries appear, in
+# order, in the right place. The sample is invented on purpose: a gate that
+# named a real clone's script would be that clone's data living in shared
+# code, and would pass while the mechanism underneath it was broken.
 CRON_TPL="$ROOT/cs/templates/project/bin/cs_operator_cron.sh.j2"
 SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
-if ! python3 - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
+if ! "$VENV/bin/python" - "$SETTINGS_TPL" "$CRON_TPL" <<'PYEOF'
 import json, re, sys
+from pathlib import Path
+
+from cs import project_init
 
 SETTINGS_PATH, CRON_PATH = sys.argv[1], sys.argv[2]
 
@@ -426,6 +440,31 @@ VERBS = [
     "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
 ]
+
+# The expansion a clone-local executable gets, rebuilt here INDEPENDENTLY of
+# the template rather than shared with it through a helper: a gate that
+# imported the same expansion it is checking would agree with the template
+# about a wrong answer. Interpreter-less first, because a script with a
+# shebang and the executable bit needs no interpreter word at all — the
+# spelling that is easiest to forget and cheapest to walk through.
+INTERPRETERS = ["", ".venv/bin/python", ".venv/bin/python3",
+                "python", "python3", "bash", "sh"]
+
+# Invented, and it must stay invented. No real clone's filename belongs in
+# kernel code, not even as a test fixture: the mechanism is what is gated.
+SAMPLE_SCRIPT = "bin/example_tool.py"
+
+KEEPS = ["Write", "Edit", "Bash(rm:*)", "Bash(git push:*)"]
+
+
+def local_tokens(script):
+    out = []
+    for form in (script, "./" + script):
+        for interp in INTERPRETERS:
+            cmd = "%s %s" % (interp, form) if interp else form
+            out.append("Bash(%s:*)" % cmd)
+    return out
+
 
 problems = []
 
@@ -450,48 +489,107 @@ for entry in allow:
             "FAIL: settings.json permissions.allow carries a send-capable entry: %s" % entry
         )
 
-try:
-    with open(CRON_PATH) as f:
-        lines = f.readlines()
-except OSError as exc:
-    problems.append("FAIL: cron template unreadable: %s" % exc)
-    lines = []
+cron_tpl_path = Path(CRON_PATH)
+tpl_root = cron_tpl_path.parent.parent  # cs/templates/project/
+env = project_init.build_jinja_env(tpl_root)
+tpl = env.get_template("bin/cs_operator_cron.sh.j2")
 
-start = next((i for i, l in enumerate(lines) if "--disallowed-tools" in l), None)
-if start is None or lines[start].strip().startswith("#"):
-    problems.append("FAIL: cron template --disallowed-tools flag line missing or commented out")
-else:
+# The full variable set the whole tree renders against, so the wrapper is
+# rendered exactly the way `cs init`/`cs update` render it.
+BASE = dict(
+    company_name="Acme Corp", company_display_name="Acme",
+    company_from_name="Acme Support", company_slug="acme",
+    company_prog_name="acme-cs", email_address="support@acme.example",
+    operator_voice=project_init.DEFAULT_OPERATOR_VOICE,
+)
+
+
+def render_tokens(local_scripts):
+    """The --disallowed-tools argument list of an actual render."""
+    text = tpl.render(local_scripts_cron_denied=local_scripts, **BASE)
+    lines = text.splitlines(keepends=True)
+    start = next((i for i, l in enumerate(lines) if "--disallowed-tools" in l), None)
+    if start is None or lines[start].strip().startswith("#"):
+        return None, "--disallowed-tools flag line missing or commented out"
     end = next((i for i in range(start + 1, len(lines)) if '>>"$LOG"' in lines[i]), None)
     if end is None:
-        problems.append('FAIL: cron template closing >>"$LOG" line not found after --disallowed-tools')
+        return None, 'closing >>"$LOG" line not found after --disallowed-tools'
+    tokens = []
+    for line in lines[start:end]:
+        if line.strip().startswith("#"):
+            continue
+        tokens.extend(re.findall(r'"([^"]*)"', line))
+    return tokens, None
+
+
+def compare(label, tokens, expected):
+    if tokens == expected:
+        return
+    problems.append(
+        "FAIL: cron --disallowed-tools token list mismatch (%s: got %d, expected %d)"
+        % (label, len(tokens), len(expected))
+    )
+    missing = [t for t in expected if t not in tokens]
+    extra = [t for t in tokens if t not in expected]
+    if missing:
+        problems.append("FAIL:   missing: %s" % ", ".join(missing))
+    if extra:
+        problems.append("FAIL:   extra:   %s" % ", ".join(extra))
+    if not missing and not extra:
+        problems.append("FAIL:   same members present, but order differs")
+
+
+kernel_expected = ["Bash(%s %s:*)" % (sp, v) for v in VERBS for sp in SPELLINGS]
+
+try:
+    # (a) The normal case. A clone that names no executables of its own — which
+    # is nearly all of them — gets precisely the kernel's own list. This is a
+    # first-class path, not a degraded one: if declaring nothing ever started
+    # emitting a stray token, every clone would inherit it.
+    empty_tokens, err = render_tokens([])
+    if err:
+        problems.append("FAIL: empty-manifest render — %s" % err)
     else:
-        tokens = []
-        for line in lines[start:end]:
-            if line.strip().startswith("#"):
-                continue
-            tokens.extend(re.findall(r'"([^"]*)"', line))
-        expected = ["Bash(%s %s:*)" % (sp, v) for v in VERBS for sp in SPELLINGS]
-        expected += ["Write", "Edit", "Bash(rm:*)", "Bash(git push:*)"]
-        if tokens != expected:
-            problems.append(
-                "FAIL: cron --disallowed-tools token list mismatch (got %d, expected %d)"
-                % (len(tokens), len(expected))
-            )
-            missing = [t for t in expected if t not in tokens]
-            extra = [t for t in tokens if t not in expected]
-            if missing:
-                problems.append("FAIL:   missing: %s" % ", ".join(missing))
-            if extra:
-                problems.append("FAIL:   extra:   %s" % ", ".join(extra))
-            if tokens != expected and not missing and not extra:
-                problems.append("FAIL:   same members present, but order differs")
+        compare("no local scripts declared", empty_tokens, kernel_expected + KEEPS)
+
+    # (b) One declared executable expands into all fourteen spellings, between
+    # the cs verbs and the keeps. The interpreter-less pair is the point of the
+    # whole gate: `bin/example_tool.py` with a shebang and mode 0755 runs with
+    # no interpreter word in front of it and matches no `python …` rule.
+    one_tokens, err = render_tokens([SAMPLE_SCRIPT])
+    if err:
+        problems.append("FAIL: one-script render — %s" % err)
+    else:
+        compare(
+            "one local script declared",
+            one_tokens,
+            kernel_expected + local_tokens(SAMPLE_SCRIPT) + KEEPS,
+        )
+
+    # (c) The declaration reaches the render THROUGH manifest.toml's own key,
+    # not only through a variable a test happens to pass. `[local_scripts]
+    # cron_denied` is where an operator writes it, and a mechanism that only
+    # worked when the test set the variable by hand would ship broken.
+    from_manifest = project_init.normalize_local_scripts(["./" + SAMPLE_SCRIPT, "", SAMPLE_SCRIPT])
+    if from_manifest != [SAMPLE_SCRIPT]:
+        problems.append(
+            "FAIL: [local_scripts] cron_denied normalisation — expected %r, got %r"
+            % ([SAMPLE_SCRIPT], from_manifest)
+        )
+except Exception as exc:  # a render error must fail the gate, never crash it
+    problems.append("FAIL: cron template render raised %s: %s" % (type(exc).__name__, exc))
 
 if problems:
     for p in problems:
         print(p)
     sys.exit(1)
 
-print("OK: settings.json deny membership + allow purity; cron --disallowed-tools 52-entry order verified")
+print(
+    "OK: settings.json deny membership + allow purity; cron --disallowed-tools "
+    "order verified on both renders (%d entries with no local scripts, %d with one)"
+    % (len(kernel_expected) + len(KEEPS),
+       len(kernel_expected) + len(local_tokens(SAMPLE_SCRIPT)) + len(KEEPS))
+)
 sys.exit(0)
 PYEOF
 then

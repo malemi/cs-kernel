@@ -99,6 +99,31 @@ scope = ""
 # not needed.
 operator_voice = "{{ operator_voice }}"
 
+[local_scripts]
+# Executable scripts this clone keeps in its OWN repo — work that is real for
+# this one company and would mean nothing in another clone, so it lives here
+# and never in the kernel.
+#
+# cron_denied: the ones the headless tick must never be able to run. The tick
+# reads untrusted inbound mail, so anything it can execute is reachable by
+# whoever wrote that mail; a script that mutates a customer-facing system, or
+# that holds credentials wider than the tick's own job, belongs in this list.
+# `bin/cs_operator_cron.sh` renders its deny entries from it — every
+# interpreter and both path forms — so adding a path here and running
+# `cs update` is the whole procedure.
+#
+# Empty is the normal answer and the kernel's own: most clones have no local
+# scripts. Paths are relative to the repo root, written WITHOUT a leading
+# `./` (both forms are denied either way). A comma-separated string is
+# accepted too. Template-only, like [surface], [cron] and [repo]: the kernel
+# reads it when it stamps, not at runtime — so an edit here needs
+# `cs update`, never a re-run of `cs init`.
+#
+# Read the honest limits before you rely on it: a deny list matches command
+# TEXT, and `bin/cs_operator_cron.sh` says in its own comments which
+# invocations it therefore cannot reach.
+cron_denied = [{% for path in local_scripts_cron_denied %}{{ path | toml_quote }}{{ ", " if not loop.last else "" }}{% endfor %}]
+
 [cron]
 # Declared intent only ([cron] is template-only, ignored by the kernel at
 # runtime) — `cs cron install` owns the real crontab entry.
