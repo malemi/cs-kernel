@@ -144,10 +144,12 @@ those, not a tree duplicated here. `cs/crm/` and `cs/ingest/` are the two
 adapter registries (rule 5), and each registry module IS the list of valid
 adapter names.
 
-**Two template roots**, and the distinction is load-bearing: `templates/project/`
+**Three template roots**, and the distinction is load-bearing: `templates/project/`
 is stamped once per CLONE by `cs init` / `cs update`, `templates/project_memory/`
-once per PROJECT by `cs project new`. Each needs its own `package-data` glob;
-the reason sits at that glob in `pyproject.toml`.
+once per PROJECT by `cs project new`, and `templates/partials/` holds shared
+fragments — `{% include %}`d at render time, never stamped as files of their
+own. Each needs its own `package-data` glob; the reason sits at that glob in
+`pyproject.toml`.
 
 **`.claude/` is the ONE rendered agent surface** — OpenCode, `AGENTS.md` and
 Codex are pointed into it by `install_agent_surfaces`, whose docstring owns
@@ -189,9 +191,9 @@ explicit ok.
 
 ## Tests
 
-`bash tests/run.sh` — its own header lists every gate and what each proves,
-including the env-driven golden-pack gate that keeps clone copy out of this
-repo. Semantic tests only, no mock theatre.
+`bash tests/run.sh` — each `step` line in the script names the gate it runs
+and what it proves, including the env-driven golden-pack gate that keeps clone
+copy out of this repo. Semantic tests only, no mock theatre.
 
 ## Work traces
 

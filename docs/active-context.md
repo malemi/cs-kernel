@@ -23,25 +23,20 @@ what is *current*.
   the live answer for how far past a tag HEAD is, so no commit count is
   written down here (one would be stale the moment this file is committed).
   Twelve tags on 2026-08-25/27, `v0.20.0` → `v0.31.0`, each with a CHANGELOG
-  entry naming its re-collaudo tier; the tag-by-tag narrative this section
-  used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`,
-  `v0.30.0` and `v0.31.0` are tagged and pinned nowhere, and re-pinning is the
-  operator's own move.
+  entry naming its re-collaudo tier. **Both clones last verified on
+  `v0.28.0`** (2026-08-27); `mrcall-cs`'s `requirements.txt` pins `v0.30.0`
+  as of 2026-08-28 — a re-pin in progress whose install state this tree
+  cannot see. `v0.31.0` is pinned nowhere, and re-pinning is the operator's
+  own move.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
-  IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
-  `Message-ID` already being FETCHed (`v0.25.0`); the engine's
-  `emails.needs_reply` decides whether a settled thread's last message owes an
-  answer, so a closing courtesy prints in its own section instead of as work
-  (`v0.26.0`). The kernel re-derives neither judgement — charter invariant 4,
-  *the engine is authoritative for what it owns; when it is wrong, fix the
-  engine*, was written from this.
-- **The engine side of that is DEPLOYED and live**, which the docs claimed for a
-  day it was not. `/home/mrcalld/mrcall-desktop` is at `810d7a4`, all five
-  `zylch-server@` units restarted 2026-08-26 15:18–15:19 UTC, and
-  `cs rpc emails.needs_reply '{"thread_ids": []}'` answers
-  `{"threads": {}, "asked": 0, "note": null}` instead of `-32601 Method not
-  found`. That install is EDITABLE, so "deployed" is the checkout's HEAD **plus**
-  a restart — a pull alone leaves the old modules in memory.
+  IS.** The unit is the thread; the engine's `emails.needs_reply` decides
+  whether a settled thread's last message owes an answer. The kernel re-derives
+  neither judgement — charter invariant 4.
+- **The engine side of that is DEPLOYED and live**:
+  `/home/mrcalld/mrcall-desktop` is at `810d7a4`, `zylch-server@` units
+  restarted 2026-08-26, `cs rpc emails.needs_reply` answers instead of
+  `-32601`. That install is EDITABLE, so "deployed" is the checkout's HEAD
+  **plus** a restart — a pull alone leaves the old modules in memory.
 - **Two ledger verbs, opposite meanings, both human-only**: `cs handled`
   (resolved out of band) and `cs escalated` (`v0.20.0` — a named human took the
   contact over: still open, still owed an answer, not the operator's to answer).
@@ -76,6 +71,16 @@ what is *current*.
   without re-running `cs init`. The three agent-facing surfaces share one
   role-framing preamble from `cs/templates/partials/`, a third template root
   with its own package-data glob.
+- **`v0.31.0` is tagged locally and pushed nowhere**, and its retire path
+  assumes an engine the VPS does not run yet: `drafts.discard` and the
+  single-flight pipeline guard exist at mrcall-desktop `9c72683`, while the
+  deployed engine is at `810d7a4`. Until that engine ships, retiring a
+  mirrored draft removes only the Gmail copy. Rollout — push, engine deploy
+  first, re-pin both clones, FULL collaudo, plus `mrcall-cs`'s
+  `[surface] operator_voice = "Italian, founders' register"` manifest line —
+  is sequenced in the meta-repo plan
+  (`hb docs/execution-plans/2026-08-27-cs-review-fresh-state.md`) and waits on
+  the operator's go.
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin;
   the old private `hahnbanach/cs-kernel` is archived. What a clone gets and how
   it upgrades is `README.md`; the five `cs-` commands and the five operator
@@ -88,31 +93,21 @@ what is *current*.
 
   | Clone | Pinned / installed | Provider → classifier | Operator |
   |---|---|---|---|
-  | `mrcall-cs` | `v0.28.0` | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
+  | `mrcall-cs` | pins `v0.30.0` (2026-08-28, install unverified) | OpenRouter → `z-ai/glm-5.3` | **PAUSED** since 2026-08-24 13:21 (`~/.mrcall-cs/CS_PAUSE`). The engine defect that caused it is fixed and deployed; the pause is now the owner's standing decision, not a blocker. Three crons live when un-paused — hourly signup loop and 2-hourly operator, both **sending**, plus the dormant July batch-2 lines |
   | `124-cs` | `v0.28.0` | Anthropic direct → `claude-sonnet-5` | Running, not paused. Cron installed, 2-hourly, draft-only |
 
   `v0.28.0`'s static + live read-only collaudo was run on both — `cs whoami`
   signs in on each profile and `cs config` reports **no setting declared in
-  more than one place** on either. Each `requirements.lock` resolves the tag
-  to `76f6656` and was installed ALONE into a fresh `uv venv` rather than
-  assumed to. **Re-pinning a clone is the operator's own move unless he asks
-  for it** — stated twice on 2026-08-21, after a `cs update` overwrite cost
-  him a hand-authored `manifest.toml`. `124-cs`'s re-pin commit is separate
-  from a same-session commit that only catches its git history up to the
-  `v0.27.0` it was already running (CHANGELOG has the detail); an unrelated
-  business-dossier edit on `124-cs` predates this release and is untouched.
-- **The poisoned-ledger class is closed at `v0.29.0`, at both its levels.** A
-  stored checksum may still fail to describe its file — the manifest holds ONE
-  value per path and answers both "did the template change" and "did the clone
-  change" with it — but no run can now leave such an entry silently: the
-  "template unchanged" fast path reads the clone file, restores it when it is
-  missing, and lists it when it differs. And the hand edit that produced the
-  divergence is gone one level up: `cs update --pin` owns
-  `template-manifest.json`'s `init_data.repo_kernel_version`, so
-  `docs/ARCHITECTURE.md`'s "Kernel pin" row re-renders instead of being typed.
+  more than one place** on either; each `requirements.lock` resolves the tag
+  to `76f6656`. **Re-pinning a clone is the operator's own move unless he
+  asks for it.**
+- **The poisoned-ledger class is closed at `v0.29.0`, at both its levels** —
+  no `cs update` run can leave a stored checksum silently contradicting its
+  file, and the hand edit that produced the divergence is gone (`cs update
+  --pin` owns `template-manifest.json`'s `init_data.repo_kernel_version`).
   Both clones are still on `v0.28.0`, where neither half exists yet; the
-  `v0.29.0` entry carries the one-time migration step (re-run `cs update --pin`
-  on the NEW kernel, then bare `cs update`).
+  `v0.29.0` CHANGELOG entry carries the one-time migration step (re-run
+  `cs update --pin` on the NEW kernel, then bare `cs update`).
 - **`docs/active-context.md` is clone-authored** (`v0.30.0`), alongside
   `company/`: a seed the kernel writes only when the clone has none, then never
   writes, never prompts about and never checksums. Measured on a copy of a real
@@ -120,17 +115,11 @@ what is *current*.
   `bin/cs_operator_cron.sh`, whose clone-owned deny line has been lost at three
   re-pins — and nothing else.
 - The multi-provider LLM path is **partly live**. The `role=`/`CS_LLM_ROUTE`
-  routing seam is unwired (no call site passes `role=`; the default is the
-  engine), but the send guard's register judgment IS a direct provider call:
-  `cs/send_mail.py:162` → `send_guard.check` → `evaluate` → `judge_register`,
-  reached only on the **model-composed** send path (`body_md is not None`),
-  never on a fixed-template one. It is gated by `llm_available()`, NOT by
-  `CS_LLM_ROUTE`,
-  and degrades loudly without a credential. **Measured per clone 2026-08-21:
-  BOTH → `True`**, so both register judgments spend — do not infer this from the
-  packaging, which is how this file carried the wrong answer for a day.
-  `ROLE_FAMILIES` (`v0.9.6`) resolves CLASSIFIER to `@glm` on OpenRouter;
-  Anthropic direct keeps `@claude-sonnet`, not served there.
+  routing seam is unwired; the send guard's register judgment IS a direct
+  provider call, reached only on the model-composed send path, gated by
+  `llm_available()` — NOT by `CS_LLM_ROUTE` — and it degrades loudly without a
+  credential. **Measured per clone 2026-08-21: BOTH → `True`**, so both
+  register judgments spend; never infer this from the packaging.
 
 ## Unresolved
 
@@ -169,8 +158,8 @@ what is *current*.
 1. Finish charter rule 6's vocabulary clean-up: `cs update --check` and the
    upgrade prompt still print `re-collaudo: <tier>` and "Every kernel upgrade
    owes a re-collaudo (CLAUDE.md, Versioning & release)"
-   (`cs/project_update.py:259, 263, 353` — verify the numbers before acting,
-   they move with every edit). The operator has already objected to exactly this
+   (`cs/project_update.py:291, :295`, more at `:385, :428` — verify the
+   numbers before acting, they move with every edit). The operator has already objected to exactly this
    vocabulary once. Replace with what a tier MEANS for them ("re-test before
    trusting it unattended") or drop it from their surface.
 2. Promote the batch-2 loop's reusable parts: the flock'd schedule store

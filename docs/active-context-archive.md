@@ -5,6 +5,48 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-08-28 — narrative pruned from `State now` at the v0.31.0 consolidation
+
+Relocated verbatim from `active-context.md`; the binding constraints stayed
+there, the mechanism detail and the tale of how each fact was learned moved
+here.
+
+From the `cs unanswered` bullet: "The unit is the thread, joined on
+`References`/`In-Reply-To`/`Message-ID` already being FETCHed (`v0.25.0`); the
+engine's `emails.needs_reply` decides whether a settled thread's last message
+owes an answer, so a closing courtesy prints in its own section instead of as
+work (`v0.26.0`). [...] charter invariant 4, *the engine is authoritative for
+what it owns; when it is wrong, fix the engine*, was written from this."
+
+From the deployed-engine bullet: "which the docs claimed for a day it was not.
+[...] all five `zylch-server@` units restarted 2026-08-26 15:18–15:19 UTC, and
+`cs rpc emails.needs_reply '{"thread_ids": []}'` answers
+`{"threads": {}, "asked": 0, "note": null}` instead of `-32601 Method not
+found`."
+
+From the clone matrix: "Each `requirements.lock` [...] was installed ALONE
+into a fresh `uv venv` rather than assumed to. **Re-pinning a clone is the
+operator's own move unless he asks for it** — stated twice on 2026-08-21,
+after a `cs update` overwrite cost him a hand-authored `manifest.toml`.
+`124-cs`'s re-pin commit is separate from a same-session commit that only
+catches its git history up to the `v0.27.0` it was already running (CHANGELOG
+has the detail); an unrelated business-dossier edit on `124-cs` predates this
+release and is untouched."
+
+From the poisoned-ledger bullet: "A stored checksum may still fail to describe
+its file — the manifest holds ONE value per path and answers both 'did the
+template change' and 'did the clone change' with it — but no run can now leave
+such an entry silently: the 'template unchanged' fast path reads the clone
+file, restores it when it is missing, and lists it when it differs. [...] so
+`docs/ARCHITECTURE.md`'s 'Kernel pin' row re-renders instead of being typed."
+
+From the multi-provider bullet: "`cs/send_mail.py:162` → `send_guard.check` →
+`evaluate` → `judge_register`, reached only on the **model-composed** send
+path (`body_md is not None`), never on a fixed-template one. [...] — do not
+infer this from the packaging, which is how this file carried the wrong answer
+for a day. `ROLE_FAMILIES` (`v0.9.6`) resolves CLASSIFIER to `@glm` on
+OpenRouter; Anthropic direct keeps `@claude-sonnet`, not served there."
+
 ## 2026-08-26 — two `Unresolved` items closed, verified against the code
 
 Relocated verbatim from `active-context.md`. Both were still listed as open

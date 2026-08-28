@@ -7,8 +7,8 @@ would prevent. Delete an entry as the enforcement lands.
   2026-07-27, narrowed 2026-07-30 — gate 1 was red at every tag `v0.3.1` …
   `v0.3.7` and they all shipped anyway. The gate itself is FIXED as of
   `v0.4.0` (literal purged, pattern widened to the operator's name/mailbox,
-  plus gate 12 rendering every template and sweeping the output), so the
-  suite is 12/12 green — but the missing enforcement is unchanged: no release
+  plus gate 12 rendering every template and sweeping the output), and the
+  suite is green — but the missing enforcement is unchanged: no release
   step refuses to tag while `bash tests/run.sh` exits 1. A pre-tag hook or a
   `make release` that runs the suite first would close it.
 
