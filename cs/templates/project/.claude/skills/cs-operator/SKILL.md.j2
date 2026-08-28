@@ -1,6 +1,6 @@
 ---
 name: cs-operator
-description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then runs /cs-triage-mail and /cs-campaign-tick in order, reconciles the drafts already waiting, and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
+description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then invokes the cs-triage-mail and cs-campaign-tick skills in order, reconciles the drafts already waiting, and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
 ---
 
 # {{ company_prog_name }} — General Operator Bootstrap
@@ -93,11 +93,7 @@ this step exists to prevent.
 
 ## 3. Recurring job — triage inbound {{ email_address }} mail
 
-Run the inbound-mail triage sub-skill:
-
-```
-/cs-triage-mail
-```
+Invoke the `cs-triage-mail` sub-skill using the host's native skill mechanism.
 
 It finds inbound {{ email_address }} mail needing a human answer, reads full bodies
 (not snippets) via the engine, and — under `CS_TRIAGE_MODE` — composes
@@ -111,11 +107,8 @@ on.
 
 ## 4. Recurring job — advance active campaigns
 
-Run the campaign sub-skill:
-
-```
-/cs-campaign-tick
-```
+Invoke the `cs-campaign-tick` sub-skill using the host's native skill
+mechanism.
 
 {% if excluded_campaign %}
 It advances every **active** campaign **except** the
@@ -246,4 +239,3 @@ Rules for the report:
 
 After the report, **STOP**. Do not loop, do not re-run the sub-skills, do
 not start anything new. The next tick is the cron's job.
-

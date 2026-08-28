@@ -1,5 +1,6 @@
 ---
-description: Design a new outreach/follow-up campaign for {{ company_prog_name }} in THIS session and leave it ready to run — a campaign pack under campaigns/<name>/ (copy, timing, playbook) wired to the kernel runner, advanced automatically by the operator tick. Draft-first; nothing is sent by this command.
+name: cs-campaign
+description: Design a new outreach/follow-up campaign for {{ company_prog_name }} in THIS session and leave it ready to run — a named campaign pack with copy, timing, and playbook wired to the kernel runner and advanced automatically by the operator tick. Draft-first; nothing is sent by this skill.
 ---
 
 # {{ company_prog_name }} — Build a campaign
@@ -8,7 +9,7 @@ A campaign here is a **pack**: the campaign's reusable intelligence as
 data in this repo, run by kernel code (`cs campaign …`). You design it
 once in a session; the operator tick advances it on schedule; months
 later `cs campaign packs` answers "have we ever done something like
-this?", and re-running is copy-and-edit. This command builds the pack
+this?", and re-running is copy-and-edit. This skill builds the pack
 WITH the user — it writes files and engine campaign state, but sends
 nothing and commits nothing.
 
@@ -64,8 +65,9 @@ dict, not an array). Then prove the loop **without sending**:
 
 ## 4. Schedule — usually nothing to do
 
-The operator tick **already advances every campaign** (`/cs-operator` →
-`/cs-campaign-tick`): if the cron is installed (`/cs-cron`), this
+The operator tick **already advances every campaign** (invoke the
+`cs-operator` skill, which invokes `cs-campaign-tick`): if the cron is
+installed (use the `cs-cron` skill), this
 campaign runs with it, draft-first, inside dedup + `CS_PAUSE`.
 A dedicated cron for one campaign is the exception (odd cadence, its own
 kill-switch) — propose it only if the windows genuinely don't fit, and

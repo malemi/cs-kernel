@@ -4,7 +4,7 @@
 Two independent properties of the stamped surfaces, gated together because both
 are about the RENDER rather than the source.
 
-**The preamble is one text, included three times.** `.claude/commands/cs-review`
+**The preamble is one text, included three times.** `.claude/skills/cs-review`
 and the `cs-triage-mail` / `cs-operator` skills all open by framing the agent as
 an assistant taking over a desk somebody else worked at. Three copies of that
 text would be three texts within two releases, so it lives in a partials root
@@ -72,7 +72,7 @@ INCLUDE = '{% include "desk-preamble.md.j2" %}'
 SAMPLE_SCRIPT = "bin/example_tool.py"
 
 SURFACES = (
-    ".claude/commands/cs-review.md",
+    ".claude/skills/cs-review/SKILL.md",
     ".claude/skills/cs-triage-mail/SKILL.md",
     ".claude/skills/cs-operator/SKILL.md",
 )

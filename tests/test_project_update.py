@@ -1384,17 +1384,51 @@ def _e2e_bare_update_offers_upgrade_eof_keeps_pin() -> None:
 
 def _e2e_bare_update_offline_offer_skipped() -> None:
     """An unreachable origin must not block the template refresh: the offer
-    prints one skip line and bare `cs update` proceeds to exit 0."""
+    prints one skip line and bare `cs update` proceeds to exit 0. This fixture
+    also proves the one-time destructive command migration and its idempotence.
+    """
     with tempfile.TemporaryDirectory() as td:
         home = Path(td, "home"); home.mkdir()
         clone = Path(td, "clone"); clone.mkdir()
         _write_requirements(clone, Path(td, "no-such-origin"), "v0.1.0")
         _minimal_manifest(clone)
 
+        commands = clone / ".claude" / "commands"
+        opencode = clone / ".opencode" / "commands"
+        prompts = home / ".codex" / "prompts"
+        for directory in (commands, opencode, prompts):
+            directory.mkdir(parents=True)
+            for name in project_update.RETIRED_COMMAND_NAMES:
+                (directory / name).write_text("obsolete\n")
+            (directory / "mine.md").write_text("keep\n")
+        manifest_path = clone / "template-manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        manifest["file_checksums"].update({
+            f".claude/commands/{name}": BOGUS_CHECKSUM
+            for name in project_update.RETIRED_COMMAND_NAMES
+        })
+        manifest_path.write_text(json.dumps(manifest))
+
         proc = _run_update([], clone, _clean_env(home))
         out = proc.stdout + proc.stderr
         assert proc.returncode == 0, f"expected exit 0:\n{out}"
         assert "release check skipped" in out, out
+        assert "5 retired" in out, out
+        assert all(not (commands / name).exists()
+                   for name in project_update.RETIRED_COMMAND_NAMES), out
+        assert all(not (opencode / name).exists()
+                   for name in project_update.RETIRED_COMMAND_NAMES), out
+        assert all(not (prompts / name).exists()
+                   for name in project_update.RETIRED_COMMAND_NAMES), out
+        assert all((directory / "mine.md").read_text() == "keep\n"
+                   for directory in (commands, opencode, prompts))
+        ledger = json.loads(manifest_path.read_text())["file_checksums"]
+        assert not any(path.startswith(".claude/commands/") for path in ledger), ledger
+
+        again = _run_update([], clone, _clean_env(home))
+        again_out = again.stdout + again.stderr
+        assert again.returncode == 0, again_out
+        assert "0 retired" in again_out, again_out
 
 
 def _offer_yes_path_repins_installs_reexecs() -> None:

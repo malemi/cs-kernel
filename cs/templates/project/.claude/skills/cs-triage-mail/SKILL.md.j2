@@ -18,10 +18,10 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 {% include "desk-preamble.md.j2" %}
 {% if excluded_campaign %}
 This skill is **general** — it is NOT about the {{ excluded_campaign }} campaign or any
-campaign; campaign follow-up is `/cs-campaign-tick`'s job, not this one.
+campaign; campaign follow-up is the `cs-campaign-tick` skill's job, not this one.
 {% else %}
 This skill is **general** — it is NOT about any campaign; campaign
-follow-up is `/cs-campaign-tick`'s job, not this one.
+follow-up is the `cs-campaign-tick` skill's job, not this one.
 {% endif %}
 
 ## Invariants (read before acting)
@@ -344,4 +344,3 @@ Note: <one line per note; omit if none>
 
 Omit a section if it is empty. The report is the only place this skill
 speaks; everything above it is silent.
-

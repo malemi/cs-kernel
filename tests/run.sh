@@ -717,16 +717,14 @@ step "26. manifest.toml is clone-owned — never a cs update render target, neve
 # isolation.
 if "$VENV/bin/python" "$ROOT/tests/test_toml_quote.py"; then echo "OK"; else echo "FAIL: toml_quote regressed"; FAIL=1; fi
 
-step "27. every agent reads the same commands (.claude → .opencode, AGENTS.md, Codex)"
+step "27. every agent reads the same project skills"
 # Found live 2026-08-21: a clone's .opencode/commands/ was a tracked COPY
 # frozen in July, still offering /munchausen and the other pre-cs- names
 # weeks after .claude/commands/ was renamed — the kernel rendered only
 # .claude/, so nothing kept them in step. Now cs init AND cs update point
-# every other surface into .claude/ by symlink (a copy is a second source,
-# and it drifts). Guards: same names/bytes in .opencode/, a renamed command
-# does not survive there, AGENTS.md resolves to CLAUDE.md, Codex's
-# home-global prompt dir is never silently hijacked from another clone (EOF
-# → No, v0.5.2 contract), and a symlink-less filesystem still gets copies.
+# Codex and OpenCode at the canonical .claude/skills tree. Guards: identical
+# bytes, AGENTS.md resolves to CLAUDE.md, exact legacy command/prompt cleanup
+# preserves unrelated files, and a symlink-less filesystem gets copies.
 if "$VENV/bin/python" "$ROOT/tests/test_agent_surfaces.py"; then echo "OK"; else echo "FAIL: agent surfaces drifted"; FAIL=1; fi
 
 step "28. RATE_CAP fully removed (send_draft no longer blocks on it)"
@@ -826,7 +824,7 @@ step "35. the ignore list matches patterns, and only what a pattern should reach
 # human writes from; and Sent-anchoring is untouched.
 if "$VENV/bin/python" "$ROOT/tests/test_system_sender_patterns.py"; then echo "OK"; else echo "FAIL: ignore-list pattern matching regressed"; FAIL=1; fi
 
-step "36. /cs-review — the ONE command, and the kill-switch is state, not news"
+step "36. cs-review — the ONE skill, and the kill-switch is state, not news"
 # Measured against a real morning: the bootstrap answered three of the eight
 # questions a returning operator has, and surfaced the kill-switch only BY
 # ACCIDENT (the cron log tail happened to be all `paused … skip`), framed it as

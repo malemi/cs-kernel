@@ -1,12 +1,13 @@
 ---
-description: Orientation for {{ company_prog_name }} — what this project is, which /cs-* commands and skills exist, what to type for the common moves, and where the deeper docs live. Pure presentation, zero tool calls, zero side effects.
+name: cs-help
+description: Orientation for {{ company_prog_name }} — what this project is, which cs-* skills exist, how to invoke common workflows in Claude Code or Codex, and where the deeper docs live. Pure presentation, zero tool calls, zero side effects.
 ---
 
 # {{ company_prog_name }} — Help
 
 Present the map below — write in {{ operator_voice }}: tight, no emoji.
 Do NOT run any command to produce it; this is orientation, not a status
-check (state is `/cs-review`'s job). Adapt phrasing freely, keep the
+check (state is the `cs-review` skill's job). Adapt phrasing freely, keep the
 content exact.
 
 ## What this is
@@ -17,15 +18,18 @@ tasks, trained voice). It triages, drafts and advances campaigns;
 nothing is sent without the operator's say-so (draft-first; the
 autonomy dial is a deliberate later step).
 
-## The commands (you type these)
+## The skills (you invoke these)
 
-| Command | When |
-|---|---|
-| `/cs-review` | **the one you type when you sit down.** Settings in force, whether the unattended run is running, every draft with a verdict and its handles, open tasks and escalations, the 45-day support queue with customers separated out{% if producer_adapter != 'none' %}, the day's outreach candidates{% endif %}, what changed in the repo and what is waiting on you |
-| `/cs-account <name>` | deep-dive on one account (read-only) |
-| `/cs-cron` | the scheduled unattended run: status, install/remove (confirmed), pause/resume |
-| `/cs-campaign` | design a new campaign: pack + wiring, draft-first |
-| `/cs-help` | this map |
+Claude Code uses `/cs-*`; Codex uses `$cs-*`. The workflow is the same
+project-scoped skill in both hosts.
+
+| Skill | Claude Code | Codex | When |
+|---|---|---|---|
+| `cs-review` | `/cs-review` | `$cs-review` | **the one you invoke when you sit down.** Settings in force, whether the unattended run is running, every draft with a verdict and its handles, open tasks and escalations, the 45-day support queue with customers separated out{% if producer_adapter != 'none' %}, the day's outreach candidates{% endif %}, what changed in the repo and what is waiting on you |
+| `cs-account` | `/cs-account <name>` | `$cs-account <name>` | deep-dive on one account (read-only) |
+| `cs-cron` | `/cs-cron` | `$cs-cron` | the scheduled unattended run: status, install/remove (confirmed), pause/resume |
+| `cs-campaign` | `/cs-campaign` | `$cs-campaign` | design a new campaign: pack + wiring, draft-first |
+| `cs-help` | `/cs-help` | `$cs-help` | this map |
 
 ## Or just ask
 
@@ -61,4 +65,4 @@ matches.
   one (ask it rather than reading `manifest.toml` and the `.env` files)
 
 End by asking what they want to do — and if this looks like the start of
-a work session, suggest `/cs-review`.
+a work session, suggest `/cs-review` in Claude Code or `$cs-review` in Codex.

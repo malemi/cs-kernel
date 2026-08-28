@@ -34,7 +34,7 @@ from the kernel and parameterised by this repo's `manifest.toml`.
 > (`cs-kernel` `CLAUDE.md`) owns the machinery; this repo owns only the variance.
 >
 > **This file is an index: it routes, it does not teach.** Verbs are `cs --help`,
-> values in force are `cs config`, procedures are in each skill/command file.
+> values in force are `cs config`, procedures are in each skill file.
 
 ## Editing this clone — template-owned vs clone-owned
 
@@ -42,7 +42,7 @@ This repo is a **stamped clone of `cs-kernel`**. **Template-owned — edit them 
 the kernel template (`cs-kernel/cs/templates/project/…`), never here**, or the
 change drifts and `cs update` overwrites it: `CLAUDE.md` · `README.md` ·
 `docs/ARCHITECTURE.md` · `docs/projects/README.md` · `.claude/settings.json` ·
-`.claude/skills/*` · `.claude/commands/*` · `bin/cs_operator_cron.sh` ·
+`.claude/skills/*` · `bin/cs_operator_cron.sh` ·
 `.env.example` · `.gitignore` · `requirements.txt`.
 
 **Clone-owned — edit freely here:** `manifest.toml` (the declared per-company
@@ -114,24 +114,22 @@ kernel pin, so this file does not keep one. Two things `--help` will not say:
 
 `cs handled <email>` (the operator resolved it off-email — a phone call leaves
 nothing in Gmail Sent) and `cs escalated <email>` (nothing is resolved; a named
-human has taken the thread over). Both are procedures, and
-[`.claude/commands/cs-review.md`](.claude/commands/cs-review.md) § Posture owns
-them end to end — the wording that triggers them, resolving "this" to ONE
-address, `--commit`, `--undo`. Why they exist:
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) § How it works. When they may be
-recorded at all is a NEVER — § 5 below.
+human has taken the thread over). Both are explicit human procedures;
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) § The two records the mailbox
+cannot hold owns their trigger wording, one-address resolution, `--commit`,
+and `--undo`. The `cs-review` skill reports these records but never creates
+them. When they may be recorded at all is a NEVER — § 5 below.
 
-## 4. Skills + commands — each file carries its own procedure
+## 4. Skills — each file carries its own procedure
 
-Autonomous (`.claude/skills/`, cron `claude -p "/cs-operator"`): `/cs-operator`
-(bootstrap: CS_PAUSE → session → `/cs-triage-mail` →
-`/cs-campaign-tick`{% if founder_sweep_enabled %} → read-only `{{ founder_sweep_account }}` sweep{% endif %} → report → STOP),
-`/cs-triage-mail` (inbound → grounded DRAFT), `/cs-campaign-tick` (advance
-campaigns{% if excluded_campaign %}, EXCEPT `{{ excluded_campaign }}`{% endif %}). Interactive skills: `/cs-customer <name>`
-(mandatory before customer work), `/cs-find-document`. Commands
-(`.claude/commands/`, zero side effects): `/cs-review` (the one review
-bootstrap), `/cs-account <name>`, `/cs-help` (the map) — plus `/cs-cron` and
-`/cs-campaign`, which build things on explicit confirmation and send nothing.
+All ten workflows live under `.claude/skills/`; Codex resolves the same bytes
+through `.agents/skills`. Claude Code invokes them as `/cs-*`, Codex as `$cs-*`.
+The cron remains `claude -p "/cs-operator"`: its bootstrap runs `cs-triage-mail`
+then `cs-campaign-tick`{% if founder_sweep_enabled %}, then the read-only `{{ founder_sweep_account }}` sweep{% endif %}, reports, and stops.
+Interactive skills are `cs-customer <name>` (mandatory before customer work),
+`cs-find-document`, `cs-review` (the one review bootstrap), `cs-account <name>`,
+`cs-help`, `cs-cron`, and `cs-campaign`. Each file owns its own write and send
+boundary.
 
 ## 5. Safety (NEVER)
 

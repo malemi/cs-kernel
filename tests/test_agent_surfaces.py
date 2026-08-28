@@ -1,33 +1,15 @@
-"""Gate: every agent reads the SAME commands — `install_agent_surfaces`.
+"""Gate: every agent resolves the same project-scoped skills.
 
-Found live 2026-08-21: a clone's `.opencode/commands/` was a git-tracked
-COPY of the commands, frozen in July, still advertising `/munchausen` and
-the other pre-`cs-` names weeks after `.claude/commands/` had been
-renamed. The kernel only ever rendered `.claude/`, so nothing kept the two
-in step — a second copy is a second source, and it drifts.
-
-`.claude/` stays the one rendered set; every other surface points into it:
-`.opencode/commands/*.md`, `.opencode/skills`, `AGENTS.md` (which BOTH
-OpenCode and Codex read as project instructions), and — home-global, so
-shared by every clone on the machine — `~/.codex/prompts/*.md`.
-
-Guards:
-1. after a stamp, OpenCode sees exactly the same command NAMES as Claude
-   Code, resolving to the same bytes, as symlinks (no second copy);
-2. renaming a command in `.claude/` and re-stamping removes the old name
-   from `.opencode/` — the exact drift that happened;
-3. `AGENTS.md` resolves to `CLAUDE.md`;
-4. Codex prompts already owned by ANOTHER clone are never silently
-   hijacked: with `ask=True` and a closed stdin the answer resolves to No
-   and the other clone keeps them (the v0.5.2 EOF contract);
-5. a filesystem that refuses symlinks still gets working copies.
+The canonical render lives under `.claude/skills`. Codex and OpenCode receive
+repository links to that tree; command-era project mirrors and home-global
+Codex prompts are retired by an exact, closed name set. Unrelated user files
+must survive, and filesystems without symlink support receive equivalent
+copies.
 """
 from __future__ import annotations
 
-import builtins
 import contextlib
 import io
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -47,29 +29,32 @@ def check(label: str, cond: bool) -> None:
         FAILED += 1
 
 
-def _clone(root: Path, name: str, commands=("cs-review.md", "cs-help.md")) -> Path:
-    d = root / name
-    (d / ".claude" / "commands").mkdir(parents=True)
-    (d / ".claude" / "skills" / "cs-operator").mkdir(parents=True)
-    for c in commands:
-        (d / ".claude" / "commands" / c).write_text(f"# {c} of {name}\n")
-    (d / ".claude" / "skills" / "cs-operator" / "SKILL.md").write_text("skill\n")
-    (d / "CLAUDE.md").write_text(f"# manual of {name}\n")
-    return d
+def _clone(root: Path, name: str) -> Path:
+    clone = root / name
+    for skill in ("cs-review", "cs-help"):
+        path = clone / ".claude" / "skills" / skill / "SKILL.md"
+        path.parent.mkdir(parents=True)
+        path.write_text(f"---\nname: {skill}\ndescription: {name}\n---\n")
+    (clone / "CLAUDE.md").write_text(f"# manual of {name}\n")
+    return clone
 
 
 @contextlib.contextmanager
-def _codex_home(tmp: Path, name: str = "codex-prompts"):
-    """Point CODEX_PROMPTS at a scratch dir — the real one is the
-    developer's own ~/.codex, which a test must never write into. Each
-    scenario gets its OWN directory: Codex's prompt dir is home-global, so
-    a shared fixture would carry one scenario's ownership into the next."""
-    real = pi.CODEX_PROMPTS
-    pi.CODEX_PROMPTS = tmp / name
+def _legacy_prompts(tmp: Path, name: str = "codex-prompts"):
+    real = pi.LEGACY_CODEX_PROMPTS
+    pi.LEGACY_CODEX_PROMPTS = tmp / name
     try:
-        yield pi.CODEX_PROMPTS
+        yield pi.LEGACY_CODEX_PROMPTS
     finally:
-        pi.CODEX_PROMPTS = real
+        pi.LEGACY_CODEX_PROMPTS = real
+
+
+def _seed_legacy(clone: Path, prompts: Path) -> None:
+    for directory in (clone / ".opencode" / "commands", prompts):
+        directory.mkdir(parents=True)
+        for name in pi.RETIRED_COMMAND_NAMES:
+            (directory / name).write_text("obsolete\n")
+        (directory / "mine.md").write_text("keep\n")
 
 
 def main() -> int:
@@ -77,73 +62,52 @@ def main() -> int:
         tmp = Path(td)
         clone = _clone(tmp, "acme-cs")
 
-        print("stamping a fresh clone")
-        with _codex_home(tmp) as codex:
+        print("project-scoped skill wiring and exact legacy cleanup")
+        with _legacy_prompts(tmp) as prompts:
+            _seed_legacy(clone, prompts)
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 pi.install_agent_surfaces(clone)
 
-            oc = clone / ".opencode" / "commands"
-            claude_names = {p.name for p in (clone / ".claude/commands").glob("*.md")}
-            check("OpenCode sees the same command names as Claude Code",
-                  {p.name for p in oc.glob("*.md")} == claude_names)
-            check("they are symlinks, not a second copy",
-                  all(p.is_symlink() for p in oc.glob("*.md")))
-            check("and they resolve to the same bytes",
-                  (oc / "cs-review.md").read_text()
-                  == (clone / ".claude/commands/cs-review.md").read_text())
-            check("skills are wired too",
-                  (clone / ".opencode/skills/cs-operator/SKILL.md").is_file())
+            canonical = clone / ".claude" / "skills"
+            codex = clone / ".agents" / "skills"
+            opencode = clone / ".opencode" / "skills"
+            check("Codex skills are a repository symlink", codex.is_symlink())
+            check("OpenCode skills are a repository symlink", opencode.is_symlink())
+            check("Codex resolves canonical bytes",
+                  (codex / "cs-review/SKILL.md").read_bytes()
+                  == (canonical / "cs-review/SKILL.md").read_bytes())
+            check("OpenCode resolves canonical bytes",
+                  (opencode / "cs-help/SKILL.md").read_bytes()
+                  == (canonical / "cs-help/SKILL.md").read_bytes())
             check("AGENTS.md resolves to CLAUDE.md",
                   (clone / "AGENTS.md").read_text() == (clone / "CLAUDE.md").read_text())
-            check("Codex prompts point at this clone",
-                  os.path.realpath(codex / "cs-review.md")
-                  == os.path.realpath(clone / ".claude/commands/cs-review.md"))
+            check("all retired OpenCode commands are gone",
+                  all(not (clone / ".opencode/commands" / n).exists()
+                      for n in pi.RETIRED_COMMAND_NAMES))
+            check("all retired global prompts are gone",
+                  all(not (prompts / n).exists() for n in pi.RETIRED_COMMAND_NAMES))
+            check("unrelated OpenCode command survives",
+                  (clone / ".opencode/commands/mine.md").read_text() == "keep\n")
+            check("unrelated global prompt survives",
+                  (prompts / "mine.md").read_text() == "keep\n")
+            check("cleanup is reported", "Retired 10 obsolete" in out.getvalue())
 
-            print("a renamed command must not survive in .opencode/")
-            (clone / ".claude/commands/cs-review.md").unlink()
-            (clone / ".claude/commands/cs-triage.md").write_text("# renamed\n")
             with contextlib.redirect_stdout(io.StringIO()):
                 pi.install_agent_surfaces(clone)
-            check("the old name is gone from OpenCode",
-                  not (oc / "cs-review.md").exists())
-            check("the new name is there",
-                  (oc / "cs-triage.md").is_symlink())
+            check("a second wiring pass is idempotent",
+                  (codex / "cs-review/SKILL.md").is_file())
 
-        print("Codex prompts owned by another clone")
-        other = _clone(tmp, "other-cs", commands=("cs-triage.md",))
-        with _codex_home(tmp, "codex-shared") as codex:
+        print("fresh clones create no command surface")
+        fresh = _clone(tmp, "fresh-cs")
+        with _legacy_prompts(tmp, "fresh-prompts"):
             with contextlib.redirect_stdout(io.StringIO()):
-                pi.install_agent_surfaces(other)          # other-cs claims them
-            first = os.path.realpath(codex / "cs-triage.md")
-            check("the first clone owns them",
-                  first == os.path.realpath(other / ".claude/commands/cs-triage.md"))
-
-            old_input = builtins.input
-            builtins.input = lambda *a, **k: (_ for _ in ()).throw(EOFError())
-            try:
-                out = io.StringIO()
-                with contextlib.redirect_stdout(out):
-                    pi.install_agent_surfaces(clone)      # acme-cs asks, gets EOF
-            finally:
-                builtins.input = old_input
-            check("a closed stdin does NOT hijack another clone's prompts",
-                  os.path.realpath(codex / "cs-triage.md") == first)
-            check("and it says where they stayed", "leaving Codex" in out.getvalue())
-
-            old_input = builtins.input
-            builtins.input = lambda *a, **k: "y"
-            try:
-                with contextlib.redirect_stdout(io.StringIO()):
-                    pi.install_agent_surfaces(clone)
-            finally:
-                builtins.input = old_input
-            check("an explicit yes does move them",
-                  os.path.realpath(codex / "cs-triage.md")
-                  == os.path.realpath(clone / ".claude/commands/cs-triage.md"))
+                pi.install_agent_surfaces(fresh)
+        check("no .claude/commands directory", not (fresh / ".claude/commands").exists())
+        check("no .opencode/commands directory", not (fresh / ".opencode/commands").exists())
 
         print("a filesystem that refuses symlinks")
-        nolink = _clone(tmp, "win-cs", commands=("cs-help.md",))
+        nolink = _clone(tmp, "win-cs")
         real_symlink = Path.symlink_to
 
         def refuse(self, target, target_is_directory=False):
@@ -151,15 +115,21 @@ def main() -> int:
 
         Path.symlink_to = refuse
         try:
-            with _codex_home(tmp, "codex-win"):
+            with _legacy_prompts(tmp, "win-prompts"):
                 out = io.StringIO()
                 with contextlib.redirect_stdout(out):
-                    pi.install_agent_surfaces(nolink, ask=False)
-                dst = nolink / ".opencode/commands/cs-help.md"
-                check("falls back to a real copy", dst.is_file() and not dst.is_symlink())
-                check("with the right content",
-                      dst.read_text() == (nolink / ".claude/commands/cs-help.md").read_text())
-                check("and says it copied", "copied" in out.getvalue())
+                    pi.install_agent_surfaces(nolink)
+            codex_copy = nolink / ".agents/skills/cs-help/SKILL.md"
+            opencode_copy = nolink / ".opencode/skills/cs-review/SKILL.md"
+            check("Codex falls back to a real skill copy",
+                  codex_copy.is_file() and not (nolink / ".agents/skills").is_symlink())
+            check("fallback copy has canonical content",
+                  codex_copy.read_bytes()
+                  == (nolink / ".claude/skills/cs-help/SKILL.md").read_bytes())
+            check("OpenCode fallback also has canonical content",
+                  opencode_copy.read_bytes()
+                  == (nolink / ".claude/skills/cs-review/SKILL.md").read_bytes())
+            check("copy fallback is disclosed", "copied" in out.getvalue())
         finally:
             Path.symlink_to = real_symlink
 

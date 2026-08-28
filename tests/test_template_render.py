@@ -73,8 +73,14 @@ env = build_jinja_env(TPL)
 BAD = ("mrcall.ai", "mario", "eva fani", "cafe124", "centralix", "/home/mal")
 fails = 0
 templates = sorted(p.relative_to(TPL).as_posix() for p in TPL.rglob("*.j2"))
+expected_skills = {
+    "cs-account", "cs-campaign", "cs-campaign-tick", "cs-cron", "cs-customer",
+    "cs-find-document", "cs-help", "cs-operator", "cs-review", "cs-triage-mail",
+}
+rendered_skill_names: dict[str, set[str]] = {}
 for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI),
                     ("email-account", EMAIL_ACCOUNT)):
+    rendered_skill_names[label] = set()
     for name in templates:
         try:
             out = env.get_template(name).render(**ctx)
@@ -92,6 +98,34 @@ for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI),
             except tomllib.TOMLDecodeError as e:
                 print(f"  FAIL invalid TOML [{label}] {name}: {e}\n--- rendered ---\n{out}")
                 fails += 1
+        if name.startswith(".claude/skills/") and name.endswith("/SKILL.md.j2"):
+            lines = out.splitlines()
+            if not lines or lines[0] != "---" or "---" not in lines[1:]:
+                print(f"  FAIL skill frontmatter [{label}] {name}")
+                fails += 1
+                continue
+            end = lines[1:].index("---") + 1
+            fields = dict(
+                line.split(":", 1) for line in lines[1:end]
+                if ":" in line and not line.startswith(" ")
+            )
+            skill_name = fields.get("name", "").strip()
+            description = fields.get("description", "").strip()
+            if not skill_name or not description:
+                print(f"  FAIL skill name/description [{label}] {name}")
+                fails += 1
+            if skill_name in rendered_skill_names[label]:
+                print(f"  FAIL duplicate skill name [{label}] {skill_name}")
+                fails += 1
+            rendered_skill_names[label].add(skill_name)
+
+for label, names in rendered_skill_names.items():
+    if names != expected_skills:
+        print(f"  FAIL skill set [{label}]: {sorted(names)}")
+        fails += 1
+if (TPL / ".claude" / "commands").exists():
+    print("  FAIL fresh template tree still contains .claude/commands")
+    fails += 1
 print(f"{len(templates)} templates x 3 configs: "
       + ("ALL RENDER CLEAN" if not fails else f"{fails} FAILURES"))
 sys.exit(1 if fails else 0)

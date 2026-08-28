@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""`/cs-review` — the ONE command an operator types when he sits down.
+"""`cs-review` — the ONE skill an operator invokes when he sits down.
 
 Why this gate exists. The command was measured against a real morning
 (2026-08-26) and answered three of the eight questions a returning operator
@@ -41,7 +41,7 @@ Asserted here:
      questions — `cs config`, `cs --version`, `git log`, the 45-day CRM sweep,
      the owner-actions digest — and its greeting shape obeys the four pause
      rules literally.
-  E. The project settings allow the read-only verbs the command runs, so the
+  E. The project settings allow the read-only verbs the skill runs, so the
      one command the operator types does not stop on a permission prompt.
 
 Hermetic: no engine, no mailbox, no network.
@@ -287,9 +287,9 @@ def _rendered_command() -> None:
     for label, ctx in (("reply-only", BASE),
                        ("with-producer", {**BASE, "producer_adapter": "acme-leads",
                                           "crm_adapter": "shopify"})):
-        out = env.get_template(".claude/commands/cs-review.md.j2").render(**ctx)
+        out = env.get_template(".claude/skills/cs-review/SKILL.md.j2").render(**ctx)
 
-        # The steps that answer the questions the command used to leave open.
+        # The steps that answer the questions the skill used to leave open.
         for needle, why in (
             ("cs config", "the settings in force must be READ, never inferred"),
             ("cs --version", "the kernel pin comes from the installed package"),
@@ -304,7 +304,7 @@ def _rendered_command() -> None:
             ("cs catchup --check", "and whether the engine is behind is asked "
              "before anything is offered"),
         ):
-            check(needle in out, f"[{label}] the command must run/read `{needle}` — {why}")
+            check(needle in out, f"[{label}] the skill must run/read `{needle}` — {why}")
 
         # The report shape: the fenced block the model fills in only AFTER it
         # has made one attention decision per candidate.

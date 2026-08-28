@@ -1,12 +1,13 @@
 ---
-description: Manage {{ company_prog_name }}'s unattended operator from THIS session — see whether the cron tick is installed, install or remove it (with explicit confirmation), pause and resume. The tick is draft-only by permission; this command never widens anything.
+name: cs-cron
+description: Manage {{ company_prog_name }}'s unattended operator from THIS session — see whether the cron tick is installed, install or remove it (with explicit confirmation), pause and resume. The tick is draft-only by permission; this skill never widens anything.
 ---
 
 # {{ company_prog_name }} — Automation (operator cron)
 
 The operator can tick unattended: `bin/cs_operator_cron.sh` runs
 `claude -p "/cs-operator"` on a schedule — triage + campaign advancement,
-draft-only, with its own re-denied permission set. This command manages
+draft-only, with its own re-denied permission set. This skill manages
 that schedule from the session. All commands run from the repo root with
 `.venv/bin/python -m cs …`.
 
@@ -56,8 +57,9 @@ live.
 
 - Install/uninstall/pause only on the user's explicit instruction in
   this conversation — never as a side effect of another request.
-- This command never edits `bin/cs_operator_cron.sh`, the permission
+- This skill never edits `bin/cs_operator_cron.sh`, the permission
   files, or `CS_TRIAGE_MODE`: going autonomous-send is a separate,
   deliberate widening the user performs on purpose, not a cron setting.
 - A dedicated per-campaign cron is the exception, not the rule — the
-  operator tick already advances every campaign. See `/cs-campaign`.
+  operator tick already advances every campaign. Invoke the `cs-campaign`
+  skill for campaign design.

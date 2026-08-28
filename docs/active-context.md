@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: fbbf68b
+doc_baseline_commit: 8893f127b87d46584f015d27e924a9e4bdb6012b
 doc_baseline_date: 2026-08-28
 ---
 
@@ -37,21 +37,29 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   resolved outside email; `cs escalated` records a still-open contact taken over
   by a named human. Both remain visible and both are denied to the unattended
   operator.
-- **The source-tree `/cs-review` now adjudicates attention.** It builds a
+- **The source-tree `cs-review` skill now adjudicates attention.** It builds a
   conversation/task/draft ledger, reads full current threads, requires one of
   five explicit verdicts per candidate, and puts only positive-evidence
   `act_now` rows in the main agenda. The seven-case incident replay passed 7/7
   with Claude Opus and the 43-gate suite is green. The completed work trace is
   [`execution-plans/2026-08-28-attention-agenda.md`](execution-plans/2026-08-28-attention-agenda.md).
+- **All operator workflows are now project-scoped skills in the source tree.**
+  `.claude/skills` is canonical; `.agents/skills` and `.opencode/skills` resolve
+  those same bytes. Fresh renders have ten skills and no command directory;
+  `cs update` retires the exact five command-era Claude/OpenCode paths and
+  home-global Codex prompts while preserving unrelated files. The 43-gate suite
+  and all ten independent skill validations are green. This work is untagged;
+  its completed trace is
+  [`execution-plans/2026-08-28-agent-skills-only.md`](execution-plans/2026-08-28-agent-skills-only.md).
 - **`cs init` discovers engine identity and mailbox credentials.** It selects a
   matching mrcall-desktop descriptor, reads the mailbox password through
   owner-authenticated `settings.get_secret`, and falls back to a prompt only
   when the engine cannot provide it.
-- **Clone pins and installed packages are not currently aligned.** On
-  2026-08-28, `mario124-cs` declares `v0.33.0` in `requirements.txt` while its
-  venv reports `cs-kernel 0.34.0`; `mrcall-cs` declares `v0.32.1` while its venv
-  also reports `0.34.0`. Neither clone should be described as pinned-and-running
-  one version until its declaration and environment agree and are re-tested.
+- **Clone pins and installed packages are aligned only for `mario124-cs`.** On
+  2026-08-28, it declares and runs `v0.35.0`. `mrcall-cs` still declares
+  `v0.32.1` while its venv reports `0.35.0`; it must not be described as
+  pinned-and-running one version until declaration and environment agree and
+  are re-tested.
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -59,12 +67,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **The attention agenda is released but not yet live-operator verified.** A disposable copy
-  of `mario124-cs` accepted the new generated review command while leaving all
-  clone-authored company files byte-identical, but the real clone was not
-  upgraded and the command was not rerun against its mailbox. The release is
-  authorized; clone upgrades remain separate operator actions.
-- **Interactive review has an ambient-permission boundary.** A rendered command
+- **The attention agenda is released but not yet live-operator verified after
+  upgrade.** `mario124-cs` now declares and runs `v0.35.0`; the generated review
+  skill still needs a read-only run against its live mailbox.
+- **The skills-only migration is implemented but unreleased.** Its disposable
+  `mario124-cs` proof passed without touching the real clone; publishing the
+  MINOR release and upgrading the clone remain separate explicit actions.
+- **Interactive review has an ambient-permission boundary.** A rendered skill
   can contain no mutation path and can stop before repair, but it cannot revoke
   tools already granted to the surrounding Claude Code session. Hard isolation
   would require a separate restricted process and a different operator flow.
@@ -82,12 +91,14 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Upgrade each clone to `v0.35.0` when its operator chooses, run the release's
-   static + live read-only re-test, then verify the real mario124 review against
-   its live mailbox.
-2. Reconcile each clone's declared pin with its installed package, then run the
+1. Publish the skills-only MINOR release when authorized; the operator will
+   perform the real clone upgrade separately.
+2. Upgrade each clone when its operator chooses, run the release's static +
+   live read-only re-test, then verify the real mario124 review against its
+   live mailbox.
+3. Reconcile each clone's declared pin with its installed package, then run the
    required re-test only after the operator explicitly requests the upgrade.
-3. Replace internal `re-collaudo` wording still exposed by `cs update` with
+4. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-4. Promote reusable attachment-reading and scheduling pieces only when a second
+5. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.

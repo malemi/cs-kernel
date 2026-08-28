@@ -37,6 +37,7 @@ from pathlib import Path
 
 from ._version import kernel_version, kernel_version_bare
 from .project_init import (
+    RETIRED_COMMAND_NAMES,
     TEMPLATE_DEFAULTS,
     build_jinja_env,
     install_agent_surfaces,
@@ -44,6 +45,24 @@ from .project_init import (
     is_executable_target,
     load_existing_config,
 )
+
+
+def _retire_generated_commands(clone_root: Path) -> int:
+    """Remove the closed set of command-era generated files from a clone."""
+    command_dir = clone_root / ".claude" / "commands"
+    removed = 0
+    for name in RETIRED_COMMAND_NAMES:
+        path = command_dir / name
+        if path.is_symlink() or path.is_file():
+            path.unlink()
+            removed += 1
+            print(f"  - .claude/commands/{name} (retired)")
+    if command_dir.is_dir():
+        try:
+            command_dir.rmdir()
+        except OSError:
+            pass
+    return removed
 
 
 def _render_vars(clone_root: Path, init_data: dict) -> dict:
@@ -541,6 +560,7 @@ def cmd_update(args: list[str]) -> int:
     updated = 0
     skipped = 0
     added = 0
+    retired = _retire_generated_commands(clone_root)
     # Paths whose stored checksum does NOT describe the file on disk, and
     # which this run had no update to offer for. The ledger is left as it is
     # (see the branch that fills this list); what may not happen is that the
@@ -759,7 +779,10 @@ def cmd_update(args: list[str]) -> int:
     manifest["file_checksums"] = new_checksums
     _write_manifest(clone_root, manifest)
 
-    print(f"\nDone: {updated} updated, {skipped} skipped (modified locally), {added} added.")
+    print(
+        f"\nDone: {updated} updated, {skipped} skipped (modified locally), "
+        f"{added} added, {retired} retired."
+    )
 
     if drifted:
         print(
@@ -778,10 +801,8 @@ def cmd_update(args: list[str]) -> int:
             "  template maintenance without anyone deciding that it should."
         )
 
-    # Re-point the other agents' surfaces at the refreshed .claude/ set. Not
-    # optional and not a separate verb: an existing clone's .opencode/ was a
-    # frozen COPY that still advertised pre-rename command names weeks after
-    # the rename — an update that refreshes one agent's commands and leaves
-    # another's stale is how that happened.
+    # Re-point every agent at the refreshed canonical skills tree and retire
+    # the exact command-era OpenCode/Codex entries. This is not optional or a
+    # separate verb: an update must not leave a second discovery surface stale.
     install_agent_surfaces(clone_root)
     return 0

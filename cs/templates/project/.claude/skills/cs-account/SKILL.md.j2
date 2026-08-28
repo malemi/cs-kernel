@@ -3,6 +3,7 @@
    clone; with one account the default IS the only place to look. #}
 {% set nondefault_account = founder_sweep_account if founder_sweep_enabled else (other_accounts[0] if other_accounts else accounts_default) %}
 ---
+name: cs-account
 description: Read-only analysis of one of THIS project's engine mailboxes (see `cs accounts`). Takes an account name as argument (mailbox address, e.g. "{{ nondefault_account }}"); if absent, list accounts and ask. ZERO side effects — no drafts, no sends, no memory writes, no commits. Reports what's in the inbox and what still needs attention.
 ---
 
@@ -57,5 +58,4 @@ mint failure, wrong identity), **STOP** and report the one-line reason — do no
 Compact and skimmable: what arrived that matters, what is still open or needs
 handling, anything urgent or easy to miss. **NO drafts, NO sends** — this is
 analysis only. Acting on any of it afterwards is a separate, explicit step, and
-sending stays outside this command either way.
-
+sending stays outside this skill either way.

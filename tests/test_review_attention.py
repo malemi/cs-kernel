@@ -159,7 +159,7 @@ def test_rendered_contract() -> None:
     # Rendering needs a full init context; the existing bootstrap test exercises
     # both variants. Use its neutral fixture rather than grow a second one.
     from test_review_bootstrap import BASE
-    rendered = env.get_template(".claude/commands/cs-review.md.j2").render(**BASE)
+    rendered = env.get_template(".claude/skills/cs-review/SKILL.md.j2").render(**BASE)
     for command in ("cs review --json",
                     "cs unanswered --days 45 --crm --json --all-buckets",
                     "cs thread <email> --json --full"):
