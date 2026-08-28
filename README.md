@@ -110,8 +110,11 @@ The `cs init` wizard prompts various questions to setup your agentic customer se
 platform. It should not be difficult, as all technical questions
 are prefilled.
 
-Remember: if the wizard asks for the **engine WS URL** and **engine owner uid**
-and no value is prefilled, it means you haven't signed in to mrcall-desktop. Do it!
+The wizard never asks you to type a uid. It reads the mrcall-desktop sign-in
+on this machine: one profile is used as is, several and it picks the one
+matching the operator email you just gave — or lists them for you to choose by
+number. If it says no sign-in was found, that is Step 1 missing: sign in to
+mrcall-desktop as that mailbox and re-run.
 
 Here is what to expect for ACME:
 
@@ -122,7 +125,7 @@ Here is what to expect for ACME:
 | From name for emails | `ACME` |
 | Short slug | names your project (`acme` → `acme-cs/`); the wizard suggests one, Enter accepts |
 | Operator email | `support@acme.example` (required) |
-| Engine URL + owner uid | prefilled from Step 1's sign-in; if asked, redo Step 1 and re-run |
+| Engine URL + owner uid | read from Step 1's sign-in, never typed |
 | Default account | `support` + that same uid |
 | CRM / producer / SMS / Drive | leave defaults unless you know you need them |
 | Mailbox app password | You need your gmail [app password](https://support.google.com/mail/answer/185833?hl=en) |

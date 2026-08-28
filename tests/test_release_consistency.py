@@ -146,6 +146,11 @@ TAG_VERSION_EXCEPTIONS = {
     # Same class as v0.6.1/v0.7.0; fixed forward by v0.8.1 (operator
     # decision, 2026-08-19).
     "v0.8.0": "0.7.1",
+    # 2026-08-28: v0.32.0 was tagged on the merge commit before the version
+    # bump landed, so it installs and reports 0.31.0. Same class as the four
+    # above, and already published — so it is recorded, not moved. Fixed
+    # forward by v0.32.1, whose whole content is the version string.
+    "v0.32.0": "0.31.0",
 }
 
 PIN_RE = re.compile(rf"cs-kernel@v(?P<v>{SEMVER})")

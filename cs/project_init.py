@@ -36,6 +36,15 @@ DEFAULT_CRON_COMMENT = "cs-operator"
 # preference frozen into shared code — charter rule 2.
 DEFAULT_OPERATOR_VOICE = "American English, professional and direct"
 
+# The engine host a clone talks to when this machine holds no desktop sign-in
+# to read it from. One mrcall-desktop deployment serves every clone the kernel
+# stamps — a per-uid socket on the same host — so this is shared infrastructure
+# the kernel drives, in the sense charter rule 1 allows, and it is a DEFAULT at
+# a prompt the operator still sees and can overwrite, never an invariant. It
+# replaced a `desktop.example.com` placeholder, which was a value no operator
+# could accept and every operator had to retype.
+DEFAULT_ENGINE_WS_URL = "wss://desktop.mrcall.ai"
+
 # Variables newer templates read that an older clone's frozen `init_data` was
 # never asked for. `cs update` renders against that frozen dict, so a template
 # growing a variable would fail under StrictUndefined on every existing clone;
@@ -84,32 +93,25 @@ def normalize_local_scripts(value) -> list[str]:
             out.append(path)
     return out
 
-def descriptor_defaults() -> dict:
-    """Prefill `cs init`'s engine-identity prompts from a mrcall-desktop
-    sign-in already on this machine.
+def descriptor_candidates() -> list[dict]:
+    """Every valid mrcall-desktop profile descriptor on this machine, in
+    `login.scan_descriptors()` order.
 
-    Scans `login.descriptor_root()` via `login.scan_descriptors()` +
-    `login.parse_descriptor()`. Returns `{}` when there is no valid
-    descriptor. When there is EXACTLY ONE valid descriptor, returns it
-    mapped onto config keys: `email_address`, `engine_ws_url`,
-    `engine_owner_uid`, `default_uid`, `descriptor_email`. When there is
-    MORE THAN ONE valid descriptor, also returns `{}` — `cs init` stays
-    neutral in that case; picking among several signed-in profiles is `cs
-    login`'s job, not this wizard's. An unparsable descriptor found during
-    the scan is skipped silently: this runs unconditionally at the top of
-    every `cs init`, and a stray or corrupt file already on the machine
-    must never crash the wizard.
+    An unparsable descriptor found during the scan is skipped silently:
+    this runs unconditionally at the top of every `cs init`, and a stray or
+    corrupt file already on the machine must never crash the wizard.
     """
-    root = login.descriptor_root()
-    valid = []
-    for path in login.scan_descriptors(root):
+    out = []
+    for path in login.scan_descriptors(login.descriptor_root()):
         try:
-            valid.append(login.parse_descriptor(path))
+            out.append(login.parse_descriptor(path))
         except ValueError:
             continue
-    if len(valid) != 1:
-        return {}
-    d = valid[0]
+    return out
+
+
+def descriptor_config(d: dict) -> dict:
+    """One parsed descriptor mapped onto `collect_config()` keys."""
     return {
         "email_address": d["email"],
         "engine_ws_url": login.descriptor_ws_base(d),
@@ -121,6 +123,68 @@ def descriptor_defaults() -> dict:
         # sending the operator to hunt the key down by hand.
         "firebase_web_api_key": d["firebase_web_api_key"],
     }
+
+
+def descriptor_defaults(email: str | None = None) -> dict:
+    """Prefill `cs init`'s engine identity from a mrcall-desktop sign-in
+    already on this machine.
+
+    With no `email`, only an unambiguous machine answers: exactly one valid
+    descriptor is mapped via `descriptor_config()`, zero or several return
+    `{}`. With `email` — the mailbox the operator has just typed — the
+    ambiguity is resolved by that mailbox: the descriptor whose own email
+    matches it (case-insensitively) is the one this clone means, and
+    anything else still returns `{}`.
+
+    Several signed-in profiles on one machine is the NORMAL state of a
+    developer box, so returning `{}` there used to drop the wizard onto raw
+    prompts for a socket URL and a Firebase uid. The uid is not a value a
+    human can type; `collect_config()` therefore never asks for one, and
+    this function plus `_resolve_descriptor()` are how it gets answered.
+    """
+    valid = descriptor_candidates()
+    if email:
+        wanted = email.strip().lower()
+        matches = [d for d in valid if d["email"].strip().lower() == wanted]
+        return descriptor_config(matches[0]) if len(matches) == 1 else {}
+    if len(valid) != 1:
+        return {}
+    return descriptor_config(valid[0])
+
+
+def _resolve_descriptor(candidates: list[dict], email: str) -> dict | None:
+    """Choose ONE descriptor when this machine holds several.
+
+    The mailbox already typed answers it silently when exactly one profile
+    carries it; otherwise the operator picks from a numbered list, reusing
+    `cs login`'s own picker so both surfaces ask the same way. "None of
+    these" and EOF (a non-interactive run) both mean no engine identity —
+    a state the caller reports and the rest of the kernel already handles.
+    `KeyboardInterrupt` is deliberately NOT caught: ^C at this prompt means
+    cancel `cs init`, and its top-level handler says so.
+    """
+    wanted = (email or "").strip().lower()
+    matches = [d for d in candidates if d["email"].strip().lower() == wanted]
+    if len(matches) == 1:
+        d = matches[0]
+        print(
+            f"Found the mrcall-desktop profile for {d['email']} "
+            f"({d['uid']}) — using it for the engine identity."
+        )
+        return d
+
+    print(f"{len(candidates)} mrcall-desktop profiles are signed in here:")
+    for i, d in enumerate(candidates, 1):
+        print(f"  {i}) {d['email']}")
+    print(f"  {len(candidates) + 1}) none of these")
+    try:
+        choice = login._prompt_choice(len(candidates) + 1)
+    except EOFError:
+        print()
+        return None
+    if choice > len(candidates):
+        return None
+    return candidates[choice - 1]
 
 def load_existing_config(target_dir: Path) -> dict:
     """Read an existing `manifest.toml` (+ its state-dir `.env`) at
@@ -331,17 +395,15 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
       a fast confirm pass instead of thirty re-typed answers. `--advanced`
       shows every prompt regardless of what is already known.
 
-    The engine identity (WS URL, owner uid, the default account's uid) is
-    the one place "essential" is computed PER FIELD rather than fixed: a
-    unique mrcall-desktop descriptor on this machine, or a value already
-    declared in `existing`, answers it with confidence, so a non-advanced
-    run skips asking (descriptor) or silently reuses the declared value
-    (existing) — but with NEITHER available (a genuinely first-time init,
-    no descriptor, nothing declared yet) there is no safe default at all,
-    so it is asked regardless of `--advanced`. `--advanced` always shows
-    the prompt (prefilled from whichever of the two answered it), even
-    when a unique descriptor would otherwise skip it silently — the whole
-    point of `--advanced` is that nothing is silently assumed.
+    The engine identity does not follow either rule, because the two uids
+    in it (the engine owner's, the default account's) are Firebase uids and
+    a human cannot type one. They are never prompted, in any mode: they are
+    read from a mrcall-desktop sign-in on this machine — the only
+    descriptor, the one carrying the mailbox just typed, or the one the
+    operator picks by number — else taken from what the clone already
+    declares, else left blank with the fix printed. Only the WS URL is a
+    question, and only when neither a descriptor nor `existing` answered
+    it; `DEFAULT_ENGINE_WS_URL` is what it proposes.
 
     Six phases, in order: identity -> mailbox -> engine -> accounts ->
     integrations (+ knobs) -> repo. Founder sweep is intentionally left
@@ -367,7 +429,8 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     # it is the ONLY one and this is a fast pass, silently ANSWERS) the
     # engine-identity prompts below; the operator still sees and can
     # override every one of them under --advanced.
-    defaults = descriptor_defaults()
+    candidates = descriptor_candidates()
+    defaults = descriptor_config(candidates[0]) if len(candidates) == 1 else {}
     descriptor_unique = bool(defaults)
     if defaults:
         print(
@@ -427,33 +490,42 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     )
 
     # --- Phase 3: engine ---
-    # No safe universal default exists for a company's own engine identity
-    # (unlike imap_host, "wss://desktop.example.com" is not a working
-    # fallback) — so these two are essential (asked regardless of
-    # --advanced) UNLESS something already answers them with confidence:
-    # a unique descriptor, or a value already declared in `existing`.
+    # The engine identity is a socket URL and a Firebase uid. The uid is NOT
+    # a question: nobody types `9nXeYF8O…` from memory, and a wizard that
+    # asks for one has already failed. It is READ from the mrcall-desktop
+    # sign-in on this machine — the only descriptor, the one carrying the
+    # mailbox just typed, or the one picked from a numbered list — and with
+    # no sign-in at all the clone is stamped without it (blank is a product
+    # state everywhere downstream: ConfigError, printed once) and the
+    # operator is told the single move that fills it.
     existing_ws = existing.get("engine_ws_url") or ""
     existing_uid = existing.get("engine_owner_uid") or ""
-    if descriptor_unique:
-        ws_default, uid_default = defaults["engine_ws_url"], defaults["engine_owner_uid"]
-    else:
-        ws_default = existing_ws or "wss://desktop.example.com"
-        uid_default = existing_uid
+    if not descriptor_unique and candidates:
+        picked = _resolve_descriptor(candidates, config["email_address"])
+        if picked:
+            defaults = descriptor_config(picked)
+            descriptor_unique = True
 
+    ws_default = (
+        defaults["engine_ws_url"] if descriptor_unique
+        else (existing_ws or DEFAULT_ENGINE_WS_URL)
+    )
     if descriptor_unique and not show_all:
         config["engine_ws_url"] = ws_default
-        config["engine_owner_uid"] = uid_default
     else:
+        # Still asked when nothing read the URL for us: the default host is
+        # right for the clones this kernel stamps, not a fact about a
+        # company we have never met.
         config["engine_ws_url"] = _prompt_or_default(
             show_all, "Engine WS URL", ws_default,
             essential=not (descriptor_unique or existing_ws),
         )
-        # Skippable (blank = fill in manifest.toml by hand later) — matches
-        # the mailbox-password contract; absence is a product state, not
-        # a crash, everywhere downstream (ConfigError, printed once).
-        config["engine_owner_uid"] = _prompt_or_default(
-            show_all, "Engine owner UID", uid_default,
-            essential=not (descriptor_unique or existing_uid),
+    config["engine_owner_uid"] = defaults.get("engine_owner_uid") or existing_uid
+    if not config["engine_owner_uid"]:
+        print(
+            f"  No mrcall-desktop sign-in for {config['email_address']} on this "
+            "machine — stamping without an engine identity. Sign in to the "
+            "desktop app as that mailbox, then re-run `cs init` to fill it in."
         )
     # Not prompted: comes with the Step-0 descriptor (public key), consumed by
     # write_state_env; empty when there was no usable descriptor.
@@ -467,14 +539,13 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
 
     if descriptor_unique and not show_all:
         default_account = default_account_value
-        default_uid = defaults["default_uid"]
     else:
         default_account = _prompt_or_default(show_all, "Default account name", default_account_value)
-        # Same "essential unless already answered" rule as the engine uid.
-        default_uid = _prompt_or_default(
-            show_all, f"Default account UID for '{default_account}'", default_uid_value,
-            essential=not (descriptor_unique or existing_default_uid),
-        )
+    # Never prompted, for the same reason as the engine uid above: it IS the
+    # engine uid of the mailbox this account signs in as, read from the
+    # descriptor or already declared by the clone. Blank when neither, and
+    # `cs login` on a signed-in machine is what fills it.
+    default_uid = default_uid_value
     accounts = {default_account: default_uid}
 
     additional_default = ",".join(
