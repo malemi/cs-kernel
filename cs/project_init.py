@@ -152,6 +152,44 @@ def descriptor_defaults(email: str | None = None) -> dict:
     return descriptor_config(valid[0])
 
 
+def fetch_mailbox_password(descriptor: dict) -> str:
+    """The mailbox's app password, read from the engine over its own socket.
+
+    The engine holds it (`EMAIL_PASSWORD` in the profile's `.env`) because it
+    speaks IMAP/SMTP with it, and `settings.get_secret` serves it to the
+    profile's owner — which is who this is: the descriptor carries a refresh
+    token, exchanged here for the ID token the socket authenticates with. No
+    session file is written; a wizard the operator may still cancel leaves
+    nothing behind.
+
+    Returns `""` on ANY failure — no engine reachable, an engine too old to
+    know the method, a profile that never stored one. The caller then asks,
+    exactly as it always did. A machine that cannot reach its engine must
+    still be able to stamp a clone.
+    """
+    from . import config as config_mod
+    from . import auth, rpc
+
+    try:
+        settings = config_mod.Settings(
+            engine_ws_url=login.descriptor_ws_base(descriptor),
+            engine_owner_uid=descriptor["uid"],
+            firebase_web_api_key=descriptor["firebase_web_api_key"],
+            email_address=descriptor["email"],
+        )
+        token = auth._exchange(settings, descriptor["refresh_token"])["id_token"]
+        result = rpc.call_sync(
+            settings,
+            "settings.get_secret",
+            {"key": "EMAIL_PASSWORD"},
+            timeout=20,
+            id_token=token,
+        )
+        return (result or {}).get("value", "") or ""
+    except Exception:
+        return ""
+
+
 def _resolve_descriptor(candidates: list[dict], email: str) -> dict | None:
     """Choose ONE descriptor when this machine holds several.
 
@@ -1003,14 +1041,29 @@ def write_state_env(config: dict, dest_dir: Path) -> None:
     except OSError as e:
         print(f"Skipped writing {env_path}: cannot read {example}: {e}", file=sys.stderr)
         return
-    try:
-        password = getpass.getpass(
-            f"Mailbox app password for {config['email_address']} "
-            f"(Enter to leave blank and fill {env_path} later): "
-        )
-    except (EOFError, KeyboardInterrupt):
-        print(f"\nNo password given — writing {env_path} with EMAIL_PASSWORD blank.")
-        password = ""
+    # The engine already has this password — it speaks IMAP/SMTP with it — so
+    # ask it before asking the human. Re-found by uid rather than threaded
+    # through `config`, which is stamped into templates and must never carry
+    # a secret. Silence on failure is deliberate: the prompt below IS the
+    # message, and an operator who cannot reach the engine still needs it.
+    password = ""
+    uid = config.get("engine_owner_uid", "")
+    if uid:
+        for d in descriptor_candidates():
+            if d["uid"] == uid:
+                password = fetch_mailbox_password(d)
+                break
+    if password:
+        print(f"Mailbox app password read from the engine — writing {env_path}.")
+    else:
+        try:
+            password = getpass.getpass(
+                f"Mailbox app password for {config['email_address']} "
+                f"(Enter to leave blank and fill {env_path} later): "
+            )
+        except (EOFError, KeyboardInterrupt):
+            print(f"\nNo password given — writing {env_path} with EMAIL_PASSWORD blank.")
+            password = ""
     values = {
         "EMAIL_PASSWORD": password,
         "FIREBASE_WEB_API_KEY": config.get("firebase_web_api_key", ""),
