@@ -144,12 +144,10 @@ those, not a tree duplicated here. `cs/crm/` and `cs/ingest/` are the two
 adapter registries (rule 5), and each registry module IS the list of valid
 adapter names.
 
-**Three template roots**, and the distinction is load-bearing: `templates/project/`
-is stamped once per CLONE by `cs init` / `cs update`, `templates/project_memory/`
-once per PROJECT by `cs project new`, and `templates/partials/` holds shared
-fragments — `{% include %}`d at render time, never stamped as files of their
-own. Each needs its own `package-data` glob; the reason sits at that glob in
-`pyproject.toml`.
+**Three template roots**: `templates/project/` is stamped once per CLONE by
+`cs init` / `cs update`, `templates/project_memory/` once per PROJECT by
+`cs project new`, `templates/partials/` is `{% include %}`d at render time and
+never stamped. Each needs its own `package-data` glob (see `pyproject.toml`).
 
 **`.claude/` is the ONE rendered agent surface** — OpenCode, `AGENTS.md` and
 Codex are pointed into it by `install_agent_surfaces`, whose docstring owns
