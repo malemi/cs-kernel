@@ -154,7 +154,7 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
-## Unreleased
+## v0.32.1 — 2026-08-28
 
 **MINOR, and a SECURITY BOUNDARY.** A clone can now name its own executables
 in `manifest.toml` and have the cron wrapper deny them, in every command-text
