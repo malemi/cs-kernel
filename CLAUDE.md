@@ -113,7 +113,12 @@ Where a subject has an owner, the owner is named inline — go there.
      spellings are written down. `prog_name` is display-only.
    - Engine RPC response shapes are kernel-owned (`emails.search→{threads}`,
      `list_by_thread→{emails}`, `tasks/campaign.*/drafts.list→bare arrays`,
-     `settings.get→{values}`).
+     `settings.get→{values}`, `settings.get_secret→{key,value}`).
+   - **The mailbox credential is the engine's to hand over, not the operator's
+     to retype.** `cs init` reads it with `settings.get_secret`, authenticating
+     as the profile owner with the descriptor's refresh token; the prompt is
+     the fallback for a machine that cannot reach its engine. Secrets stay
+     one-key-per-call: `settings.get` masks them all, deliberately.
    - The accounts registry never mixes another project's mail domain.
    - Never auto-commit; **stamp-before-send** for pack senders; CS_PAUSE +
      Sent-dedup-first before any real send; escalate on uncertainty.

@@ -154,6 +154,48 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.34.0 — 2026-08-28
+
+**MINOR, and it depends on an engine.** `cs init` no longer asks for the
+mailbox app password: it reads it from the engine over the same socket the
+clone will use. Requires mrcall-desktop `1194434` or later
+(`settings.get_secret`); against an older engine the prompt returns, so the
+wizard still completes on any machine.
+**Re-collaudo: FULL, both clones** — the auth boundary is where the new call
+authenticates, and `cs init` is what stamps a clone.
+
+### Fixed — the operator was asked for a credential the engine already had
+
+The engine speaks IMAP/SMTP with the support mailbox, so `EMAIL_PASSWORD` is
+in its profile `.env`. `cs init` asked the human for it anyway, and the offer
+to "press Enter and fill it in later" left a clone that could not send.
+
+`fetch_mailbox_password()` now exchanges the descriptor's refresh token for an
+ID token, connects to the profile's own socket — which gates
+`token.sub == OWNER_ID` — and calls `settings.get_secret(key="EMAIL_PASSWORD")`.
+No session file is written: a wizard the operator may still cancel leaves
+nothing behind. Every failure path (no engine reachable, an engine without the
+method, no stored password) falls back to the prompt that was always there.
+
+`EngineClient` and `rpc.call_sync` take an optional `id_token` for exactly this
+caller: one that holds a token and has no state directory yet.
+
+### Engine side
+
+`settings.get_secret` is the deliberate counterpart to `settings.get`'s mask,
+not a hole in it. `settings.get` returns every key at once and is what a UI
+renders, so it masks; this serves ONE named secret key and logs only the key.
+The trust boundary does not move — the caller must already hold the owner
+token, and with it can read and send this mailbox's mail through the engine.
+What it adds is a credential that outlives the token, which is why it stays
+one key per call.
+
+### Migration
+
+None for a running clone: the change is in `cs init`, and `manifest.toml` /
+`requirements.txt` are untouched. A NEW clone stamped from this tag gets the
+password automatically once its engine profile is on the required build.
+
 ## v0.33.0 — 2026-08-28
 
 **MINOR.** `cs init` no longer asks for a Firebase uid, and its engine-URL
