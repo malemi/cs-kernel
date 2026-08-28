@@ -22,12 +22,13 @@ what is *current*.
   suite red — keep the wording and change only the value. `git describe` is
   the live answer for how far past a tag HEAD is, so no commit count is
   written down here (one would be stale the moment this file is committed).
-  Twelve tags on 2026-08-25/27, `v0.20.0` → `v0.31.0`, each with a CHANGELOG
+  Every tag through `v0.34.0` is published on `origin`, each with a CHANGELOG
   entry naming its re-collaudo tier. **Both clones last verified on
   `v0.28.0`** (2026-08-27); `mrcall-cs`'s `requirements.txt` pins `v0.30.0`
   as of 2026-08-28 — a re-pin in progress whose install state this tree
-  cannot see. `v0.31.0` is pinned nowhere, and re-pinning is the operator's
-  own move.
+  cannot see. Nothing past `v0.30.0` is pinned by any clone, and re-pinning is
+  the operator's own move. A clone stamped fresh does not need one: the README
+  install resolves the newest tag at run time.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread; the engine's `emails.needs_reply` decides
   whether a settled thread's last message owes an answer. The kernel re-derives
@@ -71,16 +72,26 @@ what is *current*.
   without re-running `cs init`. The three agent-facing surfaces share one
   role-framing preamble from `cs/templates/partials/`, a third template root
   with its own package-data glob.
-- **`v0.31.0` is tagged locally and pushed nowhere**, and its retire path
-  assumes an engine the VPS does not run yet: `drafts.discard` and the
-  single-flight pipeline guard exist at mrcall-desktop `9c72683`, while the
-  deployed engine is at `810d7a4`. Until that engine ships, retiring a
-  mirrored draft removes only the Gmail copy. Rollout — push, engine deploy
-  first, re-pin both clones, FULL collaudo, plus `mrcall-cs`'s
-  `[surface] operator_voice = "Italian, founders' register"` manifest line —
-  is sequenced in the meta-repo plan
-  (`hb docs/execution-plans/2026-08-27-cs-review-fresh-state.md`) and waits on
-  the operator's go.
+- **`cs init` asks three questions and stamps a working clone** (`v0.34.0`).
+  The engine identity is read from a mrcall-desktop sign-in on the machine —
+  the only descriptor, the one whose mailbox matches the operator email, or a
+  numbered pick — and a Firebase uid is never prompted for, in any mode. The
+  mailbox app password comes from the engine itself
+  (`settings.get_secret`, authenticated as the profile owner with the
+  descriptor's refresh token); the prompt is the fallback for a machine that
+  cannot reach its engine. `DEFAULT_ENGINE_WS_URL` is the WS default when no
+  descriptor answers.
+- **The deployed engine is mrcall-desktop `1194434`** at
+  `/home/mrcalld/mrcall-desktop`, pulled 2026-08-28. Only the
+  `C06xHKoRcfdz94FaLPKuJuo0xVo1` (124) unit was restarted onto it; the other
+  four `zylch-server@` units still run the previous build in memory, so
+  `settings.get_secret` answers on 124 and `-32601` on the rest until they are
+  restarted. The kernel degrades to the password prompt on those, by design.
+- Rollout still open from `v0.31.0`: re-pin both clones + FULL collaudo, plus
+  `mrcall-cs`'s `[surface] operator_voice = "Italian, founders' register"`
+  manifest line — sequenced in the meta-repo plan
+  (`hb docs/execution-plans/2026-08-27-cs-review-fresh-state.md`) and waiting
+  on the operator's go.
 - The repo is **public** at `github.com/malemi/cs-kernel` — the single origin;
   the old private `hahnbanach/cs-kernel` is archived. What a clone gets and how
   it upgrades is `README.md`; the five `cs-` commands and the five operator
