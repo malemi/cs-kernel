@@ -16,7 +16,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.31.0`. Current HEAD status: tagged as `v0.31.0`.**
+- **Latest release tag: `v0.31.0`. Current HEAD status: untagged.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
