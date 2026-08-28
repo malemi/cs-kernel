@@ -16,7 +16,7 @@ what is *current*.
 
 ## State now
 
-- **Latest release tag: `v0.31.0`. Current HEAD status: tagged as `v0.31.0`.**
+- **Latest release tag: `v0.31.0`. Current HEAD status: untagged.**
   Those two sentences are a machine-readable claim the release gate parses
   verbatim (`tests/test_release_consistency.py`), so rephrasing them turns the
   suite red — keep the wording and change only the value. `git describe` is
@@ -26,7 +26,18 @@ what is *current*.
   entry naming its re-collaudo tier; the tag-by-tag narrative this section
   used to carry is in the archive. **Both clones run `v0.28.0`** — `v0.29.0`,
   `v0.30.0` and `v0.31.0` are tagged and pinned nowhere, and re-pinning is the
-  operator's own move.
+  operator's own move. The CHANGELOG's `Unreleased` section carries a
+  FULL-tier permission change on top of `v0.31.0`, not yet tagged.
+- **A clone names its own executables, and the cron wrapper denies them.**
+  `[local_scripts] cron_denied` in a clone's `manifest.toml` is a list of
+  repo-relative paths; `bin/cs_operator_cron.sh` expands each into fourteen
+  deny entries (seven interpreter forms, including none at all, times
+  `bin/x` and `./bin/x`). Empty is the normal case and renders the kernel's
+  own 52-entry list unchanged. This is the ONLY supported way to keep a
+  clone-local script out of the tick: hand-editing the stamped wrapper does
+  not survive `cs update`, which applies `SECURITY_CRITICAL` renders without
+  a prompt. A deny matches command TEXT — the wrapper's own comments name
+  what it therefore cannot reach.
 - **`cs unanswered` is a conversation sweep that asks the engine what a message
   IS.** The unit is the thread, joined on `References`/`In-Reply-To`/
   `Message-ID` already being FETCHed (`v0.25.0`); the engine's

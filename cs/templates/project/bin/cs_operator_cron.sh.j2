@@ -72,6 +72,29 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # not behavior, and the console script, the module path and the python3 aliases all
 # reach the same code. Do not "tidy" the list back to one spelling — a missing
 # spelling is a hole, and tests/run.sh gates the full enumeration.
+#
+# After the cs verbs come THIS CLONE's own executables, if it has any. A clone
+# may keep scripts in its repo that exist for one company and would be
+# meaningless in another; when such a script must stay out of a tick's reach,
+# its repo-relative path goes in `[local_scripts] cron_denied` in
+# manifest.toml and `cs update` renders the entries below from it. Each path
+# expands into fourteen: seven ways to name an interpreter (none at all, the
+# venv's python and python3, a bare python and python3, bash, sh) times the
+# two path forms a command line uses (`bin/x`, `./bin/x`). The
+# interpreter-less pair is the one worth spelling out — a script carrying a
+# shebang and the executable bit runs with no interpreter word in front of it,
+# so a list that denied only `python bin/x` would leave the plain `bin/x` door
+# wide open. Most clones declare nothing and this section renders empty.
+#
+# What a deny list CANNOT reach, said plainly rather than assumed away: a rule
+# matches the literal text of a command. An absolute path, a flag before the
+# script (`python3 -u bin/x`), a `cd` or `env` prefix, an interpreter this
+# list does not name, and anything wrapped in `sh -c '…'` all reach the same
+# code through text that is not enumerated here. That was already true of the
+# `Bash(rm:*)` entry below and of every spelling above. This list raises the
+# cost of reaching a surface by accident or by injected instruction; it is not
+# a sandbox. A script that must be unreachable whatever happens should not be
+# executable by the user the tick runs as.
 "$CLAUDE_BIN" -p "/cs-operator" \
   --disallowed-tools \
     "Bash(.venv/bin/python -m cs chat:*)" \
@@ -122,6 +145,17 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs rpc drafts.discard:*)" \
     "Bash(python3 -m cs rpc drafts.discard:*)" \
     "Bash(cs rpc drafts.discard:*)" \
+{% for script in local_scripts_cron_denied %}
+{% for form in [script, './' ~ script] %}
+    "Bash({{ form }}:*)" \
+    "Bash(.venv/bin/python {{ form }}:*)" \
+    "Bash(.venv/bin/python3 {{ form }}:*)" \
+    "Bash(python {{ form }}:*)" \
+    "Bash(python3 {{ form }}:*)" \
+    "Bash(bash {{ form }}:*)" \
+    "Bash(sh {{ form }}:*)" \
+{% endfor %}
+{% endfor %}
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
   >>"$LOG" 2>&1
 rc=$?

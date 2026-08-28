@@ -52,6 +52,9 @@ BASE = dict(
     repo_git_remote="git@example.com:acme/acme-cs.git", repo_kernel_version="v0.4.0",
     name="Acme", dest_dir="acme-cs",
     operator_voice="American English, professional and direct",
+    # The normal case: a clone with no executables of its own. The populated
+    # case is gate 17's, which compares the expanded deny list token by token.
+    local_scripts_cron_denied=[],
 )
 SINGLE = {**BASE, "accounts": {"support": "UID123"}, "accounts_default": "support"}
 MULTI = {**BASE, "accounts": {"support": "UID123", "founder": "UID999"},

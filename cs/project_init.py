@@ -41,7 +41,48 @@ DEFAULT_OPERATOR_VOICE = "American English, professional and direct"
 # growing a variable would fail under StrictUndefined on every existing clone;
 # these are the floor under it. A value the clone DOES declare (its manifest,
 # or its own init_data) always wins — see `cs/project_update.py`.
-TEMPLATE_DEFAULTS = {"operator_voice": DEFAULT_OPERATOR_VOICE}
+TEMPLATE_DEFAULTS = {
+    "operator_voice": DEFAULT_OPERATOR_VOICE,
+    "local_scripts_cron_denied": [],
+}
+
+
+def normalize_local_scripts(value) -> list[str]:
+    """`[local_scripts] cron_denied` from a clone's manifest, as a clean list.
+
+    A clone may keep executable scripts of its own in its repo — work that is
+    real for that one company and would be meaningless in any other clone, so
+    it lives in the clone's `bin/` and never in the kernel. Some of those
+    scripts must be unreachable from the headless tick, and the tick's deny
+    list is rendered from THIS list (`bin/cs_operator_cron.sh.j2`).
+
+    Declaring nothing is the normal case: most clones have no local scripts at
+    all, and `[]` renders a deny list identical to the kernel's own.
+
+    Accepts a TOML array or a comma-separated string, since an operator
+    editing this by hand will reasonably write either. Entries are written
+    relative to the repo root, which is where the tick runs (the wrapper
+    `cd`s there): a leading `./` is stripped so the expansion emits
+    `./bin/x` once rather than `.././bin/x`, blanks are dropped, and order is
+    preserved with duplicates removed so the rendered token list is
+    deterministic.
+    """
+    if value is None:
+        return []
+    if isinstance(value, str):
+        items = value.split(",")
+    elif isinstance(value, (list, tuple)):
+        items = list(value)
+    else:
+        return []
+    out: list[str] = []
+    for item in items:
+        path = str(item).strip()
+        while path.startswith("./"):
+            path = path[2:]
+        if path and path not in out:
+            out.append(path)
+    return out
 
 def descriptor_defaults() -> dict:
     """Prefill `cs init`'s engine-identity prompts from a mrcall-desktop
@@ -174,6 +215,15 @@ def load_existing_config(target_dir: Path) -> dict:
         # raw TOML. A clone that declares nothing greets in the kernel default.
         "operator_voice": (raw.get("surface", {}).get("operator_voice")
                            or DEFAULT_OPERATOR_VOICE),
+        # `[local_scripts]` is template-only too, and off the raw TOML for the
+        # same reason: no runtime `Settings` field reads it. It is the ONE
+        # place a clone names its own executables, and the cron wrapper's deny
+        # list is rendered from it — so it must be re-read here on every
+        # `cs update`, not trusted from a freeze taken before the script
+        # existed.
+        "local_scripts_cron_denied": normalize_local_scripts(
+            raw.get("local_scripts", {}).get("cron_denied")
+        ),
     }
     if m.crm.shopify is not None:
         out["crm_shopify"] = {
@@ -579,6 +629,17 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
         show_all,
         "Voice the surfaces address the operator in",
         _default(existing, "operator_voice", DEFAULT_OPERATOR_VOICE),
+    )
+
+    # Clone-local executables the headless tick must never reach. Never
+    # prompted, in any mode: a brand-new clone has no scripts of its own yet,
+    # so the honest answer at `cs init` time is always "none". The key is
+    # `[local_scripts] cron_denied` in manifest.toml, added by hand the day a
+    # clone grows such a script, and `cs update` re-renders the wrapper from
+    # it — same hand-edited-niche class as [producer], [drive] and
+    # [campaigns].excluded_campaign.
+    config["local_scripts_cron_denied"] = normalize_local_scripts(
+        existing.get("local_scripts_cron_denied")
     )
 
     # No `firebase_sa_path` key: Settings derives ~/.<slug>-cs/firebase-sa.json

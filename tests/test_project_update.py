@@ -218,14 +218,22 @@ def _render_current_template(rel: str, init_data: dict) -> str:
     """Render `<template_root>/<rel>.j2` with the SAME jinja settings
     cmd_update uses, independently of cs/project_update.py, so a test can
     know what "the new render" is without trusting the code under test to
-    report its own output correctly."""
+    report its own output correctly.
+
+    `TEMPLATE_DEFAULTS` is the floor here for the same reason it is the floor
+    in `_render_vars`: `init_data` is a FROZEN dict, and a template that grows
+    a variable after a clone was stamped finds nothing to answer it. Leaving
+    that layer out would make this helper fail on exactly the case
+    `cs update` exists to handle, and say the product was broken when it was
+    the fixture."""
     import cs as cs_mod
+    from cs.project_init import TEMPLATE_DEFAULTS
 
     tpl_path = Path(cs_mod.__file__).parent / "templates" / "project" / f"{rel}.j2"
     env = jinja2.Environment(
         undefined=jinja2.StrictUndefined, trim_blocks=True, lstrip_blocks=True,
     )
-    return env.from_string(tpl_path.read_text()).render(**init_data)
+    return env.from_string(tpl_path.read_text()).render(**{**TEMPLATE_DEFAULTS, **init_data})
 
 
 def _e2e_already_current_no_prompt_no_diff() -> None:

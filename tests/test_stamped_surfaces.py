@@ -34,9 +34,13 @@ Asserted here:
   C. A REAL `cs update` run against a clone whose frozen `init_data` predates
      both the include and the `operator_voice` variable renders all three
      surfaces without a Jinja error.
-  D. `manifest.toml` reaches the stamp: a clone that declares a voice gets it
-     through `cs update` without re-running `cs init`, and one that declares
-     none gets the kernel default.
+  D. `manifest.toml` reaches the stamp: the two template-only keys a clone
+     declares for itself — `[surface] operator_voice` and `[local_scripts]
+     cron_denied` — both arrive through `cs update` without re-running `cs
+     init`, against a frozen `init_data` that predates them, and a clone that
+     declares no voice gets the kernel default. The second key is the one
+     whose failure is a permission hole: the executables it names must come
+     out denied in the stamped `bin/cs_operator_cron.sh`, in every spelling.
   E. Nothing Italian survives in the rendered `.claude/` tree stamped from the
      DEFAULT manifest, nor in `cs review`'s digest.
 """
@@ -62,6 +66,10 @@ PARTIALS = ROOT / "cs" / "templates" / "partials"
 # A sentence of the preamble long enough that no other file says it by accident.
 PREAMBLE_MARK = "taking over a desk that was already being worked"
 INCLUDE = '{% include "desk-preamble.md.j2" %}'
+
+# Invented, and it must stay invented: no real clone's filename belongs in
+# kernel code, fixtures included. What is under test is the mechanism.
+SAMPLE_SCRIPT = "bin/example_tool.py"
 
 SURFACES = (
     ".claude/commands/cs-review.md",
@@ -100,6 +108,7 @@ BASE = dict(
     repo_git_remote="", repo_kernel_version="0.1.0",
     name="Acme", accounts={"support": "UID123"}, accounts_default="support",
     operator_voice=project_init.DEFAULT_OPERATOR_VOICE,
+    local_scripts_cron_denied=[],
 )
 
 fails = 0
@@ -235,14 +244,17 @@ def _update_render() -> None:
                                 ("voice declared", "Klingon, ceremonial")):
             clone = Path(td, f"clone-{len(label)}-{declared is not None}")
             clone.mkdir()
-            # An EXISTING clone: init_data frozen before `operator_voice`
-            # existed, exactly like both live clones on the previous tag.
-            frozen = {k: v for k, v in BASE.items() if k != "operator_voice"}
+            # An EXISTING clone: init_data frozen before EITHER template-only
+            # manifest key existed, exactly like both live clones on the
+            # previous tag. Both must come off the manifest, not the freeze.
+            frozen = {k: v for k, v in BASE.items()
+                      if k not in ("operator_voice", "local_scripts_cron_denied")}
             (clone / "template-manifest.json").write_text(json.dumps({
                 "template_version": "1", "init_data": frozen, "file_checksums": {},
             }))
             manifest = project_init.build_jinja_env(TPL).get_template(
-                "manifest.toml.j2").render(**BASE)
+                "manifest.toml.j2").render(
+                    **{**BASE, "local_scripts_cron_denied": [SAMPLE_SCRIPT]})
             if declared:
                 manifest = manifest.replace(
                     f'operator_voice = "{project_init.DEFAULT_OPERATOR_VOICE}"',
@@ -265,6 +277,26 @@ def _update_render() -> None:
                 check((declared or project_init.DEFAULT_OPERATOR_VOICE) in text,
                       f"[{label}] the voice the MANIFEST declares must reach the "
                       f"stamp without re-running cs init ({rel})")
+
+            # The same property for the other template-only key, on the file
+            # where getting it wrong is a permission hole rather than a
+            # greeting in the wrong language: a clone-local executable named
+            # in `[local_scripts] cron_denied` must be denied in the stamped
+            # wrapper, in every spelling, after a REAL `cs update` — with a
+            # frozen init_data that predates the key entirely.
+            wrapper = clone / "bin" / "cs_operator_cron.sh"
+            check(wrapper.exists(),
+                  f"[{label}] cs update must stamp bin/cs_operator_cron.sh:\n{out}")
+            wrapper_text = wrapper.read_text() if wrapper.exists() else ""
+            for form in (SAMPLE_SCRIPT, "./" + SAMPLE_SCRIPT):
+                for interp in ("", ".venv/bin/python", ".venv/bin/python3",
+                               "python", "python3", "bash", "sh"):
+                    cmd = f"{interp} {form}" if interp else form
+                    check(f'"Bash({cmd}:*)"' in wrapper_text,
+                          f"[{label}] the executable the MANIFEST denies must be "
+                          f"denied in the stamped wrapper as `{cmd}` — a spelling "
+                          f"the tick can type and the deny list does not carry is "
+                          f"an open door")
 
 
 _one_canonical_text()

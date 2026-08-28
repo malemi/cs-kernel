@@ -154,6 +154,99 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## Unreleased
+
+**MINOR, and a SECURITY BOUNDARY.** A clone can now name its own executables
+in `manifest.toml` and have the cron wrapper deny them, in every command-text
+spelling. It changes the permission surface and the cron wrapper — two of the
+six triggers — so there is no lower tier available.
+**Re-collaudo: FULL, both clones.**
+
+### Fixed — a clone's own executables had no owned way to stay out of the tick
+
+A clone may keep scripts in its repo that exist for one company and would mean
+nothing in another. Some of them must be unreachable from the headless tick,
+which reads untrusted inbound mail; until now the kernel offered no way to say
+so, and the mother clone said it by hand-editing `bin/cs_operator_cron.sh` —
+a `SECURITY_CRITICAL` stamped file, re-rendered from the template on every
+`cs update`. That deny had been lost at three re-pins and re-applied by hand
+each time, which `v0.30.0`'s divergence report finally surfaced as the one
+true finding on that clone.
+
+It was also a single spelling of many. The hand edit denied
+`Bash(.venv/bin/python bin/mrcall_business.py:*)` and nothing else, while the
+script itself is mode 0775 with a `#!/usr/bin/env python3` shebang — so
+`bin/mrcall_business.py` and `./bin/mrcall_business.py` execute it with no
+interpreter word at all and matched no rule. `python3 bin/…`, `python bin/…`
+and the venv's `python3` matched nothing either. The script's own docstring
+asserted the opposite ("the headless cs-operator can NEVER reach this file"),
+and it does CRUD on phone assistants with an admin-resolved token that is
+honoured cross-owner. That docstring's claim is now true for the first time,
+and it is true for a general reason rather than a lucky one.
+
+**The kernel owns the mechanism; the clone owns the data.** `[local_scripts]
+cron_denied` in `manifest.toml` is a list of repo-relative paths, and
+`bin/cs_operator_cron.sh.j2` expands each into fourteen deny entries: seven
+ways to name an interpreter (none at all, the venv's `python` and `python3`,
+a bare `python` and `python3`, `bash`, `sh`) times the two path forms a
+command line uses (`bin/x`, `./bin/x`). The interpreter-less pair is the one
+that matters most — a shebang plus the executable bit needs no interpreter
+word — and it is the pair the hand edit never had. No filename of any clone
+appears anywhere in this kernel: charter rule 2, a command that makes sense in
+one clone only does not live in shared code.
+
+**Declaring nothing is the normal case, and it renders the kernel's own list
+byte for byte.** Most clones have no local executables; an absent or empty key
+produces exactly the previous 52-entry argument list. The key is template-only
+like `[surface]` and `[cron]`, read off the raw TOML at stamp time, and it is
+re-read on every `cs update` rather than trusted from the freeze — so an
+existing clone gets it by editing `manifest.toml` and running `cs update`,
+with no `cs init` re-run and no hand edit to a stamped file ever again.
+
+**What a deny list cannot do, stated rather than assumed.** A permission rule
+matches the literal text of a command. An absolute path, a flag before the
+script (`python3 -u bin/x`), a `cd` or `env` prefix, an interpreter not in the
+seven, and anything wrapped in `sh -c '…'` all reach the same code through
+text this list does not contain — as was already true of the `Bash(rm:*)`
+entry and of the six `cs` spellings. This raises the cost of reaching a
+surface by accident or by injected instruction; it is not a sandbox, and the
+wrapper now says so in its own comments. A script that must be unreachable
+whatever happens should not be executable by the user the tick runs as.
+
+### Changed — gate 17 reads the render, not the template source
+
+The wrapper's deny list is no longer a fixed text, so asserting on the `.j2`
+would assert on Jinja rather than on what a clone receives. Gate 17 renders
+the template through the kernel's own `build_jinja_env` and compares the
+`--disallowed-tools` argument list for exact, order-preserving equality in two
+scenarios: no local scripts declared (52 entries — the normal case, gated as a
+first-class path, because a stray token there would reach every clone) and one
+declared (66). The expansion is rebuilt independently inside the gate rather
+than imported from the kernel, so the gate cannot agree with the template
+about a wrong answer, and the sample path is invented (`bin/example_tool.py`)
+so that no clone's data lives in a kernel fixture. Gate 42 covers the other
+half end to end: a REAL `cs update` against a clone whose frozen `init_data`
+predates the key, asserting all fourteen spellings land in the stamped
+wrapper. `tests/run.sh`: 43 gates, `RESULT: all gates green`.
+
+### Migration — the deny is GONE until the clone declares it
+
+This is the one risky window and it is not optional reading. `cs update` will
+overwrite `bin/cs_operator_cron.sh` (`SECURITY_CRITICAL`, applied without a
+prompt), and with it the hand-edited line. If `manifest.toml` does not yet
+carry the key, the clone re-pins to a wrapper that denies that executable in
+**no** spelling at all — strictly worse than the one spelling it had. So on
+the mother clone, add the key BEFORE running `cs update`:
+
+```toml
+[local_scripts]
+cron_denied = ["bin/mrcall_business.py"]
+```
+
+Then `cs update`, then read the stamped `bin/cs_operator_cron.sh` and confirm
+fourteen `bin/mrcall_business.py` entries are present. A clone with no local
+executables needs no edit and sees no change.
+
 ## v0.31.0 — 2026-08-27
 
 **MINOR**: `cs review`'s output shape changes, two CLI surfaces are new
