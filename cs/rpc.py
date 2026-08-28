@@ -40,9 +40,20 @@ class EngineError(RuntimeError):
 
 
 class EngineClient:
-    def __init__(self, settings: Settings, on_notification: NotifyHandler | None = None):
+    def __init__(
+        self,
+        settings: Settings,
+        on_notification: NotifyHandler | None = None,
+        id_token: str | None = None,
+    ):
         self.settings = settings
         self.on_notification = on_notification
+        # A caller that already holds a valid ID token passes it here instead
+        # of letting `auth.get_id_token` read the clone's stored session —
+        # `cs init` is the case: it has a descriptor's refresh token in hand
+        # and no state dir written yet, and a wizard the operator may still
+        # cancel must not leave a session file behind.
+        self._id_token = id_token
         self.notifications: list[dict] = []
         self._ws = None
         self._recv_task: asyncio.Task | None = None
@@ -60,7 +71,7 @@ class EngineClient:
         return f"{base}/ws/{self.settings.engine_owner_uid}"
 
     async def __aenter__(self) -> "EngineClient":
-        token = auth.get_id_token(self.settings)
+        token = self._id_token or auth.get_id_token(self.settings)
         self._ws = await websockets.connect(
             self.url,
             additional_headers={"Authorization": f"Bearer {token}"},
@@ -164,12 +175,16 @@ class EngineClient:
 
 
 def call_sync(
-    settings: Settings, method: str, params: dict | None = None, timeout: float = 60
+    settings: Settings,
+    method: str,
+    params: dict | None = None,
+    timeout: float = 60,
+    id_token: str | None = None,
 ) -> Any:
     """One-shot convenience for CLI verbs: connect, call, disconnect."""
 
     async def _run():
-        async with EngineClient(settings) as c:
+        async with EngineClient(settings, id_token=id_token) as c:
             return await c.call(method, params, timeout=timeout)
 
     return asyncio.run(_run())
