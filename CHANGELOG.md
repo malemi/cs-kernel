@@ -154,6 +154,48 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.33.0 — 2026-08-28
+
+**MINOR.** `cs init` no longer asks for a Firebase uid, and its engine-URL
+default is a host that works. The CLI surface changes (two prompts removed,
+one default replaced), and the value it now resolves is the engine identity
+the daemon authenticates with — the auth boundary.
+**Re-collaudo: FULL, both clones.**
+
+### Fixed — the wizard asked for two values a human cannot type
+
+`descriptor_defaults()` mapped a mrcall-desktop sign-in onto the engine
+identity only when the machine held EXACTLY ONE profile descriptor. More than
+one returned `{}`, the same answer as none, on the reasoning that picking
+among profiles was `cs login`'s job. But several signed-in profiles is the
+normal state of an operator's machine, and the fallback that `{}` selected was
+a raw prompt for `Engine WS URL` and `Engine owner UID` — a socket URL
+defaulting to `wss://desktop.example.com`, which could not work, and a
+Firebase uid, which nobody types from memory. The wizard was refusing to read
+data it already had on disk.
+
+The uid is now never prompted, in any mode, for either the engine owner or the
+default account. It is resolved, in order: the only descriptor on the machine;
+the descriptor whose own mailbox matches the operator email just typed; a
+numbered pick among the rest, using `cs login`'s own picker so both surfaces
+ask the same way. "None of these" and EOF both mean no engine identity, and
+`KeyboardInterrupt` still cancels `cs init` as before. With no sign-in at all
+the clone is stamped without an engine identity — already a supported state
+everywhere downstream — and the wizard prints the one move that fills it,
+instead of demanding a string.
+
+`DEFAULT_ENGINE_WS_URL` is the remaining question's default: one
+mrcall-desktop deployment serves every clone this kernel stamps, so the host
+is shared infrastructure the kernel drives, recorded in
+`tests/reviewed_literals.txt` on the same grounds as `sms_proxy_base`. The
+runtime default in `config.py` stays `""`, so a clone's manifest still has to
+declare it.
+
+### Migration
+
+None. A clone re-running `cs init` sees fewer questions and the same stamped
+values; `manifest.toml` and `requirements.txt` are untouched by this release.
+
 ## v0.32.1 — 2026-08-28
 
 **MINOR, and a SECURITY BOUNDARY.** A clone can now name its own executables
