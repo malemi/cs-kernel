@@ -154,6 +154,69 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.37.0 — 2026-09-01
+
+**"Has this company ever written to this person" is answerable across every
+mailbox the kernel can read.** A company answers customers from several
+mailboxes while the operator's evidence is scoped to one. Three verbs share
+that bound — `cs contacted` (the operator mailbox's Sent folder, 30 days),
+`cs thread` and `cs ask` (the engine archive of the same mailbox) — so when
+they agree, the agreement reads as three sources corroborating each other and
+is one absence reported three times. Measured on 2026-09-01: a prospect whom a
+co-founder had answered from his own mailbox the day after she wrote appeared,
+to all three, as never contacted; the operator listed her at 61 days waiting
+and composed a reply apologising for two months of silence. It was caught
+before sending.
+
+`cs/mailboxes.py` fans out over every account in `CS_ACCOUNTS`. Credentials
+come from the engine's own handover — `config.load(engine_owner_uid=…)`, then
+`settings.get` for the address and `settings.get_secret` for the password, two
+calls because `get_secret` serves secret keys only. Nothing is read from the
+environment and no password becomes a `Settings` field, so `cs config` cannot
+print one. One IMAP session per mailbox per process, reused.
+
+**A mailbox that cannot be read is `unreadable`, never empty.** That
+distinction is the release: a failed login rendering as an absence would be the
+incident reproduced inside its own fix. `cs contacted` gains exit **3** for
+UNKNOWN, leaving 0 and 1 exactly as they were; the degraded source travels
+through `cs history --json`; and every answer prints the scope it actually
+read, because a scope that narrows silently is what went wrong and one that
+narrows visibly is something an operator can act on.
+
+`cs history` is a new verb rather than a fold into `dossier`. Rule 6 prefers the
+fold, but `dossier`'s `sent_to` call is one of the four gates the next release
+moves, and folding would have moved a send gate through the back door in a
+release that touches none.
+
+**No send gate changes here, deliberately.** The four gating call sites
+(`campaign.py:108` and `:120`, `cli.py:797`, `draft_state.py:290`) and the
+stamped prose that says prior-contact evidence is one mailbox both wait on a
+prerequisite the kernel must not paper over: a mailbox is reachable only if it
+has an engine profile, and on `124-cs` the mailbox whose reply was missed has
+none. Building a profile-less path here for one company would break the rule of
+two. The design, the prerequisite and the deferred half are in
+`docs/briefs/2026-09-01-contact-history-across-mailboxes.md` and its plan.
+
+**Migration**: none. No manifest field, no env key, no changed default. The
+four canonical `cs history` spellings are added to the stamped
+`permissions.allow` block — additive, and without them the new verb prompts for
+permission on the surface it was built for. Clones pick that up on their next
+`cs update`.
+
+**Re-collaudo tier: FULL, both clones — and it was NOT run before this tag.**
+The tier is FULL because the release touches `gmail_archive` and the permission
+surface, two entries on the list that mandates it, even though no send gate
+moved. The operator authorised publication without the suite having been run on
+either clone, so the FULL collaudo is **owed at each clone's upgrade** and this
+entry is the record of that, in the same form as `v0.19.0`'s waiver. What must
+be exercised there and could not be exercised here: `cs history` against a real
+engine and real IMAP across more than one mailbox, an intentionally unreadable
+mailbox proving it reports `unreadable` rather than absence, `cs contacted`
+still answering as before on the operator mailbox, and the new allow entries
+landing through `cs update`. Everything in this release is proven against
+protocol doubles and the 45-gate suite; nothing in it has met a live mailbox.
+
+
 ## v0.36.0 — 2026-09-01
 
 Two changes ship together: every operator workflow becomes an Agent Skill,
