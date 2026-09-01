@@ -5,6 +5,15 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-09-01 — settled by v0.34.0, pruned at the v0.37.0 release
+
+Recorded here when it stopped carrying operational value: the behaviour is stable and documented in its own release entry.
+
+- **`cs init` discovers engine identity and mailbox credentials.** It selects a
+  matching mrcall-desktop descriptor, reads the mailbox password through
+  owner-authenticated `settings.get_secret`, and falls back to a prompt only
+  when the engine cannot provide it.
+
 ## 2026-09-01 — superseded by the v0.36.0 release
 
 These claims were replaced when `v0.36.0` published the skills-only migration

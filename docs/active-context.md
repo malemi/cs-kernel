@@ -14,7 +14,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## State now
 
-- **Latest release tag: `v0.37.0`. Current HEAD status: tagged as `v0.37.0`.** These
+- **Latest release tag: `v0.37.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; keep the wording
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
@@ -29,10 +29,10 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   drafts, tasks, human takeovers, out-of-band closures, campaigns, and the last
   scheduled run. Gmail answers whether a message exists; the engine answers
   what kind of message it is.
-- **Draft freshness is recomputed at review time.** `overtaken` and
-  `superseded` are Gmail signals, `settled` is the engine's verdict, and
-  `ready` currently means only that none of those signals fired. Draft deletion
-  remains a named human action; the cron denies both draft-retirement paths.
+- **Draft freshness is recomputed at review time.** `overtaken` and `superseded`
+  are Gmail signals, `settled` is the engine's verdict, `ready` means only that
+  none fired. Draft deletion is a named human action; the cron denies both
+  draft-retirement paths.
 - **Two human-only ledger verbs remain distinct.** `cs handled` records work
   resolved outside email; `cs escalated` records a still-open contact taken over
   by a named human. Both remain visible and both are denied to the unattended
@@ -55,11 +55,15 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   The read path is `cs ask`; `cs chat` is denied to the cron. The rules ship
   abstract, because a concrete value correct in one country is inherited as
   false everywhere else.
-- **`cs init` discovers engine identity and mailbox credentials.** It selects a
-  matching mrcall-desktop descriptor, reads the mailbox password through
-  owner-authenticated `settings.get_secret`, and falls back to a prompt only
-  when the engine cannot provide it.
-- **No clone runs `v0.36.0`.** `mrcall-cs` declares and installs `v0.32.1`
+- **Contact history is answerable across mailboxes; no send gate uses it yet.**
+  `cs history` fans out over every `CS_ACCOUNTS` account, taking each mailbox's
+  credential from the engine handover rather than any env key, reports a mailbox
+  it cannot read as `unreadable` rather than absent, and prints the scope it
+  actually read. The four gating call sites are the next release, blocked on a
+  prerequisite — a mailbox is reachable only with an engine profile, and the
+  `124-cs` mailbox whose reply was missed has none.
+  [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
+- **No clone runs `v0.36.0` or `v0.37.0`.** `mrcall-cs` declares and installs `v0.32.1`
   (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
   recorded at `v0.35.0`; that clone is not present on this machine, so its state
   is a claim from its own last upgrade, not a reading. The CHANGELOG
@@ -72,10 +76,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **`v0.36.0` is published but applied nowhere.** Both clones are behind it. The
-  tag's static + live read-only re-test has not been run on either, and the
-  attention agenda released in `v0.35.0` still has no live-operator run against
-  a real mailbox.
+- **`v0.36.0` and `v0.37.0` are published and applied nowhere.** `v0.37.0`'s
+  tier is FULL on both clones and the suite was not run before the tag: the
+  operator authorised publication without it, so the collaudo is owed at each
+  upgrade and the CHANGELOG entry records that. Nothing in `v0.37.0` has met a
+  live mailbox — the fan-out, the `unreadable` outcome and the scope line are
+  proven against protocol doubles only. The `v0.35.0` attention agenda still has
+  no live-operator run either.
 - **The outbound sourcing rules are proven as rendered text, not as behaviour.**
   Gates hold that they appear once per surface and that no fourth surface can
   paste them in unnoticed. Whether a session actually reaches memory before
@@ -106,9 +113,12 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
    crosses `v0.33.0`, `v0.34.0` and `v0.35.0` as well. Read each of those
    entries' re-test tiers and run the strictest one they demand, not only
    `v0.36.0`'s.
-3. Update the CHANGELOG operational-pin marker once both clones are on the same
+3. Stand up engine profiles for the `124-cs` mailboxes that must be gated. That
+   is the prerequisite the next release waits on, and it is the clone
+   operator's action, not the kernel's.
+4. Update the CHANGELOG operational-pin marker once both clones are on the same
    tag — it is the sign-off, not a running commentary.
-4. Replace internal `re-collaudo` wording still exposed by `cs update` with
+5. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-5. Promote reusable attachment-reading and scheduling pieces only when a second
+6. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.
