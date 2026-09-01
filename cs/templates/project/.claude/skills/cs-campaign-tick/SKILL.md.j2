@@ -39,8 +39,7 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 - **Re-classify only on a NEWER reply.** Re-LLM a contact's reply only when a
   reply arrived that is newer than the last one you classified
   (`dossier.classified_upto`). Do not re-reason the same message every run.
-- **NEVER invent facts.** Use only what is in the thread + engine memory. No
-  prices, dates, promises, or capabilities the record does not contain.
+- **NEVER invent facts.** Use only what is in the thread + engine memory.
 {% if excluded_campaign %}
 - **The {{ excluded_campaign }} campaign is EXCLUDED.** `{{ excluded_campaign }}` is
   owned by a dedicated process. `cs campaign pending` already drops it, but never
@@ -60,6 +59,9 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 - **Free-form replies go through the engine** via `cs draft-reply …`, never
   cs-SMTP, never `cs chat --allow` (denied to you by permission). It stores a
   DRAFT and CANNOT send — sending is the operator's job. You only ever draft.
+
+{% include "outbound-fact-sourcing.md.j2" %}
+
 
 ## 1. List the campaigns
 

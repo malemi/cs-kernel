@@ -200,24 +200,20 @@ quoted inside an older draft. Read the thread:
   asked, in their words, and when, you have not read enough to put their name in
   front of the operator.
 
-## 2b. When unsure HOW to answer — search past mail, don't guess
+## 2b. When unsure HOW to answer — source it, don't guess
 
-If you are not fully sure how to answer (a mechanic of this company's own domain
-— see `company/triage-domain-examples.md` — a policy, what we previously
-promised, how we phrase it): **memory first** (this
-skill + `cs ask`), and **if memory is thin → SEARCH {{ email_address }}'s PAST SENT MAIL
-for precedent**, then ground the reply in how we actually handled it before:
+{% include "outbound-fact-sourcing.md.j2" %}
 
-```bash
-.venv/bin/python -m cs rpc emails.search '{"query":"<terms>","folder":"sent","limit":8}'
-.venv/bin/python -m cs rpc emails.list_by_thread '{"thread_id":"<id>"}'   # read the real wording
-```
 
-NEVER invent mechanics, prices, steps, or commitments — lift them from the past
-emails (or escalate if you can't find them). **After you draft, UPDATE memory**
-with what you learned, so next time it's already there. (Doing the opposite —
-guessing at a mechanic instead of searching the archive — has already produced a
-confidently wrong answer to a real customer.)
+In this mailbox that means: a mechanic of this company's own domain (see
+`company/triage-domain-examples.md`), a policy, what we previously promised, or
+how we phrase it — {{ email_address }}'s own past sent mail is the precedent to
+search.
+
+**After you draft, UPDATE memory** with what you learned, so next time it's
+already there. (Doing the opposite — guessing at a mechanic instead of searching
+the archive — has already produced a confidently wrong answer to a real
+customer.)
 
 ## 3. Decide per candidate
 

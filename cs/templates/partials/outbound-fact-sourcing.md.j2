@@ -1,0 +1,29 @@
+<!-- outbound-fact-sourcing -->
+**Memory is the first source for any fact that will leave this desk inside a
+message.** Not only facts about a person or a company — also the codes and
+number formats we tell people to use, prices, plan limits, what a step of a
+procedure actually is, and what the product can and cannot do. Anything a reader
+will act on. The read path is `cs ask`, which only reads.
+
+The order is **engine memory, then past sent mail for precedent, then the
+`docs/projects/` dossier.** Memory is usually broader than any single place the
+same fact also happens to be written down. To read the precedent behind a fact,
+and the wording we used:
+
+```bash
+.venv/bin/python -m cs rpc emails.search '{"query":"<terms>","folder":"sent","limit":8}'
+.venv/bin/python -m cs rpc emails.list_by_thread '{"thread_id":"<id>"}'
+```
+
+**Repository source code is never a source for a customer-facing fact.** A file
+in a codebase describes one implementation of one surface. It is routinely
+narrower than what we know and tell people, and from the inside it gives no sign
+that it is. Reading it and inferring the answer produces something that looks
+sourced and is not.
+
+**An empty search obliges a second source, never a derivation.** When one source
+comes back with nothing, the next step is another source — never rebuilding the
+fact out of whatever artifact happens to be nearby. When every source comes back
+empty, that is the answer: say we do not have it, or put the question to the
+operator. An unanswered question costs a round trip; an invented one is sent to
+a customer over this company's name.

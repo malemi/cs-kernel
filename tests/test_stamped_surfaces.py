@@ -67,6 +67,25 @@ PARTIALS = ROOT / "cs" / "templates" / "partials"
 PREAMBLE_MARK = "taking over a desk that was already being worked"
 INCLUDE = '{% include "desk-preamble.md.j2" %}'
 
+# The outbound-fact-sourcing partial: memory-first rule for anything that
+# leaves the desk in an outbound message. Its marker is an HTML comment
+# (the partial carries no heading — it lands inside a numbered section and
+# inside skill bullet lists, so a `##` would open a sibling section). A
+# second, PROSE mark is asserted alongside it: the comment alone only catches
+# a future surface that includes the partial by name — a copy-paste of the
+# rule's TEXT into a fourth surface carries no comment and would otherwise
+# pass every assertion below.
+OUTBOUND_MARK = "<!-- outbound-fact-sourcing -->"
+OUTBOUND_PROSE_MARK = (
+    "Repository source code is never a source for a customer-facing fact."
+)
+OUTBOUND_INCLUDE = '{% include "outbound-fact-sourcing.md.j2" %}'
+OUTBOUND_SURFACES = (
+    "CLAUDE.md",
+    ".claude/skills/cs-triage-mail/SKILL.md",
+    ".claude/skills/cs-campaign-tick/SKILL.md",
+)
+
 # Invented, and it must stay invented: no real clone's filename belongs in
 # kernel code, fixtures included. What is under test is the mechanism.
 SAMPLE_SCRIPT = "bin/example_tool.py"
@@ -147,6 +166,30 @@ def _one_canonical_text() -> None:
               f"{rel}.j2 must pull the preamble in with {INCLUDE}")
 
 
+def _one_canonical_outbound_text() -> None:
+    holders = [p for p in (ROOT / "cs").rglob("*")
+               if p.is_file() and p.suffix in (".j2", ".py", ".md")
+               and OUTBOUND_MARK in p.read_text(errors="replace")]
+    check(holders == [PARTIALS / "outbound-fact-sourcing.md.j2"],
+          f"the outbound-fact-sourcing marker must exist EXACTLY once in the "
+          f"kernel, in the partials root; found "
+          f"{[str(p.relative_to(ROOT)) for p in holders]}")
+    prose_holders = [p for p in (ROOT / "cs").rglob("*")
+                      if p.is_file() and p.suffix in (".j2", ".py", ".md")
+                      and OUTBOUND_PROSE_MARK in p.read_text(errors="replace")]
+    check(prose_holders == [PARTIALS / "outbound-fact-sourcing.md.j2"],
+          f"the outbound-fact-sourcing PROSE must exist EXACTLY once in the "
+          f"kernel, in the partials root — a fourth surface can paste the "
+          f"rule's text without the HTML comment and still evade the marker "
+          f"check above; found "
+          f"{[str(p.relative_to(ROOT)) for p in prose_holders]}")
+    for rel in OUTBOUND_SURFACES:
+        src = TPL / f"{rel}.j2"
+        check(OUTBOUND_INCLUDE in src.read_text(),
+              f"{rel}.j2 must pull outbound-fact-sourcing in with "
+              f"{OUTBOUND_INCLUDE}")
+
+
 # ------------------------------------------------------------------ B + E
 
 def _init_render() -> None:
@@ -168,6 +211,43 @@ def _init_render() -> None:
               "the partial itself is never stamped into a clone")
         check(not any("desk-preamble" in k for k in checksums),
               "and it is never entered in the checksum ledger")
+
+        check(not (dest / "outbound-fact-sourcing.md").exists(),
+              "the outbound-fact-sourcing partial itself is never stamped "
+              "into a clone")
+        check(not any("outbound-fact-sourcing" in k for k in checksums),
+              "and it is never entered in the checksum ledger")
+
+        # Single-source property for the outbound-fact-sourcing marker AND its
+        # prose companion: each must land exactly once in each including
+        # surface, and nowhere else in the rendered tree.
+        outbound_hits: dict[Path, int] = {}
+        outbound_prose_hits: dict[Path, int] = {}
+        for path in dest.rglob("*"):
+            if not path.is_file():
+                continue
+            text = path.read_text(errors="replace")
+            count = text.count(OUTBOUND_MARK)
+            if count:
+                outbound_hits[path.relative_to(dest)] = count
+            prose_count = text.count(OUTBOUND_PROSE_MARK)
+            if prose_count:
+                outbound_prose_hits[path.relative_to(dest)] = prose_count
+        for rel in OUTBOUND_SURFACES:
+            check(outbound_hits.get(Path(rel)) == 1,
+                  f"{rel} must carry the outbound-fact-sourcing marker "
+                  f"exactly once, got {outbound_hits.get(Path(rel), 0)}")
+            check(outbound_prose_hits.get(Path(rel)) == 1,
+                  f"{rel} must carry the outbound-fact-sourcing PROSE mark "
+                  f"exactly once, got {outbound_prose_hits.get(Path(rel), 0)}")
+        check(set(outbound_hits) == {Path(rel) for rel in OUTBOUND_SURFACES},
+              f"the outbound-fact-sourcing marker must appear only in "
+              f"{OUTBOUND_SURFACES}, found it in "
+              f"{sorted(str(k) for k in outbound_hits)}")
+        check(set(outbound_prose_hits) == {Path(rel) for rel in OUTBOUND_SURFACES},
+              f"the outbound-fact-sourcing PROSE mark must appear only in "
+              f"{OUTBOUND_SURFACES}, found it in "
+              f"{sorted(str(k) for k in outbound_prose_hits)}")
 
         # E — the whole rendered agent surface, from the DEFAULT manifest.
         for path in sorted((dest / ".claude").rglob("*")):
@@ -278,6 +358,23 @@ def _update_render() -> None:
                       f"[{label}] the voice the MANIFEST declares must reach the "
                       f"stamp without re-running cs init ({rel})")
 
+            # The same include-survives-`cs update` property, for the
+            # outbound-fact-sourcing partial and its three including hosts —
+            # `cs-review`/`cs-operator` are the preamble's hosts above,
+            # CLAUDE.md and cs-campaign-tick are new here and untested on the
+            # update path until now.
+            for rel in OUTBOUND_SURFACES:
+                check(f"failed to render {rel}" not in out,
+                      f"[{label}] cs update must render {rel} — a loader-less "
+                      f"environment breaks EVERY clone on the include:\n{out}")
+                text = (clone / rel).read_text() if (clone / rel).exists() else ""
+                check(OUTBOUND_MARK in text,
+                      f"[{label}] cs update must stamp outbound-fact-sourcing "
+                      f"into {rel}")
+                check(OUTBOUND_PROSE_MARK in text,
+                      f"[{label}] cs update must stamp the outbound-fact-sourcing "
+                      f"PROSE into {rel}")
+
             # The same property for the other template-only key, on the file
             # where getting it wrong is a permission hole rather than a
             # greeting in the wrong language: a clone-local executable named
@@ -300,6 +397,7 @@ def _update_render() -> None:
 
 
 _one_canonical_text()
+_one_canonical_outbound_text()
 _init_render()
 _kernel_digest_is_english()
 _update_render()
