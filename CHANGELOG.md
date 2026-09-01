@@ -154,6 +154,101 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.36.0 — 2026-09-01
+
+Two changes ship together: every operator workflow becomes an Agent Skill,
+and memory becomes the first source for any outbound fact.
+
+### Memory-first for outbound facts
+
+**Memory is the first source for any fact that will appear in an outbound
+message, and an empty search obliges a second source rather than a
+derivation.** Section 9 of the clone template routed only questions *about an
+entity* to engine memory. A customer-facing message is mostly not made of
+entity facts — it carries codes, number formats, prices, plan limits,
+procedures and capability claims — so for those the operator had no declared
+source of truth and reached for whichever artifact was nearest. Measured on
+2026-09-01: a reply about landline forwarding was derived from a dashboard
+source file whose map covered two carriers and stripped the country prefix,
+producing a dial string that engine memory, which holds the universal code
+recorded dozens of times, would have answered correctly. The draft was caught
+before sending.
+
+The two rules are stated once, in the new partial
+`cs/templates/partials/outbound-fact-sourcing.md.j2`, and included by the three
+surfaces that need them: `CLAUDE.md.j2` § 9 (retitled "What we know", **number
+kept at 9** because `cs-customer` cites it by number), `cs-triage-mail` § 2b,
+and `cs-campaign-tick` § 0. § 2b now delegates instead of restating, and the
+Sent-search RPC calls moved into the partial so that every surface naming
+Sent-mail precedent also gives a way to reach it. The read path is **`cs ask`**,
+never `cs chat` — the cron denies `cs chat` in all six spellings, so a headless
+skill told to use it would state a rule it cannot execute.
+
+The rules ship **abstract**: the kernel names the class of fact that must come
+from memory and never a concrete instance. A dial code that is correct in one
+country is inherited as false by every clone elsewhere, so concrete values stay
+in engine memory and in each clone's `company/`.
+
+`cs-review` is deliberately not a host. It is read-only by declaration and
+composes nothing; it inherits the rules by reading `CLAUDE.md` in full.
+`docs/projects/README.md.j2` keeps its file-first order — that order orients on
+a project and supplies the names a later `ask` is tuned with — and gains one
+clause scoping outbound facts to § 9.
+
+`tests/test_stamped_surfaces.py` holds the single-source property, which no
+gate did before. It matches an HTML marker **and** a prose sentence: a marker
+alone is defeated by pasting the rule's text without the comment, demonstrated
+live rather than assumed. Its `cs update` leg was preamble-scoped and did not
+cover the new include hosts; it now asserts both marks on all three.
+
+One rendering constraint discovered here and worth knowing before adding a
+fourth host: `trim_blocks` swallows the blank line after an `{% include %}`,
+merging the partial's last paragraph with whatever follows. Every include of
+this partial carries two blank lines after the tag. The same quirk is
+pre-existing on the older `desk-preamble` includes and is not addressed here.
+
+### Every operator workflow is an Agent Skill
+
+This half was implemented on 2026-08-28 and left untagged; it is published
+here rather than carried further as unreleased work, because a tag that
+contains a change nobody can read about is how a clone ends up running code
+its operator never reviewed.
+
+`.claude/skills` is the one canonical rendered workflow surface: `.agents/skills`
+and `.opencode/skills` resolve to those same bytes, and `AGENTS.md` points at
+`CLAUDE.md`. Five workflows — `cs-account`, `cs-campaign`, `cs-cron`, `cs-help`,
+`cs-review` — moved from `.claude/commands/<name>.md.j2` to
+`.claude/skills/<name>/SKILL.md.j2`, with no compatibility shims. A fresh render
+has ten skills and no command directory. `install_agent_surfaces()` owns the
+links and the cleanup, and `cs update` retires exactly the five command-era
+Claude and OpenCode paths plus the home-global Codex prompts, preserving
+unrelated files. Every workflow-specific safety rule, the shared desk preamble
+and the single-copy review attention contract were carried over unchanged.
+
+Work trace: `docs/briefs/2026-08-28-agent-skills-only.md` and
+`docs/execution-plans/2026-08-28-agent-skills-only.md`. Cross-host contract:
+`docs/agent-skills.md`.
+
+**Migration**: none to write by hand. No CLI verb, flag, permission string or
+manifest field changed, and no clone edit is required. `cs update` performs the
+retirement and the re-link; a clone that has hand-edited a stamped workflow will
+see it in the closing checksum block and must decide it there.
+
+**Re-collaudo tier: static + live read-only, both clones.** Below FULL for a
+MINOR, and this is why that is safe: nothing here touches a send path,
+`campaign`, `send_mail`, `gmail_archive`, the auth boundary or the permission
+surface — the deny and allow enumerations are byte-identical. It is above
+static because the skills half changes `cs/project_init.py` and
+`cs/project_update.py` and **deletes files on the clone during the upgrade**,
+which must be observed on a real clone rather than asserted from the kernel.
+Concretely: after `cs update`, confirm ten skills and no `.claude/commands`
+directory, confirm `.agents/skills` and `.opencode/skills` resolve to the
+canonical tree, confirm no unrelated file was retired, and read the rendered
+`CLAUDE.md` § 9, `cs-triage-mail` § 2b and `cs-campaign-tick` to see the
+sourcing rules once per surface with no literal Jinja left. Then `cs whoami`
+as the proof call. Nothing is written and nothing is sent.
+
+
 ## v0.35.0 — 2026-08-28
 
 **MINOR.** `/cs-review` now owns the final attention decision instead of

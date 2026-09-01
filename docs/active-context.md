@@ -14,7 +14,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## State now
 
-- **Latest release tag: `v0.35.0`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.36.0`. Current HEAD status: tagged as `v0.36.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; keep the wording
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
