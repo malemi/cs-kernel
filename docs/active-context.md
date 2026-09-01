@@ -37,29 +37,34 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   resolved outside email; `cs escalated` records a still-open contact taken over
   by a named human. Both remain visible and both are denied to the unattended
   operator.
-- **The source-tree `cs-review` skill now adjudicates attention.** It builds a
+- **The `cs-review` skill adjudicates attention.** It builds a
   conversation/task/draft ledger, reads full current threads, requires one of
   five explicit verdicts per candidate, and puts only positive-evidence
-  `act_now` rows in the main agenda. The seven-case incident replay passed 7/7
-  with Claude Opus and the 43-gate suite is green. The completed work trace is
+  `act_now` rows in the main agenda. Its work trace is
   [`execution-plans/2026-08-28-attention-agenda.md`](execution-plans/2026-08-28-attention-agenda.md).
-- **All operator workflows are now project-scoped skills in the source tree.**
-  `.claude/skills` is canonical; `.agents/skills` and `.opencode/skills` resolve
-  those same bytes. Fresh renders have ten skills and no command directory;
-  `cs update` retires the exact five command-era Claude/OpenCode paths and
-  home-global Codex prompts while preserving unrelated files. The 43-gate suite
-  and all ten independent skill validations are green. This work is untagged;
-  its completed trace is
-  [`execution-plans/2026-08-28-agent-skills-only.md`](execution-plans/2026-08-28-agent-skills-only.md).
+- **`v0.36.0` carries two changes: agent-skills-only, and memory-first for
+  outbound facts.** Its re-test tier is static + live read-only on both clones —
+  above static because `cs update` deletes command-era files on the clone, which
+  has to be observed rather than asserted.
+- **Two sourcing rules bind every outbound message.** Memory is the first source
+  for any fact that will appear in one — not only entity facts — and an empty
+  search obliges a second source rather than a derivation. They are stated once
+  in `cs/templates/partials/outbound-fact-sourcing.md.j2` and included by
+  `CLAUDE.md.j2` § 9, `cs-triage-mail` § 2b and `cs-campaign-tick`. `cs-review`
+  is not a host: it composes nothing and inherits them by reading `CLAUDE.md`.
+  The read path is `cs ask`; `cs chat` is denied to the cron. The rules ship
+  abstract, because a concrete value correct in one country is inherited as
+  false everywhere else.
 - **`cs init` discovers engine identity and mailbox credentials.** It selects a
   matching mrcall-desktop descriptor, reads the mailbox password through
   owner-authenticated `settings.get_secret`, and falls back to a prompt only
   when the engine cannot provide it.
-- **Clone pins and installed packages are aligned only for `mario124-cs`.** On
-  2026-08-28, it declares and runs `v0.35.0`. `mrcall-cs` still declares
-  `v0.32.1` while its venv reports `0.35.0`; it must not be described as
-  pinned-and-running one version until declaration and environment agree and
-  are re-tested.
+- **No clone runs `v0.36.0`.** `mrcall-cs` declares and installs `v0.32.1`
+  (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
+  recorded at `v0.35.0`; that clone is not present on this machine, so its state
+  is a claim from its own last upgrade, not a reading. The CHANGELOG
+  operational-pin marker says `v0.28.0`, because its owner step is the re-pin
+  sign-off that runs only after both clones move.
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -67,12 +72,14 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **The attention agenda is released but not yet live-operator verified after
-  upgrade.** `mario124-cs` now declares and runs `v0.35.0`; the generated review
-  skill still needs a read-only run against its live mailbox.
-- **The skills-only migration is implemented but unreleased.** Its disposable
-  `mario124-cs` proof passed without touching the real clone; publishing the
-  MINOR release and upgrading the clone remain separate explicit actions.
+- **`v0.36.0` is published but applied nowhere.** Both clones are behind it. The
+  tag's static + live read-only re-test has not been run on either, and the
+  attention agenda released in `v0.35.0` still has no live-operator run against
+  a real mailbox.
+- **The outbound sourcing rules are proven as rendered text, not as behaviour.**
+  Gates hold that they appear once per surface and that no fourth surface can
+  paste them in unnoticed. Whether a session actually reaches memory before
+  composing needs a live engine and has not been exercised.
 - **Interactive review has an ambient-permission boundary.** A rendered skill
   can contain no mutation path and can stop before repair, but it cannot revoke
   tools already granted to the surrounding Claude Code session. Hard isolation
@@ -91,13 +98,16 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Publish the skills-only MINOR release when authorized; the operator will
-   perform the real clone upgrade separately.
-2. Upgrade each clone when its operator chooses, run the release's static +
-   live read-only re-test, then verify the real mario124 review against its
-   live mailbox.
-3. Reconcile each clone's declared pin with its installed package, then run the
-   required re-test only after the operator explicitly requests the upgrade.
+1. Upgrade each clone to `v0.36.0` when its operator chooses, then run the tag's
+   static + live read-only re-test: ten skills and no `.claude/commands`, the
+   agent surfaces resolving to the canonical tree, no unrelated file retired,
+   and the sourcing rules once per rendered surface.
+2. `mrcall-cs` is four minor releases behind at `v0.32.1`, so its upgrade
+   crosses `v0.33.0`, `v0.34.0` and `v0.35.0` as well. Read each of those
+   entries' re-test tiers and run the strictest one they demand, not only
+   `v0.36.0`'s.
+3. Update the CHANGELOG operational-pin marker once both clones are on the same
+   tag — it is the sign-off, not a running commentary.
 4. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
 5. Promote reusable attachment-reading and scheduling pieces only when a second

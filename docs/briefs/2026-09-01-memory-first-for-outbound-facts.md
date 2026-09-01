@@ -66,7 +66,7 @@ files would ship the kernel's own duplication failure, so they live in one new
 partial, `cs/templates/partials/outbound-fact-sourcing.md.j2`, `{% include %}`d
 by each surface that needs them. The render environment already carries the
 partials root on its search path for the whole project template
-(`cs/project_init.py:932`), so `CLAUDE.md.j2` can include it exactly as the
+(`cs/project_init.py:933`), so `CLAUDE.md.j2` can include it exactly as the
 skills include `desk-preamble.md.j2`.
 
 The rules ship **abstract**. The kernel states the *class* of fact that must

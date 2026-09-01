@@ -23,7 +23,7 @@ that property, because no existing gate does.
 The include host works: rendering a probe partial through
 `cs.project_init.render_templates` put its text into the rendered `CLAUDE.md`
 with no unrendered Jinja, and `cs update` shares that loader
-(`project_update.py:553` → `project_init.py:932`). One boundary: the
+(`project_update.py:553` → `project_init.py:933`). One boundary: the
 `project_memory` render (`project_memory.py:71`) builds a single-root
 environment that would **not** resolve a partial. Nothing in this plan renders
 through it.

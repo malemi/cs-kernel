@@ -5,6 +5,47 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-09-01 — superseded by the v0.36.0 release
+
+These claims were replaced when `v0.36.0` published the skills-only migration
+together with the outbound-fact sourcing rules. Relocated verbatim from
+`active-context.md`, grouped under their original sections.
+
+### State now
+
+- **All operator workflows are now project-scoped skills in the source tree.**
+  `.claude/skills` is canonical; `.agents/skills` and `.opencode/skills` resolve
+  those same bytes. Fresh renders have ten skills and no command directory;
+  `cs update` retires the exact five command-era Claude/OpenCode paths and
+  home-global Codex prompts while preserving unrelated files. The 43-gate suite
+  and all ten independent skill validations are green. This work is untagged;
+  its completed trace is
+  [`execution-plans/2026-08-28-agent-skills-only.md`](execution-plans/2026-08-28-agent-skills-only.md).
+- **Clone pins and installed packages are aligned only for `mario124-cs`.** On
+  2026-08-28, it declares and runs `v0.35.0`. `mrcall-cs` still declares
+  `v0.32.1` while its venv reports `0.35.0`; it must not be described as
+  pinned-and-running one version until declaration and environment agree and
+  are re-tested.
+
+### Unresolved
+
+- **The attention agenda is released but not yet live-operator verified after
+  upgrade.** `mario124-cs` now declares and runs `v0.35.0`; the generated review
+  skill still needs a read-only run against its live mailbox.
+- **The skills-only migration is implemented but unreleased.** Its disposable
+  `mario124-cs` proof passed without touching the real clone; publishing the
+  MINOR release and upgrading the clone remain separate explicit actions.
+
+### Next
+
+1. Publish the skills-only MINOR release when authorized; the operator will
+   perform the real clone upgrade separately.
+2. Upgrade each clone when its operator chooses, run the release's static +
+   live read-only re-test, then verify the real mario124 review against its
+   live mailbox.
+3. Reconcile each clone's declared pin with its installed package, then run the
+   required re-test only after the operator explicitly requests the upgrade.
+
 ## 2026-08-28 — narrative pruned from `State now` at the v0.31.0 consolidation
 
 Relocated verbatim from `active-context.md`; the binding constraints stayed
