@@ -82,6 +82,7 @@ HEAD_TAGGED_RE = re.compile(
 # forbidden by the release plan; pin its object so a force-move cannot be
 # described away in prose.
 IMMUTABLE_TAG_TARGETS = {
+    "v0.36.0": "ef757de1793c835c4444385927a1c94e2fdfd44f",
     "v0.35.0": "361325b6a0bffbf93fd187375f3b20ea5b522aa8",
     "v0.34.0": "63d8cadc888014b302eb09bd1c62daa73e2a686b",
     "v0.33.0": "02f7c2742dae2e517bc1532e4cb4163ce09fb8c8",
