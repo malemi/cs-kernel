@@ -9,6 +9,8 @@ Code is the brain. These verbs are thin transport:
   rpc        generic JSON-RPC call: cs rpc <method> ['{"json": "params"}'].
   thread     all email threads exchanged with one address (both directions).
   contacted  did the operator write to this address in the last N days? (dedup)
+  history    has this company EVER exchanged mail with this address, from any
+             mailbox it can open — and which mailboxes it could not read.
   unanswered inbound still awaiting a human reply (deterministic, Sent-anchored).
   handled    record that a contact was resolved OUT OF BAND (phone, WhatsApp,
              in person) — their mail up to that moment stops being open work.
@@ -232,17 +234,134 @@ def cmd_contacted(args) -> int:
     # `emails.search folder:sent` drops a thread the moment the customer replies
     # last (storage latest-sender bug) and can miss mail entirely — so it is
     # blind to replies we sent by hand. Read Gmail directly. See cs/gmail_archive.py.
+    #
+    # ONE mailbox and ONE window, and the output says so. This verb is the
+    # re-contact gate ("may we write again within DEDUP_DAYS"), not the
+    # company's contact history: it cannot see a colleague who answered from
+    # his own mailbox, and a line ending on an unqualified "ground truth" was
+    # read as a verdict on the company. `cs history` is that wider question.
     settings = config.load()
-    from . import gmail_archive
+    from . import mailboxes
 
-    msgs = gmail_archive.sent_to(settings, args.email, days=args.days)
+    prog = settings.prog_name or "cs"
+    try:
+        fan = mailboxes.sent_to_here(settings, args.email, days=args.days)
+    finally:
+        # Symmetric with `history`: the session cache is process-wide, so a verb
+        # that has finished answering hands the mailbox back rather than leaving
+        # a logged-in socket for whatever runs next in the same process.
+        mailboxes.close_sessions()
+    if not fan.complete:
+        # THE THIRD OUTCOME. A mailbox that could not be opened must never
+        # render as "nobody wrote": exit 1 means a real, read absence, and a
+        # failed login answering with it is the exact inversion this verb is
+        # relied on to prevent.
+        print(
+            f"UNKNOWN — {_self_label(settings)}'s Gmail Sent could not be read, "
+            f"so whether {args.email} was written to in the last {args.days} "
+            f"days is UNANSWERED. This is not a 'no'."
+        )
+        for u in fan.unreadable:
+            print(f"  {u.describe()}")
+        print(fan.scope_line())
+        return 3
+    msgs = fan.rows
     print(
         f"{'YES' if msgs else 'no'} — {_self_label(settings)} wrote to {args.email} "
-        f"in the last {args.days} days ({len(msgs)} message(s)) [Gmail Sent, ground truth]"
+        f"in the last {args.days} days ({len(msgs)} message(s)) [Gmail Sent]"
     )
     for m in msgs:
         print(f"  {m['date']}: {m['subject']}")
+    print(fan.scope_line())
+    print(
+        f"  ONE mailbox, {args.days} days: this is the re-contact gate, not this "
+        f"company's contact history. Ask that with `{prog} history {args.email}`."
+    )
     return 0 if msgs else 1
+
+
+def cmd_history(args) -> int:
+    """Has this company EVER been in touch with this address — from ANY mailbox?
+
+    The question `contacted` (one mailbox, one window), `thread` (the engine's
+    archive of that same mailbox) and `dossier` (both, per contact) cannot
+    answer, because they share one bound: mail that never passed through the
+    operator mailbox exists in none of them.
+    """
+    settings = config.load()
+    from . import gmail_archive, mailboxes
+
+    email = args.email
+    try:
+        fan = mailboxes.merge_directions(
+            mailboxes.sent_to_across(settings, email),
+            mailboxes.inbound_since_across(settings, email),
+        )
+    finally:
+        mailboxes.close_sessions()
+
+    rows = sorted(
+        fan.rows,
+        key=lambda r: gmail_archive._parse_date(r.get("date"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    sent = [r for r in rows if r["direction"] == "sent"]
+    inbound = [r for r in rows if r["direction"] == "in"]
+    # Found is found: a positive answer stands whatever else could not be read.
+    # Only a NEGATIVE one depends on the scope being complete, which is why the
+    # exit status splits three ways instead of two.
+    if rows:
+        code = 0
+    elif fan.complete:
+        code = 1
+    else:
+        code = 3
+
+    if getattr(args, "json", False):
+        payload = fan.as_dict()
+        payload["rows"] = rows
+        payload["email"] = email
+        payload["found"] = bool(rows)
+        payload["sent"] = len(sent)
+        payload["inbound"] = len(inbound)
+        _print_json(payload)
+        return code
+
+    print(f"=== contact history: {email} ===\n")
+    if rows:
+        print(
+            f"YES — {len(sent)} message(s) sent to them, {len(inbound)} received "
+            f"from them, in {len({r['mailbox'] for r in rows})} of the "
+            f"{len(fan.read)} mailbox(es) read. No window: this is 'ever', not "
+            f"'recently'."
+        )
+    elif fan.complete:
+        print(f"no — no mailbox in scope has ever exchanged mail with {email}.")
+    else:
+        print(
+            f"UNKNOWN — nothing found in the mailboxes that could be read, and "
+            f"at least one could NOT be. This is not a 'no'."
+        )
+    if rows:
+        print("\nper mailbox:")
+        for box in fan.read:
+            s = sum(1 for r in sent if r["mailbox"] == box)
+            i = sum(1 for r in inbound if r["mailbox"] == box)
+            print(f"  {box:38.38} sent {s:>3}   received {i:>3}")
+        print("\nmessages, newest first:")
+        for r in rows[:20]:
+            tag = "SENT" if r["direction"] == "sent" else "IN  "
+            print(
+                f"  [{tag}] {str(r.get('date') or '?'):31.31} "
+                f"{r['mailbox']:28.28} {(r.get('subject') or '')[:40]}"
+            )
+        if len(rows) > 20:
+            print(f"  … {len(rows) - 20} older not shown")
+    print(f"\n{fan.scope_line()}")
+    if not fan.complete:
+        print(f"  {mailboxes.INCOMPLETE}")
+    return code
 
 
 def cmd_unanswered(args) -> int:
@@ -1440,12 +1559,34 @@ def main(argv=None) -> int:
     )
     pt.set_defaults(func=cmd_thread)
 
-    pc = sub.add_parser("contacted", help="did the operator write to this address recently?")
+    pc = sub.add_parser(
+        "contacted",
+        help="the re-contact gate: did the OPERATOR mailbox write to this "
+        "address in the last N days? Exit 0 = yes, 1 = no, 3 = the mailbox "
+        "could not be read (which is not a no). For every mailbox, `history`.",
+    )
     pc.add_argument("email")
     pc.add_argument("--days", type=int, default=30)
     # Gmail-IMAP backed: reads the operator's own Sent folder, so --account
     # cannot redirect it (see the guard in main()).
     pc.set_defaults(func=cmd_contacted, reads_operator_mailbox=True)
+
+    pht = sub.add_parser(
+        "history",
+        help="has this company EVER exchanged mail with this address, from ANY "
+        "mailbox it can open? Unbounded, both directions, per mailbox, and it "
+        "names the mailboxes it could NOT read. Exit 0 = yes, 1 = never, "
+        "3 = evidence incomplete.",
+    )
+    pht.add_argument("email")
+    pht.add_argument(
+        "--json",
+        action="store_true",
+        help="rows + the scope actually read + a degraded-source note",
+    )
+    # Reads the operator mailbox AND every account's, each with its own
+    # engine-held credential — so --account can neither widen nor narrow it.
+    pht.set_defaults(func=cmd_history, reads_every_mailbox=True)
 
     pun = sub.add_parser(
         "unanswered",
@@ -1808,24 +1949,49 @@ def main(argv=None) -> int:
             print(f"unknown --account '{args.account}'. Configured: "
                   f"{sorted(amap) or '(none — set CS_ACCOUNTS)'}", file=sys.stderr)
             return 2
-        # `--account` switches the ENGINE profile and nothing else. The Gmail
-        # IMAP identity is the operator's single credential, so a verb that
-        # reads or writes that mailbox cannot honour the flag — and used to
-        # answer anyway, about the wrong mailbox: `cs --account other contacted
+        # `--account` switches the ENGINE profile and nothing else. Two families
+        # of verb cannot honour it, for opposite reasons, and both used to
+        # answer anyway about the wrong mailbox: `cs --account other contacted
         # <addr>` returned a confident "no" with exit 1, which reads as "never
-        # contacted" and is exactly the check that gates outreach. Refuse
-        # instead of lying; the engine-backed verbs below do honour --account.
+        # contacted" and is exactly the check that gates outreach.
+        #
+        # These verbs speak to ONE mailbox — this clone's own — over IMAP. The
+        # kernel CAN now open another account's mailbox (`cs/mailboxes.py`
+        # retrieves each profile's own credential from its own engine), so the
+        # ground is not "there is a single credential"; it is that the ANSWER
+        # these verbs give is about the operator mailbox specifically, and
+        # relabelling it as another account's would report on the wrong one.
         if uid != settings.engine_owner_uid and getattr(
             args, "reads_operator_mailbox", False
         ):
             print(
-                f"`{args.cmd}` reads {_self_label(settings)}'s own Gmail over IMAP, and "
-                f"--account switches only the engine profile — there is one mail "
-                f"credential, not one per account.\n"
-                f"Answering anyway would report on the wrong mailbox. Use an "
-                f"engine-backed verb, which does honour --account:\n"
+                f"`{args.cmd}` answers about {_self_label(settings)}'s own mailbox, "
+                f"read over IMAP, and --account switches only the engine profile.\n"
+                f"Answering anyway would report on the wrong mailbox. Ask a wider "
+                f"or an engine-backed question instead:\n"
+                f"  {settings.prog_name or 'cs'} history <email>"
+                f"   — every mailbox this kernel can open, in one answer\n"
                 f"  {settings.prog_name or 'cs'} --account {args.account} thread <email>\n"
                 f"  {settings.prog_name or 'cs'} --account {args.account} ask \"<question>\"",
+                file=sys.stderr,
+            )
+            return 2
+        # And this family already reads EVERY account's mailbox, each under its
+        # own profile's credential. `--account` could only change which engine
+        # profile the retrieval starts from; it can neither widen nor narrow
+        # the scope, and pretending it selects one would be the evidence-scope
+        # knob the charter forbids.
+        if uid != settings.engine_owner_uid and getattr(
+            args, "reads_every_mailbox", False
+        ):
+            print(
+                f"`{args.cmd}` already reads EVERY account in this project's "
+                f"registry — the operator mailbox plus each engine profile's own "
+                f"— and prints the scope it read.\n"
+                f"--account switches only the engine profile, so it cannot narrow "
+                f"or widen that scope. Run it without the flag; to ask about one "
+                f"account's engine archive instead:\n"
+                f"  {settings.prog_name or 'cs'} --account {args.account} thread <email>",
                 file=sys.stderr,
             )
             return 2

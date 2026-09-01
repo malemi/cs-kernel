@@ -14,10 +14,19 @@ is verified. The what and why are in the
 they must obey is [`CLAUDE.md`](../../CLAUDE.md).
 <!-- doc-scope:end -->
 
+**Status: phase 1 is built.** Steps 0–5, 7 and 8 are code in the tree —
+`cs/mailboxes.py` (new), `cs/gmail_drafts.py`, `cs/gmail_archive.py`,
+`cs/config.py`, `cs/cli.py`, `tests/test_contact_history.py` and `tests/run.sh`
+gate 44 — uncommitted, no version bump, not released. Steps 6 and 9 are
+outstanding and carry the FULL tier with them.
+
 ## Shape
 
-Kernel code change, in `cs/gmail_archive.py`, `cs/gmail_drafts.py`, `cs/cli.py`
-and the four gating call sites. No new env key and no new manifest field: the
+Kernel code change, in `cs/mailboxes.py` (the credential handover, the session
+cache and the fan-out), `cs/gmail_archive.py`, `cs/gmail_drafts.py`,
+`cs/config.py` (`load(engine_owner_uid=…)`, which is how one process speaks to
+a second engine profile without mutating its own environment), `cs/cli.py` and
+the four gating call sites. No new env key and no new manifest field: the
 credential comes from the engine's existing handover, and the fan-out is not
 optional.
 
@@ -94,10 +103,24 @@ site edited.
 ### 2. Retrieve another mailbox's credential from the engine
 
 A helper that, given an account from `CS_ACCOUNTS`, returns that mailbox's
-address and password through owner-authenticated `settings.get_secret`, the same
-path `cs init` uses (`project_init.py:155-190`). Cache per process: this runs
-inside send gates and must not make one RPC per candidate. Secrets stay
-one-key-per-call — `settings.get` masks them deliberately.
+address and password through owner-authenticated engine calls, the same path
+`cs init` uses (`project_init.py:155-190`). Cache per process: this runs inside
+send gates and must not make one RPC per candidate.
+
+**TWO calls, not one.** `settings.get_secret` serves SECRET keys only and
+refuses anything else (engine `rpc/methods.py:1924`), so it yields the password
+and cannot yield the address; the address is the non-secret `EMAIL_ADDRESS` in
+`settings.get`'s `{values}`. Both shapes are charter-listed. Secrets stay
+one-key-per-call — `settings.get` masks them deliberately, which is exactly why
+the password needs its own named call.
+
+Authenticating as the OTHER profile is `config.load(engine_owner_uid=<uid>)`:
+the uid enters as an init value (the highest settings source), so
+`_derive_paths` derives that uid's own token/refresh files and the handshake
+presents that profile's token. `cs --account` achieves the same thing for a
+whole invocation by swapping the env key; a fan-out speaks to several profiles
+in ONE run, and mutating the process environment per account would leak into
+everything the tick does next.
 
 *Verify*: a credential is never read from the environment, and never logged.
 
@@ -123,7 +146,12 @@ by N mailboxes is what would make this unusable. So: reuse one IMAP session per
 mailbox per process. If that is not enough, the fallback is a per-run
 address→last-sent index built once and queried in memory.
 
-*Verify*: connection count per campaign run, before and after, recorded here.
+*Verify*: **not measurable in phase 1** — the count per campaign run needs step
+6, which is what puts a gate on the fan-out, and nothing in `campaign.py` calls
+it yet. The property is held by proxy instead, in gate 44: two fan-outs over two
+mailboxes open TWO IMAP sessions, not four, and a session that died between
+calls is reopened rather than raised. The per-run count against the real runner
+belongs to step 6 and is recorded there.
 
 ### 4. `sent_to_across()` — the fan-out
 
@@ -195,13 +223,33 @@ it is what sets the release's re-test tier — see below.
 
 ### 7. The CLI surface
 
-A verb printing per mailbox, naming unreadable sources. `cmd_contacted` states
-its own scope in its own line — one mailbox, N days, a dedup gate — instead of
-ending on an unqualified "ground truth". `--days` stays 30.
+The verb is **`cs history <email>`**: unbounded, both directions, printed per
+mailbox, naming every unreadable source, `--json` carrying the same scope and a
+degraded-source note. `cs contacted` states its own scope in its own line — one
+mailbox, N days, a dedup gate — instead of ending on an unqualified "ground
+truth". `--days` stays 30.
 
-Rule 6 says one command per job: check the new verb against `thread`,
-`contacted` and `dossier` before naming it, and fold rather than add if one of
-them already answers a neighbouring question.
+**Rule 6, decided: a new verb, not a fold.** `contacted` is the re-contact GATE
+(one mailbox, one window, exit 1 = a read absence); `thread` is the engine's
+archive of that same mailbox; `dossier` composes both per contact. Folding the
+fan-out into `dossier` was the closest call and is rejected on two grounds: its
+`sent_to` call (`cli.py:797`) IS one of step 6's gate sites, so widening it
+there moves a gate ahead of the prerequisite; and short of that, `dossier`
+would print a company-wide history section above a verdict still computed from
+one mailbox — two answers to one question in one output. A `contacted
+--anywhere` flag was rejected too: it gives one exit code two meanings, and the
+stamped skills read that verb's printed line. Each verb instead names its own
+scope on every answer, which is what makes two neighbouring questions safe to
+have.
+
+No `cs-` prefix: that convention is for stamped skills and commands
+(`cs-review`, `cs-triage-mail`), while kernel verbs are already `cs <verb>`.
+
+**One stamped edit is taken here, by exception**: the four canonical `history`
+spellings are added to the clone allow list in `.claude/settings.json.j2`.
+Strictly additive, it cannot break a clone that has not re-stamped, and without
+it phase 1 ships a verb that prompts for permission on the surface it was built
+for. Everything else stamped stays in step 9.
 
 ### 8. Correct the `--account` refusal
 
@@ -218,6 +266,8 @@ mailbox: `CLAUDE.md.j2:190-191`, `cs-operator/SKILL.md.j2:133-135`,
 `cs update` re-stamp on both clones and not only a library upgrade. The new
 `unreadable` outcome from step 5 is documented in that same pass — skills read
 the printed line, so an outcome nobody described is an outcome nobody handles.
+`cs history` itself is described here too; phase 1 stamps only its permission
+entries (step 7), never prose about what it means.
 
 ### 10. Gates and tier
 

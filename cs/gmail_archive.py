@@ -9,6 +9,14 @@ engine is fixed, and as defence-in-depth after, dedup reads Gmail itself.
 
 Read-only: SEARCH/FETCH headers only, never writes. Reuses the IMAP login from
 `gmail_drafts` (same app-password, same mailbox).
+
+ONE mailbox per call — the operator's. Two readers here (`sent_to`,
+`inbound_since`) decide nothing from "is this us" and therefore also exist as
+`*_on(M, …)` variants that run on a caller-owned connection: that is what
+`cs/mailboxes.py` fans out over every mailbox the company answers from. The
+rest (`thread_with`, `inbound_recent`, `sent_recent`, `correspondence`) derive
+direction or self-ness from `settings.email_address` and would misattribute
+every message in somebody else's mailbox, so they stay single-mailbox.
 """
 from __future__ import annotations
 
@@ -85,6 +93,41 @@ def _hdr(M, uid: bytes):
     return email.message_from_bytes(md[0][1], policy=policy.default)
 
 
+def sent_to_on(M, addr: str, days: int | None = None) -> list[dict]:
+    """`sent_to`, on a connection the CALLER owns and keeps open.
+
+    Split out for the cross-mailbox fan-out (`cs/mailboxes.py`), which holds one
+    session per mailbox for the whole process: the per-call TLS + LOGIN + LIST +
+    SELECT is the entire cost of reading N mailboxes, and a function that
+    logs out cannot be called twice cheaply. This decides nothing from "is this
+    us", which is what makes it safe to run against a mailbox that is not the
+    operator's."""
+    sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
+    M.select(f'"{sent}"', readonly=True)
+    typ, d = M.uid("SEARCH", None, "TO", addr)
+    ids = d[0].split() if d and d[0] else []
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days) if days else None
+    out = []
+    for uid in ids:
+        h = _hdr(M, uid)
+        if not h:
+            continue
+        raw = h.get("Date")
+        dt = None
+        if raw:
+            try:
+                dt = parsedate_to_datetime(raw)
+                if dt is not None and dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+            except (TypeError, ValueError):
+                dt = None
+        if cutoff is not None and (dt is None or dt < cutoff):
+            continue
+        out.append({"date": raw, "subject": h.get("Subject"),
+                    "message_id": h.get("Message-ID")})
+    return out
+
+
 def sent_to(settings: Settings, addr: str, days: int | None = None) -> list[dict]:
     """Messages in Gmail's Sent folder addressed TO `addr` — the dedup truth.
 
@@ -92,33 +135,14 @@ def sent_to(settings: Settings, addr: str, days: int | None = None) -> list[dict
     replies sent by hand, which the engine never sees). When `days` is given, the window
     is computed from each message's own Date header — NOT IMAP SINCE, whose
     INTERNALDATE the live engine re-touches on every sync, which made the same
-    query flip between runs."""
+    query flip between runs.
+
+    ONE mailbox: the operator's. It answers "did WE write", where "we" is this
+    one mailbox — see `cs/mailboxes.sent_to_across` for the same question asked
+    of every mailbox the company answers from."""
     M = _imap(settings)
     try:
-        sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
-        M.select(f'"{sent}"', readonly=True)
-        typ, d = M.uid("SEARCH", None, "TO", addr)
-        ids = d[0].split() if d and d[0] else []
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days) if days else None
-        out = []
-        for uid in ids:
-            h = _hdr(M, uid)
-            if not h:
-                continue
-            raw = h.get("Date")
-            dt = None
-            if raw:
-                try:
-                    dt = parsedate_to_datetime(raw)
-                    if dt is not None and dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=timezone.utc)
-                except (TypeError, ValueError):
-                    dt = None
-            if cutoff is not None and (dt is None or dt < cutoff):
-                continue
-            out.append({"date": raw, "subject": h.get("Subject"),
-                        "message_id": h.get("Message-ID")})
-        return out
+        return sent_to_on(M, addr, days)
     finally:
         try:
             M.logout()
@@ -164,35 +188,48 @@ def correspondence(settings: Settings, addr: str) -> list[dict]:
             pass
 
 
+def inbound_since_on(M, addr: str, after=None) -> list[dict]:
+    """`inbound_since`, on a connection the CALLER owns and keeps open — same
+    split, and for the same reason, as `sent_to_on`.
+
+    Fannable across mailboxes because it names no self: it matches FROM the
+    contact and reads nothing from `settings.email_address`. (`inbound_recent`
+    and `thread_with` do, which is why neither is fanned out.)"""
+    allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
+    M.select(f'"{allm}"', readonly=True)
+    typ, d = M.uid("SEARCH", None, "FROM", addr)
+    ids = d[0].split() if d and d[0] else []
+    out = []
+    for uid in ids:
+        h = _hdr(M, uid)
+        if not h:
+            continue
+        raw = h.get("Date")
+        dt = None
+        if raw:
+            try:
+                dt = parsedate_to_datetime(raw)
+                if dt is not None and dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+            except (TypeError, ValueError):
+                dt = None
+        if after is not None and (dt is None or dt <= after):
+            continue
+        out.append({"date": raw, "subject": h.get("Subject")})
+    return out
+
+
 def inbound_since(settings: Settings, addr: str, after=None) -> list[dict]:
     """Customer messages FROM `addr` (All Mail), optionally only those whose Date
     header is strictly after `after` (a tz-aware datetime) — GROUND TRUTH for
     'did they reply'. Independent of engine sync state. A message FROM the
-    contact can never be one of our drafts, so this is draft-free by nature."""
+    contact can never be one of our drafts, so this is draft-free by nature.
+
+    ONE mailbox: the operator's. `cs/mailboxes.inbound_since_across` asks it of
+    every mailbox the company answers from."""
     M = _imap(settings)
     try:
-        allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
-        M.select(f'"{allm}"', readonly=True)
-        typ, d = M.uid("SEARCH", None, "FROM", addr)
-        ids = d[0].split() if d and d[0] else []
-        out = []
-        for uid in ids:
-            h = _hdr(M, uid)
-            if not h:
-                continue
-            raw = h.get("Date")
-            dt = None
-            if raw:
-                try:
-                    dt = parsedate_to_datetime(raw)
-                    if dt is not None and dt.tzinfo is None:
-                        dt = dt.replace(tzinfo=timezone.utc)
-                except (TypeError, ValueError):
-                    dt = None
-            if after is not None and (dt is None or dt <= after):
-                continue
-            out.append({"date": raw, "subject": h.get("Subject")})
-        return out
+        return inbound_since_on(M, addr, after)
     finally:
         try:
             M.logout()
@@ -209,6 +246,11 @@ def inbound_recent(settings: Settings, days: int) -> list[dict]:
     engine sync re-touches INTERNALDATE and makes SINCE-only queries flip between
     runs — same caveat as `sent_to`). Messages FROM the operator itself (i.e. our
     own sends, which All Mail also holds) are dropped here. Read-only.
+
+    SINGLE-MAILBOX, and not fannable as it stands: "inbound" here means "not
+    from the operator" (`self_addr` below), so run against another mailbox it
+    would count that mailbox's own sends as inbound customer mail. Widening it
+    is separate work with its own correctness question.
 
     Each row: {email, name, date (tz-aware), subject, message_id, thread_key}.
     `thread_key` is the conversation this message belongs to (`cs/thread_key.py`)
@@ -376,7 +418,11 @@ def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
       body         text/plain (or tag-stripped HTML), truncated at BODY_MAX
       attachments  filenames only
 
-    `limit` keeps the newest N messages of the conversation (0 = all)."""
+    `limit` keeps the newest N messages of the conversation (0 = all).
+
+    SINGLE-MAILBOX, and not fannable as it stands: `outbound` is decided by
+    comparing the sender against `settings.email_address`, so in another
+    mailbox every row's direction would be wrong."""
     addr = (addr or "").strip().lower()
     self_addr = (settings.email_address or "").strip().lower()
     M = _imap(settings)

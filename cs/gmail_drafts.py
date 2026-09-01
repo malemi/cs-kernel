@@ -37,10 +37,26 @@ from .config import Settings
 from .thread_key import thread_key
 
 
-def _imap(settings: Settings) -> imaplib.IMAP4_SSL:
+def _imap(
+    settings: Settings, credential: tuple[str, str] | None = None
+) -> imaplib.IMAP4_SSL:
+    """A logged-in IMAP session. Without `credential`, the operator mailbox's
+    own pair from Settings — which is what every caller here wants and why the
+    argument is optional.
+
+    `credential` is `(address, password)` for ANOTHER mailbox of the same
+    company, retrieved from its own engine profile (`cs/mailboxes.py`); it is
+    never read from the environment and never printed. Host and port stay the
+    Settings ones: they are the company's mail provider, one per clone, not a
+    per-mailbox fact."""
+    address, password = (
+        credential
+        if credential is not None
+        else (settings.email_address, settings.email_password)
+    )
     M = imaplib.IMAP4_SSL(settings.imap_host, settings.imap_port)
     # tolerate the spaced app-password paste
-    M.login(settings.email_address, settings.email_password.replace(" ", "").strip())
+    M.login(address, (password or "").replace(" ", "").strip())
     return M
 
 

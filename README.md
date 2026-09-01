@@ -298,7 +298,10 @@ need it, not more onboarding.
 `cs --help` is the reference: one line per verb there, details under
 `cs <verb> --help`. The map — **setup**: `init`, `update`, `login`,
 `accounts`, `cron`; **read-only**: `review`, `plan`, `dossier`, `ask`,
-`whoami`, `thread`, `contacted`, `unanswered`, `tasks`, `business`,
+`whoami`, `thread`, `contacted` (the re-contact gate: one mailbox, N days),
+`history` (the other question: has this company EVER written to or heard
+from this address, from any mailbox it can open — every answer prints the
+mailboxes it read and the ones it could not), `unanswered`, `tasks`, `business`,
 `drive`, `llm`, `config` (the settings in force and which file declares
 each — ask it rather than reading the manifest and the `.env` chain);
 **gated writing**: `draft-reply` / `chat` (drafts only,

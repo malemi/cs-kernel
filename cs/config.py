@@ -383,11 +383,22 @@ def env_file_chain(overrides: dict[str, Any] | None = None) -> tuple[str, ...]:
     return tuple(env_files)
 
 
-def load() -> Settings:
+def load(engine_owner_uid: str | None = None) -> Settings:
     """Read the manifest (if any), validate its adapters LOUDLY, then build
     Settings over the layered env chain. Tolerates a MISSING manifest (so
     `python -m cs --help` works in a bare install); an invalid one raises
-    ManifestError."""
+    ManifestError.
+
+    `engine_owner_uid` targets ANOTHER account of this project (a `CS_ACCOUNTS`
+    uid) without touching the process environment: it is passed as an init
+    value, the highest-priority source, and the `_derive_paths` validator then
+    derives THAT uid's own session files — which is what makes the resulting
+    Settings authenticate as that profile's owner. `cs --account` does the same
+    thing for a whole invocation by swapping the env key; this is the in-process
+    form, for code that must speak to two profiles in one run
+    (`cs/mailboxes.py`). Everything else — mailbox address and password, state
+    dir, knobs — still resolves from the clone's own layers, so this is a
+    change of engine identity, never of company."""
     mpath = manifest_mod.find_manifest_path()
     m = manifest_mod.load_manifest(mpath) if mpath is not None else None
     overrides = manifest_mod.settings_overrides(m) if m else {}
@@ -416,4 +427,7 @@ def load() -> Settings:
     _LOAD_CTX["overrides"] = overrides
     _LOAD_CTX["prefix"] = overrides.get("shopify_env_prefix", "")
     _LOAD_CTX["env_files"] = tuple(env_files)
+    uid = (engine_owner_uid or "").strip()
+    if uid:
+        return Settings(_env_file=tuple(env_files), engine_owner_uid=uid)
     return Settings(_env_file=tuple(env_files))

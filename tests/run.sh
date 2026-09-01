@@ -266,7 +266,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config chat campaign project; do
+for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -959,6 +959,29 @@ step "43. /cs-review adjudicates attention instead of formatting candidate feeds
 # the rendered command stops before any repair path. The seven-case incident
 # fixture is the input to the separate opt-in live semantic replay.
 if "$VENV/bin/python" "$ROOT/tests/test_review_attention.py"; then echo "OK"; else echo "FAIL: attention-agenda contract regressed"; FAIL=1; fi
+
+step "44. contact history across mailboxes, and the mailboxes it could not read"
+# A prospect was answered the day after she wrote — by a co-founder, from his own
+# mailbox, with the operator on no header. `cs thread`, `cs ask` and `cs contacted`
+# all reported nothing, because all three are bounded by ONE mailbox, and the
+# operator drafted an apology for two months of silence that had not happened.
+# Guards: `_imap` honours an explicit credential and is unchanged without one;
+# another account's password comes from ITS engine profile (owner-authenticated,
+# per-uid session files, cached per process) and never from the environment, so
+# it reaches no Settings field and `cs config` cannot print it; a reason that
+# echoes a secret back is redacted; ONE IMAP session per mailbox per process,
+# reused, and a dead one replaced; a mailbox that cannot be read renders as
+# UNREADABLE and never as an empty result — in the rows, in the scope line, in
+# `--json` and in the exit status, where `contacted` grows a third outcome
+# because its "no" is exit 1; one mailbox that fails the two passes DIFFERENTLY
+# (they read different folders) is ONE record and one denominator, keeping both
+# diagnoses, because a scope line that overstates how many mailboxes exist is
+# the same class of wrong evidence as the absence this work stops; no IMAP
+# failure reaches the "cannot reach the
+# engine" handler or a traceback; only the two readers that decide nothing from
+# "is this us" are fanned out; and the `--account` refusal no longer rests on
+# "there is one mail credential", which this work makes false.
+if "$VENV/bin/python" "$ROOT/tests/test_contact_history.py"; then echo "OK"; else echo "FAIL: cross-mailbox contact history regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
