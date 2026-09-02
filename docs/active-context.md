@@ -56,9 +56,10 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   it cannot read as `unreadable` rather than absent, and prints the scope it
   actually read. It reaches only profile mailboxes so far; the `124-cs`
   mailboxes that caused the incident have none and their owners contribute
-  nothing by binding constraint, so phase 1b reaches them with a
-  domain-delegated service account scoped `gmail.readonly` (brief rewritten
-  2026-09-02). The four gating call sites follow as the FULL-tier release.
+  nothing by binding constraint, so phase 1b reaches them over plain IMAP with
+  app passwords the operator already holds — the standard protocol over a
+  vendor API, the operator's decision. The four gating call sites follow as
+  the FULL-tier release.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
 - **No clone runs `v0.36.0` or `v0.37.0`.** `mrcall-cs` declares and installs `v0.32.1`
   (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
@@ -114,9 +115,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
    crosses `v0.33.0`, `v0.34.0` and `v0.35.0` as well. Read each of those
    entries' re-test tiers and run the strictest one they demand, not only
    `v0.36.0`'s.
-3. Build phase 1b: `read_mailboxes` manifest field, the delegated
-   `gmail.readonly` credential, the read path, and the `124-cs` acceptance run.
-   The one human dependency is the domain admin authorising the client ID.
+3. Build phase 1b: `read_mailboxes` manifest field, the strict env credential
+   map, wiring declared mailboxes into the fan-out, and the `124-cs` acceptance
+   run — `cs history` finding the co-founder's 2026-07-03 reply.
 4. Update the CHANGELOG operational-pin marker once both clones are on the same
    tag — it is the sign-off, not a running commentary.
 5. Replace internal `re-collaudo` wording still exposed by `cs update` with

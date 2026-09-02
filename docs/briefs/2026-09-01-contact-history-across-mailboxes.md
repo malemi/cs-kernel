@@ -8,10 +8,11 @@ delivery, and this rewrite reverts it: the constraint below is the spec.
 ## The binding constraint — mailbox owners contribute nothing
 
 The people whose mailboxes must be read answer customers from their own
-accounts and will not stand up an engine profile, run a daemon, generate an app
-password, or hand over anything, ever. A design is admissible only if the sum
-of what it asks from them is zero. One admin action by the domain
-administrator is acceptable; one action per mailbox owner is not.
+accounts and will not stand up an engine profile, run a daemon, or maintain
+anything, ever. A design is admissible only if the sum of what it asks from
+them going forward is zero. Actions by the operator or the domain admin are
+acceptable; recurring actions per mailbox owner are not. The app passwords for
+these mailboxes already exist, so the credential needs nobody's cooperation.
 
 ## Problem
 
@@ -45,35 +46,46 @@ profile, and under the constraint above they never will.
 and the scope line are the existing `cs/mailboxes.py`. What this brief adds is
 where a credential for a profile-less mailbox comes from.
 
-**A service account with domain-wide delegation, scope `gmail.readonly`.** The
-domain admin authorises the service account's client ID for exactly that scope
-in the Workspace admin console — once, for the whole domain. The mailbox
-owners do nothing, install nothing, hand over nothing. The credential
-**cannot send**: the scope is enforced by Google at token issue, not by a
-convention in our calling code, which is the property no app password can
-have. `cs/drive.py` already loads this kind of credential (`firebase_sa_path`,
-read-only Drive scope); the manifest names the key file for mail, defaulting
-to the same one.
+**Plain IMAP with an app password, by the operator's decision (2026-09-02).**
+IMAP is a shared standard that has worked for decades and binds the kernel to
+no vendor; a delegated Google credential would weld the mechanism to one
+provider's service accounts, admin console and token endpoints — a moat
+wearing a security badge. The kernel therefore speaks the standard protocol it
+already speaks: `v0.37.0`'s `_imap(settings, credential=…)`, `sent_to_on` and
+`inbound_since_on` take an explicit credential today, so this design adds no
+new read path and no new dependency. When the providers agree on a shared,
+standard protocol with real scoping, IMAP is abandoned with pleasure — not
+before.
 
-**The mailboxes are declared, addresses only, no secrets.** A manifest list —
-`read_mailboxes` — of plain addresses. It carries the same guard as
+**The mailboxes are declared, addresses only, no secrets in any repo.** A
+manifest list — `read_mailboxes` — of plain addresses, with the same guard as
 `CS_ACCOUNTS`: an address outside the company's own mail domain fails loud at
-config load, and a malformed entry is an error, never a silent drop. There is
-no password to parse because there is no password: the token is minted per
-mailbox from the service account with `with_subject(address)`.
+config load, and a malformed entry is an error, never a silent drop. The
+credential for each declared address lives in the clone's env file
+(`~/.<company>-cs/.env`, outside every repo — where `EMAIL_PASSWORD` already
+lives), parsed **strictly**: a malformed pair fails config load loud, and a
+declared address with no credential renders as
+`unreadable — no credential configured for <address>`, never as an absence.
+The silent-drop parser that killed the first version of this idea is a code
+defect, not a property of app passwords.
 
-**The read path.** A delegated token for the target mailbox, then the same
-narrow question as today: does Sent mail to this address exist, headers only —
-via the Gmail API (`messages.list`, `q="in:sent to:<address>"`) or IMAP
-XOAUTH2 with the same token; whichever is built, the credential story is
-identical. Worth recording for whoever discusses this with the mailbox owners:
-it is not a general read of somebody's mail, and describing it accurately is
-what makes the authorisation real.
+**The accepted trade-off, stated once.** An app password can send and does not
+expire; read-only is a property of our calling code, not of the credential.
+Accepted by the operator with that stated. The handling rules that contain it:
+the credential exists only in the clone env, is redacted in every error path
+(the `v0.37.0` redaction), never becomes a Settings field `cs config` could
+print, and is never passed to any send path — `send_mail` logs in with the
+operator mailbox's own credential and nothing else. Revocation is one action
+in the provider's account settings.
+
+**The read stays narrow.** The same two questions as today, headers only: does
+Sent mail to this address exist, and has this address written since a date. It
+is not a general read of somebody's mail, and describing it accurately is what
+makes the owners' consent real.
 
 **`unreadable` extends, with the fix in the message.** A declared mailbox whose
-delegation is not authorised reports `unreadable — delegation not authorised
-for <address>; authorise client ID <id> for scope gmail.readonly`, never an
-empty result. The scope line counts declared mailboxes in its denominator.
+credential is missing or refused reports it by name — never an empty result —
+and the scope line counts declared mailboxes in its denominator.
 
 **The gates read everything, always.** Phase 2 — the four gating call sites
 (`campaign.py:108`, `:120`, `cli.py:797`, `draft_state.py:290`) — reads the
@@ -82,29 +94,32 @@ evidence scope; that flag is the dedup-source knob the charter forbids. A send
 gate that meets `unreadable` refuses and names the mailbox: fail-open is the
 incident at machine speed.
 
-**Charter fit.** Identity and sending are untouched — this credential cannot
-reach them. Gmail Sent remains the dedup ground truth; it becomes the
-company's Sent instead of one box's. The addresses are manifest data (rule 2),
-the mechanism is kernel code, and both clones are Google Workspace with
-founders who answer from their own boxes, so the rule of two is met by the
-mechanism, not by one company's topology.
+**Charter fit.** Identity and sending are untouched: the read credential never
+reaches a send path by construction. Gmail Sent remains the dedup ground
+truth; it becomes the company's Sent instead of one box's. The addresses are
+manifest data, the credentials are clone-env data (rule 2), and the mechanism
+— read a declared mailbox over standard IMAP — is provider-neutral kernel
+code, so the rule of two is met by the mechanism, not by one company's
+topology or one vendor's API.
 
 ## Deliberately out of scope
 
 Existence only. Whether a message needed an answer, was an auto-reply, or
 settled a thread stays the engine's judgement, per § 0b.
 
-The mechanism is Google-specific. A clone on another mail provider declares no
-read mailboxes and keeps today's behaviour; if that clone ever exists, the
-provider seam follows the CRM/producer registry pattern, not a knob.
+How a given provider issues an IMAP credential (a Google app password, another
+provider's equivalent, a plain password on self-hosted mail) is clone
+operations, documented, not kernel code.
 
 ## Rejected approaches
 
-**`address:app-password` pairs in an env key.** Requires each mailbox owner to
-generate and hand over a secret — the exact cooperation the constraint rules
-out — and an app password has no scope, does not expire, and can send; nothing
-in the kernel could take that back. Its natural parser also drops a malformed
-pair silently, turning a typo into an absence.
+**A Google service account with domain-wide delegation (`gmail.readonly`).**
+The one shape whose credential cannot send — and it welds the kernel's
+mechanism to one vendor: a GCP service account, the Workspace admin console
+and Google token endpoints, for mailboxes that only need a decades-stable
+standard protocol. Rejected by the operator, 2026-09-02: vendor coupling
+dressed as security. Reconsidered the day a shared, standard protocol offers
+the same scoping.
 
 **An engine profile per mailbox.** Asks the most from the owners — a daemon, a
 login, an identity each — to answer a read-only question. Rejected by the
@@ -118,13 +133,14 @@ drops a customer out of view. Worth doing; worthless to rely on.
 
 ## Acceptance
 
-- With delegation authorised and `read_mailboxes` declared on `124-cs`,
-  `cs history <the prospect's address>` reports the co-founder's 2026-07-03
-  reply and names the mailbox it was found in.
-- A declared mailbox with delegation missing renders as `unreadable` with the
-  admin action in the message — in the printed line, the exit status, and JSON.
-- No secret for any of these mailboxes exists in any env file or repo.
-- The token is asserted to carry exactly `gmail.readonly` at acquisition;
-  broader fails loud.
+- With `read_mailboxes` declared and the credentials placed in the `124-cs`
+  env, `cs history <the prospect's address>` reports the co-founder's
+  2026-07-03 reply and names the mailbox it was found in.
+- A declared mailbox with a missing or refused credential renders as
+  `unreadable`, named, with the fix in the message — in the printed line, the
+  exit status, and JSON. A malformed credential entry fails config load loud.
+- No secret for any of these mailboxes exists in any repo file; `cs config`
+  prints none of them; no error path echoes one.
+- The read credential is demonstrably absent from every send path.
 - The phase-2 gates read profiles ∪ declared mailboxes, and the scope line's
   denominator counts both.

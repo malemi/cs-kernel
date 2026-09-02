@@ -58,34 +58,30 @@ incident. It is the FULL-tier release and it is a separate decision.
 
 The brief's binding constraint is that mailbox owners contribute nothing, so
 "stand up a profile per mailbox" is not a prerequisite — it is a rejected
-approach. The mailboxes without a profile are reached with a **service account
-under domain-wide delegation, scope `gmail.readonly`**, per the brief's
-Design. This inserts between phase 1 (shipped in `v0.37.0`) and step 6:
+approach. The mailboxes without a profile are reached over **plain IMAP with
+app passwords the operator already holds** (the operator's decision,
+2026-09-02: the standard protocol over a vendor API). The read path already
+exists — `_imap(settings, credential=…)`, `sent_to_on`, `inbound_since_on` —
+so 1b adds configuration and wiring, not a new protocol client:
 
 - **1b.1 — manifest field `read_mailboxes`**: a list of plain addresses,
   same-domain guard as `CS_ACCOUNTS`, malformed entry fails loud at config
   load. New manifest field ⇒ the release is at least MINOR.
-- **1b.2 — the delegated credential**: mint a per-mailbox token from the
-  service account (`with_subject(address)`), key file named by the manifest and
-  defaulting to `firebase_sa_path` (`cs/drive.py` is the loading precedent).
-  Assert the token carries exactly `gmail.readonly` at acquisition; broader
-  fails loud. No secret enters env, Settings, or logs.
-- **1b.3 — the read path**: the same two questions the fan-out already asks
-  (Sent-to and inbound-since, headers only) answered over the delegated
-  credential — Gmail API `messages.list` or IMAP XOAUTH2 with the same token;
-  pick at build time, the credential story is identical.
-- **1b.4 — wire into `cs/mailboxes.py`**: declared mailboxes join the fan-out
-  beside profile accounts; the scope line's denominator counts both; a
-  delegation not authorised renders as
-  `unreadable — … authorise client ID <id> for scope gmail.readonly`, with the
-  admin action in the message.
-- **1b.5 — prove it on `124-cs`**: the domain admin authorises the client ID
-  once; then `cs history <the prospect's address>` must report the co-founder's
-  2026-07-03 reply and name the mailbox. This is the acceptance test the
-  incident defines, and it needs no action from any mailbox owner.
+- **1b.2 — the credential map, strict**: one env entry per declared address in
+  the clone's `.env` (outside every repo, beside `EMAIL_PASSWORD`). Parsed
+  strictly: malformed fails config load loud; a declared address with no entry
+  is `unreadable — no credential configured for <address>`, never absent. The
+  values never become Settings fields `cs config` could print, are redacted in
+  every error path, and are never handed to a send path.
+- **1b.3 — wire into `cs/mailboxes.py`**: declared mailboxes join the fan-out
+  beside profile accounts; the scope line's denominator counts both.
+- **1b.4 — prove it on `124-cs`**: place the credentials, then
+  `cs history <the prospect's address>` must report the co-founder's 2026-07-03
+  reply and name the mailbox. This is the acceptance test the incident
+  defines, and it asks nothing of any mailbox owner.
 
 Step 6 (the gates) then reads profiles ∪ declared mailboxes and is unblocked by
-the admin authorisation alone.
+1b alone.
 
 ## Steps
 
@@ -296,13 +292,13 @@ changed refusal message.
 
 ## Risks
 
-- **The delegation is never authorised.** Phase 1b needs one admin action; until
-  it happens the declared mailboxes are `unreadable` and step 6 must not ship.
-  Loud and named in every answer, but still a human dependency outside the
-  kernel.
-- **Scope creep on the service account.** The token is asserted to carry
-  exactly `gmail.readonly`; the assertion failing loud is what keeps a
-  mis-configured delegation from becoming a silent capability grant.
+- **The read credential can send.** An app password has no scope and does not
+  expire; read-only is a property of our calling code. Accepted by the
+  operator with that stated; contained by the 1b.2 handling rules, and the
+  acceptance test asserts the credential is absent from every send path.
+- **A revoked or rotated app password.** The mailbox turns `unreadable`, named,
+  with the fix in the message — and under step 5's fail-closed rule that stops
+  sending until the operator updates the env. Loud by design.
 - **Per-call connection cost at gate time.** Step 3 owns it. If session reuse is
   not enough, the fallback is a per-run index — never a per-clone flag, which is
   the forbidden knob.
@@ -321,7 +317,8 @@ changes no gate.
 ## Out of scope
 
 - `inbound_recent` / `sent_recent` and the surfaces built on them.
-- Mail providers other than Google Workspace: a clone elsewhere declares no
-  read mailboxes and keeps today's behaviour; a provider seam, if ever needed,
-  follows the CRM/producer registry pattern.
+- How a provider issues an IMAP credential (Google app password, another
+  provider's equivalent, a plain password on self-hosted mail): clone
+  operations, documented, never kernel code. The kernel speaks IMAP and stays
+  provider-neutral.
 - Any change to what the engine judges: existence only.
