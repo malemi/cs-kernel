@@ -14,7 +14,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## State now
 
-- **Latest release tag: `v0.39.0`. Current HEAD status: tagged as `v0.39.0`.** These
+- **Latest release tag: `v0.39.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; keep the wording
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
@@ -50,17 +50,17 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   The read path is `cs ask`; `cs chat` is denied to the cron. The rules ship
   abstract, because a concrete value correct in one country is inherited as
   false everywhere else.
-- **Contact history is answerable across every company mailbox; no send gate
-  uses it yet.** `cs history` fans out over profile accounts (credential from
-  the engine handover) plus the mailboxes declared in
-  `[operator].read_mailboxes` with app passwords in
-  `CS_READ_MAILBOX_PASSWORDS` — plain IMAP, strictly parsed, the operator's
-  own address refused. A mailbox it cannot read is `unreadable`, never absent,
-  and every answer prints the scope it read. Live acceptance on `124-cs`
-  passed twice: the incident's answer is found and attributed. The four gating
-  call sites remain the next, FULL-tier release.
+- **Contact history is cross-mailbox everywhere — the human verbs and every
+  send gate.** The fan-out reads profile accounts (credential from the engine
+  handover) plus manifest-declared mailboxes (app passwords in
+  `CS_READ_MAILBOX_PASSWORDS`, plain IMAP, strictly parsed). A mailbox that
+  cannot be read is `unreadable`, never absent; a send gate meeting one
+  refuses, names it, and mutates nothing; a `ready` draft row carries its
+  incomplete evidence inline; the dossier verdict keys off "ever". Proven live
+  on `124-cs` including fail-closed under a real authentication refusal.
+  `send_first` stays deliberately ungated.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
-- **No clone runs `v0.36.0`, `v0.37.0` or `v0.38.0`.** `mrcall-cs` declares and installs `v0.32.1`
+- **No clone runs any of `v0.36.0`–`v0.39.0`.** `mrcall-cs` declares and installs `v0.32.1`
   (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
   recorded at `v0.35.0`; that clone is not present on this machine, so its state
   is a claim from its own last upgrade, not a reading. The CHANGELOG
@@ -73,15 +73,14 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **`v0.36.0` through `v0.38.0` are published and applied nowhere.** `v0.37.0`
-  and `v0.38.0` are FULL-tier on both clones with the suite not run before
-  either tag: the operator authorised publication, the collaudo is owed at each
-  upgrade, and both CHANGELOG entries record the waiver. `v0.38.0`'s
-  read-mailboxes half has passed live acceptance on `124-cs` from the source
-  tree; its duplicate-drafts half has met no live engine. On upgrade, `124-cs`
-  will be refused loudly until its `CS_READ_MAILBOXES` env value is split into
-  addresses and `CS_READ_MAILBOX_PASSWORDS`. The `v0.35.0` attention agenda
-  still has no live-operator run either.
+- **`v0.36.0` through `v0.39.0` are published and applied nowhere.**
+  `v0.37.0`–`v0.39.0` are FULL-tier on both clones; each entry records what was
+  exercised pre-tag and what is owed at upgrade. `v0.39.0`'s send gates and
+  fail-closed path are live-proven on `124-cs` read-only from the source tree
+  (that clone has also already split its `CS_READ_MAILBOXES` env value, so
+  `v0.38.0`'s migration is done there); `v0.38.0`'s duplicate-drafts half has
+  met no live engine, and `mrcall-cs` has met none of these releases at all.
+  The `v0.35.0` attention agenda still has no live-operator run either.
 - **The outbound sourcing rules are proven as rendered text, not as behaviour.**
   Gates hold that they appear once per surface and that no fourth surface can
   paste them in unnoticed. Whether a session actually reaches memory before
@@ -110,10 +109,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
    `CS_READ_MAILBOXES` env split the load refusal will demand first.
 2. `mrcall-cs` is six minor releases behind at `v0.32.1`; read every crossed
    CHANGELOG entry before its upgrade, not only the newest.
-3. Build phase 2 when the operator says so: move the four gating call sites
-   (`campaign.py:108`, `:120`, `cli.py:797`, `draft_state.py:290`) onto the
-   fan-out, fail-closed on `unreadable`, re-stamp the prose that says evidence
-   is one mailbox. It is the FULL-tier release and a separate decision.
+3. Upgrade `124-cs` to `v0.39.0` and run its owed FULL collaudo on the
+   installed pin — including a draft-only campaign tick observing a refusal
+   end-to-end, the one leg not exercisable from the source tree.
 4. Update the CHANGELOG operational-pin marker once both clones are on the same
    tag — it is the sign-off, not a running commentary.
 5. Replace internal `re-collaudo` wording still exposed by `cs update` with

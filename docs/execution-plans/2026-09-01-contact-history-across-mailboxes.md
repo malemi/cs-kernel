@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 started: 2026-09-01
 brief: ../briefs/2026-09-01-contact-history-across-mailboxes.md
 ---
@@ -14,7 +14,7 @@ is verified. The what and why are in the
 they must obey is [`CLAUDE.md`](../../CLAUDE.md).
 <!-- doc-scope:end -->
 
-**Status: phase 1 shipped as `v0.37.0`, phase 1b as `v0.38.0` — live-accepted on `124-cs` twice.**
+**Status: complete in the kernel — phase 1 shipped as `v0.37.0`, phase 1b as `v0.38.0`, phase 2 (the send gates) as `v0.39.0`, live-proven on `124-cs` including fail-closed. Open only: the clones' owed FULL collaudo at upgrade.**
 Phase 1 (steps 0–5, 7, 8) is the fan-out, the `unreadable` outcome, the scope
 line and `cs history`. Phase 1b (1b.1–1b.3) adds the mailboxes that hold no
 engine profile.
