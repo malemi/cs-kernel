@@ -150,6 +150,82 @@ def sent_to(settings: Settings, addr: str, days: int | None = None) -> list[dict
             pass
 
 
+#: How far back `sent_body_match` reads bodies for one contact. Headers are
+#: cheap and bodies are not, so the comparison is bounded rather than windowed
+#: by days: a draft that repeats a mail delivered more than this many messages
+#: ago is not the failure this check exists for (a compose that ran twice, one
+#: copy sent and one left behind), and the other verdicts still cover it.
+BODY_MATCH_SCAN = 20
+
+
+def sent_body_match(settings: Settings, addr: str, body: str,
+                    limit: int = BODY_MATCH_SCAN) -> tuple[dict | None, str | None]:
+    """`(match, note)` — the Sent message to `addr` carrying this same text.
+
+    Answers "has this exact reply already been delivered to this person?" —
+    the one question that separates a draft the conversation moved past from a
+    SECOND COPY of a mail the customer already has. Sending that copy mails
+    them the same thing twice, so it deserves its own verdict rather than
+    being folded into "somebody answered another way".
+
+    Bodies are compared after `_normalise` (the same collapse every other
+    reader here applies), never raw: the delivered copy has been through MIME
+    encoding and line folding, so byte equality on the wire form would never
+    fire. A markdown-rendered send whose plain-text part no longer matches the
+    source simply does not match — a miss costs the caller nothing beyond the
+    verdict it would have had anyway.
+
+    Two limits, and both are REPORTED rather than swallowed, because a silent
+    limit reads as "checked everything" when it did not:
+
+    - `_normalise` truncates at BODY_MAX, so two long mails sharing a
+      BODY_MAX-character prefix would compare equal. A body that reaches the
+      cap is therefore not compared at all — a false `duplicate` on a draft
+      that only STARTS like a delivered mail is worse than no verdict.
+    - at most `limit` bodies are fetched, newest first. When there are more
+      messages to that contact than that, the note says how many were read.
+
+    Read-only. The `(value, note)` shape is the module's degradation contract,
+    the same one `engine_view.settled` uses.
+    """
+    wanted = _normalise(body or "")
+    if not wanted:
+        return None, None
+    if len(wanted) >= BODY_MAX:
+        return None, (f"the draft to {addr} is longer than {BODY_MAX} characters "
+                      f"— too long to compare against Sent without risking a "
+                      f"false match, so it was not compared")
+    M = _imap(settings)
+    try:
+        sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
+        M.select(f'"{sent}"', readonly=True)
+        typ, d = M.uid("SEARCH", None, "TO", addr)
+        ids = d[0].split() if (typ == "OK" and d and d[0]) else []
+        scanned = list(reversed(ids))[:limit]
+        for uid in scanned:
+            typ, md = M.uid("FETCH", uid, "(BODY.PEEK[])")
+            if typ != "OK" or not md or not isinstance(md[0], tuple) or not md[0][1]:
+                continue
+            msg = email.message_from_bytes(md[0][1], policy=policy.default)
+            delivered, _files = _body_and_attachments(msg)
+            if delivered and delivered == wanted:
+                return {
+                    "date": str(msg.get("Date") or ""),
+                    "subject": str(msg.get("Subject") or ""),
+                    "message_id": str(msg.get("Message-ID") or ""),
+                }, None
+        if len(ids) > len(scanned):
+            return None, (f"read the newest {len(scanned)} of {len(ids)} messages "
+                          f"sent to {addr} — an older identical copy would not "
+                          f"have been seen")
+        return None, None
+    finally:
+        try:
+            M.logout()
+        except Exception:
+            pass
+
+
 def correspondence(settings: Settings, addr: str) -> list[dict]:
     """Real history with `addr`, both directions, DRAFT-FREE by construction.
 

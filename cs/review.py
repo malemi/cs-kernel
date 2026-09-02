@@ -2,8 +2,10 @@
 
 Read-only aggregation, run when you open a session (`cs review`):
   - DRAFTS, each with a VERDICT computed at read time (`cs/draft_state.py`):
-    `ready`, or one of `overtaken` / `superseded` / `settled`, which mean the
-    conversation moved on and the draft has to be re-decided before it is sent.
+    `ready`, or one of `duplicate` / `overtaken` / `superseded` / `settled`,
+    which mean the draft has to be re-decided before it is sent — `duplicate`
+    because the customer already has that exact text, the other three because
+    the conversation moved on.
     Both stores are reconciled into one list, so the two copies of a mirrored
     draft are one row carrying both handles;
   - the same drafts as the two RAW store listings (the queue you review + send);

@@ -1104,6 +1104,48 @@ def cmd_ask(args) -> int:
     return 0
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _engine_stamp(value) -> datetime | None:
+    """An engine timestamp as tz-aware UTC. The engine serialises UTC without
+    an offset, so a naive value is read as UTC — the same convention as
+    `cs/_time.py` and `cs/draft_state.py`."""
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def _composed_key(draft: dict) -> str:
+    return draft.get("created_at") or draft.get("updated_at") or ""
+
+
+def _all_but_newest(drafts: list[dict]) -> list[dict]:
+    newest = max(drafts, key=_composed_key)
+    return [d for d in drafts if d is not newest]
+
+
+def _touched_since(drafts: list[dict], since: datetime) -> list[dict]:
+    """Drafts the engine wrote to at or after `since`.
+
+    The engine's `create_draft` is idempotent: composing the same mail twice
+    returns the EXISTING row and stamps its `updated_at`. That stamp is the
+    only signal an outside caller gets, because no new id appears — see the
+    module docstring of the engine's `rpc/draft_queries.py`.
+    """
+    out = []
+    for d in drafts:
+        stamp = _engine_stamp(d.get("updated_at"))
+        if stamp is not None and stamp >= since:
+            out.append(d)
+    return out
+
+
 def cmd_draft_reply(args) -> int:
     # Like `chat` but with NO `--allow` option: allow_tools is hardcoded empty,
     # so the engine denies send_draft whatever the message says. Structurally
@@ -1121,6 +1163,7 @@ def cmd_draft_reply(args) -> int:
     settings = config.load()
     from . import gmail_drafts
 
+    turn_started = _utcnow()
     before = {d.get("id") for d in
               (rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or [])}
     out = asyncio.run(rpc.chat(settings, args.message, allow_tools=set(), timeout=args.timeout))
@@ -1134,11 +1177,36 @@ def cmd_draft_reply(args) -> int:
     after = rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or []
     fresh = [d for d in after if d.get("id") not in before]
     if not fresh:
+        # No NEW id. Two very different things look like this, and the engine
+        # distinguishes them through `updated_at`: composing the same mail
+        # twice returns the existing draft (and stamps it) instead of writing
+        # a duplicate, so an id that moved during this turn IS the reply that
+        # was asked for. It is NOT re-mirrored: the run that first composed it
+        # already appended it to Gmail Drafts, and a second append is the very
+        # duplicate this de-duplication exists to prevent.
+        reused = _touched_since(after, turn_started)
+        if reused:
+            print("\n[gmail-drafts] engine reused an existing draft "
+                  f"({', '.join(str(d.get('id')) for d in reused)}) — identical "
+                  "to one already composed, so nothing new was mirrored. "
+                  "Review it in Gmail Drafts, or edit the instruction to "
+                  "compose a different reply.", file=sys.stderr)
+            return 0
         # Engine asked a clarifying question / escalated instead of composing.
         print("\n[gmail-drafts] engine composed no new draft — nothing to mirror.",
               file=sys.stderr)
         return 0
-    d = max(fresh, key=lambda x: x.get("created_at") or x.get("updated_at") or "")
+    if len(fresh) > 1:
+        # ONE turn, several new drafts: only the newest is mirrored, so the
+        # others would leave the engine store silently and never reach the
+        # surface the operator reviews on. Name them — an unmirrored draft the
+        # operator cannot see is exactly how duplicate replies accumulate.
+        print(f"\n[gmail-drafts] WARNING: the engine composed {len(fresh)} drafts "
+              f"in one turn; mirroring the newest only. Not mirrored: "
+              f"{', '.join(str(d.get('id')) for d in _all_but_newest(fresh))}. "
+              f"Retire the extras with `cs draft-delete`, or review them with "
+              f"`cs review`.", file=sys.stderr)
+    d = max(fresh, key=_composed_key)
     to = ", ".join(d.get("to_addresses") or [])
     if not to or not (d.get("body") or "").strip():
         print("\n[gmail-drafts] ERROR: composed draft has no recipient/body; "

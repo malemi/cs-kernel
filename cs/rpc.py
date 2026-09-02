@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import sys
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 import websockets
@@ -27,6 +28,13 @@ if TYPE_CHECKING:  # import cycle: model_config imports config, config imports n
     from .model_config import Role
 
 NotifyHandler = Callable[[str, Any], Optional[Awaitable[None]]]
+
+# Keepalive, matched to the engine's own `server_ws` settings. Long
+# enough that a briefly busy engine loop is not mistaken for a dead peer;
+# short enough that a peer which really is gone is detected quickly,
+# because the close is what stops the turn on the other side.
+WS_PING_INTERVAL_SECONDS = 20
+WS_PING_TIMEOUT_SECONDS = 40
 
 
 class EngineError(RuntimeError):
@@ -77,6 +85,12 @@ class EngineClient:
             additional_headers={"Authorization": f"Bearer {token}"},
             max_size=32 * 1024 * 1024,  # email bodies / search results can be large
             open_timeout=30,
+            # A turn the engine is still working on must not be killed by
+            # our own keepalive: the library default gives the pong 20 s,
+            # which a briefly busy engine loop can exceed. The engine
+            # sets the same deadline on its side.
+            ping_interval=WS_PING_INTERVAL_SECONDS,
+            ping_timeout=WS_PING_TIMEOUT_SECONDS,
         )
         self._recv_task = asyncio.create_task(self._recv_loop())
         return self
@@ -153,8 +167,6 @@ class EngineClient:
             return
         exc = task.exception()
         if exc is not None:
-            import sys
-
             sys.stderr.write(f"[rpc] notification handler failed: {exc!r}\n")
 
     def _fail_pending(self, exc: BaseException) -> None:
@@ -163,15 +175,43 @@ class EngineClient:
                 fut.set_exception(exc)
 
     async def call(self, method: str, params: dict | None = None, timeout: float = 60) -> Any:
+        """Issue one JSON-RPC call and wait for its response.
+
+        On timeout the socket is CLOSED, not merely abandoned. Giving up
+        on the future alone leaves the engine working on a request whose
+        answer nobody will read — a `chat.send` that keeps composing and
+        commits a draft into an empty room. Closing is the only signal
+        this protocol has for "stop": the engine cancels the turns bound
+        to that connection when it goes away. The client is finished with
+        the socket either way, since a timeout is fatal to the run.
+        """
         rid = next(self._ids)
         fut: asyncio.Future = asyncio.get_event_loop().create_future()
         self._pending[rid] = fut
-        await self._ws.send(
-            json.dumps(
-                {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
+        try:
+            await self._ws.send(
+                json.dumps(
+                    {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
+                )
             )
+            return await asyncio.wait_for(fut, timeout=timeout)
+        except asyncio.TimeoutError:
+            await self._abandon(rid, method, timeout)
+            raise
+        finally:
+            self._pending.pop(rid, None)
+
+    async def _abandon(self, rid: int, method: str, timeout: float) -> None:
+        """Tell the engine to stop working on a call we gave up on."""
+        sys.stderr.write(
+            f"[rpc] {method} (id={rid}) got no answer in {timeout:.0f}s — "
+            f"closing the socket so the engine stops working on it\n"
         )
-        return await asyncio.wait_for(fut, timeout=timeout)
+        try:
+            if self._ws is not None:
+                await self._ws.close()
+        except Exception as exc:  # noqa: BLE001
+            sys.stderr.write(f"[rpc] closing after timeout failed: {exc!r}\n")
 
 
 def call_sync(

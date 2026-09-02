@@ -64,19 +64,28 @@ def gmail(uid="101", to="cust@example.test", subject="Re: invoice",
             "references": key, "in_reply_to": key, "thread_key": key}
 
 
+BODY = ("Buongiorno, la fattura è stata emessa ieri e le arriva in giornata. "
+        "Le confermo anche il rinnovo.")
+
+
 def engine(id="eng-1", to="cust@example.test", subject="Re: invoice",
-           when=None, key="<t1@example.test>"):
+           when=None, key="<t1@example.test>", body=None):
     return {"id": id, "to_addresses": [to], "subject": subject,
             "created_at": (when or at(6)).replace(tzinfo=None).isoformat(),
-            "thread_id": key, "in_reply_to": key, "references": [key]}
+            "thread_id": key, "in_reply_to": key, "references": [key],
+            "body": body if body is not None else BODY}
 
 
-def run(gmail_rows, engine_rows, *, inbound=None, sent=None, settled=None):
+def run(gmail_rows, engine_rows, *, inbound=None, sent=None, settled=None,
+        delivered=None):
     return draft_state.reconcile(
         None, gmail_rows, engine_rows,
         inbound=inbound or (lambda s, a, after=None: []),
         sent=sent or (lambda s, a, days=None: []),
         settled=settled or (lambda s, keys: ({}, None)),
+        # Never the real reader: a test that reaches IMAP is not a test.
+        # `(match, note)` is the module's degradation shape, same as `settled`.
+        delivered=delivered or (lambda s, a, b: (None, None)),
         now=NOW,
     )
 
@@ -198,9 +207,90 @@ def _degradation() -> None:
           f"a draft with no date is reported, not judged: {rows[0]}, {notes}")
 
     ready, re_decide = draft_state.split(
-        [{"verdict": "ready"}, {"verdict": "overtaken"}, {"verdict": "settled"}])
-    check(len(ready) == 1 and len(re_decide) == 2,
+        [{"verdict": "ready"}, {"verdict": "overtaken"}, {"verdict": "settled"},
+         {"verdict": "duplicate"}])
+    check(len(ready) == 1 and len(re_decide) == 3,
           f"split() groups the two blocks, got {len(ready)}/{len(re_decide)}")
+
+
+# ------------------------------------------------------------- duplicates
+
+def _duplicates() -> None:
+    """A draft whose text is already in Sent is a SECOND COPY, not a draft the
+    conversation moved past. It is the case that made 15 stale drafts on one
+    mailbox unreadable: every one of them was labelled `overtaken`."""
+    def delivered_hit(s, a, b):
+        return {"date": hdr(at(3)), "subject": "Re: invoice",
+                "message_id": "<sent-1@local>"}, None
+
+    rows, notes = run([], [engine()], delivered=delivered_hit)
+    check(rows[0]["verdict"] == "duplicate",
+          f"an already-delivered body is duplicate, got {rows[0]['verdict']}")
+    check("already delivered" in (rows[0]["signal"] or ""),
+          f"the signal says what happened, got {rows[0]['signal']!r}")
+    check((rows[0]["signal_at"] or "").startswith("2026-08-27T09:00"),
+          f"the signal is dated from the delivered copy, got {rows[0]['signal_at']!r}")
+    check(not notes, f"a clean duplicate run carries no note, got {notes}")
+
+    # The whole point of the rank: on a thread the customer has replied to,
+    # BOTH fire, and "they already have this text" is the one to act on.
+    rows, _ = run([], [engine()], delivered=delivered_hit,
+                  inbound=lambda s, a, after=None: [{"date": hdr(at(2))}],
+                  sent=lambda s, a, days=None: [{"date": hdr(at(1))}])
+    check(rows[0]["verdict"] == "duplicate",
+          f"duplicate outranks overtaken, got {rows[0]['verdict']}")
+
+    # A one-line courtesy repeats honestly; matching it would call every
+    # second thank-you a duplicate.
+    seen = []
+    rows, _ = run([], [engine(body="Grazie!")],
+                  delivered=lambda s, a, b: (seen.append(b), delivered_hit(s, a, b))[1])
+    check(rows[0]["verdict"] == "ready" and not seen,
+          f"a body under the floor is never compared, got {rows[0]['verdict']}")
+
+    # Headers-only Gmail rows carry no text: no body, no comparison, no read.
+    asked = []
+    rows, _ = run([gmail()], [],
+                  delivered=lambda s, a, b: (asked.append(a), (None, None))[1])
+    check(not asked, "a Gmail-only draft has no body to compare — do not read")
+
+    # A limit the reader hit is REPORTED. A silent cap reads as "checked
+    # everything" when it did not, and the operator would take a missing
+    # `duplicate` for a clean bill.
+    rows, notes = run([], [engine()],
+                      delivered=lambda s, a, b: (None, "read the newest 20 of 57"))
+    check(rows[0]["verdict"] == "ready" and any("newest 20" in n for n in notes),
+          f"a truncated scan must say so: {notes}")
+
+    # A mirrored draft is ONE row, and the engine copy's body must survive the
+    # pairing or the pair silently loses the check.
+    rows, _ = run([gmail()], [engine()], delivered=delivered_hit)
+    check(len(rows) == 1 and rows[0]["verdict"] == "duplicate",
+          f"a paired row keeps the engine body, got {rows}")
+
+    # A body at the normalisation cap is not compared at all: two long mails
+    # sharing a 4000-character prefix normalise equal, and a false `duplicate`
+    # on a draft that only STARTS like a delivered mail is worse than none.
+    from cs import gmail_archive
+
+    long_body = "x" * (gmail_archive.BODY_MAX + 50)
+    match, note = gmail_archive.sent_body_match(None, "cust@example.test", long_body)
+    check(match is None and note and "too long to compare" in note,
+          f"an over-cap body must be refused and reported, got {note!r}")
+
+    # Degradation is a note, never an exception and never a verdict.
+    def boom(s, a, b):
+        raise OSError("imap said no")
+
+    rows, notes = run([], [engine()], delivered=boom)
+    check(rows[0]["verdict"] == "ready" and notes,
+          f"a failed body read is a note, not a verdict: {rows[0]}, {notes}")
+
+    # One read per (contact, body), not one per draft.
+    calls = []
+    run([], [engine(id="eng-a"), engine(id="eng-b")],
+        delivered=lambda s, a, b: (calls.append(a), (None, None))[1])
+    check(len(calls) == 1, f"the read is cached per contact+body, got {calls}")
 
 
 # ---------------------------------------------------------------------- E
@@ -262,6 +352,7 @@ def _review_surface() -> None:
 
 
 _verdicts()
+_duplicates()
 _pairing()
 _degradation()
 _review_surface()

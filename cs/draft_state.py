@@ -7,9 +7,17 @@ by hand. `cs review` used to list both stores raw, so a reply written for a
 question that has since been withdrawn was presented as ready to send.
 
 This module gives every draft a VERDICT, computed at review time and stored
-nowhere. Two of the three signals are Gmail-anchored, need no engine and cannot
-degrade:
+nowhere. Three of the four signals are Gmail-anchored, need no engine and
+cannot degrade:
 
+    duplicate   — the same text is already in Sent to that contact: this draft
+                  is a SECOND COPY of a mail they already have, and sending it
+                  mails them the same thing twice. Ranked strongest, because
+                  it is the only signal about the draft's CONTENT rather than
+                  about the conversation around it. It needs a body to
+                  compare, so it fires on engine drafts (and on a Gmail draft
+                  paired with its engine copy); a Gmail-only row carries
+                  headers alone and keeps the other verdicts.
     overtaken   — the contact has a message in All Mail dated AFTER the draft
                   was composed: the draft answers a state of the conversation
                   that no longer holds.
@@ -29,8 +37,14 @@ The split is the charter's: *does this message exist* → Gmail;
 *what kind of message is it* → the engine.
 
 A draft with no signal is `ready`. Precedence when several fire is
-overtaken > superseded > settled: the customer having spoken since is the
-strongest reason to re-read before sending.
+duplicate > overtaken > superseded > settled. A copy of mail already delivered
+outranks everything: on a thread where the customer has since replied, both
+`duplicate` and `overtaken` are true, and "they already have this text" is the
+more actionable of the two.
+
+No verdict blocks anything. `RE_DECIDE` GROUPS the drafts the digest asks the
+operator to read again before sending; a deliberate re-send is flagged, never
+skipped, and nothing here can refuse one.
 
 **Nothing here deletes anything.** Retiring a draft is a silencing action in the
 class of `cs handled` — a named, per-draft, human instruction — so this module
@@ -55,10 +69,17 @@ from .gmail_archive import _parse_date as parse_mail_date
 from .thread_key import thread_key
 
 #: Strongest first. `ready` is the absence of every signal.
-VERDICT_RANK = {"overtaken": 0, "superseded": 1, "settled": 2, "ready": 3}
+VERDICT_RANK = {"duplicate": 0, "overtaken": 1, "superseded": 2, "settled": 3,
+                "ready": 4}
 
 #: Verdicts that mean "read this again before sending".
-RE_DECIDE = ("overtaken", "superseded", "settled")
+RE_DECIDE = ("duplicate", "overtaken", "superseded", "settled")
+
+#: Shortest body the duplicate check will compare. A one-line courtesy
+#: ("Grazie!") repeats honestly across unrelated conversations, so matching it
+#: would call every second thank-you a duplicate; below this the other
+#: verdicts decide.
+MIN_DUPLICATE_BODY = 40
 
 #: Widest Sent/All-Mail window a single draft may ask for, in days. A draft
 #: older than this is compared over the cap: the question is only ever "did
@@ -127,6 +148,9 @@ def _gmail_row(row: dict) -> dict:
         "subject": row.get("subject") or "",
         "thread_key": key or "",
         "composed_at": parse_mail_date(row.get("date")),
+        # `list_drafts` fetches headers only, so a Gmail-only draft has no
+        # text to compare and simply skips the duplicate check.
+        "body": row.get("body") or "",
     }
 
 
@@ -145,6 +169,7 @@ def _engine_row(row: dict) -> dict:
         "subject": row.get("subject") or "",
         "thread_key": key or "",
         "composed_at": _engine_composed_at(row),
+        "body": row.get("body") or "",
     }
 
 
@@ -186,6 +211,10 @@ def _pair(rows: list[dict]) -> list[dict]:
                 base["to_display"] = g["to_display"] or e["to_display"]
                 base["subject"] = g["subject"] or e["subject"]
                 base["thread_key"] = g["thread_key"] or e["thread_key"]
+                # Only the engine copy carries text; the Gmail side is
+                # headers. Keep it, or the pair loses the duplicate check the
+                # engine-only row would have had.
+                base["body"] = g["body"] or e["body"]
             base.pop("source", None)
             out.append(base)
     return out
@@ -203,14 +232,16 @@ def reconcile(
     inbound=None,
     sent=None,
     settled=None,
+    delivered=None,
     now: datetime | None = None,
 ) -> tuple[list[dict], list[str]]:
     """`(rows, notes)` — one row per LOGICAL draft, each carrying its verdict.
 
-    `inbound`, `sent` and `settled` are the three reads, injected so the logic
-    is testable over fixture dicts (the shape `cs/unanswered.py`'s tests use).
-    Their defaults are the real ones: `gmail_archive.inbound_since`,
-    `gmail_archive.sent_to` and `engine_view.settled`.
+    `inbound`, `sent`, `settled` and `delivered` are the four reads, injected
+    so the logic is testable over fixture dicts (the shape `cs/unanswered.py`'s
+    tests use). Their defaults are the real ones:
+    `gmail_archive.inbound_since`, `gmail_archive.sent_to`,
+    `engine_view.settled` and `gmail_archive.sent_body_match`.
 
     Every row: `to`, `to_display`, `subject`, `thread_key`, `composed_at`,
     `composed_iso`, `gmail_uid`, `engine_id`, `verdict`, `signal`, `signal_at`.
@@ -221,6 +252,7 @@ def reconcile(
     inbound = inbound or gmail_archive.inbound_since
     sent = sent or gmail_archive.sent_to
     settled = settled or engine_view.settled
+    delivered = delivered or gmail_archive.sent_body_match
     now = now or datetime.now(timezone.utc)
 
     rows = _pair(
@@ -247,6 +279,10 @@ def reconcile(
     # answer to "did anything happen since" is a property of the CONTACT.
     inbound_cache: dict[str, list[dict]] = {}
     sent_cache: dict[str, list[dict]] = {}
+    # Keyed by (contact, body): two rows carrying the same text to the same
+    # person ask the identical question, and that pair is precisely the
+    # duplicate case, so it must cost ONE read and not two.
+    delivered_cache: dict[tuple, dict | None] = {}
 
     for row in rows:
         row["composed_iso"] = _iso(row["composed_at"])
@@ -265,6 +301,33 @@ def reconcile(
             continue
 
         days = _lookback_days(composed_at, now)
+
+        # Is this draft a second copy of a mail they already have? Asked
+        # first, because it outranks every signal about the conversation: a
+        # duplicate on a thread the customer has since replied to is BOTH
+        # `duplicate` and `overtaken`, and only the first says "do not send
+        # this text again". No date bound — a copy of something delivered is
+        # a copy whenever it was delivered.
+        body = (row.get("body") or "").strip()
+        if len(body) >= MIN_DUPLICATE_BODY:
+            cache_key = (addr, body)
+            if cache_key not in delivered_cache:
+                try:
+                    hit, note = delivered(settings, addr, body)
+                    delivered_cache[cache_key] = hit
+                    if note:
+                        notes.append(note)
+                except Exception as e:  # noqa: BLE001 — degradation is the contract
+                    delivered_cache[cache_key] = None
+                    notes.append(f"could not compare {addr}'s Sent bodies: "
+                                 f"{type(e).__name__}: {e}")
+            hit = delivered_cache[cache_key]
+            if hit:
+                row["verdict"] = "duplicate"
+                row["signal"] = (f"this exact text was already delivered to "
+                                 f"{addr}")
+                row["signal_at"] = _iso(parse_mail_date(hit.get("date")))
+                continue
 
         if addr not in inbound_cache:
             try:
