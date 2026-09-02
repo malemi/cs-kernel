@@ -154,6 +154,63 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.39.0 — 2026-09-02
+
+**Every send gate reads every company mailbox, and refuses blind.** This
+closes the 2026-09-01 incident's machine path: after `v0.37.0`/`v0.38.0` gave
+the *human* a cross-mailbox answer, the machine's own prior-contact checks
+were still single-mailbox — the campaign runner, its reply gates (reminders
+and SMS share one), the dossier's mandatory pre-contact check, and draft
+state all asked "have we written to them" of the operator mailbox alone. All
+nine gating sites now read the fan-out (profile accounts ∪ declared
+mailboxes) through `_sent_threads_to` / `_inbound_since`, which return their
+unreadable set alongside the rows.
+
+**Fail-closed, by policy.** A send gate that meets an unreadable mailbox
+refuses to deliver, names the mailbox and the fix, and mutates nothing — the
+refusal reuses the `blocked` shape CS_PAUSE and escalation already use, stays
+outside `DELIVERY_ACTIONS`, and never reaches the engine-error handler.
+Reading and drafting continue; only delivery stops. A pending list shows a
+contact it cannot judge as its own item. `send_first` stays deliberately
+outside the gate and its docstring says so. Positive evidence outranks
+incomplete evidence at every site: found is found, and every positive branch
+resolves to refuse, mark, or hand to a human — verified per site in review,
+with the `send_reminder` refusal proven load-bearing by injection (disabled,
+the call reached `send_mail.send`).
+
+**Two asymmetries closed in review.** A `ready` draft row carries
+`evidence_incomplete: [<mailboxes>]` inline on the row the human is about to
+act on — `ready` is the one verdict resting on an absence, so it must say
+which mailbox it could not read; verdicts resting on something found need no
+caveat, and gate 40's no-retirement contract holds. And the dossier's verdict
+keys off "ever" across all mailboxes instead of the 30-day dedup window: a
+colleague's 61-day-old reply reads `REPLY IN THREAD`, not `cold contact`, at
+identical IMAP cost.
+
+One login per mailbox per process, held by a counting gate. Seven stamped
+surfaces stop saying prior-contact evidence is one mailbox and describe the
+refusal the operator will actually see, including `cs-campaign-tick`'s
+`evidence_incomplete` worklist branch.
+
+**Migration**: none beyond `v0.38.0`'s (the `CS_READ_MAILBOXES` split, which
+`124-cs` has already performed). A clone that upgrades the kernel without
+re-stamping meets an undescribed worklist action, and that skew is safe in
+the direction that matters: every sender re-checks and refuses independently,
+so a stale skill cannot produce a send.
+
+**Re-collaudo tier: FULL, both clones.** The release moves the send gates —
+the exact core of the list that mandates FULL. Exercised live on `124-cs`
+before this tag, read-only, at this code: the dossier's verdict on the
+incident's own prospect (`REPLY IN THREAD`, 4 of 4 mailboxes), `cs history`
+regression, and the fail-closed path under a real authentication refusal
+(`STOP — evidence incomplete … Nobody can say this contact is cold until that
+mailbox is readable again`), with zero clone files touched. What remains owed
+at each clone's upgrade: the full suite on the installed pin, a campaign tick
+in draft-only mode observing a refusal end-to-end, and `mrcall-cs`'s entire
+FULL collaudo — that clone has met none of `v0.36.0`–`v0.39.0` yet and
+crosses them all in one upgrade.
+
+
 ## v0.38.0 — 2026-09-02
 
 Two changes ship together: the profile-less mailboxes join the contact-history
