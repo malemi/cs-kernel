@@ -100,16 +100,35 @@ serves only `cs drive` and lead resolution.
 ### `--account` switches the ENGINE profile only
 
 The Gmail-IMAP verbs — `contacted`, `unanswered`, `dossier`, `draft-reply`,
-`draft-delete` — run on {{ email_address }}'s single mail credential, so on any
-other account they REFUSE (exit 2) rather than answering about the wrong
-mailbox. Use `thread` / `ask` there; both are engine-backed and honour the flag.
+`draft-delete` — answer about {{ email_address }}'s own mailbox, so on any other
+account they REFUSE (exit 2) rather than answering about the wrong one. Use
+`thread` / `ask` there; both are engine-backed and honour the flag.
+
+`history` refuses the flag for the opposite reason: it already reads every
+mailbox in scope — {{ email_address }}, every registry account, and every address in
+`[operator].read_mailboxes` — so `--account` could only narrow what is by
+design not narrowable. Every answer prints the mailboxes it read and the ones
+it could not.
+
+### Prior-contact evidence is every mailbox in scope
+
+"Have we already written to this person, and have they already answered
+somebody here" is asked of all of them, because a colleague answering from his
+own address leaves nothing in {{ email_address }}. Addresses are declared in
+`manifest.toml [operator].read_mailboxes`; their IMAP passwords live in
+`~/.{{ company_slug }}-cs/.env` as `CS_READ_MAILBOX_PASSWORDS`, in no repo file. A declared
+mailbox with no password, or one whose password no longer works, is reported as
+UNREADABLE and named — never as an absence — and every send gate refuses while
+it is: reading and drafting continue, only delivery stops.
 
 ### The pipeline (one daily run)
 
 1. **Worklist** — `cs plan`{% if producer_adapter == 'none' %} (reply-only — no producer wired; empty worklist){% else %}: ingest the `{{ producer_adapter }}` producer, self-filter (`SELF_UIDS`/`SELF_EMAILS`), suppression{% endif %}.
 2. **Dossier — MANDATORY before any contact** — `cs dossier <email>`: threads,
-   recent-contact check, tasks, CRM. Dedup truth is Gmail's own Sent folder
-   (`cs contacted` via `cs/gmail_archive.py`), NOT the engine archive.
+   recent-contact check, tasks, CRM. Dedup truth is Gmail's own Sent folder,
+   NOT the engine archive — read across every mailbox in scope
+   (`cs/mailboxes.py`), so the verdict is about the company and not about one
+   inbox. `cs history <email>` asks the same question with no time bound.
 3. **Decide**: thread exists → reply in it; prior relationship → informed
    outreach; genuinely cold → cold template, flagged; contacted within
    `DEDUP_DAYS` / suppressed / self → **stop**.

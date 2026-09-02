@@ -92,7 +92,7 @@ For each active campaign:
 ```
 
 Returns JSON: `campaigns[].items[]`, each item carrying an `action`
-(`reconcile` / `send_draft` / `handle_reply`), a `contact_id`, the `email`,
+(`reconcile` / `send_draft` / `handle_reply` / `evidence_incomplete`), a `contact_id`, the `email`,
 and (for replies) a `thread_id` anchor. The verb sends nothing and mutates
 nothing — it is the worklist only. An entry may also carry
 `delivery_blocked` (the campaign is over: reason + date, with `held` counting
@@ -131,6 +131,18 @@ Gmail Drafts — it never sends** (the send-capable `send-draft` verb is denied
 to you by permission). Read its JSON result: if it returns `next: reconcile`
 / `already in Sent`, run step 3a for that contact instead. Never hand-compose
 or reach for SMTP. Record the outcome.
+
+### 3b-bis. `action: evidence_incomplete`
+
+One of the mailboxes that decide "have we already written to them / have they
+replied" could not be opened, so this contact could not be judged. **Do
+nothing to it**: no queue-draft, no reminder, no SMS — the senders refuse it on
+their own anyway, saying the same thing. It is here, rather than missing, so
+that nobody mistakes a silent absence for a clean worklist.
+
+Carry the item's `unreadable` list into your report VERBATIM, with the
+address and the fix it names. This is an operator action (a password to place
+or renew), and until it is done the affected contacts stay unjudged.
 
 ### 3c. `action: handle_reply`
 

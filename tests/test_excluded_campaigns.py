@@ -29,7 +29,19 @@ from __future__ import annotations
 
 import types
 
-from cs import campaign, config, config_report, gmail_archive, manifest, rpc
+from cs import campaign, config, config_report, manifest, rpc
+from cs import mailboxes as mailboxes_mod
+
+def _fan(rows=()):
+    """The cross-mailbox fan-out's shape: rows plus the scope they came from.
+    The gates below moved onto `cs/mailboxes.py` when prior-contact evidence
+    stopped being one mailbox; the scope is complete here, because what these
+    cases vary is never the mailbox."""
+    from cs import mailboxes as mailboxes_mod
+
+    return mailboxes_mod.Fanout(rows=list(rows), read=["ops@example.test"],
+                                unreadable=[])
+
 
 
 # Deliberately generic names: this is the kernel, and a company literal here
@@ -112,8 +124,8 @@ def _stub_engine(campaign_names: list[str]) -> list[tuple]:
     # Gmail is the dedup/reply ground truth and it is NOT what this test is
     # about: nobody has replied, so every surviving campaign yields the same
     # (empty) worklist and the only variable left is the exclusion.
-    gmail_archive.inbound_since = lambda settings, email, after=None: []
-    gmail_archive.sent_to = lambda settings, email, days: []
+    mailboxes_mod.inbound_since_across = lambda settings, email, after=None: _fan()
+    mailboxes_mod.sent_to_across = lambda settings, email, days=None: _fan()
     return calls
 
 

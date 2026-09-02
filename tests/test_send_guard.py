@@ -347,7 +347,9 @@ with tempfile.TemporaryDirectory() as td:
     _r_get, _r_sent, _r_call = (campaign_mod._get_contact,
                                 campaign_mod._sent_threads_to, rpc.call_sync)
     campaign_mod._get_contact = lambda s, cid: dict(contact) if cid == "c1" else None
-    campaign_mod._sent_threads_to = lambda s, e, d: []
+    # (threads, unreadable): the gate reads every mailbox in scope, and
+    # nothing here is unreadable — what this file varies is the BODY.
+    campaign_mod._sent_threads_to = lambda s, e, d: ([], [])
     rpc.call_sync = lambda s, m, p, **kw: rpc_calls.append((m, p)) or {}
     send_mail.smtplib = types.SimpleNamespace(SMTP=_Sentinel)
     _Sentinel.opened.clear()
@@ -496,7 +498,9 @@ with tempfile.TemporaryDirectory() as td2:
     _r_get2, _r_sent2, _r_call2 = (campaign_mod._get_contact,
                                    campaign_mod._sent_threads_to, rpc.call_sync)
     campaign_mod._get_contact = lambda s, cid: dict(contact2) if cid == "c2" else None
-    campaign_mod._sent_threads_to = lambda s, e, d: []
+    # (threads, unreadable): the gate reads every mailbox in scope, and
+    # nothing here is unreadable — what this file varies is the BODY.
+    campaign_mod._sent_threads_to = lambda s, e, d: ([], [])
     rpc.call_sync = lambda s, m, p, **kw: rpc_calls2.append((m, p)) or {}
     gmail_drafts.imaplib = types.SimpleNamespace(
         IMAP4_SSL=_ImapAppendSentinel, Time2Internaldate=_real_gmail_imaplib.Time2Internaldate)

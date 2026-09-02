@@ -224,6 +224,40 @@ def _lookback_days(composed_at: datetime, now: datetime) -> int:
     return max(1, min(MAX_LOOKBACK_DAYS, (now - composed_at).days + 2))
 
 
+def _across_inbound(unreadable: dict[str, str]):
+    """The default `inbound` read: the fan-out over every mailbox in scope,
+    recording what it could not open into `unreadable` instead of raising.
+
+    A closure rather than a module-level function because the collector belongs
+    to ONE reconcile run — and because the injection contract stays exactly what
+    it was (a callable returning a list of message dicts), so every fixture that
+    stands in for this read keeps working unchanged."""
+
+    def read(settings, addr, after=None):
+        from . import mailboxes
+
+        fan = mailboxes.inbound_since_across(settings, addr, after=after)
+        for u in fan.unreadable:
+            unreadable.setdefault(u.address or u.account, u.describe())
+        return fan.rows
+
+    return read
+
+
+def _across_sent(unreadable: dict[str, str]):
+    """The default `sent` read — same shape, same collector, Sent folders."""
+
+    def read(settings, addr, days=None):
+        from . import mailboxes
+
+        fan = mailboxes.sent_to_across(settings, addr, days=days)
+        for u in fan.unreadable:
+            unreadable.setdefault(u.address or u.account, u.describe())
+        return fan.rows
+
+    return read
+
+
 def reconcile(
     settings,
     gmail_drafts: list[dict],
@@ -239,18 +273,37 @@ def reconcile(
 
     `inbound`, `sent`, `settled` and `delivered` are the four reads, injected
     so the logic is testable over fixture dicts (the shape `cs/unanswered.py`'s
-    tests use). Their defaults are the real ones:
-    `gmail_archive.inbound_since`, `gmail_archive.sent_to`,
-    `engine_view.settled` and `gmail_archive.sent_body_match`.
+    tests use). Their defaults are the real ones: the CROSS-MAILBOX fan-out
+    (`cs/mailboxes.py`) for `inbound` and `sent`, `engine_view.settled`, and
+    `gmail_archive.sent_body_match`.
+
+    Why the fan-out for two of them: `overtaken` and `superseded` are claims
+    about the CONVERSATION, not about one mailbox. A customer who wrote again
+    to a colleague has written again, and a colleague who answered has answered
+    — a draft still marked `ready` because the only mailbox consulted saw
+    nothing is the queue presenting a stale answer as fresh. A mailbox that
+    could not be read becomes a NOTE, not a retired row: this is the review
+    surface, and its contract is that no degradation ever removes a draft from
+    the operator's eyes. (`delivered` stays single-mailbox: "was this exact
+    text already delivered" is about our own copy of the body, and widening it
+    is a different question.)
 
     Every row: `to`, `to_display`, `subject`, `thread_key`, `composed_at`,
-    `composed_iso`, `gmail_uid`, `engine_id`, `verdict`, `signal`, `signal_at`.
-    `notes` holds one line per degradation, never an exception.
+    `composed_iso`, `gmail_uid`, `engine_id`, `verdict`, `signal`, `signal_at`,
+    `evidence_incomplete`. The last one is the mailboxes that could not be read
+    while this row's verdict was computed — empty unless the verdict is `ready`,
+    which is the only one that rests on an absence. `notes` holds one line per
+    degradation, never an exception.
     """
     from . import engine_view, gmail_archive
 
-    inbound = inbound or gmail_archive.inbound_since
-    sent = sent or gmail_archive.sent_to
+    # Mailboxes that failed a read during THIS reconcile, address -> reason.
+    # Collected by the default readers below and reported once at the end: the
+    # same mailbox fails for every contact, and one note per row would bury the
+    # rows themselves.
+    unreadable: dict[str, str] = {}
+    inbound = inbound or _across_inbound(unreadable)
+    sent = sent or _across_sent(unreadable)
     settled = settled or engine_view.settled
     delivered = delivered or gmail_archive.sent_body_match
     now = now or datetime.now(timezone.utc)
@@ -377,6 +430,31 @@ def reconcile(
                 datetime.fromtimestamp(getattr(view, "at", 0), tz=timezone.utc)
             ) if getattr(view, "at", None) else None
 
+    gaps = list(unreadable.values())
+    for row in rows:
+        # ON THE ROW, not only in a note. `ready` is the one verdict that rests
+        # on an ABSENCE — nothing overtook this draft, nobody answered since —
+        # and an absence read from a mailbox that could not be opened is
+        # precisely what this workstream exists to stop. The reviewer acts row
+        # by row, so the qualification has to travel with the row it qualifies;
+        # a footer under two blocks is read after the decision, if at all.
+        #
+        # The other verdicts rest on something FOUND (a later inbound, a later
+        # send, a delivered body, the engine's own reading), and a positive is
+        # a positive whatever else could not be read — so they carry no gap.
+        # The key is always present, so a machine reader can trust its absence
+        # to mean "complete".
+        row["evidence_incomplete"] = list(gaps) if (gaps and row["verdict"] == "ready") else []
+    if unreadable:
+        # The run-level note stays as well: it names the mailbox ONCE for a
+        # reader scanning the digest, and it is what says the scope narrowed at
+        # all when every row happens to be re-decided anyway.
+        notes.append(
+            "verdicts below are computed from an INCOMPLETE scope — "
+            + "; ".join(gaps)
+            + ". A draft can read as `ready` here because a mailbox that would "
+              "have overtaken it could not be opened."
+        )
     rows.sort(key=lambda r: (VERDICT_RANK.get(r["verdict"], 9),
                              r["composed_at"] or datetime.min.replace(
                                  tzinfo=timezone.utc)))

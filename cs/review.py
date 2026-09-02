@@ -293,6 +293,12 @@ def render(d: dict) -> str:
     for r in ready:
         L.append(f"  - [{_handles(r)}] {(r.get('to') or '?'):32.32} "
                  f"{(r.get('subject') or '(no subject)')[:60]}")
+        # INLINE, under the row it qualifies. `ready` means "nothing overtook
+        # this draft", and when a mailbox could not be read that is an absence
+        # nobody established — the operator is about to press send on this
+        # line, so it cannot live in a footer below the next block.
+        for gap in r.get("evidence_incomplete") or []:
+            L.append(f"      ! ready on INCOMPLETE evidence — {gap}")
     L.append(f"\nDrafts to re-decide ({len(re_decide)}) — the conversation "
              f"moved on since they were written:")
     for r in re_decide:

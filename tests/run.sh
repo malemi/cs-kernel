@@ -1010,6 +1010,28 @@ step "45. the mailboxes with no engine profile — declared, read, never silent"
 # the setting.
 if "$VENV/bin/python" "$ROOT/tests/test_read_mailboxes.py"; then echo "OK"; else echo "FAIL: declared read-only mailboxes regressed"; FAIL=1; fi
 
+step "46. the send gates read every mailbox — and refuse when one cannot be read"
+# Widening the evidence is half the fix; the other half is what a gate does when
+# a mailbox is unreadable. Fail-open would reproduce the incident at machine
+# speed — an absence of evidence read as evidence of absence, once per contact,
+# unattended. So: fail-closed, named, and a clean no-op. Guards: every sending
+# path (`send_draft`, `queue_draft`, `send_reminder`, `send_sms`) and
+# `reconcile` refuse when a mailbox in scope cannot be opened, naming it and the
+# fix; NOTHING is mutated on the way there — SMTP, SMS, the Gmail draft append
+# and every `campaign.update_contact` are wired to fail the test if reached;
+# `pending` surfaces the unjudgeable contact as its own item instead of dropping
+# it or proposing a send; a colleague's message in ANOTHER mailbox stops a send
+# the operator mailbox alone would have allowed (the incident, replayed); ONE
+# IMAP login per mailbox per PROCESS across a whole gate-heavy run (4 contacts,
+# 2 mailboxes, 2 logins — not 8); `cs dossier`'s verdict fails closed with the
+# mailbox named instead of printing "cold contact", and keys off "have we EVER"
+# rather than the dedup window, so a colleague's two-month-old reply with every
+# mailbox readable is not reported as a cold contact; and the review's draft
+# verdicts widen but never retire a row — an unreadable mailbox rides ON the
+# `ready` row and is printed inside the ready block, where the operator is
+# about to press send, rather than in a footer under the next one.
+if "$VENV/bin/python" "$ROOT/tests/test_send_gates_fanout.py"; then echo "OK"; else echo "FAIL: the cross-mailbox send gates regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

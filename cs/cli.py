@@ -891,7 +891,7 @@ def _print_crm_section(settings, email: str) -> None:
 
 def cmd_dossier(args) -> int:
     settings = config.load()
-    from . import gmail_archive
+    from . import gmail_archive, mailboxes
 
     email = args.email
     me = _self_label(settings)
@@ -913,13 +913,42 @@ def cmd_dossier(args) -> int:
     if len(corr) > 12:
         print(f"  … {len(corr) - 12} older not shown")
 
-    recent = gmail_archive.sent_to(settings, email, days=args.dedup_days)
+    # The dedup gate — the one line of this dossier a caller acts on — reads
+    # EVERY mailbox this company answers from, not only the operator's. A
+    # colleague's reply from his own address is on no header of the mailbox
+    # above, so the correspondence section can be empty while the company has
+    # been talking to this person for months.
+    #
+    # UNBOUNDED, and the window applied here in memory. "Have we ever written
+    # to them" is the question the verdict below needs; the 30-day window
+    # answers only "may we write again today", and a 61-day-old reply from a
+    # colleague — with nothing wrong anywhere — read as `cold contact` is the
+    # incident's own shape surviving inside the check that exists to prevent
+    # it. The read costs the same either way: `sent_to` fetches every matching
+    # UID's header and filters by Date afterwards.
+    fan = mailboxes.sent_to_across(settings, email, days=None)
+    ever = fan.rows
+    cutoff = _time.now_utc() - timedelta(days=args.dedup_days)
+    dated = [(gmail_archive._parse_date(m.get("date")), m) for m in ever]
+    recent = [m for dt, m in dated if dt is not None and dt >= cutoff]
     print(
-        f"\n-- contacted by {me} in last {args.dedup_days}d (Gmail Sent): "
-        f"{'YES — do not cold-contact' if recent else 'no'} --"
+        f"\n-- contacted in last {args.dedup_days}d (Gmail Sent, every mailbox "
+        f"in scope): {'YES — do not cold-contact' if recent else 'no'} --"
     )
     for m in recent:
-        print(f"  {m['date']}: {m['subject']}")
+        print(f"  [{m.get('mailbox') or '?'}] {m['date']}: {m['subject']}")
+    older = len(ever) - len(recent)
+    if older:
+        # Outside the window is NOT outside the history: this is the line that
+        # says the contact is not cold even when the dedup answer is "no".
+        print(f"  … plus {older} older message(s) to them — `{settings.prog_name or 'cs'} "
+              f"history {email}` for all of it")
+    print(f"  {fan.scope_line()}")
+    if not fan.complete:
+        print(f"  {mailboxes.INCOMPLETE}")
+    # No IMAP below this line: hand the mailboxes back rather than leaving
+    # logged-in sockets open for the rest of the verb (same as `history`).
+    mailboxes.close_sessions()
 
     # --- is a human already writing to them? (cs escalated) The dossier is the
     # mandatory step before any contact, so this is the chokepoint where an
@@ -972,7 +1001,31 @@ def cmd_dossier(args) -> int:
             f"but a human is answering it"
         )
     elif recent:
-        verdict = f"STOP — {me} already wrote within dedup window (Gmail Sent)"
+        who = ", ".join(dict.fromkeys(m.get("mailbox") or "?" for m in recent))
+        verdict = f"STOP — already written to within the dedup window, from {who}"
+    elif ever:
+        # Older than the window, and therefore NOT a dedup block — but equally
+        # not a cold contact. The verdict names where and when, because that is
+        # what the reader needs in order not to open with an apology for
+        # silence that never happened.
+        last = max(dated, key=lambda p: p[0] or datetime.min.replace(tzinfo=timezone.utc))
+        when = str(last[1].get("date") or "an unknown date")
+        verdict = (
+            f"REPLY IN THREAD — {last[1].get('mailbox') or 'a mailbox here'} "
+            f"already wrote to them ({when}); older than the {args.dedup_days}d "
+            f"window, so not a dedup block, but NOT a cold contact"
+        )
+    elif not fan.complete:
+        # Fail-closed, like every send gate: this verdict is the mandatory
+        # pre-contact check, and "cold contact" read off a partial mailbox
+        # scan is precisely the sentence that produced an apology for two
+        # months of silence that had not happened.
+        verdict = (
+            "STOP — evidence incomplete: "
+            + "; ".join(u.describe() for u in fan.unreadable)
+            + ". Nobody can say this contact is cold until that mailbox is "
+              "readable again."
+        )
     elif sent_us or inbound:
         verdict = "REPLY IN THREAD — real history exists (not cold)"
     else:

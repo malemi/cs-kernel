@@ -110,12 +110,20 @@ surfaced), run:
 .venv/bin/python -m cs dossier <email>   # {{ accounts_default }}@ — the fuller check, its own mailbox
 ```
 
-This is thread + contacted (Gmail Sent truth) + tasks + CRM. Use it before any
-later outreach. Skip only contacts with no email on file.
+This is thread + prior contact (Gmail Sent truth) + tasks + CRM. Use it before
+any later outreach. Skip only contacts with no email on file.
 
-`dossier` is the fuller check but only on {{ accounts_default }}@: on any other
-account it refuses, because its `contacted` half reads {{ email_address }}'s own
-Gmail. There, `thread` is the engine-backed equivalent.
+Its prior-contact half reads EVERY mailbox in scope — {{ email_address }}, the registry
+accounts, and the addresses declared in `manifest.toml [operator].read_mailboxes`
+— so its verdict answers "has this company written to them", not "has this
+inbox". `cs history <email>` is the same question with no time bound and a line
+per mailbox. Read the verdict: `STOP — evidence incomplete` means a mailbox
+could not be opened, which is NOT "nobody wrote" — report the named mailbox and
+do not contact anyone on that basis.
+
+Run `dossier` on {{ accounts_default }}@: on any other account it refuses, because
+its answer is about this clone's own identity. There, `thread` is the
+engine-backed equivalent.
 
 ## 4. Reconcile the two layers
 

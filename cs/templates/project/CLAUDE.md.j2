@@ -152,9 +152,18 @@ boundary.
   is not this verb — that is an OPEN task plus a line in your report. Denied on
   the cron for the same reason.
 - **NEVER contact a `SELF_UID`/`SELF_EMAIL`** or a suppressed address.
-- **NEVER re-contact within `DEDUP_DAYS`** — `cs contacted` is the check.
-- **Dedup ground truth is Gmail's own Sent folder**, never the engine archive.
-  There is no knob for it.
+- **NEVER re-contact within `DEDUP_DAYS`** — `cs contacted` is the check for
+  {{ email_address }}'s own mailbox and window; `cs history <email>` is the check for
+  "has anyone HERE ever written to them", unbounded and across every mailbox in
+  scope. Use the second before any first contact: a colleague's reply from his
+  own address is on no header of {{ email_address }}, so `contacted` cannot see it.
+- **Dedup ground truth is Gmail's own Sent folder**, never the engine archive —
+  and it is the Sent folder of EVERY mailbox in scope, not only this one. There
+  is no knob for either.
+- **An unreadable mailbox is not a "no".** When a mailbox in scope cannot be
+  opened, the answer is `UNKNOWN` / `evidence incomplete`, it names the mailbox
+  and the fix, and every send refuses until it is fixed. Never read it as "we
+  have never written to them", and never work around it — report it.
 - **Never run an engine on a stale profile copy** — the `.zylch/` directory in
   the engine service user's own home is the truth; a copy of it anywhere else is
   not.
@@ -189,6 +198,17 @@ a bare first name. The registry holds **ONLY this project's own mail domain** �
 never another company's mailboxes, never another project's uid. A non-default
 account is read-only work: **`/cs-account <name>`**. The autonomous draft/triage
 loop always runs on the **default** account only (`{{ accounts_default }}`).
+
+**Prior-contact evidence is wider than that, and always has to be.** The
+question "has this company already written to this person, or have they already
+answered somebody here" is asked of EVERY mailbox in scope: {{ email_address }}, every
+account in the registry above, and every address in `manifest.toml`
+[operator].read_mailboxes (colleagues who answer customers from their own
+address; their passwords live in `~/.{{ company_slug }}-cs/.env`, never in this repo).
+`cs history <email>` answers it and prints the mailboxes it read; `cs dossier`
+uses the same scope for its verdict, and so does every campaign send gate. A
+mailbox that cannot be opened is named, and sending stops until it can be —
+that is deliberate, and it is why the scope is printed on every answer.
 
 ## 9. What we know — engine memory first (do not be a goldfish)
 

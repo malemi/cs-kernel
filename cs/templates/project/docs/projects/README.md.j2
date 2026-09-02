@@ -145,8 +145,10 @@ working directory: from anywhere else `--account` fails with *"unknown --account
 … Configured: (none)"*.
 
 **`--account` switches the ENGINE profile only.** The Gmail-IMAP verbs —
-`contacted`, `unanswered`, `dossier`, `draft-reply` — run on the operator's one
-mail credential, so on any other account they refuse and point you at the
-engine-backed `thread` / `ask`, which do honour `--account`.
+`contacted`, `unanswered`, `dossier`, `draft-reply` — answer about the
+operator's own mailbox, so on any other account they refuse and point you at the
+engine-backed `thread` / `ask`, which do honour `--account`. `cs history`
+refuses it too, because it already reads every mailbox in scope and the flag
+could only narrow that.
 
-Twin rule in `CLAUDE.md` §9, loaded on every agent session.
+Twin rule in `CLAUDE.md` §8, loaded on every agent session.

@@ -45,6 +45,17 @@ from pathlib import Path
 from cs import _time, campaign, cli, config as cfg, filter as filt, rpc, unanswered
 from cs.state import State
 
+def _fan(rows=()):
+    """The cross-mailbox fan-out's shape: rows plus the scope they came from —
+    what the dossier and the campaign gates read since prior-contact evidence
+    stopped being one mailbox. Complete scope here: these cases vary who has
+    taken a contact over, never which mailbox could be opened."""
+    from cs import mailboxes as mailboxes_mod
+
+    return mailboxes_mod.Fanout(rows=list(rows), read=["ops@example.test"],
+                                unreadable=[])
+
+
 NOW = datetime(2026, 8, 25, 12, 0, 0, tzinfo=timezone.utc)
 TZ = "Europe/Rome"
 
@@ -363,6 +374,7 @@ def _dossier(db_path: str) -> None:
     import io
 
     from cs import crm, gmail_archive
+    from cs import mailboxes as mailboxes_mod
 
     settings = _settings(db_path)
     cfg.load = lambda: settings
@@ -372,7 +384,7 @@ def _dossier(db_path: str) -> None:
         {"direction": "in", "date": "Mon, 18 Aug 2026 09:00:00 +0200",
          "subject": "non risolto"}
     ]
-    gmail_archive.sent_to = lambda s, e, days=30: []
+    mailboxes_mod.sent_to_across = lambda s, e, days=None: _fan()
     rpc.call_sync = lambda *a, **k: []
     crm.lookup = lambda s, e: types.SimpleNamespace(
         source="none", rows=[], render_hints=[], note=None,
@@ -418,7 +430,7 @@ def _worklist(db_path: str) -> None:
 
 
 def _campaign(db_path: str) -> None:
-    from cs import gmail_archive
+    from cs import mailboxes as mailboxes_mod
 
     settings = _settings(db_path)
     State(db_path).mark_escalated("mine@example.test", owner="Andrea")
@@ -441,8 +453,8 @@ def _campaign(db_path: str) -> None:
     # restored explicitly: an earlier case stubbed it away, and `pending` /
     # `_get_contact` both route through it
     campaign.list_campaigns = lambda s: fake_call_sync(s, "campaign.list")
-    gmail_archive.sent_to = lambda s, e, days=30: []
-    gmail_archive.inbound_since = lambda s, e, after=None: []
+    mailboxes_mod.sent_to_across = lambda s, e, days=None: _fan()
+    mailboxes_mod.inbound_since_across = lambda s, e, after=None: _fan()
 
     out = campaign.pending(settings, now=NOW)
     entry = out["campaigns"][0]
@@ -455,7 +467,7 @@ def _campaign(db_path: str) -> None:
 
     # an observation stays, tagged with who owns the conversation
     contacts[0]["state"] = "sent"
-    gmail_archive.inbound_since = lambda s, e, after=None: [{"date": NOW}]
+    mailboxes_mod.inbound_since_across = lambda s, e, after=None: _fan([{"date": NOW}])
     entry = campaign.pending(settings, now=NOW)["campaigns"][0]
     replies = [i for i in entry["items"] if i["action"] == "handle_reply"]
     assert [i["email"] for i in replies] == ["mine@example.test"], entry

@@ -58,6 +58,11 @@ REMINDER_AFTER_HOUR_DEFAULT = 12
 # suppressed by a campaign being over.
 DELIVERY_ACTIONS = ("send_draft", "send_first", "send_reminder", "send_sms")
 
+# The worklist item for a contact whose evidence could not be read in full.
+# NOT a delivery action — nothing is put in front of anybody — and not an
+# omission either: it is the third outcome, printed with the mailbox to fix.
+EVIDENCE_ACTION = "evidence_incomplete"
+
 
 # ------------------------------------------------------------------ helpers
 
@@ -94,30 +99,96 @@ def list_campaigns(settings) -> list[dict]:
     return rpc.call_sync(settings, "campaign.list", {})
 
 
-def _sent_threads_to(settings, email: str, days: int) -> list[dict]:
-    """Operator messages SENT TO `email` within `days` — the dedup truth, read
-    from GROUND TRUTH (Gmail's own Sent folder), NOT the engine.
+def _sent_threads_to(settings, email: str, days: int) -> tuple[list[dict], list[str]]:
+    """`(threads, unreadable)` — messages SENT TO `email` within `days` from
+    EVERY mailbox this company answers from, plus the mailboxes that could not
+    be read.
 
-    The engine's `emails.search folder:sent` is blind to mail sent by hand and
-    drops a thread out of 'sent' the moment the customer replies last
-    (storage latest-sender bug) — so it cannot safely gate sends. This gate
-    decides whether queue-draft/send-draft/reconcile fire, so it MUST read the
-    real Sent folder. A non-empty result means we already mailed them."""
-    from . import gmail_archive
+    Ground truth is Gmail's own Sent folder, not the engine: the engine's
+    `emails.search folder:sent` is blind to mail sent by hand and drops a
+    thread out of 'sent' the moment the customer replies last (storage
+    latest-sender bug), so it cannot safely gate sends.
 
-    msgs = gmail_archive.sent_to(settings, email, days=days)
-    return [{"thread_id": m.get("message_id"), "subject": m.get("subject"),
-             "date": m.get("date")} for m in msgs]
+    ONE mailbox was not enough either. A company answers from several, and a
+    colleague's reply from his own address is on no header of the operator's
+    mailbox — so "we have never written to them" was answered from evidence
+    that could not have seen the answer, and four drafts were composed to a
+    prospect a co-founder had answered the next day. The fan-out
+    (`cs/mailboxes.py`) reads the operator mailbox, every account with an
+    engine profile, and every mailbox declared in the manifest.
+
+    `unreadable` is what makes the widening safe: a mailbox that could not be
+    opened is NEVER an empty result. Callers must treat a non-empty
+    `unreadable` as "cannot tell" (`_evidence_refusal`), never as "nobody
+    wrote"."""
+    from . import mailboxes
+
+    fan = mailboxes.sent_to_across(settings, email, days=days)
+    threads = [{"thread_id": m.get("message_id"), "subject": m.get("subject"),
+                "date": m.get("date"), "mailbox": m.get("mailbox")}
+               for m in fan.rows]
+    return threads, [u.describe() for u in fan.unreadable]
 
 
-def _inbound_since(settings, email: str, after: Optional[datetime]) -> list[dict]:
-    """Inbound messages from `email` dated after `after` — a reply to us, read
-    from GROUND TRUTH (Gmail All Mail), not the engine. 'Did they reply' must not
-    depend on the engine's sync state. A message FROM the customer can never be
-    one of our drafts, so this is draft-free by nature."""
-    from . import gmail_archive
+def _inbound_since(settings, email: str,
+                   after: Optional[datetime]) -> tuple[list[dict], list[str]]:
+    """`(messages, unreadable)` — inbound from `email` after `after`, across the
+    same set of mailboxes, read from Gmail All Mail rather than the engine.
 
-    return gmail_archive.inbound_since(settings, email, after=after)
+    'Did they reply' must not depend on the engine's sync state, and it must not
+    depend on WHICH of this company's mailboxes they replied to: a customer who
+    answers a colleague has replied. A message FROM the customer can never be
+    one of our drafts, so this is draft-free by nature — and it names no self,
+    which is what makes it safe to run against a mailbox that is not the
+    operator's."""
+    from . import mailboxes
+
+    fan = mailboxes.inbound_since_across(settings, email, after=after)
+    return fan.rows, [u.describe() for u in fan.unreadable]
+
+
+def _evidence_refusal(email: str, unreadable: list[str],
+                      action: str) -> Optional[dict]:
+    """The fail-closed refusal: a gate that could not read every mailbox does
+    not send, and says which one to fix.
+
+    Fail-open reproduces the incident at machine speed — an absence of evidence
+    read as evidence of absence, once per contact, unattended. Fail-closed can
+    halt outreach on one dead credential, which is the accepted cost: a contact
+    not written to today is recoverable, a second cold mail to someone a
+    colleague answered two months ago is not.
+
+    Same `blocked` shape as the CS_PAUSE and escalation refusals, so every
+    caller already reports it, and the sentence comes from the fan-out itself —
+    it must never reach the CLI's engine-error handler, which would announce an
+    IMAP failure as "cannot reach the engine"."""
+    if not unreadable:
+        return None
+    from . import mailboxes
+
+    return {
+        "ok": False,
+        "email": email,
+        "blocked": (
+            f"evidence incomplete — could not read {'; '.join(unreadable)}. "
+            f"{mailboxes.INCOMPLETE} Refusing to {action}: fix that mailbox "
+            f"(or drop it from the declaration) and re-run."
+        ),
+        "unreadable": unreadable,
+    }
+
+
+def _unjudgeable(c: dict, unreadable: list[str], question: str) -> dict:
+    """The worklist item for a contact this run could not judge.
+
+    A contact that simply disappears from a list when a mailbox is down is the
+    incident's own shape, one level up: the worklist would look complete and be
+    wrong. So the contact stays, as its own action, saying which question could
+    not be answered and which mailbox to fix. Nothing downstream may read it as
+    "safe to send" — it is not a delivery action, and the senders refuse the
+    same contact for the same reason."""
+    return {"action": EVIDENCE_ACTION, "contact_id": c["id"], "email": c["email"],
+            "question": question, "unreadable": unreadable}
 
 
 def _get_contact(settings, contact_id: str) -> Optional[dict]:
@@ -182,12 +253,18 @@ def _composed_draft_items(settings, contacts, dedup_days) -> list[dict]:
     items = []
     for c in contacts:
         if c["state"] == "drafted":
-            threads = _sent_threads_to(settings, c["email"], dedup_days)
+            threads, unreadable = _sent_threads_to(settings, c["email"], dedup_days)
             if threads:  # already mailed (dedup truth) → reconcile, never re-send
                 t = threads[0]
                 items.append({"action": "reconcile", "contact_id": c["id"],
                               "email": c["email"], "thread_id": _thread_id(t),
                               "subject": t.get("subject")})
+            elif unreadable:
+                # NOT a send candidate and NOT dropped. A contact that vanishes
+                # from a worklist because a mailbox was down is the same error
+                # as an absence read as a fact — it just fails silently instead
+                # of loudly. It appears as its own item, with the fix.
+                items.append(_unjudgeable(c, unreadable, "prior contact"))
             else:  # genuinely unsent → a real pending outreach (CS_TRIAGE_MODE)
                 items.append({"action": "send_draft", "contact_id": c["id"],
                               "email": c["email"], "draft_subject": c.get("draft_subject")})
@@ -201,9 +278,12 @@ def _composed_draft_items(settings, contacts, dedup_days) -> list[dict]:
                 _parse_dt(c.get("created_at")) if d.get("reconciled")
                 else _parse_dt(c.get("sent_at")) or _parse_dt(c.get("created_at"))
             )
-            if _inbound_since(settings, c["email"], after):
+            replies, unreadable = _inbound_since(settings, c["email"], after)
+            if replies:
                 items.append({"action": "handle_reply", "contact_id": c["id"],
                               "email": c["email"]})
+            elif unreadable:
+                items.append(_unjudgeable(c, unreadable, "a reply"))
     return items
 
 
@@ -221,8 +301,13 @@ def _fixed_template_items(settings, contacts, now,
             continue
         d = c.get("dossier") or {}
         after = _parse_dt(c.get("sent_at")) or _parse_dt(c.get("created_at"))
-        if _inbound_since(settings, c["email"], after):
+        replies, unreadable = _inbound_since(settings, c["email"], after)
+        if replies:
             items.append({"action": "handle_reply", "contact_id": c["id"], "email": c["email"]})
+        elif unreadable:
+            # Before the SMS and reminder branches: a contact whose reply we
+            # could not look for is not a contact to nudge.
+            items.append(_unjudgeable(c, unreadable, "a reply"))
         elif evening and _is_it_mobile(d.get("phone")) and d.get("last_sms_sent_day") != today:
             items.append({"action": "send_sms", "contact_id": c["id"], "email": c["email"],
                           "pack": pack_name})
@@ -355,8 +440,14 @@ def reconcile(settings, contact_id: str, *, commit: bool = False) -> dict:
         return {"ok": False, "error": "contact not found"}
     if c["state"] == "sent":
         return {"ok": True, "noop": "already sent", "email": c["email"]}
-    threads = _sent_threads_to(settings, c["email"], settings.dedup_days)
+    threads, unreadable = _sent_threads_to(settings, c["email"], settings.dedup_days)
     if not threads:
+        # A found thread is found whatever else could not be read, so the
+        # evidence check only guards the NEGATIVE: "no Sent thread" is a claim
+        # about every mailbox, and it cannot be made from a partial read.
+        blocked = _evidence_refusal(c["email"], unreadable, "decide this was never sent")
+        if blocked:
+            return blocked
         return {"ok": False, "email": c["email"],
                 "error": "no Sent thread — not actually sent; refusing to reconcile"}
     dossier = dict(c.get("dossier") or {})
@@ -458,10 +549,15 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
         return over
     if not _has_draft(c):
         return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
-    # dedup truth: never re-mail what is already in Sent
-    if c["state"] == "sent" or _sent_threads_to(settings, email, settings.dedup_days):
+    # dedup truth: never re-mail what is already in Sent — in ANY of this
+    # company's mailboxes, and never on evidence that could not read them all.
+    threads, unreadable = _sent_threads_to(settings, email, settings.dedup_days)
+    if c["state"] == "sent" or threads:
         return {"ok": False, "email": email, "next": "reconcile",
                 "error": "already in Sent archive — reconcile, do NOT re-send"}
+    blocked = _evidence_refusal(email, unreadable, "send")
+    if blocked:
+        return blocked
     taken = _escalation_block(settings, email)
     if taken:
         return taken
@@ -545,9 +641,15 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False,
         return over
     if not _has_draft(c):
         return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
-    if c["state"] == "sent" or _sent_threads_to(settings, email, settings.dedup_days):
+    threads, unreadable = _sent_threads_to(settings, email, settings.dedup_days)
+    if c["state"] == "sent" or threads:
         return {"ok": False, "email": email, "next": "reconcile",
                 "error": "already in Sent archive — reconcile, do NOT re-send"}
+    # A queued draft is a message to a customer one keystroke from the wire, so
+    # it fails closed on incomplete evidence exactly like a send.
+    blocked = _evidence_refusal(email, unreadable, "queue a draft")
+    if blocked:
+        return blocked
     taken = _escalation_block(settings, email)
     if taken:
         return taken
@@ -646,9 +748,16 @@ def send_reminder(settings, contact_id: str, *, commit: bool = False,
         return {"ok": False, "email": email,
                 "blocked": f"reminder cap reached ({d.get('reminders', 0)}/{rmax})"}
     after = _parse_dt(c.get("sent_at")) or _parse_dt(c.get("created_at"))
-    if _inbound_since(settings, email, after):
+    replies, unreadable = _inbound_since(settings, email, after)
+    if replies:
         return {"ok": False, "email": email, "next": "handle_reply",
                 "error": "they replied — handle the reply, do NOT remind"}
+    # Both refusals run BEFORE the stamp-before-send below, so neither leaves
+    # half-advanced state: nothing is written until the reply gate has read
+    # every mailbox it claims to have read.
+    blocked = _evidence_refusal(email, unreadable, "send a reminder")
+    if blocked:
+        return blocked
     row = {**d, "email": email}
     try:
         subject, plain, html = pack.build_reminder(row)
@@ -697,7 +806,15 @@ def send_first(settings, contact_id: str, *, commit: bool = False,
     recent Sent history with the address must not silently skip a legitimate
     target. Idempotency is the contact `state`, send-then-mark (the crash window
     between SMTP send and the state flip is sub-second and, for a one-time
-    notice, a rare duplicate is far less bad than silently skipping a warning)."""
+    notice, a rare duplicate is far less bad than silently skipping a warning).
+
+    THEREFORE IT IS ALSO OUTSIDE THE CROSS-MAILBOX GATE. Every other sender here
+    refuses when a mailbox could not be read, because each one asks "have we
+    already written / have they replied" and must not answer it from a partial
+    read. This verb asks neither question of the archive at all, so there is no
+    evidence for an unreadable mailbox to make incomplete — deliberate, and
+    stated here so nobody reads "the gates read every mailbox" as covering this
+    path. What guards it is the contact `state` and the curated list."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
@@ -801,9 +918,13 @@ def send_sms(settings, contact_id: str, *, commit: bool = False,
     if d.get("last_sms_sent_day") == today:
         return {"ok": True, "email": email, "noop": "SMS already sent today"}
     after = _parse_dt(c.get("sent_at")) or _parse_dt(c.get("created_at"))
-    if _inbound_since(settings, email, after):
+    replies, unreadable = _inbound_since(settings, email, after)
+    if replies:
         return {"ok": False, "email": email, "next": "handle_reply",
                 "error": "they replied — handle the reply, do NOT nudge"}
+    blocked = _evidence_refusal(email, unreadable, "send an SMS")
+    if blocked:
+        return blocked
     row = {**d, "email": email}
     try:
         text = pack.sms_text(row)

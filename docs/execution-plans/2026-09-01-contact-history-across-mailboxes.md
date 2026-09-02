@@ -17,11 +17,17 @@ they must obey is [`CLAUDE.md`](../../CLAUDE.md).
 **Status: phase 1 shipped as `v0.37.0`, phase 1b as `v0.38.0` — live-accepted on `124-cs` twice.**
 Phase 1 (steps 0–5, 7, 8) is the fan-out, the `unreadable` outcome, the scope
 line and `cs history`. Phase 1b (1b.1–1b.3) adds the mailboxes that hold no
-engine profile — `cs/config.py`, `cs/manifest.py`, `cs/config_report.py`,
-`cs/mailboxes.py`, `cs/cli.py`, `cs/templates/project/manifest.toml.j2`,
-`tests/test_read_mailboxes.py` and `tests/run.sh` gate 45 — with no version bump
-yet. Outstanding: 1b.4 (the acceptance run, which needs credentials placed by
-the operator), step 6 and step 9, which carry the FULL tier with them.
+engine profile.
+
+**Phase 2 — steps 6 and 9 — is built and uncommitted**: every prior-contact
+gate reads the union scope and refuses when a mailbox cannot be read
+(`cs/campaign.py`, `cs/cli.py`'s dossier verdict, `cs/draft_state.py`), and the
+six stamped surfaces that said the evidence was one mailbox now say what it is,
+including the refusal outcome (`CLAUDE.md.j2`, `cs-operator`, `cs-customer`,
+`cs-triage-mail`, `cs-campaign-tick`, `docs/ARCHITECTURE.md.j2`,
+`docs/projects/README.md.j2`). Gate 46 holds it. No version bump: this is the
+FULL-tier release, and the tag plus the two clone upgrades are the work that
+remains.
 
 ## Shape
 
@@ -248,11 +254,35 @@ an absence read as a fact.
 against Sent, so it stays uncovered by this work. Say so rather than leaving a
 reader to assume every send path is gated.
 
-### 6. Move the real gating call sites onto the fan-out
+### 6. Move the real gating call sites onto the fan-out — BUILT
 
-The sites that actually gate on `sent_to`: `campaign.py:108`, its reply gate
-`campaign.py:120`, `cli.py:797`, and `draft_state.py:290`. These are what let a
-machine compose four drafts to someone already answered.
+`campaign._sent_threads_to` and `campaign._inbound_since` return
+`(rows, unreadable)` from the fan-out; every caller acts on both halves.
+`_evidence_refusal` is the shared fail-closed refusal (the `blocked` shape the
+CS_PAUSE and escalation refusals already use, so every caller reports it
+unchanged), and `_unjudgeable` is the worklist item for a contact that could
+not be judged. Sites: `_composed_draft_items`, `_fixed_template_items`,
+`reconcile`, `send_draft`, `queue_draft`, `send_reminder`, `send_sms`; the
+dossier's read and verdict in `cli.cmd_dossier`; and `draft_state`'s default
+`inbound`/`sent` reads. `send_first` stays uncovered by design and its
+docstring now says so.
+
+Two of those sites needed more than the fan-out to be honest:
+
+- **The dossier verdict is about "have we EVER", not about the window.** It
+  reads `sent_to_across(days=None)` and applies `--dedup-days` in memory for
+  the dedup line only. Bounded, a colleague's 61-day-old reply — with every
+  mailbox readable — still came back as `cold contact`, which is the incident's
+  own shape surviving inside the check meant to prevent it. The read costs the
+  same: `sent_to` fetches every matching UID's header and filters by Date
+  afterwards. When history exists outside the window the verdict says so and
+  names the mailbox and the date.
+- **The review qualifies the row, not the digest.** Every row carries
+  `evidence_incomplete` — populated only for `ready`, the one verdict that
+  rests on an absence — and the ready block prints it INLINE under the row.
+  The run-level note stays, but a footer below the next block is read after the
+  decision, if at all. This keeps the review's contract intact: nothing is
+  retired, no verdict state is invented, the row is qualified.
 
 Three sites named in the first draft of this plan are **not** part of it.
 `unanswered.py:520-521` and `review.py:86` go through `inbound_recent` /
@@ -260,8 +290,17 @@ Three sites named in the first draft of this plan are **not** part of it.
 us" from `settings.email_address`; extending them is separate work with its own
 correctness question. `cli.py:856` is a print, not a gate.
 
-*Verify*: this is the step that changes autonomous behaviour on both clones, so
-it is what sets the release's re-test tier — see below.
+*Verify*: gate 46. Every sender and `reconcile` refuse on an unreadable
+mailbox, naming it, with every mutation path (SMTP, SMS, the Gmail draft
+append, `campaign.update_contact`) wired to fail the test if reached; `pending`
+surfaces the unjudgeable contact instead of dropping it; a colleague's message
+in another mailbox stops a send the operator mailbox alone would have allowed;
+ONE login per mailbox per process across a 4-contact run (2, not 8); the
+dossier verdict fails closed AND does not call a two-month-old colleague reply
+a cold contact; the review carries the gap on the ready row, prints it inline,
+and never retires anything. This is the
+step that changes autonomous behaviour on both clones, so it is what sets the
+release's re-test tier — see below.
 
 ### 7. The CLI surface
 
@@ -299,17 +338,24 @@ for. Everything else stamped stays in step 9.
 credential, not one per account". That becomes untrue the moment step 2
 retrieves a second profile's password. Correct the message.
 
-### 9. Re-stamp the prose that this makes false
+### 9. Re-stamp the prose that this makes false — BUILT
 
-Six stamped surfaces tell the operator that prior-contact evidence is one
-mailbox: `CLAUDE.md.j2:190-191`, `cs-operator/SKILL.md.j2:133-135`,
-`ARCHITECTURE.md.j2:101-105`, `cs-customer:113-117`, `cs-triage-mail:57,109`,
-`docs/projects/README.md.j2:148`. They go false at step 6, so the release is a
-`cs update` re-stamp on both clones and not only a library upgrade. The new
-`unreadable` outcome from step 5 is documented in that same pass — skills read
-the printed line, so an outcome nobody described is an outcome nobody handles.
-`cs history` itself is described here too; phase 1 stamps only its permission
-entries (step 7), never prose about what it means.
+Seven stamped surfaces now state the union scope and the refusal outcome, so
+the release is a `cs update` re-stamp on both clones and not only a library
+upgrade. `CLAUDE.md.j2` § 5 (the dedup NEVERs, plus "an unreadable mailbox is
+not a no") and § 8 (what the scope is, and where the passwords live);
+`cs-operator` § 4b (the founder sweep is the one step that WORKS another
+mailbox, not the only one that sees one); `docs/ARCHITECTURE.md.j2` (the
+`--account` section, `history`'s own refusal, a section on the evidence scope,
+and the pipeline's dossier line); `cs-customer` (the dossier's prior-contact
+half and its `STOP — evidence incomplete` verdict); `cs-triage-mail` §§ 1 and
+2b (the answered-check across mailboxes, and `UNKNOWN` is not "no");
+`cs-campaign-tick` (the new `evidence_incomplete` worklist action, with its own
+branch); `docs/projects/README.md.j2` (the `--account` paragraph).
+
+An outcome nobody described is an outcome nobody handles: the skills read
+printed lines and worklist JSON, so both the refusal and the new action are
+documented where they are read, in operator terms.
 
 ### 10. Gates and tier
 

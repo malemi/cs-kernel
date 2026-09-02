@@ -7,7 +7,7 @@ refusal and the run carried on, so real contacts were skipped in silence. The
 kill-switch (CS_PAUSE) plus contradiction-triggered pause replace it; no
 volume-based throttle remains on any send path.
 
-We stub `cs.rpc.call_sync` (engine transport) and `cs.gmail_archive.sent_to`
+We stub `cs.rpc.call_sync` (engine transport) and the mailbox fan-out
 (the Sent-archive dedup ground truth) — no live engine, no live Gmail — and
 drive `campaign.send_draft()` directly in CS_TRIAGE_MODE=send, dry-run
 (commit=False), for a contact who has never been mailed. Before the removal
@@ -22,7 +22,19 @@ from __future__ import annotations
 import types
 from pathlib import Path
 
-from cs import campaign, gmail_archive, rpc
+from cs import campaign, rpc
+from cs import mailboxes as mailboxes_mod
+
+def _fan(rows=()):
+    """The cross-mailbox fan-out's shape: rows plus the scope they came from.
+    The gates below moved onto `cs/mailboxes.py` when prior-contact evidence
+    stopped being one mailbox; the scope is complete here, because what these
+    cases vary is never the mailbox."""
+    from cs import mailboxes as mailboxes_mod
+
+    return mailboxes_mod.Fanout(rows=list(rows), read=["ops@example.test"],
+                                unreadable=[])
+
 
 
 def main() -> int:
@@ -41,7 +53,8 @@ def main() -> int:
         raise AssertionError(f"unexpected RPC call in a dry run: {method} {params}")
 
     rpc.call_sync = fake_call_sync
-    gmail_archive.sent_to = lambda settings, email, days: []  # never mailed before
+    # never mailed before, from any mailbox in scope
+    mailboxes_mod.sent_to_across = lambda settings, email, days=None: _fan()
 
     settings = types.SimpleNamespace(
         dedup_days=30,

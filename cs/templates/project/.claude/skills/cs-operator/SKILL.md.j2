@@ -131,8 +131,14 @@ This project has a second mailbox, `{{ founder_sweep_account }}`. Check it **rea
 each tick and just SURFACE what looks still open — **draft NOTHING**. Its engine
 profile has no trained voice / `USER_NOTES`, so composing there would be
 ungrounded; and by design the autonomous draft/triage loop stays on `{{ email_address }}`
-only (CLAUDE.md §9). This is the ONE step that reads another mailbox, and it is
-strictly read-only.
+only (CLAUDE.md §8). This is the ONE step that WORKS another mailbox — reading
+its tasks and its open mail through its own engine profile — and it is strictly
+read-only.
+
+It is not the only step that SEES another mailbox: every prior-contact check
+(`cs history`, `cs dossier`, the campaign send gates) reads the Sent and All
+Mail of every mailbox in scope by itself, with no `--account` and no extra step
+from you. Their answers name the mailboxes they read.
 
 ```bash
 .venv/bin/python -m cs --account {{ founder_sweep_account }} tasks

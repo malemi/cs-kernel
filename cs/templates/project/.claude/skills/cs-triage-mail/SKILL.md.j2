@@ -52,11 +52,15 @@ follow-up is the `cs-campaign-tick` skill's job, not this one.
   do not draft, do not write, report it as his.
 - **NEVER invent facts.** Use only what is in the thread + engine memory.
   If the answer is not grounded there → ESCALATE, do not guess.
-- **"Have we already replied to X?" = the SENT ARCHIVE, across threads.**
-  This is the dedup truth (CLAUDE.md). The authoritative check is: is there a
-  {{ email_address }} message SENT to that contact AFTER their inbound — `cs contacted
-  <email>`, which now reads **Gmail's Sent folder directly**
-  (`cs/gmail_archive.py`), the real ground truth. Do NOT use the engine's
+- **"Have we already replied to X?" = the SENT ARCHIVE, across threads AND
+  across mailboxes.** This is the dedup truth (CLAUDE.md). The authoritative
+  check is: has ANY mailbox here sent that contact a message AFTER their inbound
+  — `cs contacted <email>` for {{ email_address }}'s own last 30 days, and
+  `cs history <email>` for every mailbox in scope with no time bound. A
+  colleague who answered from his own address answered; nothing of it reaches
+  {{ email_address }}. Both read **Gmail's Sent folder directly** — `contacted`
+  this mailbox's (`cs/gmail_archive.py`), `history` every mailbox in scope
+  (`cs/mailboxes.py`) — the real ground truth. Do NOT use the engine's
   `emails.search folder:sent` for this: it misses mail sent by hand from
   Gmail. **Check across threads, not within one** — the reply/
   confirmation very often lives in a SIBLING thread (different subject), so
@@ -103,17 +107,25 @@ so nothing disappears silently. It also cannot see mail **the operator FORWARDED
 `cs tasks` signal and treat a `Fwd:` / `from:<operator's personal address>` with NO {{ accounts_default }}@ reply
 to the ORIGINAL sender as a real catch.
 
-Then for EACH candidate, the authoritative unanswered-check — across threads:
+Then for EACH candidate, the authoritative unanswered-check — across threads
+and across mailboxes:
 
 ```bash
-.venv/bin/python -m cs contacted <email>     # or: emails.search to:<email> folder:sent
+.venv/bin/python -m cs contacted <email>     # {{ email_address }}, last 30 days
+.venv/bin/python -m cs history <email>       # every mailbox in scope, no time bound
 ```
 
-- If {{ email_address }} already sent a message to that contact AFTER their inbound →
+- If ANY mailbox here sent that contact a message AFTER their inbound →
   **ANSWERED. Drop it.** Do not flag, do not draft. (This is where a real report
   went wrong: it called two contacts urgent-open when {{ email_address }} had
   already replied to both — and one of those replies was in a sibling thread,
-  which is why the check is across threads and not within one.)
+  which is why the check is across threads and not within one. A later one went
+  wrong the other way: a co-founder had answered from his own mailbox, and the
+  operator prepared an apology for two months of silence that had not happened.)
+- **`UNKNOWN` is not "no".** `cs contacted` exits 3, and `cs history` prints
+  `UNKNOWN` and names the mailbox, when a mailbox in scope could not be read.
+  Treat that contact as unjudged: do not drop it, do not draft to it, and put
+  the named mailbox in your report — the operator is the one who can fix it.
 - Only what survives the Sent-archive check is genuinely open. (Forwarded mail
   with NO {{ email_address }} reply to the original sender is the real catch — e.g. a
   `Fwd:` from the operator where nobody answered the customer.)
