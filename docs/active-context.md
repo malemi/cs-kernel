@@ -103,14 +103,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Upgrade each clone to `v0.36.0` when its operator chooses, then run the tag's
-   static + live read-only re-test: ten skills and no `.claude/commands`, the
-   agent surfaces resolving to the canonical tree, no unrelated file retired,
-   and the sourcing rules once per rendered surface.
-2. `mrcall-cs` is four minor releases behind at `v0.32.1`, so its upgrade
-   crosses `v0.33.0`, `v0.34.0` and `v0.35.0` as well. Read each of those
-   entries' re-test tiers and run the strictest one they demand, not only
-   `v0.36.0`'s.
+1. Upgrade each clone to `v0.38.0` when its operator chooses. The strictest
+   tier crossed governs: FULL on both (`v0.34.0`, `v0.35.0`, `v0.37.0`,
+   `v0.38.0` all demand it), plus each entry's own checks — the skills-only
+   surfaces, the sourcing rules, `cs history` live, and on `124-cs` the
+   `CS_READ_MAILBOXES` env split the load refusal will demand first.
+2. `mrcall-cs` is six minor releases behind at `v0.32.1`; read every crossed
+   CHANGELOG entry before its upgrade, not only the newest.
 3. Build phase 2 when the operator says so: move the four gating call sites
    (`campaign.py:108`, `:120`, `cli.py:797`, `draft_state.py:290`) onto the
    fan-out, fail-closed on `unreadable`, re-stamp the prose that says evidence
