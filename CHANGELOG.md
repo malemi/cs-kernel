@@ -154,6 +154,87 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.38.0 — 2026-09-02
+
+Two changes ship together: the profile-less mailboxes join the contact-history
+fan-out, and duplicate drafts are surfaced instead of hidden.
+
+### Declared read mailboxes over plain IMAP
+
+**The mailboxes that will never hold an engine profile are now readable.** A
+company answers customers from mailboxes whose owners contribute nothing —
+no profile, no daemon, nothing handed over; that constraint is the spec
+(`docs/briefs/2026-09-01-contact-history-across-mailboxes.md`, rewritten
+2026-09-02). The clone declares them in manifest `[operator].read_mailboxes`
+(or env `CS_READ_MAILBOXES`) — plain addresses, same domain guard as the
+accounts registry — and puts their app passwords in
+`CS_READ_MAILBOX_PASSWORDS` in its own env file, beside `EMAIL_PASSWORD` and
+in no repo. Plain IMAP, the operator's decision: the standard protocol over a
+vendor API. The rejected Google service-account path is recorded in the brief.
+
+The credential map is parsed **strictly**, because the previous generation of
+this idea died on a parser that dropped a malformed pair silently: no colon,
+empty password, mangled or undeclared address, duplicates, a comma in a
+password, and the operator's own address in the declaration all refuse config
+load with one line and exit 2 — the last because listing the identity mailbox
+again would give it a second credential source and count it twice in the scope
+line. A declared address with no credential is `unreadable`, never absent. A
+pairs-shaped value under `CS_READ_MAILBOXES` fails with the migration
+instruction in the message and never echoes the password. The value is in
+`SECRET_FIELDS`; `cs config` reports presence, explains the field's manifest
+provenance (including the TOML-list flattening it previously could not
+mirror), and never prints a password.
+
+Declared mailboxes join both fan-outs beside profile accounts with one IMAP
+session each; the scope line's denominator counts profiles ∪ declared.
+`cs history` needs no new flag. No send gate changes — the four gating call
+sites remain the next, separate release.
+
+**Acceptance, run on the real `124-cs` clone at this code, twice (pre- and
+post-fix-round):** `cs history` on the incident's prospect answers
+`YES — 4 of 4 mailbox(es) read`, finds the co-founder's 2026-07-03 reply and
+attributes it to his mailbox — the answer the incident's tooling could not
+give. The migration refusal and the own-address refusal were also observed
+live, not predicted. Gates 44/45 were each proven to bite by injecting their
+defect and watching them fail.
+
+### Duplicate drafts surfaced, not hidden
+
+`cs draft-reply` mirrored only the newest fresh draft and dropped any other on
+the floor, so the operator saw one draft while the engine held two; it now
+warns and names every draft it is not mirroring. A re-composed identical reply
+is deduped by the engine, which returns the existing row; `draft-reply` tells
+that apart from "composed nothing" via `updated_at` on the rows `drafts.list`
+already returns, and deliberately does not mirror the reused draft a second
+time. `cs review` gains a `duplicate` verdict, ranked above `overtaken`, for a
+draft whose text is already in Sent, with two guards: a body below the minimum
+length is not compared, and a body at or above the normalisation cap is not
+compared at all, since two long mails sharing a prefix normalise equal.
+`sent_body_match` reports when it truncates a scan rather than reading as if
+it had seen everything. `EngineClient.call` closes the socket when a call
+times out instead of abandoning the future — closing is the only stop signal
+this protocol has — and sets keepalive explicitly, matching the engine end.
+
+**Migration**: only for a clone already carrying `CS_READ_MAILBOXES` in the
+old `address:password` shape (`124-cs` does): on upgrade, config load refuses
+with the instruction until addresses and passwords are split into their two
+keys. Loud by design — the alternative was a key ignored in silence. No other
+clone action; `mrcall-cs` declares no read mailboxes and observes no change.
+
+**Re-collaudo tier: FULL, both clones — and it was NOT run before this tag.**
+FULL because the duplicate-drafts half touches `gmail_archive` and
+`draft_state`, two entries on the list that mandates it. The operator
+authorised publication without the suite having run on either clone, so the
+FULL collaudo is **owed at each clone's upgrade**, recorded here in the same
+form as `v0.37.0` and `v0.19.0`. What must be exercised there: the env-key
+migration on `124-cs` and `cs history` against its live mailboxes (already
+observed at this exact code from the source tree, to be re-observed through
+the installed pin), draft-reply mirroring and the `duplicate` review verdict
+against a live engine, and `cs contacted` unchanged on the operator mailbox.
+Everything in this tag is green on the 46-gate suite; the read-mailboxes half
+has met a live clone, the duplicate-drafts half has not.
+
+
 ## v0.37.0 — 2026-09-01
 
 **"Has this company ever written to this person" is answerable across every
