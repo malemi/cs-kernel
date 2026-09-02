@@ -475,7 +475,13 @@ def main() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     active = (ROOT / "docs" / "active-context.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    charter = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    # The charter lives in the doc-profile's index_file (AGENTS.md since the
+    # harness v8 migration); resolving it from the profile is what keeps this
+    # gate honest across future moves instead of hard-coding a filename.
+    profile = (ROOT / "docs" / ".doc-profile").read_text(encoding="utf-8")
+    m = re.search(r"^index_file\s*=\s*(\S+)", profile, re.M)
+    assert m, "docs/.doc-profile declares no index_file; cannot locate the charter"
+    charter = (ROOT / m.group(1)).read_text(encoding="utf-8")
     runner = (ROOT / "tests" / "run.sh").read_text(encoding="utf-8")
 
     body_lines, tier = check_changelog_entry(changelog, release)

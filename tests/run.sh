@@ -870,7 +870,11 @@ step "38. the engine is authoritative — the charter rule reaches every clone"
 # gate red while the rule itself was untouched. A gate that a rewrap can defeat
 # does not measure whether the rule is written down.
 GATE38=0
-for f in "$ROOT/CLAUDE.md" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
+# The kernel-side charter lives where docs/.doc-profile's index_file points
+# (AGENTS.md since the harness v8 migration); the clone-side copy stays in the
+# stamped CLAUDE.md.j2 template.
+CHARTER_FILE=$(sed -n 's/^index_file *= *//p' "$ROOT/docs/.doc-profile")
+for f in "$ROOT/$CHARTER_FILE" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
   flat=$(tr '\n' ' ' < "$f" | tr -s '[:space:]' ' ')
   case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
     *authoritative*) ;;
