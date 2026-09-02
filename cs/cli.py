@@ -1558,6 +1558,14 @@ def main(argv=None) -> int:
         # this fails EVERY verb including --help until the manifest is fixed.
         print(f"manifest error: {e}", file=sys.stderr)
         return 2
+    except config.ConfigError as e:
+        # A declaration that is present but unusable — a read mailbox on a
+        # foreign domain, a malformed credential entry. Same treatment as the
+        # manifest errors above and for the same reason: it is a product state
+        # with an actionable fix, so it prints as ONE line. The dispatch handler
+        # below cannot cover it — this failure happens before any verb exists.
+        print(f"cs: {e}", file=sys.stderr)
+        return 2
 
     p = argparse.ArgumentParser(prog=settings.prog_name or "cs")
     p.add_argument(

@@ -12,20 +12,33 @@ that could not have seen the answer.
 This module widens the evidence and, more importantly, makes its EDGE VISIBLE.
 
   * WHICH mailboxes. The operator's own, plus every account registered in
-    `CS_ACCOUNTS` (`Settings.account_map`). That registry is configuration,
-    edited for engine reasons, so the scope is coupled to a list nobody
-    maintains with dedup in mind — which is exactly why every answer prints
-    the scope it actually read. There is no flag to widen or narrow it: a knob
-    that let one clone gate on one mailbox and another on five is the
+    `CS_ACCOUNTS` (`Settings.account_map`), plus every address declared in
+    `manifest.toml [operator].read_mailboxes`. Both registries are
+    configuration, edited for other reasons, so the scope is coupled to lists
+    nobody maintains with dedup in mind — which is exactly why every answer
+    prints the scope it actually read. There is no flag to widen or narrow it:
+    a knob that let one clone gate on one mailbox and another on five is the
     dedup-source knob the charter forbids, wearing a different name.
 
-  * WHERE the credential comes from. The engine, never the environment. Each
-    account's mailbox password is read with owner-authenticated
-    `settings.get_secret` over that profile's own socket — the same handover
-    `cs init` uses (`cs/project_init.py`), and the invariant that the mailbox
-    credential is the engine's to hand over, not the operator's to retype. No
-    env key holds another mailbox's password, so none can leak through
-    `cs config`, and revoking the profile revokes the access.
+  * WHERE the credential comes from. Two sources, one fan-out. An account with
+    an ENGINE PROFILE hands its mailbox password over itself, with
+    owner-authenticated `settings.get_secret` over that profile's own socket —
+    the same handover `cs init` uses (`cs/project_init.py`). A DECLARED mailbox
+    has no profile and never will: the people who answer customers from their
+    own mailboxes contribute nothing, ever, which is the binding constraint
+    this design is built around. Its credential is an ordinary IMAP password in
+    the clone's own env file (`CS_READ_MAILBOX_PASSWORDS`, beside
+    `EMAIL_PASSWORD`, in no repo), parsed strictly at config load
+    (`cs/config.parse_read_credentials`).
+
+    Standard IMAP, not a vendor API: the read path is the one this kernel
+    already speaks, so reaching a profile-less mailbox adds no dependency and
+    no provider coupling. The trade-off is stated rather than hidden — such a
+    password can also send, so read-only is a property of this code, not of the
+    credential. What contains it: it never becomes a value `cs config` prints
+    (it is in `SECRET_FIELDS`), it is redacted out of every error path here,
+    and it never reaches a send path — `send_mail` logs in with
+    `email_address`/`email_password` and nothing else.
 
   * WHAT a failure renders as. `unreadable`, never an empty result. A failed
     login and a genuine absence must never render the same, or the fan-out
@@ -56,6 +69,12 @@ from . import config as config_mod
 from . import gmail_archive, gmail_drafts, rpc
 from .config import Settings
 
+
+# What a declared read-only mailbox is CALLED in a scope line. Profile accounts
+# carry their registry name; these have none — they are declared in the
+# manifest and opened with a credential from the clone's env, and that is what
+# the operator needs to know to fix one.
+DECLARED = "declared"
 
 # The one sentence every incomplete answer ends on, wherever it is rendered.
 # It is the whole point of the `unreadable` outcome: an absence of evidence is
@@ -404,6 +423,33 @@ def readable(settings: Settings) -> tuple[list[Mailbox], list[Unreadable]]:
             continue
         seen.add(mb.address.lower())
         boxes.append(mb)
+
+    # The DECLARED mailboxes: this company's other mailboxes, named in the
+    # manifest, opened with a credential from the clone's own env. They hold no
+    # engine profile and their owners are asked for nothing — which is the
+    # whole point, because the mailbox that answered the customer in the
+    # incident this module exists for is one of them, and always will be.
+    creds = settings.read_mailbox_credentials
+    for address in settings.read_mailbox_list:
+        if address in seen:
+            continue
+        seen.add(address)
+        password = creds.get(address, "")
+        if not password:
+            # Declared and unopenable is UNREADABLE, never absent — and the
+            # message carries the fix, because the operator reading it is the
+            # one person who can apply it.
+            bad.append(
+                Unreadable(
+                    DECLARED,
+                    address,
+                    f"no credential configured for {address} — add "
+                    f"'{address}:<app password>' to CS_READ_MAILBOX_PASSWORDS in "
+                    f"{settings.state_dir}/.env",
+                )
+            )
+            continue
+        boxes.append(Mailbox(account=DECLARED, address=address, password=password))
     return boxes, bad
 
 

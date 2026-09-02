@@ -7,6 +7,15 @@ prog_name = "{{ company_prog_name }}"
 
 [operator]
 email_address = "{{ email_address }}"
+# read_mailboxes: other mailboxes of THIS company whose mail history counts as
+# ours — colleagues who answer customers from their own address. Addresses
+# only, same mail domain as the one above; each one's IMAP password goes in
+# ~/.{{ company_slug }}-cs/.env as
+# CS_READ_MAILBOX_PASSWORDS="<address>:<app password>,<address>:<app password>"
+# and in no repo file. `cs history <address>` then reads them too, and a
+# declared mailbox with no password is reported as unreadable — never as
+# "nobody here ever wrote to them".
+read_mailboxes = []
 imap_host = "{{ imap_host }}"
 imap_port = {{ imap_port }}
 smtp_host = "{{ smtp_host }}"

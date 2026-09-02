@@ -151,6 +151,13 @@ def _fill(model_cls):
             ann = next(a for a in args if a is not type(None))
         if typing.get_origin(ann) is dict:
             kwargs[name] = {"default": "x"}
+        elif typing.get_origin(ann) is list:
+            # A list field is flattened by settings_overrides (a TOML list of
+            # addresses becomes the comma-separated form every other
+            # multi-value setting uses), and an EMPTY list flattens to "" —
+            # which `put` skips. Left unfilled, such a field would silently sit
+            # outside this anti-drift check.
+            kwargs[name] = ["x@example.test"]
         elif isinstance(ann, type) and issubclass(ann, BaseModel):
             kwargs[name] = _fill(ann)
         elif ann is bool:

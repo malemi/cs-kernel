@@ -47,6 +47,12 @@ What these gates hold, in the order the work builds it:
      not one per account" — untrue the moment the kernel retrieves a second
      profile's password — and `history`, which reads every account already,
      refuses the flag on its own ground.
+ 10. A mailbox with NO engine profile — declared by address in the manifest,
+     opened with a password from the clone's env — is read beside the profile
+     accounts, session-cached like them, counted in the denominator and, when
+     it has no credential, reported as `unreadable` with the fix in the
+     message. That is the shape of the mailbox that answered the customer in
+     the incident, and of every mailbox whose owner contributes nothing.
 
 No network: `imaplib.IMAP4_SSL` and the engine RPC transport are replaced by
 in-process doubles that implement the real protocol shapes (LIST special-use
@@ -76,6 +82,12 @@ OPERATOR = "support@acme.example"
 OPERATOR_PW = "operator-app-pw-1111"
 FOUNDER = "founder@acme.example"
 FOUNDER_PW = "founder-app-pw-2222"
+# The profile-less mailbox: declared in the manifest, opened with a password
+# from the clone's env. Its owner is asked for nothing, which is the constraint
+# the whole declared-mailbox surface exists to satisfy.
+COLLEAGUE = "colleague@acme.example"
+COLLEAGUE_PW = "colleague-app-pw-3333"
+UNCREDENTIALED = "silent@acme.example"
 UID_OPS = "uid-ops-acme"
 UID_FOUNDER = "uid-founder-acme"
 
@@ -179,7 +191,10 @@ MAILBOXES: dict[str, dict] = {}
 
 def _reset_world(founder_password: str = FOUNDER_PW) -> None:
     """One operator mailbox that never wrote to the contact, one founder mailbox
-    that answered them 61 days ago — the shape of the incident."""
+    that answered them 61 days ago — the shape of the incident. Plus a
+    profile-less colleague mailbox, which is the shape of the mailbox that
+    actually answered: no engine profile, no daemon, nothing asked of its owner
+    ever, reached with a declared address and a password from the clone's env."""
     MAILBOXES.clear()
     MAILBOXES.update(
         {
@@ -189,6 +204,11 @@ def _reset_world(founder_password: str = FOUNDER_PW) -> None:
                 "engine_password": founder_password,
                 "sent": [_msg(CONTACT, "Re: your request", 61)],
                 "in": [_msg(CONTACT, "private-label request", 62)],
+            },
+            COLLEAGUE: {
+                "password": COLLEAGUE_PW,
+                "sent": [_msg(CONTACT, "Re: private-label — happy to help", 60)],
+                "in": [],
             },
         }
     )
@@ -612,6 +632,80 @@ def _test_one_mailbox_is_counted_once() -> None:
         assert len(payload["scope"]["read"]) == 1
 
 
+def _test_declared_mailboxes_join_the_fanout() -> None:
+    """(10) A mailbox with NO engine profile is read, counted and named.
+
+    The mailbox that answered the customer in the incident has no profile and
+    never will — its owner contributes nothing, ever, which is the binding
+    constraint. It is declared by address in `manifest.toml
+    [operator].read_mailboxes` and opened with an ordinary IMAP password from
+    the clone's env, beside the profile accounts, in the same fan-out."""
+    settings = _settings(
+        read_mailboxes=f"{COLLEAGUE},{UNCREDENTIALED}",
+        read_mailbox_passwords=f"{COLLEAGUE}:{COLLEAGUE_PW}",
+    )
+    with _world(settings):
+        fan = mailboxes.sent_to_across(settings, CONTACT)
+        senders = {r["mailbox"] for r in fan.rows}
+        assert COLLEAGUE in senders, (
+            f"the profile-less mailbox that answered was not read: {fan.scope_line()}"
+        )
+        assert FOUNDER in senders, "the profile accounts must still be read"
+        assert set(fan.read) == {OPERATOR, FOUNDER, COLLEAGUE}
+
+        # The declared mailbox with no credential: UNREADABLE, named, with the
+        # fix in the message — never an absence, and never a load failure.
+        assert [u.address for u in fan.unreadable] == [UNCREDENTIALED]
+        u = fan.unreadable[0]
+        assert u.account == mailboxes.DECLARED
+        assert "no credential configured" in u.reason and UNCREDENTIALED in u.reason
+        assert "CS_READ_MAILBOX_PASSWORDS" in u.reason, (
+            f"the operator is the one person who can fix this — the line must "
+            f"say where the credential goes: {u.reason}"
+        )
+
+        # The denominator counts profiles ∪ declared, all four of them.
+        assert "3 of 4 mailbox(es) read" in fan.scope_line(), fan.scope_line()
+
+    with _world(settings):
+        # One session per mailbox per process, declared ones included: three
+        # readable mailboxes, two fan-outs, three logins.
+        mailboxes.sent_to_across(settings, CONTACT)
+        mailboxes.inbound_since_across(settings, CONTACT)
+        assert len(FakeIMAP.opened) == 3, (
+            f"{len(FakeIMAP.opened)} logins for three readable mailboxes over two "
+            "fan-outs — a declared mailbox must be session-cached like any other"
+        )
+
+    with _world(settings):
+        # A refused declared credential is redacted like any other, and the
+        # answer stays incomplete rather than empty.
+        MAILBOXES[COLLEAGUE]["password"] = "rotated-yesterday"
+        code, out, err = _run(["history", CONTACT, "--json"])
+        payload = json.loads(out)
+        assert code == 0, "the founder's message is still found"
+        assert payload["scope"]["complete"] is False
+        addrs = {u["address"] for u in payload["scope"]["unreadable"]}
+        assert addrs == {COLLEAGUE, UNCREDENTIALED}, payload["scope"]
+        assert COLLEAGUE_PW not in out, "a declared credential leaked into --json"
+        assert "<redacted>" in out, "the server echoed the password back unredacted"
+
+    with _world(settings):
+        # A mailbox an ENGINE PROFILE already covers, declared again: read once,
+        # counted once. The declaration is a list a human maintains, so it will
+        # eventually name a mailbox that is reachable both ways. (The operator's
+        # OWN address is refused outright at config load — gate 45 — because
+        # there the duplicate would carry a second credential for the identity
+        # mailbox.)
+        s = _settings(
+            read_mailboxes=f"{FOUNDER},{COLLEAGUE}",
+            read_mailbox_passwords=f"{FOUNDER}:{FOUNDER_PW},{COLLEAGUE}:{COLLEAGUE_PW}",
+        )
+        fan = mailboxes.sent_to_across(s, CONTACT)
+        assert fan.read.count(FOUNDER) == 1 and fan.complete
+        assert "3 of 3 mailbox(es) read" in fan.scope_line(), fan.scope_line()
+
+
 def _test_account_refusal_message() -> None:
     """(9) The refusal that rested on a sentence step 2 makes false."""
     settings = _settings()
@@ -677,6 +771,7 @@ def main() -> int:
     _test_contacted_has_a_third_outcome()
     _test_history_verb()
     _test_one_mailbox_is_counted_once()
+    _test_declared_mailboxes_join_the_fanout()
     _test_account_refusal_message()
     _test_load_targets_another_profiles_session()
     print("test_contact_history: all assertions passed")

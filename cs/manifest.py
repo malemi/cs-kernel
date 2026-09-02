@@ -55,6 +55,13 @@ class Operator(_Table):
     imap_port: int = 993
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
+    # Other mailboxes of THIS company whose Sent / All Mail the contact-history
+    # fan-out also reads (`cs/mailboxes.py`). ADDRESSES ONLY — the credentials
+    # live in the clone's own env file, never in this repo or any other. Same
+    # mail domain as `email_address`, enforced loudly at config load
+    # (`cs/config.parse_read_mailboxes`), for the reason `CS_ACCOUNTS` carries
+    # the same rule: this list decides whose mail a shared machine opens.
+    read_mailboxes: list[str] = []
 
 
 class FounderSweep(_Table):
@@ -194,6 +201,12 @@ def settings_overrides(m: Manifest) -> dict:
     put("prog_name", m.company.prog_name)
 
     put("email_address", m.operator.email_address)
+    # A TOML list flattened to the comma-separated form every other multi-value
+    # setting uses (`system_senders`, `excluded_campaign`), so one parser serves
+    # the manifest layer and an env override alike. Entries are validated in
+    # `Settings`, not here: a list is a shape, an address is a rule.
+    put("read_mailboxes", ", ".join(str(a).strip() for a in m.operator.read_mailboxes
+                                    if str(a).strip()))
     put("imap_host", m.operator.imap_host)
     put("imap_port", m.operator.imap_port)
     put("smtp_host", m.operator.smtp_host)

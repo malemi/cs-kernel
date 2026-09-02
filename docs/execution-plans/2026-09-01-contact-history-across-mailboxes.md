@@ -14,11 +14,14 @@ is verified. The what and why are in the
 they must obey is [`CLAUDE.md`](../../CLAUDE.md).
 <!-- doc-scope:end -->
 
-**Status: phase 1 is built.** Steps 0–5, 7 and 8 are code in the tree —
-`cs/mailboxes.py` (new), `cs/gmail_drafts.py`, `cs/gmail_archive.py`,
-`cs/config.py`, `cs/cli.py`, `tests/test_contact_history.py` and `tests/run.sh`
-gate 44 — uncommitted, no version bump, not released. Steps 6 and 9 are
-outstanding and carry the FULL tier with them.
+**Status: phase 1 shipped as `v0.37.0`; phase 1b is built and uncommitted.**
+Phase 1 (steps 0–5, 7, 8) is the fan-out, the `unreadable` outcome, the scope
+line and `cs history`. Phase 1b (1b.1–1b.3) adds the mailboxes that hold no
+engine profile — `cs/config.py`, `cs/manifest.py`, `cs/config_report.py`,
+`cs/mailboxes.py`, `cs/cli.py`, `cs/templates/project/manifest.toml.j2`,
+`tests/test_read_mailboxes.py` and `tests/run.sh` gate 45 — with no version bump
+yet. Outstanding: 1b.4 (the acceptance run, which needs credentials placed by
+the operator), step 6 and step 9, which carry the FULL tier with them.
 
 ## Shape
 
@@ -26,20 +29,24 @@ Kernel code change, in `cs/mailboxes.py` (the credential handover, the session
 cache and the fan-out), `cs/gmail_archive.py`, `cs/gmail_drafts.py`,
 `cs/config.py` (`load(engine_owner_uid=…)`, which is how one process speaks to
 a second engine profile without mutating its own environment), `cs/cli.py` and
-the four gating call sites. No new env key and no new manifest field: the
-credential comes from the engine's existing handover, and the fan-out is not
-optional.
+the four gating call sites. Two credential sources, one fan-out: an account
+with an engine profile hands its own password over (no env key, no new
+registry), and a mailbox with no profile is declared in the manifest
+(`[operator].read_mailboxes`) with its IMAP password in the clone's env
+(`CS_READ_MAILBOX_PASSWORDS`) — one field and one key, both loud when
+malformed. The fan-out itself is not optional.
 
 **The fan-out is not a knob.** The charter's dedup invariant says Gmail Sent is
 the ground truth and that no dedup-source knob exists. A flag that let a clone
 gate on one mailbox while another gated on five would be that knob wearing a
 different name, so no such flag is added.
 
-What the readable set *is*, stated honestly: every account in `CS_ACCOUNTS`.
-That is configuration, edited for engine reasons, so the scope is coupled to a
-list nobody maintains with dedup in mind. The kernel therefore **prints the
-scope it actually read** on every answer. A scope that can silently narrow is
-the incident; a scope that narrows visibly is a fact the operator can act on.
+What the readable set *is*, stated honestly: every account in `CS_ACCOUNTS`
+plus every address in `[operator].read_mailboxes`. Both are configuration,
+edited for other reasons, so the scope is coupled to lists nobody maintains
+with dedup in mind. The kernel therefore **prints the scope it actually read**
+on every answer. A scope that can silently narrow is the incident; a scope that
+narrows visibly is a fact the operator can act on.
 
 ## Two releases, not one
 
@@ -64,18 +71,40 @@ app passwords the operator already holds** (the operator's decision,
 exists — `_imap(settings, credential=…)`, `sent_to_on`, `inbound_since_on` —
 so 1b adds configuration and wiring, not a new protocol client:
 
-- **1b.1 — manifest field `read_mailboxes`**: a list of plain addresses,
-  same-domain guard as `CS_ACCOUNTS`, malformed entry fails loud at config
-  load. New manifest field ⇒ the release is at least MINOR.
-- **1b.2 — the credential map, strict**: one env entry per declared address in
-  the clone's `.env` (outside every repo, beside `EMAIL_PASSWORD`). Parsed
-  strictly: malformed fails config load loud; a declared address with no entry
-  is `unreadable — no credential configured for <address>`, never absent. The
-  values never become Settings fields `cs config` could print, are redacted in
-  every error path, and are never handed to a send path.
-- **1b.3 — wire into `cs/mailboxes.py`**: declared mailboxes join the fan-out
-  beside profile accounts; the scope line's denominator counts both.
-- **1b.4 — prove it on `124-cs`**: place the credentials, then
+- **1b.1 — manifest field `read_mailboxes`** — BUILT. A TOML list of plain
+  addresses under `[operator]` (`cs/manifest.py:64`), flattened to the
+  comma-separated form every other multi-value setting uses
+  (`settings_overrides`) and surfaced as `Settings.read_mailboxes` +
+  `read_mailbox_list`. `CS_READ_MAILBOXES` layers over it like any other
+  setting — the key exists in the field already, and a field without the alias
+  would have ignored it in silence. Same-domain guard as `CS_ACCOUNTS`, a
+  shallow address check, a refusal of the clone's OWN operator address (already
+  read first-class; declared again it is a second credential for the identity
+  mailbox and a double count in the scope line) and a refusal of an
+  `address:password` value with the password withheld — all LOUD at config load
+  (`cs/config.parse_read_mailboxes`). Stamped as `read_mailboxes = []` with its
+  operator doc in `cs/templates/project/manifest.toml.j2`, and both env keys are
+  documented in `cs/templates/project/.env.example.j2`. New manifest field ⇒ the
+  release is at least MINOR.
+- **1b.2 — the credential map, strict** — BUILT. ONE env key,
+  `CS_READ_MAILBOX_PASSWORDS`, holding `address:password` pairs in the clone's
+  own `.env` beside `EMAIL_PASSWORD` and in no repo file
+  (`cs/config.parse_read_credentials`). Every malformed shape fails config load
+  loud: no colon, empty password, mangled address, a credential for an
+  undeclared mailbox, one mailbox declared twice. A password containing the
+  list separator is refused rather than truncated. A declared address with no
+  entry does NOT fail load — it is `unreadable — no credential configured for
+  <address>`, with the fix in the message. The value is a `Settings` field, and
+  therefore in `config_report.SECRET_FIELDS`, so `cs config` reports presence
+  and never the value; error paths are redacted by the existing `_redact`; it
+  reaches no send path, and `cs/send_mail.py` cannot even name it.
+- **1b.3 — wire into `cs/mailboxes.py`** — BUILT. `readable()` appends the
+  declared mailboxes after the profile accounts, deduped by address, each
+  session-cached like any other; both fan-outs and therefore `cs history` see
+  them with no new flag, and the scope line's denominator counts profiles ∪
+  declared.
+- **1b.4 — prove it on `124-cs`** — NOT DONE, and not kernel work: place the
+  credentials, then
   `cs history <the prospect's address>` must report the co-founder's 2026-07-03
   reply and name the mailbox. This is the acceptance test the incident
   defines, and it asks nothing of any mailbox owner.

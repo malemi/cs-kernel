@@ -55,7 +55,7 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
     (
         "Identity",
         ("slug", "email_address", "engine_owner_uid", "engine_ws_url",
-         "accounts_default"),
+         "accounts_default", "read_mailboxes"),
     ),
     ("Ports (adapters)", ("crm_adapter", "producer_adapter")),
     ("Campaigns", ("excluded_campaign",)),
@@ -70,7 +70,9 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
 # Comma-separated settings. Printed with a space after each comma so several
 # values stay readable on one line — a reader scanning for "is batch2 excluded?"
 # must not have to parse `a,b` by eye. The stored value is untouched.
-LIST_FIELDS: frozenset[str] = frozenset({"excluded_campaign", "system_senders"})
+LIST_FIELDS: frozenset[str] = frozenset(
+    {"excluded_campaign", "system_senders", "read_mailboxes"}
+)
 
 # Never print the value of these — presence only. `firebase_web_api_key` is a
 # public Firebase key and `firebase_sa_path` is only a path, but presence is
@@ -79,6 +81,13 @@ LIST_FIELDS: frozenset[str] = frozenset({"excluded_campaign", "system_senders"})
 SECRET_FIELDS: frozenset[str] = frozenset(
     {
         "email_password",
+        # `address:password` pairs for the mailboxes this operator READS
+        # (manifest `[operator].read_mailboxes`). It is the one setting whose
+        # value is several people's credentials at once, so it is presence-only
+        # here like any other secret — and `cs config` is the verb an operator
+        # runs when a mailbox comes back `unreadable`, which is exactly the
+        # moment a report that printed them would be pasted into a chat.
+        "read_mailbox_passwords",
         "firebase_web_api_key",
         "firebase_sa_path",
         "shopify_admin_token",
@@ -88,7 +97,11 @@ SECRET_FIELDS: frozenset[str] = frozenset(
 )
 
 # Secret-shaped settings surfaced in the default report, in order.
-SECRET_REPORT: tuple[str, ...] = ("email_password", "firebase_web_api_key")
+SECRET_REPORT: tuple[str, ...] = (
+    "email_password",
+    "read_mailbox_passwords",
+    "firebase_web_api_key",
+)
 
 # Field -> where the value lives in manifest.toml. Only a key PHYSICALLY
 # present in the file counts as a manifest declaration: `settings_overrides`
@@ -103,6 +116,7 @@ MANIFEST_KEYS: dict[str, tuple[str, ...]] = {
     "slug": ("company", "slug"),
     "prog_name": ("company", "prog_name"),
     "email_address": ("operator", "email_address"),
+    "read_mailboxes": ("operator", "read_mailboxes"),
     "imap_host": ("operator", "imap_host"),
     "imap_port": ("operator", "imap_port"),
     "smtp_host": ("operator", "smtp_host"),
@@ -235,12 +249,20 @@ def _manifest_where(display: str, path: tuple[str, ...]) -> str:
 def _same(declared: Any, resolved: Any) -> bool:
     """Does a raw declaration explain the resolved value?
 
-    Tolerant of the two transformations `Settings` performs between reading a
+    Tolerant of the three transformations `Settings` performs between reading a
     declaration and holding it: the str->int/bool coercion on the way out of a
-    dotenv, and `_derive_paths`' `expanduser()` on the path fields (a manifest
-    that declares `sa_path = "~/.<slug>-cs/firebase-sa.json"` resolves to the
-    absolute form — the same declaration, not an unexplained value).
+    dotenv, `_derive_paths`' `expanduser()` on the path fields (a manifest that
+    declares `sa_path = "~/.<slug>-cs/firebase-sa.json"` resolves to the
+    absolute form — the same declaration, not an unexplained value), and a TOML
+    LIST flattened to the comma-separated form the multi-value settings hold
+    (`[operator].read_mailboxes`). Without the third, a correctly declared list
+    was reported with a `?` and a NOTE saying its provenance was unverified —
+    the report calling its own mirror's blind spot a defect in the operator's
+    configuration.
     """
+    if isinstance(declared, (list, tuple)) and isinstance(resolved, str):
+        parts = [str(v).strip() for v in declared if str(v).strip()]
+        return parts == [p.strip() for p in resolved.split(",") if p.strip()]
     if isinstance(resolved, bool):
         if isinstance(declared, bool):
             return declared is resolved

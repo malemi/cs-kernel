@@ -979,9 +979,36 @@ step "44. contact history across mailboxes, and the mailboxes it could not read"
 # the same class of wrong evidence as the absence this work stops; no IMAP
 # failure reaches the "cannot reach the
 # engine" handler or a traceback; only the two readers that decide nothing from
-# "is this us" are fanned out; and the `--account` refusal no longer rests on
-# "there is one mail credential", which this work makes false.
+# "is this us" are fanned out; a mailbox with NO engine profile — declared by
+# address, opened with a password from the clone's env — is read beside the
+# profile accounts, session-cached like them, counted in the denominator, and
+# reported as unreadable WITH THE FIX when it has no credential; and the
+# `--account` refusal no longer rests on "there is one mail credential", which
+# this work makes false.
 if "$VENV/bin/python" "$ROOT/tests/test_contact_history.py"; then echo "OK"; else echo "FAIL: cross-mailbox contact history regressed"; FAIL=1; fi
+
+step "45. the mailboxes with no engine profile — declared, read, never silent"
+# The mailbox that answered the customer in the incident has no engine profile
+# and never will: its owner answers from his own address and contributes
+# nothing — no daemon, no login, no maintenance, ever. That constraint is the
+# spec, so those mailboxes are DECLARED by address in `manifest.toml
+# [operator].read_mailboxes` and opened over standard IMAP with a password kept
+# in the clone's own env file, in no repo. The credential is real and can also
+# send, so what contains it is gated rather than asserted in a comment.
+# Guards: every malformed declaration fails at CONFIG LOAD as one actionable
+# line with no traceback — a foreign mail domain, a mangled address, a pair with
+# no colon, an empty password, a credential for a mailbox nobody declared, one
+# mailbox given two credentials — because the parser that dropped a bad pair
+# SILENTLY is what killed the first version of this idea, and a dropped
+# credential renders a mailbox as an absence; a password containing the list
+# separator is refused, never truncated; a declared mailbox with no credential
+# does NOT fail load (it is an unreadable mailbox, gate 44 holds what the
+# fan-out then says); `cs config` prints the addresses with the manifest key
+# that declares them and the credentials as presence only, in the report, in
+# --json and under --all; and the read credential never reaches the send path —
+# `send_mail` logs in with the operator pair, and its module cannot even name
+# the setting.
+if "$VENV/bin/python" "$ROOT/tests/test_read_mailboxes.py"; then echo "OK"; else echo "FAIL: declared read-only mailboxes regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
