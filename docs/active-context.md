@@ -19,10 +19,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
   operator's explicit approval.
-- **The deployed mrcall-desktop engine is `1194434`.** All five
-  `zylch-server@` units run that editable checkout after a restart and serve
-  `settings.get_secret`. Engine deployment therefore means checkout HEAD plus
-  restarted processes, never a pull alone.
+- **The deployed mrcall-desktop engine is `1194434`.** All five `zylch-server@`
+  units run that editable checkout and serve `settings.get_secret`. Engine
+  deployment means checkout HEAD plus restarted processes, never a pull alone.
 - **The open-work sources are intentionally different facts.** `cs unanswered`
   is a conversation-level, Gmail-Sent-anchored candidate sweep; the engine owns
   reply/automatic classification and its task ledger; `cs review` reconciles
@@ -33,10 +32,6 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   are Gmail signals, `settled` is the engine's verdict, `ready` means only that
   none fired. Draft deletion is a named human action; the cron denies both
   draft-retirement paths.
-- **Two human-only ledger verbs remain distinct.** `cs handled` records work
-  resolved outside email; `cs escalated` records a still-open contact taken over
-  by a named human. Both remain visible and both are denied to the unattended
-  operator.
 - **The `cs-review` skill adjudicates attention.** It builds a
   conversation/task/draft ledger, reads full current threads, requires one of
   five explicit verdicts per candidate, and puts only positive-evidence
@@ -59,9 +54,11 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   `cs history` fans out over every `CS_ACCOUNTS` account, taking each mailbox's
   credential from the engine handover rather than any env key, reports a mailbox
   it cannot read as `unreadable` rather than absent, and prints the scope it
-  actually read. The four gating call sites are the next release, blocked on a
-  prerequisite — a mailbox is reachable only with an engine profile, and the
-  `124-cs` mailbox whose reply was missed has none.
+  actually read. It reaches only profile mailboxes so far; the `124-cs`
+  mailboxes that caused the incident have none and their owners contribute
+  nothing by binding constraint, so phase 1b reaches them with a
+  domain-delegated service account scoped `gmail.readonly` (brief rewritten
+  2026-09-02). The four gating call sites follow as the FULL-tier release.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
 - **No clone runs `v0.36.0` or `v0.37.0`.** `mrcall-cs` declares and installs `v0.32.1`
   (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
@@ -69,6 +66,11 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   is a claim from its own last upgrade, not a reading. The CHANGELOG
   operational-pin marker says `v0.28.0`, because its owner step is the re-pin
   sign-off that runs only after both clones move.
+- **HEAD carries untagged work past `v0.37.0`, and it is not on the remote.**
+  `cs draft-reply` now warns and names every draft it is not mirroring instead
+  of dropping all but the newest, and `cs review` has a `duplicate` verdict,
+  ranked above `overtaken`, for a draft whose text is already in Sent. Bodies
+  below a minimum length or at the normalisation cap are not compared.
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -94,9 +96,8 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 - **`mario124-cs` can consume an undeclared provider credential.** Its own env
   carries no provider key, but an ambient `ANTHROPIC_API_KEY` can make
   `llm_available()` true interactively and absent under cron.
-- **A `/cs-operator` run is dominated by engine LLM latency.** A measured run
-  takes about four minutes; `cs ask` and per-candidate `draft-reply` calls scale
-  with candidate count.
+- **A `/cs-operator` run is dominated by engine LLM latency** — about four
+  minutes measured; `cs ask` and per-candidate `draft-reply` scale with count.
 - The full interactive `cs init` walk on a fresh machine has not been verified
   end to end; function-level gates cover descriptor selection, secret retrieval,
   environment writing, and the install offer.
@@ -113,9 +114,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
    crosses `v0.33.0`, `v0.34.0` and `v0.35.0` as well. Read each of those
    entries' re-test tiers and run the strictest one they demand, not only
    `v0.36.0`'s.
-3. Stand up engine profiles for the `124-cs` mailboxes that must be gated. That
-   is the prerequisite the next release waits on, and it is the clone
-   operator's action, not the kernel's.
+3. Build phase 1b: `read_mailboxes` manifest field, the delegated
+   `gmail.readonly` credential, the read path, and the `124-cs` acceptance run.
+   The one human dependency is the domain admin authorising the client ID.
 4. Update the CHANGELOG operational-pin marker once both clones are on the same
    tag — it is the sign-off, not a running commentary.
 5. Replace internal `re-collaudo` wording still exposed by `cs update` with

@@ -5,6 +5,15 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-09-02 — pruned at the v0.37.0 consolidation
+
+Stable behaviour with its own charter entry; kept here rather than in the living context, which tracks what is moving.
+
+- **Two human-only ledger verbs remain distinct.** `cs handled` records work
+  resolved outside email; `cs escalated` records a still-open contact taken over
+  by a named human. Both remain visible and both are denied to the unattended
+  operator.
+
 ## 2026-09-01 — settled by v0.34.0, pruned at the v0.37.0 release
 
 Recorded here when it stopped carrying operational value: the behaviour is stable and documented in its own release entry.

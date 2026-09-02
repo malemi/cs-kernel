@@ -54,21 +54,38 @@ before it, that half buys autonomous behaviour change on both clones plus the
 fail-closed halt risk, for no coverage gain on the clone that actually had the
 incident. It is the FULL-tier release and it is a separate decision.
 
-## Prerequisite — a profile per mailbox that must be read
+## Phase 1b — reach the profile-less mailboxes (rewritten 2026-09-02)
 
-This plan reaches exactly the mailboxes with an engine profile, because that is
-what makes a credential retrievable. On `124-cs` the reply that was missed came
-from a founder mailbox that has **no** profile, and two of the three mailboxes
-that clone needs read have none either. So without this prerequisite the plan
-ships a FULL-tier change to send gating that does not fix the incident that
-motivated it.
+The brief's binding constraint is that mailbox owners contribute nothing, so
+"stand up a profile per mailbox" is not a prerequisite — it is a rejected
+approach. The mailboxes without a profile are reached with a **service account
+under domain-wide delegation, scope `gmail.readonly`**, per the brief's
+Design. This inserts between phase 1 (shipped in `v0.37.0`) and step 6:
 
-The clone's own brief already names "a profile per mailbox" as its default
-option, and that is the prerequisite here: the mailboxes a clone needs gated
-must exist as engine profiles before step 6 changes any gate. Standing them up
-is the clone operator's action, not the kernel's. Until then the kernel is
-honest about what it could not see — which is the whole point of step 5 — but
-it does not pretend the incident is closed.
+- **1b.1 — manifest field `read_mailboxes`**: a list of plain addresses,
+  same-domain guard as `CS_ACCOUNTS`, malformed entry fails loud at config
+  load. New manifest field ⇒ the release is at least MINOR.
+- **1b.2 — the delegated credential**: mint a per-mailbox token from the
+  service account (`with_subject(address)`), key file named by the manifest and
+  defaulting to `firebase_sa_path` (`cs/drive.py` is the loading precedent).
+  Assert the token carries exactly `gmail.readonly` at acquisition; broader
+  fails loud. No secret enters env, Settings, or logs.
+- **1b.3 — the read path**: the same two questions the fan-out already asks
+  (Sent-to and inbound-since, headers only) answered over the delegated
+  credential — Gmail API `messages.list` or IMAP XOAUTH2 with the same token;
+  pick at build time, the credential story is identical.
+- **1b.4 — wire into `cs/mailboxes.py`**: declared mailboxes join the fan-out
+  beside profile accounts; the scope line's denominator counts both; a
+  delegation not authorised renders as
+  `unreadable — … authorise client ID <id> for scope gmail.readonly`, with the
+  admin action in the message.
+- **1b.5 — prove it on `124-cs`**: the domain admin authorises the client ID
+  once; then `cs history <the prospect's address>` must report the co-founder's
+  2026-07-03 reply and name the mailbox. This is the acceptance test the
+  incident defines, and it needs no action from any mailbox owner.
+
+Step 6 (the gates) then reads profiles ∪ declared mailboxes and is unblocked by
+the admin authorisation alone.
 
 ## Steps
 
@@ -279,9 +296,13 @@ changed refusal message.
 
 ## Risks
 
-- **The prerequisite does not land.** If a clone does not stand up profiles for
-  the mailboxes it needs gated, step 6 changes send gating without closing the
-  incident. That is the largest risk here and it is not a kernel risk.
+- **The delegation is never authorised.** Phase 1b needs one admin action; until
+  it happens the declared mailboxes are `unreadable` and step 6 must not ship.
+  Loud and named in every answer, but still a human dependency outside the
+  kernel.
+- **Scope creep on the service account.** The token is asserted to carry
+  exactly `gmail.readonly`; the assertion failing loud is what keeps a
+  mis-configured delegation from becoming a silent capability grant.
 - **Per-call connection cost at gate time.** Step 3 owns it. If session reuse is
   not enough, the fallback is a per-run index — never a per-clone flag, which is
   the forbidden knob.
@@ -299,9 +320,8 @@ changes no gate.
 
 ## Out of scope
 
-- A mailbox with no engine profile, and domain-wide delegation. Both wait on the
-  rule of two — but note this is exactly what `124-cs` needs, so the prerequisite
-  above is how that clone gets covered without the kernel growing a
-  single-company mechanism.
 - `inbound_recent` / `sent_recent` and the surfaces built on them.
+- Mail providers other than Google Workspace: a clone elsewhere declares no
+  read mailboxes and keeps today's behaviour; a provider seam, if ever needed,
+  follows the CRM/producer registry pattern.
 - Any change to what the engine judges: existence only.

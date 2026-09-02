@@ -1,201 +1,130 @@
 # Contact history across mailboxes — brief
 
+Rewritten 2026-09-02. The first version of this brief was executed only for
+mailboxes that hold an engine profile, which covers neither of the two
+mailboxes that caused the incident. That was a spec change dressed as a
+delivery, and this rewrite reverts it: the constraint below is the spec.
+
+## The binding constraint — mailbox owners contribute nothing
+
+The people whose mailboxes must be read answer customers from their own
+accounts and will not stand up an engine profile, run a daemon, generate an app
+password, or hand over anything, ever. A design is admissible only if the sum
+of what it asks from them is zero. One admin action by the domain
+administrator is acceptable; one action per mailbox owner is not.
+
 ## Problem
 
 Every clone's `CLAUDE.md` makes it a NEVER: no cold mail to an address that
-already has a thread, no re-contact inside `DEDUP_DAYS`. Both rest on the
-operator knowing whether the company has already written to a person. The kernel
-ships no verb that answers that.
+already has a thread, no re-contact inside `DEDUP_DAYS`. Both rest on knowing
+whether the company has already written to a person — and a company writes
+from several mailboxes, while the operator's evidence is scoped to one.
 
-It ships three that answer narrower questions, and they are easy to mistake for
-it. `cs contacted` reads the operator mailbox's Gmail Sent folder over a rolling
-window, 30 days by default. `cs thread` reads the engine archive for the same
-mailbox. `cs ask` reads the engine's processed state over that same archive. All
-three are bounded by one mailbox, and the first by a window as well.
-
-Sharing a bound means sharing a blind spot. When they agree, the agreement reads
-as three sources corroborating each other; it is one absence reported three
-times.
+`cs contacted`, `cs thread` and `cs ask` share that bound, so when they agree,
+the agreement reads as three sources corroborating each other and is one
+absence reported three times.
 
 Incident, 2026-09-01, `124-cs`. A prospect submitted a private-label request on
-2026-07-02 through the company's web configurator. `cs thread` returned no
-threads for her address, `cs ask` reported nothing in the archive, and
-`cs contacted` printed `no — 0 message(s) [Gmail Sent, ground truth]`. Four
-unsent drafts to her sat in the engine store. `/cs-review` concluded she had
-never been answered, listed her at 61 days waiting, and composed a reply opening
-with an apology for two months of silence.
-
-She had been answered on 2026-07-03 — the next day — by a co-founder writing from
-his own company mailbox, To: her, Cc: a shared alias. The operator mailbox is on
+2026-07-02. All three verbs reported no contact; four unsent drafts to her sat
+in the engine store; `/cs-review` listed her at 61 days waiting and composed a
+reply apologising for two months of silence. She had been answered the next
+day, by a co-founder writing from his own mailbox. The operator mailbox is on
 no header of that message, so it exists in no surface the operator reads. The
 apology was caught before sending.
 
-The four drafts were not independent evidence either. The engine composed them
-under the same bound, which is why they exist: the same error, upstream, counted
-a fourth time.
-
-## Why the near-miss fixes are not the fix
-
-`EMAIL_ALIASES` on the engine profile is what let the operator see a *different*
-founder's out-of-mailbox replies in three other threads and correctly read them
-as answers. It is genuinely load-bearing and the clone should keep it current.
-But an alias declares "this sender is us"; it does not make a message appear in a
-mailbox that never received it. It fixes attribution for mail that passes through
-the operator mailbox and reaches nothing else.
-
-Widening `DEDUP_DAYS` reaches it even less. The prospect above was at 61 days; a
-60-day gate misses her by one. There is no correct window, because "have we ever"
-has no natural horizon. And `DEDUP_DAYS` is the re-contact policy — moving it
-changes when the operator may write again, which is a commercial decision in the
-clone, not a fix for an evidence gap in the kernel.
-
-Asking humans to always copy the operator mailbox is a convention that must hold
-every time, on every device, forever. The first reply typed from a phone drops a
-customer out of view, silently. Worth doing; worthless to rely on.
-
-## Root cause
-
-A company answers customers from several mailboxes. The operator's evidence is
-scoped to one of them. The question it actually needs answered is unimplemented,
-so it gets reconstructed by hand from partial sources and eventually
-reconstructed wrong.
-
-One contributing factor is a label. `cs contacted` prints
-`{YES|no} — {mailbox} wrote to {addr} in the last {N} days ({n} message(s))
-[Gmail Sent, ground truth]`. It already names its window and its mailbox; what
-it never says is that this is the *only* mailbox it can see. "Ground truth"
-sitting at the end of that line reads as a verdict on the company, and in the
-incident it was read as one.
-
-**The gap is not only in what a human can ask.** The places where the kernel
-gates on prior contact are single-mailbox: the campaign runner
-(`campaign.py:108`) and its reply gate (`:120`), the CLI send path
-(`cli.py:797`) and draft state (`draft_state.py:290`). A verb that only a human
-invokes leaves every one of them unchanged — which is why the incident produced
-four machine-composed drafts before any human looked. Any fix that stops at a
-new verb fixes the reading and not the writing.
+Since `v0.37.0` the kernel fans out over every account in `CS_ACCOUNTS`,
+reports a mailbox it cannot read as `unreadable` rather than absent, and prints
+the scope it actually read. That machinery is correct and stays. What it cannot
+do is reach the mailboxes that matter here: on `124-cs`, two of the three
+mailboxes that must be read — including the one that answered — have no engine
+profile, and under the constraint above they never will.
 
 ## Design
 
-**Credentials come from the engine, never from the operator's environment.**
-Invariant 4 of the charter already settles this: *the mailbox credential is the
-engine's to hand over, not the operator's to retype.* `cs init` reads a
-mailbox's own password with owner-authenticated `settings.get_secret`
-(`project_init.py:155-190`), and the kernel already holds a per-uid refresh
-token (`config.py:286-289`). That is the surface to extend. A second env key
-holding `address:app-password` pairs would invert the invariant, and an app
-password carries send capability that nothing in the kernel could revoke —
-`send_mail.py:165-168` logs in with whatever pair Settings holds, so
-"read-only" would be a convention in the calling code and nothing more.
+**One fan-out, two credential sources.** The fan-out, the `unreadable` outcome
+and the scope line are the existing `cs/mailboxes.py`. What this brief adds is
+where a credential for a profile-less mailbox comes from.
 
-Extending the existing handover also removes the need for a new registry — at
-the price of a requirement rather than a fact: the kernel reaches a mailbox
-only if that mailbox has an engine profile, because that is what makes its
-credential retrievable. Which mailboxes have one, and what follows when they
-do not, is under Deliberately out of scope.
+**A service account with domain-wide delegation, scope `gmail.readonly`.** The
+domain admin authorises the service account's client ID for exactly that scope
+in the Workspace admin console — once, for the whole domain. The mailbox
+owners do nothing, install nothing, hand over nothing. The credential
+**cannot send**: the scope is enforced by Google at token issue, not by a
+convention in our calling code, which is the property no app password can
+have. `cs/drive.py` already loads this kind of credential (`firebase_sa_path`,
+read-only Drive scope); the manifest names the key file for mail, defaulting
+to the same one.
 
-**A credential argument on the IMAP path.** `_imap(settings)`
-(`gmail_drafts.py:40`) logs in with the single `settings.email_address` /
-`settings.email_password` pair. It takes an explicit `(address, password)`,
-today's behaviour staying the default so no caller changes. Only `sent_to` is
-reached this way: `thread_with` (`:381`) and `inbound_recent` (`:221`) decide
-"is this us" from `settings.email_address` and would answer wrongly for another
-mailbox, so they stay single-mailbox until they are given the same treatment.
+**The mailboxes are declared, addresses only, no secrets.** A manifest list —
+`read_mailboxes` — of plain addresses. It carries the same guard as
+`CS_ACCOUNTS`: an address outside the company's own mail domain fails loud at
+config load, and a malformed entry is an error, never a silent drop. There is
+no password to parse because there is no password: the token is minted per
+mailbox from the service account with `with_subject(address)`.
 
-**A fan-out over `sent_to`.** `gmail_archive.sent_to()` already treats
-`days=None` as "no window" (`gmail_archive.py:88,102`), so the unbounded read
-exists and only the CLI bounds it. The new function iterates the operator
-mailbox plus every other readable account, calls `sent_to(..., days=None)` on
-each, and returns rows tagged with the mailbox they came from.
+**The read path.** A delegated token for the target mailbox, then the same
+narrow question as today: does Sent mail to this address exist, headers only —
+via the Gmail API (`messages.list`, `q="in:sent to:<address>"`) or IMAP
+XOAUTH2 with the same token; whichever is built, the credential story is
+identical. Worth recording for whoever discusses this with the mailbox owners:
+it is not a general read of somebody's mail, and describing it accurately is
+what makes the authorisation real.
 
-The window is not what this costs. `sent_to` fetches every matching UID's header
-and filters by date afterwards (`:104-118`), so an unbounded read costs what a
-30-day read costs. What multiplies is the per-call TLS, LOGIN, LIST and SELECT,
-and the campaign runner pays that once per drafted contact at `campaign.py:185`,
-plus once per call at `:358`, `:462` and `:548`. Times N mailboxes, that is the number that decides
-whether this is usable, so the fan-out holds one session per mailbox per
-process.
+**`unreadable` extends, with the fix in the message.** A declared mailbox whose
+delegation is not authorised reports `unreadable — delegation not authorised
+for <address>; authorise client ID <id> for scope gmail.readonly`, never an
+empty result. The scope line counts declared mailboxes in its denominator.
 
-**A mailbox that cannot be read reports `unreadable`, never an empty result.**
-This is the property the whole brief exists for: if a failed login and a genuine
-absence render the same, the verb reproduces the incident inside the fix. Two
-consequences the current CLI cannot express and that this work must build. The
-existing `cmd_contacted` signals "no" by exiting 1 (`cli.py:245`), so a failed
-login would read as "never contacted" — the exact inversion. And a degraded
-source must survive into the machine-readable shapes, not only the printed line;
-the existing convention for that is the surfaced note (`cli.py:271,298-299`).
+**The gates read everything, always.** Phase 2 — the four gating call sites
+(`campaign.py:108`, `:120`, `cli.py:797`, `draft_state.py:290`) — reads the
+union of profile mailboxes and declared mailboxes. No flag chooses the
+evidence scope; that flag is the dedup-source knob the charter forbids. A send
+gate that meets `unreadable` refuses and names the mailbox: fail-open is the
+incident at machine speed.
 
-**A send gate that meets `unreadable` refuses, and says which mailbox.** The
-charter's standing instruction is to escalate on uncertainty. Fail-open
-reproduces the incident at machine speed; fail-closed can halt outreach on one
-dead profile, which is the accepted cost — a contact not written to today is
-recoverable, a second cold mail to someone a founder answered two months ago is
-not. Reading and drafting continue; only sending stops.
-
-**The gating call sites, not only a new verb.** The four single-mailbox gates
-listed under Root cause are what actually stopped a machine from knowing. They
-move to the fan-out, or the fix addresses the reading and leaves the writing
-exactly as it was. `unanswered` and `review` are not among them: they read
-through `inbound_recent` / `sent_recent`, which decide "is this us" from the
-operator's own address and would answer wrongly for another mailbox. Extending
-those is separate work with its own correctness question.
-
-**A CLI surface** printing per mailbox, with unreadable sources named. And
-`cmd_contacted` states its own scope in its own output — one mailbox, N days, a
-dedup gate — rather than ending on an unqualified "ground truth". Leave
-`--days` at 30; it is the dedup gate and is correct as it is.
+**Charter fit.** Identity and sending are untouched — this credential cannot
+reach them. Gmail Sent remains the dedup ground truth; it becomes the
+company's Sent instead of one box's. The addresses are manifest data (rule 2),
+the mechanism is kernel code, and both clones are Google Workspace with
+founders who answer from their own boxes, so the rule of two is met by the
+mechanism, not by one company's topology.
 
 ## Deliberately out of scope
 
-This answers existence only. Whether a message needed an answer, whether it was
-an auto-reply, whether a thread is settled — all remain the engine's judgement,
-per `§ 0b` of the clone charter. The verb must not grow a second opinion about
-any of that.
+Existence only. Whether a message needed an answer, was an auto-reply, or
+settled a thread stays the engine's judgement, per § 0b.
 
-**A mailbox with no engine profile.** The design above reaches every mailbox the
-kernel can already retrieve a credential for, which is every mailbox in
-`CS_ACCOUNTS`. A mailbox with no profile is out of scope — and this matters more
-than it sounds, because the `124-cs` mailbox whose reply was missed is one of
-them, and two of the three mailboxes that clone needs read have no profile
-either. The kernel does not grow a mechanism for that. The clone's own brief
-already names "a profile per mailbox" as its default option, and that is the
-prerequisite: profiles first, then the gates change. Building a profile-less
-path in the kernel for one company would be the rule of two broken in the exact
-way the charter names; the shape it should take when a second company needs it
-is the service account below, not an env registry.
-
-**Domain-wide delegation.** The stronger credential is a service account with
-delegation restricted to `gmail.readonly`: the admin authorises once, no mailbox
-owner generates or hands over anything, and it cannot send. `cs/drive.py`
-already loads a service account from `firebase_sa_path` with a read-only Drive
-scope and records in its header that delegation is not enabled. The cost is that
-delegation runs through the Gmail API, so it needs a read path alongside
-`imaplib`. That is the right answer for the profile-less case above and it does
-not block anything here.
-
-Worth recording for whoever discusses this with mailbox owners: the query is
-`UID SEARCH TO <address>` against the Sent folder, fetching headers. It is not a
-general read of somebody's mail, and describing it accurately is what makes the
-authorisation real.
+The mechanism is Google-specific. A clone on another mail provider declares no
+read mailboxes and keeps today's behaviour; if that clone ever exists, the
+provider seam follows the CRM/producer registry pattern, not a knob.
 
 ## Rejected approaches
 
-**`CS_READ_MAILBOXES`, an env key of `address:app-password` pairs.** Rejected on
-three counts. What the engine handover wins is provenance and revocability, not
-a smaller capability: the process still ends up holding a send-capable password
-for another mailbox. It is auditable, it is revoked by revoking the profile, and
-nobody retypes it — and the `gmail.readonly` service account below is what would
-actually remove the send capability. It inverts invariant 4, which puts the mailbox credential in the
-engine's hands rather than the operator's. An app password has no scope and does
-not expire, so it grants send capability that no kernel code path could take
-away. And parsing it "exactly like `Settings.account_map`" would inherit that
-parser's silent drop of a malformed pair (`config.py:336-341`): a typo would
-render a mailbox as an absence, which is precisely the failure this brief
-exists to prevent. A password-bearing Settings field would also need adding to
-`SECRET_FIELDS`, or `cs config` prints it (`config_report.py:79-88`).
+**`address:app-password` pairs in an env key.** Requires each mailbox owner to
+generate and hand over a secret — the exact cooperation the constraint rules
+out — and an app password has no scope, does not expire, and can send; nothing
+in the kernel could take that back. Its natural parser also drops a malformed
+pair silently, turning a typo into an absence.
 
-**Widening the `--account` refusal instead.** `cs` today refuses per-account
-work on the ground that "there is one mail credential, not one per account"
-(`cli.py:1811-1831`). That becomes false the moment the kernel retrieves a
-second profile's password, so the refusal's message is corrected as part of this
-work rather than the refusal being widened into a second mechanism.
+**An engine profile per mailbox.** Asks the most from the owners — a daemon, a
+login, an identity each — to answer a read-only question. Rejected by the
+operator in exactly those terms; it was this brief's first executed shape, and
+covering only profile-holding mailboxes is the spec change this rewrite
+reverts.
+
+**Asking humans to always CC the operator mailbox.** A convention that must
+hold on every device forever; the first reply typed from a phone silently
+drops a customer out of view. Worth doing; worthless to rely on.
+
+## Acceptance
+
+- With delegation authorised and `read_mailboxes` declared on `124-cs`,
+  `cs history <the prospect's address>` reports the co-founder's 2026-07-03
+  reply and names the mailbox it was found in.
+- A declared mailbox with delegation missing renders as `unreadable` with the
+  admin action in the message — in the printed line, the exit status, and JSON.
+- No secret for any of these mailboxes exists in any env file or repo.
+- The token is asserted to carry exactly `gmail.readonly` at acquisition;
+  broader fails loud.
+- The phase-2 gates read profiles ∪ declared mailboxes, and the scope line's
+  denominator counts both.

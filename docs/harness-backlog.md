@@ -57,3 +57,4 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/execution-plans/2026-07-28-eternal-operator-loop.md | 631 | keep whole — one argument, read start to finish when the plan is unblocked | 2026-08-26 |
 | docs/sessions/5df6e400-9157-4214-8267-426c0ebea560.md | 560 | keep whole — gitignored per-session scratch, not repository knowledge | 2026-08-26 |
 | README.md | 465 | keep whole — the clone-onboarding manual, read by section | 2026-08-26 |
+| docs/sessions/72c03d57-2961-4f9c-84d3-a5b02836bcbd.md | 633 | keep whole — router session memory, reconciled by /router sweep, not a maintained doc | 2026-09-02 |
