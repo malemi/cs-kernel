@@ -60,12 +60,11 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   on `124-cs` including fail-closed under a real authentication refusal.
   `send_first` stays deliberately ungated.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
-- **No clone runs any of `v0.36.0`–`v0.39.0`.** `mrcall-cs` declares and installs `v0.32.1`
-  (`requirements.txt` pin and the venv's dist-info agree). `mario124-cs` is
-  recorded at `v0.35.0`; that clone is not present on this machine, so its state
-  is a claim from its own last upgrade, not a reading. The CHANGELOG
-  operational-pin marker says `v0.28.0`, because its owner step is the re-pin
-  sign-off that runs only after both clones move.
+- **Both clones declare, install and run `v0.39.0`** (2026-09-02, verified on
+  the installed package, locks proven by solo-install). The CHANGELOG
+  operational-pin marker carries the sign-off. `mario124-cs` remains recorded
+  at `v0.35.0`, a claim from its own last upgrade — that machine is elsewhere.
+
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -73,14 +72,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **`v0.36.0` through `v0.39.0` are published and applied nowhere.**
-  `v0.37.0`–`v0.39.0` are FULL-tier on both clones; each entry records what was
-  exercised pre-tag and what is owed at upgrade. `v0.39.0`'s send gates and
-  fail-closed path are live-proven on `124-cs` read-only from the source tree
-  (that clone has also already split its `CS_READ_MAILBOXES` env value, so
-  `v0.38.0`'s migration is done there); `v0.38.0`'s duplicate-drafts half has
-  met no live engine, and `mrcall-cs` has met none of these releases at all.
-  The `v0.35.0` attention agenda still has no live-operator run either.
+- **One collaudo leg is deferred on both clones**: the draft-only campaign
+  tick observing an `evidence_incomplete` refusal end-to-end, at each clone's
+  next cron cycle. Recorded in each clone's own active-context.
+- **`mrcall-cs/docs/owner-actions.md` records a stopped-sends posture that is
+  not current** — its two send crons were live before and after the upgrade
+  window. That file records the operator's own posture decision, so it is his
+  to reconcile, not the kernel's.
 - **The outbound sourcing rules are proven as rendered text, not as behaviour.**
   Gates hold that they appear once per surface and that no fourth surface can
   paste them in unnoticed. Whether a session actually reaches memory before
@@ -102,19 +100,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Upgrade each clone to `v0.38.0` when its operator chooses. The strictest
-   tier crossed governs: FULL on both (`v0.34.0`, `v0.35.0`, `v0.37.0`,
-   `v0.38.0` all demand it), plus each entry's own checks — the skills-only
-   surfaces, the sourcing rules, `cs history` live, and on `124-cs` the
-   `CS_READ_MAILBOXES` env split the load refusal will demand first.
-2. `mrcall-cs` is six minor releases behind at `v0.32.1`; read every crossed
-   CHANGELOG entry before its upgrade, not only the newest.
-3. Upgrade `124-cs` to `v0.39.0` and run its owed FULL collaudo on the
-   installed pin — including a draft-only campaign tick observing a refusal
-   end-to-end, the one leg not exercisable from the source tree.
-4. Update the CHANGELOG operational-pin marker once both clones are on the same
-   tag — it is the sign-off, not a running commentary.
-5. Replace internal `re-collaudo` wording still exposed by `cs update` with
+1. Observe the deferred collaudo leg at each clone's next cron cycle: a
+   draft-only campaign tick meeting an `evidence_incomplete` refusal.
+2. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-6. Promote reusable attachment-reading and scheduling pieces only when a second
+3. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.

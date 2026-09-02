@@ -4,7 +4,29 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-08-27): **`v0.28.0` on both clones**.
+**Current operational pin** (2026-09-02): **`v0.39.0` on both clones**.
+Verified from inside each clone after the re-pin, on the installed package:
+`requirements.txt`, `template-manifest.json`, `cs --version` and the re-rendered
+ARCHITECTURE pin row all say `v0.39.0`, and each regenerated `requirements.lock`
+resolves the tag to `d932a7a` and was installed ALONE into a throwaway `uv venv`
+(resolving `cs-kernel 0.39.0`) rather than assumed to. The FULL collaudo the
+crossed entries demand ran on both: `124-cs` — whoami, config with explained
+`read_mailboxes` provenance, ten skills and no command dirs, the sourcing rules
+once per surface, `cs history` 4-of-4 finding the 2026-07-03 co-founder reply,
+dossier `REPLY IN THREAD`, and fail-closed (`STOP — evidence incomplete`) under
+a live broken credential; `mrcall-cs` — whoami, config with the read-mailbox
+surface correctly inert, the skills migration's retirement observed as exactly
+12 removals and 12 additions with the clone-authored `mrcall-assistant`
+surviving, `settings.get_secret` handing over `EMAIL_PASSWORD`, deny/allow
+enumeration intact, and a live `cs review --json` showing two `duplicate`
+verdicts and `evidence_incomplete` on every ready row — the two halves this
+file said had never met a live clone. `mrcall-cs`'s sends were held by
+`CS_PAUSE` for the upgrade window (engaged 14:34 UTC, lifted 14:51 after the
+collaudo; the 14:50 sender tick fired and skipped on the pause). Its stale
+`requirements.lock` — resolving `v0.31.0` against a `v0.32.1` pin — was
+repaired by the regeneration. Deferred, recorded in each clone's own
+active-context: the draft-only campaign tick observing an
+`evidence_incomplete` refusal end-to-end, at the next cron cycle.
 Verified from inside each clone after the re-pin: `requirements.txt`,
 `template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
 `cs --version` all say `v0.28.0`; both `requirements.lock` files resolve the tag
