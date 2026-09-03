@@ -47,10 +47,15 @@ registry; a render function the CLI calls).
   credential-hungry.
 - The `engine-memory` row resolves `engine_ws_url` + `/ws/<owner_uid>` and
   probes reachability with one TCP connect to the URL's host:port
-  (timeout ~2s). No WebSocket handshake, no token, no RPC method. Verdicts:
-  `reachable` / `unreachable: <errno text>` / `unknown: engine_ws_url not
-  configured`. The row prints, beside the verdict, that reachable ≠
-  authorized and `cs whoami` is the authenticated proof.
+  (timeout ~2s). No WebSocket handshake, no token, no RPC method. Four
+  verdicts: `reachable` / `unreachable: <errno text>` / `unknown:
+  engine_ws_url not configured` / `unknown: engine_ws_url not parseable` —
+  the fourth for a configured value the URL parser cannot split into
+  host:port (the manifest does not validate the field's shape, so this is
+  reachable from operator input; a value that cannot be probed must not be
+  reported with the not-configured verdict beside its own location). The row
+  prints, beside the verdict, that reachable ≠ authorized and `cs whoami` is
+  the authenticated proof.
 - The `cc-memory` row resolves `~/.claude/projects/<encoded>/memory/` by
   encoding the clone root the way Claude Code does — both `/` and `.` map to
   `-` (verified against this machine's own `~/.claude/projects/` entries);
@@ -103,7 +108,8 @@ gains the four canonical `cs memory` spellings in the allow list, adjacent to
 the `cs config` block (`:9-12`). No deny entries: the verb is read-only and
 the cron may run it.
 
-**3. The set-agreement gate**, appended to `tests/run.sh` as gate 47. It
+**3. The set-agreement gate**, appended to `tests/run.sh` as gate 48 — 47 is
+M1's test step, which took the next free slot. It
 imports `cs.memory_report` from `$VENV` — the venv gate 3 (`:243`) builds
 from the working tree, which every later gate already uses — and reads the
 slug set straight off `STORES`; the backticked slug set comes from § 10 of
@@ -114,7 +120,7 @@ in the gate. It also asserts the four allow spellings exist in
 `settings.json.j2` — the same one-file-forgotten failure gate 17 exists to
 catch, on the allow side.
 
-**Verification (M2)**: `bash tests/run.sh` green including gate 47; mutate a
+**Verification (M2)**: `bash tests/run.sh` green including gate 48; mutate a
 slug in either file and watch the gate fail (run locally, not committed);
 render the template pair in the golden-pack path and confirm § 10 appears
 once and `AGENTS.md`-side routing is untouched.
