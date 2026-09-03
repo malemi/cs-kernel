@@ -15,12 +15,20 @@ Guards:
         configured` and an empty location; pointed at a closed local port
         (nothing listening — no real network egress) it reports
         `unreachable: …` with the resolved `wss://…/ws/<uid>` URL as its
-        location, never a filesystem path.
+        location, never a filesystem path; and a CONFIGURED but unparseable
+        value (no scheme — the manifest does not validate the field's
+        shape) reports the fourth, distinct verdict `unknown: engine_ws_url
+        not parseable` — never the not-configured verdict — with the raw
+        unparseable value never surfacing as a location either.
   (iv)  Filesystem-resolved stores report `present` once their backing
         file/dir exists and `absent` when it does not; `gmail-sent` always
         reports `declared` (mapped, never IMAP-probed) and `user-notes`
         always reports "not probed" (it would need an authenticated
         session, which this verb refuses to open).
+  (v)   `cc-memory`'s own claimed encoding — both `/` and `.` in the clone
+        root map to `-` — is exercised directly: a clone root whose own
+        basename contains a `.` resolves to a directory whose encoded name
+        carries the expected `-`-joined tail, not the literal dot.
 """
 from __future__ import annotations
 
@@ -198,6 +206,72 @@ def _test_engine_row_unreachable() -> None:
           "location is the resolved ws:// URL, never a path")
 
 
+def _test_engine_row_unparseable() -> None:
+    """A configured-but-scheme-less `ws_url` ("localhost:8765" — the
+    manifest's `ws_url` field carries no shape validation, so this reaches
+    the resolver on real operator input) must NOT read as 'not configured':
+    a fourth, distinct verdict, and the raw unparseable value must never
+    surface as a location — an address nothing could connect to is not a
+    location."""
+    with tempfile.TemporaryDirectory() as td:
+        home, clone = _with_cwd_and_home(td)
+        old_cwd = os.getcwd()
+        old_home = os.environ.get("HOME")
+        try:
+            os.environ["HOME"] = str(home)
+            os.chdir(clone)
+            rep = memory_report.build(_settings(engine_ws_url="localhost:8765"))
+        finally:
+            os.chdir(old_cwd)
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+
+        row = next(s for s in rep["stores"] if s["id"] == "engine-memory")
+        assert row["presence"] == "unknown: engine_ws_url not parseable", row
+        assert row["presence"] != "unknown: engine_ws_url not configured", row
+        assert row["location"] == "", row
+        assert "localhost:8765" not in row["location"], row
+
+    print("OK: engine row with a scheme-less ws_url — the distinct "
+          "'not parseable' verdict, never 'not configured', empty location "
+          "(the raw unparseable value never surfaces)")
+
+
+def _test_cc_memory_encoding() -> None:
+    """The row's own claimed encoding, exercised directly: both `/` and `.`
+    in the clone root map to `-`. A clone root whose basename carries a `.`
+    (`acme.cs-clone`) must resolve to a directory whose encoded name ends in
+    the `-`-joined tail `-acme-cs-clone`, never the literal dot."""
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, "home"); home.mkdir()
+        clone = Path(td, "acme.cs-clone"); clone.mkdir()
+        old_cwd = os.getcwd()
+        old_home = os.environ.get("HOME")
+        try:
+            os.environ["HOME"] = str(home)
+            os.chdir(clone)
+            rep = memory_report.build(_settings())
+        finally:
+            os.chdir(old_cwd)
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+
+        by_id = {s["id"]: s for s in rep["stores"]}
+        cc = by_id["cc-memory"]
+        encoded_dir = Path(cc["location"]).parent.name
+        assert encoded_dir.endswith("-acme-cs-clone"), cc
+        assert "." not in encoded_dir, cc
+        assert cc["presence"] == "absent", cc
+
+    print("OK: cc-memory's [/.]→'-' encoding — a clone root basename "
+          "containing a '.' resolves to the '-'-joined directory name, "
+          "never the literal dot")
+
+
 def _test_declared_and_not_probed_rows() -> None:
     with tempfile.TemporaryDirectory() as td:
         home, clone = _with_cwd_and_home(td)
@@ -237,6 +311,8 @@ def main() -> int:
     _test_no_store_contents_leak()
     _test_engine_row_unconfigured()
     _test_engine_row_unreachable()
+    _test_engine_row_unparseable()
+    _test_cc_memory_encoding()
     _test_declared_and_not_probed_rows()
     print("test_memory_report: all assertions passed")
     return 0

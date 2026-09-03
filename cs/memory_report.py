@@ -28,7 +28,6 @@ transcript, for the same reason ``cs config`` never prints a secret value.
 """
 from __future__ import annotations
 
-import os
 import socket
 import urllib.parse
 from dataclasses import dataclass
@@ -36,21 +35,13 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import campaign_pack, config as config_mod, project_memory
+from .config_report import tilde as _tilde
 
 # Connection-level only: long enough that a briefly slow engine host is not
 # mistaken for a dead one, short enough that `cs memory` stays fast on a
 # machine that cannot reach it at all — the onboarding case this row exists
 # for.
 ENGINE_PROBE_TIMEOUT_SECONDS = 2.0
-
-
-def _tilde(p: str | os.PathLike) -> str:
-    """`~`-shorten a path under HOME — mirrors `config_report._tilde`."""
-    s = str(p)
-    home = str(Path.home())
-    if s == home:
-        return "~"
-    return "~" + s[len(home):] if s.startswith(home + os.sep) else s
 
 
 def _present(path: Path) -> str:
@@ -64,14 +55,25 @@ def _resolve_engine_memory(settings: Any) -> tuple[str, str]:
     base = (settings.engine_ws_url or "").rstrip("/")
     if not base:
         return "", "unknown: engine_ws_url not configured"
-    uid = settings.engine_owner_uid or "<owner_uid>"
-    url = f"{base}/ws/{uid}"
 
+    # The manifest's `ws_url` field carries no shape validation
+    # (`cs/manifest.py`), so a configured-but-unparseable value (e.g. one
+    # missing its scheme, "localhost:8765") reaches here. That is NOT the
+    # same verdict as "not configured" — something is declared, it just
+    # cannot be resolved to a host:port to probe — and the location must not
+    # carry the raw unparseable value either: an address nothing could
+    # connect to is not a location.
     parsed = urllib.parse.urlsplit(base)
     host = parsed.hostname
-    if not host:
-        return url, "unknown: engine_ws_url not configured"
-    port = parsed.port or (443 if parsed.scheme == "wss" else 80)
+    try:
+        port = parsed.port or (443 if parsed.scheme == "wss" else 80)
+    except ValueError:
+        port = None
+    if not host or port is None:
+        return "", "unknown: engine_ws_url not parseable"
+
+    uid = settings.engine_owner_uid or "<owner_uid>"
+    url = f"{base}/ws/{uid}"
     try:
         with socket.create_connection((host, port), timeout=ENGINE_PROBE_TIMEOUT_SECONDS):
             return url, "reachable"

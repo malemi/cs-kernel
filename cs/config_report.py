@@ -194,7 +194,7 @@ class Setting:
         return len(self.declarations) > 1 or any(d.shadowed for d in self.declarations)
 
 
-def _tilde(p: str | os.PathLike) -> str:
+def tilde(p: str | os.PathLike) -> str:
     """`~`-shorten a path under HOME — shorter, and it survives a sandbox HOME."""
     s = str(p)
     home = str(Path.home())
@@ -288,7 +288,7 @@ class Scan:
         if mpath is not None:
             with open(mpath, "rb") as fh:
                 self.manifest_raw = tomllib.load(fh)
-        self.manifest_display = _tilde(mpath) if mpath is not None else ""
+        self.manifest_display = tilde(mpath) if mpath is not None else ""
 
         # The dotenv chain, lowest -> highest. `config.env_file_chain` is the
         # ONE definition of it and is called here rather than re-implemented;
@@ -319,8 +319,8 @@ class Scan:
         self.env_layers: list[tuple[str, str, dict[str, str]]] = []
         for layer_id, f in zip(ids, chain):
             p = Path(f).expanduser()
-            self.env_layers.append((layer_id, _tilde(p), _read_dotenv(p)))
-            self.file_layers.append((layer_id, _tilde(p), p.exists()))
+            self.env_layers.append((layer_id, tilde(p), _read_dotenv(p)))
+            self.file_layers.append((layer_id, tilde(p), p.exists()))
         self.env_layers.append(
             ("process", "process env", {k.upper(): v for k, v in os.environ.items()})
         )
@@ -436,9 +436,9 @@ def build(settings=None, include_all: bool = False) -> dict:
     sa = Path(settings.firebase_sa_path) if settings.firebase_sa_path else None
     return {
         "manifest": str(scan.manifest_path) if scan.manifest_path else None,
-        "state_dir": _tilde(settings.state_dir),
+        "state_dir": tilde(settings.state_dir),
         "pause": {
-            "path": _tilde(settings.pause_path),
+            "path": tilde(settings.pause_path),
             "present": settings.pause_path.exists(),
         },
         "service_account": {
