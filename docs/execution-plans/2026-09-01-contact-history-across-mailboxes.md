@@ -107,11 +107,12 @@ so 1b adds configuration and wiring, not a new protocol client:
   session-cached like any other; both fan-outs and therefore `cs history` see
   them with no new flag, and the scope line's denominator counts profiles ∪
   declared.
-- **1b.4 — prove it on `124-cs`** — NOT DONE, and not kernel work: place the
-  credentials, then
-  `cs history <the prospect's address>` must report the co-founder's 2026-07-03
-  reply and name the mailbox. This is the acceptance test the incident
-  defines, and it asks nothing of any mailbox owner.
+- **1b.4 — prove it on `124-cs`** — DONE. The operator placed the credentials
+  (`CS_READ_MAILBOXES` + `CS_READ_MAILBOX_PASSWORDS` in the clone env), and
+  `cs history` on the prospect's address reports the co-founder's 2026-07-03
+  reply, naming the mailbox — run from the source tree during phase 1b, then
+  again on the installed `v0.39.0` pin at the clone's upgrade collaudo. It
+  asked nothing of any mailbox owner.
 
 Step 6 (the gates) then reads profiles ∪ declared mailboxes and is unblocked by
 1b alone.
