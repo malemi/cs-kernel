@@ -8,7 +8,7 @@ doc_baseline_date: 2026-09-01
 <!-- doc-scope:start -->
 Scope: the volatile state of this kernel — the tag in force, what each clone
 actually runs, and what is still open. Durable rules live in
-[`CLAUDE.md`](../CLAUDE.md), per-tag detail in [`CHANGELOG.md`](../CHANGELOG.md),
+[`AGENTS.md`](../AGENTS.md), per-tag detail in [`CHANGELOG.md`](../CHANGELOG.md),
 and pruned narrative in [`active-context-archive.md`](active-context-archive.md).
 <!-- doc-scope:end -->
 
