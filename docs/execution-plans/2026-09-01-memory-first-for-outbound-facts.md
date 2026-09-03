@@ -10,7 +10,7 @@ brief: ../briefs/2026-09-01-memory-first-for-outbound-facts.md
 Scope: the ordered steps that render the two outbound-fact rules onto the clone
 template surfaces, and how each step is verified. The what and why are in the
 [brief](../briefs/2026-09-01-memory-first-for-outbound-facts.md); the charter
-they must obey is [`CLAUDE.md`](../../CLAUDE.md).
+they must obey is [`AGENTS.md`](../../AGENTS.md).
 <!-- doc-scope:end -->
 
 ## Shape

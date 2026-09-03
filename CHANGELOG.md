@@ -26,20 +26,7 @@ collaudo; the 14:50 sender tick fired and skipped on the pause). Its stale
 `requirements.lock` — resolving `v0.31.0` against a `v0.32.1` pin — was
 repaired by the regeneration. Deferred, recorded in each clone's own
 active-context: the draft-only campaign tick observing an
-`evidence_incomplete` refusal end-to-end, at the next cron cycle.
-Verified from inside each clone after the re-pin: `requirements.txt`,
-`template-manifest.json` `init_data`, the ARCHITECTURE "Kernel pin" row and
-`cs --version` all say `v0.28.0`; both `requirements.lock` files resolve the tag
-to `76f6656`, and each lock was installed ALONE into a fresh `uv venv` —
-resolving `cs-kernel 0.28.0` — rather than assumed to. The static + live
-read-only collaudo the entry demands was run on both: `cs whoami` signs in on
-each profile (`support@mrcall.ai`, `production@cafe124.it`), `cs config`
-reports **no setting declared in more than one place** on either, and the
-rendered `CLAUDE.md` was read on each to confirm it still interpolates that
-clone's own identity rather than the other's. `.claude/skills/cs-triage-mail/
-SKILL.md` § 2 carries the new heading ("Read the customer's own words before
-you decide anything") on both, with no literal Jinja left in any of the three
-re-rendered files. Nothing was written and nothing was sent.
+`evidence_incomplete` refusal end-to-end, at a cron cycle where one occurs.
 
 **`124-cs`'s own git history had fallen four minor releases behind what was
 actually installed and rendered on it.** Its last committed re-pin was

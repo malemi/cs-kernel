@@ -19,9 +19,10 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
   operator's explicit approval.
-- **The deployed mrcall-desktop engine is `1194434`.** All five `zylch-server@`
-  units run that editable checkout and serve `settings.get_secret`. Engine
-  deployment means checkout HEAD plus restarted processes, never a pull alone.
+- **The deployed mrcall-desktop engine is `459df0f`.** All five `zylch-server@`
+  units were restarted on it (2026-09-02 08:03) and serve `settings.get_secret`.
+  Engine deployment means checkout HEAD plus restarted processes, never a pull
+  alone.
 - **The open-work sources are intentionally different facts.** `cs unanswered`
   is a conversation-level, Gmail-Sent-anchored candidate sweep; the engine owns
   reply/automatic classification and its task ledger; `cs review` reconciles
@@ -37,10 +38,6 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   five explicit verdicts per candidate, and puts only positive-evidence
   `act_now` rows in the main agenda. Its work trace is
   [`execution-plans/2026-08-28-attention-agenda.md`](execution-plans/2026-08-28-attention-agenda.md).
-- **`v0.36.0` carries two changes: agent-skills-only, and memory-first for
-  outbound facts.** Its re-test tier is static + live read-only on both clones —
-  above static because `cs update` deletes command-era files on the clone, which
-  has to be observed rather than asserted.
 - **Two sourcing rules bind every outbound message.** Memory is the first source
   for any fact that will appear in one — not only entity facts — and an empty
   search obliges a second source rather than a derivation. They are stated once
@@ -62,8 +59,10 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
 - **Both clones declare, install and run `v0.39.0`** (2026-09-02, verified on
   the installed package, locks proven by solo-install). The CHANGELOG
-  operational-pin marker carries the sign-off. `mario124-cs` remains recorded
-  at `v0.35.0`, a claim from its own last upgrade — that machine is elsewhere.
+  operational-pin marker carries the sign-off. `mario124-cs`
+  (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`; its tree has no commits
+  and no remote, so that clone's own history starts whenever its operator makes
+  it start.
 
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
@@ -72,9 +71,11 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
-- **One collaudo leg is deferred on both clones**: the draft-only campaign
-  tick observing an `evidence_incomplete` refusal end-to-end, at each clone's
-  next cron cycle. Recorded in each clone's own active-context.
+- **One collaudo leg remains unobserved on both clones**: a draft-only campaign
+  tick meeting an `evidence_incomplete` refusal end-to-end. Ticks run and pass,
+  but with healthy credentials no refusal occurs, so the leg discharges only at
+  a real credential failure or a deliberately injected one. Recorded in each
+  clone's own active-context.
 - **`mrcall-cs/docs/owner-actions.md` records a stopped-sends posture that is
   not current** — its two send crons were live before and after the upgrade
   window. That file records the operator's own posture decision, so it is his
@@ -100,8 +101,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Observe the deferred collaudo leg at each clone's next cron cycle: a
-   draft-only campaign tick meeting an `evidence_incomplete` refusal.
+1. Observe the outstanding collaudo leg: a draft-only campaign tick meeting an
+   `evidence_incomplete` refusal — at a real credential failure or an injected
+   one, whichever comes first.
 2. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
 3. Promote reusable attachment-reading and scheduling pieces only when a second

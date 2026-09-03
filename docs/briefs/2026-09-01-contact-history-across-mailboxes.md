@@ -1,10 +1,5 @@
 # Contact history across mailboxes — brief
 
-Rewritten 2026-09-02. The first version of this brief was executed only for
-mailboxes that hold an engine profile, which covers neither of the two
-mailboxes that caused the incident. That was a spec change dressed as a
-delivery, and this rewrite reverts it: the constraint below is the spec.
-
 ## The binding constraint — mailbox owners contribute nothing
 
 The people whose mailboxes must be read answer customers from their own

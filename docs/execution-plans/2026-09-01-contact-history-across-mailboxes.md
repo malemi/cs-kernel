@@ -11,23 +11,21 @@ Scope: the ordered steps that make "has this company ever written to this
 person" answerable across every mailbox the kernel can read, and how each step
 is verified. The what and why are in the
 [brief](../briefs/2026-09-01-contact-history-across-mailboxes.md); the charter
-they must obey is [`CLAUDE.md`](../../CLAUDE.md).
+they must obey is [`AGENTS.md`](../../AGENTS.md).
 <!-- doc-scope:end -->
 
-**Status: complete in the kernel — phase 1 shipped as `v0.37.0`, phase 1b as `v0.38.0`, phase 2 (the send gates) as `v0.39.0`, live-proven on `124-cs` including fail-closed. Open only: the clones' owed FULL collaudo at upgrade.**
-Phase 1 (steps 0–5, 7, 8) is the fan-out, the `unreadable` outcome, the scope
-line and `cs history`. Phase 1b (1b.1–1b.3) adds the mailboxes that hold no
-engine profile.
-
-**Phase 2 — steps 6 and 9 — is built and uncommitted**: every prior-contact
-gate reads the union scope and refuses when a mailbox cannot be read
-(`cs/campaign.py`, `cs/cli.py`'s dossier verdict, `cs/draft_state.py`), and the
-six stamped surfaces that said the evidence was one mailbox now say what it is,
-including the refusal outcome (`CLAUDE.md.j2`, `cs-operator`, `cs-customer`,
-`cs-triage-mail`, `cs-campaign-tick`, `docs/ARCHITECTURE.md.j2`,
-`docs/projects/README.md.j2`). Gate 46 holds it. No version bump: this is the
-FULL-tier release, and the tag plus the two clone upgrades are the work that
-remains.
+**Status: complete and deployed — phase 1 shipped as `v0.37.0`, phase 1b as
+`v0.38.0`, phase 2 (the send gates) as `v0.39.0`; both clones run `v0.39.0`
+with the FULL collaudo discharged (CHANGELOG operational-pin marker,
+2026-09-02).** Phase 1 (steps 0–5, 7, 8) is the fan-out, the `unreadable`
+outcome, the scope line and `cs history`. Phase 1b (1b.1–1b.4) adds the
+mailboxes that hold no engine profile, live-accepted on `124-cs`. Phase 2
+(steps 6 and 9): every prior-contact gate reads the union scope and refuses
+when a mailbox cannot be read (`cs/campaign.py`, `cs/cli.py`'s dossier
+verdict, `cs/draft_state.py`), and the seven stamped surfaces that said the
+evidence was one mailbox now say what it is, including the refusal outcome.
+Gate 46 holds it. The one leg not yet observed live: a draft-only campaign
+tick meeting an `evidence_incomplete` refusal.
 
 ## Shape
 
