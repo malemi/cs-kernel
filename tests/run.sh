@@ -1048,6 +1048,89 @@ step "47. cs memory — the ten-store map, resolved on this machine, never conte
 # authenticated session).
 if "$VENV/bin/python" "$ROOT/tests/test_memory_report.py"; then echo "OK"; else echo "FAIL: cs memory regressed"; FAIL=1; fi
 
+step "48. § 10 and cs memory agree on the store set; the allow spellings are stamped"
+# The verb and the charter section are two hand-maintained lists of the same
+# set, so they drift the moment one is edited without the other — the exact
+# failure mode the map exists to prevent from happening to a THIRD list. This
+# gate reads STORES straight from $VENV (the working tree gate 3 just
+# installed) and the backticked slug set from § 10 of CLAUDE.md.j2, and fails
+# on any symmetric difference, naming the offending slugs — no count literal:
+# an eleventh store that satisfies the brief's membership rule joins the map
+# on both sides, or this gate catches the half that forgot. It also asserts
+# the four `cs memory` allow spellings landed in settings.json.j2, the same
+# one-file-forgotten failure gate 17 exists to catch, on the allow side.
+CLAUDE_TPL="$ROOT/cs/templates/project/CLAUDE.md.j2"
+SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
+if ! "$VENV/bin/python" - "$CLAUDE_TPL" "$SETTINGS_TPL" <<'PYEOF'
+import json, re, sys
+from pathlib import Path
+
+from cs import memory_report
+
+CLAUDE_PATH, SETTINGS_PATH = sys.argv[1], sys.argv[2]
+
+problems = []
+
+expected_ids = {s.id for s in memory_report.STORES}
+
+text = Path(CLAUDE_PATH).read_text()
+heading = re.search(r"^## 10\. .*$", text, re.MULTILINE)
+if heading is None:
+    print("FAIL: CLAUDE.md.j2 has no '## 10.' section — the memory map charter section is missing")
+    sys.exit(1)
+section = text[heading.end():]  # § 10 is the file's last section: heading to EOF
+
+# Only backtick spans SHAPED like a registry slug (lowercase, digits,
+# hyphens) count — this excludes every other backticked mention in the
+# section (`cs config`, `docs/`, `/cs-customer`, `company/*.md`) without
+# needing a second marker in the prose.
+SLUG_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
+doc_ids = {t for t in re.findall(r"`([^`]+)`", section) if SLUG_RE.match(t)}
+
+missing_in_doc = expected_ids - doc_ids
+extra_in_doc = doc_ids - expected_ids
+if missing_in_doc:
+    problems.append(
+        "FAIL: STORES names slugs § 10 does not: %s" % ", ".join(sorted(missing_in_doc))
+    )
+if extra_in_doc:
+    problems.append(
+        "FAIL: § 10 names slugs STORES does not ship: %s" % ", ".join(sorted(extra_in_doc))
+    )
+
+try:
+    with open(SETTINGS_PATH) as f:
+        settings = json.load(f)
+except (OSError, json.JSONDecodeError) as exc:
+    problems.append("FAIL: settings.json.j2 unreadable/invalid JSON: %s" % exc)
+    settings = {}
+
+allow = settings.get("permissions", {}).get("allow", [])
+required = [
+    "Bash(.venv/bin/python -m cs memory:*)",
+    "Bash(.venv/bin/cs memory:*)",
+    "Bash(python -m cs memory:*)",
+    "Bash(cs memory:*)",
+]
+missing_spellings = [s for s in required if s not in allow]
+if missing_spellings:
+    problems.append(
+        "FAIL: settings.json.j2 allow list is missing: %s" % ", ".join(missing_spellings)
+    )
+
+if problems:
+    print("\n".join(problems))
+    sys.exit(1)
+
+print(
+    "OK: § 10 and STORES name the same set (%s); the four `cs memory` allow "
+    "spellings are present" % ", ".join(sorted(doc_ids))
+)
+PYEOF
+then
+  FAIL=1
+fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"
