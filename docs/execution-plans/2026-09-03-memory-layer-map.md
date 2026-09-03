@@ -1,5 +1,5 @@
 ---
-status: planned
+status: active
 started: 2026-09-03
 brief: ../briefs/2026-09-03-memory-layer-map.md
 ---
