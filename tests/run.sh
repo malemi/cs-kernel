@@ -1053,10 +1053,16 @@ step "48. § 10 and cs memory agree on the store set; the allow spellings are st
 # set, so they drift the moment one is edited without the other — the exact
 # failure mode the map exists to prevent from happening to a THIRD list. This
 # gate reads STORES straight from $VENV (the working tree gate 3 just
-# installed) and the backticked slug set from § 10 of CLAUDE.md.j2, and fails
-# on any symmetric difference, naming the offending slugs — no count literal:
-# an eleventh store that satisfies the brief's membership rule joins the map
-# on both sides, or this gate catches the half that forgot. It also asserts
+# installed) and the backticked slug set from § 10's OWN ENUMERATED LIST
+# sentence in CLAUDE.md.j2 ("The stores: ... ." — extraction stops at that
+# sentence's own period), and fails on any symmetric difference, naming the
+# offending slugs — no count literal: an eleventh store that satisfies the
+# brief's membership rule joins the map on both sides, or this gate catches
+# the half that forgot. Scoped to the list sentence and NOT the whole
+# section: `cc-memory` is also named in the boundary-rule prose below the
+# list, so a set collected over all of § 10 would still contain it after a
+# deletion from the enumerated list — the gate must fail on the LIST losing a
+# member, not on the slug vanishing from the page entirely. It also asserts
 # the four `cs memory` allow spellings landed in settings.json.j2, the same
 # one-file-forgotten failure gate 17 exists to catch, on the allow side.
 CLAUDE_TPL="$ROOT/cs/templates/project/CLAUDE.md.j2"
@@ -1080,12 +1086,22 @@ if heading is None:
     sys.exit(1)
 section = text[heading.end():]  # § 10 is the file's last section: heading to EOF
 
+# The enumerated list lives in ONE sentence ("The stores: `a`, `b`, ... .") —
+# scope the extraction to it, not to all of § 10. `cc-memory` is ALSO named
+# in the boundary-rule prose later in the section, so a section-wide collect
+# would still see it there after it was deleted from the list, and the gate
+# would stay green on exactly the drift it exists to catch.
+list_match = re.search(r"stores:\s*(.*?)\.\s", section, re.DOTALL)
+if list_match is None:
+    print("FAIL: § 10 has no 'stores: ... .' list sentence to parse")
+    sys.exit(1)
+list_text = list_match.group(1)
+
 # Only backtick spans SHAPED like a registry slug (lowercase, digits,
-# hyphens) count — this excludes every other backticked mention in the
-# section (`cs config`, `docs/`, `/cs-customer`, `company/*.md`) without
-# needing a second marker in the prose.
+# hyphens) count — defensive, since the list sentence should carry nothing
+# else backticked.
 SLUG_RE = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
-doc_ids = {t for t in re.findall(r"`([^`]+)`", section) if SLUG_RE.match(t)}
+doc_ids = {t for t in re.findall(r"`([^`]+)`", list_text) if SLUG_RE.match(t)}
 
 missing_in_doc = expected_ids - doc_ids
 extra_in_doc = doc_ids - expected_ids

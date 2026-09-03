@@ -230,17 +230,19 @@ workflow step reads as input. Four things that are NOT one: a credential or
 kill-switch flag (no records to lose); a declared setting (it has a layer
 and a precedence chain — `cs config` owns it); a description whose truth
 lies elsewhere (the thing it describes wins on disagreement); a queue whose
-items land in a real store once acted on, not before.
+items either land in a real store or vanish (a discarded draft leaves
+nothing).
 
-Ten stores follow: `engine-memory`, `user-notes`, `gmail-sent`, `ledger`,
+The stores: `engine-memory`, `user-notes`, `gmail-sent`, `ledger`,
 `company-notes`, `dossiers`, `campaign-packs`, `operator-log`,
 `template-manifest`, `cc-memory`. **`cs memory`** resolves each one's
 authority, location and reachability on THIS machine — run it rather than
 re-deriving the set from this page. (§ 9 above ranks the READ ORDER for one
-question, what we know about a customer; this section ranks AUTHORITY
-across every store — different questions, no disagreement.)
+question, what we know about a customer; this section only NAMES the
+set — `cs memory` is what states each store's authority.)
 
 **Claude Code's own per-machine memory (`cc-memory`) is authoritative for
 nothing that reaches a customer** — per-developer, not in git, not portable.
 Project knowledge goes to the engine (write it back via `/cs-customer`) or
-to `docs/` (dossiers, `company/*.md`), never here.
+to git — dossiers under `docs/projects/`, company facts in `company/*.md` —
+never here.
