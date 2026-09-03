@@ -266,7 +266,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config chat campaign project; do
+for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config memory chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -1035,6 +1035,18 @@ step "46. the send gates read every mailbox — and refuse when one cannot be re
 # `ready` row and is printed inside the ready block, where the operator is
 # about to press send, rather than in a footer under the next one.
 if "$VENV/bin/python" "$ROOT/tests/test_send_gates_fanout.py"; then echo "OK"; else echo "FAIL: the cross-mailbox send gates regressed"; FAIL=1; fi
+
+step "47. cs memory — the ten-store map, resolved on this machine, never contents"
+# The memory layer worked because one operator held it in his head; nothing
+# carried it to the next clone. Guards: build() emits exactly the ten
+# registry ids, in order, and render() names every one; no store's file/dir
+# CONTENTS reach the report, even when every backing file/dir exists —
+# location + a presence verdict only; the engine row degrades honestly (no
+# ws_url -> 'unknown', a closed port -> 'unreachable: …') and never prints a
+# filesystem path; gmail-sent maps the mailbox scope as identifiers without
+# an IMAP probe ('declared'), user-notes is 'not probed' (would need an
+# authenticated session).
+if "$VENV/bin/python" "$ROOT/tests/test_memory_report.py"; then echo "OK"; else echo "FAIL: cs memory regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

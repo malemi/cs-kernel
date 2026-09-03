@@ -1445,6 +1445,20 @@ def cmd_config(args) -> int:
     return 1 if (args.strict and rep["duplicates"]) else 0
 
 
+def cmd_memory(args) -> int:
+    # Where this operator's knowledge lives: the ten durable stores the
+    # membership rule admits, each with its authority, read/write surface,
+    # and resolved location + reachability on THIS machine. Read-only,
+    # network-free apart from the engine row's one connection-level probe,
+    # and it never prints store contents, so it is safe to run first thing
+    # in any tick and to paste into a report.
+    from . import memory_report
+
+    rep = memory_report.build(config.load())
+    _print_json(rep) if args.json else print(memory_report.render(rep))
+    return 0
+
+
 def cmd_llm(args) -> int:
     # The kernel's own LLM configuration: what it resolves to now, what else is
     # on offer, and how to change it. Non-interactive on purpose — the same
@@ -1943,6 +1957,14 @@ def main(argv=None) -> int:
         help="exit 1 when a setting is declared in more than one place",
     )
     pcf.set_defaults(func=cmd_config)
+
+    pmm = sub.add_parser(
+        "memory",
+        help="where this operator's knowledge lives — the ten durable "
+        "stores, their authority, and their reachability right now",
+    )
+    pmm.add_argument("--json", action="store_true", help="the report as data")
+    pmm.set_defaults(func=cmd_memory)
 
     pcm = sub.add_parser("campaign", help="campaign follow-up verbs")
     csub = pcm.add_subparsers(dest="caction", required=True)
