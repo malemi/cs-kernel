@@ -1960,8 +1960,8 @@ def main(argv=None) -> int:
 
     pmm = sub.add_parser(
         "memory",
-        help="where this operator's knowledge lives — the ten durable "
-        "stores, their authority, and their reachability right now",
+        help="where this operator's knowledge lives — every durable "
+        "store, its authority, and its reachability right now",
     )
     pmm.add_argument("--json", action="store_true", help="the report as data")
     pmm.set_defaults(func=cmd_memory)

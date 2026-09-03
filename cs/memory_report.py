@@ -8,7 +8,8 @@ question); a credential or the ``CS_PAUSE`` flag is not a store (no records,
 recreatable without loss); a description is not a store when its ground
 truth lies elsewhere (the thing it describes wins on disagreement, and the
 description is simply wrong). What is left, applied to the running system,
-is ten stores.
+is the STORES registry below — the set the charter's § 10 names, held in
+agreement by a gate rather than by a count.
 
 The map cannot ship as charter prose, because what matters most about each
 row — its resolved path, its reachability right now — is per-clone and
