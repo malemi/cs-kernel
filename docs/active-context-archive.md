@@ -5,6 +5,28 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-09-04 — pruned at the memory-map consolidation
+
+Stable behaviour shipped across v0.31.0–v0.36.0, each with its own CHANGELOG
+entry; kept here rather than in the living context, which tracks what is
+moving.
+
+- **The open-work sources are intentionally different facts.** `cs unanswered`
+  is a conversation-level, Gmail-Sent-anchored candidate sweep; the engine owns
+  reply/automatic classification and its task ledger; `cs review` reconciles
+  drafts, tasks, human takeovers, out-of-band closures, campaigns, and the last
+  scheduled run. Gmail answers whether a message exists; the engine answers
+  what kind of message it is.
+- **Draft freshness is recomputed at review time.** `overtaken` and `superseded`
+  are Gmail signals, `settled` is the engine's verdict, `ready` means only that
+  none fired. Draft deletion is a named human action; the cron denies both
+  draft-retirement paths.
+- **The `cs-review` skill adjudicates attention.** It builds a
+  conversation/task/draft ledger, reads full current threads, requires one of
+  five explicit verdicts per candidate, and puts only positive-evidence
+  `act_now` rows in the main agenda. Its work trace is
+  [`execution-plans/2026-08-28-attention-agenda.md`](execution-plans/2026-08-28-attention-agenda.md).
+
 ## 2026-09-02 — pruned at the v0.37.0 consolidation
 
 Stable behaviour with its own charter entry; kept here rather than in the living context, which tracks what is moving.

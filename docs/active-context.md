@@ -23,21 +23,18 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   units were restarted on it (2026-09-02 08:03) and serve `settings.get_secret`.
   Engine deployment means checkout HEAD plus restarted processes, never a pull
   alone.
-- **The open-work sources are intentionally different facts.** `cs unanswered`
-  is a conversation-level, Gmail-Sent-anchored candidate sweep; the engine owns
-  reply/automatic classification and its task ledger; `cs review` reconciles
-  drafts, tasks, human takeovers, out-of-band closures, campaigns, and the last
-  scheduled run. Gmail answers whether a message exists; the engine answers
-  what kind of message it is.
-- **Draft freshness is recomputed at review time.** `overtaken` and `superseded`
-  are Gmail signals, `settled` is the engine's verdict, `ready` means only that
-  none fired. Draft deletion is a named human action; the cron denies both
-  draft-retirement paths.
-- **The `cs-review` skill adjudicates attention.** It builds a
-  conversation/task/draft ledger, reads full current threads, requires one of
-  five explicit verdicts per candidate, and puts only positive-evidence
-  `act_now` rows in the main agenda. Its work trace is
-  [`execution-plans/2026-08-28-attention-agenda.md`](execution-plans/2026-08-28-attention-agenda.md).
+- **The memory map is code, built and kernel-verified, not yet released.**
+  `cs memory` (read-only, `--json`) prints the ten memory stores — for each:
+  authority, read/write surfaces, resolved location, presence or reachability.
+  The membership rule and the store set live in charter § 10
+  (`templates/project/CLAUDE.md.j2`); gate 48 holds verb ≡ § 10 with no count
+  literal; the four allow spellings are stamped. The engine row reports the
+  RPC endpoint plus one of four probe verdicts, never a filesystem path.
+  Verified end-to-end in the kernel (venv + temp clone, all four verdicts
+  live); reaches the clones only with the `v0.40.0` release — M3 of the
+  [plan](execution-plans/2026-09-03-memory-layer-map.md), awaiting the
+  operator's go. Engine `reachable` is proven against a local listener only;
+  a real engine proof rides the M3 collaudo.
 - **Two sourcing rules bind every outbound message.** Memory is the first source
   for any fact that will appear in one — not only entity facts — and an empty
   search obliges a second source rather than a derivation. They are stated once
@@ -63,7 +60,6 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`; its tree has no commits
   and no remote, so that clone's own history starts whenever its operator makes
   it start.
-
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -101,10 +97,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Observe the outstanding collaudo leg: a draft-only campaign tick meeting an
-   `evidence_incomplete` refusal — at a real credential failure or an injected
-   one, whichever comes first.
-2. Replace internal `re-collaudo` wording still exposed by `cs update` with
+1. **M3 of the memory-layer plan: release `v0.40.0`** (MINOR; CHANGELOG entry
+   naming verb/§ 10/settings, the behavior-neutral `_tilde`→`tilde` rename,
+   FULL tier on both clones), push on the operator's ok, then `cs update` +
+   FULL collaudo on both clones and the operational-pin marker after both.
+2. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
+   `evidence_incomplete` refusal — ideally during the same FULL runs.
+3. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-3. Promote reusable attachment-reading and scheduling pieces only when a second
+4. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.
