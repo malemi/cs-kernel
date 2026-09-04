@@ -153,8 +153,10 @@ STORES: tuple[Store, ...] = (
         "Entity memory, synced mail, the task ledger, reply and auto-reply "
         "classification, the trained voice. What a message IS. Primary and live.",
         "`cs ask` — empty tool set, cannot write memory",
-        "`cs chat --allow create_memory,update_memory` — approval-gated, "
-        "denied on the cron in twelve spellings",
+        "the engine itself, continuously (mail sync, entity extraction, "
+        "voice training); from this seat only `cs chat --allow "
+        "create_memory,update_memory` — approval-gated, denied on the cron "
+        "in twelve spellings",
         _resolve_engine_memory,
         note="reachable is not authorized — `cs whoami` is the authenticated proof.",
     ),
