@@ -1,18 +1,19 @@
 ---
-status: active
+status: completed
 started: 2026-09-03
 brief: ../briefs/2026-09-03-memory-layer-map.md
 ---
 
 # The memory layer map — execution plan
 
-**Status: M1 and M2 are merged to main (`4c9acfb`) after two-pass integration
-reviews and an APPROVED final end-to-end review; the suite is green at 48
-gates. M3 — the `v0.40.0` release and both clones' FULL collaudo — has not
-run and waits on the operator's explicit ok.** Post-review repairs on main:
-the fourth engine verdict, the § 10 rendered blank line, the removal of every
-store-count literal from prose, and the engine-memory row naming the engine
-itself as its continuous writer.
+**Status: complete and deployed.** M1 and M2 merged to main after two-pass
+integration reviews and an APPROVED final end-to-end review (suite green at
+48 gates); M3 shipped as `v0.40.0` (tag `d6c5c6a`, pushed 2026-09-05) with
+the FULL collaudo green on both clones under their `CS_PAUSE` windows —
+the CHANGELOG operational-pin marker carries the sign-off. Post-review
+repairs on main before the tag: the fourth engine verdict, the § 10 rendered
+blank line, the removal of every store-count literal from prose, and the
+engine-memory row naming the engine itself as its continuous writer.
 
 <!-- doc-scope:start -->
 Scope: the ordered milestones that ship `cs memory` (the ten-store map as a

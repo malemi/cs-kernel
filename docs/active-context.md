@@ -23,18 +23,15 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   units were restarted on it (2026-09-02 08:03) and serve `settings.get_secret`.
   Engine deployment means checkout HEAD plus restarted processes, never a pull
   alone.
-- **The memory map is code, built and kernel-verified, not yet released.**
-  `cs memory` (read-only, `--json`) prints the ten memory stores — for each:
-  authority, read/write surfaces, resolved location, presence or reachability.
-  The membership rule and the store set live in charter § 10
-  (`templates/project/CLAUDE.md.j2`); gate 48 holds verb ≡ § 10 with no count
-  literal; the four allow spellings are stamped. The engine row reports the
-  RPC endpoint plus one of four probe verdicts, never a filesystem path.
-  Verified end-to-end in the kernel (venv + temp clone, all four verdicts
-  live); reaches the clones only with the `v0.40.0` release — M3 of the
-  [plan](execution-plans/2026-09-03-memory-layer-map.md), awaiting the
-  operator's go. Engine `reachable` is proven against a local listener only;
-  a real engine proof rides the M3 collaudo.
+- **The memory map is live on both clones.** `cs memory` (read-only,
+  `--json`) prints the ten memory stores — authority, read/write surfaces,
+  resolved location, presence or reachability. The membership rule and the
+  store set live in charter § 10 (`templates/project/CLAUDE.md.j2`); gate 48
+  holds verb ≡ § 10 with no count literal. The engine row reports the RPC
+  endpoint plus one of four probe verdicts, never a filesystem path — proven
+  `reachable` against the real engine on both clones at the `v0.40.0`
+  collaudo, and headless-under-the-cron-deny-set on `124-cs`.
+  [Work trace](execution-plans/2026-09-03-memory-layer-map.md) (completed).
 - **Two sourcing rules bind every outbound message.** Memory is the first source
   for any fact that will appear in one — not only entity facts — and an empty
   search obliges a second source rather than a derivation. They are stated once
@@ -54,8 +51,9 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   on `124-cs` including fail-closed under a real authentication refusal.
   `send_first` stays deliberately ungated.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
-- **Both clones declare, install and run `v0.39.0`** (2026-09-02, verified on
-  the installed package, locks proven by solo-install). The CHANGELOG
+- **Both clones declare, install and run `v0.40.0`** (2026-09-05, verified on
+  the installed package, locks proven by solo-install, FULL collaudo green on
+  both under their `CS_PAUSE` windows). The CHANGELOG
   operational-pin marker carries the sign-off. `mario124-cs`
   (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`; its tree has no commits
   and no remote, so that clone's own history starts whenever its operator makes
@@ -94,16 +92,16 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   environment writing, and the install offer.
 - The collaudo `live` gate remains red-by-default because it diffs LLM prose and
   clock-dependent state. The meta-repo harness backlog owns that defect.
+- The rendered clone `CLAUDE.md` loses its trailing newline since § 10 landed
+  (`templates/project/CLAUDE.md.j2` + the render's `keep_trailing_newline`
+  interplay). Cosmetic, observed on both clones at the `v0.40.0` upgrade;
+  fix rides the next release.
 
 ## Next
 
-1. **M3 of the memory-layer plan: release `v0.40.0`** (MINOR; CHANGELOG entry
-   naming verb/§ 10/settings, the behavior-neutral `_tilde`→`tilde` rename,
-   FULL tier on both clones), push on the operator's ok, then `cs update` +
-   FULL collaudo on both clones and the operational-pin marker after both.
-2. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
-   `evidence_incomplete` refusal — ideally during the same FULL runs.
-3. Replace internal `re-collaudo` wording still exposed by `cs update` with
+1. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
+   `evidence_incomplete` refusal — at a cron cycle where one occurs.
+2. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-4. Promote reusable attachment-reading and scheduling pieces only when a second
+3. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.

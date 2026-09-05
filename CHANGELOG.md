@@ -4,29 +4,32 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-02): **`v0.39.0` on both clones**.
+**Current operational pin** (2026-09-05): **`v0.40.0` on both clones**.
 Verified from inside each clone after the re-pin, on the installed package:
-`requirements.txt`, `template-manifest.json`, `cs --version` and the re-rendered
-ARCHITECTURE pin row all say `v0.39.0`, and each regenerated `requirements.lock`
-resolves the tag to `d932a7a` and was installed ALONE into a throwaway `uv venv`
-(resolving `cs-kernel 0.39.0`) rather than assumed to. The FULL collaudo the
-crossed entries demand ran on both: `124-cs` — whoami, config with explained
-`read_mailboxes` provenance, ten skills and no command dirs, the sourcing rules
-once per surface, `cs history` 4-of-4 finding the 2026-07-03 co-founder reply,
-dossier `REPLY IN THREAD`, and fail-closed (`STOP — evidence incomplete`) under
-a live broken credential; `mrcall-cs` — whoami, config with the read-mailbox
-surface correctly inert, the skills migration's retirement observed as exactly
-12 removals and 12 additions with the clone-authored `mrcall-assistant`
-surviving, `settings.get_secret` handing over `EMAIL_PASSWORD`, deny/allow
-enumeration intact, and a live `cs review --json` showing two `duplicate`
-verdicts and `evidence_incomplete` on every ready row — the two halves this
-file said had never met a live clone. `mrcall-cs`'s sends were held by
-`CS_PAUSE` for the upgrade window (engaged 14:34 UTC, lifted 14:51 after the
-collaudo; the 14:50 sender tick fired and skipped on the pause). Its stale
-`requirements.lock` — resolving `v0.31.0` against a `v0.32.1` pin — was
-repaired by the regeneration. Deferred, recorded in each clone's own
-active-context: the draft-only campaign tick observing an
-`evidence_incomplete` refusal end-to-end, at a cron cycle where one occurs.
+`requirements.txt`, `template-manifest.json` (`init_data` bare `0.40.0`),
+`cs --version` and the ARCHITECTURE pin row all say `v0.40.0`, and each
+regenerated `requirements.lock` resolves the tag to `d6c5c6a` and was
+installed ALONE into a throwaway `uv venv` (resolving `cs-kernel 0.40.0`).
+The FULL collaudo this entry demands ran on both, each under its own
+`CS_PAUSE` window (124-cs 09:04–09:10 UTC, no tick due; mrcall-cs
+09:04–09:22 UTC, and the live 09:20 signup tick fired and skipped on the
+pause — load-bearing, not ceremonial). `124-cs`: whoami, config with
+explained `read_mailboxes` provenance and zero duplicate declarations,
+`cs history` 4-of-4, dossier `REPLY IN THREAD`, fail-closed under a live
+broken credential (`UNKNOWN` → `STOP — evidence incomplete`, 4-of-4
+restored after). `mrcall-cs`: whoami, config clean, `plan` / `campaign
+packs` / `pending` / `handled` / `escalated` / `unanswered` / a live
+`cs review --json` (24 drafts, 12 tasks, 4 campaigns), dry-runs proven
+write-free by an unchanged `cs.db` md5, and its 238-test `ext/` suite
+green. The v0.40.0 proofs on both: `cs memory` prints all ten stores bare
+and `--json` with no contents, the engine row is `reachable` at the real
+`wss://` endpoint, § 10 is stamped with its blank line, the four allow
+spellings are applied — and on `124-cs` a headless `claude -p` under the
+cron wrapper's own deny set ran the verb with no permission prompt.
+`settings.json` diffs on both clones show exactly the four added allow
+lines and nothing removed; both cron wrappers byte-identical. Deferred,
+unchanged, in each clone's active-context: the draft-only campaign tick
+observing an `evidence_incomplete` refusal end-to-end.
 
 **`124-cs`'s own git history had fallen four minor releases behind what was
 actually installed and rendered on it.** Its last committed re-pin was
