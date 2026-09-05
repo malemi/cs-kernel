@@ -163,6 +163,54 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.40.0 — 2026-09-05
+
+**The memory map is a verb.** An operator (or an onboarding agent) asking
+"how does memory work here" ran into prose scattered over four charter
+sections and reconstructed the store set wrong — the measured case arrived
+with three stores, one misdescribed; honest counts ran 4, 6 and 10 depending
+on who counted. The fix ships the map as code and keeps it honest by gate:
+
+- **New read-only verb `cs memory` (`--json`)**, registered beside `config`
+  (`cs/memory_report.py`, mirroring `config_report.py`). It prints every
+  memory store — authority, read surface, write surface, resolved location,
+  presence or reachability — and never any store contents: output is safe in
+  a report or a cron transcript. Membership follows a stated rule (a durable
+  body of records at least one kernel verb reads as input; credentials,
+  settings, descriptions and queues are excluded by name), and the rule
+  admits ten stores today, including four prose habit used to skip: Gmail
+  Sent/All Mail (the existence axis, now a row of its own), `campaigns/`
+  pack content, the operator log, and `template-manifest.json`.
+- **The engine row reports the RPC endpoint and a probe verdict, never a
+  filesystem path.** One TCP connect (~2s, no handshake, no token, no RPC
+  method) yields `reachable` / `unreachable: <errno>` / `unknown: … not
+  configured` / `unknown: … not parseable`; the row states that reachable ≠
+  authorized and points at `cs whoami`. `CS_ZYLCH_ROOT` plays no part.
+- **Charter § 10** (`templates/project/CLAUDE.md.j2`, appended, nothing
+  renumbered): the membership rule, the ten slugs, the pointer to
+  `cs memory`, and the Claude Code boundary — that per-developer store is
+  authoritative for nothing that reaches a customer; project knowledge goes
+  to the engine (via `/cs-customer`) or to git (`docs/projects/`,
+  `company/*.md`).
+- **Gate 48** holds the verb's `STORES` registry and § 10's slug list in
+  agreement (both directions, no count literal anywhere); it also asserts
+  the four `cs memory` allow spellings. **`.claude/settings.json.j2` gains
+  exactly those four allow entries** — read-only verb, cron may run it.
+- Internal, behavior-neutral: `config_report._tilde` renamed to public
+  `tilde`, now imported by `memory_report`; `cs config` output unchanged
+  (its gate is green and all call sites moved).
+
+Migration: none — no manifest field, no env var, no write path changed. The
+stamped `CLAUDE.md` grows § 10 (+23 rendered lines) and `settings.json`
+gains four allow lines; both are applied by `cs update` regardless, local
+copies saved as `*.local-bak`.
+
+**Re-collaudo: FULL on both clones** — the release touches the permission
+surface (`settings.json.j2`), which is on the FULL trigger list. The FULL
+runs must also prove `cs memory` live: all ten rows print, the engine row is
+`reachable` on the engine host, and the verb runs headless under the stamped
+permission set without a prompt.
+
 ## v0.39.0 — 2026-09-02
 
 **Every send gate reads every company mailbox, and refuses blind.** This
