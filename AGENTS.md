@@ -94,7 +94,7 @@ Where a subject has an owner, the owner is named inline — go there.
      judgement disagree, and nobody can say which is right. Written from a measured
      failure, where re-deriving "answered or not" from IMAP headers let our OWN
      autoresponder count as a human answer and hide a customer for 70 days: CHANGELOG
-     `v0.25.0`. The rule ships to every clone in `templates/project/CLAUDE.md.j2`
+     `v0.25.0`. The rule ships to every clone in `templates/project/AGENTS.md.j2`
      § 0b, because a charter only one repo can read is not a charter. Its ONE
      exception is the dedup rule directly above, and that exception has a measurement
      behind it rather than a preference — which is the standard any further one must
@@ -150,8 +150,12 @@ adapter names.
 never stamped. Each needs its own `package-data` glob (see `pyproject.toml`).
 
 **`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills`
-and `.opencode/skills` point into it, while `AGENTS.md` points to `CLAUDE.md`.
-`install_agent_surfaces` owns those links and the exact legacy cleanup. Never
+and `.opencode/skills` point into it; `install_agent_surfaces` owns those links
+and the exact legacy cleanup. A clone's `AGENTS.md` is the rendered charter
+(`templates/project/AGENTS.md.j2`), and its `CLAUDE.md` is a bootstrap the
+kernel writes once — the `@AGENTS.md` import Claude Code follows — and never
+touches again (`CLONE_AUTHORED_PREFIXES`), so a documentation harness that
+manages `CLAUDE.md` owns it without a drift report. Never
 render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
 
 **Clone-owned, never kernel source**, shipped only as `.j2` under

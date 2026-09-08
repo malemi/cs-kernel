@@ -1046,7 +1046,7 @@ _FULL_INIT_DATA = {
 
 
 def _e2e_manifest_toml_never_touched() -> None:
-    """manifest.toml is clone-owned by charter (CLAUDE.md.j2, "Editing this
+    """manifest.toml is clone-owned by charter (AGENTS.md.j2, "Editing this
     clone"), the ONE place values change — same class as requirements.txt.
     Confirmed live 2026-08-21: offering it through the normal diff/overwrite
     flow let an operator "y" their own hand-authored manifest away, and the

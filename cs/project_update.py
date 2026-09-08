@@ -20,7 +20,7 @@ Two opt-in discovery/re-pin flags (bare `cs update` is unchanged):
 
 Neither flag auto-bumps the pin: requirements.txt is the operator's own
 pin (v0.5.2 decision — "cs update never touches it"), and every kernel
-upgrade owes a re-collaudo (CLAUDE.md, Versioning & release). A `--check`
+upgrade owes a re-collaudo (AGENTS.md, Versioning & release). A `--check`
 that rewrote the pin itself would not be a pin anymore.
 """
 from __future__ import annotations
@@ -44,6 +44,9 @@ from .project_init import (
     is_clone_authored,
     is_executable_target,
     load_existing_config,
+    bootstrap_may_land,
+    stamped_default_untouched,
+    unlink_if_symlink,
 )
 
 
@@ -119,6 +122,10 @@ def _write_clone_file(clone_file: Path, content: str, out_rel: Path, tpl_name: s
     `is_executable_target`'s docstring for why a 0644 wrapper is a silent
     cron failure, not a cosmetic detail.
     """
+    # A symlink at the target is replaced, never written through — the legacy
+    # `AGENTS.md -> CLAUDE.md` link would otherwise carry the rendered charter
+    # back into CLAUDE.md (see project_init.unlink_if_symlink).
+    unlink_if_symlink(clone_file)
     clone_file.write_text(content)
     if is_executable_target(out_rel.parent, tpl_name):
         clone_file.chmod(0o755)
@@ -153,7 +160,7 @@ SECURITY_CRITICAL = {".claude/settings.json", "bin/cs_operator_cron.sh"}
 # 3 the pinned tag.
 _PIN_RE = re.compile(r"^(cs-kernel\s*@\s*git\+)(\S+)@([^\s@]+)\s*$")
 
-# This project's own tag shape (CLAUDE.md, Versioning & release): semver
+# This project's own tag shape (AGENTS.md, Versioning & release): semver
 # `v0.MINOR.PATCH`, MAJOR always 0.
 _TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
 
@@ -311,7 +318,7 @@ def cmd_update_check(clone_root: Path) -> int:
     else:
         print(f"\nnewer tag available: {latest}")
     print(
-        "Every kernel upgrade owes a re-collaudo (CLAUDE.md, Versioning & "
+        "Every kernel upgrade owes a re-collaudo (AGENTS.md, Versioning & "
         "release) — this only reports the tag, it writes nothing.\n"
         "To upgrade: run `cs update` and answer y — it re-pins, installs "
         "and re-stamps in one go.\n"
@@ -588,7 +595,7 @@ def cmd_update(args: list[str]) -> int:
         # going to write.
         if str_out_rel == "requirements.txt":
             # requirements.txt is operational state, not a template render
-            # target: "upgrades are a pin bump" (CLAUDE.md, Versioning &
+            # target: "upgrades are a pin bump" (AGENTS.md, Versioning &
             # release). Letting cs update rewrite it would either silently
             # re-pin the clone or overwrite it with whatever `cs init` froze
             # long ago — stale or outright broken. It is the operator's file;
@@ -598,7 +605,7 @@ def cmd_update(args: list[str]) -> int:
             continue
 
         if str_out_rel == "manifest.toml":
-            # manifest.toml is clone-owned by charter (CLAUDE.md.j2,
+            # manifest.toml is clone-owned by charter (AGENTS.md.j2,
             # "Editing this clone" — the ONE place values change), same
             # class as requirements.txt: written once by `cs init`, never a
             # render target again. Confirmed live 2026-08-21: offering it
@@ -635,8 +642,33 @@ def cmd_update(args: list[str]) -> int:
             # conflict to resolve but a file class that must not be tracked.
             clone_file = clone_root / out_rel
             if clone_file.exists():
-                if verbose:
+                if stamped_default_untouched(clone_file, old_checksums.get(str_out_rel)):
+                    if bootstrap_may_land(clone_root, out_rel):
+                        # Still the kernel's own render — the ledger says so —
+                        # and nobody has authored it: it takes the kernel's new
+                        # default, once. This run drops the path from the
+                        # ledger (the `continue` below skips new_checksums),
+                        # so the next run has nothing to compare against and
+                        # leaves it alone.
+                        _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
+                        updated += 1
+                        print(f"  ✓ {str_out_rel} (was the kernel's own default, never edited — "
+                              f"replaced; yours from now on)")
+                    else:
+                        # AGENTS.md did not render this run, so the bootstrap
+                        # that imports it stays unwritten. The ledger entry is
+                        # KEPT, so the next run — with the render fixed — can
+                        # still tell this file is the kernel's own and finish
+                        # the move; dropping it here would freeze the old
+                        # charter in CLAUDE.md for good.
+                        new_checksums[str_out_rel] = old_checksums[str_out_rel]
+                        print(f"  ! {str_out_rel}: kept as it is — AGENTS.md did not render, "
+                              f"so the bootstrap that imports it is not written")
+                elif verbose:
                     print(f"  · {str_out_rel} is yours (clone-authored) — left alone")
+            elif not bootstrap_may_land(clone_root, out_rel):
+                print(f"  ! {str_out_rel}: not written — AGENTS.md did not render, "
+                      f"so the bootstrap that imports it would point at nothing")
             else:
                 clone_file.parent.mkdir(parents=True, exist_ok=True)
                 _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)
@@ -795,7 +827,7 @@ def cmd_update(args: list[str]) -> int:
             "  Today's template renders exactly what the ledger already holds, so\n"
             "  there was nothing to apply and nothing was written — these carry local\n"
             "  edits. A template-owned file is edited in the KERNEL TEMPLATE, never in\n"
-            "  the clone (CLAUDE.md, \"Editing this clone\"). Left as they are, the next\n"
+            "  the clone (AGENTS.md, \"Editing this clone\"). Left as they are, the next\n"
             "  release that changes one of these templates arrives as a conflict prompt,\n"
             "  and a headless run answers it \"keep local\" — which is how a file leaves\n"
             "  template maintenance without anyone deciding that it should."

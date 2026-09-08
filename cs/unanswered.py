@@ -45,7 +45,7 @@ asserting a send Gmail does not have). It does NOT decide KIND. Whether a
 message is an autoresponder is the engine's judgement, asked for through
 `cs/engine_view.py`, because the engine has classified every synced message
 since the auto-ack incidents of 2026-06/07 and a second opinion here would be a
-second source of truth that drifts. The charter rule is in `CLAUDE.md`: when the
+second source of truth that drifts. The charter rule is in `AGENTS.md`: when the
 engine's classification is wrong, the engine is what gets fixed.
 
 That one deferral is what re-opens the case above. Our own auto-acknowledgement

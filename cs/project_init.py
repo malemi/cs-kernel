@@ -880,7 +880,15 @@ def is_executable_target(rel_dir: Path, template_name: str) -> bool:
 #
 # Entries are matched with `startswith`, so a member is either a directory
 # prefix (`company/`) or one whole path (`docs/active-context.md`).
-CLONE_AUTHORED_PREFIXES = ("company/", "docs/active-context.md")
+#
+# `CLAUDE.md` (v0.42.0): the entry point Claude Code reads, whose body is the
+# `@AGENTS.md` import. The charter itself is rendered into `AGENTS.md`, the
+# file Codex and OpenCode read natively. The kernel writes `CLAUDE.md` once,
+# when a clone has none, because a clone with no `CLAUDE.md` starts every
+# Claude Code session with no charter at all — and then never again, because
+# a documentation harness that manages `CLAUDE.md` byte-for-byte replaces it
+# and would otherwise be reported as drift on every update, for ever.
+CLONE_AUTHORED_PREFIXES = ("company/", "docs/active-context.md", "CLAUDE.md")
 
 
 def is_clone_authored(out_rel) -> bool:
@@ -889,6 +897,58 @@ def is_clone_authored(out_rel) -> bool:
     `out_rel` is the path RELATIVE to the clone root, as a string or a Path.
     """
     return str(out_rel).replace(os.sep, "/").startswith(CLONE_AUTHORED_PREFIXES)
+
+
+def stamped_default_untouched(path: Path, ledgered: str | None) -> bool:
+    """True when `path` is byte-identical to the checksum the ledger holds for
+    it — still the kernel's own render, edited by nobody.
+
+    The ledger only ever records a checksum of a kernel render, so a match is
+    proof that the file is the kernel's default and has not been authored. A
+    clone-authored path in that state may take the kernel's NEW default, once:
+    that is the migration a path goes through when it moves from
+    template-owned to clone-authored (`CLAUDE.md`, v0.42.0). After the run the
+    path has no ledger entry, so it can never match again. One byte of
+    difference and the file is the operator's.
+    """
+    if ledgered is None or not path.is_file():
+        return False
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() == ledgered
+
+
+def unlink_if_symlink(path: Path) -> bool:
+    """Before a render lands on `path`: a symlink there is removed, so the
+    file is written in its place and never THROUGH it. Returns whether one was.
+
+    Clones stamped before v0.42.0 carried the charter in `CLAUDE.md` and an
+    `AGENTS.md -> CLAUDE.md` link beside it. `AGENTS.md` is a rendered file
+    now; `write_text` follows a symlink, so writing it through the link would
+    put the charter back into `CLAUDE.md` and leave the old shape in place —
+    silently, on every later run, because the next walk reads the same bytes
+    back through the same link and finds nothing to do. The link is replaced
+    at write time and not before, so a render that fails leaves the clone
+    exactly as it found it.
+    """
+    if path.is_symlink():
+        path.unlink()
+        return True
+    return False
+
+
+def bootstrap_may_land(root: Path, out_rel) -> bool:
+    """True unless `out_rel` is the `CLAUDE.md` bootstrap and `AGENTS.md` is
+    not yet a regular file beside it.
+
+    The bootstrap's whole body is `@AGENTS.md`. Written before the charter has
+    landed — because that render failed — it would leave a clone whose only
+    instruction file imports a file that does not exist. Both stamping paths
+    visit `AGENTS.md` first (sorted walks), so this is false only when that
+    render did fail; the old `CLAUDE.md` is then kept, and reported.
+    """
+    if str(out_rel).replace(os.sep, "/") != "CLAUDE.md":
+        return True
+    agents = root / "AGENTS.md"
+    return agents.is_file() and not agents.is_symlink()
 
 
 def toml_quote(value) -> str:
@@ -945,13 +1005,25 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
 
     # Create destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)
-    
+
+    # The ledger of a clone being restamped in place — the one proof that a
+    # clone-authored file is still the kernel's own default and may take the
+    # new one (stamped_default_untouched). A fresh clone has none.
+    ledger: dict = {}
+    manifest_path = dest_dir / "template-manifest.json"
+    if manifest_path.is_file():
+        try:
+            ledger = json.loads(manifest_path.read_text()).get("file_checksums") or {}
+        except (OSError, ValueError):
+            ledger = {}
+
     # Track file checksums
     file_checksums = {}
     success = True
     
-    # Walk through template directory
-    for template_path in template_dir.rglob('*'):
+    # Walk through template directory — sorted, so `AGENTS.md` is rendered
+    # before the `CLAUDE.md` bootstrap that imports it (bootstrap_may_land).
+    for template_path in sorted(template_dir.rglob('*')):
         if template_path.is_dir():
             continue
         
@@ -972,7 +1044,16 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
         # the blank template, silently.
         rel_dest = dest_path.relative_to(dest_dir)
         if is_clone_authored(rel_dest) and dest_path.exists():
-            print(f"Kept: {rel_dest} (yours — clone-authored, never re-stamped)")
+            if not stamped_default_untouched(dest_path, ledger.get(str(rel_dest))):
+                print(f"Kept: {rel_dest} (yours — clone-authored, never re-stamped)")
+                continue
+            if not bootstrap_may_land(dest_dir, rel_dest):
+                print(f"Kept: {rel_dest} (AGENTS.md did not render, so the bootstrap that imports it is not written)")
+                continue
+            print(f"Replaced: {rel_dest} (still the kernel's own default, never edited — it takes the new one)")
+        elif not bootstrap_may_land(dest_dir, rel_dest):
+            print(f"Skipped: {rel_dest} (AGENTS.md did not render, so the bootstrap that imports it is not written)")
+            success = False
             continue
 
         try:
@@ -981,10 +1062,12 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
                 template = jinja_env.get_template(str(rel_path))
                 render_vars = {k: v for k, v in config.items() if k != 'dest_dir'}
                 content = template.render(**render_vars)
+                unlink_if_symlink(dest_path)
                 dest_path.write_text(content, encoding='utf-8')
                 print(f"Rendered: {rel_path} -> {dest_path.relative_to(dest_dir.parent)}")
             else:
                 # Copy non-template file
+                unlink_if_symlink(dest_path)
                 dest_path.write_bytes(template_path.read_bytes())
                 print(f"Copied: {rel_path} -> {dest_path.relative_to(dest_dir.parent)}")
 
@@ -1171,9 +1254,11 @@ def install_agent_surfaces(dest_dir: Path) -> None:
     `.claude/` is the one place the kernel renders; every other agent's
     surface points back into it:
 
-    - `.agents/skills` and `.opencode/skills` → `.claude/skills`;
-    - `AGENTS.md` → `CLAUDE.md` (the file BOTH OpenCode and Codex read as
-      their project instructions);
+    - `.agents/skills` and `.opencode/skills` → `.claude/skills`.
+
+    `AGENTS.md` is not a link: it is the rendered charter, the file Codex and
+    OpenCode read natively and Claude Code reaches through `CLAUDE.md`'s
+    `@AGENTS.md` import. This function never creates, replaces or removes it.
 
     The exact five command-era OpenCode and home-global Codex entries are
     retired idempotently. Unrelated files are never touched.
@@ -1192,9 +1277,6 @@ def install_agent_surfaces(dest_dir: Path) -> None:
                             claude_skills, "../.claude/skills") == "copied"
     copied |= _link_or_copy(dest_dir / ".opencode" / "skills",
                             claude_skills, "../.claude/skills") == "copied"
-    if (dest_dir / "CLAUDE.md").is_file():
-        copied |= _link_or_copy(dest_dir / "AGENTS.md",
-                                dest_dir / "CLAUDE.md", "CLAUDE.md") == "copied"
     print("Wired Claude Code, Codex, and OpenCode to the same project skills"
           + (" — copied, this filesystem refuses symlinks" if copied else ""))
     if removed:
@@ -1356,6 +1438,7 @@ def cmd_init(argv=None) -> int:
     print("=" * 60)
     print(f"Done! Your secrets live in '~/.{config['company_slug']}-cs/.env' (never commit it)")
     print(f"Its reference copy is: {dest_dir}/.env.example")
+    print(f"Project instructions: {dest_dir}/AGENTS.md (CLAUDE.md imports it for Claude Code)")
 
     offer_project_install(dest_dir)
 

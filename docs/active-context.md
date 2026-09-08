@@ -33,7 +33,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 - **The memory map is live on both clones.** `cs memory` (read-only,
   `--json`) prints the ten memory stores — authority, read/write surfaces,
   resolved location, presence or reachability. The membership rule and the
-  store set live in charter § 10 (`templates/project/CLAUDE.md.j2`); gate 48
+  store set live in charter § 10 (`templates/project/AGENTS.md.j2`); gate 48
   holds verb ≡ § 10 with no count literal. The engine row reports the RPC
   endpoint plus one of four probe verdicts, never a filesystem path — proven
   `reachable` against the real engine on both clones at the `v0.40.0`
@@ -43,8 +43,8 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   for any fact that will appear in one — not only entity facts — and an empty
   search obliges a second source rather than a derivation. They are stated once
   in `cs/templates/partials/outbound-fact-sourcing.md.j2` and included by
-  `CLAUDE.md.j2` § 9, `cs-triage-mail` § 2b and `cs-campaign-tick`. `cs-review`
-  is not a host: it composes nothing and inherits them by reading `CLAUDE.md`.
+  `AGENTS.md.j2` § 9, `cs-triage-mail` § 2b and `cs-campaign-tick`. `cs-review`
+  is not a host: it composes nothing and inherits them by reading `AGENTS.md`.
   The read path is `cs ask`; `cs chat` is denied to the cron. The rules ship
   abstract, because a concrete value correct in one country is inherited as
   false everywhere else.
@@ -110,10 +110,6 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   environment writing, and the install offer.
 - The collaudo `live` gate remains red-by-default because it diffs LLM prose and
   clock-dependent state. The meta-repo harness backlog owns that defect.
-- The rendered clone `CLAUDE.md` loses its trailing newline since § 10 landed
-  (`templates/project/CLAUDE.md.j2` + the render's `keep_trailing_newline`
-  interplay). Cosmetic, observed on both clones at the `v0.40.0` upgrade;
-  fix rides the next release.
 - **Shared company memory is decided, not built.** The product brief
   (meta-repo `docs/briefs/2026-09-05-shared-company-memory.md`, review-approved)
   lands in `mrcall-desktop`; the kernel's only follow-up, when it ships, is the

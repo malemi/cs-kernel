@@ -32,13 +32,13 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 ## Invariants (hold for the whole session on this customer)
 
 1. **Engine memory is primary.** Never answer from `docs/projects/` alone —
-   that is the goldfish trap (`docs/projects/README.md`, `CLAUDE.md` §9).
+   that is the goldfish trap (`docs/projects/README.md`, `AGENTS.md` §9).
 2. **Many customer relationships live on `{{ nondefault_account }}`**, not on
    the default `{{ accounts_default }}@` operator box. Always query **both** accounts unless
    the dossier explicitly pins one. Account names in `cs accounts` are
    **mailbox addresses** (never a bare first name).
 3. **No customer-visible action without a fresh dossier** on the relevant
-   contact email (`cs dossier` / `cs contacted`) — CLAUDE.md §5.
+   contact email (`cs dossier` / `cs contacted`) — AGENTS.md §5.
 4. **No autonomous send.** This skill never drafts or sends unless the operator
    explicitly asks *after* the load, and then only through the normal gated
    paths (`cs draft-reply` / `cs chat --allow send_draft`). Default = read +

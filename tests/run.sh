@@ -723,7 +723,7 @@ step "27. every agent reads the same project skills"
 # weeks after .claude/commands/ was renamed — the kernel rendered only
 # .claude/, so nothing kept them in step. Now cs init AND cs update point
 # Codex and OpenCode at the canonical .claude/skills tree. Guards: identical
-# bytes, AGENTS.md resolves to CLAUDE.md, exact legacy command/prompt cleanup
+# bytes, AGENTS.md stays the rendered charter (never a link), exact legacy command/prompt cleanup
 # preserves unrelated files, and a symlink-less filesystem gets copies.
 if "$VENV/bin/python" "$ROOT/tests/test_agent_surfaces.py"; then echo "OK"; else echo "FAIL: agent surfaces drifted"; FAIL=1; fi
 
@@ -859,7 +859,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_unanswered_threads.py"; then echo "OK"; 
 step "38. the engine is authoritative — the charter rule reaches every clone"
 # "se l'engine non fa il suo lavoro, si corregge l'engine, non si rappezza
 # altro" (operator, 2026-08-26). The rule is only worth writing down if a CLONE
-# inherits it, so it must be in the rendered project CLAUDE.md and not only in
+# inherits it, so it must be in the rendered project AGENTS.md and not only in
 # the kernel's own charter. Both files are checked, plus the measured exception
 # that keeps it honest (Gmail Sent, not the engine archive, is dedup truth).
 # The phrases are matched against the file with all whitespace collapsed to
@@ -872,9 +872,9 @@ step "38. the engine is authoritative — the charter rule reaches every clone"
 GATE38=0
 # The kernel-side charter lives where docs/.doc-profile's index_file points
 # (AGENTS.md since the harness v8 migration); the clone-side copy stays in the
-# stamped CLAUDE.md.j2 template.
+# stamped AGENTS.md.j2 template.
 CHARTER_FILE=$(sed -n 's/^index_file *= *//p' "$ROOT/docs/.doc-profile")
-for f in "$ROOT/$CHARTER_FILE" "$ROOT/cs/templates/project/CLAUDE.md.j2"; do
+for f in "$ROOT/$CHARTER_FILE" "$ROOT/cs/templates/project/AGENTS.md.j2"; do
   flat=$(tr '\n' ' ' < "$f" | tr -s '[:space:]' ' ')
   case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
     *authoritative*) ;;
@@ -1075,7 +1075,7 @@ step "48. § 10 and cs memory agree on the store set; the allow spellings are st
 # failure mode the map exists to prevent from happening to a THIRD list. This
 # gate reads STORES straight from $VENV (the working tree gate 3 just
 # installed) and the backticked slug set from § 10's OWN ENUMERATED LIST
-# sentence in CLAUDE.md.j2 ("The stores: ... ." — extraction stops at that
+# sentence in AGENTS.md.j2 ("The stores: ... ." — extraction stops at that
 # sentence's own period), and fails on any symmetric difference, naming the
 # offending slugs — no count literal: an eleventh store that satisfies the
 # brief's membership rule joins the map on both sides, or this gate catches
@@ -1086,7 +1086,7 @@ step "48. § 10 and cs memory agree on the store set; the allow spellings are st
 # member, not on the slug vanishing from the page entirely. It also asserts
 # the four `cs memory` allow spellings landed in settings.json.j2, the same
 # one-file-forgotten failure gate 17 exists to catch, on the allow side.
-CLAUDE_TPL="$ROOT/cs/templates/project/CLAUDE.md.j2"
+CLAUDE_TPL="$ROOT/cs/templates/project/AGENTS.md.j2"
 SETTINGS_TPL="$ROOT/cs/templates/project/.claude/settings.json.j2"
 if ! "$VENV/bin/python" - "$CLAUDE_TPL" "$SETTINGS_TPL" <<'PYEOF'
 import json, re, sys
@@ -1103,7 +1103,7 @@ expected_ids = {s.id for s in memory_report.STORES}
 text = Path(CLAUDE_PATH).read_text()
 heading = re.search(r"^## 10\. .*$", text, re.MULTILINE)
 if heading is None:
-    print("FAIL: CLAUDE.md.j2 has no '## 10.' section — the memory map charter section is missing")
+    print("FAIL: AGENTS.md.j2 has no '## 10.' section — the memory map charter section is missing")
     sys.exit(1)
 section = text[heading.end():]  # § 10 is the file's last section: heading to EOF
 
@@ -1209,6 +1209,23 @@ step "51. the draft review never states an absence it did not establish"
 # never-contacted address, a Bcc-only match counted as a send, and a failed
 # cross-mailbox read that left `evidence_incomplete` empty on every row.
 if "$VENV/bin/python" "$ROOT/tests/test_review_evidence_gaps.py"; then echo "OK"; else echo "FAIL: the draft review states an absence it never established (empty FETCH, Bcc-only counted, or a failed bulk read reported as complete)"; FAIL=1; fi
+
+step "52. the charter lands in AGENTS.md; CLAUDE.md is a one-time bootstrap"
+# v0.42.0: a clone's instructions are AGENTS.md (read natively by Codex and
+# OpenCode, reached by Claude Code through CLAUDE.md's `@AGENTS.md` import).
+# CLAUDE.md is clone-authored — written once when absent, never re-stamped,
+# never ledgered — so a documentation harness that manages it byte-for-byte
+# is never reported as drift. Guards, on real `cs update` subprocesses: the
+# legacy `AGENTS.md -> CLAUDE.md` symlink is replaced AT WRITE TIME, never
+# written through (through it, the rendered charter would land in CLAUDE.md
+# and the old shape would survive every later run in silence); the bootstrap
+# lands only once AGENTS.md is a regular file, so a charter render that fails
+# leaves the clone — ledger entry included — exactly as it was, and says so;
+# a CLAUDE.md byte-identical to its ledger entry — the kernel's own untouched
+# default — takes the bootstrap once, an authored one is never touched; the
+# in-place `cs init` restamp does the same and loses no charter; the render
+# keeps its trailing newline.
+if "$VENV/bin/python" "$ROOT/tests/test_charter_shape.py"; then echo "OK"; else echo "FAIL: the charter shape regressed (AGENTS.md / CLAUDE.md bootstrap / legacy symlink)"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

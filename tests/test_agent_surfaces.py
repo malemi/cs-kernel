@@ -4,7 +4,8 @@ The canonical render lives under `.claude/skills`. Codex and OpenCode receive
 repository links to that tree; command-era project mirrors and home-global
 Codex prompts are retired by an exact, closed name set. Unrelated user files
 must survive, and filesystems without symlink support receive equivalent
-copies.
+copies. `AGENTS.md` is a rendered file — the charter — and the wiring never
+links, replaces or removes it.
 """
 from __future__ import annotations
 
@@ -35,7 +36,8 @@ def _clone(root: Path, name: str) -> Path:
         path = clone / ".claude" / "skills" / skill / "SKILL.md"
         path.parent.mkdir(parents=True)
         path.write_text(f"---\nname: {skill}\ndescription: {name}\n---\n")
-    (clone / "CLAUDE.md").write_text(f"# manual of {name}\n")
+    (clone / "CLAUDE.md").write_text("@AGENTS.md\n")
+    (clone / "AGENTS.md").write_text(f"# charter of {name}\n")
     return clone
 
 
@@ -80,8 +82,10 @@ def main() -> int:
             check("OpenCode resolves canonical bytes",
                   (opencode / "cs-help/SKILL.md").read_bytes()
                   == (canonical / "cs-help/SKILL.md").read_bytes())
-            check("AGENTS.md resolves to CLAUDE.md",
-                  (clone / "AGENTS.md").read_text() == (clone / "CLAUDE.md").read_text())
+            agents = clone / "AGENTS.md"
+            check("AGENTS.md is the rendered charter, never a link",
+                  agents.is_file() and not agents.is_symlink()
+                  and agents.read_text() == "# charter of acme-cs\n")
             check("all retired OpenCode commands are gone",
                   all(not (clone / ".opencode/commands" / n).exists()
                       for n in pi.RETIRED_COMMAND_NAMES))
@@ -130,6 +134,8 @@ def main() -> int:
                   opencode_copy.read_bytes()
                   == (nolink / ".claude/skills/cs-review/SKILL.md").read_bytes())
             check("copy fallback is disclosed", "copied" in out.getvalue())
+            check("AGENTS.md is untouched on a symlink-less filesystem",
+                  (nolink / "AGENTS.md").read_text() == "# charter of win-cs\n")
         finally:
             Path.symlink_to = real_symlink
 

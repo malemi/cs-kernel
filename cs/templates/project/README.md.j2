@@ -7,7 +7,7 @@ sent automatically**: it prepares drafts, *you* review and send.
 {% if repo_docs_shape == 'generic' %}
 This is the original; other `<name>-cs` clones are stamped from it.
 {% endif %}
-> New here? Read this top-to-bottom. For depth: [CLAUDE.md](CLAUDE.md) (operator
+> New here? Read this top-to-bottom. For depth: [AGENTS.md](AGENTS.md) (operator
 > manual) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (as-built config,
 stamped from `manifest.toml`).
 
@@ -94,7 +94,8 @@ kernel README, [The `cs` CLI](https://github.com/malemi/cs-kernel#the-cs-cli).
 
 ## Map
 
-- [CLAUDE.md](CLAUDE.md) — operator manual (engine RPC shapes, verbs, pipeline, skills, safety).
+- [AGENTS.md](AGENTS.md) — operator manual (engine RPC shapes, verbs, pipeline, skills, safety).
+- `CLAUDE.md` — the entry point Claude Code reads; its body is the `@AGENTS.md` import.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — as-built config + generic design.
 - `manifest.toml` — the declared per-company variance · `company/*.md` — skill prose · `campaigns/` — packs.
 - `.venv/bin/python -m cs <verb>` — run any verb; `cs accounts`, `cs --account <name> <verb>` for multi-account.

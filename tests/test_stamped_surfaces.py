@@ -81,7 +81,7 @@ OUTBOUND_PROSE_MARK = (
 )
 OUTBOUND_INCLUDE = '{% include "outbound-fact-sourcing.md.j2" %}'
 OUTBOUND_SURFACES = (
-    "CLAUDE.md",
+    "AGENTS.md",
     ".claude/skills/cs-triage-mail/SKILL.md",
     ".claude/skills/cs-campaign-tick/SKILL.md",
 )
@@ -361,7 +361,7 @@ def _update_render() -> None:
             # The same include-survives-`cs update` property, for the
             # outbound-fact-sourcing partial and its three including hosts —
             # `cs-review`/`cs-operator` are the preamble's hosts above,
-            # CLAUDE.md and cs-campaign-tick are new here and untested on the
+            # AGENTS.md and cs-campaign-tick are new here and untested on the
             # update path until now.
             for rel in OUTBOUND_SURFACES:
                 check(f"failed to render {rel}" not in out,

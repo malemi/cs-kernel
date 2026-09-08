@@ -194,6 +194,13 @@ claude
 opencode
 ```
 
+What each agent reads first is `AGENTS.md`, the project's instructions:
+Codex and OpenCode load it natively, Claude Code reaches it through the
+`@AGENTS.md` import in `CLAUDE.md`. `cs init` writes that `CLAUDE.md` once
+and never touches it again, so a documentation harness may take it over —
+the one in [mrcall-ai-kit](https://github.com/malemi/mrcall-ai-kit) does,
+through its `/doc-create`. That is optional; nothing here depends on it.
+
 First thing to type: **`/cs-review`** — the one review bootstrap, zero
 side effects: what the operator prepared for you (drafts waiting in
 Gmail Drafts, open tasks, campaign flags) and, when a lead source is

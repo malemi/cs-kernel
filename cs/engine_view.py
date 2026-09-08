@@ -5,7 +5,7 @@ task ledger. Two of those judgements are asked for here and neither is
 re-derived: whether a message is an autoresponder, and whether a message still
 needs a reply from us. Both are the engine's, both have an owner there
 (`zylch/utils/auto_reply_detector.py` and `zylch/utils/reply_need.py`), and the
-charter rule (`CLAUDE.md`, "the engine is authoritative for what it owns") is
+charter rule (`AGENTS.md`, "the engine is authoritative for what it owns") is
 what this module exists to obey; when a classification is wrong, the fix is a
 change in the engine, never a second opinion here.
 

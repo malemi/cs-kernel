@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 **Stack**: Python 3.11 (CLI), pydantic-settings, SQLite
 **Entry point**: `.venv/bin/python -m cs <verb>` (module `cs`)
@@ -31,7 +31,7 @@ from the kernel and parameterised by this repo's `manifest.toml`.
 > **Source of truth: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the as-built
 > config (stamped from `manifest.toml`), the generic design, and § How it works
 > for the machinery. It wins over this file where they differ. The kernel charter
-> (`cs-kernel` `CLAUDE.md`) owns the machinery; this repo owns only the variance.
+> (`cs-kernel` `AGENTS.md`) owns the machinery; this repo owns only the variance.
 >
 > **This file is an index: it routes, it does not teach.** Verbs are `cs --help`,
 > values in force are `cs config`, procedures are in each skill file.
@@ -40,10 +40,17 @@ from the kernel and parameterised by this repo's `manifest.toml`.
 
 This repo is a **stamped clone of `cs-kernel`**. **Template-owned — edit them in
 the kernel template (`cs-kernel/cs/templates/project/…`), never here**, or the
-change drifts and `cs update` overwrites it: `CLAUDE.md` · `README.md` ·
-`docs/ARCHITECTURE.md` · `docs/projects/README.md` · `.claude/settings.json` ·
-`.claude/skills/*` · `bin/cs_operator_cron.sh` ·
+change drifts and `cs update` overwrites it: `AGENTS.md` (this charter) ·
+`README.md` · `docs/ARCHITECTURE.md` · `docs/projects/README.md` ·
+`.claude/settings.json` · `.claude/skills/*` · `bin/cs_operator_cron.sh` ·
 `.env.example` · `.gitignore` · `requirements.txt`.
+
+**`CLAUDE.md` is written once by the kernel and then never touched.** It is the
+entry point Claude Code reads, and its body is the `@AGENTS.md` import. The
+kernel stamps it only when a clone has none, keeps it out of the checksum
+ledger and never re-renders it, so whoever manages it afterwards owns it: a
+documentation harness's `/doc-create` replaces it with the harness's own
+template, and that harness — never the kernel — also owns `docs/.doc-profile`.
 
 **Clone-owned — edit freely here:** `manifest.toml` (the declared per-company
 variance, the ONE place values change) · `company/*.md` (the *file* is templated,
@@ -247,3 +254,4 @@ nothing that reaches a customer** — per-developer, not in git, not portable.
 Project knowledge goes to the engine (write it back via `/cs-customer`) or
 to git — dossiers under `docs/projects/`, company facts in `company/*.md` —
 never here.
+
