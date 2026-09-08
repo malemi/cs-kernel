@@ -60,3 +60,4 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/sessions/72c03d57-2961-4f9c-84d3-a5b02836bcbd.md | 633 | keep whole — router session memory, reconciled by /router sweep, not a maintained doc | 2026-09-02 |
 | docs/sessions/e8628bca-e073-4894-9a7b-24e2578c0fc4.md | 474 | keep whole — gitignored per-session scratch, closed at consolidation, not repository knowledge | 2026-09-04 |
 | docs/briefs/2026-09-07-review-latency.md | 557 | keep whole — one brief, one argument, read start to finish | 2026-09-08 |
+| docs/sessions/f1bfd7e1-d81f-42cf-9205-60aeefece296.md | 409 | keep whole — gitignored per-session scratch, closed at consolidation, not repository knowledge | 2026-09-08 |
