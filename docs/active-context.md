@@ -19,8 +19,15 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
   operator's explicit approval.
-- **The deployed mrcall-desktop engine is `459df0f`.** All five `zylch-server@`
-  units were restarted on it (2026-09-02 08:03) and serve `settings.get_secret`.
+- **HEAD carries an unreleased MINOR** (CHANGELOG "Unreleased — next tag
+  v0.41.0"): the review-latency and engine-exit-code work of 2026-09-07/08
+  plus the three review fixes of gate 51; 52 gates green on 2026-09-08. The
+  tag ships after the FULL collaudo on both clones. The engine defect behind
+  the `cs ask` overflow on one clone is fixed in `mrcall-desktop` `main` and
+  not deployed (meta-repo `docs/known-issues/2026-09-08-engine-chat-prompt-unbounded.md`).
+- **The deployed mrcall-desktop engine is `8e5fa2f`** (reconciled 2026-09-08
+  00:00 UTC). All five `zylch-server@` units run it and serve
+  `settings.get_secret`.
   Engine deployment means checkout HEAD plus restarted processes, never a pull
   alone.
 - **The memory map is live on both clones.** `cs memory` (read-only,
@@ -65,6 +72,11 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
+- **Criteria 2–4 of the review-latency brief have no gate**: the three verdict
+  corrections are proven by identical live counts across three runs, not by a
+  fixture world; the round-trip and message bounds are unasserted.
+- **`cs unanswered` exits 3 on a failed mailbox read with nothing on stderr
+  under `--all-buckets`**, and no stamped skill documents that code.
 - **One collaudo leg remains unobserved on both clones**: a draft-only campaign
   tick meeting an `evidence_incomplete` refusal end-to-end. Ticks run and pass,
   but with healthy credentials no refusal occurs, so the leg discharges only at
@@ -99,9 +111,10 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Next
 
-1. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
+1. FULL collaudo on both clones, then tag `v0.41.0` and re-pin them.
+2. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
    `evidence_incomplete` refusal — at a cron cycle where one occurs.
-2. Replace internal `re-collaudo` wording still exposed by `cs update` with
+3. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-3. Promote reusable attachment-reading and scheduling pieces only when a second
+4. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.
