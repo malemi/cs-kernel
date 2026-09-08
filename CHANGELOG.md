@@ -11,8 +11,8 @@ skipped), `cs --version` prints `0.41.0`, `requirements.txt`,
 row agree, and each regenerated `requirements.lock` resolves the tag to
 `0e50f24` and was installed ALONE into a throwaway `uv venv` (resolving
 `cs-kernel 0.41.0`). The FULL collaudo this entry demands ran on both under
-their `CS_PAUSE` files (15:47–16:05 UTC; the 124-cs 16:00 tick fell inside the
-window and skipped). `124-cs`: whoami, `cs memory` with the engine row
+their `CS_PAUSE` files (15:47–15:56 UTC; no cron tick fell inside the
+window). `124-cs`: whoami, `cs memory` with the engine row
 `reachable`, `cs history` and `cs dossier` 4-of-4 mailboxes (`STOP — already
 written to`), `cs review --json` in **65 s** with 51 rows where the previous
 kernel was killed at 1500 s with zero bytes, `cs unanswered` rc 0, and the
