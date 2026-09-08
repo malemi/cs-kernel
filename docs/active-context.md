@@ -14,11 +14,20 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## State now
 
-- **Latest release tag: `v0.41.0`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.42.0`. Current HEAD status: tagged as `v0.42.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; keep the wording
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
   operator's explicit approval.
+- **`v0.42.0` (2026-09-08, MINOR, static tier)**: a clone's charter is
+  rendered into `AGENTS.md`; `CLAUDE.md` is a one-time bootstrap (`@AGENTS.md`)
+  the kernel writes when absent and never re-stamps or ledgers, so a
+  documentation harness that manages it is never reported as drift. The legacy
+  `AGENTS.md -> CLAUDE.md` symlink is retired at write time on both stamping
+  paths, the bootstrap lands only once `AGENTS.md` is a regular file, and a
+  ledger-proven, untouched kernel default is superseded once. Brief and plan:
+  `docs/briefs/2026-09-08-clone-harness-v8-shape.md`,
+  `docs/execution-plans/2026-09-08-clone-harness-v8-shape.md`.
 - **`v0.41.0` (2026-09-08, MINOR, FULL tier)**: the review-latency and
   engine-exit-code work of 2026-09-07/08 plus the three review fixes of gate
   51; all gates green at the tag. The engine defect behind the `cs ask`

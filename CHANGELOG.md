@@ -160,6 +160,77 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.42.0 — 2026-09-08 (MINOR)
+
+**The stamped charter is `AGENTS.md`; `CLAUDE.md` is written once and never
+again.** Until this release a clone's charter was rendered into `CLAUDE.md`
+and `AGENTS.md` was a symlink back to it. That shape put two owners on one
+path: the mrcall-ai-kit documentation harness (v8) manages a repository's
+`CLAUDE.md` byte-for-byte and keeps the project's own instructions in
+`AGENTS.md`, so a clone could satisfy the kernel or the harness but not both.
+Both maintained clones had been red on the harness gate for that reason, one
+of them with a written note that trimming `CLAUDE.md` "would be overwritten
+by the next `cs update`". Brief:
+`docs/briefs/2026-09-08-clone-harness-v8-shape.md`.
+
+- **`cs/templates/project/AGENTS.md.j2`** renders the charter — the same text,
+  under the name Codex and OpenCode read natively. Its § "Editing this clone"
+  names the new ownership, and the render keeps its trailing newline (the
+  cosmetic defect open since `v0.40.0`).
+- **`cs/templates/project/CLAUDE.md`** is a plain bootstrap: the `@AGENTS.md`
+  import Claude Code follows, plus one comment saying who replaces it. It is
+  **clone-authored** (`CLONE_AUTHORED_PREFIXES`): written when a clone has
+  none, never re-stamped, never in the checksum ledger — so a repository that
+  lets `/doc-create` install the harness template over it gets no drift
+  report, ever. The kernel is a public product whose operators need not have
+  the harness; a clone with no `CLAUDE.md` would start every Claude Code
+  session with no charter at all, which is why the kernel still writes one.
+- **Migration, in `cs update` and in the in-place `cs init` restamp.** A
+  symlink at a render target is replaced at write time and never written
+  through (`unlink_if_symlink`): `write_text` follows a symlink, so rendering
+  `AGENTS.md` through the legacy link would have carried the charter back into
+  `CLAUDE.md` and left the old shape in place, silently, on every later run.
+  The bootstrap lands only once `AGENTS.md` is a regular file beside it
+  (`bootstrap_may_land`; both walks are sorted so the charter is visited
+  first) — a charter render that fails leaves the clone, its ledger entry
+  included, exactly as it was, and says so. Then one general rule: a
+  clone-authored file that is byte-identical to the checksum the ledger holds
+  for it was never authored by anyone — it is still the kernel's default —
+  and the new default replaces it, once (`stamped_default_untouched`). Only a
+  path that *was* ledgered and is *now* clone-authored can match, which is
+  exactly `CLAUDE.md` on a clone stamped before this release; a file that
+  differs by one byte is the operator's and is never touched. After the run
+  the path is out of the ledger and the rule cannot fire on it again.
+- **What a clone observes at `cs update`:** `+ AGENTS.md`; `✓ CLAUDE.md (was
+  the kernel's own default, never edited — replaced; yours from now on)`; the
+  refreshed skills and docs that used to send a reader to `CLAUDE.md` for the
+  charter; no prompt. `git status` shows `AGENTS.md` changing from a
+  symlink to a regular file. Then, on a repository using the harness,
+  `/doc-create` migrates `docs/.doc-profile` to v8 and installs its own
+  `CLAUDE.md`.
+- **`install_agent_surfaces()`** no longer links `AGENTS.md`; `.agents/skills`
+  and `.opencode/skills` are unchanged.
+- **Every stamped surface that sent a reader to `CLAUDE.md` for the charter
+  now names `AGENTS.md`** — eighteen references across eleven files: the
+  skills, the clone README, `company/`, `docs/ARCHITECTURE.md` and
+  `docs/projects/README.md`;
+  the sharpest was `cs-review`'s "Read `CLAUDE.md` in full". The clone README
+  says in one line what `CLAUDE.md` is; the kernel README says which harness
+  may take it over, and that this is optional.
+- Gates: `tests/test_charter_shape.py` (step 52: fresh render, in-place
+  restamp over the legacy shape with and without a ledger, real `cs update`
+  on a pristine legacy clone twice, on an authored `CLAUDE.md` twice,
+  against an older ledger, and with a charter render that fails — nothing
+  changes and the next run finishes the move; the helpers); the agent-surfaces (27),
+  stamped-surfaces (42), charter-rule (38) and memory-map (48) gates read
+  `AGENTS.md.j2`. 55 gates green at the tag.
+
+**Re-collaudo: `static` on both clones.** Nothing on a send path, the auth
+boundary or the permission surface changes; the files that move are prose and
+an import line. MINOR because the stamped shape of every clone changes.
+Static evidence per clone: the diff of every refreshed stamped file against its
+pre-update copy, `cs --version`, and one `cs whoami`.
+
 ## v0.41.0 — 2026-09-08 (MINOR)
 
 **`cs review` finishes, three verdicts stop being wrong, and an engine failure
