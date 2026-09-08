@@ -166,6 +166,63 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## Unreleased — next tag v0.41.0 (MINOR)
+
+**`cs review` finishes, three verdicts stop being wrong, and an engine failure
+is an exit code.** On the reference clone `cs review --json` never returned
+(killed at 1500 s with zero bytes out). One draft was addressed to a colleague
+whose mailbox is in the read scope, and the code asked *that colleague's own
+mailbox* for everything he had ever sent — 21,637 messages, one round trip
+each. Every one of them then read as "he wrote again", so any draft to a
+colleague was `superseded` because he had mailed *somebody*. Measured after the
+change on the same 51 drafts: 54.3 s, verdict counts identical across three
+runs. Briefs: `docs/briefs/2026-09-07-review-latency.md`,
+`docs/briefs/2026-09-07-engine-error-exit-code.md`.
+
+- **One bulk read per (mailbox, folder) for all contacts at once**
+  (`gmail_archive.headers_for_addresses_on`, `mailboxes.headers_since_across`,
+  `draft_state._bulk_across`), bucketed by address in memory. A mailbox is
+  never asked about its own owner, on either side (All Mail `FROM`, Sent `TO`);
+  the skip is `Fanout.skipped`, printed on both surfaces — never `unreadable`,
+  which would make the send gates refuse that colleague forever. The send
+  gates' own readers, `sent_to_across` and `inbound_since_across`, are
+  byte-identical, and a send gate must not call the new reader (its docstring
+  says why).
+- **Three verdict corrections.** The colleague case above; both per-contact
+  caches were keyed by address while parameterised by each draft's own date,
+  so the first draft processed fixed the answer for every later one; and the
+  inbound side had no date re-filter at all and produced a false `overtaken`,
+  which outranks and masks the true verdict.
+- **A failed batched header FETCH raises `ChunkFetchFailed`** instead of
+  returning a short list indistinguishable from a complete one. `cs review`
+  degrades to a note; `cs unanswered` degrades with the *right* explanation
+  (the list is too short, not too wide) and exits 3.
+- **`cs ask`, `cs chat` and `cs draft-reply` exit 4 on an engine failure**,
+  read from `metadata.error` and never from the text of the response, with the
+  detail on stderr and nothing on stdout. The campaign tick no longer marks a
+  contact engaged after a failed empty turn, and `cs-customer` stops when its
+  grounding step fails. On one clone `cs ask` had failed for months with a
+  context overflow while every tick recorded it in prose and exited 0.
+- **`cs review` writes a progress trail to stderr** per stage with elapsed
+  times; stdout under `--json` is byte-identical; `campaign.contacts` and
+  `engine_view.settled` carry explicit timeouts.
+- **Three review findings fixed before the commit** (gate 51): `sent_body_match`
+  issued a FETCH with an empty sequence-set for every never-contacted address;
+  a Bcc-only match was flagged by the reader and then counted by the bucketing;
+  a failed cross-mailbox read left `evidence_incomplete` empty on every
+  `ready` row.
+- Gates: contact history across mailboxes, chunk-fetch failure, own-mailbox
+  exclusion (both sides), review progress (49), engine error exit code (50),
+  evidence gaps (51). **No gate yet for criteria 2–4 of the latency brief**
+  (the three verdict corrections in a fixture world, the round-trip and
+  message bounds): proven by the live run counts only.
+
+**Re-collaudo tier: FULL, both clones.** The release touches `gmail_archive`
+and the review evidence path, and it changes observable verb behaviour — exit
+codes 3 and 4, the stderr trail, `Fanout.skipped` in `scope_line()` (`cs
+history`, `cs dossier`) — which is why it is a MINOR and not a patch. The tag
+ships only after the collaudo suite runs on both clones.
+
 ## v0.40.0 — 2026-09-05
 
 **The memory map is a verb.** An operator (or an onboarding agent) asking

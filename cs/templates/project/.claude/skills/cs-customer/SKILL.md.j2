@@ -84,9 +84,14 @@ relationships live there):
 .venv/bin/python -m cs ask "<same question>"   # {{ accounts_default }}@ default
 ```
 
-If `whoami` fails on an account (daemon down, wrong identity): note it and
-continue with the other — do not invent memory. If **both** fail → STOP with
-the one-line reason; a file-only answer is incomplete and you must say so.
+If `whoami` OR `ask` fails on an account (daemon down, wrong identity, or the
+engine itself reporting failure on the turn — `ask` now exits non-zero with
+`error` / `error_detail` on stderr instead of printing an error as if it were
+an answer): note it and continue with the other account — do not invent
+memory, and do not read the failure as "engine empty on this account" (§ 4's
+table is for a genuinely empty answer, not a failed turn). If **both** fail →
+STOP with the one-line reason; a file-only answer is incomplete and you must
+say so.
 
 Tune the `ask` with names/emails from the dossier (e.g. "Acme-Corp Jane Smith",
 "Globex John Doe") so the engine retrieves the right entities.

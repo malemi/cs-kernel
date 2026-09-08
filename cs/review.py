@@ -23,9 +23,106 @@ where you review and authorise. Mutates nothing.
 """
 from __future__ import annotations
 
+import sys
+import time
+from contextlib import contextmanager
 from typing import Optional
 
-from . import _time, campaign, draft_state, gmail_drafts, rpc
+from . import _time, campaign, draft_state, engine_view, gmail_drafts, rpc
+
+# Two calls inside `gather()` are excluded, on purpose, from the 90s wall M3
+# owns (see `docs/execution-plans/2026-09-07-review-latency.md` § Verification
+# of the whole): `campaign.contacts`, looped once per campaign with a fresh
+# connect/disconnect per call (`cs/rpc.py:226-230`), and `engine_view.settled`,
+# whose own docstring admits the engine may make a model call to answer it.
+# Both used to run under whatever default happened to sit on the callee —
+# `rpc.call_sync`'s unstated 60s, `engine_view.settled`'s own 120s — which is
+# invisible until one of those defaults changes. Naming them here does not
+# shrink either budget (that is M2/M3's job, not this one); it pins today's
+# effective values so a slow engine degrades with a clear line instead of
+# looking exactly like the 25-minute run this fix was written from.
+CAMPAIGN_CONTACTS_TIMEOUT_SECONDS = 60
+ENGINE_SETTLED_TIMEOUT_SECONDS = 120
+
+
+def _progress(msg: str) -> None:
+    """One line of `gather()` progress. Stderr only, and flushed immediately.
+
+    `cs review --json` stdout is parsed (the cron's own bootstrap step 4c), so
+    it has to stay exactly what it always printed — nothing in this module
+    ever reaches stdout through here. The incident this exists for: the
+    operator watched `cs review` emit zero bytes for fourteen minutes and
+    could not tell a slow run from a hang; an instrumented run later showed it
+    still going past 25 minutes.
+    """
+    print(f"[review] {msg}", file=sys.stderr, flush=True)
+
+
+@contextmanager
+def _stage(name: str):
+    """Bracket one `gather()` stage with a start line and a timed end line.
+
+    A stage that raises is timed too, and marked FAILED rather than done: how
+    long the thing that broke took is exactly what tells a slow engine apart
+    from one that never answers at all. Every caller inside `gather()` still
+    catches its own exception right after — this only adds the stderr trail
+    around that existing degradation, it changes no return value.
+    """
+    _progress(f"{name}: starting")
+    t0 = time.monotonic()
+    try:
+        yield
+    except Exception:
+        _progress(f"{name}: FAILED ({time.monotonic() - t0:.1f}s)")
+        raise
+    else:
+        _progress(f"{name}: done ({time.monotonic() - t0:.1f}s)")
+
+
+def _settled_with_timeout(settings, thread_ids):
+    """`draft_state.reconcile`'s injectable `settled` seam, given an explicit
+    timeout and its own line on the progress trail.
+
+    `reconcile` calls its `settled` argument with no timeout of its own
+    (`cs/draft_state.py:324`), so left at its default this silently inherits
+    whatever `engine_view.settled` happens to declare. Worth naming: its own
+    docstring admits the engine may make a model call to answer
+    (`cs/engine_view.py:164-168`), which makes it the one RPC in `gather()`
+    least safe to assume is fast.
+    """
+    with _stage("engine_view.settled"):
+        try:
+            return engine_view.settled(settings, thread_ids,
+                                       timeout=ENGINE_SETTLED_TIMEOUT_SECONDS)
+        except TimeoutError as e:
+            # `reconcile` turns whatever this raises into a note via
+            # `f"{type(e).__name__}: {e}"` (`cs/draft_state.py:326`), and a
+            # bare `asyncio.TimeoutError` stringifies to "" — name the bound
+            # so the note says something instead of just its own class.
+            raise TimeoutError(
+                f"engine_view.settled exceeded {ENGINE_SETTLED_TIMEOUT_SECONDS}s"
+            ) from e
+
+
+def _campaign_contacts(settings, camp: dict) -> list:
+    """One `campaign.contacts` call, explicitly timed and bounded.
+
+    Looped once per campaign (`gather`'s § 3), each call a fresh
+    `asyncio.run` plus connect/disconnect (`cs/rpc.py:226-230`) — the same
+    invisible-hang shape as `engine_view.settled` above, multiplied by however
+    many campaigns are configured, and previously with no timeout of its own
+    before `rpc.call_sync`'s unstated 60s default.
+    """
+    with _stage(f"campaign.contacts {camp['name']}"):
+        try:
+            return rpc.call_sync(settings, "campaign.contacts",
+                                 {"campaign_id": camp["id"]},
+                                 timeout=CAMPAIGN_CONTACTS_TIMEOUT_SECONDS)
+        except TimeoutError as e:
+            raise TimeoutError(
+                f"campaign.contacts for {camp['name']!r} exceeded "
+                f"{CAMPAIGN_CONTACTS_TIMEOUT_SECONDS}s"
+            ) from e
 
 
 def _task_row(task: dict) -> dict:
@@ -131,22 +228,24 @@ def gather(settings) -> dict:
     # 1a. Gmail Drafts — cs-SMTP outreach queued via `campaign queue-draft`
     #     (IMAP review surface; you review + send these). Each row carries its
     #     `uid` — the handle `draft-delete` takes to remove a bad one.
-    try:
-        out["gmail_drafts"] = gmail_drafts.list_drafts(settings)
-    except Exception as e:  # noqa: BLE001 — a mailbox hiccup must not kill the digest
-        out["gmail_drafts"] = []
-        out["gmail_drafts_error"] = f"{type(e).__name__}: {e}"
+    with _stage("Gmail draft listing"):
+        try:
+            out["gmail_drafts"] = gmail_drafts.list_drafts(settings)
+        except Exception as e:  # noqa: BLE001 — a mailbox hiccup must not kill the digest
+            out["gmail_drafts"] = []
+            out["gmail_drafts_error"] = f"{type(e).__name__}: {e}"
 
     # 1b. Engine drafts — reply/compose drafts the engine composed (memory +
     #     trained voice + threading) via the chat `create_draft` tool, stored
     #     in the engine DB. Exposed by the read-only `drafts.list` RPC.
-    try:
-        res = rpc.call_sync(settings, "drafts.list", {}, timeout=60)
-        # campaign.list/tasks.list return bare arrays; handle a wrapper too.
-        out["engine_drafts"] = res if isinstance(res, list) else res.get("drafts", [])
-    except Exception as e:  # noqa: BLE001
-        out["engine_drafts"] = []
-        out["engine_drafts_error"] = f"{type(e).__name__}: {e}"
+    with _stage("engine drafts.list"):
+        try:
+            res = rpc.call_sync(settings, "drafts.list", {}, timeout=60)
+            # campaign.list/tasks.list return bare arrays; handle a wrapper too.
+            out["engine_drafts"] = res if isinstance(res, list) else res.get("drafts", [])
+        except Exception as e:  # noqa: BLE001
+            out["engine_drafts"] = []
+            out["engine_drafts_error"] = f"{type(e).__name__}: {e}"
 
     # 1c. The two stores reconciled into ONE list, every row carrying a verdict
     #     computed from Gmail (and, when the engine answers, its reading of the
@@ -154,24 +253,27 @@ def gather(settings) -> dict:
     #     question the customer has already withdrawn" instead of listing it as
     #     ready. Never raises: a mailbox hiccup is a note, and the raw listings
     #     above are still there.
-    try:
-        rows, notes = draft_state.reconcile(
-            settings, out["gmail_drafts"], out["engine_drafts"]
-        )
-        out["drafts"] = rows
-        out["drafts_notes"] = notes
-    except Exception as e:  # noqa: BLE001
-        out["drafts"] = []
-        out["drafts_notes"] = [f"{type(e).__name__}: {e}"]
+    with _stage("draft reconcile"):
+        try:
+            rows, notes = draft_state.reconcile(
+                settings, out["gmail_drafts"], out["engine_drafts"],
+                settled=_settled_with_timeout,
+            )
+            out["drafts"] = rows
+            out["drafts_notes"] = notes
+        except Exception as e:  # noqa: BLE001
+            out["drafts"] = []
+            out["drafts_notes"] = [f"{type(e).__name__}: {e}"]
 
     # 2. Open engine tasks (triage escalations + general inbound needing a human)
-    try:
-        res = rpc.call_sync(settings, "tasks.list", {"limit": 200}, timeout=120)
-        tasks = res if isinstance(res, list) else res.get("tasks", [])
-        out["tasks"] = [_task_row(t) for t in tasks]
-    except Exception as e:  # noqa: BLE001
-        out["tasks"] = []
-        out["tasks_error"] = f"{type(e).__name__}: {e}"
+    with _stage("tasks.list"):
+        try:
+            res = rpc.call_sync(settings, "tasks.list", {"limit": 200}, timeout=120)
+            tasks = res if isinstance(res, list) else res.get("tasks", [])
+            out["tasks"] = [_task_row(t) for t in tasks]
+        except Exception as e:  # noqa: BLE001
+            out["tasks"] = []
+            out["tasks_error"] = f"{type(e).__name__}: {e}"
 
     # 2a2. Contacts a human has TAKEN OVER (`cs escalated`). Read from the
     #      ledger rather than from the mail sweep, so a takeover on a thread
@@ -234,31 +336,32 @@ def gather(settings) -> dict:
     # human is wanted, so it keeps its address and its reason.
     excluded = getattr(settings, "excluded_campaign_set", set()) or set()
     camps = []
-    try:
-        for c in campaign.list_campaigns(settings):
-            contacts = rpc.call_sync(settings, "campaign.contacts", {"campaign_id": c["id"]})
-            flagged = []
-            outcomes: dict[str, int] = {}
-            for ct in contacts:
-                d = ct.get("dossier") or {}
-                if d.get("escalated"):
-                    flagged.append({
-                        "email": ct["email"], "state": ct["state"],
-                        "escalated": True,
-                        "reason": d.get("escalate_reason"),
-                        "outcome": d.get("outcome"),
-                    })
-                elif d.get("outcome"):
-                    o = str(d["outcome"])
-                    outcomes[o] = outcomes.get(o, 0) + 1
-            camps.append({"campaign": c["name"], "counts": c.get("contacts_by_state"),
-                          "flagged": flagged, "outcomes": outcomes,
-                          # A campaign a dedicated process owns is still shown —
-                          # hiding it would make its escalations invisible — but
-                          # labelled, so nobody works it by mistake.
-                          "excluded": c["name"] in excluded})
-    except Exception as e:  # noqa: BLE001
-        out["campaigns_error"] = f"{type(e).__name__}: {e}"
+    with _stage("per-campaign loop"):
+        try:
+            for c in campaign.list_campaigns(settings):
+                contacts = _campaign_contacts(settings, c)
+                flagged = []
+                outcomes: dict[str, int] = {}
+                for ct in contacts:
+                    d = ct.get("dossier") or {}
+                    if d.get("escalated"):
+                        flagged.append({
+                            "email": ct["email"], "state": ct["state"],
+                            "escalated": True,
+                            "reason": d.get("escalate_reason"),
+                            "outcome": d.get("outcome"),
+                        })
+                    elif d.get("outcome"):
+                        o = str(d["outcome"])
+                        outcomes[o] = outcomes.get(o, 0) + 1
+                camps.append({"campaign": c["name"], "counts": c.get("contacts_by_state"),
+                              "flagged": flagged, "outcomes": outcomes,
+                              # A campaign a dedicated process owns is still shown —
+                              # hiding it would make its escalations invisible — but
+                              # labelled, so nobody works it by mistake.
+                              "excluded": c["name"] in excluded})
+        except Exception as e:  # noqa: BLE001
+            out["campaigns_error"] = f"{type(e).__name__}: {e}"
     out["campaigns"] = camps
 
     # 4. Last cron tick

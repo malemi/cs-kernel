@@ -51,23 +51,111 @@ def _imap_since(dt: datetime) -> str:
     return dt.strftime("%d-%b-%Y")
 
 
+class ChunkFetchFailed(Exception):
+    """A batched header FETCH came back non-OK, so `chunk` messages are missing.
+
+    Raised rather than swallowed. The old behaviour was `continue`, which
+    discarded up to 200 messages per failure and returned a SHORT LIST that
+    looks exactly like a complete one — and every caller here answers a question
+    where a short list means "nothing found": has this contact written to us,
+    who is still waiting. An absence nobody established is the failure mode
+    `cs/mailboxes.py` exists to prevent, so it is never inferred from a read
+    that did not happen.
+
+    Callers catch this and report it. What they must NOT do is fold it into a
+    channel that already means something else — see `cs/unanswered.py`'s
+    `read_incomplete`, which is separate from `note` for exactly that reason."""
+
+
 def _fetch_headers(M, ids, chunk: int = 200):
     """Batch BODY.PEEK header FETCH over a list of UID byte-strings, yielding
     parsed email.message objects. One FETCH per `chunk` UIDs (not one per UID) —
-    the bulk path. Read-only (PEEK)."""
+    the bulk path. Read-only (PEEK).
+
+    Raises `ChunkFetchFailed` if any chunk comes back non-OK."""
     out = []
     for i in range(0, len(ids), chunk):
-        batch = b",".join(ids[i : i + chunk])
+        batch = ids[i : i + chunk]
         typ, data = M.uid(
             "FETCH",
-            batch,
-            "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
+            b",".join(batch),
+            "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC BCC SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
         )
         if typ != "OK" or not data:
-            continue
+            raise ChunkFetchFailed(
+                f"a batched header FETCH over {len(batch)} message(s) returned "
+                f"{typ!r} — those messages were not read"
+            )
         for part in data:
             if isinstance(part, tuple) and part[1]:
                 out.append(email.message_from_bytes(part[1], policy=policy.default))
+    return out
+
+
+def headers_for_addresses_on(M, addrs, key: str, flag: str, default: str,
+                             since=None) -> list[dict]:
+    """Every message in one folder involving ANY of `addrs`, in ONE search plus
+    chunked header FETCHes — the bulk twin of `sent_to_on` / `inbound_since_on`.
+
+    Those two answer about ONE address and issue one FETCH round trip per
+    matching UID. Asked once per contact per mailbox that is O(contacts x
+    mailboxes x messages) round trips, and on a mailbox that holds one of the
+    contacts' own sent history it was 21,637 of them for a single pair. This
+    asks the whole question once: `OR`-composed SEARCH, then `_fetch_headers`.
+
+    `key` is "TO" (Sent) or "FROM" (All Mail). Rows carry `date`, `subject`,
+    `message_id` and `matched` — the address this row is evidence about, which
+    is what makes bucketing possible in the caller.
+
+    **Matching is reproduced, not assumed.** Measured against Gmail: a `TO`
+    search matches the Cc header too (37 To / 14 Cc / 0 Bcc over one Sent
+    folder), so the To-side bucket reads To+Cc; a `FROM` search matched the
+    From header and nothing else (133 of 133), so the From-side bucket reads
+    From. Substring matching was refuted (0 hits over 25 contacts). `Bcc` is
+    fetched but never bucketed on: whether the server matches it is unknown —
+    no message in the sampled folder carries one — so a Bcc-only match is
+    REPORTED rather than silently counted or silently dropped."""
+    addrs = [a for a in addrs if a]
+    if not addrs:
+        return []
+    folder = _find_folder(M, flag, default)
+    M.select(f'"{folder}"', readonly=True)
+
+    terms: list = []
+    for a in addrs[:-1]:
+        terms += ["OR", key, a]
+    terms += [key, addrs[-1]]
+    if since is not None:
+        terms += ["SINCE", _imap_since(since)]
+    typ, d = M.uid("SEARCH", None, *terms)
+    ids = d[0].split() if (typ == "OK" and d and d[0]) else []
+    if not ids:
+        return []
+
+    wanted = {a.lower() for a in addrs}
+    fields = ("To", "Cc") if key == "TO" else ("From",)
+    out = []
+    for h in _fetch_headers(M, ids):
+        hit = set()
+        for f in fields:
+            hit |= {e.lower() for _n, e in getaddresses([str(h.get(f) or "")])}
+        matched = sorted(hit & wanted)
+        row = {
+            "date": h.get("Date"),
+            "subject": h.get("Subject"),
+            "message_id": str(h.get("Message-ID") or ""),
+        }
+        if matched:
+            for a in matched:
+                out.append({**row, "matched": a})
+            continue
+        # The server returned it and none of the bucketed headers explain why.
+        # Measured cause when it happens: the address is in Bcc. Reported, not
+        # counted — an unknown resolved silently in either direction is the
+        # thing this module exists to stop.
+        bcc = {e.lower() for _n, e in getaddresses([str(h.get("Bcc") or "")])}
+        for a in sorted(bcc & wanted):
+            out.append({**row, "matched": a, "bcc_only": True})
     return out
 
 
@@ -157,6 +245,17 @@ def sent_to(settings: Settings, addr: str, days: int | None = None) -> list[dict
 #: copy sent and one left behind), and the other verdicts still cover it.
 BODY_MATCH_SCAN = 20
 
+#: Bytes of each Sent message fetched for the duplicate comparison.
+#:
+#: `BODY.PEEK[]` pulls the entire MIME tree, attachments included: 86 MiB over a
+#: 120-message sample, ~717 KiB per message, to compare a body `_normalise`
+#: truncates at BODY_MAX characters. A bounded prefix carries the headers and
+#: the leading text part — attachments come after — and is parsed by exactly the
+#: same code, so no MIME reconstruction is involved and nothing about the
+#: comparison changes. Measured over that sample: byte-identical `_normalise`
+#: output on 120 of 120 messages, 1.8% of the bytes, 162s -> 24s.
+BODY_PREFIX_BYTES = 65536
+
 
 def sent_body_match(settings: Settings, addr: str, body: str,
                     limit: int = BODY_MATCH_SCAN) -> tuple[dict | None, str | None]:
@@ -195,18 +294,38 @@ def sent_body_match(settings: Settings, addr: str, body: str,
         return None, (f"the draft to {addr} is longer than {BODY_MAX} characters "
                       f"— too long to compare against Sent without risking a "
                       f"false match, so it was not compared")
-    M = _imap(settings)
+    # The SHARED session, not a private login. Every other reader here reuses
+    # `mailboxes.session()`; this one opened its own TLS+LOGIN and logged out
+    # again on every call — 1.22s of the cost of each one, paid once per draft.
+    from . import mailboxes
+
+    M = mailboxes.session(settings, mailboxes.operator_mailbox(settings))
     try:
         sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
         M.select(f'"{sent}"', readonly=True)
         typ, d = M.uid("SEARCH", None, "TO", addr)
         ids = d[0].split() if (typ == "OK" and d and d[0]) else []
         scanned = list(reversed(ids))[:limit]
-        for uid in scanned:
-            typ, md = M.uid("FETCH", uid, "(BODY.PEEK[])")
-            if typ != "OK" or not md or not isinstance(md[0], tuple) or not md[0][1]:
+        if not scanned:
+            # Nothing has been sent to this address, so no copy can exist —
+            # and an empty sequence-set is not a FETCH the server accepts.
+            return None, None
+        truncated = 0
+        # ONE round trip for the whole scan, not one per message. Bounding the
+        # prefix made each fetch small, which moved the cost back onto the
+        # round trips themselves: 20 of them per contact, once per draft.
+        typ, md = M.uid("FETCH", b",".join(scanned),
+                        f"(BODY.PEEK[]<0.{BODY_PREFIX_BYTES}>)")
+        if typ != "OK" or not md:
+            return None, (f"could not read the messages sent to {addr} "
+                          f"(FETCH returned {typ!r}), so no duplicate check "
+                          f"was made")
+        for part in md:
+            if not isinstance(part, tuple) or not part[1]:
                 continue
-            msg = email.message_from_bytes(md[0][1], policy=policy.default)
+            if len(part[1]) >= BODY_PREFIX_BYTES:
+                truncated += 1
+            msg = email.message_from_bytes(part[1], policy=policy.default)
             delivered, _files = _body_and_attachments(msg)
             if delivered and delivered == wanted:
                 return {
@@ -218,12 +337,19 @@ def sent_body_match(settings: Settings, addr: str, body: str,
             return None, (f"read the newest {len(scanned)} of {len(ids)} messages "
                           f"sent to {addr} — an older identical copy would not "
                           f"have been seen")
+        if truncated:
+            # A miss, never a false match: the comparison is exact equality, so
+            # a body cut short can only fail to match. Said out loud anyway —
+            # a limit nobody is told about reads as "checked everything".
+            return None, (f"{truncated} message(s) to {addr} are longer than "
+                          f"{BODY_PREFIX_BYTES} bytes and were compared on their "
+                          f"first {BODY_PREFIX_BYTES}; a duplicate whose text "
+                          f"begins beyond that would not have been seen")
         return None, None
     finally:
-        try:
-            M.logout()
-        except Exception:
-            pass
+        # The session is shared and stays open for the rest of the run; closing
+        # it here is what made every call pay a fresh login.
+        pass
 
 
 def correspondence(settings: Settings, addr: str) -> list[dict]:

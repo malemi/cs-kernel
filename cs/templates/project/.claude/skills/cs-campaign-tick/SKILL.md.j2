@@ -183,7 +183,13 @@ judgment and route:
   .venv/bin/python -m cs draft-reply "reply in the thread with <email>: <brief intent>"
   ```
   `draft-reply` stores a DRAFT and cannot send (the operator reviews & sends).
-  Then mark the contact engaged:
+  **Check it actually succeeded before marking anything.** A non-zero exit
+  means the engine reported failure on that turn (`error` / `error_detail` on
+  stderr) and NO draft was composed — do not mark the contact `engaged` on a
+  turn that produced nothing. Treat that case like the escalation branch
+  below instead: note the engine failure, leave the contact untouched, list
+  it under "Escalations (need you):". Only on success, mark the contact
+  engaged:
   ```bash
   .venv/bin/python -m cs campaign mark <contact_id> --state replied --dossier '{"outcome":"engaged"}' --commit
   ```

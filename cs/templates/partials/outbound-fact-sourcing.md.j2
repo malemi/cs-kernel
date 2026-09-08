@@ -27,3 +27,10 @@ fact out of whatever artifact happens to be nearby. When every source comes back
 empty, that is the answer: say we do not have it, or put the question to the
 operator. An unanswered question costs a round trip; an invented one is sent to
 a customer over this company's name.
+
+**A non-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,
+not a second "empty."** It means the engine itself reported failure on that turn
+— `error` / `error_detail` on stderr — and stdout carries nothing, so there is
+no text to mistake for a real answer. Treat it exactly like an empty search for
+sourcing purposes: try the next source. If it was the last one, say the engine
+turn failed, not that the answer is unknown or that nothing was found.

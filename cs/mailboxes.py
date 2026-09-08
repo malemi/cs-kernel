@@ -109,6 +109,31 @@ class Unreadable:
         return f"{who} — {self.reason}"
 
 
+@dataclass(frozen=True)
+class Skipped:
+    """One mailbox this process DELIBERATELY did not read, and why.
+
+    Distinct from `Unreadable` on purpose, and the distinction is load-bearing.
+    `Unreadable` is a failure: a send gate refuses on it
+    (`cs/campaign.py` `_evidence_refusal`), every `ready` draft row carries it
+    as `evidence_incomplete`, and the operator is told to go fix a credential.
+    A skip is none of that — it is a mailbox we chose not to ask because asking
+    it could not produce evidence. Recording a skip as `Unreadable` would
+    refuse every campaign send to a colleague's address, forever, over nothing.
+
+    But it is not `read` either: `scope_line()` printing "4 of 4 read" when one
+    was skipped is precisely the invisible narrowing this module exists to
+    prevent. So: a third outcome, named and printed."""
+
+    account: str
+    address: str
+    reason: str
+
+    def describe(self) -> str:
+        who = f"{self.account} <{self.address}>" if self.address else self.account
+        return f"{who} — {self.reason}"
+
+
 @dataclass
 class Fanout:
     """The answer plus the scope it was answered from.
@@ -121,9 +146,13 @@ class Fanout:
     rows: list[dict]
     read: list[str]
     unreadable: list[Unreadable]
+    skipped: list[Skipped] = field(default_factory=list)
 
     @property
     def complete(self) -> bool:
+        # A deliberate skip does NOT make a scope incomplete: nothing was lost,
+        # because the mailbox could not have answered the question. Only a
+        # mailbox we wanted and could not open does.
         return not self.unreadable
 
     def scope_line(self) -> str:
@@ -131,10 +160,21 @@ class Fanout:
 
         A scope that can silently narrow is the incident; a scope that narrows
         visibly is a fact the operator can act on."""
-        total = len(self.read) + len(self.unreadable)
-        line = f"scope: {len(self.read)} of {total} mailbox(es) read"
+        # Distinct mailboxes, because a mailbox can be BOTH read and partially
+        # skipped — read for the other contacts, not asked about its own owner.
+        # Counting it twice printed "2 of 3" over two mailboxes, which is the
+        # same misleading arithmetic this line exists to prevent, inverted.
+        names = set(self.read)
+        names |= {u.address or u.account for u in self.unreadable}
+        names |= {k.address or k.account for k in self.skipped}
+        line = f"scope: {len(self.read)} of {len(names)} mailbox(es) read"
         if self.read:
             line += " — " + ", ".join(self.read)
+        if self.skipped:
+            # Named, never folded into the denominator silently: "3 of 3" when
+            # a fourth was skipped is the invisible narrowing itself.
+            line += "; not asked about their own owner: " + "; ".join(
+                k.describe() for k in self.skipped)
         if self.unreadable:
             line += "; UNREADABLE, so this answer is INCOMPLETE: " + "; ".join(
                 u.describe() for u in self.unreadable
@@ -162,6 +202,10 @@ class Fanout:
                 "unreadable": [
                     {"account": u.account, "address": u.address, "reason": u.reason}
                     for u in self.unreadable
+                ],
+                "skipped": [
+                    {"account": k.account, "address": k.address, "reason": k.reason}
+                    for k in self.skipped
                 ],
                 "complete": self.complete,
             },
@@ -481,6 +525,70 @@ def _fan(
             rows.append({**row, "mailbox": mb.address})
         read.append(mb.address)
     return Fanout(rows=rows, read=read, unreadable=failed)
+
+
+def headers_since_across(settings: Settings, addrs: Iterable[str], key: str,
+                         since=None) -> Fanout:
+    """Every message involving any of `addrs`, across every mailbox in scope —
+    ONE search + chunked FETCH per mailbox, and a mailbox is never asked about
+    its OWN owner.
+
+    **NOT a drop-in for `sent_to_across` / `inbound_since_across`, and a SEND
+    GATE MUST NOT CALL IT.** It sits beside them and returns the same `Fanout`
+    they consume, so it will read like one. It is not: it applies the
+    self-exclusion below, and inside a gate that exclusion empties `replies`
+    for a colleague contact, which short-circuits past the send branches in
+    `cs/campaign.py` and moves that contact from no-send to send. Widening a
+    send path is not something a read optimisation may do. This exists for
+    `cs/draft_state.reconcile`, which is read-only and human-supervised.
+
+    **The self-exclusion.** A mailbox is not asked about its own owner. Asking
+    a colleague's own mailbox "has this colleague written" matches their entire
+    sent history — measured once at 21,637 messages against 49 for all other
+    contacts in that folder combined — and every one of those then reads as
+    "they wrote again", so a draft addressed to a colleague is marked
+    `overtaken` because they mailed *somebody*. The question is whether they
+    wrote TO US, and a person's own outbox cannot answer it. Nothing is lost: a
+    message they genuinely sent us is in the RECIPIENT's mailbox too, and every
+    in-scope recipient is already in the fan.
+
+    The skip is reported as `Fanout.skipped` — never `unreadable`, which would
+    make the send gates refuse that colleague forever, and never silence, which
+    would print "3 of 3 read" over a scope that narrowed."""
+    boxes, bad = readable(settings)
+    addrs = [a.strip().lower() for a in addrs if a and a.strip()]
+    flag, default = ("\\sent", "[Gmail]/Sent Mail") if key == "TO" else (
+        "\\all", "[Gmail]/All Mail")
+
+    rows: list[dict] = []
+    read: list[str] = []
+    failed = list(bad)
+    skipped: list[Skipped] = []
+    for mb in boxes:
+        mine = mb.address.strip().lower()
+        ask = [a for a in addrs if a != mine]
+        if not ask:
+            skipped.append(Skipped(
+                mb.account, mb.address,
+                "every address asked about is this mailbox's own owner — its "
+                "own outbox cannot say whether they wrote to us"))
+            continue
+        try:
+            M = session(settings, mb)
+            got = gmail_archive.headers_for_addresses_on(
+                M, ask, key, flag, default, since=since)
+        except Exception as e:  # noqa: BLE001 — one mailbox degrades, not the run
+            _drop(mb.address)
+            failed.append(Unreadable(mb.account, mb.address, _reason(e, mb.password)))
+            continue
+        for row in got:
+            rows.append({**row, "mailbox": mb.address})
+        read.append(mb.address)
+        if len(ask) < len(addrs):
+            skipped.append(Skipped(
+                mb.account, mb.address,
+                f"not asked about its own owner {mb.address}"))
+    return Fanout(rows=rows, read=read, unreadable=failed, skipped=skipped)
 
 
 def sent_to_across(settings: Settings, addr: str, days: int | None = None) -> Fanout:

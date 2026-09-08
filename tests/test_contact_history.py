@@ -460,11 +460,29 @@ def _test_fanout_tags_rows_and_names_what_it_could_not_read() -> None:
     # (8) exactly two readers are fanned out, and they are the two that decide
     # nothing from "is this us".
     fanned = {n for n in dir(mailboxes) if n.endswith("_across")}
-    assert fanned == {"sent_to_across", "inbound_since_across"}, (
+    # `headers_since_across` is the third, and it is the EXCEPTION that proves
+    # the rule: it DOES decide from "is this us" — it refuses to ask a mailbox
+    # about its own owner. That is safe for `reconcile`, which is read-only,
+    # and unsafe for a send gate, where emptying the evidence moves a contact
+    # from no-send to send. So it is admitted here only together with the
+    # assertion below that its docstring carries that prohibition — extending
+    # the guard, never retiring it.
+    assert fanned == {"sent_to_across", "inbound_since_across",
+                      "headers_since_across"}, (
         f"unexpected fan-out surface {fanned}: `thread_with` and "
         "`inbound_recent` derive direction from settings.email_address and "
         "would misattribute every message in another mailbox"
     )
+    # Whitespace-normalised on purpose: the phrase wraps across lines in the
+    # source, and a guard that a reflow can silently disarm is not a guard.
+    doc = " ".join((mailboxes.headers_since_across.__doc__ or "").split())
+    assert "SEND GATE MUST NOT CALL IT" in doc, (
+        "`headers_since_across` applies a self-exclusion that is unsafe inside "
+        "a send gate, and it returns the same Fanout type the gates already "
+        "consume — so it reads as a drop-in. The prohibition has to be on the "
+        "function, where the next caller will look."
+    )
+
     for reader in ("thread_with", "inbound_recent"):
         src = gmail_archive.__dict__[reader].__doc__ or ""
         assert "SINGLE-MAILBOX" in src, (

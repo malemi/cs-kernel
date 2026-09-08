@@ -509,16 +509,41 @@ def compute_courtesy(
 
 def sweep(settings: Settings, days: int) -> dict:
     """IMAP-backed sweep: {"open", "handled", "escalated", "resumed",
-    "automatic", "courtesy", "note"}. `handled` rows carry `handled_at` +
-    `handled_reason`; `escalated` rows carry `escalated_at`, `escalated_owner`,
-    `escalated_reason` and `days_escalated`; `courtesy` rows carry the engine's
-    own `reason`; `note` is non-None only when the engine could not answer for
-    some conversation, in which case those threads are read exactly as they were
-    before the engine was ever asked — every message needing a reply."""
+    "automatic", "courtesy", "note", "read_incomplete"}. `handled` rows carry
+    `handled_at` + `handled_reason`; `escalated` rows carry `escalated_at`,
+    `escalated_owner`, `escalated_reason` and `days_escalated`; `courtesy` rows
+    carry the engine's own `reason`.
+
+    **The two degradation channels mean opposite things and must never be
+    merged.**
+
+    `note` is non-None only when the ENGINE could not answer for some
+    conversation, in which case those threads are read exactly as they were
+    before the engine was ever asked — every message needing a reply. That
+    OVER-reports: the list is too wide, and the renderer says so.
+
+    `read_incomplete` is non-None when the MAILBOX could not be read in full —
+    a batched FETCH failed and some messages never entered the sweep at all.
+    That UNDER-reports: the list is too short, and somebody waiting for an
+    answer may simply be missing from it. Routing this into `note` would print
+    the reassuring "every message reads as needing a reply" over a silently
+    short list, which is the opposite of what happened and the dangerous
+    direction — `cs/mailboxes.py:1-16`, and "an unreadable mailbox is not a
+    'no'"."""
     from . import engine_view, gmail_archive
 
-    inbound = gmail_archive.inbound_recent(settings, days)
-    sent = gmail_archive.sent_recent(settings, days)
+    read_incomplete = None
+    try:
+        inbound = gmail_archive.inbound_recent(settings, days)
+        sent = gmail_archive.sent_recent(settings, days)
+    except gmail_archive.ChunkFetchFailed as e:
+        # Degrade, do not raise: `cs/cli.py` calls sweep() with no try, and a
+        # traceback helps nobody. Degrade into `read_incomplete`, never `note`
+        # — see the docstring. With the read short we cannot say who is
+        # waiting, so we say that, rather than printing a confidently empty
+        # queue.
+        read_incomplete = str(e)
+        inbound, sent = [], []
 
     self_addrs = set(settings.self_email_set)
     if settings.email_address:
@@ -578,7 +603,7 @@ def sweep(settings: Settings, days: int) -> dict:
         row["handled_reason"] = (records.get(row["email"]) or {}).get("reason", "")
     return {"open": open_rows, "handled": held, "escalated": mine,
             "resumed": resumed, "automatic": automatic, "courtesy": courtesy,
-            "note": note}
+            "note": note, "read_incomplete": read_incomplete}
 
 
 def open_threads(settings: Settings, days: int) -> list[dict]:

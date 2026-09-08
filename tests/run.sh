@@ -1036,6 +1036,27 @@ step "46. the send gates read every mailbox — and refuse when one cannot be re
 # about to press send, rather than in a footer under the next one.
 if "$VENV/bin/python" "$ROOT/tests/test_send_gates_fanout.py"; then echo "OK"; else echo "FAIL: the cross-mailbox send gates regressed"; FAIL=1; fi
 
+step "46b. a failed batched FETCH is reported, and never wears the engine's excuse"
+# `_fetch_headers` fetches 200 UIDs per round trip and used to answer a non-OK
+# FETCH with `continue` — discarding the chunk and returning a short list that
+# looks complete. Every caller asks a question where short reads as "nothing
+# found". It now raises, and the two consumers degrade DIFFERENTLY on purpose:
+# `cs unanswered`'s existing `note` means the engine could not screen, so the
+# list is too WIDE; a failed mailbox read means it is too SHORT. Printing the
+# first sentence over the second state promises a conservative queue while
+# showing a narrow one, on the verb whose whole output is who is still waiting.
+if "$VENV/bin/python" "$ROOT/tests/test_chunk_fetch_failure.py"; then echo "OK"; else echo "FAIL: a failed batched FETCH is being dropped or mislabelled"; FAIL=1; fi
+
+step "46c. a contact who is also one of our mailboxes is not asked about themselves"
+# A draft to a colleague made the fan-out ask that colleague's OWN All Mail for
+# everything FROM them — their entire sent history. Two costs: one FETCH round
+# trip per message (a `cs review` that never returned in 25 minutes), and a
+# verdict of `overtaken` earned by that colleague having mailed ANYBODY, when
+# the question is whether they wrote TO US. The skip must be real, visible, and
+# never recorded as `unreadable` — which would make every campaign send gate
+# refuse that colleague forever.
+if "$VENV/bin/python" "$ROOT/tests/test_own_mailbox_exclusion.py"; then echo "OK"; else echo "FAIL: the own-mailbox exclusion regressed"; FAIL=1; fi
+
 step "47. cs memory — the ten-store map, resolved on this machine, never contents"
 # The memory layer worked because one operator held it in his head; nothing
 # carried it to the next clone. Guards: build() emits exactly the ten
@@ -1146,6 +1167,48 @@ PYEOF
 then
   FAIL=1
 fi
+
+step "49. cs review's progress trail — stderr only, and two named timeouts"
+# The operator watched `cs review` emit zero bytes for fourteen minutes and
+# could not tell a slow run from a hang; an instrumented run later passed 25
+# minutes still going (docs/execution-plans/2026-09-07-review-latency.md M4).
+# `gather()` now announces each of its stages on stderr as it starts and times
+# it when it finishes, `campaign.contacts` and `engine_view.settled` each
+# carry a named explicit timeout instead of inheriting an unstated default,
+# and a timeout degrades to a line naming the bound rather than a hang or the
+# blank string a bare `asyncio.TimeoutError` prints. Guards: `cs review --json`
+# stdout is unchanged and carries no progress marker — the contract the cron's
+# bootstrap parses — while stderr carries all six stages plus the two nested
+# calls, in order; both named timeouts are asserted directly on the calls they
+# bound; and `gather()` as a whole absorbs a `campaign.contacts` timeout into
+# `campaigns_error` without raising, leaving an earlier stage's result intact.
+if "$VENV/bin/python" "$ROOT/tests/test_review_progress.py"; then echo "OK"; else echo "FAIL: cs review's progress trail or its explicit timeouts regressed"; FAIL=1; fi
+
+step "50. an engine turn that fails is reported, not printed as an answer"
+# `chat.send` can return `metadata.error` on an otherwise-successful JSON-RPC
+# envelope: the transport succeeded, the engine turn did not. `cmd_ask`,
+# `cmd_chat` and `cmd_draft_reply` used to unwrap only `response` and end
+# with a hardcoded `return 0`, so an outage became fluent assistant prose
+# printed to stdout with a success exit code — indistinguishable from a real
+# answer by either stream or status (docs/briefs/2026-09-07-engine-error-exit-code.md).
+# A shared helper now reads `metadata.error`/`metadata.error_detail` — never
+# the text of `response` — and every chat-path verb goes through it: on
+# failure, stderr carries the verdict and the exit code is a NEW, distinct
+# non-zero constant; on success, stdout and exit code are byte-identical to
+# before. Guards: the fixture is the real captured payload shape, not
+# invented; a response carrying the SAME error prose with no `metadata.error`
+# key is asserted a SUCCESS, proving detection cannot have been re-derived
+# from text; and `cmd_draft_reply` is asserted to stop before its
+# post-compose `drafts.list` diff on a failed turn, never printing "composed
+# no new draft" over a real engine outage.
+if "$VENV/bin/python" "$ROOT/tests/test_engine_error_exit_code.py"; then echo "OK"; else echo "FAIL: an engine turn failure is being printed as an answer or exiting 0"; FAIL=1; fi
+
+step "51. the draft review never states an absence it did not establish"
+# Three review findings on the latency work, each a `ready`/`superseded`
+# verdict resting on nothing: a FETCH with an empty sequence-set on every
+# never-contacted address, a Bcc-only match counted as a send, and a failed
+# cross-mailbox read that left `evidence_incomplete` empty on every row.
+if "$VENV/bin/python" "$ROOT/tests/test_review_evidence_gaps.py"; then echo "OK"; else echo "FAIL: the draft review states an absence it never established (empty FETCH, Bcc-only counted, or a failed bulk read reported as complete)"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

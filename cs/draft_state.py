@@ -62,7 +62,7 @@ not cost the operator the whole digest.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parseaddr
 
 from .gmail_archive import _parse_date as parse_mail_date
@@ -220,8 +220,70 @@ def _pair(rows: list[dict]) -> list[dict]:
     return out
 
 
+def _after(rows, composed_at: datetime) -> list[dict]:
+    """Only the messages strictly newer than this draft.
+
+    Every verdict here answers "did anything happen AFTER this draft was
+    composed", and the bulk read is deliberately wider than any one draft's
+    window, so the per-row test is what keeps one row's evidence from leaking
+    into another's."""
+    out = []
+    for m in rows or []:
+        d = parse_mail_date(m.get("date"))
+        if d is not None and d > composed_at:
+            out.append(m)
+    return out
+
+
 def _lookback_days(composed_at: datetime, now: datetime) -> int:
     return max(1, min(MAX_LOOKBACK_DAYS, (now - composed_at).days + 2))
+
+
+def _bulk_across(unreadable: dict[str, str], skipped: dict[str, str],
+                 notes: list[str]):
+    """The default bulk read: ONE search + chunked FETCH per (mailbox, folder)
+    for ALL contacts at once, bucketed by address in memory.
+
+    Replaces a per-contact fan-out that issued one FETCH round trip per matching
+    message. On the reference clone that was >25 minutes and never finished;
+    this shape measures 7.2s over the same four mailboxes.
+
+    Returns `(sent_by_addr, inbound_by_addr)`. Both collectors belong to ONE
+    reconcile run, which is why this is a closure — and the injection contract
+    for `inbound`/`sent` is unchanged, so every fixture that stands in for those
+    reads keeps working."""
+
+    def read(settings, addrs, since):
+        from . import mailboxes
+
+        out = {}
+        for key in ("TO", "FROM"):
+            fan = mailboxes.headers_since_across(settings, addrs, key, since=since)
+            for u in fan.unreadable:
+                unreadable.setdefault(u.address or u.account, u.describe())
+            for k in fan.skipped:
+                skipped.setdefault(k.address or k.account, k.describe())
+            bucket: dict[str, list[dict]] = {}
+            bcc_only: dict[tuple[str, str], int] = {}
+            for row in fan.rows:
+                if row.get("bcc_only"):
+                    # Reported, never counted. Whether the server matched a
+                    # Bcc is unknown, and a row counted here would mint
+                    # `superseded` on evidence nobody established.
+                    k = (row["matched"], row.get("mailbox") or "?")
+                    bcc_only[k] = bcc_only.get(k, 0) + 1
+                    continue
+                bucket.setdefault(row["matched"], []).append(row)
+            for (addr, mailbox), n in sorted(bcc_only.items()):
+                notes.append(
+                    f"{n} message(s) in {mailbox} carry {addr} only in Bcc — "
+                    f"whether the server matched them is unknown, so they were "
+                    f"reported and not counted"
+                )
+            out[key] = bucket
+        return out["TO"], out["FROM"]
+
+    return read
 
 
 def _across_inbound(unreadable: dict[str, str]):
@@ -302,6 +364,15 @@ def reconcile(
     # same mailbox fails for every contact, and one note per row would bury the
     # rows themselves.
     unreadable: dict[str, str] = {}
+    # Mailboxes DELIBERATELY not asked, address -> reason. Kept apart from
+    # `unreadable` because they mean opposite things: unreadable is a failure
+    # that must qualify every `ready` row, a skip is a mailbox that could not
+    # have answered. Both are printed; neither is silent.
+    skipped: dict[str, str] = {}
+    # Whether the caller injected the reads. Injected seams keep the old
+    # per-contact call shape (that is what every fixture speaks); the real path
+    # takes the bulk read below.
+    injected = inbound is not None or sent is not None
     inbound = inbound or _across_inbound(unreadable)
     sent = sent or _across_sent(unreadable)
     settled = settled or engine_view.settled
@@ -330,8 +401,33 @@ def reconcile(
     # Gmail is read once per contact, not once per draft: two drafts to the
     # same person are the common case (a reply and a follow-up), and the
     # answer to "did anything happen since" is a property of the CONTACT.
+    # ONE read for the whole run, bucketed by address — not one per contact.
+    #
+    # The window is derived, not configured: every question here is strictly
+    # "did anything happen AFTER this draft was composed", so the union over all
+    # rows is `min(composed_at) - 3d`. It is deliberately UNCAPPED.
+    # `MAX_LOOKBACK_DAYS` is legitimate as a POST-filter — the per-message Date
+    # test recovers anything the window over-reads — and illegitimate here,
+    # because a SINCE the server applies can never give back what it excluded:
+    # a 200-day-old draft compared over 120 days turns a real `overtaken` into
+    # `ready`.
+    stamps = [r["composed_at"] for r in rows if r["composed_at"]]
+    since = (min(stamps) - timedelta(days=3)) if stamps else None
+    addrs = sorted({r["to"] for r in rows if r["to"]})
+
     inbound_cache: dict[str, list[dict]] = {}
     sent_cache: dict[str, list[dict]] = {}
+    if addrs and not injected:
+        try:
+            sent_cache, inbound_cache = _bulk_across(unreadable, skipped, notes)(
+                settings, addrs, since)
+        except Exception as e:  # noqa: BLE001 — degradation is the contract
+            # Nothing was read, so no absence was established: the whole
+            # scope is unreadable for this run, and every `ready` row below
+            # carries that gap on the row, not only in a note.
+            unreadable.setdefault(
+                "every mailbox in scope",
+                f"the cross-mailbox read failed: {type(e).__name__}: {e}")
     # Keyed by (contact, body): two rows carrying the same text to the same
     # person ask the identical question, and that pair is precisely the
     # duplicate case, so it must cost ONE read and not two.
@@ -382,14 +478,21 @@ def reconcile(
                 row["signal_at"] = _iso(parse_mail_date(hit.get("date")))
                 continue
 
-        if addr not in inbound_cache:
+        if injected and addr not in inbound_cache:
             try:
                 inbound_cache[addr] = inbound(settings, addr, after=composed_at)
             except Exception as e:  # noqa: BLE001
                 inbound_cache[addr] = []
                 notes.append(f"could not read All Mail for {addr}: "
                              f"{type(e).__name__}: {e}")
-        later_in = inbound_cache[addr]
+        # THE DATE TEST LIVES HERE NOW, and it is not optional.
+        #
+        # It used to live inside the per-contact read, which filtered on the
+        # parsed Date before returning — which is why this consumer was a bare
+        # `if later_in:`. The bulk read spans `min(composed_at) - 3d`, wider
+        # than any single row's own date, so without this test every row would
+        # see every other row's later mail and read `overtaken` unconditionally.
+        later_in = _after(inbound_cache.get(addr), composed_at)
         if later_in:
             newest = max(
                 (parse_mail_date(m.get("date")) for m in later_in),
@@ -401,7 +504,7 @@ def reconcile(
             row["signal_at"] = _iso(newest)
             continue
 
-        if addr not in sent_cache:
+        if injected and addr not in sent_cache:
             try:
                 sent_cache[addr] = sent(settings, addr, days=days)
             except Exception as e:  # noqa: BLE001
@@ -410,7 +513,8 @@ def reconcile(
                              f"{type(e).__name__}: {e}")
         later_out = [
             d for d in (
-                parse_mail_date(m.get("date")) for m in sent_cache[addr]
+                parse_mail_date(m.get("date"))
+                for m in (sent_cache.get(addr) or [])
             )
             if d is not None and d > composed_at
         ]
@@ -445,6 +549,16 @@ def reconcile(
         # The key is always present, so a machine reader can trust its absence
         # to mean "complete".
         row["evidence_incomplete"] = list(gaps) if (gaps and row["verdict"] == "ready") else []
+    if skipped:
+        # ON THE PAGE, not only in `Fanout.scope_line()` — reconcile never
+        # calls that, so without this line a colleague's draft would flip from
+        # `overtaken` to `ready` with nothing saying a mailbox was skipped.
+        notes.append(
+            "not every mailbox was asked about every contact — "
+            + "; ".join(skipped.values())
+            + ". A mailbox is never asked about its own owner: its outbox "
+              "cannot say whether that person wrote TO US."
+        )
     if unreadable:
         # The run-level note stays as well: it names the mailbox ONCE for a
         # reader scanning the digest, and it is what says the scope narrowed at

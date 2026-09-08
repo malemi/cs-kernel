@@ -140,21 +140,56 @@ class FakeIMAP:
 
     def uid(self, command, *args):
         if command == "SEARCH":
-            _none, key, value = args
-            self._last = self._rows(key, value)
+            # Two shapes now. The per-address readers send `(None, KEY, value)`.
+            # The bulk reader sends an OR-composed criteria list over every
+            # contact at once, optionally with a trailing SINCE — one search
+            # per (mailbox, folder) instead of one per contact.
+            rest = list(args[1:])
+            since = None
+            if len(rest) >= 2 and rest[-2] == "SINCE":
+                since, rest = rest[-1], rest[:-2]
+            pairs = []
+            i = 0
+            while i < len(rest):
+                if rest[i] == "OR":
+                    i += 1
+                    continue
+                pairs.append((rest[i], rest[i + 1]))
+                i += 2
+            self._last = []
+            self._matched = []
+            for key, value in pairs:
+                for when in self._rows(key, value):
+                    self._last.append(when)
+                    self._matched.append(value)
+            self._since = since
             return "OK", [b" ".join(str(i + 1).encode()
                                     for i in range(len(self._last)))]
         if command == "FETCH":
-            i = int(args[0].decode()) - 1
-            when = self._last[i]
-            raw = (
-                f"Date: {format_datetime(when)}\r\n"
-                f"From: {self.address}\r\n"
-                f"To: {CONTACT}\r\n"
-                f"Subject: an earlier message\r\n"
-                f"Message-ID: <{i}@acme.example>\r\n\r\n"
-            ).encode()
-            return "OK", [(b"1 (BODY[HEADER])", raw)]
+            # A batched FETCH passes a comma-joined sequence set, not one id —
+            # `_fetch_headers` sends `b",".join(batch)`. Handle both, so the
+            # double covers the bulk path as well as the per-UID readers.
+            spec = args[0].decode()
+            parts = []
+            for token in spec.split(","):
+                i = int(token) - 1
+                when = self._last[i]
+                # The bulk reader buckets by parsing To/Cc (a TO search) or
+                # From (a FROM search), so the header has to carry the address
+                # this row actually matched — not a fixed CONTACT.
+                who = (self._matched[i] if getattr(self, "_matched", None)
+                       else CONTACT)
+                frm = who if self.folder and "All" in self.folder else self.address
+                to = self.address if frm == who else who
+                raw = (
+                    f"Date: {format_datetime(when)}\r\n"
+                    f"From: {frm}\r\n"
+                    f"To: {to}\r\n"
+                    f"Subject: an earlier message\r\n"
+                    f"Message-ID: <{i}@acme.example>\r\n\r\n"
+                ).encode()
+                parts.append((b"1 (BODY[HEADER])", raw))
+            return "OK", parts
         raise AssertionError(f"unexpected UID command {command}")
 
     def logout(self):

@@ -364,6 +364,22 @@ def cmd_history(args) -> int:
     return code
 
 
+# `cs unanswered` could not read the whole mailbox. Distinct from 0 so an
+# unattended caller can tell a genuinely empty queue from an unread one — the
+# lesson of `cs ask`, which used to exit 0 while printing an engine error and
+# hid a months-long grounding outage from every cron tick that ran.
+_INCOMPLETE_RC = 3
+
+# A `chat.send` turn came back with the engine's OWN `metadata.error` set —
+# failure reported *inside* a successful JSON-RPC envelope (see
+# `_chat_engine_error` below, which every chat-path verb now goes through).
+# Distinct from `_INCOMPLETE_RC`: that one means a MAILBOX read did not
+# finish; this one means the ENGINE itself reported failure on a turn behind
+# `cs ask` / `cs chat` / `cs draft-reply`. Kept as two codes so a caller does
+# not have to guess which failed from the exit status alone.
+_ENGINE_ERROR_RC = 4
+
+
 def cmd_unanswered(args) -> int:
     # DETERMINISTIC replacement for the flaky LLM discovery query. Enumerate
     # recent inbound (Gmail All Mail, Date-header windowed) and subtract every
@@ -392,17 +408,32 @@ def cmd_unanswered(args) -> int:
         if getattr(args, "all_buckets", False):
             d["crm_note"] = crm_note
             _print_json(d)
-            return 0
+            return _INCOMPLETE_RC if d.get("read_incomplete") else 0
         # The open list, exactly as before: this is the triage skill's PRIMARY
         # candidate feed and its shape is a contract. The out-of-band and
         # taken-over sections below are for the human — a machine reader wants
         # the work it may do, not the explanation of what was left out (and for
         # the taken-over rows the whole point is that it may NOT do them).
         _print_json(rows)
+        if d.get("read_incomplete"):
+            # stdout keeps its contract — a bare JSON list, the shape the triage
+            # skill parses. The failure goes to STDERR and to the EXIT CODE,
+            # because a short list plus a success code is indistinguishable from
+            # "nobody is waiting", and this is the unattended path: the cron tick
+            # reads it with no human to notice the queue looks suspiciously calm.
+            print(f"MAILBOX READ INCOMPLETE: {d['read_incomplete']}\n"
+                  f"The list on stdout is NOT complete — messages that could not "
+                  f"be read are absent from it entirely. Treat it as UNKNOWN, "
+                  f"never as nobody waiting.", file=sys.stderr)
+            return _INCOMPLETE_RC
         return 0
-    if not rows:
+    if not rows and not d.get("read_incomplete"):
         # The re-labelled rows below ARE unanswered inbound, so an unqualified
         # "none" above a list of them would read as a contradiction.
+        #
+        # Suppressed entirely when the mailbox read failed: "no unanswered
+        # inbound" is a POSITIVE claim about an empty queue, and the `!!` footer
+        # below would then be retracting a headline we had no business printing.
         extra = len(mine) + len(held) + len(resumed) + len(automatic) + len(courtesy)
         print(f"no unanswered inbound in the last {args.days} days"
               + (f" beyond the {extra} listed below" if extra else ""))
@@ -505,6 +536,18 @@ def cmd_unanswered(args) -> int:
         # the sections above exist to separate.
         print(f"\n  (engine unavailable: {d['note']} — no autoresponder was "
               f"recognised, so every message reads as needing a reply)")
+    if d.get("read_incomplete"):
+        # The OPPOSITE degradation from `note`, so it gets its own sentence.
+        # `note` means the list is too WIDE — the engine could not screen, so
+        # everything reads as owed. This means the list is too SHORT: the
+        # mailbox read failed part-way and those messages never entered the
+        # sweep, so somebody waiting may simply not be here. Printing the
+        # `note` wording over this state would promise a conservatively wide
+        # queue while showing a silently narrow one.
+        print(f"\n  !! MAILBOX READ INCOMPLETE: {d['read_incomplete']}")
+        print("     This list is NOT the full picture — messages that could not "
+              "be read are absent from it entirely, so read a short or empty "
+              "queue as UNKNOWN, not as nobody waiting.")
     return 0
 
 
@@ -1034,6 +1077,40 @@ def cmd_dossier(args) -> int:
     return 0
 
 
+def _chat_engine_error(res: dict) -> int | None:
+    """Read the engine's OWN machine-readable verdict off a `rpc.chat` result,
+    and report it if the turn failed.
+
+    The engine can report failure *inside* a successful JSON-RPC envelope: an
+    outage (an upstream transport error, a rejected prompt, ...) becomes
+    fluent assistant prose — "I encountered an error processing your
+    message: ..." — printed where an answer belongs, with the real verdict
+    sitting one level down in `metadata.error` / `metadata.error_detail`.
+    Every verb that reads a `chat.send` result (`cs chat`, `cs ask`,
+    `cs draft-reply`) must go through THIS function, and only this function,
+    to decide success vs. failure — never by pattern-matching `response`
+    text, which would be a second implementation of a judgement the engine
+    already publishes (the operator charter's rule that the engine is
+    authoritative for what it owns). `metadata` can be absent entirely on a
+    genuine success (the `CS_LLM_ROUTE=direct` path in `rpc.chat` returns
+    `{"response": ...}` with no `metadata` key at all) — that reads as
+    success, same as `metadata` present with no `error` key.
+
+    Returns the exit code to use when the turn failed (after printing `error`
+    and `error_detail` to stderr — never stdout, where a real answer prints).
+    Returns `None` when the turn succeeded, the caller's cue to keep going
+    exactly as before.
+    """
+    metadata = (res or {}).get("metadata") or {}
+    error = metadata.get("error")
+    if not error:
+        return None
+    detail = metadata.get("error_detail") or ""
+    print(f"engine error: {error}" + (f": {detail}" if detail else ""),
+          file=sys.stderr)
+    return _ENGINE_ERROR_RC
+
+
 def cmd_chat(args) -> int:
     settings = config.load()
     allow = {t.strip() for t in (args.allow or "").split(",") if t.strip()}
@@ -1041,6 +1118,9 @@ def cmd_chat(args) -> int:
         rpc.chat(settings, args.message, allow_tools=allow, timeout=args.timeout)
     )
     res = out["result"] or {}
+    rc = _chat_engine_error(res)
+    if rc is not None:
+        return rc
     text = res.get("response") or res.get("text") or res
     if isinstance(text, (dict, list)):
         _print_json(text)
@@ -1152,6 +1232,9 @@ def cmd_ask(args) -> int:
     settings = config.load()
     out = asyncio.run(rpc.chat(settings, args.question, allow_tools=set(), timeout=args.timeout))
     res = out["result"] or {}
+    rc = _chat_engine_error(res)
+    if rc is not None:
+        return rc
     text = res.get("response") or res.get("text") or res
     _print_json(text) if isinstance(text, (dict, list)) else print(text)
     return 0
@@ -1221,6 +1304,13 @@ def cmd_draft_reply(args) -> int:
               (rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or [])}
     out = asyncio.run(rpc.chat(settings, args.message, allow_tools=set(), timeout=args.timeout))
     res = out["result"] or {}
+    rc = _chat_engine_error(res)
+    if rc is not None:
+        # No new draft can exist for a turn the engine reports as failed — skip
+        # the drafts.list round trip and the "nothing to mirror" path below,
+        # which would otherwise print a second, misleading explanation over an
+        # engine outage already reported above.
+        return rc
     text = res.get("response") or res.get("text") or res
     if isinstance(text, (dict, list)):
         _print_json(text)
