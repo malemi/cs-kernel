@@ -67,12 +67,15 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   on `124-cs` including fail-closed under a real authentication refusal.
   `send_first` stays deliberately ungated.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
-- **Both clones declare, install and run `v0.41.0`** (2026-09-08; FULL
-  collaudo green on both, 15:47–15:56 UTC, no cron tick inside the window;
-  both `requirements.txt` pin the tag). The CHANGELOG operational-pin marker
-  carries the sign-off. `mario124-cs` (`/home/mal/124/mario124-cs`) is pinned
-  at `v0.35.0`; its tree has no commits and no remote, so that clone's own
-  history starts whenever its operator makes it start.
+- **Both maintained clones declare, install and run `v0.42.0`** (2026-09-08,
+  static tier: `cs --version`, one `cs whoami` and the stamped-file diffs on
+  both; no cron tick inside either update window; both `requirements.txt` pin
+  the tag). The tag is not yet on GitHub, so both venvs were installed from
+  the local checkout; anything that rebuilds a venv from `requirements.txt`
+  before the push fails. The CHANGELOG operational-pin marker carries the
+  sign-off. `mario124-cs` (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`
+  in the pre-`v0.42.0` shape; its tree has no commits and no remote, so that
+  clone's own history starts whenever its operator makes it start.
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and

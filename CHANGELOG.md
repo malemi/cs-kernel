@@ -4,26 +4,21 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-08): **`v0.41.0` on both clones**.
-Each clone took the tag through `cs update` (5 stamped files refreshed, none
-skipped), `cs --version` prints `0.41.0`, `requirements.txt`,
-`template-manifest.json` (`init_data` bare `0.41.0`) and the ARCHITECTURE pin
-row agree, and each regenerated `requirements.lock` resolves the tag to
-`0e50f24` and was installed ALONE into a throwaway `uv venv` (resolving
-`cs-kernel 0.41.0`). The FULL collaudo this entry demands ran on both under
-their `CS_PAUSE` files (15:47–15:56 UTC; no cron tick fell inside the
-window). `124-cs`: whoami, `cs memory` with the engine row
-`reachable`, `cs history` and `cs dossier` 4-of-4 mailboxes (`STOP — already
-written to`), `cs review --json` in **65 s** with 51 rows where the previous
-kernel was killed at 1500 s with zero bytes, `cs unanswered` rc 0, and the
-production grounding `cs ask` that had overflowed the model window since at
-least June answered in 45 s on the deployed engine (`mrcall-desktop`
-`2af67a5`; second call 40,099 estimated tokens, no truncation). `mrcall-cs`:
-whoami, memory, plan, campaign packs, handled, escalated, unanswered,
-`cs review --json` in 138 s (49 drafts, 15 tasks, 4 campaigns), `cs.db` md5
-unchanged across every read verb, `ext/` suite 238 passed. Not re-run: the
-fail-closed leg under a live broken credential (the send-gate readers are
-byte-identical to `v0.40.0`, where it was proven).
+**Current operational pin** (2026-09-09): **`v0.42.0` on both clones**.
+Each clone took the tag through `cs update` from the local kernel checkout —
+the tag is not yet on GitHub, so the venvs were installed with
+`git+file:///home/mal/hb/cs-kernel@v0.42.0` while `requirements.txt` and
+`requirements.lock` carry the normal GitHub form at the tag's commit
+`d119dd8`; the GitHub resolution is unproven until the push. What each
+clone observed: `+ AGENTS.md` (a regular file, the charter), `CLAUDE.md`
+superseded by the bootstrap and then replaced by the harness template via
+`/doc-create`, the refreshed skills and docs, no prompt; `git status` shows
+`AGENTS.md` changing from a symlink to a regular file. `cs --version` prints
+`0.42.0`, `template-manifest.json` `init_data` says `0.42.0`, and the
+ARCHITECTURE pin row agrees. Static tier: the diff of every refreshed stamped
+file against its pre-update copy is the filename re-pointing this entry
+describes and nothing else; one `cs whoami` per clone. `mario124-cs`
+(`v0.35.0`) is untouched.
 
 **`124-cs`'s own git history had fallen four minor releases behind what was
 actually installed and rendered on it.** Its last committed re-pin was
