@@ -5,6 +5,19 @@ dated, newest-first. Cold storage: `/doc-start` never reads this file. It
 exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
+## 2026-09-08 — pruned at the v0.41.0 consolidation
+
+Replaced in the living context by the `v0.41.0` state; kept verbatim.
+
+- **Both clones declare, install and run `v0.40.0`** (2026-09-05, verified on
+  the installed package, locks proven by solo-install, FULL collaudo green on
+  both under their `CS_PAUSE` windows). The CHANGELOG
+  operational-pin marker carries the sign-off. `mario124-cs`
+  (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`; its tree has no commits
+  and no remote, so that clone's own history starts whenever its operator makes
+  it start.
+- Next: FULL collaudo on both clones, then tag `v0.41.0` and re-pin them.
+
 ## 2026-09-04 — pruned at the memory-map consolidation
 
 Stable behaviour shipped across v0.31.0–v0.36.0, each with its own CHANGELOG

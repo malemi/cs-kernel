@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: c6cd3b1cf1ae82f06e8533e13f67443635cfe8e8
-doc_baseline_date: 2026-09-05
+doc_baseline_commit: dd7b873579c9203b39bc04afdc2542a4d0e7b593
+doc_baseline_date: 2026-09-08
 ---
 
 # Active Context — cs-kernel
@@ -21,7 +21,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   operator's explicit approval.
 - **`v0.41.0` (2026-09-08, MINOR, FULL tier)**: the review-latency and
   engine-exit-code work of 2026-09-07/08 plus the three review fixes of gate
-  51; 52 gates green at the tag. The engine defect behind the `cs ask`
+  51; all gates green at the tag. The engine defect behind the `cs ask`
   overflow on one clone is fixed and DEPLOYED (`mrcall-desktop` `2af67a5`,
   all five units restarted 15:41 UTC; meta-repo
   `docs/known-issues/2026-09-08-engine-chat-prompt-unbounded.md`).
@@ -90,7 +90,7 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   clone's own active-context.
 - **`mrcall-cs/docs/owner-actions.md` records a stopped-sends posture that is
   not current** — its two send crons were live before and after the upgrade
-  window. That file records the operator's own posture decision, so it is his
+  window, and no `~/.mrcall-cs/CS_PAUSE` file exists. That file records the operator's own posture decision, so it is his
   to reconcile, not the kernel's.
 - **The outbound sourcing rules are proven as rendered text, not as behaviour.**
   Gates hold that they appear once per surface and that no fourth surface can
