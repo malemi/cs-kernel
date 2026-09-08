@@ -19,7 +19,7 @@ kernel was killed at 1500 s with zero bytes, `cs unanswered` rc 0, and the
 production grounding `cs ask` that had overflowed the model window since at
 least June answered in 45 s on the deployed engine (`mrcall-desktop`
 `2af67a5`; second call 40,099 estimated tokens, no truncation). `mrcall-cs`:
-whoami, memory, plan, campaign packs, pending, handled, escalated, unanswered,
+whoami, memory, plan, campaign packs, handled, escalated, unanswered,
 `cs review --json` in 138 s (49 drafts, 15 tasks, 4 campaigns), `cs.db` md5
 unchanged across every read verb, `ext/` suite 238 passed. Not re-run: the
 fail-closed leg under a live broken credential (the send-gate readers are
