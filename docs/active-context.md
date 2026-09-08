@@ -14,19 +14,19 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## State now
 
-- **Latest release tag: `v0.40.0`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.41.0`. Current HEAD status: tagged as `v0.41.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; keep the wording
   and change only the values. Every published tag has a CHANGELOG entry with
   its re-test tier. Releasing, pushing, or upgrading a clone still requires the
   operator's explicit approval.
-- **HEAD carries an unreleased MINOR** (CHANGELOG "Unreleased — next tag
-  v0.41.0"): the review-latency and engine-exit-code work of 2026-09-07/08
-  plus the three review fixes of gate 51; 52 gates green on 2026-09-08. The
-  tag ships after the FULL collaudo on both clones. The engine defect behind
-  the `cs ask` overflow on one clone is fixed in `mrcall-desktop` `main` and
-  not deployed (meta-repo `docs/known-issues/2026-09-08-engine-chat-prompt-unbounded.md`).
-- **The deployed mrcall-desktop engine is `8e5fa2f`** (reconciled 2026-09-08
-  00:00 UTC). All five `zylch-server@` units run it and serve
+- **`v0.41.0` (2026-09-08, MINOR, FULL tier)**: the review-latency and
+  engine-exit-code work of 2026-09-07/08 plus the three review fixes of gate
+  51; 52 gates green at the tag. The engine defect behind the `cs ask`
+  overflow on one clone is fixed and DEPLOYED (`mrcall-desktop` `2af67a5`,
+  all five units restarted 15:41 UTC; meta-repo
+  `docs/known-issues/2026-09-08-engine-chat-prompt-unbounded.md`).
+- **The deployed mrcall-desktop engine is `2af67a5`** (deployed 2026-09-08
+  15:41 UTC). All five `zylch-server@` units run it and serve
   `settings.get_secret`.
   Engine deployment means checkout HEAD plus restarted processes, never a pull
   alone.

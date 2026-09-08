@@ -166,7 +166,7 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
-## Unreleased — next tag v0.41.0 (MINOR)
+## v0.41.0 — 2026-09-08 (MINOR)
 
 **`cs review` finishes, three verdicts stop being wrong, and an engine failure
 is an exit code.** On the reference clone `cs review --json` never returned
