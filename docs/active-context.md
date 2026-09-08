@@ -58,13 +58,12 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   on `124-cs` including fail-closed under a real authentication refusal.
   `send_first` stays deliberately ungated.
   [Work trace](execution-plans/2026-09-01-contact-history-across-mailboxes.md).
-- **Both clones declare, install and run `v0.40.0`** (2026-09-05, verified on
-  the installed package, locks proven by solo-install, FULL collaudo green on
-  both under their `CS_PAUSE` windows). The CHANGELOG
-  operational-pin marker carries the sign-off. `mario124-cs`
-  (`/home/mal/124/mario124-cs`) is pinned at `v0.35.0`; its tree has no commits
-  and no remote, so that clone's own history starts whenever its operator makes
-  it start.
+- **Both clones declare, install and run `v0.41.0`** (2026-09-08; FULL
+  collaudo green on both, 15:47–15:56 UTC, no cron tick inside the window;
+  both `requirements.txt` pin the tag). The CHANGELOG operational-pin marker
+  carries the sign-off. `mario124-cs` (`/home/mal/124/mario124-cs`) is pinned
+  at `v0.35.0`; its tree has no commits and no remote, so that clone's own
+  history starts whenever its operator makes it start.
 - **The provider-routing seam is partial.** The send guard can call a direct
   classifier through `cs/worker_llm.py`; general `role=` routing remains opt-in
   through `CS_LLM_ROUTE`. Kernel-owned LLM work must stay fixed-output and
@@ -72,6 +71,13 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
 
 ## Unresolved
 
+- **`cs unanswered` disagreed with the Sent-archive evidence on six contacts**
+  in a `124-cs` operator tick (2026-09-08 17:48 UTC, kernel `v0.41.0`): it
+  listed three contacts whose last message had been answered and omitted
+  three who were waiting. Reported by the tick's own review, not yet
+  reproduced or diagnosed; the verb's answer comes from the engine's
+  `needs_reply` judgement and the operator's screen, so the disagreement is
+  either an engine verdict or a sweep window, not a kernel re-derivation.
 - **Criteria 2–4 of the review-latency brief have no gate**: the three verdict
   corrections are proven by identical live counts across three runs, not by a
   fixture world; the round-trip and message bounds are unasserted.
@@ -108,13 +114,16 @@ and pruned narrative in [`active-context-archive.md`](active-context-archive.md)
   (`templates/project/CLAUDE.md.j2` + the render's `keep_trailing_newline`
   interplay). Cosmetic, observed on both clones at the `v0.40.0` upgrade;
   fix rides the next release.
+- **Shared company memory is decided, not built.** The product brief
+  (meta-repo `docs/briefs/2026-09-05-shared-company-memory.md`, review-approved)
+  lands in `mrcall-desktop`; the kernel's only follow-up, when it ships, is the
+  engine-memory row's authority prose in `cs/memory_report.py`.
 
 ## Next
 
-1. FULL collaudo on both clones, then tag `v0.41.0` and re-pin them.
-2. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
+1. Observe the outstanding collaudo leg — a draft-only campaign tick meeting an
    `evidence_incomplete` refusal — at a cron cycle where one occurs.
-3. Replace internal `re-collaudo` wording still exposed by `cs update` with
+2. Replace internal `re-collaudo` wording still exposed by `cs update` with
    plain operator language.
-4. Promote reusable attachment-reading and scheduling pieces only when a second
+3. Promote reusable attachment-reading and scheduling pieces only when a second
    clone needs them, per the rule of two.
