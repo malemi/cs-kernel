@@ -4,7 +4,7 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-09): **`v0.42.0` on both clones**.
+**Current operational pin** (2026-09-08): **`v0.42.0` on both clones**.
 Each clone took the tag through `cs update` from the local kernel checkout —
 the tag is not yet on GitHub, so the venvs were installed with
 `git+file:///home/mal/hb/cs-kernel@v0.42.0` while `requirements.txt` and

@@ -1,10 +1,16 @@
 ---
-status: active
+status: completed
 started: 2026-09-08
 brief: ../briefs/2026-09-08-clone-harness-v8-shape.md
 ---
 
 # Clones stamp the v8 doc-harness shape — execution plan
+
+**Status: complete.** Kernel `v0.42.0` is tagged locally (`d119dd8`, not pushed;
+55 gates green at the tag) and both maintained clones run it at doc-harness v8
+with a clean `doc-check` (`124-cs` `dffdfa8`, `mrcall-cs` `c492b73`). Every
+milestone passed its integration review and the final end-to-end review
+returned APPROVED on all nine acceptance criteria; the push is the operator's.
 
 <!-- doc-scope:start -->
 Scope: the ordered milestones that move the stamped charter to `AGENTS.md`,
@@ -119,9 +125,10 @@ Two design decisions the brief left to planning:
    - `render_templates` over the legacy shape with a manifest present: same
      result as the update path — the charter is not lost; with no manifest,
      `CLAUDE.md` is kept, because nothing proves it is the kernel's;
-   - the two helpers: `retire_legacy_agents_link` unlinks a symlink, reports
-     it, and never touches a regular file; `install_agent_surfaces` never
-     replaces a real `AGENTS.md` and never creates one.
+   - the helpers: `unlink_if_symlink` removes a symlink at a render target,
+     reports it, and never touches a regular file; `bootstrap_may_land` gates
+     only `CLAUDE.md`; `install_agent_surfaces` never replaces a real
+     `AGENTS.md` and never creates one.
 7. `bash tests/run.sh` green. Integration review of M1 before M2 begins.
 
 ## M2 — stamped surfaces and this kernel's documents

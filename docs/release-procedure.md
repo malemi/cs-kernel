@@ -63,7 +63,7 @@ owner. Not before.
 1. Everything to ship is committed; `bash tests/run.sh` green.
 2. **Release commit**: bump `pyproject.toml`; write the `CHANGELOG.md`
    `## vX.Y.Z` section (why/what/migration/**Re-collaudo tier**, decided by
-   what the release TOUCHES — see `CLAUDE.md`); `active-context.md` claims
+   what the release TOUCHES — see `AGENTS.md`); `active-context.md` claims
    `Latest release tag` + `Current HEAD status: tagged as` the new tag.
 3. `git tag vX.Y.Z` **immediately** (the gate is red in the gap).
 4. `bash tests/run.sh` again — gates verified AT the tag.
