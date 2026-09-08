@@ -19,8 +19,8 @@ verified outcomes instead of forwarding raw problems.
 - Ask only when missing product intent, material risk, irreversible/external
   action, or authority cannot be resolved safely from available evidence.
 - Implement directly when fastest. Delegate only bounded, substantive work
-  whose parallelism, specialist value, or context isolation exceeds coordination
-  and waiting; never delegate a trivial local edit.
+  whose parallelism, specialist value, or context isolation exceeds
+  coordination, waiting, and review; never delegate a trivial local edit.
 - Match investigation, planning, verification, and reporting to risk and blast
   radius. Do not turn a focused change into a broad audit or full-suite run
   without evidence that it is needed.
@@ -43,16 +43,20 @@ Otherwise, substantial development follows these gates in order:
    `APPROVED`; repair `REVISE` findings and re-review.
 3. Write the milestone plan: dependencies, ownership, verification, and risk or
    rollback handling where relevant.
-4. Have a fresh reviewer judge the plan. Do not implement until it returns
-   `APPROVED`; repair `REVISE` findings and re-review.
+4. Have a fresh reviewer judge the plan. Do not delegate or implement until it
+   returns `APPROVED`; repair `REVISE` findings and re-review.
 5. Execute the smallest independently reviewable milestones. Each milestone
    receives an integration review before dependent work begins.
 6. After all milestone reviews pass, run a separate final end-to-end review
    through the final-user path and reconcile docs and plan state.
 
-A brief or plan reviewer may return `FAST_PATH` only by showing that every fast
-path condition holds; the lead then uses direct implementation and one focused
-real check. Reviews are internal engineering gates, never CTO approval prompts.
-Escalate only `BLOCKED`: product intent, material risk, irreversible/external
-action, or authority that evidence cannot resolve. Without a fresh-review
-capability, perform an explicit separate review pass and report that limitation.
+A review returns exactly one of `APPROVED`, `REVISE`, `FAST_PATH`, or
+`BLOCKED`. A brief or plan reviewer may return `FAST_PATH` only by showing that
+every fast path condition holds; the lead then uses direct implementation and
+one focused real check. Reviews are internal engineering gates, never CTO
+approval prompts. Escalate only `BLOCKED`: product intent, material risk,
+irreversible/external action, or authority that evidence cannot resolve.
+Relay a review's verdict and its evidence in your own words rather than pasting
+the report. Continue the same reviewer for a revision at the same gate, and use
+a fresh reviewer for each new gate. Without a fresh-review capability, perform
+an explicit separate review pass and report that limitation.
