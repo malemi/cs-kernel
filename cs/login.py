@@ -46,7 +46,7 @@ from pathlib import Path
 from . import auth
 from . import config
 from . import manifest as manifest_mod
-from .config import Settings
+from .config import ConfigError, Settings
 
 DESCRIPTOR_FILENAME = "cs-descriptor.json"
 REQUIRED_STRING_FIELDS = (
@@ -123,6 +123,71 @@ def descriptor_ws_base(descriptor: dict) -> str:
     url = descriptor["engine_ws_url"].rstrip("/")
     suffix = f"/ws/{descriptor['uid']}"
     return url[: -len(suffix)] if url.endswith(suffix) else url
+
+
+def mint_descriptor(
+    uid: str,
+    settings: Settings,
+    *,
+    resolve_email=None,
+) -> dict:
+    """Synthesize a descriptor for `uid` — the same five fields `cmd_login`
+    reads from a desktop-app-written ``cs-descriptor.json``
+    (`REQUIRED_STRING_FIELDS`) — from this clone's own Firebase
+    service-account key instead. Lets a clone open a session for a
+    colleague's engine profile that has never signed in to the desktop app
+    interactively; the profiles this kernel actually needs are provisioned
+    headless and write no descriptor at all.
+
+    Guards run in this order, each raising ONE handled `ConfigError`:
+
+      1. **Registry** — `uid` must already be a value in
+         `settings.account_map` (`CS_ACCOUNTS`). Reachable with no key and
+         no network: kernel code cannot mint a session for a uid the
+         operator has not written into this clone's own configuration.
+      2. **Email** — resolved through `resolve_email`, an injectable seam
+         (``None`` binds `resolve.resolve_email` lazily) so a unit test can exercise the
+         no-email refusal with a stub, needing neither a key nor an
+         email-less Firebase user.
+      3. **Mint** — `auth.mint_refresh_token` exchanges a locally-signed
+         custom token for a refresh token.
+
+    The tty check and the interactive confirmation belong to the CLI
+    surface that calls this, not here — this stays pure data assembly plus
+    the two guards above, so both are callable from a test with neither a
+    terminal nor a live engine.
+    """
+    if resolve_email is None:
+        # Lazy: `cs/resolve.py` imports `firebase_admin`, and `cs/cli.py`
+        # imports this module for the `login` stub, so binding the default
+        # at module scope would make every verb pay that import.
+        from . import resolve
+
+        resolve_email = resolve.resolve_email
+
+    if uid not in settings.account_map.values():
+        raise ConfigError(
+            f"uid {uid!r} is not declared in this clone's CS_ACCOUNTS "
+            "registry — add it there (CS_ACCOUNTS=name:uid) before minting "
+            "a session for it"
+        )
+
+    email = resolve_email(uid, settings)
+    if email is None:
+        raise ConfigError(
+            f"no Firebase user with an email for uid {uid!r} — cannot mint "
+            "a session without a resolvable address"
+        )
+
+    refresh_token = auth.mint_refresh_token(settings, uid)
+
+    return {
+        "email": email,
+        "uid": uid,
+        "engine_ws_url": settings.engine_ws_url,
+        "firebase_web_api_key": settings.firebase_web_api_key,
+        "refresh_token": refresh_token,
+    }
 
 
 def _identity_conflict(

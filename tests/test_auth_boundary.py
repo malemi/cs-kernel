@@ -12,7 +12,11 @@ Guards:
   (i)   no refresh file at all -> ConfigError naming `cs login`
   (ii)  a refresh file for a DIFFERENT uid -> ConfigError (identity mismatch
         must be caught before any network call is attempted)
-  (iii) `_write_refresh` writes uid-tagged JSON at mode 0600
+  (iii) `_write_refresh` writes uid-tagged JSON at mode 0600, and RETIRES any
+        id-token cache for that account: `get_id_token` reads the cache before
+        the refresh file, so a cache surviving a session write would answer
+        every later call — `cs login`'s own proof included — with the session
+        that was just replaced
   (iv)  a still-valid cached id_token is returned straight from the cache,
         proven by pointing `refresh_token_path` at a directory that does not
         exist: if `get_id_token` ever fell through to the refresh/exchange
@@ -102,6 +106,17 @@ def run() -> None:
         assert mode == 0o600, f"refresh file mode is {oct(mode)}, expected 0o600"
         written = json.loads(p.read_text())
         assert written == {"uid": UID, "refresh_token": "rt-freshly-written"}, written
+
+        # The stale cache must not survive the session that replaced it.
+        cache = Path(settings.token_cache_path)
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(json.dumps({"uid": UID, "id_token": "stale-from-previous"}))
+        auth._write_refresh(settings, "rt-second-session")
+        assert not cache.exists(), (
+            "a session write left the previous id-token cache in place — "
+            "every later call would answer on the replaced session"
+        )
+        assert auth._read_cache(settings) is None, "cache still readable after a session write"
 
     # -- (iv) valid cached id_token returned WITHOUT touching the network -
     with tempfile.TemporaryDirectory() as td:

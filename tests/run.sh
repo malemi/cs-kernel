@@ -633,6 +633,18 @@ step "19. cs login — descriptor parsing, profile scan, known-uid auto-select, 
 # refused (known-uid no-match, nothing written) without --account.
 if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
+step "19b. mint_descriptor — registry and no-email refusals (no key, no network)"
+# cs/login.py::mint_descriptor is the synthesized-descriptor source for a
+# future --mint (no CLI surface yet). Both refusals here sit BEFORE any
+# credential is spent, so both run unconditionally: a uid absent from
+# settings.account_map (CS_ACCOUNTS) refuses naming the uid and the
+# registry, proven with a resolver stub that raises if ever called; a
+# registered uid whose injected resolver returns None refuses naming the
+# uid, proven with a mint stub that raises if ever called. The mint call
+# itself (a real Google round trip) is out of scope for a gate that must
+# always run.
+if "$VENV/bin/python" "$ROOT/tests/test_mint_descriptor.py"; then echo "OK"; else echo "FAIL: mint_descriptor refusals regressed"; FAIL=1; fi
+
 step "20. rendered bin/ scripts are executable (cs init AND cs update)"
 # A rendered file under bin/ (or sourced from a *.sh.j2 template) is a shell
 # script the operator's crontab is told to invoke directly. render_templates
