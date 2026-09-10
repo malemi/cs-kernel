@@ -106,3 +106,12 @@ harness does not send messages; manual paid ticks and live draft creation are
 outside that automated tier and will not be claimed as tested.
 
 Rollout state: pre-upgrade verification active.
+
+### CI prerequisite correction
+
+The published tag's CI run `34496419413` reached gate 53 and failed because
+the GitHub runner had no `uv` executable. Its log contains no other failed gate;
+the same installed-workspace journey passed locally where `uv` was present.
+The workflow now installs `uv` after selecting Python and before the semantic
+suite. This is a CI environment correction only: release-tag contents and
+runtime code stay unchanged. The corrected workflow must pass on the next push.

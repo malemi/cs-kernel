@@ -27,5 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: install workspace test prerequisite
+        run: python -m pip install uv
       - name: semantic gates
         run: bash tests/run.sh
