@@ -285,12 +285,12 @@ later "have we ever done something like this?" is answered by
 | Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
 | “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
 
-### Shared written projects (development)
+### Shared written projects
 
-The `feat/shared-project-memory` source adds revisioned project records in the
-company engine, separate from synthesized entity memory. The current public
-v0.43.0 tag does not include this feature; both updated kernel and engine are
-required. The [implementation plan](docs/execution-plans/2026-09-10-shared-project-memory.md)
+Project records live in the company engine with recoverable revisions, separate
+from synthesized entity memory. Both the kernel's project commands and an engine
+providing `projects.*` RPCs are required; older engines report an upgrade action.
+The [implementation plan](docs/execution-plans/2026-09-10-shared-project-memory.md)
 records acceptance and rollout status.
 
 Use `cs project list` and `cs project show <name>` to read selected records.

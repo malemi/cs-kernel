@@ -171,6 +171,36 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.44.0 — 2026-09-10 (MINOR)
+
+Written project memory now lives in the company engine, separately from entity
+blobs. `cs project new` creates remote records; `list`, `files`, `show` and
+`history` read selected metadata/documents. `checkout` and explicit `save --commit`
+provide editable working copies with immutable revisions, company-space binding,
+conflict refusal and verified retry recovery.
+
+`cs project import <directory> [--all]` previews migration; `--commit` imports
+byte-preserving documents and attachments, verifies read-back and retains source
+folders. Existing different content is refused. Imports/save are capped at 10,000
+files and 128 MiB total, documents at 4 MiB. Working-copy metadata has a separate
+64 MiB bound so supported large projects remain editable. Deletion and automatic
+blob extraction are not part of this release.
+
+The canonical customer skill, memory map and new `docs/project-memory.md` guide
+address shared records; new workspaces no longer create `docs/projects/` folders.
+Old folders remain recoverable source data until explicitly imported. All three
+agent surfaces resolve the same workflow. Company-join preserves compatible
+history and refuses divergent project histories rather than dropping records.
+
+Migration requires the companion engine's `projects.*` RPCs (hosted engine source
+`b875cb5`); an older engine reports an actionable upgrade requirement, never a
+silent local fallback. No new model calls, mail sends or authentication scheme.
+
+**Re-collaudo tier: FULL on both maintained clones.** Shared-memory join and
+customer workflow boundaries changed. The release requires fresh baseline
+comparisons, installed-tag verification, lock-only reconstruction and additive
+production import verification; no live draft/send or paid agent tick is implied.
+
 ## v0.43.0 — 2026-09-10 (MINOR)
 
 Desktop-to-workspace setup now accepts an explicit `cs init --descriptor PATH`,
