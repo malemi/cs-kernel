@@ -60,6 +60,14 @@ engine identity and shared-memory access. 124 is ready; MrCall has fourteen
 messages awaiting preparation at the release check. Evidence lives in
 [the delivery plan](execution-plans/2026-09-10-desktop-workspace-setup.md).
 
+**Shared written projects (development).** Project documents are moving from
+clone `docs/projects/` folders to revisioned company-engine storage, separate
+from entity blobs. The work includes explicit import, checkout/save and selective
+reads; source directories remain available for recovery. This is not a claim
+that the installed v0.43.0 kernel already supports these commands. The
+[brief](briefs/2026-09-10-shared-project-memory.md) and
+[plan](execution-plans/2026-09-10-shared-project-memory.md) own current acceptance.
+
 ## Unresolved
 
 - An operator report dated 2026-09-08 found six disagreements between

@@ -35,7 +35,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from . import campaign_pack, config as config_mod, project_memory
+from . import campaign_pack, config as config_mod
 from .config_report import tilde as _tilde
 
 # Connection-level only: long enough that a briefly slow engine host is not
@@ -105,8 +105,7 @@ def _resolve_company_notes(settings: Any) -> tuple[str, str]:
 
 
 def _resolve_dossiers(settings: Any) -> tuple[str, str]:
-    p = Path.cwd() / project_memory.PROJECTS_DIR
-    return _tilde(p), _present(p)
+    return "RPC: projects.list / projects.read", "not probed — needs an authenticated session"
 
 
 def _resolve_campaign_packs(settings: Any) -> tuple[str, str]:
@@ -203,11 +202,11 @@ STORES: tuple[Store, ...] = (
     ),
     Store(
         "dossiers",
-        "Dossiers (docs/projects/<name>/)",
+        "Shared written projects",
         "History and judgement about a project. Secondary — never 'what "
         "we know' on its own.",
-        "the files, `/cs-customer`",
-        "`cs project new`, then the operator via git",
+        "`cs project show`, the customer skill",
+        "`cs project new/import/save` (company engine, immutable revisions)",
         _resolve_dossiers,
     ),
     Store(

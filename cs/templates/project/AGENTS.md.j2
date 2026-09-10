@@ -41,7 +41,7 @@ from the kernel and parameterised by this repo's `manifest.toml`.
 This repo is a **stamped clone of `cs-kernel`**. **Template-owned — edit them in
 the kernel template (`cs-kernel/cs/templates/project/…`), never here**, or the
 change drifts and `cs update` overwrites it: `AGENTS.md` (this charter) ·
-`README.md` · `docs/ARCHITECTURE.md` · `docs/projects/README.md` ·
+`README.md` · `docs/ARCHITECTURE.md` · `docs/project-memory.md` ·
 `.claude/settings.json` · `.claude/skills/*` · `bin/cs_operator_cron.sh` ·
 `.env.example` · `.gitignore` · `requirements.txt`.
 
@@ -55,9 +55,13 @@ template, and that harness — never the kernel — also owns `docs/.doc-profile
 **Clone-owned — edit freely here:** `manifest.toml` (the declared per-company
 variance, the ONE place values change) · `company/*.md` (the *file* is templated,
 its **content is yours** to author) · `campaigns/<name>/` (pack content) ·
-`docs/projects/<name>/` (per-project working folders) · `.env` · `ext/`.
+`.env` · `ext/`.
 
-Rule of thumb: **behavior/shape → kernel template; company data → clone.** A change
+Written project records live in the shared engine through `cs project`; local
+`.project-work/` checkouts are editable copies, never the authority.
+
+Rule of thumb: **behavior/shape → kernel template; shared project records → engine;
+clone configuration and campaign packs → clone.** A change
 that would help every clone belongs in `cs-kernel` (rule of two + anti-fork charter).
 
 ## 0b. The engine is authoritative for what it owns
@@ -219,14 +223,16 @@ that is deliberate, and it is why the scope is printed on every answer.
 
 ## 9. What we know — engine memory first (do not be a goldfish)
 
-A question about a **customer / prospect / integration** needs BOTH layers, in
-this order: **engine memory** (primary, live — `cs ask` on the account that owns
-the relationship, often not the default `{{ accounts_default }}@` box), then the **dossier
-files** under `docs/projects/<name>/` (secondary — see
-[`docs/projects/README.md`](docs/projects/README.md)). Never answer from
-`docs/projects/` alone and call it "what we know". **`/cs-customer <name>` does
-the whole load** and is mandatory before customer work; it also owns the
-write-back path that keeps memory and dossier aligned.
+A question about a **customer / prospect / integration** needs both authored
+project records and entity memory. Orient with `cs project show <name>` (current
+status), then selected project documents, then `cs ask` on the account that owns
+the relationship, often not the default `{{ accounts_default }}@` box. See
+[`docs/project-memory.md`](docs/project-memory.md). Reconcile dates and
+provenance; storing a document in the engine does not make its claims newer
+than other evidence. The `cs-customer` skill performs this load and is mandatory
+before customer work. Its explicit save path preserves authored records and
+keeps entity-memory writes separate. Sourcing an outbound fact follows the
+additional order below.
 
 {% include "outbound-fact-sourcing.md.j2" %}
 
@@ -251,7 +257,8 @@ set — `cs memory` is what states each store's authority.)
 
 **Claude Code's own per-machine memory (`cc-memory`) is authoritative for
 nothing that reaches a customer** — per-developer, not in git, not portable.
-Project knowledge goes to the engine (write it back via `/cs-customer`) or
-to git — dossiers under `docs/projects/`, company facts in `company/*.md` —
-never here.
+Written project records go to the engine through `cs project save`; entity
+facts use the separate memory-write procedure in the customer skill. Clone-wide
+company configuration remains in `company/*.md`. Never keep the only copy in
+an assistant conversation or personal memory.
 

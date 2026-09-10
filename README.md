@@ -279,11 +279,25 @@ later "have we ever done something like this?" is answered by
 
 | You care about | What happens |
 |---|---|
-| Customer context | Skill loads dossier files + **engine memory** |
+| Customer context | Skill loads shared written projects + **entity memory** |
 | Memory over time | Engine keeps relationships as mail is synced and you work |
 | Replies | Written end-to-end; land in Drafts until you open the autonomy dial |
 | Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
 | “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
+
+### Shared written projects (development)
+
+The `feat/shared-project-memory` source adds revisioned project records in the
+company engine, separate from synthesized entity memory. The current public
+v0.43.0 tag does not include this feature; both updated kernel and engine are
+required. The [implementation plan](docs/execution-plans/2026-09-10-shared-project-memory.md)
+records acceptance and rollout status.
+
+Use `cs project list` and `cs project show <name>` to read selected records.
+`cs project checkout <name> .project-work/<name>` creates an editable copy;
+`cs project save .project-work/<name> --commit` saves verified revisions.
+Import existing folders with `cs project import docs/projects --all` (preview),
+then `--commit`; originals are retained and existing divergent data is refused.
 
 ### How memory gets rich
 

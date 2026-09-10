@@ -97,7 +97,7 @@ def _new(client, settings, args):
         verified_paths.add(path)
     print(f'Created {name} in company memory ({len(files)} files).')
     print(f'Open its status: cs project show {name}')
-    print(f'Edit a working copy: cs project checkout {name} ./project-{name}')
+    print(f'Edit a working copy: cs project checkout {name} .project-work/{name}')
 
 
 def cmd_project(args):

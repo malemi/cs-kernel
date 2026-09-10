@@ -94,6 +94,8 @@ report excluded generated caches (`__pycache__`, `.pyc`, `.DS_Store`, `.git`);
 reject sensitive `.env` paths rather than uploading them. Refuse symlinks and
 unsupported/oversize files rather than silently omitting business attachments.
 Top-level legacy README/templates are conventions, not a project to upload.
+Bound each working-copy/import operation to 10,000 files and 128 MiB aggregate,
+with explicit refusal rather than unbounded allocation.
 
 Retire new `docs/projects/` scaffolding. Update canonical customer skill,
 project conventions, project templates, memory report and relevant README/charter

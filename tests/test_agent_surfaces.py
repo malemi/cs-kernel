@@ -102,6 +102,22 @@ def main() -> int:
             check("a second wiring pass is idempotent",
                   (codex / "cs-review/SKILL.md").is_file())
 
+        print("rendered customer workflow is shared and projects stay outside docs")
+        from test_project_update import _FULL_INIT_DATA
+        rendered = tmp / "rendered-cs"
+        rendered.mkdir()
+        with _legacy_prompts(tmp, "rendered-prompts"):
+            with contextlib.redirect_stdout(io.StringIO()):
+                pi.render_templates({**pi.TEMPLATE_DEFAULTS, **_FULL_INIT_DATA},
+                                    ROOT / "cs/templates/project", rendered)
+                pi.install_agent_surfaces(rendered)
+        customer = rendered / ".claude/skills/cs-customer/SKILL.md"
+        check("written projects are not initialized in docs", not (rendered / "docs/projects").exists())
+        check("project usage guide is available", (rendered / "docs/project-memory.md").is_file())
+        for host in (".agents", ".opencode"):
+            check(f"{host} resolves real customer workflow",
+                  (rendered / host / "skills/cs-customer/SKILL.md").read_bytes() == customer.read_bytes())
+
         print("fresh clones create no command surface")
         fresh = _clone(tmp, "fresh-cs")
         with _legacy_prompts(tmp, "fresh-prompts"):

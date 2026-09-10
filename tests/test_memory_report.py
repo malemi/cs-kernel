@@ -137,7 +137,9 @@ def _test_no_store_contents_leak() -> None:
         # whose backing file/dir the fixture just created — proving the
         # absence of the marker is not just an absence of the FILE too.
         by_id = {s["id"]: s for s in rep["stores"]}
-        for sid in ("ledger", "operator-log", "company-notes", "dossiers",
+        assert by_id["dossiers"]["location"] == "RPC: projects.list / projects.read"
+        assert by_id["dossiers"]["presence"].startswith("not probed")
+        for sid in ("ledger", "operator-log", "company-notes",
                     "campaign-packs", "template-manifest"):
             assert by_id[sid]["presence"] == "present", (sid, by_id[sid])
 

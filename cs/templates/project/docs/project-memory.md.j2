@@ -1,0 +1,103 @@
+# Shared project memory
+
+## What lives here
+
+The engine stores written project records for your company: current status,
+meeting notes, research and original attachments. Every colleague with the same
+company memory can access them from their own operator workspace. Entity blobs
+remain a separate synthesized memory; saving a document does not run an LLM or
+extract facts into blobs.
+
+Software documentation stays in `docs/`. Project records are accessed through
+`cs project`; local checkouts are working copies and require an explicit save.
+Run commands from the operator workspace root.
+
+## Find and read
+
+```bash
+cs project list
+cs project files <name>
+cs project show <name>               # current status.md
+cs project show <name> README.md
+cs project history <name> status.md
+```
+
+Names are exact lowercase slugs. List first when unsure; do not guess a similar
+customer. Read current status first, then only documents relevant to the task.
+Listing does not load document bodies. For binary attachments use `show` with
+its output-file option instead of interpreting bytes as text; `--help` names it.
+
+## Start or update a project
+
+```bash
+cs project new <name> --title "Project title"
+cs project checkout <name> .project-work/<name>
+```
+
+The new project has README, status, timeline and a meetings directory. Edit the
+working copy using normal file tools. `.project-work/` is ignored by Git. Its
+`.cs-project.json` records company identity and base revisions; do not edit it.
+
+```bash
+cs project save .project-work/<name>             # preview
+cs project save .project-work/<name> --commit    # save verified changes
+```
+
+Saving creates recoverable revisions with author and timestamp. A colleague's
+newer edit causes a conflict, not an overwrite. Keep your edited copy; check out
+the latest project into another directory, reconcile intentionally, and save it.
+Deleted local files are not deleted remotely. If a save is interrupted, retry:
+unchanged successful writes are recognized rather than duplicated. A save reports
+partial progress explicitly if a later document cannot be written.
+
+A working copy belongs to one company. If the account joins another company
+memory, create a new checkout there; never change the old copy's identity file.
+
+## Import an existing project folder
+
+```bash
+cs project import docs/projects/<name>          # preview one
+cs project import docs/projects/<name> --commit
+cs project import docs/projects --all           # preview all project folders
+cs project import docs/projects --all --commit
+```
+
+Import preserves original bytes, including binary attachments. It verifies stored
+hashes and leaves the source tree in place. Equal existing files are accepted on
+retry; differing files require reconciliation. Source folders retained after a
+successful import are recovery copies, not the live project memory. No automatic
+fallback reads them when the engine is unavailable.
+
+Generated caches are reported as excluded; unsafe paths, symlinks, sensitive env
+files and files larger than 4 MiB are refused explicitly. Each checkout/import/save
+is bounded to 10,000 files and 128 MiB; larger operations require smaller
+project selections. Resolve a refusal before
+retrying; an incomplete import is not a completed migration. Top-level legacy
+README and meeting templates are conventions, not company project folders.
+
+## Record shape and evidence
+
+| Document | Responsibility |
+|---|---|
+| `README.md` | Project identity, abstract, contacts and document index |
+| `status.md` | Agreed scope, current obligations, deadlines, risks and next actions |
+| `timeline.md` | Dated chronology, sources and links to meeting notes |
+| `meetings/*` | Meeting records; append dated corrections instead of rewriting history |
+| Other documents | Research, proposals, dossiers and original attachments |
+
+Keep status in one place. Write short abstracts so the next operator can choose
+what to read. Attribute claims with `[mail]`, `[meeting]`, `[confirmed]`,
+`[reported]`, `[inferred]` or `[to verify]`; retain dates and provenance. Use
+English for authored notes, preserving the original language of direct quotes and
+customer copy. No passwords, tokens or credentials belong in project memory.
+
+Start meeting notes from [the meeting template](project-meeting-template.md),
+in the selected working copy's `meetings/` folder. Add the event to timeline.md
+and save explicitly. Revision storage preserves bytes; the append-only meeting
+convention is an authoring responsibility, not a server content validator.
+
+Use the customer skill before customer work. Reconcile authored documents with
+entity memory and current correspondence by evidence and dates. No storage layer
+wins a factual conflict merely by being stored in the engine. Facts worth adding
+to entity memory use the separate explicit memory-write procedure in that skill.
+Shared project writes themselves never create drafts, send messages or train AI.

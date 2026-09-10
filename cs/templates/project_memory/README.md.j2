@@ -17,7 +17,7 @@ Index and entry point for everything we know about {{ project_title }} — read
 [`status.md`](status.md) first, as it is the only file that describes the present.
 
 > **Confidential — internal.** Commercial intelligence about a third party.
-> Tracked in git for multi-machine sync; **no credentials in these files**.
+> Stored in company memory with recoverable revisions; **no credentials in these files**.
 
 ## Index
 
@@ -50,6 +50,6 @@ Mail for this project is on **{{ owner_account }}**.
 .venv/bin/python -m cs --account {{ owner_account }} thread <email>
 ```
 
-Conventions for writing in here — abstract-first, reliability markers,
-append-only meetings — are in [`../README.md`](../README.md). Follow them; they
-are what makes this folder readable by the next session.
+Project conventions — abstract-first, provenance, append-only meeting notes —
+are in the operator workspace guide `docs/project-memory.md`. Save changes from
+a working copy with `cs project save <directory> --commit`.
