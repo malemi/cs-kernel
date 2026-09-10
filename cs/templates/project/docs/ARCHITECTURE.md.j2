@@ -87,8 +87,10 @@ at `{{ engine_ws_url }}/ws/<uid>`; this profile is `{{ engine_owner_uid }}` (`CS
 descriptor the mrcall-desktop app writes at sign-in), then every verb mints a
 short-lived ID token the daemon gates on `token.sub == OWNER_ID`. Steps:
 [README.md](../README.md) § Setup / config; mechanics: the installed kernel's
-`cs/auth.py` docstring. The service-account key is NOT part of this chain — it
-serves only `cs drive` and lead resolution.
+`cs/auth.py` docstring. The service-account key is a second way into that
+chain: `cs login --mint` signs a session for an account in this clone's
+`CS_ACCOUNTS` registry, so a colleague's headless profile is reachable without
+a desktop sign-in. It also serves `cs drive` and lead resolution.
 
 **RPC wrapper keys are NOT uniform — a wrong key silently returns 0 rows:**
 `emails.search`/`list_inbox`/`list_sent` → `{"threads":[…]}` ·

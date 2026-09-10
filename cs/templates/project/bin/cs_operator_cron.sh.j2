@@ -157,7 +157,7 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 {% endfor %}
 {% endfor %}
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
-  >>"$LOG" 2>&1
+  </dev/null >>"$LOG" 2>&1
 rc=$?
 echo "$(ts) {{ company_prog_name }}: tick end (exit $rc)" >>"$LOG"
 exit "$rc"
