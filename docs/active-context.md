@@ -14,7 +14,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
-- **Latest release tag: `v0.44.0`. Current HEAD status: tagged as `v0.44.0`.** These
+- **Latest release tag: `v0.44.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release, push and operational clone upgrades require explicit
   authorization and the release procedure's verification gates.
