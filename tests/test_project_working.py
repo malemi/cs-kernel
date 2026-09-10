@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from cs.project_documents import Documents, ProjectError, META, MAX_FILE, digest, load_state, scan
+from cs.project_documents import Documents, ProjectError, META, MAX_FILE, MAX_METADATA, digest, load_state, scan, write_state
 from cs.project_working import checkout, import_projects, save
 from cs.rpc import EngineError
 
@@ -268,6 +268,45 @@ class ProjectWorkingTests(unittest.TestCase):
             return response
         with self.assertRaises(ProjectError):
             self.client(duplicate).files('trial')
+
+    def test_large_valid_metadata_round_trips_and_save_preview_works(self):
+        # Long but valid filenames expose the distinction between document and
+        # metadata limits. Exercise actual checkout, disk metadata and save.
+        self.engine.records['trial'] = {
+            f'{number:04}-' + 'x' * 175 + '.md': [b'x'] for number in range(7500)
+        }
+        destination = self.checkout('large-work')
+        self.assertGreater((destination / META).stat().st_size, MAX_FILE)
+        self.assertEqual(len(load_state(destination)['files']), 7500)
+        save(self.client(), destination)
+        self.assertEqual(self.engine.writes, 0)
+
+    def test_metadata_read_write_limits_and_scalar_validation(self):
+        destination = self.checkout()
+        original = (destination / META).read_bytes()
+        state = load_state(destination)
+        # Both directions enforce the same bound; refused writes preserve the
+        # previously valid state and do not leave temporary metadata behind.
+        with patch('cs.project_documents.MAX_METADATA', len(original) - 1):
+            with self.assertRaisesRegex(ProjectError, 'metadata.*limit'):
+                load_state(destination)
+            with self.assertRaisesRegex(ProjectError, 'metadata.*limit'):
+                write_state(destination, state)
+        self.assertEqual((destination / META).read_bytes(), original)
+        self.assertEqual(list(destination.glob('.cs-project-*')), [])
+        for field, value in (('revision', 2**63), ('author_uid', 'a' * 513),
+                             ('created_at', 'a' * 129)):
+            bad = copy.deepcopy(state)
+            bad['files']['status.md'][field] = value
+            with self.assertRaises(ProjectError):
+                write_state(destination, bad)
+        self.assertEqual((destination / META).read_bytes(), original)
+        # A sparse oversized metadata file is refused by the actual default
+        # limit too, independently of JSON parsing or patched constants.
+        with (destination / META).open('wb') as stream:
+            stream.truncate(MAX_METADATA + 1)
+        with self.assertRaisesRegex(ProjectError, 'metadata.*limit'):
+            load_state(destination)
 
     def test_old_engine_actionable_without_local_fallback(self):
         def old(*args):

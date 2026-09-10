@@ -15,6 +15,8 @@ from . import rpc
 MAX_FILE = 4 * 1024 * 1024
 MAX_FILES = 10000
 MAX_TREE = 128 * 1024 * 1024
+MAX_METADATA = 64 * 1024 * 1024
+MAX_REVISION = 2**63 - 1
 META = '.cs-project.json'
 SLUG = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?\Z')
 HASH = re.compile(r'[0-9a-f]{64}\Z')
@@ -63,12 +65,14 @@ def metadata(item, project=None, path=None):
         raise ProjectError('Invalid document metadata response.')
     slug(item.get('project'))
     path_name(item.get('path'))
-    integer(item.get('revision'), 1)
+    integer(item.get('revision'), 1, MAX_REVISION)
     integer(item.get('size'), 0, MAX_FILE)
     if not isinstance(item.get('sha256'), str) or not HASH.fullmatch(item['sha256']):
         raise ProjectError('Invalid document hash.')
     for key in ('author_uid', 'created_at'):
-        if not isinstance(item.get(key), str) or not item[key]:
+        if (not isinstance(item.get(key), str) or not item[key]
+                or len(item[key].encode('utf-8')) > (512 if key == 'author_uid' else 128)
+                or any(ord(c) < 32 or ord(c) == 127 for c in item[key])):
             raise ProjectError('Invalid document provenance.')
     if project is not None and item['project'] != project or path is not None and item['path'] != path:
         raise ProjectError('Engine returned a different document.')
@@ -197,7 +201,7 @@ def safe_ancestors(path):
     return path
 
 
-def read_bytes(path):
+def _read_bounded(path, limit, label):
     safe_ancestors(path)
     if not stat.S_ISREG(path.lstat().st_mode):
         raise ProjectError('Only regular project files are supported.')
@@ -206,10 +210,14 @@ def read_bytes(path):
         mode = os.fstat(stream.fileno()).st_mode
         if not stat.S_ISREG(mode):
             raise ProjectError('Only regular project files are supported.')
-        data = stream.read(MAX_FILE + 1)
-    if len(data) > MAX_FILE:
-        raise ProjectError('Document exceeds the 4 MiB limit.')
+        data = stream.read(limit + 1)
+    if len(data) > limit:
+        raise ProjectError(f'{label} exceeds its size limit.')
     return data
+
+
+def read_bytes(path):
+    return _read_bounded(path, MAX_FILE, 'Document (4 MiB)')
 
 
 def scan(root, working=False):
@@ -247,10 +255,16 @@ def scan(root, working=False):
 def load_state(root):
     target = safe_ancestors(Path(root) / META)
     try:
-        state = json.loads(read_bytes(target))
-    except (ValueError, OSError):
+        state = json.loads(_read_bounded(target, MAX_METADATA, 'Working-copy metadata (64 MiB)'))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         raise ProjectError('Cannot read working-copy metadata. Make a new checkout and preserve your edits.') from None
-    if not isinstance(state, dict) or state.get('version') != 1 or type(state.get('version')) is not int:
+    return _validate_state(state)
+
+
+def _validate_state(state):
+    if not isinstance(state, dict) or set(state) != {'version', 'space_id', 'project', 'files'}:
+        raise ProjectError('Invalid working-copy metadata fields.')
+    if state.get('version') != 1 or type(state.get('version')) is not int:
         raise ProjectError('Invalid working-copy metadata version.')
     space(state.get('space_id'))
     slug(state.get('project'))
@@ -259,18 +273,26 @@ def load_state(root):
         raise ProjectError('Invalid working-copy file metadata.')
     for path, item in entries.items():
         path_name(path)
-        metadata(item, state['project'], path)
+        validated = metadata(item, state['project'], path)
+        if set(item) != set(validated):
+            raise ProjectError('Invalid working-copy document metadata fields.')
     return state
 
 
 def write_state(root, state):
+    # Bound the exact serialized representation before changing local state.
+    # Canonical fields plus scalar/path/file-count bounds keep every supported
+    # state under this separate limit; document payloads retain their 4 MiB cap.
+    _validate_state(state)
+    encoded = (json.dumps(state, indent=2, ensure_ascii=False) + '\n').encode('utf-8')
+    if len(encoded) > MAX_METADATA:
+        raise ProjectError('Working-copy metadata exceeds the 64 MiB limit.')
     safe_ancestors(root)
     target = safe_ancestors(Path(root) / META)
     fd, name = tempfile.mkstemp(prefix='.cs-project-', dir=root)
     try:
-        with os.fdopen(fd, 'w', encoding='utf-8') as stream:
-            json.dump(state, stream, indent=2)
-            stream.write('\n')
+        with os.fdopen(fd, 'wb') as stream:
+            stream.write(encoded)
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(name, target)
