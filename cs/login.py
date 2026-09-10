@@ -365,6 +365,12 @@ def _prompt_choice(n: int) -> int:
         print(f"Please enter a number between 1 and {n}.")
 
 
+def identity_verified(result: object, uid: str) -> bool:
+    """Successful transport alone does not prove the expected signed-in identity."""
+    return (isinstance(result, dict) and result.get("signed_in") is True
+            and bool(uid) and result.get("uid") == uid)
+
+
 def _finish_login(
     settings: Settings,
     descriptor: dict,
@@ -422,14 +428,16 @@ def _finish_login(
         # traceback — it is the first thing a new customer sees.
         print(
             f"cs login: stored the session, but the proof call to "
-            f"{settings.engine_ws_url!r} failed: {type(e).__name__}: {e}\n"
+            f"the configured engine failed ({type(e).__name__}).\n"
             "  If this profile has not been provisioned on the engine yet, "
             "that is expected — the stored session is still valid.",
             file=sys.stderr,
         )
         return 1
 
-    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    if not identity_verified(result, settings.engine_owner_uid):
+        print("cs login: session stored, but the engine did not confirm this profile. Check the desktop account and endpoint, then retry.", file=sys.stderr)
+        return 1
     print(f"signed in: {descriptor['email']} ({descriptor['uid']})")
     return 0
 

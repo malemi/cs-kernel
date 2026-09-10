@@ -71,7 +71,7 @@ A complete customer-service operator, not an autocomplete:
 What you need:
 
 - **Python 3.11+** and **[uv](https://github.com/astral-sh/uv)**
-- **Claude Code** or **OpenCode** (the TUI/session you work in)
+- **Codex**, **Claude Code**, or **OpenCode** (the session you work in; agent access is paid separately)
 - A **mrcall-desktop** engine profile
 - Email IMAP for the operator mailbox (supported Google Mail at the moment)
 
@@ -116,6 +116,20 @@ matching the operator email you just gave — or lists them for you to choose by
 number. If it says no sign-in was found, that is Step 1 missing: sign in to
 mrcall-desktop as that mailbox and re-run.
 
+The development version also accepts an explicit desktop handoff:
+
+```bash
+cs init --descriptor "/path/to/cs-descriptor.json"
+```
+
+This selects that exact profile even when other profiles exist. The handoff
+contains a refresh credential: keep it outside the workspace. Invalid handoffs
+stop initialization instead of selecting another account. Connection settings
+come from the selected engine; if unavailable, the wizard asks you to confirm
+them. The descriptor and mailbox password never enter the workspace's tracked
+files. These additions are unreleased; fetching an older public tag does not
+provide them.
+
 Here is what to expect for ACME:
 
 | Question | Example |
@@ -134,9 +148,12 @@ When you confirm, you get a folder **`acme-cs/`**.
 
 If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
-One last prompt: `Install the project now (creates acme-cs/.venv and
-installs the pinned kernel)? [y/N]`. Say **y** and step 3 below is
-already done for you — skip straight to step 4.
+The install prompt creates `.venv` and installs the pinned kernel after an
+explicit **y**. The development version then offers engine login, also with a
+default-no confirmation. A declined install leaves a created workspace; a
+failed install or login exits nonzero with the stage to retry. Successful login
+confirms the configured UID. It does not prove email preparation is complete.
+Skip steps already completed by the wizard.
 
 ### 3. Install the project pin (only if you said no above)
 
@@ -183,12 +200,28 @@ session valid until 2026-08-21 12:54 CEST (auto-renews)
 `not signed in — run cs login` → redo step 4. Anything else:
 Troubleshooting below. (Raw JSON, if you want it: `cs whoami --json`.)
 
+With the development version, run `cs setup` (or `cs setup --json`) for the
+full readiness report. It checks workspace files, configured mailbox settings,
+the expected engine identity, email preparation, company memory, and whether
+Codex or Claude Code is on this terminal's PATH. Exit zero means those checks
+passed; mailbox credential validity and external-agent login remain unverified.
+Missing evidence on an older engine is reported as unverified. A connected empty
+mailbox needs preparation, not another login. Memory processing proves neither
+reply quality nor completed tasks.
+
+The report starts no sync, training, generation, sending, installation, or agent.
+Authentication may refresh existing local token caches. Each RPC response has a
+15-second timeout, in addition to the existing authentication and connection
+bounds. Address the first reported action, then repeat `cs setup`.
+
 ### 6. Open the TUI and work
 
 Still inside `acme-cs/` with the venv active:
 
 ```bash
 # pick one:
+codex
+# or
 claude
 # or
 opencode

@@ -1779,6 +1779,11 @@ def main(argv=None) -> int:
     )
     plg.set_defaults(func=cmd_login_stub)
 
+    from . import setup as setup_mod
+    ps = sub.add_parser("setup", help="check workspace and engine preparation without starting work")
+    ps.add_argument("--json", action="store_true", help="machine-readable readiness and recovery actions")
+    ps.set_defaults(func=setup_mod.cmd_setup)
+
     pp = sub.add_parser("plan", help="producer worklist: who to consider today")
     pp.add_argument("--period", default="7d")
     pp.add_argument("--verbose", "-v", action="store_true")

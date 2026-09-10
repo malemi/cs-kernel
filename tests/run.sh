@@ -1256,6 +1256,9 @@ step "52. the charter lands in AGENTS.md; CLAUDE.md is a one-time bootstrap"
 # keeps its trailing newline.
 if "$VENV/bin/python" "$ROOT/tests/test_charter_shape.py"; then echo "OK"; else echo "FAIL: the charter shape regressed (AGENTS.md / CLAUDE.md bootstrap / legacy symlink)"; FAIL=1; fi
 
+step "53. desktop handoff to stamped workspace and bounded readiness"
+if "$VENV/bin/python" "$ROOT/tests/test_setup_journey.py"; then echo "OK"; else echo "FAIL: workspace setup journey regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

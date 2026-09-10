@@ -9,6 +9,8 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import shlex
 import tomllib
 from pathlib import Path
 import hashlib
@@ -188,6 +190,33 @@ def fetch_mailbox_password(descriptor: dict) -> str:
         return (result or {}).get("value", "") or ""
     except Exception:
         return ""
+
+
+def fetch_mailbox_settings(descriptor: dict | None) -> dict:
+    """Read only transport settings; credentials and other settings stay private."""
+    if not descriptor:
+        return {}
+    from . import auth, rpc
+    from .config import Settings
+    try:
+        settings = Settings(engine_ws_url=login.descriptor_ws_base(descriptor),
+                            engine_owner_uid=descriptor["uid"],
+                            firebase_web_api_key=descriptor["firebase_web_api_key"])
+        token = auth._exchange(settings, descriptor["refresh_token"])["id_token"]
+        result = rpc.call_sync(settings, "settings.get", timeout=20, id_token=token)
+        values = result.get("values", {})
+        out = {}
+        for key in ("imap_host", "smtp_host", "imap_port", "smtp_port"):
+            value = values.get(key.upper())
+            if key.endswith("port"):
+                if str(value).isdigit() and 0 < int(value) <= 65535:
+                    out[key] = int(value)
+            elif isinstance(value, str) and value.strip() and "\n" not in value:
+                out[key] = value.strip()
+        return out
+    except Exception:
+        print("Mailbox connection settings could not be read; confirm them below.")
+        return {}
 
 
 def _resolve_descriptor(candidates: list[dict], email: str) -> dict | None:
@@ -414,7 +443,8 @@ def get_company_slug(name: str) -> str:
     """Convert company name to slug (lowercase, no spaces)."""
     return re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
 
-def collect_config(advanced: bool = False, existing: dict | None = None) -> dict:
+def collect_config(advanced: bool = False, existing: dict | None = None,
+                   selection: dict | None = None) -> dict:
     """Collect configuration through interactive prompts.
 
     Two independent things decide what the operator actually sees:
@@ -467,7 +497,10 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     # it is the ONLY one and this is a fast pass, silently ANSWERS) the
     # engine-identity prompts below; the operator still sees and can
     # override every one of them under --advanced.
-    candidates = descriptor_candidates()
+    candidates = ([selection["descriptor"]] if selection and selection.get("descriptor")
+                  else descriptor_candidates())
+    if selection is not None and len(candidates) == 1:
+        selection["descriptor"] = candidates[0]
     defaults = descriptor_config(candidates[0]) if len(candidates) == 1 else {}
     descriptor_unique = bool(defaults)
     if defaults:
@@ -543,6 +576,8 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
         if picked:
             defaults = descriptor_config(picked)
             descriptor_unique = True
+            if selection is not None:
+                selection["descriptor"] = picked
 
     ws_default = (
         defaults["engine_ws_url"] if descriptor_unique
@@ -568,6 +603,21 @@ def collect_config(advanced: bool = False, existing: dict | None = None) -> dict
     # Not prompted: comes with the Step-0 descriptor (public key), consumed by
     # write_state_env; empty when there was no usable descriptor.
     config["firebase_web_api_key"] = defaults.get("firebase_web_api_key", "")
+
+    if selection is not None:
+        selected = selection.get("descriptor")
+        if selected and config["email_address"].strip().lower() != selected["email"].strip().lower():
+            raise ValueError("selected desktop profile does not match the operator email; select the matching profile")
+        mailbox = fetch_mailbox_settings(selected) if selected else {}
+        for key, label in (("imap_host", "IMAP host"), ("imap_port", "IMAP port"),
+                           ("smtp_host", "SMTP host"), ("smtp_port", "SMTP port")):
+            if key in mailbox and not show_all:
+                config[key] = mailbox[key]
+            elif not show_all and key not in existing:
+                if key.endswith("port"):
+                    config[key] = _prompt_or_default_int(True, label, config[key])
+                else:
+                    config[key] = prompt_input(label, config[key])
 
     # --- Phase 4: accounts ---
     existing_accounts = existing.get("accounts") or {}
@@ -1097,7 +1147,7 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
             
     return success, file_checksums
 
-def write_state_env(config: dict, dest_dir: Path) -> None:
+def write_state_env(config: dict, dest_dir: Path, *, selection: dict | None = None) -> None:
     """Write `~/.<slug>-cs/.env` from the freshly rendered `.env.example`.
 
     The wizard already knows almost everything the secrets file asks for —
@@ -1132,7 +1182,9 @@ def write_state_env(config: dict, dest_dir: Path) -> None:
     password = ""
     uid = config.get("engine_owner_uid", "")
     if uid:
-        for d in descriptor_candidates():
+        candidates = ([selection["descriptor"]] if selection and selection.get("descriptor")
+                      else ([] if selection is not None else descriptor_candidates()))
+        for d in candidates:
             if d["uid"] == uid:
                 password = fetch_mailbox_password(d)
                 break
@@ -1183,7 +1235,7 @@ def _venv_python(dest_dir: Path) -> Path:
 
 def _manual_install_lines(dest_dir: Path) -> str:
     return (
-        f"  cd {dest_dir}\n"
+        f"  cd {shlex.quote(str(dest_dir))}\n"
         f"  uv venv .venv && source .venv/bin/activate  # Windows: .venv\\Scripts\\activate\n"
         f"  uv pip install -r requirements.txt"
     )
@@ -1283,7 +1335,7 @@ def install_agent_surfaces(dest_dir: Path) -> None:
         print(f"Retired {removed} obsolete command/prompt entr{'y' if removed == 1 else 'ies'}.")
 
 
-def offer_project_install(dest_dir: Path) -> None:
+def offer_project_install(dest_dir: Path) -> bool | None:
     """After `cs init` stamps the project, OFFER to create its venv and
     install the pinned kernel right here — collapsing the manual `cd
     <dir> && uv venv .venv && source … && uv pip install -r
@@ -1310,36 +1362,48 @@ def offer_project_install(dest_dir: Path) -> None:
         print(_manual_install_lines(dest_dir))
         return
 
+    if not shutil.which("uv"):
+        print("Install requires uv. Install uv, then retry the commands below.", file=sys.stderr)
+        print(_manual_install_lines(dest_dir))
+        return False
     print(f"Creating venv in {dest_dir}/.venv …")
-    proc = subprocess.run(["uv", "venv", ".venv"], cwd=dest_dir)
+    try:
+        proc = subprocess.run(["uv", "venv", ".venv"], cwd=dest_dir)
+    except OSError:
+        print("Could not start uv; install uv and retry the workspace installation.", file=sys.stderr)
+        return False
     if proc.returncode != 0:
         print(
             "uv venv FAILED — install by hand:\n" + _manual_install_lines(dest_dir),
             file=sys.stderr,
         )
-        return
+        return False
 
     print("Installing the pinned kernel …")
-    proc = subprocess.run(
-        ["uv", "pip", "install", "--python", str(_venv_python(dest_dir)),
-         "-r", "requirements.txt"],
-        cwd=dest_dir,
-    )
+    try:
+        proc = subprocess.run(
+            ["uv", "pip", "install", "--python", str(_venv_python(dest_dir)),
+             "-r", "requirements.txt"], cwd=dest_dir)
+    except OSError:
+        print("Could not start uv; retry installation from the workspace.", file=sys.stderr)
+        return False
     if proc.returncode != 0:
         print(
             "pip install FAILED — the venv exists; finish by hand:\n"
-            f"  cd {dest_dir} && source .venv/bin/activate && "
+            f"  cd {shlex.quote(str(dest_dir))} && source .venv/bin/activate && "
             "uv pip install -r requirements.txt",
             file=sys.stderr,
         )
-        return
-    print(f"Installed. Next: cd {dest_dir} && source .venv/bin/activate && cs login")
+        return False
+    print(f"Installed. Next: cd {shlex.quote(str(dest_dir))} && source .venv/bin/activate && cs login")
+    return True
 
 
 def cmd_init(argv=None) -> int:
     """Main entry point for the init command."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(prog='cs init')
+    parser.add_argument('--descriptor', metavar='PATH', help='use this desktop profile handoff')
     parser.add_argument('--version', action='version', version=kernel_version())
     parser.add_argument(
         '--advanced', action='store_true',
@@ -1354,6 +1418,14 @@ def cmd_init(argv=None) -> int:
     except SystemExit as e:
         code = e.code
         return code if isinstance(code, int) else (0 if code is None else 1)
+
+    selection = {}
+    if args.descriptor:
+        try:
+            selection["descriptor"] = login.parse_descriptor(Path(args.descriptor).expanduser())
+        except ValueError:
+            print("cs init: descriptor is missing or invalid; export it again from the desktop.", file=sys.stderr)
+            return 1
 
     # Import cs to find template directory
     try:
@@ -1374,8 +1446,11 @@ def cmd_init(argv=None) -> int:
 
     # Collect configuration
     try:
-        config = collect_config(advanced=args.advanced, existing=existing)
+        config = collect_config(advanced=args.advanced, existing=existing, selection=selection)
         proceed = prompt_yes_no("Proceed with these settings?", default=True)
+    except ValueError as exc:
+        print(f"cs init: {exc}", file=sys.stderr)
+        return 1
     except EOFError:
         print(
             "cs init: input ended before the wizard finished — run it in an "
@@ -1396,6 +1471,7 @@ def cmd_init(argv=None) -> int:
     dest_dir = Path(config['company_slug'] + '-cs')
     if 'dest_dir' in config:
         dest_dir = Path(config['dest_dir'])
+    dest_dir = dest_dir.expanduser().resolve()
     
     # Render templates
     success, file_checksums = render_templates(config, template_root, dest_dir)
@@ -1420,28 +1496,53 @@ def cmd_init(argv=None) -> int:
     git_dir = dest_dir / '.git'
     if not git_dir.exists():
         try:
-            result = os.system(f"cd '{dest_dir}' && git init")
-            if result != 0:
+            result = subprocess.run(["git", "init"], cwd=dest_dir)
+            if result.returncode != 0:
                 print(f"Warning: failed to initialize git repository")
         except Exception as e:
             print(f"Warning: error during git init: {e}")
     
     # Secrets file — after the stamp so the rendered .env.example exists.
-    write_state_env(config, dest_dir)
+    write_state_env(config, dest_dir, selection=selection)
 
     # Every agent surface points at the one rendered set (.claude/).
     install_agent_surfaces(dest_dir)
 
     # Print post-init instructions
     print("\n" + "=" * 60)
-    print("Initialization Complete")
+    print("Workspace created")
     print("=" * 60)
     print(f"Done! Your secrets live in '~/.{config['company_slug']}-cs/.env' (never commit it)")
     print(f"Its reference copy is: {dest_dir}/.env.example")
     print(f"Project instructions: {dest_dir}/AGENTS.md (CLAUDE.md imports it for Claude Code)")
 
-    offer_project_install(dest_dir)
-
+    installed = offer_project_install(dest_dir)
+    if installed is False:
+        return 1
+    if installed:
+        try:
+            connect = prompt_yes_no("Connect this workspace to the engine now?", default=False)
+        except (EOFError, KeyboardInterrupt):
+            connect = False
+        if connect:
+            command = [str(_venv_python(dest_dir)), "-m", "cs", "login"]
+            try:
+                # Preserve the exact selection across process boundaries, even
+                # when ambient descriptors change while installation runs.
+                with tempfile.TemporaryDirectory(prefix="cs-login-") as handoff_dir:
+                    if selection.get("descriptor"):
+                        handoff = Path(handoff_dir) / "descriptor.json"
+                        handoff.touch(mode=0o600)
+                        handoff.write_text(json.dumps(selection["descriptor"]), encoding="utf-8")
+                        command.extend(["--descriptor", str(handoff)])
+                    result = subprocess.run(command, cwd=dest_dir)
+            except OSError:
+                print("Could not start workspace login; run cs login from its environment.", file=sys.stderr)
+                return 1
+            if result.returncode:
+                print("Workspace installed; engine connection needs attention. Retry cs login, then cs setup.")
+                return 1
+        print("Next: run cs setup in the workspace to check preparation, then open Codex or Claude Code there.")
     return 0
 
 if __name__ == "__main__":

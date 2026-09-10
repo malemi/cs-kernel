@@ -51,14 +51,16 @@ def _stubbed(answer, returncodes=(0, 0)):
         calls.append((cmd, cwd))
         return FakeCompleted(next(rcs, 0))
 
-    old_input, old_run = builtins.input, pi.subprocess.run
+    old_input, old_run, old_which = builtins.input, pi.subprocess.run, pi.shutil.which
     builtins.input = with_answer(answer)
     pi.subprocess.run = fake_run
+    pi.shutil.which = lambda _: "/fixture/uv"
     try:
         yield calls
     finally:
         builtins.input = old_input
         pi.subprocess.run = old_run
+        pi.shutil.which = old_which
 
 
 def _eof_and_no_skip_with_no_calls() -> None:
@@ -67,7 +69,7 @@ def _eof_and_no_skip_with_no_calls() -> None:
         with _stubbed(answer) as calls:
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
-                pi.offer_project_install(dest)
+                assert pi.offer_project_install(dest) is None
             assert calls == [], f"answer {answer!r} must call subprocess.run 0 times, got {calls}"
             text = out.getvalue()
             assert "uv venv .venv" in text, f"manual fallback must be printed:\n{text}"
@@ -79,7 +81,7 @@ def _yes_runs_venv_then_install_with_right_args() -> None:
     with _stubbed("y", returncodes=(0, 0)) as calls:
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
-            pi.offer_project_install(dest)
+            assert pi.offer_project_install(dest) is True
     assert len(calls) == 2, f"expected exactly 2 subprocess calls, got {calls}"
     (venv_cmd, venv_cwd), (install_cmd, install_cwd) = calls
     assert venv_cmd == ["uv", "venv", ".venv"], venv_cmd
@@ -99,15 +101,28 @@ def _venv_failure_stops_before_install() -> None:
     with _stubbed("y", returncodes=(1,)) as calls:
         out = io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(out):
-            pi.offer_project_install(dest)
+            assert pi.offer_project_install(dest) is False
     assert len(calls) == 1, f"a failed venv must not attempt the install call, got {calls}"
     assert "uv venv FAILED" in out.getvalue()
+
+
+def _install_failure_is_not_success() -> None:
+    with _stubbed("y", returncodes=(0, 1)) as calls:
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            assert pi.offer_project_install(Path("/tmp/operator's workspace")) is False
+        assert len(calls) == 2
+    with _stubbed("y") as calls:
+        pi.shutil.which = lambda _: None
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            assert pi.offer_project_install(Path("/tmp/workspace")) is False
+        assert not calls
 
 
 def main() -> None:
     _eof_and_no_calls = _eof_and_no_skip_with_no_calls()
     _yes_runs_venv_then_install_with_right_args()
     _venv_failure_stops_before_install()
+    _install_failure_is_not_success()
     print("test_init_install_offer: all assertions passed")
 
 
