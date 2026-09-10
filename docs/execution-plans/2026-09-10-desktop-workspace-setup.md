@@ -105,7 +105,19 @@ rollback files: `/tmp/cs-kernel-043-upgrade-backup` (private). The automated FUL
 harness does not send messages; manual paid ticks and live draft creation are
 outside that automated tier and will not be claimed as tested.
 
-Rollout state: pre-upgrade verification active.
+Rollout state: production installation complete. Public tag `v0.43.0` is
+`ead47a6`; both maintained clones install it from GitHub, and each frozen lock
+rebuilds alone in a separate environment. Clone upgrade commits are `837397f`
+(124) and `7c7db36` (MrCall). Independent release review approved both automated
+FULL comparisons: all eleven live outputs match their fresh baselines. Remaining
+red assertions are intended help additions and previously identified harness
+assumptions, not new functional failures. Identity and company-memory checks
+pass on both; setup is ready on 124 and reports fourteen pending messages on
+MrCall. Crontab and clone-owned denies are preserved, and rollout-created pauses
+are removed. No account migration, paid tick, live draft or message was run.
+Public Desktop installation guidance now uses the released kernel; the existing
+Desktop 0.1.47 development-kernel label is cosmetic and still links to that guide.
+Remote CI verification follows the prerequisite correction recorded below.
 
 ### CI prerequisite correction
 

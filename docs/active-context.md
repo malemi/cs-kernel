@@ -22,8 +22,8 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   one-time bootstrap. Claude Code, Codex and OpenCode share canonical skills.
 - The engine owns mail classification, task judgement and company memory.
   Shared company memory exists in the companion engine implementation;
-  `cs setup` checks its availability through `memory.status`. This is a source
-  capability, not a claim that any deployment has been upgraded or verified.
+  `cs setup` checks its availability through `memory.status`; both maintained
+  operational clones passed this read during the authorized release verification.
 - `cs memory` reports the ten-store map. Outbound sourcing instructions require
   memory first and a second source when memory is empty. Their runtime semantic
   effectiveness is still a verification gap below.
@@ -33,10 +33,10 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   while Sent/All Mail remains the dedup source.
 - Provider routing is partial: the send guard can use a direct classifier;
   general role routing remains opt-in through `CS_LLM_ROUTE`.
-- No production services, existing profiles or operational clones were checked
-  during this development session. Previous deployment hashes, clone versions,
-  cron posture and public-tag availability are dated observations in the archive,
-  not verified present state.
+- Both maintained clones now run the public `v0.43.0` tag. Their locks rebuild
+  independently; read-only FULL comparisons found no material regression.
+  Existing crontab and clone-specific deny rules were preserved, and temporary
+  upgrade pauses removed. The release record identifies remaining harness drift.
 
 **Workspace setup.**
 
@@ -54,10 +54,10 @@ probed. Auth can refresh local caches; no business mutation is initiated.
 
 Full local gates pass, including an isolated generated workspace, installation
 of changed source into its own environment and a controlled local WebSocket.
-The v0.43.0 release candidate includes these commands and guarded `login --mint`,
-refresh-cache invalidation and closed cron stdin. Production release and both
-clone upgrades are authorized; current baseline comparisons and publication
-verification are tracked in the rollout section. State lives in
+The published v0.43.0 release includes these commands and guarded `login --mint`,
+refresh-cache invalidation and closed cron stdin. Both operational clones prove
+engine identity and shared-memory access. 124 is ready; MrCall has fourteen
+messages awaiting preparation at the release check. Evidence lives in
 [the delivery plan](execution-plans/2026-09-10-desktop-workspace-setup.md).
 
 ## Unresolved
@@ -79,14 +79,15 @@ verification are tracked in the rollout section. State lives in
   and observed cron state, plus reliance on an ambient provider credential in
   another clone. These require deliberate checks in their owning environments;
   neither condition was re-observed or changed here.
-- Public-release onboarding, real credentials and operational clone compatibility
-  remain future release checks. Local source-install tests do not discharge the
-  FULL verification requirement for this auth-boundary change.
+- Secondary-account migration remains separate from the released mint capability.
+  Automated FULL does not establish paid agent-tick or live draft behavior;
+  the external harness still needs its obsolete rate-cap and cron assumptions
+  updated. MrCall preparation backlog requires the normal engine update flow.
 
 ## Next
 
-1. Complete the authorized production rollout and lock-only install checks;
-   source implementation and release-plan reviews are approved.
+1. Complete secondary-account onboarding when requested and repair obsolete
+   external-harness assumptions; the kernel rollout and lock proofs are complete.
 2. Diagnose unanswered-mail disagreement and close the evidence/latency gaps.
 3. Replace internal verification terminology still exposed by `cs update` with
    operator-facing language; promote clone-specific tools only under rule two.

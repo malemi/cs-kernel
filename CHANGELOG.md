@@ -4,7 +4,23 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-08): **`v0.42.0` on both clones**.
+**Current operational pin** (2026-09-10): **`v0.43.0` on both clones**.
+Both maintained clones install the public GitHub tag at `ead47a6`; their
+requirements pins, installed versions, template ledger and architecture agree.
+Each regenerated lock was installed alone in a separate throwaway environment
+and reports `0.43.0`. Upgrade commits: `124-cs` `837397f`, `mrcall-cs` `7c7db36`.
+
+The automated FULL comparison against fresh `0.42.0` baselines found no material
+regression: all eleven live-command outputs match on each clone; identity,
+degraded reads, dedup, permissions and paused-cron proofs pass. Remaining harness
+red assertions are reviewed help additions and pre-existing infrastructure,
+cron-tag and removed-rate-cap assumptions. They are not claimed green. No real
+draft creation, outgoing messages or paid agent tick was performed. `cs setup`
+reports ready on 124; MrCall reports fourteen messages awaiting preparation.
+Clone-owned deny rules, user edits and crontab were preserved; temporary rollout
+pauses were removed. `mario124-cs` was not upgraded.
+
+**Historical operational pin** (2026-09-08): **`v0.42.0` on both clones**.
 Each clone took the tag through `cs update` from the local kernel checkout —
 the tag is not yet on GitHub, so the venvs were installed with
 `git+file:///home/mal/hb/cs-kernel@v0.42.0` while `requirements.txt` and
