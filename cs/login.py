@@ -34,6 +34,16 @@ What it deliberately does NOT do: it never writes or edits ``.env`` or
 ``manifest.toml`` — those are operator-owned files. When the descriptor
 disagrees with what this clone has configured (the Firebase web API key,
 the engine WS URL), `cs login` only PRINTS the line/field to fix by hand.
+
+``--mint`` is the other way in: instead of reading a descriptor, it
+synthesizes one from this clone's own Firebase service-account key
+(`_cmd_login_mint`, `auth.mint_refresh_token`) for a uid already declared
+in ``CS_ACCOUNTS``. It opens a session for a colleague's engine profile
+that has never signed in to the desktop app interactively — the profiles
+this kernel actually needs are provisioned headless and write no
+descriptor at all — behind its own guard order (registry, then an
+interactive-terminal check, then the resolved email, then an explicit
+confirmation) before rejoining steps 3-5 above.
 """
 from __future__ import annotations
 
@@ -125,6 +135,84 @@ def descriptor_ws_base(descriptor: dict) -> str:
     return url[: -len(suffix)] if url.endswith(suffix) else url
 
 
+def _mint_check_registry(uid: str, settings: Settings) -> None:
+    """Guard 1 of the mint path: `uid` must already be a value in
+    `settings.account_map` (`CS_ACCOUNTS`). Raises `ConfigError` naming the
+    uid and the registry; a no-op otherwise. Pure — no key, no network —
+    so this is the guard `cmd_login`'s `--mint` branch runs BEFORE the tty
+    check: kernel code cannot mint a session for a uid the operator has
+    not written into this clone's own configuration, and that refusal is
+    provable with no credential at all.
+    """
+    if uid not in settings.account_map.values():
+        raise ConfigError(
+            f"uid {uid!r} is not declared in this clone's CS_ACCOUNTS "
+            "registry — add it there (CS_ACCOUNTS=name:uid) before minting "
+            "a session for it"
+        )
+
+
+def _mint_resolve_email(uid: str, settings: Settings, resolve_email=None) -> str:
+    """Guard 2 of the mint path: resolve `uid`'s email through
+    `resolve_email`, an injectable seam (``None`` binds
+    `resolve.resolve_email` lazily, so importing this module never pulls in
+    `firebase_admin`). Raises `ConfigError` naming the uid when the
+    resolver returns `None` — `cs/resolve.py::resolve_email` returns
+    `None` both for "no Firebase user with this uid" and "a user with no
+    email address", and the two are indistinguishable from here, so the
+    message covers both causes.
+    """
+    if resolve_email is None:
+        # Lazy for the same reason `mint_refresh_token`'s app is lazy in
+        # cs/auth.py: cs/rpc.py imports this module for the `login` stub,
+        # so every verb — `--help` included — would otherwise pay the
+        # `firebase_admin` import cost.
+        from . import resolve
+
+        resolve_email = resolve.resolve_email
+
+    try:
+        email = resolve_email(uid, settings)
+    except ConfigError:
+        raise
+    except Exception as e:  # noqa: BLE001 — the Admin SDK raises many types (missing/unreadable key file, transport)
+        # `cs/resolve.py::resolve_email` catches only `UserNotFoundError`; a
+        # missing key file surfaces as `FileNotFoundError`, a transport
+        # failure as `FirebaseError`. Neither is a `ConfigError`, so without
+        # this wrap they would traceback here while the very same key file
+        # is reported in one handled line by `mint_refresh_token` one step
+        # later. Same shape as that wrap, for the same reason.
+        raise ConfigError(
+            f"could not resolve the email for uid {uid!r}: {type(e).__name__}: {e} "
+            "— check that this clone's Firebase service-account key "
+            f"({settings.firebase_sa_path}) exists and is readable"
+        ) from None
+    if email is None:
+        raise ConfigError(
+            f"no Firebase user with an email for uid {uid!r} — cannot mint "
+            "a session without a resolvable address"
+        )
+    return email
+
+
+def _assemble_descriptor(
+    uid: str, settings: Settings, email: str, refresh_token: str
+) -> dict:
+    """The same five `REQUIRED_STRING_FIELDS` `cmd_login` reads from a
+    desktop-app-written descriptor, built from already-resolved pieces.
+    Shared by `mint_descriptor` (the pure, prompt-free composition below)
+    and `cmd_login`'s `--mint` branch, which resolves the email once — to
+    echo it in the confirmation prompt — and must not resolve it again
+    here."""
+    return {
+        "email": email,
+        "uid": uid,
+        "engine_ws_url": settings.engine_ws_url,
+        "firebase_web_api_key": settings.firebase_web_api_key,
+        "refresh_token": refresh_token,
+    }
+
+
 def mint_descriptor(
     uid: str,
     settings: Settings,
@@ -139,55 +227,18 @@ def mint_descriptor(
     interactively; the profiles this kernel actually needs are provisioned
     headless and write no descriptor at all.
 
-    Guards run in this order, each raising ONE handled `ConfigError`:
-
-      1. **Registry** — `uid` must already be a value in
-         `settings.account_map` (`CS_ACCOUNTS`). Reachable with no key and
-         no network: kernel code cannot mint a session for a uid the
-         operator has not written into this clone's own configuration.
-      2. **Email** — resolved through `resolve_email`, an injectable seam
-         (``None`` binds `resolve.resolve_email` lazily) so a unit test can exercise the
-         no-email refusal with a stub, needing neither a key nor an
-         email-less Firebase user.
-      3. **Mint** — `auth.mint_refresh_token` exchanges a locally-signed
-         custom token for a refresh token.
-
-    The tty check and the interactive confirmation belong to the CLI
-    surface that calls this, not here — this stays pure data assembly plus
-    the two guards above, so both are callable from a test with neither a
-    terminal nor a live engine.
+    The pure, prompt-free composition of the mint path's three guards,
+    each raising ONE handled `ConfigError`: `_mint_check_registry` ->
+    `_mint_resolve_email` -> `auth.mint_refresh_token`. `cmd_login`'s
+    `--mint` branch calls the first two individually instead, with the tty
+    check and the interactive confirmation interleaved between them — this
+    function stays the composed shape the unit tests exercise directly,
+    with neither a terminal nor a live engine.
     """
-    if resolve_email is None:
-        # Lazy: `cs/resolve.py` imports `firebase_admin`, and `cs/cli.py`
-        # imports this module for the `login` stub, so binding the default
-        # at module scope would make every verb pay that import.
-        from . import resolve
-
-        resolve_email = resolve.resolve_email
-
-    if uid not in settings.account_map.values():
-        raise ConfigError(
-            f"uid {uid!r} is not declared in this clone's CS_ACCOUNTS "
-            "registry — add it there (CS_ACCOUNTS=name:uid) before minting "
-            "a session for it"
-        )
-
-    email = resolve_email(uid, settings)
-    if email is None:
-        raise ConfigError(
-            f"no Firebase user with an email for uid {uid!r} — cannot mint "
-            "a session without a resolvable address"
-        )
-
+    _mint_check_registry(uid, settings)
+    email = _mint_resolve_email(uid, settings, resolve_email)
     refresh_token = auth.mint_refresh_token(settings, uid)
-
-    return {
-        "email": email,
-        "uid": uid,
-        "engine_ws_url": settings.engine_ws_url,
-        "firebase_web_api_key": settings.firebase_web_api_key,
-        "refresh_token": refresh_token,
-    }
+    return _assemble_descriptor(uid, settings, email, refresh_token)
 
 
 def _identity_conflict(
@@ -196,6 +247,7 @@ def _identity_conflict(
     *,
     account_switched: bool = False,
     account_name: str | None = None,
+    minted: bool = False,
 ) -> str | None:
     """Return a one-line refusal reason if THIS clone's configured identity
     conflicts with the descriptor's, or None when it is safe to store the
@@ -226,6 +278,16 @@ def _identity_conflict(
     instead — the resolved uid IS the primary, so the primary-identity
     email check correctly applies, and a mismatch there points at a
     CS_ACCOUNTS/CS_ENGINE_OWNER_UID configuration error, not a missing flag.
+
+    `minted` marks a descriptor `cmd_login`'s `--mint` branch synthesized
+    rather than read from a file. The uid check can never fire for one —
+    `_assemble_descriptor` builds `descriptor["uid"]` from the very same
+    `settings.engine_owner_uid` this function reads as `configured_uid`, so
+    that comparison is a self-comparison by construction — but the email
+    check can, and its usual wording ("pick the matching descriptor", "run
+    `cs --account <name> login` instead") names a file that does not exist
+    and omits `--mint` entirely; `minted=True` swaps in wording that names
+    the two real fixes instead.
     """
     configured_uid = (settings.engine_owner_uid or "").strip()
     if not configured_uid:
@@ -246,6 +308,16 @@ def _identity_conflict(
     configured_email = (settings.email_address or "").strip()
     descriptor_email = descriptor["email"].strip()
     if configured_email and configured_email.lower() != descriptor_email.lower():
+        if minted:
+            return (
+                "this clone is stamped for a different profile (configured "
+                f"email_address={configured_email!r}, minted session email="
+                f"{descriptor_email!r}) — fix manifest.toml "
+                "[operator].email_address if it is stale, or this clone's "
+                "CS_ACCOUNTS/CS_ENGINE_OWNER_UID registry pin if it points "
+                "at the wrong uid; `--mint` synthesized this session and "
+                "cannot resolve the mismatch on its own"
+            )
         if account_name is None:
             pointer = (
                 "; for a registered secondary account run `cs --account "
@@ -293,6 +365,152 @@ def _prompt_choice(n: int) -> int:
         print(f"Please enter a number between 1 and {n}.")
 
 
+def _finish_login(
+    settings: Settings,
+    descriptor: dict,
+    *,
+    account_switched: bool,
+    account_name: str | None,
+    minted: bool = False,
+) -> int:
+    """The shared tail for both `cmd_login` entry points — a descriptor
+    read from the mrcall-desktop app's file and `--mint`'s synthesized
+    one: the identity cross-check, the refresh-token store, the
+    config-drift advisories, and the `account.who_am_i` proof. `descriptor`
+    carries the same five `REQUIRED_STRING_FIELDS` either way, so nothing
+    from here on can tell which entry point produced it — except the
+    refusal wording `_identity_conflict` picks when `minted` is set (a
+    synthesized descriptor has no file to "pick" instead)."""
+    conflict = _identity_conflict(
+        settings,
+        descriptor,
+        account_switched=account_switched,
+        account_name=account_name,
+        minted=minted,
+    )
+    if conflict:
+        print(f"cs login: {conflict}", file=sys.stderr)
+        return 1
+
+    auth._write_refresh(settings, descriptor["refresh_token"])
+
+    # Config-drift advisories — print, never mutate: .env and manifest.toml
+    # are operator-owned files, not something a sign-in verb rewrites.
+    if settings.firebase_web_api_key != descriptor["firebase_web_api_key"]:
+        print(
+            "note: this clone's FIREBASE_WEB_API_KEY is missing or does not "
+            "match the descriptor — add this line to .env:\n"
+            f"  FIREBASE_WEB_API_KEY={descriptor['firebase_web_api_key']}"
+        )
+    if settings.engine_ws_url.rstrip("/") != descriptor_ws_base(descriptor):
+        print(
+            f"note: configured engine_ws_url ({settings.engine_ws_url!r}) "
+            f"differs from the descriptor's ({descriptor_ws_base(descriptor)!r}) "
+            "— fix manifest.toml [engine].ws_url if this is stale"
+        )
+
+    from . import rpc  # lazy: keeps `import cs.login` light
+
+    try:
+        result = rpc.call_sync(settings, "account.who_am_i")
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:  # noqa: BLE001 — the proof call has many transports
+        # The session IS stored; only the proof failed. The commonest cause is
+        # the expected one: the vendor engine has no daemon for this profile
+        # yet, so the WS upgrade is refused. That must read as one line, not a
+        # traceback — it is the first thing a new customer sees.
+        print(
+            f"cs login: stored the session, but the proof call to "
+            f"{settings.engine_ws_url!r} failed: {type(e).__name__}: {e}\n"
+            "  If this profile has not been provisioned on the engine yet, "
+            "that is expected — the stored session is still valid.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+    print(f"signed in: {descriptor['email']} ({descriptor['uid']})")
+    return 0
+
+
+def _cmd_login_mint(
+    settings: Settings,
+    *,
+    account_switched: bool,
+    account_name: str | None,
+) -> int:
+    """The `--mint` branch of `cmd_login`: synthesizes a descriptor instead
+    of reading one from the mrcall-desktop app, then rejoins
+    `_finish_login` — the same store/prove tail a descriptor-based login
+    uses, so the two entry points are indistinguishable from there on.
+
+    Guard order (load-bearing, do not reorder): registry -> tty -> email ->
+    confirmation -> mint. Registry and tty are checked before any
+    credential is spent, so both refuse provably with no key and no
+    network; only email resolution and the mint itself touch Firebase, and
+    only after a human has confirmed at an interactive terminal.
+
+    Every `ConfigError` from the three credential-touching guards
+    (registry, email, mint) is caught here and printed as one line — bare
+    `cs login --mint` dispatches before `cli.main`'s own `ConfigError`
+    handlers ever run, so an uncaught one would traceback on that spelling
+    while `cs --account <name> login --mint` (routed through the argparse
+    tree) prints cleanly; catching it here makes both spellings fail
+    identically.
+    """
+    uid = (settings.engine_owner_uid or "").strip()
+    try:
+        _mint_check_registry(uid, settings)
+
+        if not sys.stdin.isatty():
+            print(
+                "cs login: --mint needs a human at a terminal — run it in "
+                "an interactive terminal, not from a script, a cron tick "
+                "or an agent session",
+                file=sys.stderr,
+            )
+            return 1
+
+        email = _mint_resolve_email(uid, settings)
+
+        if account_name:
+            prompt = (
+                f"Mint a session for account {account_name!r} (uid {uid!r}, "
+                f"email {email!r})? [y/N] "
+            )
+        else:
+            prompt = f"Mint a session for uid {uid!r} (email {email!r})? [y/N] "
+        try:
+            if not _prompt_yes_no(prompt, default=False):
+                print("cs login: cancelled", file=sys.stderr)
+                return 1
+        except EOFError:
+            print(
+                "cs login: input ended before confirmation — run --mint in "
+                "an interactive terminal and answer the prompt",
+                file=sys.stderr,
+            )
+            return 1
+        except KeyboardInterrupt:
+            print("\ncs login: cancelled", file=sys.stderr)
+            return 130
+
+        refresh_token = auth.mint_refresh_token(settings, uid)
+    except ConfigError as e:
+        print(f"cs login: {e}", file=sys.stderr)
+        return 1
+
+    descriptor = _assemble_descriptor(uid, settings, email, refresh_token)
+    return _finish_login(
+        settings,
+        descriptor,
+        account_switched=account_switched,
+        account_name=account_name,
+        minted=True,
+    )
+
+
 def cmd_login(
     argv: list[str] | None = None,
     *,
@@ -310,11 +528,25 @@ def cmd_login(
         metavar="PATH",
         help="use this cs-descriptor.json directly, skipping the ~/.zylch profile scan",
     )
+    parser.add_argument(
+        "--mint",
+        action="store_true",
+        help="mint a session for this account from this clone's own "
+        "Firebase service-account key instead of reading a descriptor — "
+        "needs a human at an interactive terminal to confirm",
+    )
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:
         code = e.code
         return code if isinstance(code, int) else (0 if code is None else 1)
+
+    if args.mint and args.descriptor:
+        print(
+            "cs login: --mint and --descriptor are mutually exclusive",
+            file=sys.stderr,
+        )
+        return 1
 
     # `login` runs from a clone root and needs Settings for its identity
     # cross-checks. A ManifestError is already handled loudly elsewhere in
@@ -326,6 +558,15 @@ def cmd_login(
     except manifest_mod.ManifestError as e:
         print(f"manifest error: {e}", file=sys.stderr)
         return 2
+
+    if args.mint:
+        # Before any descriptor scan: a machine this feature exists for —
+        # a colleague's profile that has never signed in to the desktop
+        # app — has no descriptor at all, so scanning first would refuse
+        # with "no profile descriptor found" before the mint path ever ran.
+        return _cmd_login_mint(
+            settings, account_switched=account_switched, account_name=account_name
+        )
 
     root = descriptor_root()
     if args.descriptor:
@@ -423,53 +664,9 @@ def cmd_login(
             print("\ncs login: cancelled", file=sys.stderr)
             return 130
 
-    conflict = _identity_conflict(
+    return _finish_login(
         settings, descriptor, account_switched=account_switched, account_name=account_name
     )
-    if conflict:
-        print(f"cs login: {conflict}", file=sys.stderr)
-        return 1
-
-    auth._write_refresh(settings, descriptor["refresh_token"])
-
-    # Config-drift advisories — print, never mutate: .env and manifest.toml
-    # are operator-owned files, not something a sign-in verb rewrites.
-    if settings.firebase_web_api_key != descriptor["firebase_web_api_key"]:
-        print(
-            "note: this clone's FIREBASE_WEB_API_KEY is missing or does not "
-            "match the descriptor — add this line to .env:\n"
-            f"  FIREBASE_WEB_API_KEY={descriptor['firebase_web_api_key']}"
-        )
-    if settings.engine_ws_url.rstrip("/") != descriptor_ws_base(descriptor):
-        print(
-            f"note: configured engine_ws_url ({settings.engine_ws_url!r}) "
-            f"differs from the descriptor's ({descriptor_ws_base(descriptor)!r}) "
-            "— fix manifest.toml [engine].ws_url if this is stale"
-        )
-
-    from . import rpc  # lazy: keeps `import cs.login` light
-
-    try:
-        result = rpc.call_sync(settings, "account.who_am_i")
-    except KeyboardInterrupt:
-        raise
-    except Exception as e:  # noqa: BLE001 — the proof call has many transports
-        # The session IS stored; only the proof failed. The commonest cause is
-        # the expected one: the vendor engine has no daemon for this profile
-        # yet, so the WS upgrade is refused. That must read as one line, not a
-        # traceback — it is the first thing a new customer sees.
-        print(
-            f"cs login: stored the session, but the proof call to "
-            f"{settings.engine_ws_url!r} failed: {type(e).__name__}: {e}\n"
-            "  If this profile has not been provisioned on the engine yet, "
-            "that is expected — the stored session is still valid.",
-            file=sys.stderr,
-        )
-        return 1
-
-    print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
-    print(f"signed in: {descriptor['email']} ({descriptor['uid']})")
-    return 0
 
 
 if __name__ == "__main__":

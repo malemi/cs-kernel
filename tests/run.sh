@@ -634,8 +634,8 @@ step "19. cs login — descriptor parsing, profile scan, known-uid auto-select, 
 if "$VENV/bin/python" "$ROOT/tests/test_login.py"; then echo "OK"; else echo "FAIL: cs login regressed"; FAIL=1; fi
 
 step "19b. mint_descriptor — registry and no-email refusals (no key, no network)"
-# cs/login.py::mint_descriptor is the synthesized-descriptor source for a
-# future --mint (no CLI surface yet). Both refusals here sit BEFORE any
+# cs/login.py::mint_descriptor is the synthesized-descriptor source behind
+# `cs login --mint` (step 19c gates the CLI surface). Both refusals here sit BEFORE any
 # credential is spent, so both run unconditionally: a uid absent from
 # settings.account_map (CS_ACCOUNTS) refuses naming the uid and the
 # registry, proven with a resolver stub that raises if ever called; a
@@ -644,6 +644,23 @@ step "19b. mint_descriptor — registry and no-email refusals (no key, no networ
 # itself (a real Google round trip) is out of scope for a gate that must
 # always run.
 if "$VENV/bin/python" "$ROOT/tests/test_mint_descriptor.py"; then echo "OK"; else echo "FAIL: mint_descriptor refusals regressed"; FAIL=1; fi
+
+step "19c. cs login --mint (CLI surface) — guard order, both spellings, refusal wording"
+# The CLI wiring on top of 19b's pure guards: `cs login --mint` and `cs
+# --account <name> login --mint` both refuse on a closed stdin, naming the
+# tty reason — proving cmd_login_stub forwards --mint instead of silently
+# dropping it (it rebuilds its argv from --descriptor alone; a declared but
+# unforwarded flag never reaches login.cmd_login). A uid absent from
+# CS_ACCOUNTS refuses naming the registry, never the tty reason, proving
+# the registry check runs first. `--mint --descriptor` together refuse with
+# one line before either flag's own machinery runs. And
+# _identity_conflict(minted=True), exercised directly, never tells the
+# operator to pick a descriptor or run a descriptor login — a minted
+# session has neither. No key, no network, no real mint anywhere here; a
+# short per-run timeout means a guard that blocks on input() instead of
+# checking isatty() first fails this gate by timing out, not by hanging
+# the suite.
+if "$VENV/bin/python" "$ROOT/tests/test_login_mint.py"; then echo "OK"; else echo "FAIL: cs login --mint regressed"; FAIL=1; fi
 
 step "20. rendered bin/ scripts are executable (cs init AND cs update)"
 # A rendered file under bin/ (or sourced from a *.sh.j2 template) is a shell

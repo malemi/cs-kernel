@@ -1670,8 +1670,12 @@ def cmd_llm(args) -> int:
 # is acceptable because `--account` is meaningless for init/update anyway —
 # login is the one stub real invocations actually take. Maintenance rule:
 # any new `cs login` option must be added BOTH to `cs/login.py`'s own
-# parser AND on this stub — the failure mode of forgetting is LOUD
-# (argparse exit 2 here), never a silent drop.
+# parser AND on this stub — the failure mode of forgetting to DECLARE it
+# here is LOUD (argparse exit 2). Forgetting to FORWARD a declared option
+# in cmd_login_stub's `rest` below is the opposite failure: parse_args
+# accepts it silently and the value never reaches login.cmd_login at all —
+# `--mint` is gated against exactly this drop (tests/test_login_mint.py),
+# and any future option needs the same gate, not just the same declaration.
 def cmd_init_stub(args) -> int:
     return project_init.cmd_init(args.init_args)
 
@@ -1682,6 +1686,8 @@ def cmd_update_stub(args) -> int:
 
 def cmd_login_stub(args) -> int:
     rest = ["--descriptor", args.descriptor] if args.descriptor else []
+    if getattr(args, "mint", False):
+        rest.append("--mint")
     return login.cmd_login(
         rest,
         account_switched=getattr(args, "account_switched", False),
@@ -1755,13 +1761,21 @@ def main(argv=None) -> int:
     pup.set_defaults(func=cmd_update_stub)
     plg = sub.add_parser(
         "login",
-        help="sign in via the mrcall-desktop profile descriptor (stores the "
-        "session, proves it with account.who_am_i)",
+        help="open a session for this account: from the mrcall-desktop profile "
+        "descriptor, or minted from the clone's own service-account key "
+        "(--mint); stores it, proves it with account.who_am_i",
     )
     plg.add_argument(
         "--descriptor",
         metavar="PATH",
         help="use this cs-descriptor.json directly, skipping the ~/.zylch profile scan",
+    )
+    plg.add_argument(
+        "--mint",
+        action="store_true",
+        help="mint a session for this account from this clone's own "
+        "Firebase service-account key instead of reading a descriptor — "
+        "needs a human at an interactive terminal to confirm",
     )
     plg.set_defaults(func=cmd_login_stub)
 

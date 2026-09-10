@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Semantic guard for `cs/login.py::mint_descriptor` — the synthesized-
-descriptor source `--mint` will consume (CLI surface not yet wired; that is
-a later milestone). Both guards here are the two refusals the guard order
-puts BEFORE any credential is spent, so both run unconditionally, with no
-key and no network:
+"""Semantic guard for `cs/login.py::mint_descriptor` — the pure, prompt-free
+composition the CLI surface (`cs login --mint`, `tests/test_login_mint.py`)
+calls its two guards from individually, with the tty check and the
+confirmation prompt interleaved between them. Both guards here are the two
+refusals the guard order puts BEFORE any credential is spent, so both run
+unconditionally, with no key and no network:
 
   (i)  a uid absent from `settings.account_map` (`CS_ACCOUNTS`) refuses,
        naming the uid and the registry — proven with a resolver stub that
@@ -97,9 +98,48 @@ def _test_no_email_refusal() -> None:
     )
 
 
+def _test_resolver_error_is_handled() -> None:
+    """The resolver reaches the Firebase Admin SDK, which raises many types
+    that are NOT `ConfigError`: a missing service-account key file surfaces
+    as `FileNotFoundError`, a transport failure as `FirebaseError`. Left
+    unwrapped they traceback out of the mint path while the very same key
+    file is reported in one handled line by `mint_refresh_token` one step
+    later. `_mint_resolve_email` must turn any such exception into one
+    `ConfigError` naming the uid. Proven with an injected resolver that
+    raises — no key, no network.
+    """
+    def _raises(_uid, _settings):
+        raise FileNotFoundError(2, "No such file or directory", "/nonexistent/key.json")
+
+    settings = _settings()
+    try:
+        login._mint_resolve_email(
+            REGISTERED_UID, settings, resolve_email=_raises
+        )
+        raise AssertionError(
+            "expected a ConfigError when the resolver raises a non-ConfigError"
+        )
+    except ConfigError as e:
+        reason = str(e)
+        assert REGISTERED_UID in reason, f"refusal must name the uid: {reason}"
+    except FileNotFoundError:
+        raise AssertionError(
+            "the resolver's FileNotFoundError leaked unwrapped — it would "
+            "traceback out of the mint path instead of one handled line"
+        )
+
+    print(
+        "OK: mint_descriptor resolver-error wrap — a non-ConfigError from "
+        "the resolver (missing key, transport) becomes one handled "
+        "ConfigError naming the uid, never a leaked traceback (no key, "
+        "no network)"
+    )
+
+
 def main() -> int:
     _test_registry_refusal()
     _test_no_email_refusal()
+    _test_resolver_error_is_handled()
     print("test_mint_descriptor: all assertions passed")
     return 0
 
