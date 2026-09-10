@@ -116,7 +116,7 @@ matching the operator email you just gave — or lists them for you to choose by
 number. If it says no sign-in was found, that is Step 1 missing: sign in to
 mrcall-desktop as that mailbox and re-run.
 
-The development version also accepts an explicit desktop handoff:
+The wizard also accepts an explicit desktop handoff:
 
 ```bash
 cs init --descriptor "/path/to/cs-descriptor.json"
@@ -127,8 +127,7 @@ contains a refresh credential: keep it outside the workspace. Invalid handoffs
 stop initialization instead of selecting another account. Connection settings
 come from the selected engine; if unavailable, the wizard asks you to confirm
 them. The descriptor and mailbox password never enter the workspace's tracked
-files. These additions are unreleased; fetching an older public tag does not
-provide them.
+files. Use the latest release; older tags may not provide these setup commands.
 
 Here is what to expect for ACME:
 
@@ -149,7 +148,7 @@ When you confirm, you get a folder **`acme-cs/`**.
 If you are interested, `cs init` wrote all the info into `~/.acme-cs/.env`.
 
 The install prompt creates `.venv` and installs the pinned kernel after an
-explicit **y**. The development version then offers engine login, also with a
+explicit **y**. The wizard then offers engine login, also with a
 default-no confirmation. A declined install leaves a created workspace; a
 failed install or login exits nonzero with the stage to retry. Successful login
 confirms the configured UID. It does not prove email preparation is complete.
@@ -200,7 +199,7 @@ session valid until 2026-08-21 12:54 CEST (auto-renews)
 `not signed in — run cs login` → redo step 4. Anything else:
 Troubleshooting below. (Raw JSON, if you want it: `cs whoami --json`.)
 
-With the development version, run `cs setup` (or `cs setup --json`) for the
+Run `cs setup` (or `cs setup --json`) for the
 full readiness report. It checks workspace files, configured mailbox settings,
 the expected engine identity, email preparation, company memory, and whether
 Codex or Claude Code is on this terminal's PATH. Exit zero means those checks

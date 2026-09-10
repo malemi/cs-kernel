@@ -155,6 +155,33 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.43.0 — 2026-09-10 (MINOR)
+
+Desktop-to-workspace setup now accepts an explicit `cs init --descriptor PATH`,
+uses that profile consistently for mailbox settings and credential handoff,
+and distinguishes workspace creation, installation and optional login outcomes.
+`cs setup [--json]` reports identity, mailbox configuration, preparation evidence,
+company memory and agent executable prerequisites with actionable next steps.
+It performs no sync, generation or send; old-engine evidence remains unverified.
+
+Login proves the expected UID and signed-in state. The release also includes
+`login --mint` for accounts in the clone registry: registry/TTY/identity/explicit
+confirmation guards precede the existing store-and-prove path. Storing a new
+refresh credential retires the cached ID token, preventing proof with the old
+session. The scheduled operator's stdin is closed with `</dev/null`.
+
+Migration: no automatic account enrollment or credential migration. Existing
+clones upgrade their tag and refresh templates; preserve clone-owned deny rules.
+New workspaces can install the published tag through the normal wizard offer.
+Explicit descriptors and mailbox passwords stay outside tracked workspace files.
+
+**Re-collaudo tier: FULL on both maintained clones.** Authentication and the
+scheduled operator boundary are touched. Required evidence includes the complete
+kernel suite at the tag, current-baseline FULL clone comparisons, live identity
+and setup reads, preserved security overrides, and lock-only reinstall proofs.
+The automated FULL harness uses sandboxed send/pause checks; no actual outbound
+message or paid headless tick is part of this release verification.
+
 ## v0.42.0 — 2026-09-08 (MINOR)
 
 **The stamped charter is `AGENTS.md`; `CLAUDE.md` is written once and never

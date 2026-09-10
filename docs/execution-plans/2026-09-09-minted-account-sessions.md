@@ -28,10 +28,9 @@ after, because it is the first step that spends a credential.
   tracebacks); fixed, gated (`19b` resolver-error wrap), re-verified.
 - **M3 done** — `70b6930`. The two stamped surfaces reconciled; rendered wrapper is valid
   bash. Suite green (57 gates).
-- **M4 pending the CTO** — v0.43.0, MINOR, **FULL tier** (auth boundary + permission
-  surface). CHANGELOG entry drafted (scratchpad). Blocked on the operator by design: the
-  tag, the push, and the live-clone upgrades + FULL collaudo touch external/running
-  infrastructure. Then the clone-side work: Ivan and Riccardo into 124's `CS_ACCOUNTS`,
+- **M4 release authorized 2026-09-10; consumer migration remains pending** — v0.43.0, MINOR, **FULL tier** (auth boundary + permission
+  surface). CHANGELOG entry drafted (scratchpad). The CTO authorized the tag, push and live-clone upgrades;
+  the coordinated rollout is tracked in `2026-09-10-desktop-workspace-setup.md`. Then the clone-side work: Ivan and Riccardo into 124's `CS_ACCOUNTS`,
   mint their sessions, prove `--full` returns bodies, retire the app passwords
   (password entry before mailbox entry — the reverse fails every verb at config load).
 

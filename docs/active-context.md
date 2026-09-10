@@ -14,7 +14,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
-- **Latest release tag: `v0.42.0`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.43.0`. Current HEAD status: tagged as `v0.43.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release, push and operational clone upgrades require explicit
   authorization and the release procedure's verification gates.
@@ -38,7 +38,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   cron posture and public-tag availability are dated observations in the archive,
   not verified present state.
 
-**Untagged workspace setup.**
+**Workspace setup.**
 
 `cs init --descriptor PATH` selects an explicit desktop handoff, reuses that
 selection for mailbox settings and credentials, and distinguishes creation,
@@ -54,10 +54,10 @@ probed. Auth can refresh local caches; no business mutation is initiated.
 
 Full local gates pass, including an isolated generated workspace, installation
 of changed source into its own environment and a controlled local WebSocket.
-Public tag installation and live provider authentication remain unverified.
-Generated pins still refer to the existing release, so testing these additions
-requires the documented source installation. No versions, permissions, releases
-or operational clone upgrades changed. Integration/final-review state lives in
+The v0.43.0 release candidate includes these commands and guarded `login --mint`,
+refresh-cache invalidation and closed cron stdin. Production release and both
+clone upgrades are authorized; current baseline comparisons and publication
+verification are tracked in the rollout section. State lives in
 [the delivery plan](execution-plans/2026-09-10-desktop-workspace-setup.md).
 
 ## Unresolved
@@ -85,8 +85,8 @@ or operational clone upgrades changed. Integration/final-review state lives in
 
 ## Next
 
-1. Run real-user acceptance from the source guide, then coordinate release;
-   independent implementation and documentation reviews are approved.
+1. Complete the authorized production rollout and lock-only install checks;
+   source implementation and release-plan reviews are approved.
 2. Diagnose unanswered-mail disagreement and close the evidence/latency gaps.
 3. Replace internal verification terminology still exposed by `cs update` with
    operator-facing language; promote clone-specific tools only under rule two.
