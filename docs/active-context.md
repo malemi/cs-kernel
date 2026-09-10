@@ -66,7 +66,8 @@ from entity blobs. The work includes explicit import, checkout/save and selectiv
 reads; source directories remain available for recovery. The public v0.44.0 tag is installed in both maintained clones with independent
 lock-only proofs. The hosted engine contains six 124 projects (28 documents) and
 four MrCall projects (23 documents); independent downloads match source hashes.
-Original folders remain unchanged recovery copies. A second 124 owner sees all
+Original folders are archived byte-exactly in the private clone Git histories
+(124 `abd48c8`, MrCall `3f53462`) and removed from their working trees. A second 124 owner sees all
 six shared projects. FULL comparisons have no unexplained regression. The
 [brief](briefs/2026-09-10-shared-project-memory.md) and
 [plan](execution-plans/2026-09-10-shared-project-memory.md) own current acceptance.
