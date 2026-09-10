@@ -20,6 +20,21 @@ through a live Firebase round trip is a guard nobody runs. The brief requires on
 the tty be checked before any `input()`; this order satisfies it. Email resolution comes
 after, because it is the first step that spends a credential.
 
+## Status (2026-09-10)
+
+- **M1 done** — `6fcad5f`. Mint source + cache-retirement fix. Integration review APPROVED.
+- **M2 done** — `c2a08df`. `--mint` on both spellings, guard chain, end-to-end proof on
+  the live host. Integration review found one escape (resolver exceptions leaking as
+  tracebacks); fixed, gated (`19b` resolver-error wrap), re-verified.
+- **M3 done** — `70b6930`. The two stamped surfaces reconciled; rendered wrapper is valid
+  bash. Suite green (57 gates).
+- **M4 pending the CTO** — v0.43.0, MINOR, **FULL tier** (auth boundary + permission
+  surface). CHANGELOG entry drafted (scratchpad). Blocked on the operator by design: the
+  tag, the push, and the live-clone upgrades + FULL collaudo touch external/running
+  infrastructure. Then the clone-side work: Ivan and Riccardo into 124's `CS_ACCOUNTS`,
+  mint their sessions, prove `--full` returns bodies, retire the app passwords
+  (password entry before mailbox entry — the reverse fails every verb at config load).
+
 ## Milestones
 
 ### M1 — The mint source, no CLI surface
