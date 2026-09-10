@@ -173,6 +173,23 @@ class ProjectWorkingTests(unittest.TestCase):
         self.assertEqual(self.engine.records['two']['status.md'], [b'status'])
         self.assertEqual(before, {str(p): p.read_bytes() for p in source.rglob('*') if p.is_file()})
 
+    def test_import_all_enforces_aggregate_file_limit_before_rpc(self):
+        source = self.root / 'legacy'
+        for name in ('one', 'two'):
+            project = source / name
+            project.mkdir(parents=True)
+            for filename in ('a.md', 'b.md'):
+                (project / filename).write_bytes(b'content')
+        calls = []
+        def observed(*args):
+            calls.append(args)
+            return self.engine(*args)
+        with patch('cs.project_working.MAX_FILES', 2):
+            with self.assertRaisesRegex(ProjectError, 'file limit'):
+                import_projects(self.client(observed), source, all_projects=True, commit=True)
+        self.assertEqual(calls, [])
+        self.assertEqual(self.engine.writes, 0)
+
     def test_import_preflights_every_tree_and_remote_conflict(self):
         source = self.root / 'source'
         (source / 'aaa').mkdir(parents=True)

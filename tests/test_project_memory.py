@@ -98,6 +98,13 @@ def main():
             args.name = 'second-project'
             project_memory._new(client, settings, args)
             assert 'founder@acme.example' in client.read(args.name, 'README.md')[1].decode()
+            args.name = 'selected-account-project'
+            args.account = 'secondary'
+            project_memory._new(client, settings, args)
+            selected = client.read(args.name, 'README.md')[1].decode()
+            assert '**secondary**' in selected
+            assert '--account secondary' in selected
+            assert 'founder@acme.example' not in selected
             before = repr(engine.records)
             try:
                 project_memory._new(client, settings, args)

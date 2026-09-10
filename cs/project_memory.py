@@ -73,7 +73,8 @@ def _new(client, settings, args):
         'project_name': name,
         'project_title': (args.title or '').strip() or title_from_slug(name),
         'today': _time.local_date(_time.now_utc(), settings.timezone),
-        'owner_account': settings.founder_sweep_account or settings.email_address,
+        'owner_account': (getattr(args, 'account', None)
+                          or settings.founder_sweep_account or settings.email_address),
     }
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)

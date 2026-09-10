@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 from .project_documents import (
-    Documents, ProjectError, MAX_TREE, digest, load_state, metadata, path_name, read_bytes,
+    Documents, ProjectError, MAX_FILES, MAX_TREE, digest, load_state, metadata, path_name, read_bytes,
     safe_ancestors, scan, slug, write_state,
 )
 
@@ -138,12 +138,15 @@ def import_projects(client, directory, name=None, all_projects=False, commit=Fal
         selections.append((slug(name or root.name), root))
     # Every selected tree is scanned BEFORE any RPC mutation. No attachments are
     # silently omitted because of extension, encoding, traversal or file type.
-    scanned, total_size = [], 0
+    scanned, total_size, total_files = [], 0, 0
     for project, source in selections:
         files, excluded = scan(source)
         _excluded([f'{project}/{path}' for path in excluded])
         if not files:
             raise ProjectError('An empty directory cannot be imported as a project.')
+        total_files += len(files)
+        if total_files > MAX_FILES:
+            raise ProjectError('Import exceeds the 10000-file limit. Import project directories separately.')
         total_size += sum(map(len, files.values()))
         if total_size > MAX_TREE:
             raise ProjectError('Import exceeds 128 MiB. Import project directories separately.')
