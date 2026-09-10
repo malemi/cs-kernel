@@ -63,3 +63,46 @@ Rollback is discarding the isolated development branch.
 - Documentation semantic review approved; release consistency and mechanical
   documentation checks pass. Public-install and live authentication remain
   unverified.
+
+## Production rollout — v0.43.0
+
+The CTO authorized production release and installation on 2026-09-10, after
+Desktop v0.1.47 was released. Scope includes the earlier reviewed minted-session
+work already in the branch: mint guards, cached-token retirement and cron stdin
+closure, plus descriptor setup and strict login proof. MINOR / FULL on both
+maintained clones. Adding company accounts or migrating secondary credentials is
+separate consumer work and is not implied by installing this kernel.
+
+Release review finds no code blocker. Before publication:
+
+1. Preserve clone pin/template/security files, installed freezes and unrelated
+   edits. Capture a private current0.42.0 baseline with the FULL external harness
+   on both clones; historical baselines remain untouched. Inspect gate results
+   rather than trusting capture's exit code. Existing defects must be identified.
+2. Run the kernel suite before versioning. Make the release commit, immediately
+   tag0.43.0 locally, rerun the suite at the tag, and make the mandatory first
+   post-tag immutable-target/untagged documentation commit.
+3. Pause future clone ticks only during the upgrade window, preserving prior
+   pause state; wait for running tick locks. Install the local candidate tag in
+   both clones, use the supported pin/template refresh, and inspect every changed
+   security file against its saved pre-upgrade contents. Preserve clone-owned
+   deny rules and authored documents. No outbound messages or account migration.
+4. Run FULL checks with the candidate installed against both current baselines;
+   classify expected CLI additions and pre-existing harness drift explicitly.
+   Independently prove live identity/setup reads and known safety assertions.
+   Any unexplained functional regression blocks publication and triggers repair
+   or restoration of the previous installed pin.
+5. Follow the release-procedure version sweep. Publish main+tag after review;
+   normalize both installations to the published tag, regenerate requirements.lock
+   and prove each lock alone in a throwaway environment. Align every live pin
+   claim. Commit only upgrade-owned clone files, then update the operational-pin
+   marker after both installations and verifications succeed.
+6. Restore only pause flags introduced by this rollout, retaining existing
+   operator pauses. Update Desktop's installation guide for the released kernel.
+
+Evidence directory: `/tmp/cs-kernel-release-043-collaudo` (private business output);
+rollback files: `/tmp/cs-kernel-043-upgrade-backup` (private). The automated FULL
+harness does not send messages; manual paid ticks and live draft creation are
+outside that automated tier and will not be claimed as tested.
+
+Rollout state: pre-upgrade verification active.
