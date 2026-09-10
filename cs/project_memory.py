@@ -1,53 +1,17 @@
-"""`cs project` — stamp a project's written memory from the kernel templates.
-
-WHY THIS IS CODE AND NOT A CONVENTION IN A README. Every clone keeps a folder
-per company under `docs/projects/`, and that folder is the operator's memory of
-the relationship: what is agreed, what we owe, what happened, who these people
-are. A convention documented in prose drifts the moment somebody is in a hurry —
-the observed failure is a live prospect whose folder held a dossier and nothing
-else, so three weeks of meetings and a changed project scope existed only in one
-person's head. A generator makes the shape the default: `cs project new <name>`
-and the structure is already right, in every clone, identically.
-
-WHAT THE SHAPE IS, and why each part exists:
-
-  README.md    what this project is + the index of its own files
-  status.md    the ONLY file describing the present — agreed scope, what we owe,
-               deadlines, live risks. One home for state, so two files can never
-               disagree about it.
-  timeline.md  what happened, when, and how we know. Append-only: a timeline's
-               value is that it shows what we believed at the time.
-  meetings/    one file per meeting, append-only, corrections dated at the
-               bottom. A meeting note that gets edited in place quietly rewrites
-               history and hides that we misread the room.
-
-Each stamped file opens with front matter and an `## Abstract`, mirroring the
-`docs/` harness: a reader decides in ten seconds whether to read on. The bodies
-are HTML comments describing what to write rather than prose pretending to be
-content — an empty section is honest, invented content is not.
-
-The templates live in `cs/templates/project_memory/`, deliberately NOT under
-`cs/templates/project/`: they are stamped per project by this verb, not once per
-clone by `cs init`. Company variance comes from Settings (manifest → env) as
-everywhere else in the kernel — this module contains no company literal.
-"""
+"""Company project memory: engine-backed records and explicit local working copies."""
 from __future__ import annotations
 
-import re
+import base64
+import json
 import sys
+import tempfile
 from pathlib import Path
 
 import jinja2
 
 from . import _time, config
-
-# Relative to the clone root, which is also where every permission string runs
-# from (`find_manifest_path()` reads ./manifest.toml, no upward walk).
-PROJECTS_DIR = Path("docs") / "projects"
-
-# A folder slug: lowercase, digits, hyphens. NOT a person's first name and not a
-# mail address — those produce folders nobody can guess the name of later.
-_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$")
+from .project_documents import Documents, ProjectError, digest, metadata, safe_ancestors, slug
+from .project_working import checkout, import_projects, save
 
 
 def _template_root() -> Path:
@@ -102,63 +66,131 @@ def render_scaffold(dest: Path, render_vars: dict) -> list[Path]:
     return written
 
 
-def cmd_project_new(args) -> int:
-    name = args.name.strip()
-    if not _SLUG_RE.match(name):
-        print(
-            f"error: '{name}' is not a folder slug.\n"
-            "Use lowercase letters, digits and hyphens (e.g. acme-corp) — not a "
-            "first name, not a mail address: the folder has to be guessable "
-            "months from now.",
-            file=sys.stderr,
-        )
-        return 2
+def _new(client, settings, args):
+    name = slug(args.name)
+    client.page('list', limit=1)
+    render_vars = {
+        'project_name': name,
+        'project_title': (args.title or '').strip() or title_from_slug(name),
+        'today': _time.local_date(_time.now_utc(), settings.timezone),
+        'owner_account': settings.founder_sweep_account or settings.email_address,
+    }
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        written = render_scaffold(root, render_vars)
+        files = {path.relative_to(root).as_posix(): path.read_bytes() for path in written}
+    response = client.request('create', space_id=client.space_id, project=name,
+                              files={path: base64.b64encode(data).decode('ascii') for path, data in files.items()})
+    received = response.get('files')
+    if response.get('project') != name or not isinstance(received, list) or len(received) != len(files):
+        raise ProjectError('Invalid project creation response. Check cs project files before retrying.')
+    verified_paths = set()
+    for item in received:
+        metadata(item, name)
+        path = item['path']
+        if path not in files or path in verified_paths or item['sha256'] != digest(files[path]):
+            raise ProjectError('Project creation verification failed. Check cs project files before retrying.')
+        _, data = client.read(name, path, item['revision'])
+        if data != files[path]:
+            raise ProjectError('Project creation read-back verification failed.')
+        verified_paths.add(path)
+    print(f'Created {name} in company memory ({len(files)} files).')
+    print(f'Open its status: cs project show {name}')
+    print(f'Edit a working copy: cs project checkout {name} ./project-{name}')
 
-    # Refuse to stamp outside a clone. Without this the verb happily creates
-    # docs/projects/<name>/ in whatever directory it was run from.
-    if not Path("manifest.toml").exists():
-        print(
-            "error: no manifest.toml in the current directory.\n"
-            "Run `cs project new` from the clone root — that is where the "
-            "manifest and env chain resolve from.",
-            file=sys.stderr,
-        )
-        return 2
 
-    dest = PROJECTS_DIR / name
-    if dest.exists():
-        print(
-            f"error: {dest} already exists — refusing to overwrite it.\n"
-            "A project's memory is append-only by design. To add a meeting:\n"
-            f"  cp {PROJECTS_DIR / '_meeting-template.md'} {dest / 'meetings'}/"
-            "$(date +%Y-%m-%d)-<slug>.md",
-            file=sys.stderr,
-        )
+def cmd_project(args):
+    try:
+        if not Path('manifest.toml').is_file():
+            raise ProjectError('Run cs project from the clone directory containing manifest.toml.')
+        settings = config.load()
+        client = Documents(settings)
+        action = args.paction
+        if action == 'new':
+            _new(client, settings, args)
+        elif action in ('list', 'files', 'history'):
+            params = {}
+            if action != 'list':
+                params['project'] = slug(args.name)
+            if action == 'history':
+                params['path'] = args.path
+            result = client.page(action, limit=args.limit, offset=args.offset, **params)
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                for item in result['items']:
+                    if action == 'list':
+                        print(item['project'])
+                    else:
+                        print(f"{item['path']}  revision {item['revision']}  {item['size']} bytes  {item['created_at']}")
+                print(f"Showing {len(result['items'])} of {result['total']} (offset {result['offset']}).")
+        elif action == 'show':
+            result, data = client.read(args.name, args.path, args.revision)
+            if args.output:
+                destination = safe_ancestors(args.output)
+                with destination.open('xb') as stream:
+                    stream.write(data)
+                print(f'Wrote {len(data)} bytes to {destination}.')
+            elif args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                try:
+                    text = data.decode('utf-8')
+                except UnicodeDecodeError:
+                    raise ProjectError('Binary document: use --output FILE for byte-exact export.') from None
+                if any(ord(c) < 32 and c not in '\n\r\t' for c in text) or '\x7f' in text:
+                    raise ProjectError('Binary or control-character document: use --output FILE.')
+                print(text, end='' if text.endswith('\n') else '\n')
+        elif action == 'checkout':
+            checkout(client, args.name, args.directory)
+        elif action == 'save':
+            save(client, args.directory, args.commit)
+        elif action == 'import':
+            import_projects(client, args.directory, args.name, args.all, args.commit)
+        return 0
+    except (ProjectError, OSError) as exc:
+        print(f'Project operation refused: {exc}', file=sys.stderr)
         return 1
 
-    settings = config.load()
-    render_vars = {
-        "project_name": name,
-        "project_title": (args.title or "").strip() or title_from_slug(name),
-        "today": _time.local_date(_time.now_utc(), settings.timezone),
-        # Only what a template in `cs/templates/project_memory/` actually
-        # consumes. The renderer uses StrictUndefined, so a MISSING variable is
-        # a loud failure and an unused one is silent weight — which is how
-        # three of these went unnoticed until v0.18.0.
-        # The mailbox that actually owns business relationships. On most clones
-        # that is the founder inbox, not the autonomous operator's default.
-        "owner_account": settings.founder_sweep_account or settings.email_address,
-    }
 
-    written = render_scaffold(dest, render_vars)
-    for path in written:
-        print(f"  + {path}")
-    print(
-        f"\n{dest} is ready. Fill the abstract in README.md and the state in "
-        f"status.md — the placeholders are HTML comments saying what belongs "
-        f"where.\nA meeting note starts from "
-        f"{PROJECTS_DIR / '_meeting-template.md'}; add a line for it in "
-        f"timeline.md so it can be found from the chronology.\n"
-        f"Conventions: {PROJECTS_DIR / 'README.md'}"
-    )
-    return 0
+def cmd_project_new(args):
+    """Compatibility entry point; all commands share validation and error handling."""
+    args.paction = 'new'
+    return cmd_project(args)
+
+
+def add_subparsers(sub):
+    project = sub.add_parser('project', help='shared company project documents')
+    actions = project.add_subparsers(dest='paction', required=True)
+    new = actions.add_parser('new', help='create project index, status and timeline in company memory')
+    new.add_argument('name')
+    new.add_argument('--title')
+    for action in ('list', 'files', 'history'):
+        parser = actions.add_parser(action, help='list project metadata' if action == 'list' else f'list project {action}')
+        if action != 'list':
+            parser.add_argument('name')
+        if action == 'history':
+            parser.add_argument('path')
+        parser.add_argument('--limit', type=int, default=50)
+        parser.add_argument('--offset', type=int, default=0)
+        parser.add_argument('--json', action='store_true')
+    show = actions.add_parser('show', help='read one document (status.md by default)')
+    show.add_argument('name')
+    show.add_argument('path', nargs='?', default='status.md')
+    show.add_argument('--revision', type=int)
+    output = show.add_mutually_exclusive_group()
+    output.add_argument('--json', action='store_true')
+    output.add_argument('--output')
+    fetch = actions.add_parser('checkout', help='download a new working copy for editing')
+    fetch.add_argument('name')
+    fetch.add_argument('directory')
+    put = actions.add_parser('save', help='preview changes to a working copy')
+    put.add_argument('directory')
+    put.add_argument('--commit', action='store_true', help='save changes to company memory')
+    migrate = actions.add_parser('import', help='preview a non-destructive legacy project import')
+    migrate.add_argument('directory')
+    selection = migrate.add_mutually_exclusive_group()
+    selection.add_argument('--name')
+    selection.add_argument('--all', action='store_true', help='import immediate project subdirectories')
+    migrate.add_argument('--commit', action='store_true', help='import and verify bytes in company memory')
+    project.set_defaults(func=cmd_project)

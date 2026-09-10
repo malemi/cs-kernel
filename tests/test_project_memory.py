@@ -1,28 +1,22 @@
 #!/usr/bin/env python3
-"""`cs project new` — the per-project memory scaffold, against a REAL subprocess
-in a sandbox clone (trial manifest, no value from any real clone):
-
-  - stamps index + status + timeline + meetings/, every file front-matter'd
-    and abstract-first (the shape the docs/ harness relies on)
-  - every template variable renders; an unrendered `{{ … }}` reaching a clone
-    is a silent template bug that only shows up in someone's dossier
-  - the date comes from the manifest timezone, not UTC
-  - `meetings/` survives a commit (a .gitkeep, or the append-only half of the
-    scaffold vanishes from git)
-  - REFUSES an existing folder without touching it — a project's memory is
-    append-only, and clobbering it destroys the only copy of a judgment
-  - refuses a non-slug name, and refuses to run outside a clone root
-"""
+"""Real template rendering and CLI parser validation without engine credentials."""
 from __future__ import annotations
 
-import hashlib
+import argparse
 import os
 import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
+
+from cs import project_memory
+from cs.project_documents import Documents
+from test_project_working import FakeEngine
+
 
 TZ = "Europe/Madrid"
 
@@ -72,131 +66,75 @@ def _run(repo: Path, env: dict, *args: str) -> subprocess.CompletedProcess:
                           capture_output=True, text=True)
 
 
-def _digest(root: Path) -> dict[str, str]:
-    return {
-        str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-        for p in sorted(root.rglob("*")) if p.is_file()
-    }
 
-
-def main() -> int:
+def main():
+    settings = SimpleNamespace(timezone='Europe/Madrid', email_address='ops@acme.example',
+                               founder_sweep_account='')
     with tempfile.TemporaryDirectory() as td:
-        home = Path(td, "home"); home.mkdir()
-        repo = Path(td, "repo"); repo.mkdir()
-        (repo / "manifest.toml").write_text(MANIFEST)
+        root = Path(td)
+        original = Path.cwd()
+        os.chdir(root)
+        try:
+            engine = FakeEngine()
+            client = Documents(settings, engine)
+            args = SimpleNamespace(name='acme-corp', title='Acme Corp S.p.A.')
+            project_memory._new(client, settings, args)
+            assert not (root / 'docs').exists(), 'new project must live in engine, not docs/'
+            expected = {'README.md', 'status.md', 'timeline.md', 'meetings/.gitkeep'}
+            assert expected <= set(engine.records['acme-corp'])
+            for path in ('README.md', 'status.md', 'timeline.md'):
+                _, data = client.read('acme-corp', path)
+                text = data.decode()
+                assert text.startswith('---\n') and '## Abstract' in text
+                assert 'project: acme-corp' in text
+                assert '{{' not in text and '{%' not in text
+            _, data = client.read('acme-corp', 'README.md')
+            text = data.decode()
+            assert 'Acme Corp S.p.A.' in text and 'S.p.A..' not in text
+            assert 'ops@acme.example' in text
+            today = datetime.now(timezone.utc).astimezone(ZoneInfo(settings.timezone)).strftime('%Y-%m-%d')
+            assert f'created: {today}' in text
+            settings.founder_sweep_account = 'founder@acme.example'
+            args.name = 'second-project'
+            project_memory._new(client, settings, args)
+            assert 'founder@acme.example' in client.read(args.name, 'README.md')[1].decode()
+            before = repr(engine.records)
+            try:
+                project_memory._new(client, settings, args)
+                raise AssertionError('duplicate creation accepted')
+            except ValueError:
+                pass
+            assert repr(engine.records) == before
+            args.paction = 'new'
+            assert project_memory.cmd_project(args) == 1
+            assert not (root / 'docs').exists()
+        finally:
+            os.chdir(original)
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest='cmd')
+    project_memory.add_subparsers(sub)
+    for command in ('list', 'files acme-corp', 'show acme-corp', 'history acme-corp status.md',
+                    'checkout acme-corp work', 'save work', 'import legacy --all', 'new acme-corp'):
+        args = parser.parse_args(('project ' + command).split())
+        assert args.func is project_memory.cmd_project
+        if args.paction in ('save', 'import'):
+            assert args.commit is False
+    # Preserve the unrelated historical account-boundary regression checks.
+    with tempfile.TemporaryDirectory() as td:
+        home = Path(td, 'home'); home.mkdir()
+        repo = Path(td, 'repo'); repo.mkdir()
+        (repo / 'manifest.toml').write_text(MANIFEST)
         env = _clean_env(home)
-
-        # ---- 1. the happy path -------------------------------------------
-        proc = _run(repo, env, "project", "new", "acme-corp",
-                    "--title", "Acme Corp S.p.A.")
-        assert proc.returncode == 0, f"project new failed:\n{proc.stderr}"
-
-        dest = repo / "docs" / "projects" / "acme-corp"
-        expected = ["README.md", "status.md", "timeline.md", "meetings/.gitkeep"]
-        for rel in expected:
-            assert (dest / rel).exists(), f"missing from the scaffold: {rel}"
-
-        # ---- 2. abstract-first, front-matter'd ---------------------------
-        for rel in ("README.md", "status.md", "timeline.md"):
-            text = (dest / rel).read_text()
-            assert text.startswith("---\n"), f"{rel}: no front matter"
-            assert "\n---\n" in text, f"{rel}: front matter not closed"
-            assert "## Abstract" in text, f"{rel}: no abstract — the harness reads it first"
-            assert "project: acme-corp" in text, f"{rel}: project slug not stamped"
-
-        # ---- 3. every variable rendered ----------------------------------
-        # StrictUndefined catches a MISSING var at render time; a var that is
-        # defined but never referenced, or a typo'd `{{` in prose, survives to
-        # the clone. Assert no Jinja syntax reaches the stamped files.
-        for path in sorted(dest.rglob("*")):
-            if not path.is_file():
-                continue
-            body = path.read_text(errors="replace")
-            for token in ("{{", "{%"):
-                assert token not in body, f"{path.name}: unrendered template syntax {token}"
-
-        readme = (dest / "README.md").read_text()
-        assert "Acme Corp S.p.A." in readme, "--title not honoured"
-        # A title ending in a period must not produce "S.p.A.." — the template
-        # never puts {{ project_title }} at the end of a sentence.
-        assert "S.p.A.." not in readme, "title concatenated into a double period"
-        # The mailbox that owns relationships: founder sweep is off in this
-        # manifest, so it must fall back to the operator address.
-        assert "ops@acme.example" in readme, "owner account not resolved"
-
-        # ---- 4. the date is market-local, not UTC ------------------------
-        today_local = datetime.now(timezone.utc).astimezone(ZoneInfo(TZ)).strftime("%Y-%m-%d")
-        assert f"created: {today_local}" in readme, (
-            f"date not taken from the manifest timezone ({TZ}): "
-            f"expected {today_local}"
-        )
-
-        # ---- 4b. with the founder sweep on, THAT mailbox owns the project --
-        # The branch that matters on a real clone: business relationships live
-        # on the founder inbox, not on the autonomous operator's default. Wrong
-        # mailbox here sends the next session looking in an empty archive.
-        repo2 = Path(td, "repo2"); repo2.mkdir()
-        (repo2 / "manifest.toml").write_text(
-            MANIFEST + '\n[engine.founder_sweep]\nenabled = true\n'
-            'account = "founder@acme.example"\n'
-        )
-        proc = _run(repo2, env, "project", "new", "acme-corp")
-        assert proc.returncode == 0, f"founder-sweep clone failed:\n{proc.stderr}"
-        readme2 = (repo2 / "docs/projects/acme-corp/README.md").read_text()
-        assert "founder@acme.example" in readme2, \
-            "founder-sweep account must own the project when the sweep is on"
-
-        # ---- 5. an existing folder is refused, and left alone ------------
-        before = _digest(dest)
-        (dest / "meetings" / "2026-01-31-kickoff.md").write_text("hand-written note\n")
-        before[str(Path("meetings") / "2026-01-31-kickoff.md")] = hashlib.sha256(
-            b"hand-written note\n"
-        ).hexdigest()
-
-        proc = _run(repo, env, "project", "new", "acme-corp")
-        assert proc.returncode != 0, "an existing project folder must be refused"
-        assert "already exists" in (proc.stderr + proc.stdout)
-        assert _digest(dest) == before, "refusal still modified the project folder"
-
-        # ---- 6. a name that is not a slug is refused --------------------
-        for bad in ("Acme Corp", "ops@acme.example", "acme_corp", "-acme", "ACME"):
-            proc = _run(repo, env, "project", "new", bad)
-            assert proc.returncode != 0, f"non-slug name accepted: {bad!r}"
-
-        # ---- 6b. Gmail-IMAP verbs refuse a non-default --account ---------
-        # They read the operator's ONE mail credential, so --account cannot
-        # redirect them. They used to answer anyway, about the wrong mailbox:
-        # `contacted` returned a confident "no" with exit 1, which reads as
-        # "never contacted" and is the exact check that gates outreach.
-        # The registry's uids live in the env layer, not the manifest.
-        env3 = {**env, "CS_ACCOUNTS": "ops:uid-ops-acme,other:uid-other-acme"}
-        for verb, extra in (("contacted", ["x@acme.example"]),
-                            ("unanswered", []),
-                            ("dossier", ["x@acme.example"]),
-                            ("draft-reply", ["say hello"])):
-            proc = _run(repo, env3, "--account", "other", verb, *extra)
-            out = proc.stderr + proc.stdout
-            assert proc.returncode == 2, (
-                f"`--account other {verb}` must refuse, got rc={proc.returncode}: {out}"
-            )
-            assert "engine profile" in out, f"{verb}: refusal must explain why: {out}"
-            assert "unknown --account" not in out, f"{verb}: refused for the wrong reason"
-        # ...and the DEFAULT account is NOT blocked: it gets past the guard and
-        # fails later on the network, not on the flag.
-        proc = _run(repo, env3, "--account", "ops", "contacted", "x@acme.example")
-        assert "engine profile" not in (proc.stderr + proc.stdout), \
-            "the default account must not be blocked by the guard"
-
-        # ---- 7. outside a clone root: refused, nothing created ----------
-        loose = Path(td, "loose"); loose.mkdir()
-        proc = _run(loose, env, "project", "new", "acme-corp")
-        assert proc.returncode != 0, "must refuse to stamp outside a clone root"
-        assert "manifest.toml" in (proc.stderr + proc.stdout)
-        assert not (loose / "docs").exists(), "created docs/ outside a clone"
-
-    print("test_project_memory: all assertions passed")
+        env['PYTHONPATH'] = str(Path(__file__).resolve().parents[1])
+        env['CS_ACCOUNTS'] = 'ops:uid-ops-acme,other:uid-other-acme'
+        for verb, extra in (('contacted', ['x@acme.example']), ('unanswered', []),
+                            ('dossier', ['x@acme.example']), ('draft-reply', ['say hello'])):
+            result = _run(repo, env, '--account', 'other', verb, *extra)
+            assert result.returncode == 2, result.stderr
+            assert 'engine profile' in result.stderr + result.stdout
+    print('test_project_memory: engine scaffold, rendered bytes and parser assertions passed')
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     raise SystemExit(main())

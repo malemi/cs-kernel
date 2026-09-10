@@ -344,6 +344,7 @@ step "13. project memory scaffold (cs project new)"
 # templates/project_memory/ is a SECOND template root and gate 12 only walks the
 # first one, so this is the only thing standing between it and shipping empty.
 if "$VENV/bin/python" "$ROOT/tests/test_project_memory.py"; then echo "OK"; else echo "FAIL: project memory scaffold regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_project_working.py"; then echo "OK"; else echo "FAIL: shared project working-copy safety regressed"; FAIL=1; fi
 
 step "14. model-output send guard (send_mail.send with body_md=)"
 # The 2026-07-28 incident: a campaign loop mailed a customer the model's own

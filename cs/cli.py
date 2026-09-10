@@ -2163,19 +2163,8 @@ def main(argv=None) -> int:
     lt.add_argument("--model", default="", help="override the model to test")
     lt.set_defaults(func=cmd_llm)
 
-    # --- project: the written memory of one company, under docs/projects/ ---
-    # A generator rather than a documented convention: the shape only stays the
-    # same across clones if getting it right is the path of least effort.
-    ppj = sub.add_parser("project", help="per-project written memory (docs/projects/)")
-    pjsub = ppj.add_subparsers(dest="paction", required=True)
-    pjn = pjsub.add_parser(
-        "new", help="stamp a new project folder: index + status + timeline + meetings/"
-    )
-    pjn.add_argument("name", help="folder slug, lowercase-with-hyphens (e.g. acme-corp)")
-    pjn.add_argument(
-        "--title", help="human title for the headings (default: derived from the slug)"
-    )
-    pjn.set_defaults(func=project_memory_mod.cmd_project_new)
+    # Shared written projects use the configured engine company memory.
+    project_memory_mod.add_subparsers(sub)
 
     # --- cron: manage crontab entry (requires manifest) ---
     try:
