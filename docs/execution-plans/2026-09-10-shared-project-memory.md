@@ -136,3 +136,19 @@ and the exact remaining step, never claim the production records moved.
 
 - Brief: approved.
 - Plan: independently approved. Implementation started in isolated worktrees.
+
+- M1 engine integration: independently approved; 182 memory/storage/contract
+  checks passed before final error hardening, then 45 targeted checks and 29
+  project cases passed. SQL errors during join cannot disclose document bytes.
+- M2 kernel integration: independently approved; complete import file counts
+  bounded before any RPC, explicit account honored, 14 recovery/filesystem tests
+  plus scaffold/account tests pass.
+- M3 installed kernel over real local WebSocket/engine SQLite: passed. Fixed
+  fixture authentication only; no live Firebase or business records used.
+- Full kernel suite: all gates green before release versioning. Three canonical
+  skill surfaces and no newly stamped docs/projects tree are verified.
+- Fresh final cross-repository review: approved after dedicated metadata limits
+  fixed large valid working copies; original 10,000-file reproducer now succeeds.
+- Production rollout preparation: fresh 0.43.0 FULL baselines captured on both
+  clones, with only the three previously classified external-harness failures.
+  No source project folders have been imported yet.
