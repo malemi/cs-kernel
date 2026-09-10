@@ -33,7 +33,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   while Sent/All Mail remains the dedup source.
 - Provider routing is partial: the send guard can use a direct classifier;
   general role routing remains opt-in through `CS_LLM_ROUTE`.
-- Both maintained clones now run the public `v0.43.0` tag. Their locks rebuild
+- Both maintained clones now run the public `v0.44.0` tag. Their locks rebuild
   independently; read-only FULL comparisons found no material regression.
   Existing crontab and clone-specific deny rules were preserved, and temporary
   upgrade pauses removed. The release record identifies remaining harness drift.
@@ -63,8 +63,11 @@ messages awaiting preparation at the release check. Evidence lives in
 **Shared written projects.** Project documents move from
 clone `docs/projects/` folders to revisioned company-engine storage, separate
 from entity blobs. The work includes explicit import, checkout/save and selective
-reads; source directories remain available for recovery. The v0.44.0 source is approved; production clone installation and imports
-are being verified against fresh v0.43.0 baselines. The
+reads; source directories remain available for recovery. The public v0.44.0 tag is installed in both maintained clones with independent
+lock-only proofs. The hosted engine contains six 124 projects (28 documents) and
+four MrCall projects (23 documents); independent downloads match source hashes.
+Original folders remain unchanged recovery copies. A second 124 owner sees all
+six shared projects. FULL comparisons have no unexplained regression. The
 [brief](briefs/2026-09-10-shared-project-memory.md) and
 [plan](execution-plans/2026-09-10-shared-project-memory.md) own current acceptance.
 

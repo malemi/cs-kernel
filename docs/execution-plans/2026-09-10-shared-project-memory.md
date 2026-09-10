@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 ---
 # Shared written project memory — execution plan
 
@@ -151,4 +151,22 @@ and the exact remaining step, never claim the production records moved.
   fixed large valid working copies; original 10,000-file reproducer now succeeds.
 - Production rollout preparation: fresh 0.43.0 FULL baselines captured on both
   clones, with only the three previously classified external-harness failures.
-  No source project folders have been imported yet.
+  Baselines remained frozen throughout candidate verification.
+
+- Rollout complete: engine `b875cb5` deployed, seven profile services active;
+  kernel public immutable tag `v0.44.0` (`4ca6ea15a4353c27b118231fd2930c7c69cf038d`)
+  installed in both clones and reconstructed from each lock alone.
+- Independent candidate FULL approval: eleven gates executed per clone, five
+  green and six classified differences (expected help/skills, historical harness
+  assumptions, expiry/mailbox activity). No unexplained regression; no paid tick,
+  draft creation or sending used to claim acceptance.
+- Additive production import and independent downloaded SHA-256 comparison:
+  124 six projects / 28 files; MrCall four projects / 23 files. Original folders
+  unchanged, including binary attachments. Second 124 owner sees all six projects.
+- Upgrade commits: 124 `6bcc318`, MrCall `deb5831`. Public lock proofs,
+  source hashes and import evidence are private under
+  `/tmp/cs-kernel-044-upgrade-backup`; FULL evidence under
+  `/tmp/cs-kernel-release-044-collaudo`. No company contents enter source Git.
+- Existing cron/settings/permissions and unrelated edits preserved; temporary
+  pauses removed. Desktop v0.1.47 stays unchanged; its bundled sidecar requires
+  a future release for projects RPC, while the hosted engine is ready now.

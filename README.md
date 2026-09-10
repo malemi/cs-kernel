@@ -233,7 +233,8 @@ and never touches it again, so a documentation harness may take it over —
 the one in [mrcall-ai-kit](https://github.com/malemi/mrcall-ai-kit) does,
 through its `/doc-create`. That is optional; nothing here depends on it.
 
-First thing to type: **`/cs-review`** — the one review bootstrap, zero
+Start the review skill: **`/cs-review`** in Claude Code, **`$cs-review`** in
+Codex, or OpenCode's native skill invocation. This is the review bootstrap, zero
 side effects: what the operator prepared for you (drafts waiting in
 Gmail Drafts, open tasks, campaign flags) and, when a lead source is
 configured, the day's outreach candidates with one dossier each. Or
