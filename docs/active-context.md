@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 50cba147d083c181e81d521d44aeb551fdfbf61b
-doc_baseline_date: 2026-09-10
+doc_baseline_commit: 59dc3e109a3147ce1c878cc447fe0eaca4deb746
+doc_baseline_date: 2026-09-11
 ---
 
 # Active Context — cs-kernel
@@ -63,7 +63,7 @@ messages awaiting preparation at the release check. Evidence lives in
 **Shared written projects.** Project documents move from
 clone `docs/projects/` folders to revisioned company-engine storage, separate
 from entity blobs. The work includes explicit import, checkout/save and selective
-reads; source directories remain available for recovery. The public v0.44.0 tag is installed in both maintained clones with independent
+reads. The public v0.44.0 tag is installed in both maintained clones with independent
 lock-only proofs. The hosted engine contains six 124 projects (28 documents) and
 four MrCall projects (23 documents); independent downloads match source hashes.
 Original folders are archived byte-exactly in the private clone Git histories

@@ -132,6 +132,18 @@ rollback. Existing binaries ignore new tables. No cleanup or background sync is
 part of this rollout. If release cannot finish, state source-only availability
 and the exact remaining step, never claim the production records moved.
 
+## Authorized post-rollout cleanup
+
+The CTO subsequently authorized archiving and removing the legacy folders.
+Both private clone histories contain byte-exact snapshots, pushed before removal:
+124 `abd48c8` (31 files), MrCall `3f53462` (25 files), including ignored files.
+Separate removal commits are 124 `a281bef` and MrCall `b868b46`.
+`docs/projects/` is absent in both working trees; recovery uses those archive
+commits. This supersedes the initial rollout's local-copy retention decision;
+`cs project import` itself still never deletes sources. Unrelated local edits
+remain preserved. Metadata and hash evidence: `git-archive-proof.json` in each
+clone's directory under `/tmp/cs-kernel-044-upgrade-backup`.
+
 ## Progress
 
 - Brief: approved.
