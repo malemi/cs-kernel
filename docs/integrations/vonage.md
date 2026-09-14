@@ -1,6 +1,6 @@
 # Vonage SIP
 
-The development CLI exposes `cs connection vonage` through the normal command
+The installed CLI exposes `cs connection vonage` through the normal command
 entry point. It is clone-scoped: `--account` is rejected. It uses Vonage's HTTPS
 PSIP API directly; a separately installed vendor CLI is not required.
 
@@ -25,6 +25,13 @@ credential creation and each provider mutation. The rendered cron sets the
 marker and denies both verbs in six command spellings. This is an operational
 guard, not isolation against a process that can alter its own environment.
 
+Agent-host permissions also apply. The stamped Claude settings deny the two
+provider mutation verbs, including their preview forms, in interactive sessions
+as well as cron. Human task authorization does not override that host policy.
+An operator can run the installed CLI directly in an authorized terminal;
+other agent hosts need their own permission to execute it. Never work around a
+host denial through another command spelling or launcher.
+
 Provision refuses existing domains. Its new credential file must be a direct
 child of the clone's private, owned mode-0700 state directory; it is created
 exclusively with mode 0600 before the first provider write. Partial failures
@@ -42,22 +49,25 @@ OpenCode through project agent surfaces. It reads clone-owned
 drafting still requires a dossier and the engine. Passwords remain outside
 model prompts; the operator privately fills draft placeholders.
 
-The candidate is integrated with the current release line. Publication and
-production adoption are in progress under the authorized rollout plan.
-The [implementation plan](../execution-plans/2026-09-11-provider-connections-vonage.md)
-owns validation evidence and remaining adoption work. No Shopify or Faire
-implementation is included.
+The released integration is installed in both maintained clones. Each clone
+must enable its own binding; installing the shared code grants no provider
+credentials. The [rollout plan](../execution-plans/2026-09-14-vonage-production-rollout.md)
+owns deployment evidence. No Shopify or Faire implementation is included.
 
 ## What has been verified
 
-On 2026-09-11, the development CLI authenticated against a configured account,
+On 2026-09-14, the installed CLI authenticated against the configured account,
 listed domains and verified the allowed voice application. A real-provider
 provision preview completed without writes or a generated credential file.
+The second clone refused provider access because its binding is disabled.
+Both package installations and independent lock-only rebuilds contain the exact
+released template inventory; all three agent surfaces expose the same SIP skill.
+
 Forty-one configuration, HTTP, provisioning and agent-surface tests passed,
 including local-server mutation/readback, partial failures and headless refusal;
-the full kernel suite passed. No production trunk was created in that test.
-The deployed clone still lacked the command when checked on 2026-09-13;
-a development checkout invocation was available.
+the full kernel suite passed at the release tag. No customer trunk was created,
+password authentication exercised, PBX configured or test call placed as part
+of this release validation.
 
 ## Requests this integration can handle
 

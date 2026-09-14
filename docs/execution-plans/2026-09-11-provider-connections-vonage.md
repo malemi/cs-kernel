@@ -105,10 +105,10 @@ will have happened during this implementation.
   `RESULT: all gates green` (2026-09-11), including a fresh package install,
   33 templates across three configurations and all 41 provider tests.
   Evidence: `/tmp/cs-vonage-final-clean-tests.log` on the implementation host.
-- Release/adoption is a separate pending operation: integrate this reviewed
-  diff with the current release line, then obtain the repository-required
-  release/upgrade authorization. No commit, tag, push or production upgrade
-  is included in the completed implementation scope.
+- At implementation completion on 2026-09-11, release/adoption remained
+  separate and awaited integration plus authorization. Publication and installed
+  verification now belong to the authorized
+  [rollout plan](2026-09-14-vonage-production-rollout.md).
 - Final implementation review APPROVED. Independent provider tests: 41 passed.
 - Real exact-clone CLI `status` authenticated and verified its allowed voice
   application. A new-domain preview used synthetic public IP 8.8.8.8 solely

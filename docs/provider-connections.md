@@ -2,7 +2,7 @@
 
 Each integration has its own capability and configuration reference:
 
-- [Vonage SIP](integrations/vonage.md): development connection and supervised
+- [Vonage SIP](integrations/vonage.md): released connection and supervised
   provisioning, with explicit credential references per clone.
 - [Shopify](integrations/shopify.md): existing customer-lookup CRM adapter.
 - [Google Drive](integrations/google-drive.md): existing read-only document access.

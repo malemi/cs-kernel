@@ -4,7 +4,17 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-10): **`v0.44.0` on both clones**.
+**Current operational pin** (2026-09-14): **`v0.45.0` on both clones**.
+Both install the public tag at `a3e7aff`; independent lock-only environments
+report 0.45.0 and match all 39 released templates. Upgrade commits are
+`mrcall-cs` `f3e8004` and `124-cs` `b8d11f3`. Installed FULL comparisons
+and independently reviewed supplemental fixtures pass; expected permission/skill
+additions remain explicitly classified. Provider status and a no-write preview
+pass on the configured clone; the other clone refuses its disabled binding.
+Original pause states, crontab and unrelated changes are preserved. No customer
+trunk mutation, message, paid agent tick or call was part of release validation.
+
+**Historical operational pin** (2026-09-10): **`v0.44.0` on both clones**.
 Both install the public tag at `4ca6ea1`; independent lock-only environments
 report 0.44.0. Upgrade commits: `124-cs` `6bcc318`, `mrcall-cs` `deb5831`.
 Fresh 0.43.0 FULL comparisons are independently approved: no unexplained

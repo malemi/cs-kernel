@@ -14,98 +14,53 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
-- **Latest release tag: `v0.45.0`. Current HEAD status: untagged.** These
-  sentences are parsed by `tests/test_release_consistency.py`; preserve their
-  wording. Release, push and operational clone upgrades require explicit
-  authorization and the release procedure's verification gates.
-- Workspace instructions are stamped into `AGENTS.md`; `CLAUDE.md` is a
-  one-time bootstrap. Claude Code, Codex and OpenCode share canonical skills.
+- **Latest release tag: `v0.45.0`. Current HEAD status: untagged.**
+  The published tag and both maintained clones passed their release
+  verification under the [rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
+  Both production clones have v0.45.0 installed and independent lock rebuilds.
+  Original operator pause states are restored; crontab is unchanged.
+- The Vonage CLI supports clone-scoped reads, provisioning previews, supervised
+  domain/user creation and additive public ACL updates. Provider credentials
+  resolve only from explicit clone references. Headless and paused mutations
+  refuse; password handoff stays outside model prompts. See
+  [Vonage](integrations/vonage.md) for the exact boundary.
+- The README's integration index routes to separate Vonage, Shopify, Drive and
+  Faire guides. Faire application setup is documented; authenticated API use
+  and a kernel adapter remain unverified/unimplemented respectively.
 - The engine owns mail classification, task judgement and company memory.
-  Shared company memory exists in the companion engine implementation;
-  `cs setup` checks its availability through `memory.status`; both maintained
-  operational clones passed this read during the authorized release verification.
-- `cs memory` reports the ten-store map. Outbound sourcing instructions require
-  memory first and a second source when memory is empty. Their runtime semantic
-  effectiveness is still a verification gap below.
-- Cross-mailbox history uses profile accounts and declared read mailboxes.
-  Unreadable evidence causes applicable send gates to refuse; `send_first`
-  remains deliberately ungated. The engine remains authoritative for judgement,
-  while Sent/All Mail remains the dedup source.
-- Provider routing is partial: the send guard can use a direct classifier;
-  general role routing remains opt-in through `CS_LLM_ROUTE`.
-- Both maintained clones now run the public `v0.44.0` tag. Their locks rebuild
-  independently; read-only FULL comparisons found no material regression.
-  Existing crontab and clone-specific deny rules were preserved, and temporary
-  upgrade pauses removed. The release record identifies remaining harness drift.
-
-**Vonage connection.** The integrated candidate adds clone-scoped provider
-configuration, account inspection, preview/authorized SIP provisioning and
-public ACL additions. Publication and deployment are in progress under the
-[authorized rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
-The current production pin remains v0.44.0 until each upgrade is verified.
-
-**Workspace setup.**
-
-`cs init --descriptor PATH` selects an explicit desktop handoff, reuses that
-selection for mailbox settings and credentials, and distinguishes creation,
-installation and optional login outcomes. Login requires the engine to confirm
-the configured UID and signed-in state.
-
-`cs setup [--json]` checks workspace files, mailbox configuration, expected engine
-identity, preparation evidence, company memory and external-agent executables.
-Missing old-engine evidence stays unverified. Completed preparation requires
-all three agent prompts and no pending memory processing. Processing counts do
-not prove reply quality; mailbox credential validity and agent login are not
-probed. Auth can refresh local caches; no business mutation is initiated.
-
-Full local gates pass, including an isolated generated workspace, installation
-of changed source into its own environment and a controlled local WebSocket.
-The published v0.43.0 release includes these commands and guarded `login --mint`,
-refresh-cache invalidation and closed cron stdin. Both operational clones prove
-engine identity and shared-memory access. 124 is ready; MrCall has fourteen
-messages awaiting preparation at the release check. Evidence lives in
-[the delivery plan](execution-plans/2026-09-10-desktop-workspace-setup.md).
-
-**Shared written projects.** Project documents move from
-clone `docs/projects/` folders to revisioned company-engine storage, separate
-from entity blobs. The work includes explicit import, checkout/save and selective
-reads. The public v0.44.0 tag is installed in both maintained clones with independent
-lock-only proofs. The hosted engine contains six 124 projects (28 documents) and
-four MrCall projects (23 documents); independent downloads match source hashes.
-Original folders are archived byte-exactly in the private clone Git histories
-(124 `abd48c8`, MrCall `3f53462`) and removed from their working trees. A second 124 owner sees all
-six shared projects. FULL comparisons have no unexplained regression. The
-[brief](briefs/2026-09-10-shared-project-memory.md) and
-[plan](execution-plans/2026-09-10-shared-project-memory.md) own current acceptance.
+  Shared written projects use revisioned engine records, separate from entity
+  memory. Legacy project folders remain recoverable in private clone Git.
+- `cs init --descriptor` uses an explicit desktop handoff; `cs setup` checks
+  workspace, engine identity, preparation evidence, memory and agent tools.
+  Preparation counts do not prove reply quality or mailbox credential validity.
+- Workspace instructions live in stamped `AGENTS.md`; `CLAUDE.md` is a one-time
+  bootstrap. Claude Code, Codex and OpenCode share canonical skills.
+- Cross-mailbox history spans configured profiles and read mailboxes. Incomplete
+  evidence refuses applicable sends; `send_first` remains deliberately ungated.
+  Sent/All Mail owns message-existence evidence; the engine owns judgement.
+- General role routing remains opt-in through `CS_LLM_ROUTE`; the send guard
+  can use a direct classifier. `cs memory` reports the ten-store memory map.
 
 ## Unresolved
 
-- An operator report dated 2026-09-08 found six disagreements between
-  `cs unanswered` and Sent evidence. It remains undiagnosed; resolve the engine
-  verdict or sweep window rather than adding a parallel kernel judgement.
-- Review-latency brief criteria 2–4 still lack fixture gates for the reported
-  verdict corrections and round-trip/message bounds. Historical operator runs
-  also reported substantial engine LLM latency; no new timing was measured.
-- `cs unanswered --all-buckets` can exit 3 after a mailbox-read failure without
-  stderr, and the stamped skills do not document that outcome.
-- End-to-end observation of a draft-only tick encountering `evidence_incomplete`
-  remains outstanding. The historical live gate also compares variable LLM prose
-  and clock-dependent state; its reproducibility defect remains open.
-- Outbound sourcing is tested as rendered instructions, not demonstrated agent
-  behavior. Interactive skills cannot revoke ambient session permissions.
-- Historical clone notes identify a mismatch between documented send posture
-  and observed cron state, plus reliance on an ambient provider credential in
-  another clone. These require deliberate checks in their owning environments;
-  neither condition was re-observed or changed here.
-- Secondary-account migration remains separate from the released mint capability.
-  Automated FULL does not establish paid agent-tick or live draft behavior;
-  the external harness still needs its obsolete rate-cap and cron assumptions
-  updated. MrCall preparation backlog requires the normal engine update flow.
+- No customer trunk mutation or real SIP authentication/call was part of release
+  validation. Telephone-number association and PBX configuration remain separate.
+- The six reported disagreements between `cs unanswered` and Sent evidence remain
+  undiagnosed. Repair the engine verdict or sweep window, not a parallel judgement.
+- Review-latency criteria 2–4 lack fixture gates for verdict corrections and
+  round-trip/message bounds; historical engine LLM latency is not remeasured.
+- `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
+  the stamped skills do not explain that outcome.
+- Paid agent-tick/live draft behavior, including an `evidence_incomplete` refusal,
+  remains outside the read-only FULL harness. Outbound sourcing has instruction
+  tests but no demonstrated agent-behavior proof.
+- Historical clone observations of send posture and ambient provider credentials
+  need checks in their owning environments. Interactive skills cannot revoke
+  ambient permissions. MrCall preparation backlog needs normal engine updating.
+- Secondary-account onboarding remains separate from the released mint command.
 
 ## Next
 
-1. Complete secondary-account onboarding when requested and repair obsolete
-   external-harness assumptions; the kernel rollout and lock proofs are complete.
-2. Diagnose unanswered-mail disagreement and close the evidence/latency gaps.
-3. Replace internal verification terminology still exposed by `cs update` with
-   operator-facing language; promote clone-specific tools only under rule two.
+1. Diagnose unanswered-mail disagreement and close evidence/latency gaps.
+2. Complete secondary-account onboarding when requested; replace internal
+   verification terminology exposed by `cs update` with operator-facing language.

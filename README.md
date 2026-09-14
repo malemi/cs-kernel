@@ -73,7 +73,7 @@ supplies its own configuration, credentials and company procedure.
 
 | Integration and guide | What we can do | Current status |
 |---|---|---|
-| [**Vonage SIP**](docs/integrations/vonage.md) | Inspect trunks, preview and perform authorized domain/user creation and public-IP ACL additions | Development implementation tested; release and clone adoption pending |
+| [**Vonage SIP**](docs/integrations/vonage.md) | Inspect trunks, preview and perform authorized domain/user creation and public-IP ACL additions | Released; installed in both maintained clones, enabled in the configured clone |
 | [**Shopify**](docs/integrations/shopify.md) | Look up customers by email and add order-count, spend and tag context to dossiers | Existing CRM adapter |
 | [**Google Drive**](docs/integrations/google-drive.md) | Find and read shared documents and extract supported file formats | Existing read-only integration |
 | [**Faire**](docs/integrations/faire.md) | Inspect the existing application setup and prepare account-access verification; handle synced Faire email through the normal mailbox workflow | Application credentials present in a clone; authenticated API access unverified; no kernel adapter |
