@@ -58,6 +58,7 @@ SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
          "accounts_default", "read_mailboxes"),
     ),
     ("Ports (adapters)", ("crm_adapter", "producer_adapter")),
+    ("Provider connections (manifest only)", ("connections",)),
     ("Campaigns", ("excluded_campaign",)),
     # `system_senders` decides who is never a customer — it removes senders
     # from the support queue and from the outreach worklist alike. Since
@@ -110,6 +111,7 @@ SECRET_REPORT: tuple[str, ...] = (
 # `[knobs].dedup_days` line that is not in their file. tests/test_config_report.py
 # asserts this map stays in step with `manifest.settings_overrides`.
 MANIFEST_KEYS: dict[str, tuple[str, ...]] = {
+    "connections": ("connections",),
     "company_name": ("company", "name"),
     "company_display_name": ("company", "display_name"),
     "email_from_name": ("company", "from_name"),
@@ -331,7 +333,8 @@ class Scan:
         info = type(self.settings).model_fields[name]
         fld = Setting(
             name=name,
-            resolved=getattr(self.settings, name),
+            resolved=(self.settings.connections.model_dump() if name == "connections"
+                      else getattr(self.settings, name)),
             secret=name in SECRET_FIELDS,
         )
 
@@ -339,11 +342,16 @@ class Scan:
         if tpath and self.manifest_raw:
             present, val = _toml_lookup(self.manifest_raw, tpath)
             if present:
+                if name == "connections":
+                    val = self.manifest_overrides["connections"]
                 fld.declarations.append(
                     Declaration(
                         "manifest", _manifest_where(self.manifest_display, tpath), val
                     )
                 )
+
+        if name == "connections":
+            return fld  # ambient JSON is not a provider binding source
 
         names = _env_names(name, info)
         for layer_id, display, mapping in self.env_layers:

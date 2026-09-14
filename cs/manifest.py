@@ -27,9 +27,11 @@ from __future__ import annotations
 import os
 import tomllib
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
+from uuid import UUID
+import re
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 
 class ManifestError(RuntimeError):
@@ -136,6 +138,53 @@ class EnvTable(_Table):
     platform_env_path: str = ""  # optional lowest-precedence env layer
 
 
+class VonageConnection(BaseModel):
+    """Explicit per-clone binding. Only env REFERENCES belong here, never secrets."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True)
+    enabled: bool = False
+    api_key_env: str = ""
+    api_secret_env: str = ""
+    application_ids: list[str] = Field(default_factory=list)
+    region: Literal["eu", "us", "ap"] = "eu"
+
+    @field_validator("api_key_env", "api_secret_env")
+    @classmethod
+    def env_reference(cls, value: str) -> str:
+        if value and not re.fullmatch(r"[A-Z_][A-Z0-9_]*", value):
+            raise ValueError("must be an uppercase environment variable name")
+        return value
+
+    @field_validator("application_ids")
+    @classmethod
+    def applications(cls, values: list[str]) -> list[str]:
+        normalized = []
+        for value in values:
+            try:
+                canonical = str(UUID(value))
+            except ValueError:
+                raise ValueError("application IDs must be UUIDs") from None
+            if value.lower() != canonical:
+                raise ValueError("application IDs must use canonical UUID notation")
+            if canonical in normalized:
+                raise ValueError("application IDs must be unique")
+            normalized.append(canonical)
+        return normalized
+
+    @model_validator(mode="after")
+    def complete_binding(self):
+        if self.enabled and not (self.api_key_env and self.api_secret_env and self.application_ids):
+            raise ValueError("enabled Vonage requires both credential env references and application_ids")
+        if self.api_key_env and self.api_key_env == self.api_secret_env:
+            raise ValueError("API key and secret require distinct env references")
+        return self
+
+
+class Connections(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True)
+    vonage: VonageConnection = Field(default_factory=VonageConnection)
+
+
 class Manifest(_Table):
     company: Company = Company()
     operator: Operator = Operator()
@@ -147,6 +196,7 @@ class Manifest(_Table):
     sms: Sms = Sms()
     drive: Drive = Drive()
     env: EnvTable = EnvTable()
+    connections: Connections = Field(default_factory=Connections)
 
 
 def find_manifest_path() -> Path | None:
@@ -175,6 +225,15 @@ def load_manifest(path: Path) -> Manifest:
     try:
         return Manifest.model_validate(data)
     except ValidationError as e:
+        if any(err["loc"] and err["loc"][0] == "connections" for err in e.errors()):
+            # Validation can encounter a secret pasted where a reference belongs.
+            # Never let pydantic's input repr expose it in CLI errors.
+            locations = ", ".join(".".join(map(str, err["loc"])) for err in e.errors())
+            raise ManifestError(
+                f"{path} failed validation at {locations}: connections require strict "
+                "known fields, env variable references, a supported region and UUID "
+                "application IDs; enabled Vonage requires both references and an allowlist"
+            ) from None
         raise ManifestError(f"{path} failed validation:\n{e}") from None
 
 
@@ -186,6 +245,7 @@ def settings_overrides(m: Manifest) -> dict:
     always carried (their sub-model defaults equal the kernel defaults, so
     an omitted table is a no-op)."""
     out: dict = {}
+    out["connections"] = m.connections.model_dump()
 
     def put(key: str, val) -> None:
         if isinstance(val, str):

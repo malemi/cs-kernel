@@ -36,6 +36,8 @@ if ! flock -n 9; then
 fi
 
 cd "$ROOT" || { echo "$(ts) {{ company_prog_name }}: cannot cd $ROOT" >>"$LOG"; exit 1; }
+# Provider mutations also enforce the headless boundary inside their CLI.
+export CS_OPERATOR_HEADLESS=1
 echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # Draft-only is enforced HERE, on the cron, INDEPENDENT of .claude/settings.json
 # (which the interactive REPL shares — a human may relax it to send from the REPL).
@@ -145,6 +147,18 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs rpc drafts.discard:*)" \
     "Bash(python3 -m cs rpc drafts.discard:*)" \
     "Bash(cs rpc drafts.discard:*)" \
+    "Bash(.venv/bin/python -m cs connection vonage provision:*)" \
+    "Bash(.venv/bin/python3 -m cs connection vonage provision:*)" \
+    "Bash(.venv/bin/cs connection vonage provision:*)" \
+    "Bash(python -m cs connection vonage provision:*)" \
+    "Bash(python3 -m cs connection vonage provision:*)" \
+    "Bash(cs connection vonage provision:*)" \
+    "Bash(.venv/bin/python -m cs connection vonage allow-ip:*)" \
+    "Bash(.venv/bin/python3 -m cs connection vonage allow-ip:*)" \
+    "Bash(.venv/bin/cs connection vonage allow-ip:*)" \
+    "Bash(python -m cs connection vonage allow-ip:*)" \
+    "Bash(python3 -m cs connection vonage allow-ip:*)" \
+    "Bash(cs connection vonage allow-ip:*)" \
 {% for script in local_scripts_cron_denied %}
 {% for form in [script, './' ~ script] %}
     "Bash({{ form }}:*)" \

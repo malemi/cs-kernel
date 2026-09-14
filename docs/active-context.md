@@ -38,6 +38,12 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   Existing crontab and clone-specific deny rules were preserved, and temporary
   upgrade pauses removed. The release record identifies remaining harness drift.
 
+**Vonage connection.** The integrated candidate adds clone-scoped provider
+configuration, account inspection, preview/authorized SIP provisioning and
+public ACL additions. Publication and deployment are in progress under the
+[authorized rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
+The current production pin remains v0.44.0 until each upgrade is verified.
+
 **Workspace setup.**
 
 `cs init --descriptor PATH` selects an explicit desktop handoff, reuses that

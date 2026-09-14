@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import dotenv_values
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, PrivateAttr, model_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -273,6 +273,10 @@ class Settings(BaseSettings):
         case_sensitive=False,
         populate_by_name=True,  # manifest layer feeds values by FIELD NAME
     )
+
+    # Provider bindings are manifest-only; env layers supply referenced secrets.
+    connections: manifest_mod.Connections = Field(default_factory=manifest_mod.Connections)
+    _connection_env_files: tuple[str, ...] = PrivateAttr(default=())
 
     # --- company / operator identity (manifest [company] / [operator]) ---
     company_name: str = ""
@@ -578,6 +582,13 @@ class Settings(BaseSettings):
         dotenv_settings,
         file_secret_settings,
     ):
+        # Remove before complex-value decoding: even malformed ambient JSON
+        # must not enable, redirect or break a clone's provider binding.
+        for source in (env_settings, dotenv_settings):
+            source.env_vars = {
+                key: value for key, value in source.env_vars.items()
+                if key.lower() != "connections"
+            }
         return (
             init_settings,
             _ShopifyPrefixSource(settings_cls),  # prefixed key beats bare fallback
@@ -657,6 +668,41 @@ def load(engine_owner_uid: str | None = None) -> Settings:
     _LOAD_CTX["prefix"] = overrides.get("shopify_env_prefix", "")
     _LOAD_CTX["env_files"] = tuple(env_files)
     uid = (engine_owner_uid or "").strip()
-    if uid:
-        return Settings(_env_file=tuple(env_files), engine_owner_uid=uid)
-    return Settings(_env_file=tuple(env_files))
+    kwargs = {"engine_owner_uid": uid} if uid else {}
+    # An explicit empty model also blocks fallback to a file-secret binding.
+    settings = Settings(
+        _env_file=tuple(env_files),
+        connections=m.connections if m else manifest_mod.Connections(),
+        **kwargs,
+    )
+    settings._connection_env_files = tuple(str(Path(f).expanduser().resolve()) for f in env_files)
+    return settings
+
+
+def connection_credentials(settings: Settings, provider: str = "vonage") -> tuple[str, str]:
+    """Resolve only the selected clone's explicit references, never bare fallbacks.
+
+    Paths are captured at load time so loading another clone (or changing cwd)
+    cannot silently switch the first clone's credential files. Values are not
+    retained in Settings or included in its representation/config reports.
+    """
+    if provider != "vonage":
+        raise ConfigError("Unknown provider connection")
+    binding = settings.connections.vonage
+    if not binding.enabled:
+        raise ConfigError("Vonage connection is disabled; configure [connections.vonage]")
+    if not binding.api_key_env or not binding.api_secret_env or not binding.application_ids:
+        raise ConfigError("Vonage requires credential env references and an application allowlist")
+    values: dict[str, str | None] = {}
+    for filename in settings._connection_env_files:
+        # No dotenv interpolation: a reference must not inherit another key's
+        # ambient value indirectly. Secrets are literal strings.
+        values.update(dotenv_values(filename, interpolate=False))
+    values.update(os.environ)
+    resolved = []
+    for name in (binding.api_key_env, binding.api_secret_env):
+        value = values.get(name)
+        if value is None or not value.strip():
+            raise ConfigError(f"Vonage credential is missing: set {name} in this clone's env layers")
+        resolved.append(value)
+    return resolved[0], resolved[1]

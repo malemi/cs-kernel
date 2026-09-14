@@ -1743,6 +1743,8 @@ def main(argv=None) -> int:
         "This project's accounts only — never another project's.",
     )
     sub = p.add_subparsers(dest="cmd", required=True)
+    from . import connection_cli
+    connection_cli.register(sub)
 
     # --- the "human verbs" (init/update/login): registered here ONLY so
     # `cs --help` tells the truth about what exists — see the double
@@ -2191,6 +2193,10 @@ def main(argv=None) -> int:
         pass
 
     args = p.parse_args(argv)
+    if args.cmd == "connection" and getattr(args, "account", None):
+        print("connection uses this clone's provider binding; --account switches only engine profiles",
+              file=sys.stderr)
+        return 2
     if getattr(args, "account", None):
         amap = settings.account_map
         uid = amap.get(args.account)

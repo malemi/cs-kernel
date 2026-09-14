@@ -43,10 +43,9 @@ Done: in the thread, in your voice. Anything else from the list?
 That is the product: **everything handled** — and the one case where
 another apology would have burned the customer, it understood the
 situation and brought it to you with a recommendation. On day one every
-reply waits in Gmail Drafts for your send: the operator's judgment is on
-trial, not in charge. When what you read keeps matching what you would
-have written, open the autonomy dial and it sends on its own — the dial,
-and the kill-switch, stay in your hand.
+reply waits in Gmail Drafts for your send. Interactive sending requires
+your authorization and the configured send permissions; the supplied
+headless cron wrapper keeps its own send denials in force.
 
 ---
 
@@ -61,8 +60,31 @@ A complete customer-service operator, not an autocomplete:
    against your own Sent folder and one kill-switch that stops everything
 3. **Memory that compounds**: every mail synced and every session worked
    makes the next answer better — no retraining, no CRM data entry
-4. A **cron wrapper** so all of the above runs unattended, plus the
-   autonomy dial: draft-first on day one, autonomous send when you say so
+4. A **cron wrapper** for unattended triage and campaign drafts, with
+   customer sends blocked by the wrapper
+
+---
+
+## Integrazioni
+
+Integrations let the operator consult company systems and perform supervised
+service operations. The kernel owns reusable code and workflows; each clone
+supplies its own configuration, credentials and company procedure.
+
+| Integration and guide | What we can do | Current status |
+|---|---|---|
+| [**Vonage SIP**](docs/integrations/vonage.md) | Inspect trunks, preview and perform authorized domain/user creation and public-IP ACL additions | Development implementation tested; release and clone adoption pending |
+| [**Shopify**](docs/integrations/shopify.md) | Look up customers by email and add order-count, spend and tag context to dossiers | Existing CRM adapter |
+| [**Google Drive**](docs/integrations/google-drive.md) | Find and read shared documents and extract supported file formats | Existing read-only integration |
+| [**Faire**](docs/integrations/faire.md) | Inspect the existing application setup and prepare account-access verification; handle synced Faire email through the normal mailbox workflow | Application credentials present in a clone; authenticated API access unverified; no kernel adapter |
+
+Each guide explains configuration, supported requests, verification evidence,
+limits and failure handling. The entries have different readiness levels:
+credential setup, tested development code and deployed functionality are stated
+separately. Read the relevant guide before promising or performing an operation.
+
+[Provider connections](docs/provider-connections.md) explains the configuration
+boundaries between the new connection surface and the existing CRM/Drive paths.
 
 ---
 
@@ -169,11 +191,12 @@ uv pip install -r requirements.txt
 
 ### 4. Sign in
 
-Either way you got here, this shell isn't in the project yet:
+If you skipped step 3, enter `acme-cs` and activate its environment first.
+If you completed step 3, you are already there:
 
 ```bash
-cd acme-cs
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+cd acme-cs                        # only if you skipped step 3
+source .venv/bin/activate          # if not already active; Windows: .venv\Scripts\activate
 cs login
 ```
 
@@ -282,7 +305,7 @@ later "have we ever done something like this?" is answered by
 |---|---|
 | Customer context | Skill loads shared written projects + **entity memory** |
 | Memory over time | Engine keeps relationships as mail is synced and you work |
-| Replies | Written end-to-end; land in Drafts until you open the autonomy dial |
+| Replies | Written end-to-end; land in Drafts for authorized sending |
 | Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
 | “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
 
@@ -323,10 +346,9 @@ Next sessions — interactive or cron — start from that memory instead of a bl
   the proof call to '<url>' failed: …`); on other verbs (`cs whoami` and
   friends) it currently surfaces as a raw Python traceback ending in
   something like `ConnectionRefusedError: [Errno 111] Connect call
-  failed…`. Either way, it means the mrcall-desktop app is not running,
-  or it is running on a **different machine** than the one you're typing
-  `cs` on — `cs` only ever talks to the daemon on the machine it runs on
-  (see Step 1).
+  failed…`. Check that the engine is running and reachable at
+  `[engine].ws_url` in the clone manifest. The engine can run on another
+  machine; the configured URL determines where `cs` connects.
 - **`cs login: no profile descriptor found under ~/.zylch/profiles/ —
   sign in to the mrcall-desktop app first (it writes the descriptor at
   sign-in)`** — you have not signed in to mrcall-desktop on this machine
@@ -389,10 +411,10 @@ configuration resolves to; `cs llm test` makes one real call.
 
 This is where the operator takes over the routine entirely: on a
 schedule, unattended, it triages inbound mail and advances campaigns —
-the same work as your sessions, without you in the room. Out of the box
-each tick lands its replies in Gmail Drafts (draft mode); flipping to
-autonomous send is one deliberate change of mode + permissions, once
-the drafts have earned it.
+the same triage and drafting work as your sessions, without you in the room.
+The supplied wrapper denies customer-send commands independently of the
+configured mode and session permissions. A mode change does not enable
+sending from this cron.
 
 #### What’s already in the project
 
@@ -446,9 +468,8 @@ touch ~/.acme-cs/CS_PAUSE
 rm ~/.acme-cs/CS_PAUSE
 ```
 
-Autonomous send is the destination; day one is draft mode. Opening that
-dial is one deliberate step (config + permissions) — yours to take, and
-yours to close again.
+Review the prepared drafts in an interactive session. Sending from that
+session follows its authorization and permissions; the cron remains draft-only.
 
 ### Upgrading later
 
@@ -500,7 +521,8 @@ reopen `claude` / `opencode` in that folder.
 - Contact history uses **Gmail’s own Sent mail** as ground truth.  
 - `~/.<your-slug>-cs/CS_PAUSE` stops automated ticks immediately.
 
-Turning on autonomous send is a deliberate later choice, not the default.
+The supplied headless operator remains draft-only even when interactive
+sending is enabled.
 
 ### Versioning
 

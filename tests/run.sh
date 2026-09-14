@@ -247,6 +247,13 @@ VENV="$TMP/venv"
 python3 -m venv "$VENV"
 "$VENV/bin/pip" -q install --upgrade pip >/dev/null
 if ! "$VENV/bin/pip" -q install "$ROOT"; then echo "FAIL: pip install"; exit 1; fi
+# A fresh environment can still receive deleted templates from stale local
+# build output. Compare the actual isolated install, without cleaning first.
+if "$VENV/bin/python" -I "$ROOT/tests/test_package_inventory.py" "$ROOT"; then
+  echo "OK: installed template inventory"
+else
+  echo "FAIL: installed template inventory differs from source"; FAIL=1
+fi
 EMPTY="$TMP/empty"; mkdir -p "$EMPTY"
 if (cd "$EMPTY" && "$VENV/bin/python" -m cs --help >/dev/null 2>&1); then
   echo "OK: python -m cs --help from an empty dir"
@@ -395,7 +402,7 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # settings.json.j2 membership under permissions.deny (and nothing
 # chat/send-draft-shaped under permissions.allow), and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
-# equality against the 48 deny entries + 4 keeps. `handled` is in that list not
+# equality against the 60 deny entries + 4 keeps. `handled` is in that list not
 # because it sends, but because it SILENCES: it declares a contact resolved
 # off-email, and a tick reading untrusted inbound must never be talked into it.
 # `escalated` is there for the sharper version of the same reason: it asserts
@@ -440,6 +447,7 @@ SPELLINGS = [
 VERBS = [
     "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
+    "connection vonage provision", "connection vonage allow-ip",
 ]
 
 # The expansion a clone-local executable gets, rebuilt here INDEPENDENTLY of
@@ -479,10 +487,11 @@ except (OSError, json.JSONDecodeError) as exc:
 deny = settings.get("permissions", {}).get("deny", [])
 allow = settings.get("permissions", {}).get("allow", [])
 
-for spelling in SPELLINGS:
-    entry = "Bash(%s campaign send-draft:*)" % spelling
-    if entry not in deny:
-        problems.append("FAIL: settings.json permissions.deny missing %s" % entry)
+for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip"):
+    for spelling in SPELLINGS:
+        entry = "Bash(%s %s:*)" % (spelling, verb)
+        if entry not in deny:
+            problems.append("FAIL: settings.json permissions.deny missing %s" % entry)
 
 for entry in allow:
     if "chat" in entry or "send-draft" in entry:
@@ -1259,6 +1268,11 @@ if "$VENV/bin/python" "$ROOT/tests/test_charter_shape.py"; then echo "OK"; else 
 
 step "53. desktop handoff to stamped workspace and bounded readiness"
 if "$VENV/bin/python" "$ROOT/tests/test_setup_journey.py"; then echo "OK"; else echo "FAIL: workspace setup journey regressed"; FAIL=1; fi
+
+step "54. provider binding isolation, SIP HTTP contracts and supervised provisioning"
+for test in test_connection_config.py test_vonage.py test_sip_provision.py test_sip_surfaces.py; do
+  if "$VENV/bin/python" "$ROOT/tests/$test"; then echo "OK: $test"; else echo "FAIL: $test"; FAIL=1; fi
+done
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

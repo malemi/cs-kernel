@@ -1,0 +1,49 @@
+---
+name: cs-sip-trunk
+description: Inspect or provision a Vonage SIP connection for this clone. Interactive provider changes only; customer communication remains an engine draft.
+---
+
+# SIP trunk procedure
+
+Read `company/sip-trunk.md` and `company/claude-extra.md` first. If the company
+procedure is missing, inspect the configured provider but do not invent company
+routing or PBX instructions. Load `cs-customer` before named customer work.
+Use `.venv/bin/python -m cs` for every command below.
+
+1. Read `cs config` and `cs connection vonage status`. Connections belong to
+   the clone, not `--account`. Disabled/missing credentials require the clone's
+   explicit manifest binding and private env configuration; never borrow another
+   clone's credentials. Never print API secrets, SIP passwords or private files.
+2. Read `connection vonage domains`, then `show DOMAIN` and `users DOMAIN` for
+   an existing domain. Use the actual domain identity; never derive it from a
+   customer name or telephone number. Existing domains are not reprovisioned.
+3. Confirm allowed application, domain, digest username and the PBX's public
+   IPv4 address(es)/CIDRs with the technician. Missing IP means pending, not an
+   open ACL. Resolve hostnames with the technician; do not guess an address.
+4. Preview `connection vonage provision DOMAIN --application UUID --ip IP
+   --username USER --secret-file PRIVATE_PATH`. PRIVATE_PATH must be a new
+   direct child of this clone's state directory, which must be owned by the
+   current user with mode 0700. Preview creates no directory, file or password.
+   For an existing domain preview `connection vonage allow-ip DOMAIN --ip IP`.
+   An ACL containing `0.0.0.0/0` requires a separately reviewed replacement;
+   adding one address cannot restrict it. This CLI refuses that change.
+5. Present the concrete preview and any remaining call-routing checks. Apply
+   `--commit` only with human authorization covering that operation. Existing
+   authorization counts; do not request it twice. Commits require an interactive
+   terminal and refuse headless markers and the pause switch. Avoid concurrent
+   dashboard/API edits: PSIP has no documented conditional-update contract.
+6. Read the verification result. Provisioning creates an application domain
+   and digest user, not telephone-number routing. User existence does not prove
+   password authentication or successful calls. Check number association and
+   perform a real PBX call before declaring service ready. A partial failure
+   keeps the private recovery file; inspect provider state and report the last
+   verified step. Never blindly retry, overwrite credentials, or delete to undo.
+7. Source customer-facing facts from engine memory, sent precedent and authored
+   records. Load the full dossier before preparing an engine draft. Include the
+   company-approved PBX guide and ask for missing IP information. Keep passwords
+   out of prompts, memory, project documents and transcripts. The current draft
+   path has no private-file credential ingestion: prepare placeholders and let
+   the operator insert the credential through an approved private channel.
+   This skill never sends mail. Record non-secret configuration and pending
+   verification in the appropriate existing records, not a new customer project
+   merely to store the general procedure.

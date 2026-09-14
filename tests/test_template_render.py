@@ -75,7 +75,7 @@ fails = 0
 templates = sorted(p.relative_to(TPL).as_posix() for p in TPL.rglob("*.j2"))
 expected_skills = {
     "cs-account", "cs-campaign", "cs-campaign-tick", "cs-cron", "cs-customer",
-    "cs-find-document", "cs-help", "cs-operator", "cs-review", "cs-triage-mail",
+    "cs-find-document", "cs-help", "cs-operator", "cs-review", "cs-sip-trunk", "cs-triage-mail",
 }
 rendered_skill_names: dict[str, set[str]] = {}
 for label, ctx in (("single-account", SINGLE), ("multi-account", MULTI),

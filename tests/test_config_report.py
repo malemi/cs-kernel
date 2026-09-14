@@ -143,6 +143,12 @@ def _fill(model_cls):
 
     from pydantic import BaseModel
 
+    if model_cls is manifest_mod.VonageConnection:
+        return model_cls(
+            enabled=True, api_key_env="EXAMPLE_KEY", api_secret_env="EXAMPLE_SECRET",
+            application_ids=["11111111-1111-4111-8111-111111111111"], region="eu",
+        )
+
     kwargs = {}
     for name, info in model_cls.model_fields.items():
         ann = info.annotation

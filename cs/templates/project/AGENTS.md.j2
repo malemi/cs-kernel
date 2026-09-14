@@ -133,13 +133,14 @@ them. When they may be recorded at all is a NEVER — § 5 below.
 
 ## 4. Skills — each file carries its own procedure
 
-All ten workflows live under `.claude/skills/`; Codex resolves the same bytes
+All workflows live under `.claude/skills/`; Codex resolves the same bytes
 through `.agents/skills`. Claude Code invokes them as `/cs-*`, Codex as `$cs-*`.
 The cron remains `claude -p "/cs-operator"`: its bootstrap runs `cs-triage-mail`
 then `cs-campaign-tick`{% if founder_sweep_enabled %}, then the read-only `{{ founder_sweep_account }}` sweep{% endif %}, reports, and stops.
 Interactive skills are `cs-customer <name>` (mandatory before customer work),
 `cs-find-document`, `cs-review` (the one review bootstrap), `cs-account <name>`,
-`cs-help`, `cs-cron`, and `cs-campaign`. Each file owns its own write and send
+`cs-help`, `cs-cron`, `cs-campaign`, and `cs-sip-trunk` (supervised Vonage SIP
+provisioning). Each file owns its own write and send
 boundary.
 
 ## 5. Safety (NEVER)
