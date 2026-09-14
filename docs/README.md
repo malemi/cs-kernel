@@ -14,3 +14,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [active-context-archive.md](active-context-archive.md) — pruned session narrative from `active-context.md`, dated, newest-first; cold storage, never read by `/doc-start`.
 
 - [Shared written project memory](briefs/2026-09-10-shared-project-memory.md) — shared authored records in the engine; [execution plan](execution-plans/2026-09-10-shared-project-memory.md).
+
+- [Operator runtime, models, billing and independent pause boundaries](operator-runtime.md).

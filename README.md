@@ -307,7 +307,7 @@ later "have we ever done something like this?" is answered by
 | Memory over time | Engine keeps relationships as mail is synced and you work |
 | Replies | Written end-to-end; land in Drafts for authorized sending |
 | Campaigns | Templates/packs advanced as drafts unless you opt into send mode |
-| “Stop everything” | Create pause file: `touch ~/.acme-cs/CS_PAUSE` |
+| Stop subsequent operator ticks | Create `~/.acme-cs/CS_PAUSE`; engine work and already-running processes are separate |
 
 ### Shared written projects
 
@@ -392,12 +392,16 @@ age, instead of being handed out as work);
 
 ### The kernel's own model calls
 
+Start with [operator runtime and controls](docs/operator-runtime.md) for exact
+model, authentication, budget and pause boundaries, including unattended Claude.
+
+
 Three different things spend model tokens, and only the middle one is the
 engine:
 
 | Who | On what | Paid by |
 |---|---|---|
-| Your session (Claude Code / OpenCode) | your conversation with the project | your own plan |
+| Agent host (interactive or Claude Code headless cron) | reasoning and tool selection | its actual agent login/API authentication, independent of Desktop |
 | The **engine** (mrcall-desktop) | replies and campaign copy — memory + trained voice | the engine's account |
 | The **`cs` kernel itself** | the send guard's register judgment; classification a skill routes directly | a provider key in `~/.<slug>-cs/.env` |
 
@@ -519,7 +523,7 @@ reopen `claude` / `opencode` in that folder.
 - **Draft first** — automated paths are not free-fire send.  
 - No cold outreach without a proper contact check.  
 - Contact history uses **Gmail’s own Sent mail** as ground truth.  
-- `~/.<your-slug>-cs/CS_PAUSE` stops automated ticks immediately.
+- `~/.<your-slug>-cs/CS_PAUSE` prevents subsequent guarded ticks; it does not terminate a running tick or stop the engine.
 
 The supplied headless operator remains draft-only even when interactive
 sending is enabled.

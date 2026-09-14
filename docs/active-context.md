@@ -14,6 +14,9 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
+The unattended operator is a Claude Code process; engine API calls and kernel
+direct classifiers have separate model/billing/stop controls. See [runtime boundaries](operator-runtime.md).
+
 - **Latest release tag: `v0.45.0`. Current HEAD status: untagged.**
   The published tag and both maintained clones passed their release
   verification under the [rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
