@@ -183,6 +183,34 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.45.0 — 2026-09-14 (MINOR)
+
+**Re-collaudo tier: FULL on both maintained clones.** This release adds a
+provider authentication/configuration boundary and changes headless permission
+surfaces. Clone upgrades require installed-package, engine identity, read-only
+behavior comparisons and private-lock reconstruction proofs.
+
+- Add optional clone-scoped `[connections.vonage]` with explicit credential
+  environment references, allowed application IDs and region; disabled by default.
+- Add `cs connection vonage` inspection, provisioning preview/commit and additive
+  public IPv4 ACL updates. Mutations require a terminal, an active operator,
+  exclusive private credential recovery and verified provider readback.
+- Add the canonical `cs-sip-trunk` skill across Claude Code, Codex and OpenCode;
+  deny both provider mutation verbs in all six headless command spellings and
+  enforce headless markers in code, including custom sending operators.
+- Add integration guides for Vonage, Shopify, Drive and Faire with actual
+  capabilities and verification limits. Faire API access remains unverified;
+  no Faire adapter is introduced. SIP provisioning does not configure a PBX,
+  associate a phone number or prove a successful call.
+- Add installed-template inventory verification to reject stale build artifacts
+  that would restore removed templates, including legacy local project folders.
+
+Migration: update the pinned package and templates, then explicitly configure
+Vonage only on clones authorized for that provider account. Keep credentials
+private; company procedure belongs in `company/sip-trunk.md`. Existing setup,
+shared project memory, sending policy and non-Vonage integrations remain intact.
+No customer trunk mutation or message send is part of release verification.
+
 ## v0.44.0 — 2026-09-10 (MINOR)
 
 Written project memory now lives in the company engine, separately from entity
