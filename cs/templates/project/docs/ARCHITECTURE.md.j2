@@ -136,8 +136,11 @@ it is: reading and drafting continue, only delivery stops.
    `DEDUP_DAYS` / suppressed / self → **stop**.
 4. **Draft via the engine** (`cs draft-reply` / `cs chat "compose …"`), never
    from scratch in cs. **Review** in the desktop app or Gmail Drafts, then
-   **send** only through the engine's approval gate (`cs chat … --allow
-   send_draft`). Replies land in {{ email_address }} and re-ingest as tasks.
+   **send** the exact engine row with `cs draft-send <full-engine-draft-id>`.
+   That verb approves only `send_draft` carrying the same ID and verifies the
+   engine recorded it as sent. Gmail, Superhuman and other ambient connectors
+   may be used to read/review, never to send an engine-owned contextual draft.
+   Replies land in {{ email_address }} and re-ingest as tasks.
 
 ### The two records the mailbox cannot hold
 

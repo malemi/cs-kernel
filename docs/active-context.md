@@ -43,6 +43,11 @@ direct classifiers have separate model/billing/stop controls. See [runtime bound
   Sent/All Mail owns message-existence evidence; the engine owns judgement.
 - General role routing remains opt-in through `CS_LLM_ROUTE`; the send guard
   can use a direct classifier. `cs memory` reports the ten-store memory map.
+- The untagged working tree adds `cs draft-send <full-engine-draft-id>` as the
+  canonical interactive path for contextual mail. It approves one exact engine
+  draft ID, verifies the engine recorded `status=sent`, and remains denied to
+  headless execution. Stamped guidance reserves Gmail and other ambient mail
+  connectors for review rather than sending engine-owned drafts.
 
 ## Unresolved
 
@@ -61,9 +66,18 @@ direct classifiers have separate model/billing/stop controls. See [runtime bound
   need checks in their owning environments. Interactive skills cannot revoke
   ambient permissions. MrCall preparation backlog needs normal engine updating.
 - Secondary-account onboarding remains separate from the released mint command.
+- The contextual-send command is not released or installed in maintained clones.
+  A Gmail send performed outside the engine can still leave its mirrored engine
+  draft stale; exact reconciliation belongs in the engine and is not designed.
+- The Café 124 audit currently sees 5 Gmail drafts and 61 engine drafts, paired
+  into 63 logical rows. Three Gmail rows pair with engine drafts; two exist only
+  in Gmail. Existing pairing is inferred from thread/recipient, and Gmail-only
+  rows carry no body into review. See the active exact-draft-identity plan.
 
 ## Next
 
-1. Diagnose unanswered-mail disagreement and close evidence/latency gaps.
-2. Complete secondary-account onboarding when requested; replace internal
+1. Implement the exact-draft-identity plan, then release and roll out the
+   canonical send and reconciliation changes after clone verification.
+2. Diagnose unanswered-mail disagreement and close evidence/latency gaps.
+3. Complete secondary-account onboarding when requested; replace internal
    verification terminology exposed by `cs update` with operator-facing language.

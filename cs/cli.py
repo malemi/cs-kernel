@@ -1133,6 +1133,108 @@ def cmd_chat(args) -> int:
     return 0
 
 
+def _drafts_with_status(settings, status: str, timeout: float) -> list[dict]:
+    return rpc.call_sync(
+        settings, "drafts.list", {"status": status}, timeout=timeout
+    ) or []
+
+
+def cmd_draft_send(args) -> int:
+    """Send ONE exact engine draft through the engine's own lifecycle.
+
+    The Gmail copy created by ``draft-reply`` is only a review surface. An
+    ambient Gmail connector can send that copy, but cannot update the engine
+    row; this verb therefore never touches Gmail and never approves a
+    ``send_draft`` request whose input differs from the exact id supplied by
+    the operator.
+    """
+    settings = config.load()
+    draft_id = (args.draft_id or "").strip()
+    drafts = _drafts_with_status(settings, "draft", args.timeout)
+    matches = [d for d in drafts if str(d.get("id") or "") == draft_id]
+    if len(matches) != 1:
+        print(
+            f"engine draft {draft_id!r} is not an exact, currently sendable "
+            "draft id; nothing was sent",
+            file=sys.stderr,
+        )
+        return 1
+
+    draft = matches[0]
+    recipients = ", ".join(draft.get("to_addresses") or []) or "(no recipient)"
+    subject = draft.get("subject") or ""
+    print(f"sending engine draft {draft_id}\nto: {recipients}\nsubject: {subject}")
+
+    send_approved = False
+
+    def exact_send(tool: str, tool_input: dict) -> bool:
+        nonlocal send_approved
+        matches = (
+            tool == "send_draft"
+            and str(tool_input.get("draft_id") or "") == draft_id
+        )
+        if not matches or send_approved:
+            return False
+        send_approved = True
+        return True
+
+    instruction = (
+        "Send the already-reviewed engine draft with the exact full draft_id "
+        f"{draft_id}. Call send_draft exactly once with draft_id={draft_id}. "
+        "Do not create, edit, select, or send any other draft."
+    )
+    out = asyncio.run(
+        rpc.chat(
+            settings,
+            instruction,
+            allow_tools={"send_draft"},
+            timeout=args.timeout,
+            approval_predicate=exact_send,
+        )
+    )
+    res = out["result"] or {}
+    rc = _chat_engine_error(res)
+    if rc is not None:
+        return rc
+
+    approvals = out.get("approvals") or []
+    matching = [
+        a for a in approvals
+        if a.get("tool") == "send_draft"
+        and a.get("mode") == "once"
+        and str((a.get("input") or {}).get("draft_id") or "") == draft_id
+    ]
+    other_approved = [
+        a for a in approvals if a.get("mode") == "once" and a not in matching
+    ]
+    if len(matching) != 1 or other_approved:
+        print(
+            "engine did not request exactly one send_draft approval for the "
+            f"named id; nothing was approved by this command",
+            file=sys.stderr,
+        )
+        return 1
+
+    sent = _drafts_with_status(settings, "sent", args.timeout)
+    if any(str(d.get("id") or "") == draft_id for d in sent):
+        print(f"sent and recorded by engine: {draft_id}")
+        return 0
+
+    states = {}
+    for status in ("draft", "sending", "failed"):
+        for row in _drafts_with_status(settings, status, args.timeout):
+            if str(row.get("id") or "") == draft_id:
+                states[status] = row
+    state = next(iter(states), "absent")
+    print(
+        f"send approval ran, but engine draft {draft_id} is {state!r}, not "
+        "recorded as sent. Delivery is uncertain; check Gmail Sent and do not "
+        "retry blindly.",
+        file=sys.stderr,
+    )
+    return 5
+
+
 # ----------------------------------------------------------------- campaign
 
 
@@ -1972,6 +2074,15 @@ def main(argv=None) -> int:
     )
     ph.add_argument("--timeout", type=float, default=600)
     ph.set_defaults(func=cmd_chat)
+
+    pds = sub.add_parser(
+        "draft-send",
+        help="send ONE exact engine draft through the engine approval gate and "
+        "verify its sent state; interactive only",
+    )
+    pds.add_argument("draft_id", help="full engine draft id from `cs review --json`")
+    pds.add_argument("--timeout", type=float, default=600)
+    pds.set_defaults(func=cmd_draft_send)
 
     pas = sub.add_parser(
         "ask",

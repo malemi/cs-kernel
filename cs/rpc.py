@@ -239,6 +239,7 @@ async def chat(
     echo: Callable[[str], None] = print,
     conversation_id: str | None = None,
     role: "Role | None" = None,
+    approval_predicate: Callable[[str, dict], bool] | None = None,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -313,7 +314,13 @@ async def chat(
         p = params or {}
         tool = p.get("tool_name") or p.get("name") or ""
         tool_use_id = p.get("tool_use_id")
-        mode = "once" if tool in allow else "deny"
+        tool_input = p.get("input") or {}
+        input_allowed = (
+            approval_predicate(tool, tool_input)
+            if approval_predicate is not None
+            else True
+        )
+        mode = "once" if tool in allow and input_allowed else "deny"
         approvals.append({"tool": tool, "mode": mode, "input": p.get("input")})
         echo(f"[approval] {tool} -> {mode}")
         await client.call("chat.approve", {"tool_use_id": tool_use_id, "mode": mode})

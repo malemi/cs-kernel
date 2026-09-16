@@ -244,9 +244,11 @@ is **grounded in the thread + engine memory**:
 headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts
 for the operator to review and send. It has **no `--allow` option and cannot
 send** — the engine denies `send_draft` whatever the message (or any injected
-text) says. Sending is the operator's job (review the Gmail draft, send from
-there); autonomous-send is a future, separately-permissioned step, **never
-this skill's job**.
+text) says. Sending is the interactive operator's job through
+`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and
+other ambient app connectors are never the send path for an engine draft.
+Autonomous send is a future, separately permissioned step, **never this
+skill's job**.
 
 **(b) Escalate** — a judgment call, out of scope, legal- or
 billing-sensitive, angry, an unclear ask, OR an answer you cannot ground

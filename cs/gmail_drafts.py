@@ -1,11 +1,12 @@
 """Put outreach drafts where the operator actually works: Gmail Drafts.
 
-Phase-1 review surface: the engine composes (memory + voice + threading),
-cs APPENDs the result into the operator's Gmail Drafts; the operator reviews,
-edits and SENDS from Gmail. The sent mail lands in Gmail Sent and the
-engine's normal sync picks it up — archive, threading and dedup stay
-correct with zero extra plumbing. The engine-side Draft store is NOT used
-in this flow (single copy, no divergence).
+Review surface: the engine composes and persists the authoritative draft
+(memory + voice + threading), then cs APPENDs a second, editable copy into the
+operator's Gmail Drafts. That mirror is for review only. Sending it from Gmail
+bypasses the engine draft's claim/status/message-id lifecycle and leaves the
+engine row stale, so an engine-owned contextual draft is sent through the
+kernel's exact-id engine send path. `cs review` reconciles the two stores for
+display, but reconciliation does not mutate either one.
 
 The surface was append-only until 2026-08-23, when a composed draft quoted a
 sentence the customer had never written and nothing in cs could take it back:

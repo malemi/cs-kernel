@@ -74,8 +74,8 @@ blocks new guarded ticks, not engine work or a running Claude. See
 4. **The invariants are code, not config** (never manifest fields):
    - Identity is always the company's own support mailbox (daemon gates
      `token.sub == OWNER_ID`; SMTP logs in with the mailbox's own creds).
-   - Contextual/free-form generation ONLY via the engine; only
-     fixed-template bulk is cs-owned (`send_mail.py`, `sms.py`).
+   - Contextual/free-form generation and send ONLY via the engine; use `cs draft-send <full-id>`.
+     Gmail/Superhuman are read/review only; fixed-template bulk is cs-owned.
    - The headless cron is draft-only via the wrapper's `--disallowed-tools`
      re-deny set (template-side, baked verbatim) — not a knob.
    - Policy/voice/signature live in engine `USER_NOTES`, outside every repo.

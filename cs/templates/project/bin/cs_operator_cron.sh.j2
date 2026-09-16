@@ -99,6 +99,12 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # executable by the user the tick runs as.
 "$CLAUDE_BIN" -p "/cs-operator" \
   --disallowed-tools \
+    "Bash(.venv/bin/python -m cs draft-send:*)" \
+    "Bash(.venv/bin/python3 -m cs draft-send:*)" \
+    "Bash(.venv/bin/cs draft-send:*)" \
+    "Bash(python -m cs draft-send:*)" \
+    "Bash(python3 -m cs draft-send:*)" \
+    "Bash(cs draft-send:*)" \
     "Bash(.venv/bin/python -m cs chat:*)" \
     "Bash(.venv/bin/python3 -m cs chat:*)" \
     "Bash(.venv/bin/cs chat:*)" \

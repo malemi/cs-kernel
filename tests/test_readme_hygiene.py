@@ -139,7 +139,7 @@ def _test_no_italian_leftovers() -> None:
         assert "**Drafts**" in out, (
             f"[{label}] the Gmail-Drafts pointer must be in English:\n{out}"
         )
-        assert 'cs chat "send the draft' in out, (
+        assert "cs draft-send <full-engine-draft-id>" in out, (
             f"[{label}] the send-draft example must be in English:\n{out}"
         )
 

@@ -273,7 +273,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-delete review catchup drive accounts config memory chat campaign project; do
+for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -309,6 +309,9 @@ step "8. draft-reply mirrors composed draft into Gmail Drafts (anti-regression)"
 # cmd_draft_reply MUST APPEND the composed draft into Gmail Drafts or it is
 # invisible to the operator ("draft not in Gmail" — a recurring regression).
 if "$VENV/bin/python" "$ROOT/tests/test_draft_reply.py"; then echo "OK"; else echo "FAIL: draft-reply no longer appends to Gmail Drafts"; FAIL=1; fi
+
+step "8b. draft-send names, input-gates and verifies one engine draft"
+if "$VENV/bin/python" "$ROOT/tests/test_draft_send.py"; then echo "OK"; else echo "FAIL: canonical contextual send regressed"; FAIL=1; fi
 
 step "9. unanswered open-logic (deterministic Sent-anchored sweep)"
 # `cs unanswered` replaced a NON-DETERMINISTIC LLM discovery query (incident
@@ -445,7 +448,7 @@ SPELLINGS = [
     "cs",
 ]
 VERBS = [
-    "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
+    "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
 ]
