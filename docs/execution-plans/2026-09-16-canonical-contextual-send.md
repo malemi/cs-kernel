@@ -43,6 +43,6 @@ stamped guidance before a tag.
 
 - Focused tests cover the exact-ID success path, wrong-ID and missing approvals,
   repeated exact-ID requests, engine errors and uncertain delivery state.
-- The full kernel suite passes all 54 gates, including rendered surfaces and the
-  cron deny enumeration.
+- The implementation session recorded a passing full kernel suite, including
+  rendered surfaces and the cron deny enumeration; doc-end did not rerun it.
 - The documentation mechanical gate and semantic source review are clean.

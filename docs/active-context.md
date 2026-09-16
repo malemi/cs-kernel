@@ -14,70 +14,60 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
-The unattended operator is a Claude Code process; engine API calls and kernel
-direct classifiers have separate model/billing/stop controls. See [runtime boundaries](operator-runtime.md).
+The unattended operator runs through Claude Code; engine APIs and kernel direct
+classifiers have separate models, billing and stop controls. See
+[runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
+operator activity, and CS_PAUSE does not stop engine processing.
 
 - **Latest release tag: `v0.45.0`. Current HEAD status: untagged.**
-  The published tag and both maintained clones passed their release
-  verification under the [rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
-  Both production clones have v0.45.0 installed and independent lock rebuilds.
-  Original operator pause states are restored; crontab is unchanged.
-- The Vonage CLI supports clone-scoped reads, provisioning previews, supervised
-  domain/user creation and additive public ACL updates. Provider credentials
-  resolve only from explicit clone references. Headless and paused mutations
-  refuse; password handoff stays outside model prompts. See
-  [Vonage](integrations/vonage.md) for the exact boundary.
-- The README's integration index routes to separate Vonage, Shopify, Drive and
-  Faire guides. Faire application setup is documented; authenticated API use
-  and a kernel adapter remain unverified/unimplemented respectively.
+  Release verification records are in the [rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
+  Current clone installations must be checked in their own environments.
+- Vonage supports clone-scoped reads, provisioning previews, supervised
+  domain/user creation and additive ACL changes with explicit credential
+  references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
+- Integration guides separate Vonage, Shopify, Drive and Faire. Faire application
+  setup is documented; authenticated use and a kernel adapter remain unverified
+  and unimplemented respectively.
 - The engine owns mail classification, task judgement and company memory.
-  Shared written projects use revisioned engine records, separate from entity
-  memory. Legacy project folders remain recoverable in private clone Git.
-- `cs init --descriptor` uses an explicit desktop handoff; `cs setup` checks
-  workspace, engine identity, preparation evidence, memory and agent tools.
-  Preparation counts do not prove reply quality or mailbox credential validity.
-- Workspace instructions live in stamped `AGENTS.md`; `CLAUDE.md` is a one-time
-  bootstrap. Claude Code, Codex and OpenCode share canonical skills.
-- Cross-mailbox history spans configured profiles and read mailboxes. Incomplete
-  evidence refuses applicable sends; `send_first` remains deliberately ungated.
-  Sent/All Mail owns message-existence evidence; the engine owns judgement.
-- General role routing remains opt-in through `CS_LLM_ROUTE`; the send guard
-  can use a direct classifier. `cs memory` reports the ten-store memory map.
-- The untagged working tree adds `cs draft-send <full-engine-draft-id>` as the
-  canonical interactive path for contextual mail. It approves one exact engine
-  draft ID, verifies the engine recorded `status=sent`, and remains denied to
-  headless execution. Stamped guidance reserves Gmail and other ambient mail
-  connectors for review rather than sending engine-owned drafts.
+  Shared written projects are revisioned engine records; legacy clone folders
+  remain recoverable in private Git history.
+- `cs init --descriptor` consumes the explicit Desktop handoff. `cs setup` checks
+  workspace, identity, preparation evidence, memory and agent tools; preparation
+  counts do not certify reply quality or mailbox credential validity.
+- Stamped AGENTS.md owns workspace instructions. CLAUDE.md is a one-time
+  bootstrap; Claude Code, Codex and OpenCode share canonical skills.
+- Cross-mailbox history includes configured profiles and read mailboxes.
+  Incomplete evidence refuses applicable sends; send_first remains deliberately
+  ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
+- Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
+  classifier. `cs memory` reports the ten-store memory map.
+- Untagged source includes interactive `cs draft-send <full-engine-draft-id>`:
+  it approves the exact engine draft and checks recorded sent status. The
+  supplied cron wrapper denies the command; the CLI has no headless/pause guard.
+  Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
+  The command is absent from the released tag; clone installation is unverified.
 
 ## Unresolved
 
-- No customer trunk mutation or real SIP authentication/call was part of release
-  validation. Telephone-number association and PBX configuration remain separate.
-- The six reported disagreements between `cs unanswered` and Sent evidence remain
-  undiagnosed. Repair the engine verdict or sweep window, not a parallel judgement.
-- Review-latency criteria 2–4 lack fixture gates for verdict corrections and
-  round-trip/message bounds; historical engine LLM latency is not remeasured.
-- `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
-  the stamped skills do not explain that outcome.
-- Paid agent-tick/live draft behavior, including an `evidence_incomplete` refusal,
-  remains outside the read-only FULL harness. Outbound sourcing has instruction
-  tests but no demonstrated agent-behavior proof.
-- Historical clone observations of send posture and ambient provider credentials
-  need checks in their owning environments. Interactive skills cannot revoke
-  ambient permissions. MrCall preparation backlog needs normal engine updating.
-- Secondary-account onboarding remains separate from the released mint command.
-- The contextual-send command is not released or installed in maintained clones.
-  A Gmail send performed outside the engine can still leave its mirrored engine
-  draft stale; exact reconciliation belongs in the engine and is not designed.
-- The Café 124 audit currently sees 5 Gmail drafts and 61 engine drafts, paired
-  into 63 logical rows. Three Gmail rows pair with engine drafts; two exist only
-  in Gmail. Existing pairing is inferred from thread/recipient, and Gmail-only
-  rows carry no body into review. See the active exact-draft-identity plan.
+- The [exact-draft-identity plan](execution-plans/2026-09-16-exact-draft-identity.md)
+  specifies preservation proof, exact pairing and reconciliation. These are not
+  implemented; a Gmail send outside the engine can still leave a stale mirrored
+  draft. Current pairing uses thread/recipient inference, and Gmail-only rows
+  have no authored body in review. Dated inventory counts are in the archive.
+- Unanswered-mail disagreements and review-latency fixture gaps remain open.
+  `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
+  stamped skills do not explain that outcome.
+- Paid agent-tick/live draft behavior remains outside read-only FULL checks.
+  Instruction tests do not establish agent-behavior proof or revoke ambient
+  permissions. Historical clone send posture requires checks in that clone.
+- Live SIP/customer-trunk acceptance, telephone-number association, PBX setup
+  and secondary-account onboarding remain separate from the release checks.
 
 ## Next
 
-1. Implement the exact-draft-identity plan, then release and roll out the
-   canonical send and reconciliation changes after clone verification.
-2. Diagnose unanswered-mail disagreement and close evidence/latency gaps.
-3. Complete secondary-account onboarding when requested; replace internal
-   verification terminology exposed by `cs update` with operator-facing language.
+1. Continue exact draft identity from its active plan; verify canonical send and
+   reconciliation before a new release/clone rollout. No send is part of doc-end.
+2. Diagnose unanswered-mail disagreement and close evidence/latency gaps in the
+   owning engine or kernel path rather than adding parallel judgement.
+3. Complete secondary-account onboarding when requested and replace internal
+   verification terminology in operator-facing update output.

@@ -58,7 +58,8 @@ must never send an engine-owned contextual draft.
    same draft ID and a post-send engine read showing the named row is no longer
    `draft`.
 4. A model reply claiming success without the matching tool event fails.
-5. Headless execution cannot reach the new verb.
+5. The supplied headless cron wrapper denies all six command spellings. This
+   is a wrapper permission boundary, not a CLI runtime guard.
 6. Stamped docs explicitly prohibit ambient mail connector sends for
    engine-owned contextual drafts.
 7. Focused regression tests cover success, mismatched approval, no approval,
