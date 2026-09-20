@@ -19,8 +19,8 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.45.0`. Current HEAD status: untagged.**
-  Release verification records are in the [rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
+- **Latest release tag: `v0.46.0`. Current HEAD status: untagged.**
+  Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
   Current clone installations must be checked in their own environments.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
@@ -36,6 +36,9 @@ operator activity, and CS_PAUSE does not stop engine processing.
   counts do not certify reply quality or mailbox credential validity.
 - Stamped AGENTS.md owns workspace instructions. CLAUDE.md is a one-time
   bootstrap; Claude Code, Codex and OpenCode share canonical skills.
+- `cs-triage-mail` reads an optional clone-owned
+  `company/customer-service-playbook.md`; the shared skill retains send and
+  tool-approval boundaries across all three agent surfaces.
 - Cross-mailbox history includes configured profiles and read mailboxes.
   Incomplete evidence refuses applicable sends; send_first remains deliberately
   ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.

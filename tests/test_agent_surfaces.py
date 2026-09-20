@@ -112,11 +112,16 @@ def main() -> int:
                                     ROOT / "cs/templates/project", rendered)
                 pi.install_agent_surfaces(rendered)
         customer = rendered / ".claude/skills/cs-customer/SKILL.md"
+        triage = rendered / ".claude/skills/cs-triage-mail/SKILL.md"
         check("written projects are not initialized in docs", not (rendered / "docs/projects").exists())
         check("project usage guide is available", (rendered / "docs/project-memory.md").is_file())
+        check("triage reads an optional company customer-service playbook",
+              "company/customer-service-playbook.md" in triage.read_text())
         for host in (".agents", ".opencode"):
             check(f"{host} resolves real customer workflow",
                   (rendered / host / "skills/cs-customer/SKILL.md").read_bytes() == customer.read_bytes())
+            check(f"{host} resolves real triage workflow",
+                  (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
         print("fresh clones create no command surface")
         fresh = _clone(tmp, "fresh-cs")

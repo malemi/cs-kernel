@@ -193,6 +193,28 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.46.0 — 2026-09-20 (MINOR)
+
+`cs-triage-mail` can now apply an optional clone-owned
+`company/customer-service-playbook.md`. This keeps company-specific support
+decision trees beside the clone while the kernel retains the common triage,
+evidence and draft/send boundaries. Engine `USER_NOTES` remains the owner of
+voice and writing policy rather than operational procedure.
+
+A playbook may require a separately approval-gated non-mail action, such as a
+diagnostic call, during an interactive run. The skill permits only the named
+tool, never co-approves a mail-send tool, and does not bypass a headless denial;
+the task remains open with a concrete operator action when the runtime cannot
+perform it. Claude Code, Codex and OpenCode continue to resolve the same
+rendered skill bytes through their repository surfaces.
+
+**Re-collaudo tier: static on both maintained clones.** The release changes a
+stamped skill and documentation only. It does not change executable code,
+permission files, cron wrappers, mail send paths or provider configuration.
+Upgrade each clone through `cs update`; verify the rendered skill, agent links,
+template ledger and unchanged permission/send files. Company playbooks are
+clone-owned and are never overwritten by the update.
+
 ## v0.45.0 — 2026-09-14 (MINOR)
 
 **Re-collaudo tier: FULL on both maintained clones.** This release adds a
