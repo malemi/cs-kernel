@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 5736e568c50238f811e3adb57ccbebc4f7ccb130
-doc_baseline_date: 2026-09-16
+doc_baseline_commit: d8ad9460652f59a8ef616d0d6f36b441731c8833
+doc_baseline_date: 2026-09-20
 ---
 
 # Active Context — cs-kernel
@@ -21,7 +21,9 @@ operator activity, and CS_PAUSE does not stop engine processing.
 
 - **Latest release tag: `v0.46.0`. Current HEAD status: untagged.**
   Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Current clone installations must be checked in their own environments.
+  Both maintained clones install the public tag at `82e611f`; independent
+  lock-only environments report `0.46.0`, and their rendered Codex skill paths
+  resolve the canonical Claude skill bytes.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
