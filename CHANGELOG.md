@@ -4,7 +4,18 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-14): **`v0.45.0` on both clones**.
+**Current operational pin** (2026-09-20): **`v0.46.0` on both clones**.
+Both install the public tag at `82e611f`; independent lock-only environments
+report 0.46.0. Upgrade commits are `mrcall-cs` `05c674e` and `124-cs`
+`17c8463`. The full kernel suite passes before release, on the tag and after
+integration with current main. Static clone verification confirms the rendered
+triage hook and byte-identical Codex `.agents/skills` resolution. MrCall's
+company playbook is clone-owned; 124's unrelated pricing-skill work remains
+uncommitted and intact. Permission files, cron policy and send boundaries are
+unchanged. No call, draft, customer message or paid agent tick was part of the
+release.
+
+**Historical operational pin** (2026-09-14): **`v0.45.0` on both clones**.
 Both install the public tag at `a3e7aff`; independent lock-only environments
 report 0.45.0 and match all 39 released templates. Upgrade commits are
 `mrcall-cs` `f3e8004` and `124-cs` `b8d11f3`. Installed FULL comparisons
