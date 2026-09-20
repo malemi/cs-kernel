@@ -31,3 +31,16 @@ Host-specific launchers may remain host-specific only when their runtime is
 explicitly scoped that way, as with the existing Claude-owned cron wrapper.
 They do not create a second copy of the skill instructions and do not relax the
 three-host invariant for the skill itself.
+
+## Company customer-service playbooks
+
+`cs-triage-mail` reads `company/customer-service-playbook.md` when a clone has
+authored that file. The kernel skill owns the common triage sequence and safety
+boundaries; the clone-owned playbook supplies company-specific decision trees,
+evidence requirements and authorised non-mail actions. `cs update` refreshes
+the shared skill and never overwrites the playbook.
+
+The playbook cannot grant a send capability or bypass a tool approval. A
+headless runtime that denies an action leaves the task open and reports the
+specific operator action; an interactive runtime may approve only the named
+non-mail tool required by the matching workflow.

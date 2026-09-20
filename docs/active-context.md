@@ -14,7 +14,7 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
 
 ## State now
 
-- **Latest release tag: `v0.45.0`. Current HEAD status: tagged as `v0.45.0`.** These
+- **Latest release tag: `v0.46.0`. Current HEAD status: tagged as `v0.46.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release, push and operational clone upgrades require explicit
   authorization and the release procedure's verification gates.
@@ -33,16 +33,17 @@ Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
   while Sent/All Mail remains the dedup source.
 - Provider routing is partial: the send guard can use a direct classifier;
   general role routing remains opt-in through `CS_LLM_ROUTE`.
-- Both maintained clones now run the public `v0.44.0` tag. Their locks rebuild
+- Both maintained clones entered this release on the public `v0.45.0` tag. Their locks rebuild
   independently; read-only FULL comparisons found no material regression.
   Existing crontab and clone-specific deny rules were preserved, and temporary
   upgrade pauses removed. The release record identifies remaining harness drift.
 
-**Vonage connection.** The integrated candidate adds clone-scoped provider
-configuration, account inspection, preview/authorized SIP provisioning and
-public ACL additions. Publication and deployment are in progress under the
-[authorized rollout plan](execution-plans/2026-09-14-vonage-production-rollout.md).
-The current production pin remains v0.44.0 until each upgrade is verified.
+**Customer-service playbooks.** `cs-triage-mail` reads an optional clone-owned
+`company/customer-service-playbook.md` before deciding or composing. The shared
+skill retains send and approval boundaries; Claude Code, Codex and OpenCode
+resolve the same rendered instructions. See the
+[brief](briefs/2026-09-20-company-customer-service-playbooks.md) and
+[plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
 
 **Workspace setup.**
 

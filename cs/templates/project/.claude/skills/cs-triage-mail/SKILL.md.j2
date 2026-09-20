@@ -31,8 +31,12 @@ follow-up is the `cs-campaign-tick` skill's job, not this one.
 - **Free-form replies ALWAYS go through the engine** via `cs draft-reply
   "…"`, which composes with memory + trained voice + threading and stores a
   DRAFT. **Never** a cs-SMTP path, never a draft written from scratch in cs,
-  never `cs chat --allow` (the operator's supervised send path, not yours —
-  and denied to you by permission).
+  and never `cs chat --allow` for composing or sending mail. A company
+  customer-service playbook may require a separately approval-gated non-mail
+  action such as a diagnostic call. In an interactive authorised run, allow
+  only the named tool needed for that action; never co-approve a mail-send tool.
+  If the headless wrapper denies the action, keep the task open and report the
+  concrete operator action instead of bypassing the wrapper.
 - **You only ever DRAFT — you cannot send.** `cs draft-reply` has no send
   capability, and the headless permission set forbids every send surface.
   Going autonomous-send later is a deliberate permission change the operator
@@ -226,6 +230,14 @@ search.
 already there. (Doing the opposite — guessing at a mechanic instead of searching
 the archive — has already produced a confidently wrong answer to a real
 customer.)
+
+## 2c. Apply the company's customer-service playbook
+
+If `company/customer-service-playbook.md` exists and is non-empty, read it now
+and apply every matching issue workflow before deciding or composing. That file
+owns company-specific support procedures; `USER_NOTES` owns voice and writing
+policy. A playbook may narrow a decision or require additional evidence, but it
+never widens this skill's draft/send boundary or any tool approval boundary.
 
 ## 3. Decide per candidate
 
