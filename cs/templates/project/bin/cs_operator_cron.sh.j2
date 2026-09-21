@@ -165,6 +165,20 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(python -m cs connection vonage allow-ip:*)" \
     "Bash(python3 -m cs connection vonage allow-ip:*)" \
     "Bash(cs connection vonage allow-ip:*)" \
+{% for method in [
+  'update.run',
+  'memory.reconsolidate_now',
+  'memory.join',
+  'memory.reset',
+  'preparation.resume',
+] %}
+    "Bash(.venv/bin/python -m cs rpc {{ method }}:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc {{ method }}:*)" \
+    "Bash(.venv/bin/cs rpc {{ method }}:*)" \
+    "Bash(python -m cs rpc {{ method }}:*)" \
+    "Bash(python3 -m cs rpc {{ method }}:*)" \
+    "Bash(cs rpc {{ method }}:*)" \
+{% endfor %}
 {% for script in local_scripts_cron_denied %}
 {% for form in [script, './' ~ script] %}
     "Bash({{ form }}:*)" \

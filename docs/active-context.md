@@ -46,6 +46,11 @@ operator activity, and CS_PAUSE does not stop engine processing.
   ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
 - Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
   classifier. `cs memory` reports the ten-store memory map.
+- Untagged source makes `cs ask` negotiate engine read-only chat policy version
+  1 before sending a question. The scheduled wrapper denies all six command
+  spellings of each raw mutating memory/update/preparation RPC surface. Focused
+  policy tests, the deny-enumeration gate and `cs memory` pass; this is not
+  released or installed in a clone.
 - Untagged source includes interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.

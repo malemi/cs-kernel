@@ -39,6 +39,16 @@ classifier model. These are distinct from engine `LLM_PROVIDER` settings.
 Changing a key through Desktop Settings does not populate the clone's env.
 A classifier's historical evaluation does not certify memory or merge quality.
 
+## Read-only engine questions
+
+`cs ask` first requires `system.capabilities.chat_read_only_policy == 1`, then
+sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
+refuses an older engine rather than treating an empty approval allowlist as a
+mutation policy. Supervised `cs chat` and `cs draft-reply` keep their existing
+contracts. The scheduled wrapper also denies raw RPC entry points that run
+update, reconsolidation, memory join/reset or preparation resume in every
+supported command spelling.
+
 ## Inspect before recommending or pausing
 
 - Read the clone wrapper and its installed cron entry: company extensions may

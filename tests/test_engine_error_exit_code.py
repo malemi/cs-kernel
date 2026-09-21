@@ -91,7 +91,7 @@ def _ok_envelope(text: str) -> dict:
 
 def _stub_chat(envelope: dict):
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None):
+                        echo=print, conversation_id=None, read_only=False):
         return envelope
     return fake_chat
 

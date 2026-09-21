@@ -1332,7 +1332,15 @@ def cmd_ask(args) -> int:
     # see an out-of-band reply, a closed task, or what memory marks handled).
     # allow_tools empty → structurally read-only (cannot send), composes nothing.
     settings = config.load()
-    out = asyncio.run(rpc.chat(settings, args.question, allow_tools=set(), timeout=args.timeout))
+    out = asyncio.run(
+        rpc.chat(
+            settings,
+            args.question,
+            allow_tools=set(),
+            timeout=args.timeout,
+            read_only=True,
+        )
+    )
     res = out["result"] or {}
     rc = _chat_engine_error(res)
     if rc is not None:

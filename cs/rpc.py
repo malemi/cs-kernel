@@ -240,6 +240,7 @@ async def chat(
     conversation_id: str | None = None,
     role: "Role | None" = None,
     approval_predicate: Callable[[str, dict], bool] | None = None,
+    read_only: bool = False,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -286,6 +287,15 @@ async def chat(
 
     from . import model_config
 
+    if read_only:
+        return await _read_only_chat(
+            settings,
+            message,
+            timeout=timeout,
+            echo=echo,
+            conversation_id=conversation_id,
+        )
+
     if role is not None and model_config.route_direct():
         from . import worker_llm
 
@@ -331,3 +341,35 @@ async def chat(
             "chat.send", {"message": message, "conversation_id": conv}, timeout=timeout
         )
         return {"result": result, "approvals": approvals, "notifications": c.notifications}
+
+
+async def _read_only_chat(
+    settings: Settings,
+    message: str,
+    *,
+    timeout: float,
+    echo: Callable[[str], None],
+    conversation_id: str | None,
+) -> Any:
+    """Negotiate and send a server-enforced read-only engine turn."""
+    import uuid
+
+    conv = conversation_id or f"cs-{uuid.uuid4().hex[:16]}"
+    async with EngineClient(settings) as client:
+        capabilities = await client.call("system.capabilities", {}, timeout=60)
+        version = (capabilities or {}).get("chat_read_only_policy")
+        if version != 1:
+            raise RuntimeError(
+                "engine does not support the required read-only chat policy version 1"
+            )
+        result = await client.call(
+            "chat.send",
+            {
+                "message": message,
+                "conversation_id": conv,
+                "mutation_policy": "read_only",
+                "policy_version": 1,
+            },
+            timeout=timeout,
+        )
+        return {"result": result, "approvals": [], "notifications": client.notifications}

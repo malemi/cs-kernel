@@ -405,7 +405,7 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # settings.json.j2 membership under permissions.deny (and nothing
 # chat/send-draft-shaped under permissions.allow), and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
-# equality against the 60 deny entries + 4 keeps. `handled` is in that list not
+# equality against the kernel deny entries + 4 keeps. `handled` is in that list not
 # because it sends, but because it SILENCES: it declares a contact resolved
 # off-email, and a tick reading untrusted inbound must never be talked into it.
 # `escalated` is there for the sharper version of the same reason: it asserts
@@ -451,6 +451,8 @@ VERBS = [
     "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
+    "rpc update.run", "rpc memory.reconsolidate_now", "rpc memory.join",
+    "rpc memory.reset", "rpc preparation.resume",
 ]
 
 # The expansion a clone-local executable gets, rebuilt here INDEPENDENTLY of
@@ -1276,6 +1278,9 @@ step "54. provider binding isolation, SIP HTTP contracts and supervised provisio
 for test in test_connection_config.py test_vonage.py test_sip_provision.py test_sip_surfaces.py; do
   if "$VENV/bin/python" "$ROOT/tests/$test"; then echo "OK: $test"; else echo "FAIL: $test"; FAIL=1; fi
 done
+
+step "55. read-only ask policy is negotiated and sent to the engine"
+if "$VENV/bin/python" "$ROOT/tests/test_chat_memory_policy.py"; then echo "OK"; else echo "FAIL: cs ask can reach an engine without the read-only policy"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
