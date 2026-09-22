@@ -39,8 +39,11 @@ Otherwise, substantial development follows these gates in order:
 
 1. Write the brief: intent, scope, constraints, acceptance criteria, and
    material assumptions.
-2. Have a fresh reviewer judge the brief. Do not plan until it returns
-   `APPROVED`; repair `REVISE` findings and re-review.
+2. Have a fresh reviewer judge the brief. Its first question is whether the
+   artifact is the right *kind* for the question asked: a frame error is
+   invisible to every later gate, because each of them measures the work
+   against the brief. Do not plan until it returns `APPROVED`; repair `REVISE`
+   findings and re-review.
 3. Write the milestone plan: dependencies, ownership, verification, and risk or
    rollback handling where relevant.
 4. Have a fresh reviewer judge the plan. Do not delegate or implement until it

@@ -105,9 +105,20 @@ def _client_credentials_token(settings) -> str:
     return token
 
 
-def _access_token(settings) -> str:
-    # A static token wins if explicitly set; otherwise the client-credentials grant.
+def access_token(settings) -> str:
+    """Supported way to obtain a Shopify Admin token.
+
+    A static token wins if explicitly set; otherwise the client-credentials
+    grant. This is the name a consumer outside this module imports: the Desktop
+    engine needs a token to drive `fetch_customers`, and reaching into a
+    private name for it leaves the kernel free to rename that name without
+    warning anyone.
+    """
     return settings.shopify_admin_token or _client_credentials_token(settings)
+
+
+# Kept so existing pinned callers keep working. New code uses `access_token`.
+_access_token = access_token
 
 
 def _graphql(settings, token: str, query: str, variables: dict) -> dict:
