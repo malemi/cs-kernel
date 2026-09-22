@@ -1282,6 +1282,13 @@ done
 step "55. read-only ask policy is negotiated and sent to the engine"
 if "$VENV/bin/python" "$ROOT/tests/test_chat_memory_policy.py"; then echo "OK"; else echo "FAIL: cs ask can reach an engine without the read-only policy"; FAIL=1; fi
 
+step "56. a CRM fact the backend did not send is never reported as a value"
+# The adapter read an absent order count as "0": a customer with ten orders
+# read as having none, ok=True, no note, indistinguishable from a real zero.
+# Both halves are gated — absent degrades the result, and a genuine zero stays
+# an authoritative zero — through the dossier's own rendering path.
+if "$VENV/bin/python" "$ROOT/tests/test_crm_shopify_absent_facts.py"; then echo "OK"; else echo "FAIL: a missing Shopify fact is being answered instead of reported missing"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

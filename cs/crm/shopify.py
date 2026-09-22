@@ -137,24 +137,57 @@ def _graphql(settings, token: str, query: str, variables: dict) -> dict:
         return json.loads(r.read())
 
 
-def _row(node: dict, email: str) -> CrmRow:
+# Facts the customer query is always supposed to yield, because Shopify's
+# schema declares their source fields non-null: `numberOfOrders:
+# UnsignedInt64!`, `amountSpent: MoneyV2!`, `state: CustomerState!`,
+# `tags: [String!]!`. One of them missing means the response shape changed
+# under us, and projecting it anyway would INVENT a fact rather than report
+# one. `last_order` is deliberately absent from this tuple: `lastOrder: Order`
+# is nullable and is null for a customer who has never ordered, which is an
+# answer, not a break.
+_REQUIRED_FACTS = ("orders", "spent", "state", "tags")
+
+
+def _row(node: dict, email: str) -> tuple[CrmRow, list[str]]:
+    """Project one customer node into a row, plus the names of the required
+    facts the node did not carry.
+
+    A fact we cannot read is OMITTED rather than given a value. Zero and absent
+    are different answers: `str(node.get("numberOfOrders") or "0")` reported a
+    customer with ten orders as having none whenever the field moved, with
+    `ok=True` and no note, and no caller could tell the two apart. The renderers
+    read facts with `.get(key, "")` (`cs/cli.py:929`, `cs/unanswered.py:653`),
+    so an omitted key prints blank — an absence they can show, not a claim.
+    """
     spent = node.get("amountSpent") or {}
     last = node.get("lastOrder") or {}
     name = " ".join(filter(None, [node.get("firstName"), node.get("lastName")]))
     amount = spent.get("amount")
     currency = spent.get("currencyCode") or ""
-    return CrmRow(
-        id=str(node.get("id") or ""),
-        label=name or str(node.get("email") or email),
-        email=str(node.get("email") or email),
-        facts={
-            "orders": str(node.get("numberOfOrders") or "0"),
-            "spent": f"{amount} {currency}".strip() if amount is not None else "",
-            "state": str(node.get("state") or ""),
-            "tags": ", ".join(node.get("tags") or []) if isinstance(node.get("tags"), list)
-                    else str(node.get("tags") or ""),
-            "last_order": str(last.get("name") or ""),
-        },
+    tags = node.get("tags")
+    state = node.get("state")
+    orders = node.get("numberOfOrders")
+
+    facts: dict[str, str] = {}
+    if orders is not None:
+        facts["orders"] = str(orders)
+    if amount is not None:
+        facts["spent"] = f"{amount} {currency}".strip()
+    if state is not None:
+        facts["state"] = str(state)
+    if tags is not None:
+        facts["tags"] = ", ".join(tags) if isinstance(tags, list) else str(tags)
+    # Null `lastOrder` is "no last order", so this key is always present.
+    facts["last_order"] = str(last.get("name") or "")
+
+    return (
+        CrmRow(
+            id=str(node.get("id") or ""),
+            label=name or str(node.get("email") or email),
+            email=str(node.get("email") or email),
+            facts=facts,
+        ),
+        [k for k in _REQUIRED_FACTS if k not in facts],
     )
 
 
@@ -200,6 +233,22 @@ def lookup(ctx: CrmCtx, email: str) -> CrmResult:
                          note=f"GraphQL errors: {data['errors']}",
                          rows=[], render_hints=list(RENDER_HINTS))
     edges = (((data.get("data") or {}).get("customers") or {}).get("edges")) or []
-    rows = [_row(e["node"], email) for e in edges]
+    rows, missing = [], set()
+    for e in edges:
+        row, row_missing = _row(e["node"], email)
+        rows.append(row)
+        missing.update(row_missing)
+    if missing:
+        # The backend answered, but not with what it promised. Degrade rather
+        # than hand the caller a row whose gaps look like values: the rows go
+        # back so the dossier still says who this is, and ok=False says the
+        # answer is not authoritative (see CrmResult.ok, cs/crm/__init__.py:47).
+        return CrmResult(
+            source="shopify", ok=False,
+            note=(f"Shopify returned no {', '.join(sorted(missing))} for this "
+                  "customer — the response shape changed or the token lacks the "
+                  "scope. Those facts are MISSING, not zero; the row shows them "
+                  "blank and nothing downstream should read them as an answer"),
+            rows=rows, render_hints=list(RENDER_HINTS))
     return CrmResult(source="shopify", ok=True, note=None,
                      rows=rows, render_hints=list(RENDER_HINTS))
