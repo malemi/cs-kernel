@@ -29,7 +29,12 @@ Asserted here:
   7. every surface that hides an escalated contact also PRINTS it, aged:
      `unanswered`, `review`, `dossier` (whose verdict flips to STOP);
   8. no automated outbound reaches them — the producer worklist skips them with
-     a counted reason, and the campaign senders + `pending()` refuse.
+     a counted reason, and the campaign senders + `pending()` refuse;
+  9. a contact who writes from TWO addresses is covered on both — `--also`
+     records the same takeover on each, and one released record does not leave
+     the other mailbox open. Maurizio Costa arrived from a second address the
+     record never named, passed every check, and was drafted to while a human
+     was already answering him.
 
 Hermetic: a sandbox HOME for the SQLite ledger, stubbed IMAP + RPC. No mailbox,
 no engine, no network.
@@ -485,6 +490,62 @@ def _campaign(db_path: str) -> None:
     print("OK: campaigns — no delivery, replies flagged, senders refuse independently")
 
 
+def _aliases(db_path: str) -> None:
+    """A person is not an address: the record holds on every mailbox named."""
+    settings = _settings(db_path)
+    cfg.load = lambda: settings
+    rpc.call_sync = lambda *a, **kw: []
+
+    def _args(**kw):
+        base = dict(email=None, why=None, who=None, undo=False, commit=False,
+                    also=None)
+        base.update(kw)
+        return types.SimpleNamespace(**base)
+
+    # A mistyped alias refuses the WHOLE call — a partial record is worse than
+    # none, because the address that did land reads as full coverage.
+    assert cli.cmd_escalated(
+        _args(email="mauricos1410@example.test", also=["studiotre.zero"],
+              commit=True)
+    ) == 2, "a non-address alias must refuse"
+    assert State(db_path).escalated_to_human() == {}, "a refusal must write nothing"
+
+    assert cli.cmd_escalated(
+        _args(email="Mauricos1410@example.test",
+              also=["Studiotre.Zero@example.test", "mauricos1410@example.test",
+                    "studiotre.zero@example.test"],
+              who="Mario", why="Maurizio Costa, one person", commit=True)
+    ) == 0
+    recs = State(db_path).escalated_to_human()
+    assert set(recs) == {"mauricos1410@example.test",
+                         "studiotre.zero@example.test"}, recs
+    for addr, rec in recs.items():
+        assert rec["owner"] == "Mario", (addr, rec)
+        assert rec["reason"] == "Maurizio Costa, one person", (addr, rec)
+
+    # The reader needs no alias knowledge: one row per address is the shape it
+    # already consults, so BOTH mailboxes leave the open queue.
+    now = datetime(2026, 9, 22, 12, 0, 0, tzinfo=timezone.utc)
+    inbound = [
+        {"email": a, "name": "Maurizio", "date": now - timedelta(days=3),
+         "subject": "s", "thread_key": f"<{a}>"}
+        for a in ("mauricos1410@example.test", "studiotre.zero@example.test")
+    ]
+    assert unanswered.compute_open(
+        inbound, [], set(), set(), now, None, recs
+    ) == [], "neither address may be offered as work while a human has them"
+
+    # Releasing names every address, and says which ones held no record.
+    assert cli.cmd_escalated(
+        _args(email="mauricos1410@example.test",
+              also=["studiotre.zero@example.test", "never@example.test"],
+              undo=True, commit=True)
+    ) == 0
+    assert State(db_path).escalated_to_human() == {}, \
+        "--undo must release every address it named"
+    print("OK: one takeover covers every address the contact writes from")
+
+
 def run() -> None:
     _pure()
     with tempfile.TemporaryDirectory() as tmp:
@@ -496,6 +557,7 @@ def run() -> None:
         _dossier(str(Path(tmp) / "dossier.db"))
         _worklist(str(Path(tmp) / "worklist.db"))
         _campaign(str(Path(tmp) / "campaign.db"))
+        _aliases(str(Path(tmp) / "aliases.db"))
 
 
 if __name__ == "__main__":

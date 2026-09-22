@@ -862,48 +862,84 @@ def cmd_escalated(args) -> int:
     if not _EMAIL_RE.match(email):
         print(f"not an email address: {args.email!r}", file=sys.stderr)
         return 2
+    # A PERSON IS NOT AN ADDRESS. The ledger is keyed by address, and a
+    # customer who writes from a second mailbox arrives as a stranger: the
+    # takeover recorded on one of Maurizio Costa's addresses left the other
+    # one unguarded, it passed every check, and a draft was composed to a man
+    # a human was already answering. `--also` records the SAME takeover on
+    # every address the operator knows the contact by — one row each, which is
+    # the shape every reader already consults, so nothing downstream has to
+    # learn about aliases to honour them.
+    aliases: list[str] = []
+    for raw in (getattr(args, "also", None) or []):
+        alias = (raw or "").strip().lower()
+        if not _EMAIL_RE.match(alias):
+            print(f"not an email address: {raw!r}", file=sys.stderr)
+            return 2
+        if alias != email and alias not in aliases:
+            aliases.append(alias)
+    addresses = [email] + aliases
     existing = records.get(email)
     who = (args.who or "").strip()
     reason = (args.why or "").strip()
 
     if args.undo:
-        if not existing:
-            print(f"no escalation record for {email} — nothing to release")
+        on_file = [a for a in addresses if a in records]
+        if not on_file:
+            print(f"no escalation record for {' / '.join(addresses)} — "
+                  f"nothing to release")
             return 1
-        held = _fmt_local(existing["escalated_at"], settings.timezone)
+        missing = [a for a in addresses if a not in records]
+        for addr in on_file:
+            held = _fmt_local(records[addr]["escalated_at"], settings.timezone)
+            if not args.commit:
+                print(f"DRY RUN — would release {addr} back to the operator "
+                      f"(taken over {held}).")
+            else:
+                st.unmark_escalated(addr)
+                print(f"released {addr} — the operator may work them again "
+                      f"(was taken over {held}).")
+        if missing:
+            # Named but not on file: said out loud, because a silent skip here
+            # reads as "released" and leaves an address still blocked.
+            print(f"  (no record for {' / '.join(missing)} — nothing released "
+                  f"there)")
         if not args.commit:
-            print(f"DRY RUN — would release {email} back to the operator "
-                  f"(taken over {held}). Nothing written; re-run with --commit.")
-            return 0
-        st.unmark_escalated(email)
-        print(f"released {email} — the operator may work them again "
-              f"(was taken over {held}).")
+            print("Nothing written; re-run with --commit.")
         return 0
 
     if not args.commit:
         # The preview names the address back, which is the check that matters:
         # this verb is typed about "these two", and resolving the wrong "these"
         # is how a customer goes quiet.
-        print(f"DRY RUN — would record {email} as taken over by "
+        print(f"DRY RUN — would record {' / '.join(addresses)} as taken over by "
               f"{who or 'you'}{' — ' + reason if reason else ''}.")
-        if existing:
-            print(f"  (replaces the record of "
-                  f"{_fmt_local(existing['escalated_at'], settings.timezone)})")
+        for addr in addresses:
+            prior = records.get(addr)
+            if prior:
+                print(f"  ({addr}: replaces the record of "
+                      f"{_fmt_local(prior['escalated_at'], settings.timezone)})")
         print("  they would stop being offered as work to answer, and would be "
               "listed as yours, with an age, in `unanswered` / `review` / "
               "`dossier`. Nothing written; re-run with --commit.")
         if not reason:
             print("  no --why given: the record would carry only the date.")
+        if not aliases:
+            print("  one address only: if this contact writes from another "
+                  "one, name it with --also or that mailbox stays unguarded.")
         return 0
 
-    st.mark_escalated(email, owner=who, reason=reason)
-    print(f"recorded: {email} is with {who or 'you'}"
+    for addr in addresses:
+        st.mark_escalated(addr, owner=who, reason=reason)
+    print(f"recorded: {' / '.join(addresses)} is with {who or 'you'}"
           f"{' — ' + reason if reason else ''}")
     print("  the operator will not draft or write to them, and no campaign "
           "will deliver to them, until you release it:")
     print(f"  release with `{settings.prog_name or 'cs'} escalated {email} "
-          f"--undo --commit`, or close it with `{settings.prog_name or 'cs'} "
-          f"handled {email} --why \"…\"` once it is resolved.")
+          f"{' '.join('--also ' + a for a in aliases)}"
+          f"{' ' if aliases else ''}--undo --commit`, or close it with "
+          f"`{settings.prog_name or 'cs'} handled {email} --why \"…\"` once it "
+          f"is resolved.")
     # Deliberately NO engine write. `handled` closes the contact's tasks
     # because the work is over; here it is not, and closing the task would
     # delete the only durable trace that somebody still owes this customer an
@@ -1130,6 +1166,41 @@ def cmd_chat(args) -> int:
         print("\n-- tool approvals --")
         for a in out["approvals"]:
             print(f"  {a['tool']}: {a['mode']}")
+    # A send is only half done while its mirror still sits in the review queue.
+    # Retiring it HERE, on the turn that sent it, is what keeps the queue a
+    # list of decisions rather than a pile of answered mail.
+    sent_ids = {
+        str((a.get("input") or {}).get("draft_id") or "")
+        for a in out["approvals"] or []
+        if a.get("tool") == "send_draft"
+    } - {""}
+    if sent_ids:
+        if getattr(args, "account_switched", False):
+            # The mirrors live in the OPERATOR's Gmail; with --account in play
+            # this turn sent from somebody else's profile and the drafts folder
+            # here is not the one that holds them.
+            print("\n[gmail-drafts] --account: mirrors are not retired from "
+                  "another profile's send; run `cs draft-delete --sent` as the "
+                  "operator.", file=sys.stderr)
+        else:
+            try:
+                res = _retire_sent_mirrors(settings, commit=True,
+                                           timeout=args.timeout,
+                                           only_ids=sent_ids)
+            except Exception as e:  # noqa: BLE001 - the mail is already sent
+                # Never turn a successful send into a failure: the customer has
+                # the reply. Say what was left behind so it can be retired.
+                print(f"\n[gmail-drafts] could not retire the mirror(s) of the "
+                      f"sent draft: {type(e).__name__}: {e}. Retire them with "
+                      f"`cs draft-delete --sent`.", file=sys.stderr)
+            else:
+                for d in res["retired"]:
+                    print(f"[gmail-drafts] retired the mirror of the sent "
+                          f"draft: {d['subject']} -> {d['to']} (uid {d['uid']})")
+                for d in res["skipped"]:
+                    print(f"[gmail-drafts] mirror left in place ({d['reason']}): "
+                          f"{d['subject']} -> {d['to']} (uid {d['gmail_uid']})",
+                          file=sys.stderr)
     return 0
 
 
@@ -1376,6 +1447,41 @@ def cmd_draft_reply(args) -> int:
     return 0
 
 
+def _retire_sent_mirrors(settings, *, commit: bool, timeout: int,
+                         only_ids: set[str] | None = None) -> dict:
+    """Trash the Gmail mirrors of engine drafts that have already been sent.
+
+    Sending happens on the ENGINE's copy of a draft; the Gmail mirror is a
+    review surface the send never touches, so each contextual reply leaves a
+    draft of a mail that is already out. The queue a human reads to decide
+    what still needs answering fills up with answered mail.
+
+    `only_ids` narrows it to the drafts one turn just sent — the same work,
+    done at the moment it becomes true, instead of waiting for a sweep.
+    """
+    from . import draft_state, gmail_drafts
+
+    sent = rpc.call_sync(settings, "drafts.list", {"status": "sent"},
+                         timeout=timeout) or []
+    if only_ids:
+        sent = [d for d in sent if str(d.get("id") or "") in only_ids]
+    if not sent:
+        return {"ok": True, "orphans": [], "retired": [], "skipped": []}
+    mirrors = gmail_drafts.list_drafts(settings)
+    rows = draft_state.sent_orphans(sent, mirrors)
+    retire = [r for r in rows if r["retire"]]
+    skipped = [r for r in rows if not r["retire"]]
+    done = []
+    for row in retire:
+        res = gmail_drafts.delete_draft(settings, uid=row["gmail_uid"],
+                                        commit=commit)
+        done.append({"uid": row["gmail_uid"], "to": row["to"],
+                     "subject": row["subject"], "engine_id": row["engine_id"],
+                     "ok": bool(res.get("ok")), "result": res})
+    return {"ok": all(d["ok"] for d in done) if done else True,
+            "orphans": rows, "retired": done, "skipped": skipped}
+
+
 def cmd_draft_delete(args) -> int:
     # Take ONE bad draft out of the review queue. Destructive, so it follows the
     # campaign verbs' contract exactly: dry-run unless --commit, and the result
@@ -1384,6 +1490,18 @@ def cmd_draft_delete(args) -> int:
     # as "deleted".
     settings = config.load()
     from . import gmail_drafts
+
+    if getattr(args, "sent", False):
+        # The backlog form: every mirror whose engine original is already sent.
+        # Same contract — dry-run unless --commit, result printed verbatim.
+        if args.uid or args.message_id:
+            print("--sent retires every already-sent mirror; it does not take "
+                  "a uid or a message-id", file=sys.stderr)
+            return 2
+        out = _retire_sent_mirrors(settings, commit=args.commit,
+                                   timeout=getattr(args, "timeout", 120) or 120)
+        _print_json(out)
+        return 0 if out.get("ok") else 1
 
     out = gmail_drafts.delete_draft(
         settings, uid=args.uid, message_id=args.message_id, commit=args.commit
@@ -1911,6 +2029,14 @@ def main(argv=None) -> int:
         "as 'you')",
     )
     pes.add_argument(
+        "--also",
+        action="append",
+        metavar="EMAIL",
+        help="another address the SAME contact writes from — repeatable. The "
+        "record is written on each one, so the takeover holds whichever "
+        "mailbox they use; --undo releases all of them.",
+    )
+    pes.add_argument(
         "--undo",
         action="store_true",
         help="release the contact — they become ordinary open work again",
@@ -2007,6 +2133,16 @@ def main(argv=None) -> int:
         help="Message-ID: a cross-check on the uid when both are given, and the "
         "selector of last resort when it is given alone (drafts written by this "
         "tool carry no Message-ID)",
+    )
+    pdd.add_argument(
+        "--sent",
+        action="store_true",
+        help="retire EVERY mirror whose engine original has already been sent "
+        "— the review queue's backlog of answered mail. Takes no uid.",
+    )
+    pdd.add_argument(
+        "--timeout", type=int, default=120,
+        help="seconds for the engine call --sent makes (default: 120)",
     )
     pdd.add_argument("--commit", action="store_true", help="apply (default: dry-run)")
     # Writes the operator's own Gmail over IMAP — --account cannot redirect it.

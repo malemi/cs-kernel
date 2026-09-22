@@ -183,6 +183,50 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.46.1 — 2026-09-22 (PATCH)
+
+Three defects of the support@ operator, all of them about a conversation the
+operator could not see it had already answered.
+
+**An HTML-escaped message id now resolves to the same conversation as a clean
+one.** `cs/thread_key.py` unescapes `&lt;` / `&gt;` (and the entities one
+`html.escape` pass produces alongside them) before it reads a header, and
+`cs/draft_state.py` passes an engine-stored `thread_id` through the same
+normalisation. Replies that went out with escaped `In-Reply-To` / `References`
+never settled the thread they answered: the contact was reported unanswered on
+every tick, and in send mode an unattended tick answers them again. The repair
+is at read time, so rows already in Gmail and in the engine archive rejoin
+their conversation with no stored mail rewritten. The same fault had a second
+face — a contact dated by an OLDER conversation the escaped reply had left
+open, reading as an eleven-day stale `last_inbound_date` — and it closes with
+it. Measured on the live support@ queue: seven open contacts fell to five and
+four conversations rejoined.
+
+**`cs escalated --also` records one takeover across every address a contact
+writes from.** The ledger is keyed by address, so a customer who writes from a
+second mailbox arrived as a stranger: a takeover recorded on one of Maurizio
+Costa's addresses left the other unguarded, it passed every check, and a draft
+was composed to a man a human was already answering. `--also` is repeatable,
+writes one row per address — the shape every reader already consults, so no
+reader learns about aliases — and `--undo` releases all of them, naming any
+address that held no record.
+
+**A sent draft's Gmail mirror is retired instead of accumulating.** Sending
+happens on the engine's copy; the mirror is a review surface the send never
+touched, so every contextual reply left a draft of answered mail behind — 78
+on the live queue, the oldest from 19 June, 42 of them mirrors of mail already
+sent. `cs chat` now retires the mirrors of what its own turn sent, and
+`cs draft-delete --sent` retires the backlog (dry-run unless `--commit`). A
+draft composed AFTER the send is a new draft and is left alone with its reason
+printed; without both timestamps nothing is retired at all.
+
+**Re-collaudo tier: +live read-only on both maintained clones.** The release
+changes executable read paths (the sweep's conversation key, draft
+reconciliation) and adds one destructive verb that is dry-run by default. It
+changes no permission file, cron wrapper or mail send path. Verify
+`cs unanswered`, `cs review` and `cs draft-delete --sent` (without `--commit`)
+before retiring anything.
+
 ## v0.46.0 — 2026-09-20 (MINOR)
 
 `cs-triage-mail` can now apply an optional clone-owned
