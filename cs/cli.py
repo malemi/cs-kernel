@@ -2204,10 +2204,7 @@ def main(argv=None) -> int:
     ph.add_argument(
         "--allow",
         help="comma-separated tool names to approve (e.g. send_draft) — "
-        "use only after operator review. It cannot grant "
-        "confirm_memory_write: that is the engine asking a human to accept a "
-        "memory change it decided on, and this clone has no human, so it is "
-        "always denied and nothing is written",
+        "use only after operator review",
     )
     ph.add_argument("--timeout", type=float, default=600)
     ph.set_defaults(func=cmd_chat)
