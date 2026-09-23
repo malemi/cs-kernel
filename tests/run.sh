@@ -1279,8 +1279,12 @@ for test in test_connection_config.py test_vonage.py test_sip_provision.py test_
   if "$VENV/bin/python" "$ROOT/tests/$test"; then echo "OK: $test"; else echo "FAIL: $test"; FAIL=1; fi
 done
 
-step "55. read-only ask policy is negotiated and sent to the engine"
-if "$VENV/bin/python" "$ROOT/tests/test_chat_memory_policy.py"; then echo "OK"; else echo "FAIL: cs ask can reach an engine without the read-only policy"; FAIL=1; fi
+step "55. read-only asks, and no standing grant for a changed memory write"
+# Two guarantees. `cs ask` negotiates a server-enforced read-only policy. And
+# `confirm_memory_write` — the engine asking a human to accept a memory change
+# that is NOT the one the tool call asked for — is denied whatever is in
+# `--allow`, because a headless clone has no human to do the accepting.
+if "$VENV/bin/python" "$ROOT/tests/test_chat_memory_policy.py"; then echo "OK"; else echo "FAIL: cs ask can reach an engine without the read-only policy, or --allow now accepts a changed memory write"; FAIL=1; fi
 
 step "56. a CRM fact the backend did not send is never reported as a value"
 # The adapter read an absent order count as "0": a customer with ten orders

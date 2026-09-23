@@ -36,6 +36,13 @@ NotifyHandler = Callable[[str, Any], Optional[Awaitable[None]]]
 WS_PING_INTERVAL_SECONDS = 20
 WS_PING_TIMEOUT_SECONDS = 40
 
+#: The engine's approval name for a memory change that is not the one the tool
+#: call asked for. Spelled here rather than imported: the kernel is an RPC client
+#: and does not depend on the engine package. It is part of the wire contract —
+#: ``mrcall-desktop/engine/zylch/services/mnemonic_approval.py`` — so a rename
+#: there is a protocol change, and this line is where a clone finds out.
+CONFIRM_MEMORY_WRITE = "confirm_memory_write"
+
 
 class EngineError(RuntimeError):
     """JSON-RPC error response from the engine."""
@@ -277,6 +284,11 @@ async def chat(
     it. Non-destructive tools (search, compose, create_draft) auto-execute
     engine-side and never reach this gate.
 
+    ``confirm_memory_write`` is the one notification ``allow_tools`` cannot
+    grant. It is not a tool call: it is the engine asking a human to accept a
+    memory change that differs from what was asked for, and an acceptance has to
+    name that change. A headless clone denies it and the engine writes nothing.
+
     Each call gets a UNIQUE ``conversation_id`` by default. The engine's
     busy-guard is per conversation_id, defaulting to "general"; if every cs
     one-shot used "general" they would share one lane, and an interrupted
@@ -325,6 +337,21 @@ async def chat(
         tool = p.get("tool_name") or p.get("name") or ""
         tool_use_id = p.get("tool_use_id")
         tool_input = p.get("input") or {}
+
+        if tool == CONFIRM_MEMORY_WRITE:
+            # Not a tool the clone may be granted: it is the engine showing the
+            # change its mnemonic role actually decided on, because that change
+            # is not the one the tool call asked for. Accepting it means echoing
+            # the nonce and digest on the card — which is a statement that a
+            # human read them, and there is no human in a headless clone. So the
+            # operator denies, and the engine reports a review that writes
+            # nothing. Answering "once" here would put "approved" in the log
+            # beside a memory that never changed.
+            approvals.append({"tool": tool, "mode": "deny", "input": tool_input})
+            echo(f"[approval] {tool} -> deny (a changed memory write needs a human)")
+            await client.call("chat.approve", {"tool_use_id": tool_use_id, "mode": "deny"})
+            return
+
         input_allowed = (
             approval_predicate(tool, tool_input)
             if approval_predicate is not None
