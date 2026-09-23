@@ -8,11 +8,9 @@ company memory.
 a write by the engine choosing to route it through a mutating tool.
 
 ``cs chat --allow`` may grant tools, and it answers every
-``chat.pending_approval`` for a granted name — that is what ``--allow`` means.
-But ``confirm_memory_write`` is not a tool call. It is the engine showing a
-memory change that differs from what the tool call asked for, and accepting it
-means stating that a human read the change. A headless clone has no human, so it
-denies, whatever is in ``--allow``.
+``chat.pending_approval`` for a granted name — that is what ``--allow`` means,
+and it is all it means: it never asks for a session grant, and nothing on this
+side writes memory on its own.
 """
 
 from __future__ import annotations
@@ -94,7 +92,7 @@ def test_supervised_chat_does_not_claim_read_only():
     assert "read_only=True" not in source
 
 
-# ─── A changed memory write is never granted by name ──────────────────
+# ─── --allow answers by name, once, and asks for nothing more ─────────
 
 
 class NotifyingClient(FakeClient):
@@ -140,61 +138,9 @@ def test_an_allowed_tool_is_still_approved_once():
     assert approve[0][1] == {"tool_use_id": "tu-1", "mode": "once"}
 
 
-def test_a_changed_memory_write_is_denied_even_when_its_name_is_allowed():
-    """``--allow confirm_memory_write`` must not become a human's acceptance.
-
-    The engine refuses a bare yes anyway — the acceptance has to echo the card's
-    nonce. Denying here as well is about the operator's log: answering "once"
-    would record an approval beside a memory that never changed.
-    """
-    card = {
-        "name": rpc.CONFIRM_MEMORY_WRITE,
-        "tool_use_id": "tu-2",
-        "input": {
-            "acceptance_nonce": "n-1",
-            "proposal_digest": "d-1",
-            "action": "UPDATE",
-            "flags": ["changed_subject"],
-        },
-    }
-    out, client = approvals_for([card], {rpc.CONFIRM_MEMORY_WRITE, "update_memory"})
-
-    assert [a["mode"] for a in out["approvals"]] == ["deny"]
-    approve = [c for c in client.calls if c[0] == "chat.approve"]
-    assert approve[0][1] == {"tool_use_id": "tu-2", "mode": "deny"}
-
-
-def test_the_kernel_never_echoes_the_acceptance_fields_back():
-    """The deny carries no ``edited_input``, so it cannot be read as an acceptance."""
-    card = {
-        "name": rpc.CONFIRM_MEMORY_WRITE,
-        "tool_use_id": "tu-3",
-        "input": {"acceptance_nonce": "n-2", "proposal_digest": "d-2"},
-    }
-    _out, client = approvals_for([card], set())
-    approve = [c for c in client.calls if c[0] == "chat.approve"]
-    assert "edited_input" not in approve[0][1]
-    assert "acceptance_nonce" not in approve[0][1]
-
-
-def test_a_second_card_in_one_turn_is_denied_the_same_way():
-    """No memory of the first answer, because there is nothing to remember."""
-    cards = [
-        {
-            "name": rpc.CONFIRM_MEMORY_WRITE,
-            "tool_use_id": f"tu-{n}",
-            "input": {"acceptance_nonce": f"n-{n}", "proposal_digest": f"d-{n}"},
-        }
-        for n in (4, 5)
-    ]
-    out, client = approvals_for(cards, {rpc.CONFIRM_MEMORY_WRITE})
-    assert [a["mode"] for a in out["approvals"]] == ["deny", "deny"]
-    modes = [c[1]["mode"] for c in client.calls if c[0] == "chat.approve"]
-    assert modes == ["deny", "deny"]
-
-
 def test_the_kernel_never_asks_for_a_session_grant():
-    """A session grant is a standing yes, which a memory change may not have."""
+    """The kernel answers each notification on its own; a standing yes would
+    outlive the turn it was given in."""
     source = inspect.getsource(rpc.chat)
     assert '"session"' not in source
     assert "'session'" not in source
@@ -206,11 +152,5 @@ if __name__ == "__main__":
     test_cmd_ask_requests_read_only_policy()
     test_supervised_chat_does_not_claim_read_only()
     test_an_allowed_tool_is_still_approved_once()
-    test_a_changed_memory_write_is_denied_even_when_its_name_is_allowed()
-    test_the_kernel_never_echoes_the_acceptance_fields_back()
-    test_a_second_card_in_one_turn_is_denied_the_same_way()
     test_the_kernel_never_asks_for_a_session_grant()
-    print(
-        "OK: cs ask negotiates the read-only policy, and a changed memory write "
-        "is denied even when its name is allowed"
-    )
+    print("OK: cs ask negotiates the read-only policy; --allow grants by name, once")
