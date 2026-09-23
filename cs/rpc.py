@@ -37,7 +37,6 @@ WS_PING_INTERVAL_SECONDS = 20
 WS_PING_TIMEOUT_SECONDS = 40
 
 
-
 class EngineError(RuntimeError):
     """JSON-RPC error response from the engine."""
 
@@ -277,7 +276,6 @@ async def chat(
     ``allow_tools``, otherwise we deny and the engine LLM continues without
     it. Non-destructive tools (search, compose, create_draft) auto-execute
     engine-side and never reach this gate.
-
 
     Each call gets a UNIQUE ``conversation_id`` by default. The engine's
     busy-guard is per conversation_id, defaulting to "general"; if every cs
