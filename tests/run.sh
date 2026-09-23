@@ -452,7 +452,7 @@ VERBS = [
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
     "rpc update.run", "rpc memory.reconsolidate_now", "rpc memory.join",
-    "rpc memory.reset", "rpc preparation.resume",
+    "rpc memory.reset", "rpc memory.restore_version", "rpc preparation.resume",
 ]
 
 # The expansion a clone-local executable gets, rebuilt here INDEPENDENTLY of

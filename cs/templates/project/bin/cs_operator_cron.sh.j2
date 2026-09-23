@@ -170,6 +170,7 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
   'memory.reconsolidate_now',
   'memory.join',
   'memory.reset',
+  'memory.restore_version',
   'preparation.resume',
 ] %}
     "Bash(.venv/bin/python -m cs rpc {{ method }}:*)" \
