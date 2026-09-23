@@ -1288,6 +1288,25 @@ step "56. a CRM fact the backend did not send is never reported as a value"
 # Both halves are gated — absent degrades the result, and a genuine zero stays
 # an authoritative zero — through the dossier's own rendering path.
 if "$VENV/bin/python" "$ROOT/tests/test_crm_shopify_absent_facts.py"; then echo "OK"; else echo "FAIL: a missing Shopify fact is being answered instead of reported missing"; FAIL=1; fi
+step "57. an HTML-escaped message id is the same conversation"
+# Four replies went out on 2026-09-18 with `In-Reply-To` / `References` whose
+# angle brackets were escaped (`&lt;id@host&gt;`). Read literally, our own reply
+# lands in a conversation of its own: the customer's thread is never settled,
+# `cs unanswered` reports them open for ever, and an operator in send mode
+# answers them twice. The key normalises, so those rows rejoin their thread
+# with no stored mail rewritten — and a clean id, a literal `&` included, is
+# left exactly as it is.
+if "$VENV/bin/python" "$ROOT/tests/test_thread_key_escaped.py"; then echo "OK"; else echo "FAIL: escaped message ids no longer rejoin their conversation"; FAIL=1; fi
+
+step "58. sending a draft retires its Gmail mirror"
+# The mirror is a review surface; the send happens on the engine's copy and
+# never touched it, so every contextual reply left a draft of answered mail
+# behind — 78 of them on the live queue, oldest from 19 June. Guards: the
+# mirror of a sent draft is paired on recipient + thread (or subject, for a
+# compose); a draft composed AFTER the send is a new draft and survives, with
+# its reason printed; another recipient is never matched; and without both
+# timestamps nothing is retired at all.
+if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else echo "FAIL: sent drafts leave their Gmail mirror behind"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

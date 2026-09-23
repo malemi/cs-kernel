@@ -19,12 +19,55 @@ message's own `Message-ID`. If the engine ever changes it, this changes with it
 
 Costs no extra IMAP work: `gmail_archive._fetch_headers` already asks for
 MESSAGE-ID, REFERENCES and IN-REPLY-TO on both the inbound and the Sent side.
+
+IDS ARRIVE HTML-ESCAPED AND THE KEY UNESCAPES THEM. A message id written
+`&lt;id@host&gt;` is the same conversation as `<id@host>`: the escaping is a
+corruption of the transport, never a distinction a mailer intends. Such ids
+exist on the wire, in Gmail Sent and in the engine archive, so a reader that
+takes them literally files our own reply under a conversation of its own and
+the customer's thread is never settled — it is reported unanswered for ever,
+and an operator that answers by itself answers twice. Normalising HERE, at the
+single point every caller already funnels through, rejoins those rows without
+rewriting one byte of stored mail.
 """
 from __future__ import annotations
 
 import re
 
 _WS = re.compile(r"\s+")
+
+# Exactly what one pass of `html.escape(id, quote=True)` produces, inverted in
+# one pass. One pass, not a loop to a fixed point: a single escaping is what
+# the defect produces, and repeated unescaping would eat a literal `&amp;` that
+# a mailer legitimately put in an id.
+_ENTITY = re.compile(r"&(?:lt|gt|amp|quot|#39|#x27);", re.IGNORECASE)
+_ENTITY_TEXT = {
+    "&lt;": "<", "&gt;": ">", "&amp;": "&",
+    "&quot;": '"', "&#39;": "'", "&#x27;": "'",
+}
+
+
+def unescape_ids(raw: str) -> str:
+    """HTML-escaped angle brackets turned back into brackets.
+
+    Only touches a value that carries an escaped bracket: `&lt;` or `&gt;` is
+    the signature of the corruption, and without one there is nothing here to
+    repair. That guard is what keeps a legitimate `&` in an id — rare, legal,
+    and unrecoverable once mangled — out of the substitution entirely.
+    """
+    if "&lt;" not in raw.lower() and "&gt;" not in raw.lower():
+        return raw
+    return _ENTITY.sub(lambda m: _ENTITY_TEXT[m.group(0).lower()], raw)
+
+
+def normalize_key(key: str | None) -> str:
+    """Normalise a key a caller already holds — an engine-stored `thread_id`,
+    say — to what `thread_key` would have produced for the same message.
+
+    A caller that trusts a stored key and skips `thread_key` must still pass it
+    through here, or the two disagree on exactly the rows this module exists to
+    rejoin."""
+    return _flat(key)
 
 
 def _flat(raw: str | None) -> str:
@@ -36,7 +79,8 @@ def _flat(raw: str | None) -> str:
     """
     if not raw:
         return ""
-    return _WS.sub(" ", str(raw).replace("\r", " ").replace("\n", " ")).strip()
+    flat = _WS.sub(" ", str(raw).replace("\r", " ").replace("\n", " ")).strip()
+    return unescape_ids(flat)
 
 
 def thread_key(

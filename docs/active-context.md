@@ -19,11 +19,11 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.46.0`. Current HEAD status: untagged.**
-  Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Both maintained clones install the public tag at `82e611f`; independent
-  lock-only environments report `0.46.0`, and their rendered Codex skill paths
-  resolve the canonical Claude skill bytes.
+- **Latest release tag: `v0.46.1`. Current HEAD status: untagged.** These
+  sentences are parsed by `tests/test_release_consistency.py`; preserve their
+  wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+  `mrcall-cs` installs the public `v0.46.1` tag at `2f4b07f` and reports
+  `0.46.1`; `124-cs` stays on `v0.46.0` at `82e611f`.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).

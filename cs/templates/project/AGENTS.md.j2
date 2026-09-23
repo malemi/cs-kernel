@@ -2,7 +2,7 @@
 
 **Stack**: Python 3.11 (CLI), pydantic-settings, SQLite
 **Entry point**: `.venv/bin/python -m cs <verb>` (module `cs`)
-**Do not break**: The headless/cron operator NEVER sends (draft-only, wrapper-enforced); NEVER write to anyone without their dossier (thread + contacted + tasks + CRM) first
+**Do not break**: The cron wrapper — never `.claude/settings.json` — decides whether a headless tick may send, and the kernel's own wrapper is draft-only; NEVER write to anyone without their dossier (thread + contacted + tasks + CRM) first
 
 <!-- orientation ends -->
 
@@ -147,11 +147,18 @@ boundary.
 
 - **NEVER write to anyone without their dossier** (thread + contacted + tasks + CRM).
 - **NEVER cold-mail an address with an existing thread** — reply in the thread.
-- **The headless/cron operator NEVER sends.** Sending needs a deliberate human
-  `CS_TRIAGE_MODE=send` + a relaxed permission set; the cron re-denies every
-  send surface in its wrapper (`bin/cs_operator_cron.sh --disallowed-tools`),
-  independent of `.claude/settings.json`. Two gated send paths: contextual →
-  the engine's approval-gated `send_draft`; fixed-template bulk → cs-owned SMTP
+- **The wrapper that launches a tick decides whether it may send, and the
+  kernel's own wrapper never does.** `bin/cs_operator_cron.sh` re-denies every
+  send surface on its command line, independent of `.claude/settings.json`, and
+  that is the default for every clone. A clone whose owner has decided its
+  headless operator should answer customers ships its own launcher under `ext/`
+  that grants those surfaces — and THAT launcher, not this file and not
+  `.claude/settings.json`, is the authority for the session it starts. To know
+  whether a given tick may send, read the wrapper the cron line invokes; a tick
+  that re-derived its authority from a permission file instead escalated a day
+  of answerable mail it was entitled to answer. Sending also needs a deliberate
+  human `CS_TRIAGE_MODE=send`. Two gated send paths: contextual → the engine's
+  approval-gated `send_draft`; fixed-template bulk → cs-owned SMTP
   (`cs/send_mail.py`). For an engine-owned contextual draft, the interactive
   path is **only** `cs draft-send <full-engine-draft-id>`. Never use Gmail,
   Superhuman or another ambient app connector to send it: those paths bypass

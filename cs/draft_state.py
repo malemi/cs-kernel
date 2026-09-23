@@ -66,7 +66,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parseaddr
 
 from .gmail_archive import _parse_date as parse_mail_date
-from .thread_key import thread_key
+from .thread_key import normalize_key, thread_key
 
 #: Strongest first. `ready` is the absence of every signal.
 VERDICT_RANK = {"duplicate": 0, "overtaken": 1, "superseded": 2, "settled": 3,
@@ -157,7 +157,10 @@ def _gmail_row(row: dict) -> dict:
 def _engine_row(row: dict) -> dict:
     """One `drafts.list` row → the shape this module reconciles."""
     to = _first(row.get("to_addresses"))
-    key = row.get("thread_id") or thread_key(
+    # `normalize_key`, not the raw field: the engine stores the id the send
+    # path gave it, and a mirror filed under an HTML-escaped id must still
+    # reconcile against the Gmail copy of the same conversation.
+    key = normalize_key(row.get("thread_id")) or thread_key(
         None, _refs(row.get("references")), row.get("in_reply_to")
     )
     return {
@@ -217,6 +220,83 @@ def _pair(rows: list[dict]) -> list[dict]:
                 base["body"] = g["body"] or e["body"]
             base.pop("source", None)
             out.append(base)
+    return out
+
+
+def _sent_at(row: dict) -> datetime | None:
+    """When the engine says it SENT this draft (UTC, tz-aware)."""
+    for key in ("sent_at", "updated_at", "created_at"):
+        raw = row.get(key)
+        if not raw:
+            continue
+        try:
+            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            continue
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return None
+
+
+def sent_orphans(sent_rows: list[dict], gmail_rows: list[dict]) -> list[dict]:
+    """Gmail mirrors whose engine original has already been SENT.
+
+    The mirror exists so a human can read a composed reply where they read
+    everything else; the SEND happens on the engine's own copy, and nothing
+    retracts the mirror afterwards. So every contextual reply leaves one
+    behind, the review queue fills with drafts of mail already answered, and
+    the queue that is supposed to say "these need a decision" stops meaning
+    anything. Retiring them is the other half of sending.
+
+    A mirror is an orphan when a sent draft agrees with it on the recipient
+    AND on the conversation — the thread key when either side is a reply, the
+    subject when neither is — and the mirror was composed no later than the
+    send. That last clause is the whole safety margin: a NEW draft written
+    after the send, on the same thread and to the same person, is the operator
+    composing again and is never touched. When either time is unknown the row
+    is left alone and reported, because "probably already sent" is not a
+    reason to delete somebody's draft.
+
+    Pure: plain dicts in, plain dicts out, no IMAP and no engine.
+    """
+    sent = []
+    for row in sent_rows:
+        e = _engine_row(row)
+        e["sent_at"] = _sent_at(row)
+        sent.append(e)
+
+    out: list[dict] = []
+    for raw in gmail_rows:
+        g = _gmail_row(raw)
+        if not g["gmail_uid"]:
+            continue
+        for e in sent:
+            if g["to"] != e["to"] or not g["to"]:
+                continue
+            if g["thread_key"] and e["thread_key"]:
+                if g["thread_key"] != e["thread_key"]:
+                    continue
+            elif g["subject"].strip().lower() != e["subject"].strip().lower():
+                continue
+            when, sent_when = g["composed_at"], e["sent_at"]
+            out.append({
+                "gmail_uid": g["gmail_uid"],
+                "to": g["to_display"] or g["to"],
+                "subject": g["subject"],
+                "thread_key": g["thread_key"],
+                "composed_at": when,
+                "engine_id": e["engine_id"],
+                "sent_at": sent_when,
+                # Reported, never silently dropped: an operator who cannot see
+                # why a draft was skipped cannot retire it by hand either.
+                "retire": bool(when and sent_when and when <= sent_when),
+                "reason": (
+                    "composed before the send" if (when and sent_when and when <= sent_when)
+                    else "composed AFTER the send — a newer draft, left alone"
+                    if (when and sent_when) else
+                    "no comparable timestamps — left alone"
+                ),
+            })
+            break
     return out
 
 
