@@ -22,8 +22,8 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - **Latest release tag: `v0.47.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  `mrcall-cs` installs the public `v0.46.1` tag at `2f4b07f` and reports
-  `0.46.1`; `124-cs` stays on `v0.46.0` at `82e611f`.
+  Both maintained clones install the public `v0.47.0` tag at `fef680e` and
+  report `0.47.0`. Their pinned lockfiles rebuild the same package.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
@@ -58,7 +58,8 @@ operator activity, and CS_PAUSE does not stop engine processing.
   pre-tool quota/payment refusal. The optional OpenRouter model and per-tick
   budget are manifest knobs. Fixed owner mail reports route/model changes and
   stops. The generated wrapper reuses its draft-only deny list. Source tests
-  pass locally; clone installation remains in progress.
+  pass locally. Café 124's scheduled draft-only wrapper uses the fallback;
+  MrCall's live send-mode cron uses its separate clone-owned launcher.
 
 ## Unresolved
 

@@ -4,15 +4,28 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-20): **`v0.46.0` on both clones**.
-Both install the public tag at `82e611f`; independent lock-only environments
-report 0.46.0. Upgrade commits are `mrcall-cs` `05c674e` and `124-cs`
-`17c8463`. The full kernel suite passes before release, on the tag and after
-integration with current main. Static clone verification confirms the rendered
+**Current operational pin** (2026-09-28): **`v0.47.0` on both maintained
+clones**. Both install the public tag at `fef680e` and report `0.47.0`;
+independent lock-only environments rebuild it. Upgrade commits are `124-cs`
+`4489bfa` and `mrcall-cs` `9183038`. The kernel suite passed before release
+and at the tag. The FULL clone harness ran on both; its frozen historical
+baseline produces reviewed red differences from prior releases, while the
+headless pause smoke passed on both. The draft-only Café 124 wrapper now uses
+the deterministic fallback with an explicit model and $2 per-tick Claude
+budget. A supervised tick completed through OpenRouter and its owner notice
+arrived in Inbox. MrCall's live send-mode cron remains its clone-owned wrapper;
+the kernel's updated draft-only wrapper is installed but is not its scheduled
+entry point. Unrelated local clone work was left out of the upgrade commits.
+
+**Historical operational pin** (2026-09-20): **`v0.46.0` on both clones**.
+Both installed the public tag at `82e611f`; independent lock-only environments
+reported 0.46.0. Upgrade commits were `mrcall-cs` `05c674e` and `124-cs`
+`17c8463`. The full kernel suite passed before release, on the tag and after
+integration with current main. Static clone verification confirmed the rendered
 triage hook and byte-identical Codex `.agents/skills` resolution. MrCall's
-company playbook is clone-owned; 124's unrelated pricing-skill work remains
-uncommitted and intact. Permission files, cron policy and send boundaries are
-unchanged. No call, draft, customer message or paid agent tick was part of the
+company playbook was clone-owned; 124's unrelated pricing-skill work remained
+uncommitted and intact. Permission files, cron policy and send boundaries were
+unchanged. No call, draft, customer message or paid agent tick was part of that
 release.
 
 **Historical operational pin** (2026-09-14): **`v0.45.0` on both clones**.
