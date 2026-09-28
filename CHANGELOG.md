@@ -204,6 +204,36 @@ vendor can issue — a new customer cannot complete onboarding on those tags
 and must not be pointed at them; `v0.6.0` is the first tag a new customer
 can install end to end.
 
+## v0.47.0 — 2026-09-28 (MINOR)
+
+Scheduled Claude Code ticks recover from a proven pre-tool quota or payment
+refusal by trying one explicitly configured OpenRouter Claude model. The
+supervisor reuses the wrapper's draft-only deny list, refuses to replay any
+attempt that may have used a tool, and checks the pause file again before the
+alternate launch. Routing and fixed `URGENT` owner mail use no LLM. The notice
+identifies the actual key by a short fingerprint and reports its OpenRouter
+workspace and creator IDs from the ordinary current-key endpoint; no
+management key is needed. A failed route is reported and retried on the next
+scheduled tick. The per-tick Claude budget is soft; the provider key's cap
+remains the spending boundary.
+
+**Migration:** set `[knobs].cron_fallback_model` to an explicit Claude route
+and `[knobs].cron_fallback_budget_usd` to a positive amount in each clone that
+should recover. Defaults leave paid fallback disabled. Re-render the clone's
+cron wrapper through `cs update`, verify its local deny entries and install the
+tag. The clone-owned MrCall send-mode cron is a separate wrapper and is not
+rewired by this release.
+
+The tag also carries the already merged changes since `v0.46.1`: negotiated
+read-only `cs ask` policy, exact-ID interactive `cs draft-send`, Shopify token
+and absent-fact handling, and headless denies for mutating memory, update and
+preparation RPCs.
+
+**Re-collaudo tier: FULL on both maintained clones.** The cron permission
+surface, send-related behavior and authentication boundary change. Run the
+full collaudo suite on both clones before publishing the tag; compare their
+local wrapper and settings changes and verify one owner identity call each.
+
 ## v0.46.1 — 2026-09-22 (PATCH)
 
 Three defects of the support@ operator, all of them about a conversation the

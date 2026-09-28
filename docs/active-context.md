@@ -19,7 +19,7 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.46.1`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.47.0`. Current HEAD status: tagged as `v0.47.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
   `mrcall-cs` installs the public `v0.46.1` tag at `2f4b07f` and reports
@@ -46,21 +46,19 @@ operator activity, and CS_PAUSE does not stop engine processing.
   ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
 - Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
   classifier. `cs memory` reports the ten-store memory map.
-- Untagged source makes `cs ask` negotiate engine read-only chat policy version
+- `cs ask` negotiates engine read-only chat policy version
   1 before sending a question. The scheduled wrapper denies all six command
   spellings of each raw mutating memory/update/preparation RPC surface. Focused
-  policy tests, the deny-enumeration gate and `cs memory` pass; this is not
-  released or installed in a clone.
-- Untagged source includes interactive `cs draft-send <full-engine-draft-id>`:
+  policy tests, the deny-enumeration gate and `cs memory` pass.
+- Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
   Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
-  The command is absent from the released tag; clone installation is unverified.
-- Untagged source adds a deterministic scheduled-Claude fallback for a proven
+- This release adds a deterministic scheduled-Claude fallback for a proven
   pre-tool quota/payment refusal. The optional OpenRouter model and per-tick
   budget are manifest knobs. Fixed owner mail reports route/model changes and
   stops. The generated wrapper reuses its draft-only deny list. Source tests
-  pass locally; neither clone has this revision installed.
+  pass locally; clone installation remains in progress.
 
 ## Unresolved
 
