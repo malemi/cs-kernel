@@ -268,3 +268,27 @@ probe with tools disabled: the result was `OK`, terminal reason `completed`,
 and reported cost $0.118128. This proves that key can authenticate through
 the Claude/OpenRouter route; the complete scheduled tick was exercised with
 the first key only.
+
+## Release and installed acceptance (2026-09-28)
+
+The release code commit `74ea403` and release commit `fef680e` produced tag
+`v0.47.0`. The full kernel suite passed before tagging and again at the tag.
+The tag and post-tag main commits were published. Both maintained clones
+installed the public tag at `fef680e`, refreshed their templates, rebuilt the
+pin from `requirements.lock` in independent throwaway environments, and
+reported `cs-kernel 0.47.0`. The FULL collaudo harness ran on both: its pause
+smoke passed; other gates were red against the frozen early baseline for
+previously introduced help, settings, permissions, live mailbox state and
+removed rate-cap assumptions. Focused wrapper, identity and version checks
+passed. Café 124's published upgrade commits are `4489bfa` and `0431cc4`.
+MrCall's published isolated upgrade commit is `279a9c8`; its local main also
+contains the equivalent upgrade as `9183038` alongside two unrelated local
+commits that were not published. The original unpaused cron state was restored
+on both clones.
+
+The first installed Café 124 cron tick at 12:00 UTC reached its initial $2
+Claude fallback budget after executing tool calls. The supervisor exited 1,
+classified `fallback_budget_exhausted`, and sent one `URGENT` notice. IMAP
+confirmed the notice in Inbox at 12:14 UTC with the current key fingerprint
+and workspace. The clone's explicit fallback budget was raised to $4; a new
+installed-wrapper tick was started manually at 12:16 UTC under the cron lock.

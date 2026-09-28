@@ -12,9 +12,11 @@ the equivalent upgrade commit `9183038`). The kernel suite passed before release
 and at the tag. The FULL clone harness ran on both; its frozen historical
 baseline produces reviewed red differences from prior releases, while the
 headless pause smoke passed on both. The draft-only Café 124 wrapper now uses
-the deterministic fallback with an explicit model and $2 per-tick Claude
-budget. A supervised tick completed through OpenRouter and its owner notice
-arrived in Inbox. MrCall's live send-mode cron remains its clone-owned wrapper;
+the deterministic fallback with an explicit model and $4 per-tick Claude
+budget. A supervised tick completed through OpenRouter. The first scheduled
+tick reached the initial $2 budget and its `URGENT` stop notice arrived in
+Inbox; the budget was raised to $4 in clone commit `0431cc4`. MrCall's live
+send-mode cron remains its clone-owned wrapper;
 the kernel's updated draft-only wrapper is installed but is not its scheduled
 entry point. Unrelated local clone work was left out of the upgrade commits.
 
