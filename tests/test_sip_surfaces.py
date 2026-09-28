@@ -53,6 +53,10 @@ class SIPSurfaceTests(unittest.TestCase):
     def test_actual_wrapper_passes_denies_and_exports_headless_marker(self):
         clone = self.root / "clone"
         (clone / "bin").mkdir(parents=True)
+        (clone / ".venv/bin").mkdir(parents=True)
+        python = clone / ".venv/bin/python"
+        python.write_text(f"#!/bin/sh\nexec {sys.executable} \"$@\"\n")
+        python.chmod(0o755)
         wrapper = clone / "bin/cs_operator_cron.sh"
         wrapper.write_text(self.render("bin/cs_operator_cron.sh.j2"))
         fake = self.root / "fake-claude"
@@ -60,20 +64,26 @@ class SIPSurfaceTests(unittest.TestCase):
             f"#!{sys.executable}\n"
             "import json, os, sys\nfrom pathlib import Path\n"
             "Path(os.environ['CAPTURE']).write_text(json.dumps({"
-            "'args': sys.argv[1:], 'marker': os.environ.get('CS_OPERATOR_HEADLESS')}))\n")
+            "'args': sys.argv[1:], 'marker': os.environ.get('CS_OPERATOR_HEADLESS')}))\n"
+            "print(json.dumps({'type': 'result', 'result': 'done', 'is_error': False}))\n")
         fake.chmod(0o700)
         capture = self.root / "invocation.json"
         runtime_env = dict(os.environ, HOME=str(self.root / "home"),
+                           PYTHONPATH=str(Path(project_init.__file__).parent.parent),
                            CLAUDE_BIN=str(fake), CAPTURE=str(capture), CS_OPERATOR_HEADLESS="0")
         result = subprocess.run(["bash", str(wrapper)], env=runtime_env,
                                 capture_output=True, text=True, timeout=10)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        log = self.root / "home/.acme-cs/cs_operator.log"
+        self.assertEqual(result.returncode, 0,
+                         result.stderr + (log.read_text() if log.exists() else ""))
         invocation = json.loads(capture.read_text())
         self.assertEqual(invocation["marker"], "1")
         args = invocation["args"]
-        self.assertEqual(args[:3], ["-p", "/cs-operator", "--disallowed-tools"])
+        self.assertEqual(args[:5], ["-p", "/cs-operator", "--verbose",
+                                    "--output-format", "stream-json"])
+        self.assertEqual(args[5], "--disallowed-tools")
         for entry in self.expected_denies():
-            self.assertEqual(args[3:].count(entry), 1)
+            self.assertEqual(args[6:].count(entry), 1)
 
     def check_skill_hosts(self, copy_fallback):
         clone = self.root / ("copy-clone" if copy_fallback else "link-clone")

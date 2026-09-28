@@ -56,6 +56,11 @@ operator activity, and CS_PAUSE does not stop engine processing.
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
   Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
   The command is absent from the released tag; clone installation is unverified.
+- Untagged source adds a deterministic scheduled-Claude fallback for a proven
+  pre-tool quota/payment refusal. The optional OpenRouter model and per-tick
+  budget are manifest knobs. Fixed owner mail reports route/model changes and
+  stops. The generated wrapper reuses its draft-only deny list. Source tests
+  pass locally; neither clone has this revision installed.
 
 ## Unresolved
 

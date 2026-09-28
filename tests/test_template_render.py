@@ -40,6 +40,7 @@ BASE = dict(
     platform_env_path="", producer_adapter="none", producer_mrcall_tracking=False,
     crm_adapter="none", crm_shopify=False, drive_scope="",
     cs_triage_mode="draft", dedup_days="30", reminder_max="2",
+    cron_fallback_model="", cron_fallback_budget_usd=0.0,
     system_senders="", send_guard_min_chars=40, send_guard_banned_phrases="",
     sms_enabled=False, sms_hour="18", sms_proxy_base="",
     smtp_host="smtp.example.com", smtp_port="587",

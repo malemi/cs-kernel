@@ -54,6 +54,7 @@ BASE = dict(
     firebase_sa_path="~/.acme-cs/firebase-sa.json",
     founder_sweep_enabled=False, founder_sweep_account="",
     excluded_campaign="", repo_docs_shape="generic",
+    cron_fallback_model="", cron_fallback_budget_usd=0.0,
     repo_git_remote="git@example.com:acme/acme-cs.git", repo_kernel_version="v0.6.1",
     name="Acme",
     accounts={"support": "UID123"}, accounts_default="support",

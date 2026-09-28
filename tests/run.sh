@@ -520,17 +520,20 @@ BASE = dict(
 
 
 def render_tokens(local_scripts):
-    """The --disallowed-tools argument list of an actual render."""
+    """The single deny array consumed by both supervisor attempts."""
     text = tpl.render(local_scripts_cron_denied=local_scripts, **BASE)
     lines = text.splitlines(keepends=True)
-    start = next((i for i, l in enumerate(lines) if "--disallowed-tools" in l), None)
-    if start is None or lines[start].strip().startswith("#"):
-        return None, "--disallowed-tools flag line missing or commented out"
-    end = next((i for i in range(start + 1, len(lines)) if '>>"$LOG"' in lines[i]), None)
+    start = next((i for i, l in enumerate(lines) if l.strip() == "DENIED=("), None)
+    if start is None:
+        return None, "DENIED array missing"
+    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == ")"), None)
     if end is None:
-        return None, 'closing >>"$LOG" line not found after --disallowed-tools'
+        return None, "DENIED array closing parenthesis missing"
+    if text.count('"${DENIED[@]}"') != 1 or \
+            '.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" "${DENIED[@]}"' not in text:
+        return None, "supervisor does not consume the one DENIED array"
     tokens = []
-    for line in lines[start:end]:
+    for line in lines[start + 1:end]:
         if line.strip().startswith("#"):
             continue
         tokens.extend(re.findall(r'"([^"]*)"', line))
@@ -1307,6 +1310,9 @@ step "58. sending a draft retires its Gmail mirror"
 # its reason printed; another recipient is never matched; and without both
 # timestamps nothing is retired at all.
 if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else echo "FAIL: sent drafts leave their Gmail mirror behind"; FAIL=1; fi
+
+step "59. scheduled Claude retry requires a proven pre-work refusal"
+if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

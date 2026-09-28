@@ -110,6 +110,8 @@ class Campaigns(_Table):
 
 class Knobs(_Table):
     dedup_days: int = 30
+    cron_fallback_model: str = ""
+    cron_fallback_budget_usd: float = 0.0
     cs_triage_mode: str = "draft"   # draft | send — bounded by the send-boundary invariant
     timezone: str = "Europe/Rome"
     sms_hour: int = 18
@@ -292,6 +294,8 @@ def settings_overrides(m: Manifest) -> dict:
     put("excluded_campaign", m.campaigns.excluded_campaign)
 
     put("dedup_days", m.knobs.dedup_days)
+    put("cron_fallback_model", m.knobs.cron_fallback_model)
+    put("cron_fallback_budget_usd", m.knobs.cron_fallback_budget_usd)
     put("cs_triage_mode", m.knobs.cs_triage_mode)
     put("timezone", m.knobs.timezone)
     put("sms_hour", m.knobs.sms_hour)

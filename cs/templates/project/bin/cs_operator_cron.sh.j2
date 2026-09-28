@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # {{ company_name }} general operator — one headless tick.
 #
-# Fired by cron every 2h in business hours. Runs `claude -p "/cs-operator"`:
+# Fired by cron every 2h in business hours. Supervises `claude -p "/cs-operator"`:
 # triage inbound {{ email_address }} mail into review DRAFTS + advance active campaigns
 # (reconcile already-sent drafts, handle replies). With CS_TRIAGE_MODE=draft
 # (the default) NOTHING is sent to a customer autonomously.
@@ -97,8 +97,7 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # cost of reaching a surface by accident or by injected instruction; it is not
 # a sandbox. A script that must be unreachable whatever happens should not be
 # executable by the user the tick runs as.
-"$CLAUDE_BIN" -p "/cs-operator" \
-  --disallowed-tools \
+DENIED=(
     "Bash(.venv/bin/python -m cs draft-send:*)" \
     "Bash(.venv/bin/python3 -m cs draft-send:*)" \
     "Bash(.venv/bin/cs draft-send:*)" \
@@ -191,7 +190,9 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
     "Bash(sh {{ form }}:*)" \
 {% endfor %}
 {% endfor %}
-    "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)" \
+    "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)"
+)
+.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" "${DENIED[@]}" \
   </dev/null >>"$LOG" 2>&1
 rc=$?
 echo "$(ts) {{ company_prog_name }}: tick end (exit $rc)" >>"$LOG"

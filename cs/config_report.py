@@ -51,7 +51,8 @@ from . import manifest as manifest_mod
 # The settings that decide BEHAVIOUR. Deliberately short: a wall of sixty
 # lines is as unreadable as no output at all. `--all` dumps the rest.
 SECTIONS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("Autonomy and safety", ("cs_triage_mode", "dedup_days")),
+    ("Autonomy and safety", ("cs_triage_mode", "dedup_days",
+                             "cron_fallback_model", "cron_fallback_budget_usd")),
     (
         "Identity",
         ("slug", "email_address", "engine_owner_uid", "engine_ws_url",
@@ -137,6 +138,8 @@ MANIFEST_KEYS: dict[str, tuple[str, ...]] = {
     "agent_prompt_python": ("producer", "mrcall_tracking", "python_path"),
     "excluded_campaign": ("campaigns", "excluded_campaign"),
     "dedup_days": ("knobs", "dedup_days"),
+    "cron_fallback_model": ("knobs", "cron_fallback_model"),
+    "cron_fallback_budget_usd": ("knobs", "cron_fallback_budget_usd"),
     "cs_triage_mode": ("knobs", "cs_triage_mode"),
     "timezone": ("knobs", "timezone"),
     "sms_hour": ("knobs", "sms_hour"),

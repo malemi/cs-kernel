@@ -380,6 +380,8 @@ class Settings(BaseSettings):
 
     # --- behaviour knobs ---
     dedup_days: int = 30
+    cron_fallback_model: str = ""
+    cron_fallback_budget_usd: float = 0.0
     # No `dry_run` / `autonomous` field: neither ever gated anything. Dry-run
     # is the `commit` argument on every send function, fed by the `--commit`
     # CLI flag; autonomy is `cs_triage_mode` plus the clone's

@@ -55,6 +55,8 @@ DEFAULT_ENGINE_WS_URL = "wss://desktop.mrcall.ai"
 TEMPLATE_DEFAULTS = {
     "operator_voice": DEFAULT_OPERATOR_VOICE,
     "local_scripts_cron_denied": [],
+    "cron_fallback_model": "",
+    "cron_fallback_budget_usd": 0.0,
 }
 
 
@@ -332,6 +334,8 @@ def load_existing_config(target_dir: Path) -> dict:
         "founder_sweep_account": m.engine.founder_sweep.account,
         "crm_adapter": m.crm.adapter,
         "dedup_days": m.knobs.dedup_days,
+        "cron_fallback_model": m.knobs.cron_fallback_model,
+        "cron_fallback_budget_usd": m.knobs.cron_fallback_budget_usd,
         "cs_triage_mode": m.knobs.cs_triage_mode,
         "timezone": m.knobs.timezone,
         "sms_hour": m.knobs.sms_hour,
@@ -765,6 +769,12 @@ def collect_config(advanced: bool = False, existing: dict | None = None,
     # through `existing` so a re-run of the wizard cannot silently reset an
     # operator's edit.
     _knob_defaults = manifest_mod.Knobs()
+    config["cron_fallback_model"] = _default(
+        existing, "cron_fallback_model", _knob_defaults.cron_fallback_model
+    )
+    config["cron_fallback_budget_usd"] = _default(
+        existing, "cron_fallback_budget_usd", _knob_defaults.cron_fallback_budget_usd
+    )
     config["system_senders"] = _default(
         existing, "system_senders", _knob_defaults.system_senders
     )

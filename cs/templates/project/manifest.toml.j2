@@ -64,6 +64,10 @@ excluded_campaign = ""
 
 [knobs]
 dedup_days = {{ dedup_days }}
+# Scheduled Claude Code fallback. Both values are required to enable a paid
+# retry after a proven pre-work access refusal. The budget is per tick in USD.
+cron_fallback_model = {{ cron_fallback_model | toml_quote }}
+cron_fallback_budget_usd = {{ cron_fallback_budget_usd }}
 cs_triage_mode = "{{ cs_triage_mode }}"
 timezone = "{{ timezone }}"
 sms_hour = {{ sms_hour }}
