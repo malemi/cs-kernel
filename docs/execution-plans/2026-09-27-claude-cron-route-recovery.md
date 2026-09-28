@@ -292,3 +292,20 @@ classified `fallback_budget_exhausted`, and sent one `URGENT` notice. IMAP
 confirmed the notice in Inbox at 12:14 UTC with the current key fingerprint
 and workspace. The clone's explicit fallback budget was raised to $4; a new
 installed-wrapper tick was started manually at 12:16 UTC under the cron lock.
+
+## Follow-up: send-mode clone launcher (unreleased)
+
+MrCall's scheduled launcher still invokes Claude directly. Its configured
+`cs_triage_mode=send` is backed by a clone-owned command allow list and a
+headless send marker; the kernel-generated wrapper is draft-only. The direct
+launcher fails on the Claude account's current weekly limit and cannot reach
+the already released supervisor.
+
+The follow-up extends the supervisor to accept the clone's prompt and explicit
+allow list, using them unchanged on primary and fallback. It rejects a mismatch
+between `cs_triage_mode` and the launched permissions before starting Claude,
+then sends a fixed urgent owner notice. A separate, uninstalled copy of the
+MrCall launcher calls this extended supervisor. The active cron remains on its
+original launcher until the new kernel code can be released and installed.
+The clone has no saved OpenRouter key and has not configured a fallback model
+or per-tick budget, so a production fallback cannot succeed yet.

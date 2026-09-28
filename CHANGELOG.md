@@ -20,6 +20,34 @@ send-mode cron remains its clone-owned wrapper;
 the kernel's updated draft-only wrapper is installed but is not its scheduled
 entry point. Unrelated local clone work was left out of the upgrade commits.
 
+## v0.48.0 — 2026-09-28
+
+MrCall's autonomous support operator used a clone-owned send launcher that
+still called Claude directly. The Claude account's weekly limit therefore
+stopped every scheduled tick even though the kernel already had a deterministic
+alternate route for the standard draft-only launcher.
+
+The supervisor now accepts a clone-owned prompt and explicit command allow
+list. It passes the same prompt, allow list, deny list and headless send marker
+to the primary and OpenRouter attempts. Before either process starts, it checks
+the resolved `cs_triage_mode`: `send` requires the exact six `cs chat` allow
+rules and the headless send marker; `draft` requires neither. A mismatch stops
+the tick and sends the owner the fixed `URGENT` notice. The generated
+draft-only wrapper and its permissions are unchanged.
+
+**Migration:** a send-enabled clone can move its existing launcher to the
+supervisor after installing this tag, preserving its explicit send permissions.
+Set `cron_fallback_model` and `cron_fallback_budget_usd` in that clone's
+manifest; save its OpenRouter key in its own engine profile. An absent key
+produces the urgent credential notice and does not silently borrow another
+workspace's credential.
+
+**Re-collaudo: FULL on both maintained clones.** The scheduled send boundary
+and launcher invocation change for MrCall, so both clones run the full suite
+before this tag and after installation. The existing frozen baseline has known
+historical differences; the pause smoke, configured mode, permissions, owner
+identity and new same-permissions fallback replay are checked independently.
+
 **Historical operational pin** (2026-09-20): **`v0.46.0` on both clones**.
 Both installed the public tag at `82e611f`; independent lock-only environments
 reported 0.46.0. Upgrade commits were `mrcall-cs` `05c674e` and `124-cs`

@@ -1,7 +1,8 @@
 """Deterministic supervision of the scheduled Claude Code operator tick.
 
-Only the generated cron wrapper invokes this module. It owns the second process
-launch and owner notices so a quota refusal cannot ask an LLM to repair itself.
+The generated cron wrapper and authorized clone launchers invoke this module.
+It owns the second process launch and owner notices so a quota refusal cannot
+ask an LLM to repair itself.
 """
 from __future__ import annotations
 
@@ -28,6 +29,11 @@ RUN_TIMEOUT_SECONDS = 3 * 3600
 GATEWAY_BASE_URL = "https://openrouter.ai/api"
 KEY_INFO_URL = "https://openrouter.ai/api/v1/key"
 MODEL_RE = re.compile(r"~?anthropic/claude-[A-Za-z0-9._-]+\Z")
+SEND_ALLOW_RULES = frozenset(
+    f"Bash({prefix}cs chat:*)" for prefix in
+    (".venv/bin/python -m ", ".venv/bin/python3 -m ", ".venv/bin/",
+     "python -m ", "python3 -m ", "")
+)
 
 
 @dataclass
@@ -45,10 +51,11 @@ class Attempt:
         return results[-1] if len(results) == 1 else None
 
 
-def _run(claude_bin: str, denies: list[str], *, model: str = "",
+def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
+         allows: list[str] | None = None, model: str = "",
          budget: float = 0, key: str = "") -> Attempt:
     """Run one bounded-output process; never echo a credential from its output."""
-    cmd = [claude_bin, "-p", "/cs-operator", "--verbose", "--output-format",
+    cmd = [claude_bin, "-p", prompt, "--verbose", "--output-format",
            "stream-json"]
     env = os.environ.copy()
     if key:
@@ -59,6 +66,8 @@ def _run(claude_bin: str, denies: list[str], *, model: str = "",
         for name in ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX",
                      "CLAUDE_CODE_USE_FOUNDRY"):
             env.pop(name, None)
+    if allows:
+        cmd.extend(["--allowedTools", *allows])
     cmd.extend(["--disallowed-tools", *denies])
     events: list[dict[str, Any]] = []
     malformed = False
@@ -314,6 +323,7 @@ def _notice(settings: config.Settings, state: dict[str, Any], status: str,
             "fallback_timeout": "the OpenRouter process exceeded its three-hour limit",
             "fallback_unconfigured": "the alternate model or per-tick budget is not configured",
             "credential_unavailable": "the alternate credential was unavailable",
+            "mode_mismatch": "the cron permissions do not match its configured triage mode",
         }.get(item.get("reason"), "the scheduled operator could not complete its run")
         if kind == "fallback":
             detail = (f"Primary access failed because {cause}. Scheduled operator "
@@ -351,10 +361,24 @@ def _notice(settings: config.Settings, state: dict[str, Any], status: str,
     return True
 
 
-def run(claude_bin: str, denies: list[str]) -> int:
+def run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
+        allows: list[str] | None = None) -> int:
     settings = config.load()
     state = _read_state(settings)
-    primary = _run(claude_bin, denies)
+    allows = allows or []
+    mode = settings.cs_triage_mode.lower()
+    send_authorized = (len(allows) == len(SEND_ALLOW_RULES) and
+                       set(allows) == SEND_ALLOW_RULES and
+                       not SEND_ALLOW_RULES.intersection(denies))
+    if (mode not in ("draft", "send") or
+            (mode == "send") != send_authorized or
+            (mode == "draft" and bool(allows)) or
+            (mode == "send" and os.environ.get("CS_HEADLESS_SEND") != "1") or
+            (mode == "draft" and os.environ.get("CS_HEADLESS_SEND") == "1")):
+        print("operator: cron permissions disagree with cs_triage_mode", flush=True)
+        _notice(settings, state, "stopped", reason="mode_mismatch")
+        return 1
+    primary = _run(claude_bin, denies, prompt=prompt, allows=allows)
     if _successful(primary):
         return 0 if _notice(settings, state, "primary", _effective_models(primary)) else 1
     if not _prework_refusal(primary):
@@ -388,7 +412,8 @@ def run(claude_bin: str, denies: list[str]) -> int:
     if settings.pause_path.exists():
         print("operator: paused before fallback", flush=True)
         return 0
-    fallback = _run(claude_bin, denies, model=model, budget=budget, key=key)
+    fallback = _run(claude_bin, denies, prompt=prompt, allows=allows,
+                    model=model, budget=budget, key=key)
     if _successful(fallback):
         used_model = _effective_models(fallback)
         if not used_model:
@@ -408,7 +433,27 @@ def main() -> int:
         print("operator: missing Claude executable", file=sys.stderr)
         return 2
     try:
-        return run(sys.argv[1], sys.argv[2:])
+        args = sys.argv[2:]
+        prompt = "/cs-operator"
+        allows: list[str] = []
+        if args[:1] == ["--prompt-env"]:
+            if len(args) < 2 or not args[1].startswith("CS_OPERATOR_"):
+                raise ValueError("invalid operator prompt environment variable")
+            prompt = os.environ.get(args[1], "")
+            if not prompt:
+                raise ValueError("operator prompt is empty")
+            args = args[2:]
+        if args[:1] == ["--allowed-tools"]:
+            if "--disallowed-tools" not in args:
+                raise ValueError("missing disallowed-tools separator")
+            split = args.index("--disallowed-tools")
+            allows = args[1:split]
+            args = args[split + 1:]
+            if not allows:
+                raise ValueError("empty allowed-tools list")
+        if not args:
+            raise ValueError("empty disallowed-tools list")
+        return run(sys.argv[1], args, prompt=prompt, allows=allows)
     except Exception as exc:
         print(f"operator: supervisor failed ({type(exc).__name__}: {exc})", file=sys.stderr)
         return 1

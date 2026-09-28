@@ -27,8 +27,12 @@ assume the engine's selected model is Claude's.
 
 The supervisor in [`operator_recovery.py`](../cs/operator_recovery.py) starts a
 second Claude process only after a structured, immediate quota or payment
-refusal proves no tool ran and no tokens were billed. It reuses the same skill
-and command deny list. A three-hour process watchdog stops a hung tick and
+refusal proves no tool ran and no tokens were billed. It reuses the same prompt,
+command allow list, command deny list and headless send marker for both attempts.
+Before launching Claude, it checks that a `send` triage mode has explicit send
+permissions and the headless send marker, while a `draft` mode has neither.
+A mismatch stops the tick and sends the owner an urgent notice. A three-hour
+process watchdog stops a hung tick and
 reports the stop; it never retries that tick. The manifest must set
 `knobs.cron_fallback_model` to an
 explicit Claude model route and `knobs.cron_fallback_budget_usd` to a positive

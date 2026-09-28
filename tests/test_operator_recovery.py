@@ -24,8 +24,17 @@ assert operator_recovery._fallback_failure_reason(
 FAKE_CLAUDE = '''#!/usr/bin/env python3
 import json, os, sys, time
 args = sys.argv[1:]
-assert args[:3] == ['-p', '/cs-operator', '--verbose']
-assert args[args.index('--disallowed-tools') + 1:] == ['Write', 'Bash(cs draft-send:*)']
+operator_rules = set(os.environ.get('FAKE_ALLOW_RULES', '').split('|'))
+assert args[0] == '-p' and args[2] == '--verbose'
+if os.environ.get('FAKE_SEND'):
+    assert args[1] == '/cs-operator send briefing'
+    assert set(args[args.index('--allowedTools') + 1:args.index('--disallowed-tools')]) == operator_rules
+    assert os.environ.get('CS_HEADLESS_SEND') == '1'
+    assert args[args.index('--disallowed-tools') + 1:] == ['Write']
+else:
+    assert args[1] == '/cs-operator'
+    assert '--allowedTools' not in args
+    assert args[args.index('--disallowed-tools') + 1:] == ['Write', 'Bash(cs draft-send:*)']
 assert 'sample-key' not in args
 fallback = bool(os.environ.get('ANTHROPIC_BASE_URL'))
 if fallback:
@@ -101,6 +110,30 @@ def _setup(root: Path):
 
     return binary, settings, sent, key, send
 
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    with patch.dict(os.environ, {"HOME": str(root), "FAKE_PRIMARY": "limit", "FAKE_SEND": "1",
+                              "CS_HEADLESS_SEND": "1",
+                              "FAKE_ALLOW_RULES": "|".join(sorted(operator_recovery.SEND_ALLOW_RULES))}):
+        binary, settings, sent, key, send = _setup(root)
+        settings.cs_triage_mode = "send"
+        send_allows = sorted(operator_recovery.SEND_ALLOW_RULES)
+        with patch.object(operator_recovery.config, "load", return_value=settings), \
+             patch.object(operator_recovery, "_saved_openrouter_key", key), \
+             patch.object(operator_recovery, "_openrouter_identity", return_value=IDENTITY), \
+             patch.object(operator_recovery.send_mail, "send", send):
+            assert operator_recovery.run(str(binary), ["Write"],
+                                         prompt="/cs-operator send briefing",
+                                         allows=send_allows) == 0
+            assert len(sent) == 1 and "OpenRouter" in sent[0]
+            assert operator_recovery.run(str(binary), ["Write"]) == 1
+            assert len(sent) == 2 and "permissions" in sent[-1]
+            del os.environ["CS_HEADLESS_SEND"]
+            assert operator_recovery.run(str(binary), ["Write"],
+                                         prompt="/cs-operator send briefing",
+                                         allows=send_allows) == 1
+            assert len(sent) == 2  # same mismatch is deduplicated
 
 with tempfile.TemporaryDirectory() as tmp:
     root = Path(tmp)
