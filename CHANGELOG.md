@@ -7,7 +7,8 @@ and at which tier (design brief §6.6: static / +live read-only / full).
 **Current operational pin** (2026-09-28): **`v0.47.0` on both maintained
 clones**. Both install the public tag at `fef680e` and report `0.47.0`;
 independent lock-only environments rebuild it. Upgrade commits are `124-cs`
-`4489bfa` and `mrcall-cs` `9183038`. The kernel suite passed before release
+`4489bfa` and published `mrcall-cs` `279a9c8` (the live local clone also has
+the equivalent upgrade commit `9183038`). The kernel suite passed before release
 and at the tag. The FULL clone harness ran on both; its frozen historical
 baseline produces reviewed red differences from prior releases, while the
 headless pause smoke passed on both. The draft-only Café 124 wrapper now uses
