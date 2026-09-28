@@ -309,3 +309,20 @@ MrCall launcher calls this extended supervisor. The active cron remains on its
 original launcher until the new kernel code can be released and installed.
 The clone has no saved OpenRouter key and has not configured a fallback model
 or per-tick budget, so a production fallback cannot succeed yet.
+
+## Send-mode rollout (2026-09-28)
+
+The follow-up shipped as `v0.48.0` at `fd66900`. The kernel suite passed before
+release and on the tag. The full clone harness ran on both clones before and
+after installation; its historical baseline returned the same red categories
+as the `v0.47.0` run, and the pause smoke stayed green. Both clones now pin
+`v0.48.0`, and lock-only fresh environments rebuild that version. Café 124's
+published upgrade is `efe9c8c`; MrCall's published upgrade is `4b68918`.
+
+MrCall's live cron path still points to its clone-owned send launcher, whose
+Claude invocation now goes through the supervisor. Its manifest has an
+explicit fallback model and $4 per-tick budget. A manual tick saw the weekly
+Claude quota refusal before tool use, found no OpenRouter key in the MrCall
+engine profile, and delivered the fixed `URGENT` notice to the owner Inbox at
+14:10 UTC. No customer message was sent in that tick. A funded OpenRouter
+fallback for MrCall remains unverified until its owner adds that profile's key.

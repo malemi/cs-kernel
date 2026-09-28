@@ -4,21 +4,18 @@
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-28): **`v0.47.0` on both maintained
-clones**. Both install the public tag at `fef680e` and report `0.47.0`;
-independent lock-only environments rebuild it. Upgrade commits are `124-cs`
-`4489bfa` and published `mrcall-cs` `279a9c8` (the live local clone also has
-the equivalent upgrade commit `9183038`). The kernel suite passed before release
-and at the tag. The FULL clone harness ran on both; its frozen historical
-baseline produces reviewed red differences from prior releases, while the
-headless pause smoke passed on both. The draft-only Café 124 wrapper now uses
-the deterministic fallback with an explicit model and $4 per-tick Claude
-budget. A supervised tick completed through OpenRouter. The first scheduled
-tick reached the initial $2 budget and its `URGENT` stop notice arrived in
-Inbox; the budget was raised to $4 in clone commit `0431cc4`. MrCall's live
-send-mode cron remains its clone-owned wrapper;
-the kernel's updated draft-only wrapper is installed but is not its scheduled
-entry point. Unrelated local clone work was left out of the upgrade commits.
+**Current operational pin** (2026-09-28): **`v0.48.0` on both maintained
+clones**. Both install the public tag at `fd66900`, report `0.48.0`, and rebuild
+from their pinned lockfiles in independent environments. Upgrade commits are
+`124-cs` `efe9c8c` and published `mrcall-cs` `4b68918`; the live MrCall
+checkout contains the same upgrade files alongside unrelated local work. The
+kernel suite passed before release and at the tag. The FULL clone harness ran
+on both before and after installation; its frozen historical baseline returned
+the same reviewed differences as `v0.47.0`, while the headless pause smoke
+passed on both. MrCall's send-enabled cron now uses the supervisor. A manual
+tick detected Claude's weekly limit and the absent MrCall OpenRouter key, and
+the fixed `URGENT` notice arrived in the owner Inbox. The draft-only Café 124
+cron keeps its configured OpenRouter fallback and $4 per-tick budget.
 
 ## v0.48.0 — 2026-09-28
 

@@ -22,8 +22,8 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - **Latest release tag: `v0.48.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Both maintained clones install the public `v0.47.0` tag at `fef680e` and
-  report `0.47.0`. Their pinned lockfiles rebuild the same package.
+  Both maintained clones install the public `v0.48.0` tag at `fd66900` and
+  report `0.48.0`. Their pinned lockfiles rebuild the same package.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
@@ -54,12 +54,13 @@ operator activity, and CS_PAUSE does not stop engine processing.
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
   Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
-- This release adds a deterministic scheduled-Claude fallback for a proven
-  pre-tool quota/payment refusal. The optional OpenRouter model and per-tick
-  budget are manifest knobs. Fixed owner mail reports route/model changes and
-  stops. The generated wrapper reuses its draft-only deny list. Source tests
-  pass locally. Café 124's scheduled draft-only wrapper uses the fallback;
-  MrCall's live send-mode cron uses its separate clone-owned launcher.
+- Scheduled Claude retries only after a proven pre-tool quota/payment refusal.
+  The optional OpenRouter model and per-tick budget are manifest knobs. Fixed
+  owner mail reports route/model changes and stops. Café 124 runs the generated
+  draft-only wrapper; MrCall runs its clone-owned send launcher through the
+  same supervisor. The supervisor checks each launcher's permissions against
+  its resolved triage mode before starting Claude. MrCall has no saved
+  OpenRouter key yet; its urgent missing-credential notice reached the owner.
 
 ## Unresolved
 
