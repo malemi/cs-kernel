@@ -42,18 +42,14 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-28): **`v0.48.0` on both maintained
-clones**. Both install the public tag at `fd66900`, report `0.48.0`, and rebuild
-from their pinned lockfiles in independent environments. Upgrade commits are
-`124-cs` `efe9c8c` and published `mrcall-cs` `4b68918`; the live MrCall
-checkout contains the same upgrade files alongside unrelated local work. The
-kernel suite passed before release and at the tag. The FULL clone harness ran
-on both before and after installation; its frozen historical baseline returned
-the same reviewed differences as `v0.47.0`, while the headless pause smoke
-passed on both. MrCall's send-enabled cron now uses the supervisor. A manual
-tick detected Claude's weekly limit and the absent MrCall OpenRouter key, and
-the fixed `URGENT` notice arrived in the owner Inbox. The draft-only Café 124
-cron keeps its configured OpenRouter fallback and $4 per-tick budget.
+**Current operational pin** (2026-09-30): **`v0.49.0` on both maintained
+clones**. Both install the public tag at `1aea012`, report `0.49.0`, and their
+lockfiles resolve that commit. Upgrade commits: `mrcall-cs` `2f01ea5`,
+`124-cs` `48af02c`. The standing-instructions documents were stored through
+the running engine before its deploy (nine documents, read-back verified);
+the FULL re-collaudo on both clones is recorded in the meta-repo plan
+`docs/execution-plans/2026-09-30-retire-user-notes.md`. `mario124-cs` stays
+on `v0.35.0`; its identity document is stored by `124-cs`.
 
 ## v0.48.0 — 2026-09-28
 
