@@ -78,7 +78,14 @@ blocks new guarded ticks, not engine work or a running Claude. See
      Gmail/Superhuman are read/review only; fixed-template bulk is cs-owned.
    - The headless cron is draft-only via the wrapper's `--disallowed-tools`
      re-deny set (template-side, baked verbatim) — not a knob.
-   - Policy/voice/signature live in engine `USER_NOTES`, outside every repo.
+   - **The operator's standing instructions live in the clone's `company/`
+     files** (`customer-service-playbook.md` for procedures,
+     `mailbox-identity.md` for this mailbox's voice, `mailboxes/<email>.md`
+     for company mailboxes without a clone). They are compiled and stored in
+     the engine only through `instructions.store` (`cs instructions --commit`);
+     the file is authoritative and the engine copy is derived. The scheduled
+     operator can neither write the files nor call the store; only the human
+     in an interactive session adds a rule. No engine setting holds them.
    - **Gmail Sent/All Mail is the dedup ground truth** — never the engine archive
      (`emails.search folder:sent` misses hand-sent mail and drops threads when the
      customer replies last). No dedup-source knob exists. Its one blind spot is

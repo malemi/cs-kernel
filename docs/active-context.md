@@ -50,6 +50,15 @@ operator activity, and CS_PAUSE does not stop engine processing.
   1 before sending a question. The scheduled wrapper denies all six command
   spellings of each raw mutating memory/update/preparation RPC surface. Focused
   policy tests, the deny-enumeration gate and `cs memory` pass.
+- Untagged source adds `cs instructions`: it compiles
+  `company/customer-service-playbook.md`, `company/mailbox-identity.md` and
+  `company/mailboxes/<email>.md` into the engine's reserved
+  `operator-instructions` documents and, with `--commit`, stores them only
+  through `instructions.store`. `cs project new/save/import` refuse the
+  reserved slug; the cron wrapper denies the verb and the raw RPC in all six
+  spellings; `cs setup` and `cs memory` report the company files as the
+  standing-instructions store. The engine side is a separate `mrcall-desktop`
+  change; the verb is untested against a live engine.
 - Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
