@@ -22,9 +22,11 @@ Guards:
         unparseable value never surfacing as a location either.
   (iv)  Filesystem-resolved stores report `present` once their backing
         file/dir exists and `absent` when it does not; `gmail-sent` always
-        reports `declared` (mapped, never IMAP-probed) and `user-notes`
-        always reports "not probed" (it would need an authenticated
-        session, which this verb refuses to open).
+        reports `declared` (mapped, never IMAP-probed) and
+        `standing-instructions` reports `present` only once BOTH
+        `company/customer-service-playbook.md` and
+        `company/mailbox-identity.md` exist, `incomplete` with the
+        directory but not both files, `absent` with no `company/` at all.
   (v)   `cc-memory`'s own claimed encoding — both `/` and `.` in the clone
         root map to `-` — is exercised directly: a clone root whose own
         basename contains a `.` resolves to a directory whose encoded name
@@ -44,7 +46,7 @@ MARKER = "SECRET-STORE-CONTENT-MUST-NEVER-BE-PRINTED"
 
 EXPECTED_IDS = (
     "engine-memory",
-    "user-notes",
+    "standing-instructions",
     "gmail-sent",
     "ledger",
     "company-notes",
@@ -297,15 +299,83 @@ def _test_declared_and_not_probed_rows() -> None:
         assert gm["presence"].startswith("declared"), gm
         assert "ops@acme.example" in gm["location"] and "founder" in gm["location"], gm
 
-        un = by_id["user-notes"]
-        assert "not probed" in un["presence"], un
+        # No company/ dir in this fixture: standing instructions read absent,
+        # never "not probed" — this store is filesystem-resolved, no session.
+        si = by_id["standing-instructions"]
+        assert si["presence"] == "absent", si
 
         # cc-memory absent on a fresh HOME with no ~/.claude/projects tree
         assert by_id["cc-memory"]["presence"] == "absent", by_id["cc-memory"]
 
     print("OK: gmail-sent maps the mailbox scope as identifiers ('declared', "
-          "never IMAP-probed); user-notes is 'not probed'; cc-memory absent "
-          "is a normal answer")
+          "never IMAP-probed); standing-instructions is 'absent' with no "
+          "company/ dir; cc-memory absent is a normal answer")
+
+
+def _test_standing_instructions_presence() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        home, clone = _with_cwd_and_home(td)
+        (clone / "company").mkdir()
+        old_cwd = os.getcwd()
+        old_home = os.environ.get("HOME")
+        try:
+            os.environ["HOME"] = str(home)
+            os.chdir(clone)
+
+            rep = memory_report.build(_settings())
+            row = next(s for s in rep["stores"] if s["id"] == "standing-instructions")
+            assert row["presence"] == "incomplete", row
+
+            (clone / "company" / "mailbox-identity.md").write_text(MARKER)
+            rep = memory_report.build(_settings())
+            row = next(s for s in rep["stores"] if s["id"] == "standing-instructions")
+            assert row["presence"] == "incomplete", row
+
+            (clone / "company" / "customer-service-playbook.md").write_text(MARKER)
+            rep = memory_report.build(_settings())
+            row = next(s for s in rep["stores"] if s["id"] == "standing-instructions")
+            assert row["presence"] == "present", row
+            assert MARKER not in memory_report.render(rep), "store contents leaked"
+        finally:
+            os.chdir(old_cwd)
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+
+    print("OK: standing-instructions is 'incomplete' until both company "
+          "files exist, 'present' once they do, contents never leak")
+
+
+def _test_standing_instructions_unedited_slot_never_present() -> None:
+    """Both files exist with real BYTES, but one still carries the kernel's
+    own '## What to write here' heading — an unedited stamped slot, not an
+    authored one. Must report 'incomplete', never 'present'."""
+    with tempfile.TemporaryDirectory() as td:
+        home, clone = _with_cwd_and_home(td)
+        company = clone / "company"; company.mkdir()
+        (company / "mailbox-identity.md").write_text("Sign as Ops.\n")
+        (company / "customer-service-playbook.md").write_text(
+            "# Playbook\n\n## What to write here\n\nStill the stamped default.\n"
+        )
+        old_cwd = os.getcwd()
+        old_home = os.environ.get("HOME")
+        try:
+            os.environ["HOME"] = str(home)
+            os.chdir(clone)
+            rep = memory_report.build(_settings())
+        finally:
+            os.chdir(old_cwd)
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+
+        row = next(s for s in rep["stores"] if s["id"] == "standing-instructions")
+        assert row["presence"] == "incomplete", row
+
+    print("OK: an unedited stamped slot (still carrying '## What to write "
+          "here') never reads 'present'")
 
 
 def main() -> int:
@@ -316,6 +386,8 @@ def main() -> int:
     _test_engine_row_unparseable()
     _test_cc_memory_encoding()
     _test_declared_and_not_probed_rows()
+    _test_standing_instructions_presence()
+    _test_standing_instructions_unedited_slot_never_present()
     print("test_memory_report: all assertions passed")
     return 0
 

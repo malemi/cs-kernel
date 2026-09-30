@@ -21,6 +21,13 @@ META = '.cs-project.json'
 SLUG = re.compile(r'[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?\Z')
 HASH = re.compile(r'[0-9a-f]{64}\Z')
 
+# The reserved company project the engine holds an operator's standing
+# instructions in. Its only writer is `cs instructions --commit`, through the
+# engine's dedicated `instructions.store` RPC; every generic project door
+# (`cs project new/save/import`) refuses it, mirroring the engine's own
+# refusal on `projects.write`/`projects.create` for this slug.
+RESERVED_PROJECT_SLUG = 'operator-instructions'
+
 
 class ProjectError(ValueError):
     """An actionable refusal that does not disclose document contents."""
@@ -30,6 +37,17 @@ def slug(value):
     if not isinstance(value, str) or not SLUG.fullmatch(value):
         raise ProjectError('Use a project slug of 1–100 lowercase letters, digits and hyphens.')
     return value
+
+
+def refuse_reserved(project):
+    """Refuse the reserved standing-instructions project on a generic project
+    door. Its only writer is `cs instructions --commit`; use that instead."""
+    if project == RESERVED_PROJECT_SLUG:
+        raise ProjectError(
+            "'%s' is the reserved standing-instructions project — use "
+            "cs instructions --commit, never cs project." % RESERVED_PROJECT_SLUG
+        )
+    return project
 
 
 def path_name(value):

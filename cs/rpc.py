@@ -257,8 +257,9 @@ async def chat(
     one would hope: ``cs draft-reply`` and a campaign's reply-composer also run
     with an empty allow-list, and they write the words a customer reads.
     Inferring "safe to route" from tool-freedom would send exactly the traffic
-    the charter keeps on the engine (policy, voice and signature live in the
-    engine's ``USER_NOTES``, outside every repo) to whatever model is cheapest.
+    the charter keeps on the engine (policy, voice and signature are compiled
+    from this clone's ``company/`` files and injected by the engine) to
+    whatever model is cheapest.
 
     Two semantics differ from the engine path, on purpose:
 

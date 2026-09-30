@@ -10,7 +10,7 @@ from pathlib import Path
 import jinja2
 
 from . import _time, config
-from .project_documents import Documents, ProjectError, digest, metadata, safe_ancestors, slug
+from .project_documents import Documents, ProjectError, digest, metadata, refuse_reserved, safe_ancestors, slug
 from .project_working import checkout, import_projects, save
 
 
@@ -67,7 +67,7 @@ def render_scaffold(dest: Path, render_vars: dict) -> list[Path]:
 
 
 def _new(client, settings, args):
-    name = slug(args.name)
+    name = refuse_reserved(slug(args.name))
     client.page('list', limit=1)
     render_vars = {
         'project_name': name,

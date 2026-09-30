@@ -54,6 +54,7 @@ from . import login
 from . import manifest as manifest_mod
 from . import state as state_mod
 from . import project_init, project_update
+from . import instructions as instructions_mod
 from . import project_memory as project_memory_mod
 from . import cron as cron_mod
 
@@ -2422,6 +2423,10 @@ def main(argv=None) -> int:
 
     # Shared written projects use the configured engine company memory.
     project_memory_mod.add_subparsers(sub)
+
+    # Standing instructions: compile company/ into the engine's reserved
+    # operator-instructions project, through instructions.store only.
+    instructions_mod.add_subparsers(sub)
 
     # --- cron: manage crontab entry (requires manifest) ---
     try:

@@ -235,6 +235,16 @@ then
   FAIL=1
 fi
 
+step "1c. USER_NOTES retired from cs/ — standing instructions route to company/ instead"
+USER_NOTES_HITS="$(grep -rn 'USER_NOTES' cs/ --include='*.py' --include='*.j2' --include='*.md' | grep -v __pycache__ || true)"
+if [ -n "$USER_NOTES_HITS" ]; then
+  echo "$USER_NOTES_HITS"
+  echo "FAIL: USER_NOTES still referenced in cs/ — charter invariant 4 routes standing instructions to company/customer-service-playbook.md and company/mailbox-identity.md instead"
+  FAIL=1
+else
+  echo "OK: no USER_NOTES reference in cs/"
+fi
+
 step "2. boundary greps"
 BAD="$(grep -rl --include='*.py' 'smtplib' cs/ | grep -v 'cs/send_mail.py' || true)"
 if [ -n "$BAD" ]; then echo "FAIL: smtplib outside cs/send_mail.py: $BAD"; FAIL=1; else echo "OK: SMTP only in send_mail.py"; fi
@@ -273,7 +283,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project; do
+for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project instructions; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -449,6 +459,7 @@ SPELLINGS = [
 ]
 VERBS = [
     "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
+    "instructions", "rpc instructions.store",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
     "rpc update.run", "rpc memory.reconsolidate_now", "rpc memory.join",
@@ -1112,8 +1123,8 @@ step "47. cs memory — the ten-store map, resolved on this machine, never conte
 # location + a presence verdict only; the engine row degrades honestly (no
 # ws_url -> 'unknown', a closed port -> 'unreachable: …') and never prints a
 # filesystem path; gmail-sent maps the mailbox scope as identifiers without
-# an IMAP probe ('declared'), user-notes is 'not probed' (would need an
-# authenticated session).
+# an IMAP probe ('declared'), standing-instructions is 'present' only once
+# both company files exist ('incomplete' with just one, 'absent' with none).
 if "$VENV/bin/python" "$ROOT/tests/test_memory_report.py"; then echo "OK"; else echo "FAIL: cs memory regressed"; FAIL=1; fi
 
 step "48. § 10 and cs memory agree on the store set; the allow spellings are stamped"
@@ -1313,6 +1324,19 @@ if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else e
 
 step "59. scheduled Claude retry requires a proven pre-work refusal"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi
+
+step "60. cs instructions — compile rules, diff classification, --commit's one door"
+# The verb that replaced engine USER_NOTES: compiles company/*.md into the
+# reserved operator-instructions project and stores it through
+# instructions.store ONLY. Guards, against a fake RPC client: absent/empty/
+# still-stamped-default company files compile as absent, never a binding
+# instruction nobody wrote; a single authored file reaches procedures.md AND
+# phone.md byte-for-byte; company/mailboxes/<email>.md reaches
+# mail/<email>.md; the dry-run diff correctly calls new/unchanged/changed
+# against projects.read; --commit calls instructions.store and read-verifies
+# every document, and NEVER projects.write/projects.create; cs project
+# new/save/import all refuse the reserved slug before touching any client.
+if "$VENV/bin/python" "$ROOT/tests/test_instructions.py"; then echo "OK"; else echo "FAIL: cs instructions regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

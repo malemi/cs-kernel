@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import campaign_pack, config as config_mod
+from . import instructions as instructions_mod
 from .config_report import tilde as _tilde
 
 # Connection-level only: long enough that a briefly slow engine host is not
@@ -82,8 +83,16 @@ def _resolve_engine_memory(settings: Any) -> tuple[str, str]:
         return url, f"unreachable: {e.strerror or e}"
 
 
-def _resolve_user_notes(settings: Any) -> tuple[str, str]:
-    return "RPC: settings.get USER_NOTES", "not probed — needs an authenticated session"
+def _resolve_standing_instructions(settings: Any) -> tuple[str, str]:
+    base = Path.cwd() / "company"
+    if not base.is_dir():
+        return _tilde(base), "absent"
+    root = Path.cwd()
+    authored = (
+        instructions_mod._slot_bytes(root, instructions_mod.PLAYBOOK_FILE) is not None
+        and instructions_mod._slot_bytes(root, instructions_mod.IDENTITY_FILE) is not None
+    )
+    return _tilde(base), "present" if authored else "incomplete"
 
 
 def _resolve_gmail_sent(settings: Any) -> tuple[str, str]:
@@ -160,14 +169,17 @@ STORES: tuple[Store, ...] = (
         note="reachable is not authorized — `cs whoami` is the authenticated proof.",
     ),
     Store(
-        "user-notes",
-        "USER_NOTES (engine profile)",
-        "Outreach and reply policy: declared-AI identity, signature, "
-        "recipient-language rule, the LLM-ism ban list. The biggest "
-        "per-company artifact.",
-        "`cs rpc settings.get`",
-        "`cs rpc settings.update` — its own six-spelling cron deny block",
-        _resolve_user_notes,
+        "standing-instructions",
+        "Standing instructions (company files)",
+        "Authoritative for procedures, voice and signature: declared-AI "
+        "identity, recipient-language rule, the LLM-ism ban list, "
+        "company-wide support procedures. The engine's compiled documents "
+        "are a derived copy, never the source.",
+        "the files (`company/customer-service-playbook.md`, "
+        "`company/mailbox-identity.md`) + `cs instructions`",
+        "the agent editing the files then `cs instructions --commit` — its "
+        "own six-spelling cron deny block, like `cs rpc settings.update`",
+        _resolve_standing_instructions,
     ),
     Store(
         "gmail-sent",

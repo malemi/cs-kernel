@@ -12,6 +12,9 @@ has to write down, and the skills read them at run time to know what is true of
 
 | File | Read by | Holds |
 |---|---|---|
+| `customer-service-playbook.md` | `/cs-triage-mail`, `cs instructions` | company-wide support procedures: what to do and write per kind of request, product facts, escalation — compiled into the standing instructions of every profile of this company and into the phone assistant's product notes |
+| `mailbox-identity.md` | `cs instructions` | this mailbox's own voice: who signs, register, language rule, format rules, banned phrasings — compiled into {{ email_address }}'s standing instructions only |
+| `mailboxes/<email>.md` | `cs instructions` | the identity document of another mailbox of this company that has no clone of its own (same shape as `mailbox-identity.md`, one file per address); not stamped — create it yourself when such a mailbox exists |
 | `triage-domain-examples.md` | `/cs-triage-mail` | what an ordinary mail to {{ email_address }} is about |
 | `triage-answerable.md` | `/cs-triage-mail` | which asks may be answered without a human |
 | `team-conventions.md` | `/cs-triage-mail` | who replies from where — what the Sent-archive checks cannot see |
@@ -21,11 +24,14 @@ has to write down, and the skills read them at run time to know what is true of
 | `claude-extra.md` | `AGENTS.md` | other systems this operator may reach, and how |
 | `clone-notes.md` | `docs/ARCHITECTURE.md` | how this clone is really built — everything the manifest cannot express |
 
+`customer-service-playbook.md` and `mailbox-identity.md` are the ONE place a
+standing instruction is recorded. An agent that writes one because a person
+stated a rule in chat runs `cs instructions --commit` in the same exchange —
+so the engine copy never lags what is in this repo — and commits the file.
+
 Rules for all of them:
 
-- **Prose only, and no secrets.** Voice, signature and reply policy are not here
-  either: they live in the engine profile's `USER_NOTES`
-  (`cs rpc settings.update`), outside every repo.
+- **Prose only, and no secrets.**
 - **Write what is true of {{ company_name }} and of nobody else.** An agent
   reads these files as fact. Another company's habits pasted in here become
   {{ company_name }}'s habits.

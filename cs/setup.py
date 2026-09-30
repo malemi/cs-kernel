@@ -95,9 +95,32 @@ def build(settings, *, root=None, call=None, which=None):
         except Exception:
             add("memory", "unverified", "Company memory could not be checked.",
                 "Check company memory in the desktop and retry cs setup.")
+        try:
+            from . import instructions as instructions_mod
+            from .project_documents import Documents as _Documents
+
+            company_docs = instructions_mod.compile_documents(root, settings)
+            if not company_docs:
+                add("instructions", "ready", "No standing instructions are authored yet in company/.")
+            else:
+                instr_client = _Documents(settings, call=call)
+                instr_client.page("list", limit=1)
+                rows = instructions_mod.diff_documents(instr_client, company_docs)
+                diverging = [row for row in rows if row[1] != "unchanged"]
+                if diverging:
+                    detail = "; ".join(f"{path} {status}" for path, status, _c, _r in diverging)
+                    add("instructions", "incomplete",
+                        f"Standing instructions differ from the engine: {detail}.",
+                        "Run cs instructions --commit to store the current files.")
+                else:
+                    add("instructions", "ready", "Standing instructions match the engine.")
+        except Exception:
+            add("instructions", "unverified", "Standing instructions could not be checked.",
+                "Check the engine connection and retry cs setup.")
     else:
         add("preparation", "unverified", "Connect the engine to check email preparation.")
         add("memory", "unverified", "Connect the engine to check company memory.")
+        add("instructions", "unverified", "Connect the engine to check standing instructions.")
     agents = [name for name in ("codex", "claude") if which(name)]
     add("agent", "available" if agents else "incomplete",
         "Agent executable found; sign-in and subscription are unverified." if agents

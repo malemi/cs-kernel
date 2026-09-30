@@ -117,6 +117,15 @@ def main() -> int:
         check("project usage guide is available", (rendered / "docs/project-memory.md").is_file())
         check("triage reads an optional company customer-service playbook",
               "company/customer-service-playbook.md" in triage.read_text())
+        agents_text = (rendered / "AGENTS.md").read_text()
+        check("AGENTS.md names the customer-service playbook slot",
+              "company/customer-service-playbook.md" in agents_text)
+        check("AGENTS.md names the mailbox-identity slot",
+              "company/mailbox-identity.md" in agents_text)
+        check("AGENTS.md names the cs instructions verb",
+              "cs instructions" in agents_text)
+        check("AGENTS.md no longer routes policy to USER_NOTES",
+              "USER_NOTES" not in agents_text)
         for host in (".agents", ".opencode"):
             check(f"{host} resolves real customer workflow",
                   (rendered / host / "skills/cs-customer/SKILL.md").read_bytes() == customer.read_bytes())

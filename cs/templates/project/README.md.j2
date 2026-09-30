@@ -35,8 +35,9 @@ accounts are never mixed in (different repos, config, registries).
 {% if crm_adapter != 'none' %}
 - **CRM:** `cs business <email>` / the dossier query {{ crm_adapter }} (`mrcall.search_businesses`) — the {{ company_name }} telephony CRM.
 {% endif %}
-- **Product mechanics** (what we sell, how, the policies) live in the engine's
-  **`USER_NOTES`**, not in this repo.
+- **Product mechanics** (what we sell, how, the policies) live in
+  [company/customer-service-playbook.md](company/customer-service-playbook.md),
+  in this repo.
 {% if excluded_campaign %}
 - The `{{ excluded_campaign }}` campaign is carved out to a dedicated process.
 {% endif %}
@@ -80,7 +81,8 @@ kernel README, [The `cs` CLI](https://github.com/malemi/cs-kernel#the-cs-cli).
   (skill prose slots); everything else is stamped by `cs init` / `cs update`.
 - `~/.{{ company_slug }}-cs/.env` holds the secrets + real account uids
   (see [.env.example](.env.example)).
-- `USER_NOTES` authored (voice / policy) via `cs rpc settings.update`.
+- Standing instructions (voice / policy) authored in `company/*.md`, then
+  `cs instructions --commit` to compile and store them in the engine.
 - `.venv` with the pinned kernel: `pip install -r requirements.txt`.
 - `cs login` once — signs this clone in from the mrcall-desktop app's profile
   descriptor and stores the session at `~/.{{ company_slug }}-cs/refresh_token-<uid>.json`.

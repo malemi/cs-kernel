@@ -78,8 +78,10 @@ sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
 refuses an older engine rather than treating an empty approval allowlist as a
 mutation policy. Supervised `cs chat` and `cs draft-reply` keep their existing
 contracts. The scheduled wrapper also denies raw RPC entry points that run
-update, reconsolidation, memory join/reset or preparation resume in every
-supported command spelling.
+update, reconsolidation, memory join/reset, preparation resume or
+`instructions.store` in every supported command spelling; the wrapper denies
+the `cs instructions` verb itself the same way — compiling and storing the
+operator's standing instructions stays an interactive gesture.
 
 ## Inspect before recommending or pausing
 

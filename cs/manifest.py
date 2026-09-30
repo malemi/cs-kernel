@@ -13,8 +13,9 @@ lowest-priority value layer:
 Hard exclusions (kernel invariants, deliberately NOT manifest fields):
 the send boundary, the cron deny-list, the Gmail-Sent dedup ground truth,
 engine RPC shapes, the module path `cs` (`prog_name` is display-only),
-USER_NOTES policy (engine-side), and secret VALUES (the manifest names
-required env KEYS only).
+the reserved standing-instructions project slug and its one writer
+(`cs instructions` / `instructions.store`), and secret VALUES (the
+manifest names required env KEYS only).
 
 Template-only tables ([repo], [cron]) are tolerated and ignored at
 runtime — they are consumed by the stamping template, not by the kernel.

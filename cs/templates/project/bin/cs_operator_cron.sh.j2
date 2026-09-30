@@ -69,6 +69,15 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # settings.json allows the broad `cs rpc:*`. It is the sharper half, too: the
 # engine DELETES the row, where `draft-delete` only moves the Gmail copy to
 # Trash, so this is the one with nothing to recover.
+# `cs instructions` and `cs rpc instructions.store` are denied for the same
+# reason as `cs rpc settings.update` above: this is the store verb for the
+# operator's standing instructions (procedures, voice, signature), and the
+# charter requires it to stay an INTERACTIVE gesture — an agent writes
+# `company/customer-service-playbook.md` or `company/mailbox-identity.md`
+# because a person stated a rule in chat, never because a tick reading
+# untrusted mail decided to. `cs rpc instructions.store` is spelled out
+# separately for the same load-bearing reason as `cs rpc chat` and
+# `cs rpc drafts.discard`: settings.json allows the broad `cs rpc:*`.
 # Each surface is denied in SIX spellings (.venv/bin/python -m cs, .venv/bin/python3 -m cs,
 # .venv/bin/cs, python -m cs, python3 -m cs, cs): permission rules match command TEXT,
 # not behavior, and the console script, the module path and the python3 aliases all
@@ -128,6 +137,18 @@ DENIED=(
     "Bash(python -m cs rpc settings.update:*)" \
     "Bash(python3 -m cs rpc settings.update:*)" \
     "Bash(cs rpc settings.update:*)" \
+    "Bash(.venv/bin/python -m cs instructions:*)" \
+    "Bash(.venv/bin/python3 -m cs instructions:*)" \
+    "Bash(.venv/bin/cs instructions:*)" \
+    "Bash(python -m cs instructions:*)" \
+    "Bash(python3 -m cs instructions:*)" \
+    "Bash(cs instructions:*)" \
+    "Bash(.venv/bin/python -m cs rpc instructions.store:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc instructions.store:*)" \
+    "Bash(.venv/bin/cs rpc instructions.store:*)" \
+    "Bash(python -m cs rpc instructions.store:*)" \
+    "Bash(python3 -m cs rpc instructions.store:*)" \
+    "Bash(cs rpc instructions.store:*)" \
     "Bash(.venv/bin/python -m cs handled:*)" \
     "Bash(.venv/bin/python3 -m cs handled:*)" \
     "Bash(.venv/bin/cs handled:*)" \

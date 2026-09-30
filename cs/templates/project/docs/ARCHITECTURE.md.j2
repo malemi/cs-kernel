@@ -48,9 +48,14 @@ off this table.
 
 ## Outside this repo (referenced, never stamped)
 
-- **`USER_NOTES`** (the engine profile): voice, signature, transparency line,
-  recipient-language rule, LLM-ism ban, product mechanics. The biggest
-  per-company artifact — read/edit via `cs rpc settings.update`, NEVER a repo file.
+- **The engine's standing-instructions documents** (`procedures.md`,
+  `mail/<mailbox>.md`, `phone.md` in the reserved `operator-instructions`
+  company project) are a DERIVED COPY, compiled and stored from
+  [company/customer-service-playbook.md](../company/customer-service-playbook.md)
+  and [company/mailbox-identity.md](../company/mailbox-identity.md) by
+  `cs instructions --commit`. Those two files, in this repo, are authoritative;
+  a divergence `cs setup` reports is resolved by re-storing from them, never
+  by editing the engine copy.
 - **Secrets**: `EMAIL_PASSWORD`, `FIREBASE_WEB_API_KEY`, the real account uids
   (`CS_ACCOUNTS`), the SA key, `SMS_BUSINESS_ID` — in `~/.{{ company_slug }}-cs/.env` (see `.env.example`).
 - **The kernel source** (`cs/`): not here — pinned in `requirements.txt`, installed into `.venv`.
@@ -194,9 +199,10 @@ from prose.
 
 Everything above is generated. This file is replaced wholesale by every
 `cs update`, so nothing hand-written survives in it — the engine-profile
-provenance, what was authored into `USER_NOTES`, the send boundary as it
-actually stands, the mechanisms that exist because something once went wrong,
-and the known gaps all live in
+provenance, what was authored into `company/customer-service-playbook.md` and
+`company/mailbox-identity.md`, the send boundary as it actually stands, the
+mechanisms that exist because something once went wrong, and the known gaps
+all live in
 [`company/clone-notes.md`](../company/clone-notes.md), which the kernel creates
 once and then never touches. Read it next; it is the half of this clone that
 no template can derive.

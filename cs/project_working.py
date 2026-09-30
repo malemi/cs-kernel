@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .project_documents import (
     Documents, ProjectError, MAX_FILES, MAX_TREE, digest, load_state, metadata, path_name, read_bytes,
-    safe_ancestors, scan, slug, write_state,
+    refuse_reserved, safe_ancestors, scan, slug, write_state,
 )
 
 
@@ -83,6 +83,7 @@ def _preflight(client, project, files, base=None):
 def save(client, directory, commit=False):
     root = safe_ancestors(directory)
     state = load_state(root)
+    refuse_reserved(state['project'])
     client.space_id = state['space_id']
     files, excluded = scan(root, working=True)
     _excluded(excluded)
@@ -129,13 +130,13 @@ def import_projects(client, directory, name=None, all_projects=False, commit=Fal
             if item.name in ('.git', '__pycache__', '.DS_Store') or item.name.endswith('.pyc'):
                 _excluded([item.name])
             elif item.is_dir():
-                selections.append((slug(item.name), item))
+                selections.append((refuse_reserved(slug(item.name)), item))
             elif item.name in ('README.md', '_meeting-template.md', '_dossier-template.md'):
                 print(f'Legacy convention, not a project: {item.name}')
             else:
                 raise ProjectError('Unexpected top-level file: import it within a named project directory.')
     else:
-        selections.append((slug(name or root.name), root))
+        selections.append((refuse_reserved(slug(name or root.name)), root))
     # Every selected tree is scanned BEFORE any RPC mutation. No attachments are
     # silently omitted because of extension, encoding, traversal or file type.
     scanned, total_size, total_files = [], 0, 0

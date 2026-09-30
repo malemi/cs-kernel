@@ -1,5 +1,43 @@
 # Changelog — cs-kernel
 
+## Unreleased (MINOR)
+
+**Charter change.** Invariant 4 ("Policy/voice/signature live in engine
+`USER_NOTES`, outside every repo") is reversed: the operator's standing
+instructions — company-wide support procedures, this mailbox's voice — now
+live in the clone's own `company/customer-service-playbook.md` and
+`company/mailbox-identity.md`, which are authoritative. A new verb,
+`cs instructions`, compiles them and, with `--commit`, stores the result in
+the engine's reserved `operator-instructions` company project through a
+single dedicated RPC, `instructions.store` — never the generic
+`projects.write`. `cs project new/save/import` refuse the reserved slug.
+Two new stamped slots, `company/customer-service-playbook.md.j2` and
+`company/mailbox-identity.md.j2` (gate-1b shape), plus a documented,
+unstamped convention for another mailbox's identity,
+`company/mailboxes/<email>.md`. The cron wrapper denies `cs instructions` and
+`cs rpc instructions.store` in the same six spellings as `settings.update`
+(gate 17); `cs setup` reports divergence between the compiled files and what
+the engine holds; `cs memory` store 2 is now "Standing instructions (company
+files)", with the engine documents named as the derived copy. Every stamped
+surface that pointed "policy/voice/product mechanics" at engine `USER_NOTES`
+(`AGENTS.md.j2` §1, `README.md.j2`, `docs/ARCHITECTURE.md.j2`,
+`company/README.md.j2`, `company/clone-notes.md.j2`, the `cs-triage-mail` and
+`cs-operator` skills) now points at the two company files instead, and
+`cs-triage-mail` §2c adds the write-back sentence: a rule stated in chat is
+written to the file and stored with `cs instructions --commit` in the same
+exchange.
+
+The engine side this verb calls (`instructions.store`, the reserved-slug
+refusal on `projects.write`/`projects.create`, `get_personal_data_section`
+reading the compiled documents instead of `USER_NOTES`) ships separately in
+`mrcall-desktop`; until that lands, `cs instructions --commit` fails loudly
+against a running engine — the kernel-side contract and its tests are ready
+for it.
+
+Re-collaudo **FULL on all three clones** (`mrcall-cs`, `124-cs`,
+`mario124-cs`) once both sides are tagged and deployed together — this
+release touches the compose path (charter invariant 4) and the cron deny
+list, both on the FULL list regardless of diff size.
 
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
