@@ -1,6 +1,6 @@
 # Changelog — cs-kernel
 
-## Unreleased (MINOR)
+## v0.49.0 — 2026-09-30 (MINOR)
 
 **Charter change.** Invariant 4 ("Policy/voice/signature live in engine
 `USER_NOTES`, outside every repo") is reversed: the operator's standing
