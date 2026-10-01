@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 ---
 
 # Reconcile the shared repository
@@ -59,3 +59,27 @@ The original branch commits, snapshot ref and independent bundle survive every
 step. Before the main fast-forward, discard only the isolated candidate if its
 review fails. After the fast-forward, restore the original snapshot in a new
 recovery worktree if necessary; do not force-push or erase concurrent history.
+
+## Completion evidence — 2026-10-01
+
+- Fresh brief, plan, inventory, integration and final reviews returned APPROVED.
+- Integrated merge `2be7a44` retains local commits `43d17fd` and `7484e9f`
+  and published base `d16e12b` as ancestors. The primary checkout was
+  fast-forwarded to that merge and the ordinary push to origin/main succeeded.
+- `bash tests/run.sh` exited 0 with `RESULT: all gates green` on the integrated
+  tree. Documentation mechanics passed; the living context shape passed and
+  semantic review found zero STALE reconciliation claims. Historical live
+  probes and customer reply quality were not independently reproduced.
+- Immediately before cleanup, all 226 original file hashes, original HEAD
+  and index matched the saved snapshot; only the three known trace additions
+  existed, and those originals were also backed up. Exact-path cleanup and
+  fast-forward left the primary checkout clean.
+- Five unfinished pricing/triage files remain byte-identical to the initial
+  snapshot on `work/pricing-triage-20261001` at `d16e3e5`; its focused render
+  check passed (34 templates, three configurations). Its acceptance stays open.
+- Standalone `snapshot.bundle` and `reconciled.bundle` are retained under
+  `/home/mal/.local/state/cs-kernel-reconcile/20261001T134452Z/`.
+  The initial bundle was independently restored and all 226 hashes verified.
+- Keyword coverage was 66/68. Missing literals `compiled` and `send-enabled`
+  are vocabulary variants of documented instruction compilation and send mode.
+  No new release tag or clone upgrade was part of this reconciliation.

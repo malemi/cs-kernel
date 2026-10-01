@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 ---
 
 # Reconciliation inventory
@@ -49,5 +49,10 @@ The snapshot also preserves every superseded recovery file.
 
 ## Final evidence
 
-Pending milestone reviews and integrated verification. No clean-checkout or
-publication success is asserted by this inventory until those checks finish.
+All eighteen original dirty paths have the destinations listed above. Merge
+`2be7a44` passed the full kernel suite, documentation mechanics and fresh final
+review, then was fast-forwarded into the clean primary checkout and pushed to
+origin/main. The five unfinished work files remain at `d16e3e5` on the named
+work branch. Snapshot and reconciled bundles independently retain the source.
+See the [completed plan](2026-10-01-repository-reconciliation.md#completion-evidence--2026-10-01)
+for preservation checks, review results and verification limits.
