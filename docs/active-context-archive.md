@@ -6,6 +6,88 @@ exists to answer "when did we do X" without reconstructing it from
 `git log -p docs/active-context.md`.
 
 
+## 2026-10-01 — Snapshot before cross-session reconciliation
+
+## State now
+
+The unattended operator runs through Claude Code; engine APIs and kernel direct
+classifiers have separate models, billing and stop controls. See
+[runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
+operator activity, and CS_PAUSE does not stop engine processing.
+
+- **Latest release tag: `v0.48.0`. Current HEAD status: untagged.** These
+  sentences are parsed by `tests/test_release_consistency.py`; preserve their
+  wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+  Both maintained clones install the public `v0.48.0` tag at `fd669008`
+  and report `0.48.0`. This local checkout is behind `origin/main`; its
+  `pyproject.toml` still declares `v0.46.1`.
+- Vonage supports clone-scoped reads, provisioning previews, supervised
+  domain/user creation and additive ACL changes with explicit credential
+  references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
+- Integration guides separate Vonage, Shopify, Drive and Faire. Faire application
+  setup is documented; authenticated use and a kernel adapter remain unverified
+  and unimplemented respectively.
+- The engine owns mail classification, task judgement and company memory.
+  Shared written projects are revisioned engine records; legacy clone folders
+  remain recoverable in private Git history.
+- `cs init --descriptor` consumes the explicit Desktop handoff. `cs setup` checks
+  workspace, identity, preparation evidence, memory and agent tools; preparation
+  counts do not certify reply quality or mailbox credential validity.
+- Stamped AGENTS.md owns workspace instructions. CLAUDE.md is a one-time
+  bootstrap; Claude Code, Codex and OpenCode share canonical skills.
+- `cs-triage-mail` reads an optional clone-owned
+  `company/customer-service-playbook.md`; the shared skill retains send and
+  tool-approval boundaries across all three agent surfaces.
+- Cross-mailbox history includes configured profiles and read mailboxes.
+  Incomplete evidence refuses applicable sends; send_first remains deliberately
+  ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
+- Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
+  classifier. `cs memory` reports the ten-store memory map.
+- Untagged source makes `cs ask` negotiate engine read-only chat policy version
+  1 before sending a question. The scheduled wrapper denies all six command
+  spellings of each raw mutating memory/update/preparation RPC surface. Focused
+  policy tests, the deny-enumeration gate and `cs memory` pass; this is not
+  released or installed in a clone.
+- Untagged source includes interactive `cs draft-send <full-engine-draft-id>`:
+  it approves the exact engine draft and checks recorded sent status. The
+  supplied cron wrapper denies the command; the CLI has no headless/pause guard.
+  Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
+  The command is absent from the released tag; clone installation is unverified.
+- Untagged source adds a deterministic scheduled-Claude fallback for a proven
+  pre-tool quota/payment refusal. The optional OpenRouter model and per-tick
+  budget are manifest knobs. Fixed owner mail reports route/model changes and
+  stops. The generated wrapper reuses its draft-only deny list. Source tests
+  pass locally; neither clone has this revision installed.
+- A temporary read-only IMAP evidence reader was present in this snapshot;
+  it was removed on 2026-10-01 after mailbox integration landed in an engine
+  worktree. Live acceptance of that integration was still open.
+
+## Unresolved
+
+- The [exact-draft-identity plan](execution-plans/2026-09-16-exact-draft-identity.md)
+  specifies preservation proof, exact pairing and reconciliation. These are not
+  implemented; a Gmail send outside the engine can still leave a stale mirrored
+  draft. Current pairing uses thread/recipient inference, and Gmail-only rows
+  have no authored body in review. Dated inventory counts are in the archive.
+- Unanswered-mail disagreements and review-latency fixture gaps remain open.
+  `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
+  stamped skills do not explain that outcome.
+- Paid agent-tick/live draft behavior remains outside read-only FULL checks.
+  Instruction tests do not establish agent-behavior proof or revoke ambient
+  permissions. Historical clone send posture requires checks in that clone.
+- Live SIP/customer-trunk acceptance, telephone-number association, PBX setup
+  and secondary-account onboarding remain separate from the release checks.
+
+## Next
+
+1. Continue exact draft identity from its active plan; verify canonical send and
+   reconciliation before a new release/clone rollout. No send is part of doc-end.
+2. Diagnose unanswered-mail disagreement and close evidence/latency gaps in the
+   owning engine or kernel path rather than adding parallel judgement.
+3. Complete secondary-account onboarding when requested and replace internal
+   verification terminology in operator-facing update output.
+
+
 ## 2026-09-16 — Snapshot before cross-repository session closure
 
 ## State now

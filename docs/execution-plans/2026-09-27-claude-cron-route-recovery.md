@@ -1,8 +1,23 @@
 ---
-status: active
+status: completed
 ---
 
 # Claude Code cron route recovery
+
+## Current delivery status
+
+Scheduled recovery shipped in `v0.47.0`; send-mode launcher support shipped
+in `v0.48.0`. Both maintained clones now report `0.49.0`, with $4 OpenRouter
+fallback budgets. Historical acceptance sections below retain their dated
+observations; they do not describe the current installation.
+
+MrCall's primary-key launcher and deterministic missing/restored-key notices
+were published as clone commit `49770d3`. Its live $4 OpenRouter probe completed
+on 2026-09-30. Read-only inspection on 2026-10-01 found scheduled ticks ending
+with exit 0, most recently at 11:01:09 UTC; exit status alone does not certify
+customer reply quality. The broader engine/direct-classifier plan remains
+active. Earlier local supervisor source is retained in the reconciliation
+snapshot; the integrated branch preserves the released send-mode checks.
 
 Brief: [2026-09-27-claude-cron-route-recovery.md](../briefs/2026-09-27-claude-cron-route-recovery.md).
 Brief review: APPROVED after the adversarial pass replaced an unsupported
@@ -293,7 +308,7 @@ confirmed the notice in Inbox at 12:14 UTC with the current key fingerprint
 and workspace. The clone's explicit fallback budget was raised to $4; a new
 installed-wrapper tick was started manually at 12:16 UTC under the cron lock.
 
-## Follow-up: send-mode clone launcher (unreleased)
+## Follow-up design snapshot (before v0.48.0)
 
 MrCall's scheduled launcher still invokes Claude directly. Its configured
 `cs_triage_mode=send` is backed by a clone-owned command allow list and a

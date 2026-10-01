@@ -158,22 +158,18 @@ adapter names.
 `cs project new`, `templates/partials/` is `{% include %}`d at render time and
 never stamped. Each needs its own `package-data` glob (see `pyproject.toml`).
 
-**`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills`
-and `.opencode/skills` point into it; `install_agent_surfaces` owns those links
-and the exact legacy cleanup. A clone's `AGENTS.md` is the rendered charter
-(`templates/project/AGENTS.md.j2`), and its `CLAUDE.md` is a bootstrap the
-kernel writes once — the `@AGENTS.md` import Claude Code follows — and never
-touches again (`CLONE_AUTHORED_PREFIXES`), so a documentation harness that
-manages `CLAUDE.md` owns it without a drift report. Never
-render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
+**`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills` and `.opencode/skills` point
+into it; `install_agent_surfaces` owns those links and the exact legacy cleanup. A clone's `AGENTS.md` is
+the rendered charter (`templates/project/AGENTS.md.j2`), and its `CLAUDE.md` is a bootstrap the kernel
+writes once — the `@AGENTS.md` import Claude Code follows — and never touches again
+(`CLONE_AUTHORED_PREFIXES`), so a documentation harness that manages `CLAUDE.md` owns it without a drift
+report. Never render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
 
-**Clone-owned, never kernel source**, shipped only as `.j2` under
-`cs/templates/project/`: `.claude/`, `bin/cs_operator_cron.sh`,
-`company/*.md`, `manifest.toml`, `requirements.txt`. `company/**` is
-create-if-missing, never overwritten, never prompted about
-(`CLONE_AUTHORED_PREFIXES`; the prompt-fatigue failure it prevents is
-CHANGELOG `v0.16.0`). Never in this repo in ANY form: `campaigns/` pack
-content, `docs/customers`, `ext/`.
+**Clone-owned, never kernel source**, shipped only as `.j2` under `cs/templates/project/`: `.claude/`,
+`bin/cs_operator_cron.sh`, `company/*.md`, `manifest.toml`, `requirements.txt`. `company/**` is
+create-if-missing, never overwritten, never prompted about (`CLONE_AUTHORED_PREFIXES`; the prompt-fatigue
+failure it prevents is CHANGELOG `v0.16.0`). Never in this repo in ANY form: `campaigns/` pack content,
+`docs/customers`, `ext/`.
 
 ## Versioning & release
 
@@ -182,26 +178,23 @@ content, `docs/customers`, `ext/`.
 and clone-upgrade steps, the version-claim inventory and the mandatory sweep.
 Two rules stay here, because that file points back at this one for them.
 
-Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches. The version
-describes the INTERFACE: PATCH = behavior-identical fix; MINOR = new manifest field /
-adapter / new or changed CLI surface. A verb that stops prompting, or a flag that did
-not exist, is a MINOR even when the diff is small — an operator reading "patch" is
-entitled to expect nothing observable changed.
+Semver tags `v0.MINOR.PATCH`; clones pin **tags only**, never branches. The version describes the INTERFACE:
+PATCH = behavior-identical fix; MINOR = new manifest field / adapter / new or changed CLI surface. A verb
+that stops prompting, or a flag that did not exist, is a MINOR even when the diff is small — an operator
+reading "patch" is entitled to expect nothing observable changed.
 
-**The re-collaudo tier is a separate judgement, decided by what the release TOUCHES —
-never inferred from the version digit.** FULL on both clones when it touches send
-paths, `campaign`, `gmail_archive`, `send_mail`, the auth boundary or the permission
-surface (the same list invariant 4 escalates on), and FULL means the collaudo suite
-runs on BOTH clones before the tag ships. Otherwise declared per entry — static when
-the only observable surface is the help tree or stamped prose, `read` when a live
-engine call could plausibly differ. Every tag gets a CHANGELOG entry naming what
-changed, **which clones must re-collaudo**, at which tier, and — when the tier is
-below FULL for a MINOR — one line of why that is safe (brief §6.6). Bending this rule
-silently rots it; bending it in writing does not. Never push without the operator's
+**The re-collaudo tier is a separate judgement, decided by what the release TOUCHES — never inferred from
+the version digit.** FULL on both clones when it touches send paths, `campaign`, `gmail_archive`,
+`send_mail`, the auth boundary or the permission surface (the same list invariant 4 escalates on), and FULL
+means the collaudo suite runs on BOTH clones before the tag ships. Otherwise declared per entry — static
+when the only observable surface is the help tree or stamped prose, `read` when a live engine call could
+plausibly differ. Every tag gets a CHANGELOG entry naming what changed, **which clones must re-collaudo**,
+at which tier, and — when the tier is below FULL for a MINOR — one line of why that is safe (brief §6.6).
+Bending this rule silently rots it; bending it in writing does not. Never push without the operator's
 explicit ok.
 
 ## Tests
 
-`bash tests/run.sh` — each `step` line in the script names the gate it runs
-and what it proves, including the env-driven golden-pack gate that keeps clone
-copy out of this repo. Semantic tests only, no mock theatre.
+`bash tests/run.sh` — each `step` line in the script names the gate it runs and what it proves, including
+the env-driven golden-pack gate that keeps clone copy out of this repo. Semantic tests only, no mock
+theatre.

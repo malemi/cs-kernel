@@ -19,11 +19,16 @@ engine generation, and a send guard requests its own classification. Read-only
 RPCs do not themselves generate engine LLM spend; a draft-only policy does not
 make reasoning or generation free. Charging Claude to a subscription rather than
 API billing must be checked in its actual runtime authentication, not inferred
-from `claude -p` or the engine's credentials. The primary run supplies no
+from `claude -p` or the engine's credentials. The generic supervisor's primary run supplies no
 `--model` or `--max-budget-usd` flag. The fallback, when configured, supplies
 both; the budget flag is a soft guard that may be exceeded by one model call.
 The alternate key's provider-side limit is the final spending boundary. Never
 assume the engine's selected model is Claude's.
+
+A clone-owned executable may supply primary API authentication and its own
+budget flag before invoking Claude. Inspect that executable as well as the
+supervisor: the generic primary flags do not establish the clone's actual
+billing route or cap.
 
 The supervisor in [`operator_recovery.py`](../cs/operator_recovery.py) starts a
 second Claude process only after a structured, immediate quota or payment
@@ -78,7 +83,7 @@ sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
 refuses an older engine rather than treating an empty approval allowlist as a
 mutation policy. Supervised `cs chat` and `cs draft-reply` keep their existing
 contracts. The scheduled wrapper also denies raw RPC entry points that run
-update, reconsolidation, memory join/reset, preparation resume or
+update, reconsolidation, memory join/reset/restore, preparation resume or
 `instructions.store` in every supported command spelling; the wrapper denies
 the `cs instructions` verb itself the same way — compiling and storing the
 operator's standing instructions stays an interactive gesture.

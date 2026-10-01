@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 6258917d03977e729afca892ae8f46dfc564caba
-doc_baseline_date: 2026-09-21
+doc_baseline_commit: 43d17fdafd8f3012a57457adc75d1ff13fbdcd1b
+doc_baseline_date: 2026-10-01
 ---
 
 # Active Context — cs-kernel
@@ -68,10 +68,21 @@ operator activity, and CS_PAUSE does not stop engine processing.
   owner mail reports route/model changes and stops. Café 124 runs the generated
   draft-only wrapper; MrCall runs its clone-owned send launcher through the
   same supervisor. The supervisor checks each launcher's permissions against
-  its resolved triage mode before starting Claude. MrCall has no saved
-  OpenRouter key yet; its urgent missing-credential notice reached the owner.
+  its resolved triage mode before starting Claude. Both clones configure $4
+  fallback budgets. MrCall uses its clone-owned Anthropic API primary and
+  fixed missing/restored-key notices; its funded OpenRouter probe succeeded.
+  Recent observed scheduled ticks exit 0; that alone does not certify each reply.
+
+- Pricing and triage work is committed separately on
+  `work/pricing-triage-20261001` at `d16e3e5`; its five source files preserve
+  the original working copies exactly. Integration and acceptance remain open
+  under the [pricing plan](execution-plans/2026-09-21-pricing-skill-production-economics.md).
 
 ## Unresolved
+
+- Engine and direct-classifier failover remain separate from scheduled Claude
+  recovery; the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md)
+  is still active.
 
 - The [exact-draft-identity plan](execution-plans/2026-09-16-exact-draft-identity.md)
   specifies preservation proof, exact pairing and reconciliation. These are not

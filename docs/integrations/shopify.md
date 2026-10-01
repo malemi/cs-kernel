@@ -34,6 +34,10 @@ out of documentation and prompts. The existing loader supports bare `SHOPIFY_*`
 fallback; it does not use Vonage's strict credential-reference model or a
 `[connections.shopify]` binding.
 
+Python callers obtain an Admin token through
+`cs.crm.shopify.access_token(settings)`, which uses the same static-token
+precedence and cached credential exchange.
+
 ## Limits and failure handling
 
 - The query requests at most ten customer matches and does not paginate a store.
@@ -44,6 +48,9 @@ fallback; it does not use Vonage's strict credential-reference model or a
   the customer does not exist; inspect `ok` and `note` before using the rows.
 - CRM is auxiliary context. It does not override the dossier's contact/sending
   verdict, which relies on mailbox evidence.
+- Missing required customer facts yield `ok=false` with a note and partial
+  rows. Absent order counts or spending remain absent; they are not reported
+  as zero. A null last order is a valid result for a customer without orders.
 
 ## Verification and implementation
 
