@@ -54,6 +54,7 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 
 | doc | lines at review | verdict | date |
 |---|---|---|---|
+| docs/sessions/fccb0d91-e8bc-4b0d-b92a-e5cd72d306ed.md | 993 | keep whole — per-session scratch reconciled by its owning session, not maintained reference | 2026-10-01 |
 | docs/execution-plans/2026-07-28-eternal-operator-loop.md | 631 | keep whole — one argument, read start to finish when the plan is unblocked | 2026-08-26 |
 | docs/sessions/5df6e400-9157-4214-8267-426c0ebea560.md | 560 | keep whole — gitignored per-session scratch, not repository knowledge | 2026-08-26 |
 | README.md | 465 | keep whole — the clone-onboarding manual, read by section | 2026-08-26 |

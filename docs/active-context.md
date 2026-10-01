@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 6258917d03977e729afca892ae8f46dfc564caba
-doc_baseline_date: 2026-09-21
+doc_baseline_commit: 258c9277ffc408e5d4ba51e2018716c04830717c
+doc_baseline_date: 2026-10-01
 ---
 
 # Active Context — cs-kernel
@@ -19,11 +19,17 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.46.1`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.49.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  `mrcall-cs` installs the public `v0.46.1` tag at `2f4b07f` and reports
-  `0.46.1`; `124-cs` stays on `v0.46.0` at `82e611f`.
+  Both maintained clones report `0.49.0`; tag `v0.49.0` points to `1aea012`.
+  This checkout is based on `258c927`, behind published history, and declares
+  `0.46.1`. Its dirty source and local CHANGELOG are not the production tree.
+  Release history after this HEAD is available through `git show origin/main:CHANGELOG.md`.
+- Released `v0.49.0` adds `cs instructions`: clone company files own standing
+  instructions and `instructions.store` publishes their compiled engine copy.
+  This other-session change is absent from this checkout; its older charter
+  still describes USER_NOTES. Live engine acceptance is not established here.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
@@ -46,16 +52,25 @@ operator activity, and CS_PAUSE does not stop engine processing.
   ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
 - Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
   classifier. `cs memory` reports the ten-store memory map.
-- Untagged source makes `cs ask` negotiate engine read-only chat policy version
+- Local and released source make `cs ask` negotiate engine read-only chat policy version
   1 before sending a question. The scheduled wrapper denies all six command
-  spellings of each raw mutating memory/update/preparation RPC surface. Focused
-  policy tests, the deny-enumeration gate and `cs memory` pass; this is not
-  released or installed in a clone.
-- Untagged source includes interactive `cs draft-send <full-engine-draft-id>`:
+  spellings of update, reconsolidation, memory join/reset/restore and preparation
+  resume RPCs, including `memory.restore_version`. These capabilities are
+  included in the installed release; no new runtime test is claimed here.
+- Local and released source include interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
   Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
-  The command is absent from the released tag; clone installation is unverified.
+- Released scheduled-Claude recovery retries a proven pre-tool quota/payment
+  refusal through OpenRouter and sends fixed owner notices without an LLM.
+  Both clones configure a $4 fallback budget. MrCall's clone-owned launcher
+  uses an Anthropic API primary and reports missing/restored primary keys;
+  its latest observed tick exits 0. The local untracked supervisor predates
+  the released send-mode support and must not replace the installed package.
+- Local pricing and triage templates contain another session's uncommitted
+  workflow changes. Their brief records an exercise; release and installed
+  equivalence remain open in the
+  [pricing integration plan](execution-plans/2026-09-21-pricing-skill-production-economics.md).
 
 ## Unresolved
 
@@ -75,9 +90,11 @@ operator activity, and CS_PAUSE does not stop engine processing.
 
 ## Next
 
-1. Continue exact draft identity from its active plan; verify canonical send and
-   reconciliation before a new release/clone rollout. No send is part of doc-end.
-2. Diagnose unanswered-mail disagreement and close evidence/latency gaps in the
+1. Reconcile this checkout with published history in a separate integration,
+   preserving the pricing and other local changes.
+2. Continue exact draft identity from its active plan; verify canonical send and
+   reconciliation before a new release/clone rollout.
+3. Diagnose unanswered-mail disagreement and close evidence/latency gaps in the
    owning engine or kernel path rather than adding parallel judgement.
-3. Complete secondary-account onboarding when requested and replace internal
+4. Complete secondary-account onboarding when requested and replace internal
    verification terminology in operator-facing update output.

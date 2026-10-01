@@ -18,8 +18,13 @@ engine generation, and a send guard requests its own classification. Read-only
 RPCs do not themselves generate engine LLM spend; a draft-only policy does not
 make reasoning or generation free. Charging Claude to a subscription rather than
 API billing must be checked in its actual runtime authentication, not inferred
-from `claude -p` or the engine's credentials. The wrapper supplies no `--model`
+from `claude -p` or the engine's credentials. The generic wrapper supplies no `--model`
 or `--max-budget-usd` flag. Never assume the engine's selected model is Claude's.
+
+A clone-owned executable may supply primary API authentication and its own
+budget flag before invoking Claude. Inspect that executable as well as the
+wrapper: the generic flags do not establish the clone's actual billing route
+or cap.
 
 ## Direct kernel calls
 
@@ -46,7 +51,7 @@ sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
 refuses an older engine rather than treating an empty approval allowlist as a
 mutation policy. Supervised `cs chat` and `cs draft-reply` keep their existing
 contracts. The scheduled wrapper also denies raw RPC entry points that run
-update, reconsolidation, memory join/reset or preparation resume in every
+update, reconsolidation, memory join/reset/restore or preparation resume in every
 supported command spelling.
 
 ## Inspect before recommending or pausing
