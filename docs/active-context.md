@@ -27,7 +27,7 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.51.0`. Current HEAD status: tagged as `v0.51.0`.** These
+- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
   Both maintained clones install public `v0.50.0` at `29ab764` and report
