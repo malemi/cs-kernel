@@ -1,0 +1,170 @@
+---
+status: active
+---
+
+# Legal-research kernel skill execution plan
+
+Approved brief: [2026-10-08-legal-research-skill.md](../briefs/2026-10-08-legal-research-skill.md).
+Brief review: first pass REVISE on `5158e14`; re-review APPROVED on
+`db85607`, reviewed brief SHA-256
+`3d66735c3caa11342a369d93788c2d7fc47aa8dfd7b166eb345488ccb16fc1ba`.
+
+## Classification and ownership
+
+Substantial development: a new stamped skill changes the operator surface of
+every clone. It is not a fast-path change.
+
+The lead owns the skill text, routing, tests, documentation and reviews. The
+work is seven small template files and edits to seven existing files, so
+implementation is not delegated; gate runs and native acceptance run inline.
+Each review gate uses a fresh reviewer.
+
+All changes land on branch `feat/legal-research-skill` in the worktree
+`/home/mal/worktrees/cs-kernel-legal-research`. Commits by explicit path on
+that branch are part of the work. No push, tag, release, clone upgrade or
+change outside this worktree is authorized.
+
+## Dependencies and baseline evidence
+
+- Base: `origin/main` at `9780920` (`v0.51.0` plus two documentation commits).
+- `bash tests/run.sh` on the unmodified branch: 70 gates, all green. The
+  golden-pack gate is skipped by design; it is env-driven.
+- Baseline render of the base with `_FULL_INIT_DATA`, generic shape. SHA-256 of
+  the three surfaces that must not change:
+  - `.claude/skills/cs-triage-mail/SKILL.md` `3bcf71668e55d7d7f7e9c1d44cb5c9317c4f90c7c9c629d8c9a859819dc0c64d`
+  - `.claude/settings.json` `58f5ada0513b2607f115ccf80528436c533939760280917eb096bca0251a91e0`
+  - `bin/cs_operator_cron.sh` `00aaea8be348579cd9fce61d02d8dd15903ba005f12d26dbb7ed3b7503319da9`
+- Interpreters: `tests/run.sh` builds its own environment with `pip install`.
+  Focused tests run with `/home/mal/hb/cs-kernel/.venv/bin/python`, which holds
+  `cs-kernel` 0.45.0; the tests import the worktree source through their own
+  `sys.path` insert, and any leg that needs the installed package runs only
+  under `tests/run.sh`.
+- Native hosts on the acceptance machine: Claude Code 2.1.291, Codex 0.161.0,
+  OpenCode 1.18.35. Codex there also loads the user-level
+  `ricerca-giuridica-it`.
+- Source skill `~/.codex/skills/ricerca-giuridica-it/`, SHA-256:
+  - `SKILL.md` `b0b665c5437664c61e8ae0f299d7a4daaa021586c9fdd002dc2bb5f2f1062083`
+  - `PROVENANCE.md` `6a55ad3c2010685cc22db1150e67878055375248f02ace2fc27d3d20e3f52340`
+  - `references/administrative-remedies.md` `e5f41994199e19a6f248b38da43cec40de0177f647ad5fc4d8eedbca5ddc465b`
+  - `references/deadlines.md` `d2f9ee5a2d4be07d0ae7d2d236f958721e74da40084e04b4667495d899e3dd86`
+  - `references/evidence.md` `ec693466f0d91bc749516147d659f443ac4e03b25f198f31d2cab5d9977e7a99`
+  - `references/sources.md` `46639a4e2e50bf677f8dffd39f2f3fa007a6afdb45c90e2d4d710a5893075c37`
+  - `scripts/count_days.py` `1fac35e1e3bf1ffedc49bcb3df256ba8f06d968b481e814261862a4fe908cb07`
+- Constraints verified before planning: a plain `.py` in the template tree is
+  byte-compiled by `pip install` and breaks `cs update`; under the kernel's
+  Jinja environment `{% raw -%}` + newline + body + `{% endraw %}` + newline
+  renders the body byte for byte, while an opener without the dash leaves a
+  leading newline. The form is exact only when the body starts with a
+  non-whitespace character and contains no `endraw` tag: the dash also strips
+  leading blank lines and indentation, and an `endraw` inside the body is a
+  template syntax error. The contract gate therefore compares rendered bytes
+  with the body.
+- With all seven files as `.j2`, the installed-template inventory gate counts
+  49 templates: the 42 of the base plus these seven.
+
+## M1 — Skill, routing and gates
+
+**Templates.** Add under
+`cs/templates/project/.claude/skills/cs-legal-research/`:
+
+| Template | Content |
+|---|---|
+| `SKILL.md.j2` | The source `SKILL.md` with four edits: `name: cs-legal-research`; a description that confines selection to the interactive human's own question and excludes the scheduled operator and customer mail; a `## When this skill applies` section stating the same and pointing legal customer mail at the Escalate branch of `cs-triage-mail`; the closing provenance sentence without "local". No Jinja variable. |
+| `references/sources.md.j2` | Source file in one raw block. Renders byte-identical to the source. |
+| `references/administrative-remedies.md.j2` | Same. |
+| `references/evidence.md.j2` | Same. |
+| `references/deadlines.md.j2` | Source file in one raw block with the helper named and invoked by its path inside a clone: `.venv/bin/python .claude/skills/cs-legal-research/scripts/count_days.py`. |
+| `scripts/count_days.py.j2` | Source helper in one raw block. Renders byte-identical to the source. |
+| `PROVENANCE.md.j2` | The source provenance in one raw block, restated for this copy: same upstream repository, commit, directory, licence and review date; "newly written"; no session narrative. |
+
+`agents/openai.yaml` is not added.
+
+**Routing.** In `cs/templates/project/AGENTS.md.j2` § 4 add the skill to the
+interactive list with its boundary. In
+`cs/templates/project/.claude/skills/cs-help/SKILL.md.j2` add a table row, one
+"Or just ask" example and the name in the closing skill list.
+
+**Gates.**
+
+- `tests/test_template_render.py`: add `cs-legal-research` to
+  `expected_skills`.
+- New `tests/test_legal_research_skill.py`, exporting the file list the other
+  gates import: no Python source or bytecode in the template roots; the skill's
+  templates are exactly the seven `.j2`; each supporting template is one raw
+  block of LF-ended UTF-8 text; a rendered clone holds exactly the seven files,
+  each byte-identical to its raw block, in the checksum ledger and resolved
+  identically by `.agents` and `.opencode`; every relative link resolves; the
+  description confines selection; the stamped helper reproduces ten arithmetic
+  cases and six refusals through each of the three host paths; settings and
+  cron wrapper name neither the skill nor its helper; triage still carries the
+  Escalate branch; `AGENTS.md` and `cs-help` route to the skill. Under
+  `tests/run.sh` it also renders from the pip-installed package and asserts the
+  seven files and no bytecode in the clone.
+- `tests/test_agent_surfaces.py`: the real rendered clone and the forced
+  copy fallback resolve every file of the skill for both linked hosts.
+- `tests/test_stamped_surfaces.py`: the real `cs update` run adds the seven
+  files to a clone that predates the skill, with both hosts resolving them.
+- `tests/run.sh`: step 62 runs the new test.
+
+**Documentation owned by M1.** `docs/agent-skills.md` gains the
+supporting-file contract and the legal-research section with its
+instruction-level boundary.
+
+**Verification**, from the worktree, logs retained in the session scratch
+directory:
+
+```bash
+PY=/home/mal/hb/cs-kernel/.venv/bin/python
+$PY tests/test_template_render.py
+$PY tests/test_legal_research_skill.py
+$PY tests/test_agent_surfaces.py
+$PY tests/test_stamped_surfaces.py
+rm -rf build && bash tests/run.sh
+```
+
+Then render the branch with the baseline's variables and compare the three
+SHA-256 values above.
+
+A fresh reviewer evaluates M1 against the brief and this plan before M2.
+
+## M2 — Native three-host acceptance
+
+Render a fixture clone from the branch into a scratch directory and initialize
+a git repository there. In that directory run one non-interactive prompt per
+host — Claude Code, Codex, OpenCode — that asks the agent to name the legal
+research skill it discovers, state the path it loaded the skill from, read
+`references/sources.md` through that same skill directory and quote its first
+heading, and do nothing else. No mail, no engine, no clone and no network
+service other than each host's own model provider is involved.
+
+Evidence per host: the command line, exit status, the raw transcript kept in
+the session scratch directory, the quoted heading and the path. The Codex
+evidence must show `.agents/skills/cs-legal-research/`. Results are recorded
+below. One observed discovery per host is what this establishes.
+
+## Closure
+
+Final review by a fresh reviewer through the final-user path: a rendered clone
+and the acceptance evidence, not the diff alone. Then `doc-end`: reconcile
+`docs/active-context.md`, `docs/README.md` and `docs/agent-skills.md`, run the
+mechanical gate and `doc-critic`, then `doc-check.py --completion check` and
+`--completion finalize`.
+
+## Rollback
+
+Revert the branch commits; nothing outside this worktree is touched before a
+release. After a release, a clone that received the skill keeps its seven files
+when a later kernel drops them, because `cs update` does not remove a file the
+template stopped shipping; removing them is a `git rm` in that clone.
+
+## Note for the next release
+
+This plan releases nothing. When a tag is authorized, the change is a MINOR: a
+new stamped skill. Re-collaudo: both maintained clones, tier `static`. Why that
+is safe for a MINOR: the change is stamped prose and one side-effect-free
+helper; no send path, campaign, mailbox read, auth boundary or permission
+surface is touched and no `cs/*.py` changes.
+
+## Results
+
+Pending.
