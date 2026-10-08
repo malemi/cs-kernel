@@ -8,6 +8,12 @@ Approved brief: [2026-10-08-legal-research-skill.md](../briefs/2026-10-08-legal-
 Brief review: first pass REVISE on `5158e14`; re-review APPROVED on
 `db85607`, reviewed brief SHA-256
 `3d66735c3caa11342a369d93788c2d7fc47aa8dfd7b166eb345488ccb16fc1ba`.
+Acceptance 7 was amended at `17bab69` after this plan's first review
+(SHA-256 `399175052e1c0f8ec25f3c73e3e48848a2f23d865a4493e16c952f5407d40d84`):
+Codex reports a linked skill root by its target, and discovery is taken from
+what each host reports. The amendment's review is recorded under Results.
+Plan review: first pass REVISE on `5567483`, three required changes, all
+applied in this revision.
 
 ## Classification and ownership
 
@@ -39,9 +45,12 @@ change outside this worktree is authorized.
   `cs-kernel` 0.45.0; the tests import the worktree source through their own
   `sys.path` insert, and any leg that needs the installed package runs only
   under `tests/run.sh`.
-- Native hosts on the acceptance machine: Claude Code 2.1.291, Codex 0.161.0,
-  OpenCode 1.18.35. Codex there also loads the user-level
-  `ricerca-giuridica-it`.
+- Native hosts on the acceptance machine: Claude Code, Codex and OpenCode are
+  installed. Claude Code updates itself, so each host's version is recorded at
+  run time under Results. Codex also loads user-level skills.
+- On 2026-10-08 the operator authorized removing the user-level Codex original
+  `~/.codex/skills/ricerca-giuridica-it/`. It is removed after M1 is committed,
+  so that the committed templates are the durable copy, and before M2.
 - Source skill `~/.codex/skills/ricerca-giuridica-it/`, SHA-256:
   - `SKILL.md` `b0b665c5437664c61e8ae0f299d7a4daaa021586c9fdd002dc2bb5f2f1062083`
   - `PROVENANCE.md` `6a55ad3c2010685cc22db1150e67878055375248f02ace2fc27d3d20e3f52340`
@@ -92,8 +101,9 @@ interactive list with its boundary. In
   gates import: no Python source or bytecode in the template roots; the skill's
   templates are exactly the seven `.j2`; each supporting template is one raw
   block of LF-ended UTF-8 text; a rendered clone holds exactly the seven files,
-  each byte-identical to its raw block, in the checksum ledger and resolved
-  identically by `.agents` and `.opencode`; every relative link resolves; the
+  all in the checksum ledger and resolved identically by `.agents` and
+  `.opencode`, with each of the six supporting files byte-identical to its raw
+  block; every relative link resolves; the
   description confines selection; the stamped helper reproduces ten arithmetic
   cases and six refusals through each of the three host paths; settings and
   cron wrapper name neither the skill nor its helper; triage still carries the
@@ -129,26 +139,36 @@ A fresh reviewer evaluates M1 against the brief and this plan before M2.
 
 ## M2 — Native three-host acceptance
 
-Render a fixture clone from the branch into a scratch directory and initialize
-a git repository there. In that directory run one non-interactive prompt per
-host — Claude Code, Codex, OpenCode — that asks the agent to name the legal
-research skill it discovers, state the path it loaded the skill from, read
-`references/sources.md` through that same skill directory and quote its first
-heading, and do nothing else. No mail, no engine, no clone and no network
-service other than each host's own model provider is involved.
+Render a fixture clone from the branch into a scratch directory, with a company
+slug nothing else on the machine uses, and initialize a git repository there.
+No mail, no engine, no clone and no network service other than each host's own
+model provider is involved.
 
-Evidence per host: the command line, exit status, the raw transcript kept in
-the session scratch directory, the quoted heading and the path. The Codex
-evidence must show `.agents/skills/cs-legal-research/`. Results are recorded
-below. One observed discovery per host is what this establishes.
+Discovery is taken from what the host reports and the read from the host's
+event stream. An agent's own sentence about what it loaded is not evidence.
+
+| Host | Discovery evidence | Read evidence |
+|---|---|---|
+| Codex | `codex debug prompt-input`, run inside the fixture; it makes no model call. The skill list names `cs-legal-research` with its file under a root alias, and the alias legend places that root inside the fixture. Codex resolves the `.agents/skills` link, so the root it prints is `.claude/skills`. In a copy of the fixture without `.agents/skills` the same command lists no `cs-` skill. | `codex exec --json --sandbox read-only`: the event that reads `references/sources.md` under the fixture's skill directory, with its output. |
+| OpenCode | `opencode debug skill`, run inside the fixture; no model call. `cs-legal-research` is registered at a location inside the fixture. OpenCode reads `.opencode/skills`, `.agents/skills` and `.claude/skills`, which are one tree here, and reports one of them. | `opencode run --format json`: the tool event that reads the reference, with its path. |
+| Claude Code | `claude -p` with `--output-format stream-json --verbose` and only `Read`, `Glob`, `Grep` and `Skill` allowed: the `Skill` tool call and its result, and the init event's skill list where the stream carries one. | Same stream: the `Read` call on `.claude/skills/cs-legal-research/references/sources.md` and its result. |
+
+Each model run gets one prompt: load the project skill `cs-legal-research`,
+read its sources reference through the skill's own directory, reply with that
+reference's first heading, and do nothing else.
+
+Results record, per host: the command lines, the host version, the exit
+statuses, the decisive event lines, and the SHA-256 and path of each raw
+transcript kept in the session scratch directory. One observed discovery per
+host is what this establishes.
 
 ## Closure
 
-Final review by a fresh reviewer through the final-user path: a rendered clone
-and the acceptance evidence, not the diff alone. Then `doc-end`: reconcile
-`docs/active-context.md`, `docs/README.md` and `docs/agent-skills.md`, run the
-mechanical gate and `doc-critic`, then `doc-check.py --completion check` and
-`--completion finalize`.
+`doc-end` first: reconcile `docs/active-context.md`, `docs/README.md` and
+`docs/agent-skills.md`, run the mechanical gate and `doc-critic`, then
+`doc-check.py --completion check`. Then the final review by a fresh reviewer
+through the final-user path: a rendered clone and the acceptance evidence, not
+the diff alone. After APPROVED, `doc-check.py --completion finalize`.
 
 ## Rollback
 
