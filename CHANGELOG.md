@@ -1,6 +1,6 @@
 # Changelog — cs-kernel
 
-## v0.51.0 — 2026-10-08 (MINOR, release candidate)
+## v0.51.0 — 2026-10-08 (MINOR)
 
 ### Bounded fan-out history and honest mailbox scope
 
