@@ -219,8 +219,44 @@ surface is touched and no `cs/*.py` changes.
 
 ### M1 review
 
-Pending.
+APPROVED by a fresh reviewer on `915d7b4`, with no required change: the commit
+holds exactly the fifteen planned files, the four verbatim files are
+byte-identical to the source, every other difference is one of the four kinds
+the brief allows, and each recorded number reproduced. Two of its remarks are
+applied in `186c367`: the `cs-help` check now holds the table row, the example
+and the closing list separately, and the bytecode comment in the
+stamped-surfaces gate says what it catches. A third, the exact condition under
+which a raw block renders verbatim, is corrected in `docs/agent-skills.md` at
+closure.
 
-### M2
+### M2 — native discovery on the three hosts, kernel at `186c367`
+
+Fixture: a clone rendered from the branch with the slug `legalfixture`, a git
+repository, `.agents/skills` and `.opencode/skills` linking to
+`../.claude/skills`. Raw transcripts are in the session scratch directory
+`scratchpad/m2/`; their SHA-256 values are below. Prompt of each model run:
+"Load the project skill named cs-legal-research. Then read the file
+references/sources.md inside that skill's own directory and reply with only its
+first heading line. Do nothing else: no web access, no other files, no other
+commands."
+
+| Host | Discovery, from the host | Read, from the event stream |
+|---|---|---|
+| Codex `codex-cli 0.161.0` | `codex debug prompt-input`, exit 0, no model call: `cs-legal-research … (file: r3/cs-legal-research/SKILL.md)` with `r3` = `<fixture>/.claude/skills`. In a copy without `.agents/skills`: no `cs-` skill listed. Transcripts `3afdfb01…` and `40f074da…`. | `codex exec --json --sandbox read-only -C <fixture>`, exit 0: `command_execution` of `cat .claude/skills/cs-legal-research/references/sources.md`, output beginning `# Source retrieval and legal validation`. Transcript `cd16c1e8…`. |
+| OpenCode `1.18.35` | `opencode debug skill`, exit 0, no model call: registered at `<fixture>/.opencode/skills/cs-legal-research/SKILL.md`, bytes equal to the canonical file. Transcript `3de45e0f…`. | `opencode run --format json --dir <fixture>`, exit 0: tool `skill` with `name: cs-legal-research` completed, then tool `read` of `<fixture>/.opencode/skills/cs-legal-research/references/sources.md`. Transcript `e96594a8…`. |
+| Claude Code `2.1.294` | `claude -p … --allowedTools Read,Glob,Grep,Skill --output-format stream-json --verbose`, exit 0: the init event lists the skill (skills, slash_commands); `Skill` tool call with `skill: cs-legal-research`, answered with `Base directory for this skill: <fixture>/.claude/skills/cs-legal-research`. | Same stream: `Read` of `<fixture>/.claude/skills/cs-legal-research/references/sources.md`, result line 1 `# Source retrieval and legal validation`. Transcript `8c9abc36…`. |
+
+The canonical `SKILL.md` of the fixture is SHA-256 `d903fcf1…` and
+`references/sources.md` is `46639a4e…`, the source skill's own value.
+
+Codex listed one other legal skill in every run, the user-level original:
+`ricerca-giuridica-it … (file: r0/ricerca-giuridica-it/SKILL.md)` with `r0` =
+`~/.codex/skills`. Its root is outside the fixture.
+
+This establishes one observed discovery and one reference read per host. It
+does not establish automatic selection from a plain-language question,
+scheduled-run behavior or the quality of a legal answer.
+
+### Closure
 
 Pending.
