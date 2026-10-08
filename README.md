@@ -384,8 +384,8 @@ from this address across the configured scope — a mailbox is never asked
 about its own owner; every answer prints read, unreadable and skipped mailboxes), `unanswered`, `tasks`, `business`,
 `drive`, `llm`, `config` (the settings in force and which file declares
 each — ask it rather than reading the manifest and the `.env` chain);
-**gated writing**: `draft-reply` / `chat` (drafts only,
-never send), `campaign` (Sent-dedup, pause file), `draft-delete` (move
+**gated writing**: `draft-reply` (scoped drafts only) / `chat` (explicit tool
+approvals; generic chat has no assignment-thread scope guard), `campaign` (Sent-dedup, pause file), `draft-delete` (move
 ONE named draft to Trash), `tasks
 create`/`close`, `handled` (this contact was resolved off-email — by phone,
 WhatsApp, in person — so their mail up to that moment stops being raised),
@@ -395,7 +395,7 @@ age, instead of being handed out as work);
 **standing rules**: `instructions` (preview compiled company rules;
 `--commit` publishes them through the engine); **plumbing**: `rpc`, `project`.
 
-### Company thread assignments (release candidate)
+### Company thread assignments
 
 `cs assignment status`, `preview`, `export` and `commit` consume the engine's
 company task subtype. An independent host operator approves exact writes;

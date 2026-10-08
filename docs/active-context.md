@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: eae4d260ee09a04aaa90c4558bccaf77e6d53c61
+doc_baseline_commit: 18242a4d3a573bb4dd22767fbb603520e6568557
 doc_baseline_date: 2026-10-08
 ---
 
@@ -14,13 +14,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-Candidate [thread assignments](task-assignment.md) pass local CLI/transport,
-full-suite and nine native workflow cases across Claude, Codex and OpenCode.
-Version `v0.51.0` is prepared for authorized release. Both clone candidates pass
-current scoped FULL acceptance and real bounded provider reads; the legacy July
-harness remains red on the installed `v0.50.0` baseline. Production trust,
-activation and original-clone upgrades remain pending. Local hardening is closed
-with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+Released [thread assignments](task-assignment.md) use signed engine authority,
+guarded scoped drafts and exact inbound coverage. Both maintained clones install
+`v0.51.0`; current scoped FULL and real bounded provider acceptance pass. The
+legacy July harness remains red on the retained `v0.50.0` baseline. Six hosted
+engines have verified assignment reads and root-owned trust. Local hardening is
+closed with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
 
 The unattended operator runs through Claude Code; engine APIs and kernel direct
 classifiers have separate models, billing and stop controls. See
@@ -30,9 +29,9 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Both maintained clones install public `v0.50.0` at `29ab764` and report
-  `0.50.0`. Their lockfiles independently rebuild that exact tag; static
-  verification and authenticated identity reads pass on both.
+  Both maintained clones install public `v0.51.0` at `5609207` and report
+  `0.51.0`. Lock-only rebuilds resolve that exact tag; authenticated identity,
+  complete assignment-list and draft-policy capability reads pass on both.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
@@ -50,12 +49,12 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - `cs-triage-mail` reads an optional clone-owned
   `company/customer-service-playbook.md`; the shared skill retains send and
   tool-approval boundaries across all three agent surfaces.
-- Candidate `v0.51.0` adds bounded cross-mailbox reads with a fixed self-owner
+- Release `v0.51.0` adds bounded cross-mailbox reads with a fixed self-owner
   skip and named read/unreadable/skipped scope. Incomplete evidence refuses
   applicable sends; `send-first` retains its existing ungated contact-state path.
   [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md) records
   real provider history, RFC-key parity and bounded FETCH latency on both clone
-  candidates. Publication and original-clone installation remain pending.
+  candidates. Both original clones now install the immutable release.
 - Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
   classifier. `cs memory` reports the ten-store memory map.
 - `cs ask` negotiates engine read-only chat policy version
@@ -105,7 +104,10 @@ operator activity, and CS_PAUSE does not stop engine processing.
   implemented; a Gmail send outside the engine can still leave a stale mirrored
   draft. Current pairing uses thread/recipient inference, and Gmail-only rows
   have no authored body in review. Dated inventory counts are in the archive.
-- Live unanswered-mail parity and review-latency acceptance remain open.
+- MrCall support and Mario have separate company spaces: peer assignment
+  evidence remains unknown across that boundary. No company join is part of
+  this release. Live unanswered-mail parity and review-latency acceptance
+  remain open.
   `cs unanswered --all-buckets` reports incomplete assignment authority and
   exits 3; canonical triage guidance retains held threads.
 - Clone-local help routing and MrCall triage prose contain reviewed corrections

@@ -1,3 +1,31 @@
+## 2026-10-08 — Superseded release state
+
+**Current operational pin** (2026-10-08): **`v0.50.0` on both maintained
+clones**. Both install public tag `29ab764`, report `0.50.0`, and pass
+independent lock-only rebuilds resolving that exact commit. Static verification
+passes on both clones, including runtime equality, command help, canonical
+instruction skills, preserved controls and authenticated `cs whoami` reads.
+Local documentation adaptations preserve the installed harness routing and
+correct older company/triage guidance. Production standing-rule publication and
+paid draft/send behavior are outside these checks. The prior operational record
+is preserved verbatim in `docs/active-context-archive.md`.
+
+## 2026-10-08 — Superseded release state
+
+Both maintained clones install public `v0.50.0` at `29ab764` and report
+  `0.50.0`. Their lockfiles independently rebuild that exact tag; static
+  verification and authenticated identity reads pass on both.
+
+## 2026-10-08 — Superseded release state
+
+Candidate [thread assignments](task-assignment.md) pass local CLI/transport,
+full-suite and nine native workflow cases across Claude, Codex and OpenCode.
+Version `v0.51.0` is prepared for authorized release. Both clone candidates pass
+current scoped FULL acceptance and real bounded provider reads; the legacy July
+harness remains red on the installed `v0.50.0` baseline. Production trust,
+activation and original-clone upgrades remain pending. Local hardening is closed
+with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+
 ## 2026-10-08 — Release candidate before current FULL acceptance
 
 Candidate [thread assignments](task-assignment.md) pass local CLI/transport,

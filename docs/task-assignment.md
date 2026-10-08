@@ -2,11 +2,13 @@
 
 ## Availability
 
-This consumer is local source work under
-[the delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
+This consumer ships in `v0.51.0` and is installed in both maintained clones.
 CLI, queues, draft guards and canonical workflows consume the same engine
-authority. The delivery plan owns source, transport and three-host acceptance. Existing released
-clones and production engines have not been upgraded by this task.
+authority. The [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md)
+owns local source/transport/native acceptance. Six hosted engines have compatible
+source and verified root-owned trust. Café 124's four members share one space;
+MrCall support and Mario retain separate spaces, so cross-space assignment and
+peer evidence remain unavailable. Release verification creates no real assignment.
 
 The engine owns assignment state, membership, source verification and signed
 mutation authority. The kernel keeps no assignment ledger and never signs or
@@ -99,6 +101,8 @@ Protocol version 1 and configured peer identity/company are checked explicitly.
 Unavailable methods, malformed responses and unreadable source are unknown;
 no fallback turns them into successful absence. The delivery plan retains
 canonical workflow and scheduled-wrapper verification.
-Offline fixtures do not establish live mailbox parity or latency, installed
-Desktop behavior or FULL acceptance on both maintained clones. Release,
-production trust setup and clone upgrades require separate authorization.
+Offline fixtures alone do not establish live mailbox parity or latency.
+Separately authorized release checks verify scoped current FULL on both clones,
+real provider reads, root key permissions, six hosted activations and reproducible
+clone locks. Customer sends, paid ticks, real assignment mutations and installed
+Desktop GUI behavior remain unverified.
