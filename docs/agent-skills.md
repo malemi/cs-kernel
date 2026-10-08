@@ -79,9 +79,9 @@ directory whose whole body is a single raw block:
 
 It is stamped byte for byte to the same path without the suffix, through the
 same render, checksum ledger and host links as `SKILL.md`. The form is exact
-when the body starts with a non-whitespace character and contains no `endraw`
-tag; the contract gate compares the stamped bytes with the body. A supporting
-file is UTF-8 text with LF line endings.
+when the body starts with a non-whitespace character, ends with a newline and
+contains no `endraw` tag; the contract gate compares the stamped bytes with
+the body. A supporting file is UTF-8 text with LF line endings.
 
 A plain `.py` never ships in the template tree. `pip install` byte-compiles
 it, and both stamping walks take every file they meet: `cs init` stamps the
@@ -109,3 +109,10 @@ escalates a legal-sensitive customer message. No permission rule enforces the
 boundary: the stamped settings allow the `Skill` tool and the cron wrapper
 denies no skill by name. The wrapper's send and draft boundaries do not depend
 on which skill a run loads, and the helper is on no allow list.
+
+In a rendered fixture each supported host lists the skill from a root inside
+the fixture and reads a reference document through its own skill path, with
+discovery taken from the host's own report. That is one observed case per
+host; it does not establish automatic selection from a plain-language
+question. The [execution record](execution-plans/2026-10-08-legal-research-skill.md)
+owns the evidence.

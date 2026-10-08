@@ -76,6 +76,13 @@ operator activity, and CS_PAUSE does not stop engine processing.
   independently checked publication, Git and refusal evidence. Implementation
   and final review are approved; both maintained clones install the workflow
   through the [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+- `cs-legal-research` is a stamped skill for the interactive human's own legal
+  questions under Italian and EU law, with four reference documents and a
+  date-arithmetic helper, all shipped as `.j2` templates and stamped verbatim
+  ([agent-skills.md](agent-skills.md)). Its interactive-only boundary is
+  instruction-level. Local gates pass and each host discovers it natively in a
+  fixture ([plan](execution-plans/2026-10-08-legal-research-skill.md)). It is
+  untagged and no clone installs it.
 - Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.

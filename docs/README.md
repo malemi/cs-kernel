@@ -21,6 +21,8 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 
 - [Conversational standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md) — canonical three-host workflow; [brief](briefs/2026-10-07-cs-instructions-skill.md).
 
+- [Legal research skill](execution-plans/2026-10-08-legal-research-skill.md) — stamped `cs-legal-research` with supporting files and its three-host discovery record; [brief](briefs/2026-10-08-legal-research-skill.md).
+
 - [Desktop/kernel hardening closure](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md) — local contract/gate evidence and remaining owners; [brief](briefs/2026-10-07-desktop-kernel-hardening-closure.md).
 - [Human thread ownership design](2026-10-07-human-thread-ownership-design.md) — reviewed lifecycle and selected engine mechanism.
 - [Engine-owned thread assignments](task-assignment.md) — CLI, queues, approval/source boundaries and compatibility; [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
