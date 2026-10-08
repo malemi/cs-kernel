@@ -123,10 +123,13 @@ this work.
 6. `bash tests/run.sh` reports all gates green.
 7. In a rendered fixture, Claude Code, Codex and OpenCode each discover
    `cs-legal-research` and read one reference document through their own skill
-   path. The Codex evidence shows the `.agents/skills/cs-legal-research/` path,
-   because Codex on the acceptance machine also loads the user-level original.
-   This establishes the observed discovery on each host, not future automatic
-   selection, scheduled-run behavior or the quality of any legal answer.
+   path. Discovery is taken from what each host itself reports, never from the
+   agent's own statement. Codex also loads user-level skills, so its evidence
+   shows the skill listed under a skill root inside the fixture and absent once
+   the fixture's `.agents/skills` is removed; Codex resolves that link, so the
+   root it reports is the link's target. This establishes the observed
+   discovery on each host, not future automatic selection, scheduled-run
+   behavior or the quality of any legal answer.
 
 ## Assumptions and prerequisites
 
