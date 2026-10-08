@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: 9780920d4f742f16436bd407566a1ed2352da518
+doc_baseline_commit: 672d702211d04ba2f944daa71693570a7b8d6529
 doc_baseline_date: 2026-10-08
 ---
 
@@ -110,10 +110,11 @@ operator activity, and CS_PAUSE does not stop engine processing.
   implemented; a Gmail send outside the engine can still leave a stale mirrored
   draft. Current pairing uses thread/recipient inference, and Gmail-only rows
   have no authored body in review. Dated inventory counts are in the archive.
-- MrCall support and Mario have separate company spaces: peer assignment
-  evidence remains unknown across that boundary. No company join is part of
-  this release. Live unanswered-mail parity and review-latency acceptance
-  remain open.
+- MrCall support and Mario share support's company space through a separately
+  authorized fenced join on the existing released engine. Both identities have
+  complete assignment and shared project reads; private tasks/mail remain isolated.
+  No real assignment is created. Live unanswered-mail parity and review-latency
+  acceptance remain open.
   `cs unanswered --all-buckets` reports incomplete assignment authority and
   exits 3; canonical triage guidance retains held threads.
 - Clone-local help routing and MrCall triage prose contain reviewed corrections

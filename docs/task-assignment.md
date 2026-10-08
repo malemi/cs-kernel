@@ -7,8 +7,10 @@ CLI, queues, draft guards and canonical workflows consume the same engine
 authority. The [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md)
 owns local source/transport/native acceptance. Six hosted engines have compatible
 source and verified root-owned trust. Café 124's four members share one space;
-MrCall support and Mario retain separate spaces, so cross-space assignment and
-peer evidence remain unavailable. Release verification creates no real assignment.
+MrCall support and Mario share support's company space after a separately
+authorized fenced join. Both members have complete authenticated assignment reads
+and shared project access; private mail and ordinary/Qonto tasks remain isolated.
+Real assignment writes and live peer-answer parity remain unverified.
 
 The engine owns assignment state, membership, source verification and signed
 mutation authority. The kernel keeps no assignment ledger and never signs or

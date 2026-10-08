@@ -1,3 +1,20 @@
+## 2026-10-08 — Before authorized MrCall company sharing
+
+- The [exact-draft-identity plan](execution-plans/2026-09-16-exact-draft-identity.md)
+  specifies preservation proof, exact pairing and reconciliation. These are not
+  implemented; a Gmail send outside the engine can still leave a stale mirrored
+  draft. Current pairing uses thread/recipient inference, and Gmail-only rows
+  have no authored body in review. Dated inventory counts are in the archive.
+- MrCall support and Mario have separate company spaces: peer assignment
+  evidence remains unknown across that boundary. No company join is part of
+  this release. Live unanswered-mail parity and review-latency acceptance
+  remain open.
+  `cs unanswered --all-buckets` reports incomplete assignment authority and
+  exits 3; canonical triage guidance retains held threads.
+- Clone-local help routing and MrCall triage prose contain reviewed corrections
+  beyond the tagged templates. Preserve these documentation adaptations on the
+  next stamp; the factory help/triage descriptions still need alignment.
+
 ## 2026-10-08 — Superseded release state
 
 **Current operational pin** (2026-10-08): **`v0.50.0` on both maintained
