@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -41,7 +42,7 @@ SEMVER = r"\d+\.\d+\.\d+"
 COLLAUDO_TIERS = ("static", "live read-only", "full")
 
 # Charter §1 tokens: the company literals the gate must reject. The same list has
-# to appear in CLAUDE.md's documented grep AND in the pattern tests/run.sh runs.
+# to appear in the kernel charter's documented grep AND in the pattern tests/run.sh runs.
 COMPANY_TOKENS = (
     "mrcall\\.ai",
     "cafe124",
@@ -240,6 +241,21 @@ def _best_leg(legs: list[tuple[str, str]]) -> tuple[str, str]:
     return max(legs, key=lambda leg: sum(t in leg[1] for t in COMPANY_TOKENS))
 
 
+def load_charter(root: Path, index_file: str) -> str:
+    index_path = (root / index_file).resolve()
+    assert index_path.is_relative_to(root.resolve()), "charter index escapes repository"
+    index = index_path.read_text(encoding="utf-8")
+    links = set(re.findall(r"\[kernel charter\]\(([^)]+)\)", index, re.I))
+    if not links:
+        assert grep_legs(index), "index declares no kernel charter link or inline gate"
+        return index
+    assert len(links) == 1, "index declares ambiguous kernel charter links"
+    path = (index_path.parent / links.pop()).resolve()
+    assert path.is_relative_to(root.resolve()), "kernel charter link escapes repository"
+    assert path.is_file(), "kernel charter link does not name a file"
+    return path.read_text(encoding="utf-8")
+
+
 def check_executing_charter_gate(runner: str, charter: str) -> None:
     runner_legs = grep_legs(runner)
     assert runner_legs, (
@@ -271,18 +287,18 @@ def check_executing_charter_gate(runner: str, charter: str) -> None:
 
     charter_legs = grep_legs(charter)
     assert charter_legs, (
-        "CLAUDE.md documents no `grep … '<pattern>' cs/` command, so the charter and "
+        "The kernel charter documents no `grep … '<pattern>' cs/` command, so the charter and "
         "the executable gate can no longer be compared."
     )
     _, charter_pattern = _best_leg(charter_legs)
     charter_missing = [t for t in COMPANY_TOKENS if t not in charter_pattern]
     assert not charter_missing, (
-        f"the grep documented in CLAUDE.md omits {charter_missing}; charter and "
+        f"the grep documented in the kernel charter omits {charter_missing}; charter and "
         f"executing gate must reject the same tokens. Documented pattern: "
         f"{charter_pattern!r}"
     )
     assert any(HB_TOKEN in p for _, p in charter_legs), (
-        f"the grep documented in CLAUDE.md omits {HB_TOKEN!r}"
+        f"the grep documented in the kernel charter omits {HB_TOKEN!r}"
     )
 
 
@@ -478,6 +494,33 @@ def prove_readme_install_negative(readme: str, changelog: str, tags: list[str]) 
     return 1
 
 
+def prove_charter_negatives(runner: str, charter: str) -> int:
+    count = 0
+    for token in COMPANY_TOKENS:
+        _expect_assertion(
+            lambda token=token: check_executing_charter_gate(runner.replace(token, ""), charter),
+            "does not reject",
+        )
+        _expect_assertion(
+            lambda token=token: check_executing_charter_gate(runner, charter.replace(token, "")),
+            "omits",
+        )
+        count += 2
+    _expect_assertion(
+        lambda: check_executing_charter_gate(runner.replace(HB_TOKEN, ""), charter),
+        "shared-drive literal leg is gone",
+    )
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        (root / "AGENTS.md").write_text("[kernel charter](missing.md)", encoding="utf-8")
+        _expect_assertion(lambda: load_charter(root, "AGENTS.md"), "does not name a file")
+        (root / "AGENTS.md").write_text("[kernel charter](../outside.md)", encoding="utf-8")
+        _expect_assertion(lambda: load_charter(root, "AGENTS.md"), "escapes repository")
+        (root / "AGENTS.md").write_text("No charter routing.", encoding="utf-8")
+        _expect_assertion(lambda: load_charter(root, "AGENTS.md"), "no kernel charter link")
+    return count + 4
+
+
 def main() -> None:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     version = project["project"]["version"]
@@ -485,13 +528,10 @@ def main() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     active = (ROOT / "docs" / "active-context.md").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    # The charter lives in the doc-profile's index_file (AGENTS.md since the
-    # harness v8 migration); resolving it from the profile is what keeps this
-    # gate honest across future moves instead of hard-coding a filename.
     profile = (ROOT / "docs" / ".doc-profile").read_text(encoding="utf-8")
     m = re.search(r"^index_file\s*=\s*(\S+)", profile, re.M)
     assert m, "docs/.doc-profile declares no index_file; cannot locate the charter"
-    charter = (ROOT / m.group(1)).read_text(encoding="utf-8")
+    charter = load_charter(ROOT, m.group(1))
     runner = (ROOT / "tests" / "run.sh").read_text(encoding="utf-8")
 
     body_lines, tier = check_changelog_entry(changelog, release)
@@ -510,6 +550,7 @@ def main() -> None:
     )
     pins = check_readme_install(readme, changelog, tags)
     negative_proofs += prove_readme_install_negative(readme, changelog, tags)
+    negative_proofs += prove_charter_negatives(runner, charter)
 
     print(
         f"test_release_consistency: {release} — changelog section {body_lines} lines, "

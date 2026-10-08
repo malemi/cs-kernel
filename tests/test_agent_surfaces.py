@@ -32,7 +32,7 @@ def check(label: str, cond: bool) -> None:
 
 def _clone(root: Path, name: str) -> Path:
     clone = root / name
-    for skill in ("cs-review", "cs-help"):
+    for skill in ("cs-review", "cs-help", "cs-instructions"):
         path = clone / ".claude" / "skills" / skill / "SKILL.md"
         path.parent.mkdir(parents=True)
         path.write_text(f"---\nname: {skill}\ndescription: {name}\n---\n")
@@ -132,6 +132,38 @@ def main() -> int:
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
+        instructions = rendered / ".claude/skills/cs-instructions/SKILL.md"
+        check("standing-rule skill is rendered", instructions.is_file())
+        text = instructions.read_text()
+        check("standing-rule commit exception is explicit beside safety rule",
+              "sole standing-rule exception" in agents_text
+              and "explicit paths only" in agents_text)
+        check("AGENTS routes conversational teaching to the canonical skill",
+              "Invoke `cs-instructions`" in agents_text)
+        check("triage routes without duplicating the publishing procedure",
+              "invoke that skill" in triage.read_text()
+              and "run `cs instructions --commit`" not in triage.read_text())
+        for host in (".agents", ".opencode"):
+            check(f"{host} resolves real standing-rule workflow",
+                  (rendered / host / "skills/cs-instructions/SKILL.md").read_bytes()
+                  == instructions.read_bytes())
+        check("withdrawal verifies both playbook destinations",
+              "BOTH `procedures.md` and `phone.md`" in text
+              and "Do not delete/empty the file" in text)
+
+        company_rendered = tmp / "company-cs"
+        company_rendered.mkdir()
+        with _legacy_prompts(tmp, "company-prompts"):
+            with contextlib.redirect_stdout(io.StringIO()):
+                pi.render_templates({**pi.TEMPLATE_DEFAULTS, **_FULL_INIT_DATA,
+                                     "repo_docs_shape": "as-built"},
+                                    ROOT / "cs/templates/project", company_rendered)
+                pi.install_agent_surfaces(company_rendered)
+        for host in (".claude", ".agents", ".opencode"):
+            check(f"company clone {host} resolves canonical standing-rule bytes",
+                  (company_rendered / host / "skills/cs-instructions/SKILL.md").read_bytes()
+                  == instructions.read_bytes())
+
         print("fresh clones create no command surface")
         fresh = _clone(tmp, "fresh-cs")
         with _legacy_prompts(tmp, "fresh-prompts"):
@@ -142,6 +174,7 @@ def main() -> int:
 
         print("a filesystem that refuses symlinks")
         nolink = _clone(tmp, "win-cs")
+        (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
         real_symlink = Path.symlink_to
 
         def refuse(self, target, target_is_directory=False):
@@ -163,6 +196,10 @@ def main() -> int:
             check("OpenCode fallback also has canonical content",
                   opencode_copy.read_bytes()
                   == (nolink / ".claude/skills/cs-review/SKILL.md").read_bytes())
+            for host in (".agents", ".opencode"):
+                check(f"{host} copies standing-rule skill without symlinks",
+                      (nolink / host / "skills/cs-instructions/SKILL.md").read_bytes()
+                      == (nolink / ".claude/skills/cs-instructions/SKILL.md").read_bytes())
             check("copy fallback is disclosed", "copied" in out.getvalue())
             check("AGENTS.md is untouched on a symlink-less filesystem",
                   (nolink / "AGENTS.md").read_text() == "# charter of win-cs\n")

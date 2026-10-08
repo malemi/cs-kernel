@@ -1,13 +1,13 @@
 ---
-doc_baseline_commit: 2be7a44bc8d2ec38ca4bcb538f64f01c0280fa6a
-doc_baseline_date: 2026-10-01
+doc_baseline_commit: 46d5f80d2d9e9097142356dd99923f97032095fe
+doc_baseline_date: 2026-10-08
 ---
 
 # Active Context — cs-kernel
 
 <!-- doc-scope:start -->
 Scope: current source capabilities, untagged development and unresolved work.
-Durable rules live in [`AGENTS.md`](../AGENTS.md), release history in
+Durable rules live in the [kernel charter](kernel-charter.md), release history in
 [`CHANGELOG.md`](../CHANGELOG.md), and dated operational observations in
 [`active-context-archive.md`](active-context-archive.md).
 <!-- doc-scope:end -->
@@ -58,7 +58,13 @@ operator activity, and CS_PAUSE does not stop engine processing.
   reserved slug; the cron wrapper denies the verb and the raw RPC in all six
   spellings; `cs setup` and `cs memory` report the company files as the
   standing-instructions store. The engine side is a separate `mrcall-desktop`
-  change; the verb is untested against a live engine.
+  change. Publication is verified against the real loopback fixture;
+  production publication and Firebase authentication remain unverified.
+- `cs-instructions` provides a canonical interactive standing-rule workflow
+  across Claude, Codex and OpenCode. All 33 native fixture cases pass with
+  independently checked publication, Git and refusal evidence. Final review,
+  release and live clone adoption remain pending under the
+  [plan](execution-plans/2026-10-07-cs-instructions-skill.md).
 - Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
@@ -70,13 +76,11 @@ operator activity, and CS_PAUSE does not stop engine processing.
   same supervisor. The supervisor checks each launcher's permissions against
   its resolved triage mode before starting Claude. Both clones configure $4
   fallback budgets. MrCall uses its clone-owned Anthropic API primary and
-  fixed missing/restored-key notices; its funded OpenRouter probe succeeded.
-  Recent observed scheduled ticks exit 0; that alone does not certify each reply.
+  fixed missing/restored-key notices. Reply quality requires separate acceptance.
 
-- Pricing and triage work is committed separately on
-  `work/pricing-triage-20261001` at `d16e3e5`; its five source files preserve
-  the original working copies exactly. Integration and acceptance remain open
-  under the [pricing plan](execution-plans/2026-09-21-pricing-skill-production-economics.md).
+- Pricing and triage integration and acceptance remain open under the
+  [pricing plan](execution-plans/2026-09-21-pricing-skill-production-economics.md),
+  with candidate work on `work/pricing-triage-20261001` at `d16e3e5`.
 
 ## Unresolved
 

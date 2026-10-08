@@ -1,6 +1,6 @@
 ---
 name: cs-help
-description: Orientation for {{ company_prog_name }} — what this project is, which cs-* skills exist, how to invoke common workflows in Claude Code or Codex, and where the deeper docs live. Pure presentation, zero tool calls, zero side effects.
+description: Orientation for {{ company_prog_name }} — what this project is, which cs-* skills exist, how to invoke common workflows in Claude Code, Codex or OpenCode, and where the deeper docs live. Pure presentation, zero tool calls, zero side effects.
 ---
 
 # {{ company_prog_name }} — Help
@@ -21,7 +21,8 @@ autonomy dial is a deliberate later step).
 ## The skills (you invoke these)
 
 Claude Code uses `/cs-*`; Codex uses `$cs-*`. The workflow is the same
-project-scoped skill in both hosts.
+project-scoped skill in all three hosts; OpenCode loads the named skill from
+`.opencode/skills`.
 
 | Skill | Claude Code | Codex | When |
 |---|---|---|---|
@@ -30,6 +31,7 @@ project-scoped skill in both hosts.
 | `cs-cron` | `/cs-cron` | `$cs-cron` | the scheduled unattended run: status, install/remove (confirmed), pause/resume |
 | `cs-campaign` | `/cs-campaign` | `$cs-campaign` | design a new campaign: pack + wiring, draft-first |
 | `cs-sip-trunk` | `/cs-sip-trunk` | `$cs-sip-trunk` | inspect or provision a Vonage SIP trunk using this clone's connection; preview first, supervised changes |
+| `cs-instructions` | `/cs-instructions` | `$cs-instructions` | teach, amend or retire a recurring response rule or mailbox voice; ordinary conversational instructions invoke it too |
 | `cs-help` | `/cs-help` | `$cs-help` | this map |
 
 ## Or just ask
@@ -41,10 +43,12 @@ project-scoped skill in both hosts.
   the sweep stops re-raising it — reversible)
 - *"this one I'm writing myself"* (still open, but yours: nobody else drafts,
   writes or mails them, and it stays on your list with the age — reversible)
+- *"When customers ask about invoices, answer with these steps"*
+- *"Stop using that standing signature rule"*
 - *"find the document about Y"*
 
 Behind those sit the operator skills (`cs-triage-mail`,
-`cs-campaign-tick`, `cs-customer`, `cs-find-document`; `cs-operator` is
+`cs-campaign-tick`, `cs-customer`, `cs-find-document`, `cs-instructions`; `cs-operator` is
 the headless cron bootstrap) — they fire on their own when the request
 matches.
 
@@ -53,8 +57,9 @@ matches.
 - Draft-first: every outgoing mail is reviewed until send mode is
   deliberately enabled (`cs config` says which is in force). Dedup (Gmail
   Sent truth) and the dossier-before-contact rule are not negotiable.
-- Kill-switch: `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every
-  scheduled run; remove the file to resume.
+- Kill-switch: `touch ~/.{{ company_slug }}-cs/CS_PAUSE` prevents subsequent
+  guarded ticks; remove the file to resume. Running processes and engine work
+  have separate controls.
 
 ## Deeper
 

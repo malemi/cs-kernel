@@ -1,8 +1,7 @@
 schema_version = 1
 mode = leaf
 index_file = AGENTS.md
-harness_file = CLAUDE.md
 inventory_ignore =
 index_max_lines = 200
 # build = bash tests/run.sh
-harness_version = 8
+harness_version = 9

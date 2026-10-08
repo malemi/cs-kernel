@@ -295,6 +295,44 @@ class CommitTests(unittest.TestCase):
             self.engine.records[instructions_mod.PHONE_PATH][-1], docs["phone.md"]
         )
 
+    def test_nonempty_retirement_replaces_prior_playbook_and_identity(self):
+        client = Documents(self.settings, self.engine)
+        client.page("list", limit=1)
+        identity = self.root / instructions_mod.IDENTITY_FILE
+        identity.write_bytes(b"Sign every response as Example Agent.\n")
+        prior = instructions_mod.compile_documents(self.root, self.settings)
+        for path, data in prior.items():
+            instructions_mod._store(client, path, data, 0)
+        (self.root / instructions_mod.PLAYBOOK_FILE).write_bytes(
+            b"No standing refund-response procedure remains.\n")
+        identity.write_bytes(b"No standing signature rule remains.\n")
+        replacement = instructions_mod.compile_documents(self.root, self.settings)
+        self.assertEqual(set(replacement),
+                         {"procedures.md", "phone.md", "mail/support@acme.example.md"})
+        for path, _status, _checksum, revision in instructions_mod.diff_documents(client, replacement):
+            self.assertEqual(revision, 1)
+            stored = instructions_mod._store(client, path, replacement[path], revision)
+            self.assertEqual(stored["revision"], 2)
+            verified, data = client.read(RESERVED_PROJECT_SLUG, path, 2)
+            self.assertEqual(data, replacement[path])
+            self.assertNotEqual(data, prior[path])
+            self.assertNotIn(b"Refunds: verify, then issue.", data)
+            self.assertNotIn(b"Sign every response as Example Agent.", data)
+            self.assertEqual(verified["sha256"], digest(replacement[path]))
+        self.assertTrue(all(row[1] == "unchanged" for row in
+                            instructions_mod.diff_documents(client, replacement)))
+
+    def test_absent_input_does_not_retire_prior_published_rule(self):
+        client = Documents(self.settings, self.engine)
+        client.page("list", limit=1)
+        prior = instructions_mod.compile_documents(self.root, self.settings)
+        for path, data in prior.items():
+            instructions_mod._store(client, path, data, 0)
+        (self.root / instructions_mod.PLAYBOOK_FILE).write_bytes(b"")
+        self.assertEqual(instructions_mod.compile_documents(self.root, self.settings), {})
+        for path, data in prior.items():
+            self.assertEqual(client.read(RESERVED_PROJECT_SLUG, path)[1], data)
+
     def test_cmd_instructions_commit_end_to_end(self):
         import os
         from unittest.mock import patch

@@ -928,11 +928,21 @@ step "38. the engine is authoritative — the charter rule reaches every clone"
 # gate red while the rule itself was untouched. A gate that a rewrap can defeat
 # does not measure whether the rule is written down.
 GATE38=0
-# The kernel-side charter lives where docs/.doc-profile's index_file points
-# (AGENTS.md since the harness v8 migration); the clone-side copy stays in the
-# stamped AGENTS.md.j2 template.
 CHARTER_FILE=$(sed -n 's/^index_file *= *//p' "$ROOT/docs/.doc-profile")
-for f in "$ROOT/$CHARTER_FILE" "$ROOT/cs/templates/project/AGENTS.md.j2"; do
+if ! "$VENV/bin/python" - "$ROOT" "$CHARTER_FILE" > "$TMP/kernel-charter.md" <<'PYEOF'
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / "tests"))
+from test_release_consistency import load_charter
+
+print(load_charter(root, sys.argv[2]))
+PYEOF
+then
+  echo "FAIL: cannot resolve the kernel charter"; GATE38=1
+fi
+for f in "$TMP/kernel-charter.md" "$ROOT/cs/templates/project/AGENTS.md.j2"; do
   flat=$(tr '\n' ' ' < "$f" | tr -s '[:space:]' ' ')
   case "$(printf '%s' "$flat" | tr '[:upper:]' '[:lower:]')" in
     *authoritative*) ;;
@@ -1337,6 +1347,9 @@ step "60. cs instructions — compile rules, diff classification, --commit's one
 # every document, and NEVER projects.write/projects.create; cs project
 # new/save/import all refuse the reserved slug before touching any client.
 if "$VENV/bin/python" "$ROOT/tests/test_instructions.py"; then echo "OK"; else echo "FAIL: cs instructions regressed"; FAIL=1; fi
+
+step "60b. native instruction evidence parsing stays honest without invoking native hosts"
+if "$VENV/bin/python" "$ROOT/tests/test_live_instructions_fixture.py"; then echo "OK"; else echo "FAIL: native instruction fixture evidence parsing regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

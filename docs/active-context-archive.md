@@ -1,3 +1,26 @@
+
+## 2026-10-08 — Standing-instruction acceptance before recovery completion
+
+  change; the verb is untested against a live engine.
+- `cs-instructions` provides a canonical interactive standing-rule workflow
+  across Claude, Codex and OpenCode. Native acceptance and release remain
+  pending under the [plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+
+## 2026-10-08 — Pre-closure instruction and runtime observations
+
+- `cs-instructions` provides a canonical interactive standing-rule workflow
+  across Claude, Codex and OpenCode. Acceptance evidence is being regenerated
+  after temporary evidence loss; the [plan](execution-plans/2026-10-07-cs-instructions-skill.md)
+  records completion and release obligations.
+
+  fixed missing/restored-key notices; its funded OpenRouter probe succeeded.
+  Recent observed scheduled ticks exit 0; that alone does not certify each reply.
+
+- Pricing and triage work is committed separately on
+  `work/pricing-triage-20261001` at `d16e3e5`; its five source files preserve
+  the original working copies exactly. Integration and acceptance remain open
+  under the [pricing plan](execution-plans/2026-09-21-pricing-skill-production-economics.md).
+
 # Active Context — archive (cs-kernel)
 
 Pruned session narrative from `docs/active-context.md`, relocated verbatim,

@@ -55,7 +55,12 @@ off this table.
   and [company/mailbox-identity.md](../company/mailbox-identity.md) by
   `cs instructions --commit`. Those two files, in this repo, are authoritative;
   a divergence `cs setup` reports is resolved by re-storing from them, never
-  by editing the engine copy.
+  by editing the engine copy. Other company mailboxes without their own clone
+  use `company/mailboxes/<email>.md` for identity. Conversational rule teaching,
+  amendment and withdrawal invoke `cs-instructions`, whose canonical skill owns
+  the interactive-only edit/publish/verify/scoped-commit workflow. Empty or
+  absent inputs do not clear engine documents; the skill uses nonempty factual
+  replacements when the last rule is retired.
 - **Secrets**: `EMAIL_PASSWORD`, `FIREBASE_WEB_API_KEY`, the real account uids
   (`CS_ACCOUNTS`), the SA key, `SMS_BUSINESS_ID` — in `~/.{{ company_slug }}-cs/.env` (see `.env.example`).
 - **The kernel source** (`cs/`): not here — pinned in `requirements.txt`, installed into `.venv`.
@@ -181,7 +186,9 @@ are denied in the cron wrapper for exactly that reason.
 
 ### There is no per-day send quota
 
-`CS_PAUSE` (`~/.{{ company_slug }}-cs/CS_PAUSE`) is the stop, and it stops everything.
+`CS_PAUSE` (`~/.{{ company_slug }}-cs/CS_PAUSE`) blocks subsequent guarded ticks
+and campaign sends. It does not terminate running processes or stop independent
+engine work.
 
 ### Which rollout phase you are in is not written down
 

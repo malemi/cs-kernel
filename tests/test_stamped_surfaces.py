@@ -342,6 +342,16 @@ def _update_render() -> None:
                     f'operator_voice = "{declared}"')
             (clone / "manifest.toml").write_text(manifest)
 
+            authored = {
+                "company/customer-service-playbook.md": b"Keep this authored procedure.\n",
+                "company/mailbox-identity.md": b"Keep this authored signature.\n",
+                "company/mailboxes/colleague@acme.example.md": b"Keep this colleague voice.\n",
+            }
+            for rel, data in authored.items():
+                target = clone / rel
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+
             proc = subprocess.run([sys.executable, "-m", "cs", "update"],
                                   cwd=clone, env=env, stdin=subprocess.DEVNULL,
                                   capture_output=True, text=True)
@@ -358,6 +368,16 @@ def _update_render() -> None:
                 check((declared or project_init.DEFAULT_OPERATOR_VOICE) in text,
                       f"[{label}] the voice the MANIFEST declares must reach the "
                       f"stamp without re-running cs init ({rel})")
+
+            instructions = clone / ".claude/skills/cs-instructions/SKILL.md"
+            check(instructions.is_file(), f"[{label}] update adds standing-rule skill")
+            for host in (".agents", ".opencode"):
+                check((clone / host / "skills/cs-instructions/SKILL.md").read_bytes()
+                      == instructions.read_bytes(),
+                      f"[{label}] {host} update resolves canonical standing-rule skill")
+            for rel, data in authored.items():
+                check((clone / rel).read_bytes() == data,
+                      f"[{label}] update preserves authored {rel}")
 
             # The same include-survives-`cs update` property, for the
             # outbound-fact-sourcing partial and its three including hosts —

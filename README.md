@@ -57,7 +57,8 @@ A complete customer-service operator, not an autocomplete:
    grounded in each correspondent's history — it answers what it can
    defend and brings you the rest with a recommendation
 2. **Campaigns and follow-ups** advanced on schedule, with hard dedup
-   against your own Sent folder and one kill-switch that stops everything
+   against your own Sent folder and a pause file for subsequent guarded ticks
+   and campaign sends; engine work and running processes have separate controls
 3. **Memory that compounds**: every mail synced and every session worked
    makes the next answer better — no retraining, no CRM data entry
 4. A **cron wrapper** for unattended triage and campaign drafts, with
@@ -65,7 +66,7 @@ A complete customer-service operator, not an autocomplete:
 
 ---
 
-## Integrazioni
+## Integrations
 
 Integrations let the operator consult company systems and perform supervised
 service operations. The kernel owns reusable code and workflows; each clone
@@ -267,6 +268,10 @@ just talk:
 - *"Load customer Northwind"* → customer skill (docs + engine memory)
 - *"Draft a reply to …"* → grounded draft; **nothing is sent** until you
   review and approve it
+- *"From now on, ask for the order number before handling returns"* →
+  `cs-instructions`; an interactive human can teach, amend or withdraw a
+  standing rule in the authoritative company files. The workflow verifies
+  engine publication and commits only the named rule changes; it sends no mail.
 
 Lost at any point? **`/cs-help`** shows the whole map. The skills are
 the product surface; the CLI is plumbing the AI (and you, if you want)
@@ -344,9 +349,8 @@ Next sessions — interactive or cron — start from that memory instead of a bl
   not answering at the configured WebSocket URL. During `cs login` this
   is caught and printed as one line (`cs login: stored the session, but
   the proof call to '<url>' failed: …`); on other verbs (`cs whoami` and
-  friends) it currently surfaces as a raw Python traceback ending in
-  something like `ConnectionRefusedError: [Errno 111] Connect call
-  failed…`. Check that the engine is running and reachable at
+  friends) it prints a configured-engine connection diagnostic and exits
+  unsuccessfully. Check that the engine is running and reachable at
   `[engine].ws_url` in the clone manifest. The engine can run on another
   machine; the configured URL determines where `cs` connects.
 - **`cs login: no profile descriptor found under ~/.zylch/profiles/ —
@@ -388,7 +392,8 @@ WhatsApp, in person — so their mail up to that moment stops being raised),
 `escalated` (the opposite: NOT resolved, but a human has personally taken the
 contact over, so nobody else writes to them and it is listed as his, with an
 age, instead of being handed out as work);
-**plumbing**: `rpc`, `project`.
+**standing rules**: `instructions` (preview compiled company rules;
+`--commit` publishes them through the engine); **plumbing**: `rpc`, `project`.
 
 ### The kernel's own model calls
 

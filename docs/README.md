@@ -16,3 +16,7 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Shared written project memory](briefs/2026-09-10-shared-project-memory.md) — shared authored records in the engine; [execution plan](execution-plans/2026-09-10-shared-project-memory.md).
 
 - [Operator runtime, models, billing and independent pause boundaries](operator-runtime.md).
+
+- [Kernel charter](kernel-charter.md) — mandatory anti-fork rules; read before source investigation.
+
+- [Conversational standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md) — canonical three-host workflow; [brief](briefs/2026-10-07-cs-instructions-skill.md).

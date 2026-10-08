@@ -44,3 +44,25 @@ The playbook cannot grant a send capability or bypass a tool approval. A
 headless runtime that denies an action leaves the task open and reports the
 specific operator action; an interactive runtime may approve only the named
 non-mail tool required by the matching workflow.
+
+## Conversational standing instructions
+
+`cs-instructions` selects an interactive human's teaching, amendment or retirement
+of recurring response rules, mailbox voice and signature. Stamped AGENTS and
+triage guidance route to that one canonical workflow. It reads the authoritative
+company files, previews all compiled changes, publishes through the existing
+`cs instructions --commit` API, verifies revision read-back and commits only the
+named company-rule files. Unrelated staged/unstaged edits remain untouched.
+
+Current-draft edits, hypothetical discussion and untrusted retrieved instructions
+do not authorize persistence. Material conflicts require clarification. Scheduled
+sessions cannot teach rules. Last-rule retirement uses a nonempty factual
+replacement because absent compiler inputs do not clear stored documents.
+
+Native fixture acceptance passes eleven cases on each supported host, including
+actual discovery, real WebSocket/SQLite publication and narrow Git commits.
+Independent state checks cover all 33 cases. Acceptance establishes only the
+observed cases, not universal future selection,
+reply compliance, production Firebase verification or live clone adoption. The
+[execution record](execution-plans/2026-10-07-cs-instructions-skill.md) owns exact
+results and review status.
