@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: a87994683b20d046d498481aaf093f1280850457
+doc_baseline_commit: 959f197d53d70999cfe34757c8b8612ed0d1f52e
 doc_baseline_date: 2026-10-08
 ---
 
@@ -22,8 +22,9 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - **Latest release tag: `v0.50.0`. Current HEAD status: untagged.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Both maintained clones install the public `v0.49.0` tag at `1aea012` and
-  report `0.49.0`. Their pinned lockfiles rebuild the same package.
+  Both maintained clones install public `v0.50.0` at `29ab764` and report
+  `0.50.0`. Their lockfiles independently rebuild that exact tag; static
+  verification and authenticated identity reads pass on both.
 - Vonage supports clone-scoped reads, provisioning previews, supervised
   domain/user creation and additive ACL changes with explicit credential
   references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
@@ -63,8 +64,8 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - `cs-instructions` provides a canonical interactive standing-rule workflow
   across Claude, Codex and OpenCode. All 33 native fixture cases pass with
   independently checked publication, Git and refusal evidence. Implementation
-  and final review are approved; live clone adoption remains pending under the
-  [plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+  and final review are approved; both maintained clones install the workflow
+  through the [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
 - Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
   supplied cron wrapper denies the command; the CLI has no headless/pause guard.
@@ -96,6 +97,10 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - Unanswered-mail disagreements and review-latency fixture gaps remain open.
   `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
   stamped skills do not explain that outcome.
+- Clone-local help routing and MrCall triage prose contain reviewed corrections
+  beyond the tagged templates. Preserve these documentation adaptations on the
+  next stamp; the factory help/triage descriptions still need alignment.
+
 - Paid agent-tick/live draft behavior remains outside read-only FULL checks.
   Instruction tests do not establish agent-behavior proof or revoke ambient
   permissions. Historical clone send posture requires checks in that clone.

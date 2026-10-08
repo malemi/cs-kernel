@@ -65,24 +65,15 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-09-30): **`v0.49.0` on both maintained
-clones**. Both install the public tag at `1aea012`, report `0.49.0`, and their
-lockfiles resolve that commit. Upgrade commits: `mrcall-cs` `2f01ea5`,
-`124-cs` `48af02c`/`824206a`. The standing-instructions documents were stored
-through the running engine before its deploy (nine documents, read-back
-verified). Re-collaudo actually run: the FULL harness tier on both clones
-against the day-0 baselines — every red is the reviewed baseline drift the
-v0.43–v0.48 pins already classify (help/skill additions, allow-list growth,
-whoami/mailbox state, dedup snapshot, removed rate-cap locks); the paused-cron
-proof is green on both, and no red is attributable to this release. On top:
-`cs instructions` dry-run "unchanged" and `cs setup` "match" on both clones,
-and on `mrcall-cs` (whose engine runs the new code) a rule round-trip —
-playbook edit → `cs instructions --commit` → the engine quotes it → revert.
-The Café 124 daemons still run pre-M1 engine releases, so 124's live reads
-ran against the old engine; its documents are stored, unread until those
-releases are rebuilt. Record and open items: meta-repo plan
-`docs/execution-plans/2026-09-30-retire-user-notes.md`. `mario124-cs` stays
-on `v0.35.0`; its identity document is stored by `124-cs`.
+**Current operational pin** (2026-10-08): **`v0.50.0` on both maintained
+clones**. Both install public tag `29ab764`, report `0.50.0`, and pass
+independent lock-only rebuilds resolving that exact commit. Static verification
+passes on both clones, including runtime equality, command help, canonical
+instruction skills, preserved controls and authenticated `cs whoami` reads.
+Local documentation adaptations preserve the installed harness routing and
+correct older company/triage guidance. Production standing-rule publication and
+paid draft/send behavior are outside these checks. The prior operational record
+is preserved verbatim in `docs/active-context-archive.md`.
 
 ## v0.48.0 — 2026-09-28
 
