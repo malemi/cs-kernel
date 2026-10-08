@@ -11,9 +11,10 @@ Brief review: first pass REVISE on `5158e14`; re-review APPROVED on
 Acceptance 7 was amended at `17bab69` after this plan's first review
 (SHA-256 `399175052e1c0f8ec25f3c73e3e48848a2f23d865a4493e16c952f5407d40d84`):
 Codex reports a linked skill root by its target, and discovery is taken from
-what each host reports. The amendment's review is recorded under Results.
-Plan review: first pass REVISE on `5567483`, three required changes, all
-applied in this revision.
+what each host reports. The brief's reviewer re-reviewed the amendment:
+APPROVED.
+Plan review: first pass REVISE on `5567483` with three required changes;
+second pass REVISE on `95f094c` with one. All four are applied here.
 
 ## Classification and ownership
 
@@ -48,9 +49,10 @@ change outside this worktree is authorized.
 - Native hosts on the acceptance machine: Claude Code, Codex and OpenCode are
   installed. Claude Code updates itself, so each host's version is recorded at
   run time under Results. Codex also loads user-level skills.
-- On 2026-10-08 the operator authorized removing the user-level Codex original
-  `~/.codex/skills/ricerca-giuridica-it/`. It is removed after M1 is committed,
-  so that the committed templates are the durable copy, and before M2.
+- The user-level Codex original `~/.codex/skills/ricerca-giuridica-it/` stays
+  in place for the whole of this plan, as the brief states. M1's review
+  compares the templates with it, and M2 reports it as the other legal skill
+  Codex lists. Its removal is a separate operator decision and no step here.
 - Source skill `~/.codex/skills/ricerca-giuridica-it/`, SHA-256:
   - `SKILL.md` `b0b665c5437664c61e8ae0f299d7a4daaa021586c9fdd002dc2bb5f2f1062083`
   - `PROVENANCE.md` `6a55ad3c2010685cc22db1150e67878055375248f02ace2fc27d3d20e3f52340`
@@ -146,6 +148,8 @@ model provider is involved.
 
 Discovery is taken from what the host reports and the read from the host's
 event stream. An agent's own sentence about what it loaded is not evidence.
+Every host command writes to a file: through a pipe `opencode debug skill`
+stops at 65,536 bytes and its output no longer parses.
 
 | Host | Discovery evidence | Read evidence |
 |---|---|---|
