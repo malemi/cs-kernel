@@ -191,4 +191,36 @@ surface is touched and no `cs/*.py` changes.
 
 ## Results
 
+### M1 — committed as `915d7b4`
+
+- `bash tests/run.sh` in the worktree, after `rm -rf build`: 71 gate headers,
+  `RESULT: all gates green`. Step 3 prints `OK: 49 installed templates match
+  source paths and bytes`, against 42 on the base. Step 62 ran from the
+  pip-installed package without skipping its installed-build leg: 141 checks.
+- Focused runs with the kernel venv interpreter: the render gate prints
+  `43 templates x 3 configs: ALL RENDER CLEAN`; `test_legal_research_skill`,
+  `test_agent_surfaces` and `test_stamped_surfaces` pass. Under that
+  interpreter the installed-build leg is skipped with its note, as designed.
+- Render of the branch with the baseline's variables: 44 stamped files against
+  37. Changed: `AGENTS.md` and `.claude/skills/cs-help/SKILL.md`. New: the seven
+  files of the skill. `cs-triage-mail/SKILL.md`, `.claude/settings.json` and
+  `bin/cs_operator_cron.sh` carry the three baseline SHA-256 values above.
+- Against the source skill: `references/sources.md`,
+  `references/administrative-remedies.md`, `references/evidence.md` and
+  `scripts/count_days.py` are stamped byte-identical. `SKILL.md`,
+  `PROVENANCE.md` and `references/deadlines.md` carry the planned edits.
+- The new gate fails by name on each of these deliberate breaks, tried on a
+  scratch copy: a plain `.py` in the template tree, a CRLF supporting template,
+  a deleted reference, a deleted `SKILL.md.j2`, helper arithmetic off by one, a
+  helper that prints on a refusal, a helper that drops an output key, a
+  description without its confinement sentence, the helper named in
+  `settings.json`, a raw opener without the dash, a triage skill without its
+  Escalate branch.
+
+### M1 review
+
+Pending.
+
+### M2
+
 Pending.
