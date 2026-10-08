@@ -1,3 +1,89 @@
+## 2026-10-08 — Release candidate before current FULL acceptance
+
+Candidate [thread assignments](task-assignment.md) pass local CLI/transport,
+full-suite and nine native workflow cases across Claude, Codex and OpenCode.
+Version `v0.51.0` is prepared for release; production trust setup and both-clone
+FULL acceptance remain pending before publication. Local hardening is closed
+with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+
+  [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md) retains
+  live clone history, source-parity and latency obligations.
+
+## 2026-10-08 — Release candidate supersedes prior source summary
+
+- Cross-mailbox history includes configured profiles and read mailboxes.
+  Incomplete evidence refuses applicable sends; send_first remains deliberately
+  ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
+
+- Unanswered-mail disagreements and review-latency fixture gaps remain open.
+  `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
+  stamped skills do not explain that outcome.
+
+## 2026-10-08 — Assignment verification before final native acceptance
+
+Local [thread assignments](task-assignment.md) pass the fresh K1 CLI/transport
+review and full kernel suite. Canonical three-host native acceptance is running.
+Production trust setup, clone upgrades and release remain separate under the
+[delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
+
+
+
+## 2026-10-08 — Superseded assignment verification snapshot
+
+Local [thread assignments](task-assignment.md) pass the fresh K1 CLI/transport
+review. Canonical workflows are updated; full-suite and three-host native
+acceptance are running. Production trust setup, clone upgrades and release
+remain separate under the [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
+
+
+## 2026-10-08 — Superseded local hardening and unanswered snapshot
+
+Local Desktop/kernel reliability gates and task/RPC contract checks pass.
+The August umbrella is retired; exact source-only evidence, withdrawn work and
+remaining owners are in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+No new release, clone upgrade, installer/fleet acceptance or live cleanup is implied.
+
+- Unanswered-mail disagreements and review-latency fixture gaps remain open.
+  `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
+  stamped skills do not explain that outcome.
+
+
+## 2026-10-08 — Fan-out scope supersedes prior summary
+
+- Cross-mailbox history includes configured profiles and read mailboxes.
+  Incomplete evidence refuses applicable sends; send_first remains deliberately
+  ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
+
+
+
+## 2026-10-08 — Standing-instruction closure status
+
+- `cs-instructions` has native fixture acceptance on Claude, Codex and OpenCode
+  (33 cases). Independent integration/final closure remains in its
+  [plan](execution-plans/2026-10-07-cs-instructions-skill.md); no clone rollout.
+
+
+## 2026-10-07 — Standing-instruction fixture verification supersedes prior status
+
+- `cs instructions` compiles
+  `company/customer-service-playbook.md`, `company/mailbox-identity.md` and
+  `company/mailboxes/<email>.md` into the engine's reserved
+  `operator-instructions` documents and, with `--commit`, stores them only
+  through `instructions.store`. `cs project new/save/import` refuse the
+  reserved slug; the cron wrapper denies the verb and the raw RPC in all six
+  spellings; `cs setup` and `cs memory` report the company files as the
+  standing-instructions store. The engine side is a separate `mrcall-desktop`
+  change; the verb is untested against a live engine.
+
+
+## 2026-10-08 — Superseded release-tag snapshot
+
+- **Latest release tag: `v0.49.0`. Current HEAD status: untagged.** These
+  sentences are parsed by `tests/test_release_consistency.py`; preserve their
+  wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+  Both maintained clones install the public `v0.49.0` tag at `1aea012` and
+  report `0.49.0`. Their pinned lockfiles rebuild the same package.
+
 
 ## 2026-10-08 — Prior operational pin and pending adoption
 

@@ -105,6 +105,7 @@ class FakeIMAP:
     password behaves, and the whole point of these gates."""
 
     opened: list["FakeIMAP"] = []
+    asked: list[tuple] = []
 
     def __init__(self, host, port):
         self.address = None
@@ -140,6 +141,7 @@ class FakeIMAP:
 
     def uid(self, command, *args):
         if command == "SEARCH":
+            FakeIMAP.asked.append((self.address, self.folder, args))
             # Two shapes now. The per-address readers send `(None, KEY, value)`.
             # The bulk reader sends an OR-composed criteria list over every
             # contact at once, optionally with a trailing SINCE — one search
@@ -181,6 +183,8 @@ class FakeIMAP:
                        else CONTACT)
                 frm = who if self.folder and "All" in self.folder else self.address
                 to = self.address if frm == who else who
+                if WORLD[self.address].get("outbox_to_third_party") and frm == self.address:
+                    to = "third-party@elsewhere.example"
                 raw = (
                     f"Date: {format_datetime(when)}\r\n"
                     f"From: {frm}\r\n"
@@ -217,6 +221,7 @@ def _world(*, colleague_password: str = COLLEAGUE_PW,
         },
     })
     FakeIMAP.opened.clear()
+    FakeIMAP.asked.clear()
     mailboxes._CREDENTIALS.clear()
     mailboxes._SESSIONS.clear()
 
@@ -528,7 +533,7 @@ def _test_dossier_verdict_is_about_ever_not_about_the_window(db_path: str) -> No
             "a contact a colleague answered two months ago is not cold, and "
             f"opening with an apology for silence is what that verdict caused: {verdict}"
         )
-        assert "REPLY IN THREAD" in verdict, verdict
+        assert "STOP" in verdict and "HELD / UNKNOWN" in verdict, verdict
         assert COLLEAGUE in verdict, (
             f"the verdict must name WHERE the history is, or the reader cannot "
             f"go and read it: {verdict}"
@@ -541,6 +546,139 @@ def _test_dossier_verdict_is_about_ever_not_about_the_window(db_path: str) -> No
             f"the history outside the window must be visible, not only implied "
             f"by the verdict:\n{text}"
         )
+
+
+def _owner_contact(state):
+    return dict(_contact(state), email=COLLEAGUE)
+
+
+def _assert_owner_not_opened_or_asked():
+    assert COLLEAGUE not in {m.address for m in FakeIMAP.opened}, FakeIMAP.opened
+    assert not [a for a in FakeIMAP.asked if a[0] == COLLEAGUE], FakeIMAP.asked
+
+
+def _test_colleague_outbox_does_not_count_as_reply(db_path: str) -> None:
+    settings = _settings(db_path)
+    cases = [("send_draft", "drafted", campaign_mod.send_draft),
+             ("queue_draft", "drafted", campaign_mod.queue_draft),
+             ("send_reminder", "sent", campaign_mod.send_reminder),
+             ("send_sms", "sent", campaign_mod.send_sms)]
+    for label, contact_state, call in cases:
+        with _installed(settings):
+            _world()
+            WORLD[COLLEAGUE]["inbound_from"][COLLEAGUE] = [NOW - timedelta(days=1)]
+            WORLD[COLLEAGUE]["outbox_to_third_party"] = True
+            _engine(contact_state, contacts=[_owner_contact(contact_state)])
+            _no_delivery()
+            result = call(settings, "c1", commit=False, now=NOW)
+            assert result["ok"] is True and result["dry_run"], (label, result)
+            _assert_owner_not_opened_or_asked()
+            assert not MUTATIONS
+    with _installed(settings):
+        _world()
+        WORLD[COLLEAGUE]["inbound_from"][COLLEAGUE] = [NOW - timedelta(days=1)]
+        _engine("drafted", contacts=[_owner_contact("drafted")])
+        _no_delivery()
+        result = campaign_mod.reconcile(settings, "c1", commit=False)
+        assert result["ok"] is False and "no Sent thread" in result["error"], result
+        _assert_owner_not_opened_or_asked()
+        assert not MUTATIONS
+    print("PASS: colleague outbox-only rows do not block draft/reminder/SMS dry-runs; no owner login/SEARCH and no mutations")
+
+
+def _test_real_colleague_reply_blocks_from_the_other_side(db_path: str) -> None:
+    settings = _settings(db_path)
+    for call in [campaign_mod.send_reminder, campaign_mod.send_sms]:
+        with _installed(settings):
+            _world()
+            WORLD[OPERATOR]["inbound_from"][COLLEAGUE] = [NOW - timedelta(days=1)]
+            _engine("sent", contacts=[_owner_contact("sent")])
+            _no_delivery()
+            result = call(settings, "c1", commit=False, now=NOW)
+            assert result["ok"] is False and result["next"] == "handle_reply", result
+            _assert_owner_not_opened_or_asked()
+            assert any(who == OPERATOR and args[1:] == ("FROM", COLLEAGUE)
+                       for who, folder, args in FakeIMAP.asked)
+            assert not MUTATIONS
+    print("PASS: a genuine colleague answer visible in the recipient mailbox still blocks reminder/SMS")
+
+
+def _test_colleague_dedup_keeps_every_other_sender(db_path: str) -> None:
+    settings = _settings(db_path)
+    second = "second@acme.example"
+    settings.read_mailboxes = f"{COLLEAGUE},{second}"
+    settings.read_mailbox_passwords = f"{COLLEAGUE}:{COLLEAGUE_PW},{second}:second-app-password"
+    for sender in [OPERATOR, second, COLLEAGUE]:
+        for call in [campaign_mod.send_draft, campaign_mod.queue_draft, campaign_mod.reconcile]:
+            with _installed(settings):
+                _world()
+                WORLD[second] = {"password": "second-app-password", "sent_to": {}, "inbound_from": {}}
+                WORLD[sender]["sent_to"][COLLEAGUE] = [NOW - timedelta(days=1)]
+                _engine("drafted", contacts=[_owner_contact("drafted")])
+                _no_delivery()
+                result = call(settings, "c1", commit=False)
+                if sender != COLLEAGUE:
+                    if call is campaign_mod.reconcile:
+                        assert result["ok"] and result["dry_run"], result
+                    else:
+                        assert not result["ok"] and result["next"] == "reconcile", result
+                elif call is campaign_mod.reconcile:
+                    assert not result["ok"] and "no Sent thread" in result["error"], result
+                else:
+                    assert result["ok"] and result["dry_run"], result
+                _assert_owner_not_opened_or_asked()
+                assert not MUTATIONS
+    print("PASS: dedup retains actual sends from every other mailbox; only owner self-sends disappear")
+
+
+def _test_owner_skip_never_hides_unreadable_or_read_failure(db_path: str) -> None:
+    settings = _settings(db_path)
+    for failure in ["login", "search", "chunk"]:
+        for label, contact_state, call in [
+                ("send_draft", "drafted", campaign_mod.send_draft),
+                ("queue_draft", "drafted", campaign_mod.queue_draft),
+                ("send_reminder", "sent", campaign_mod.send_reminder),
+                ("send_sms", "sent", campaign_mod.send_sms),
+                ("reconcile", "drafted", campaign_mod.reconcile)]:
+            with _installed(settings):
+                _world()
+                _engine(contact_state, contacts=[_owner_contact(contact_state)])
+                _no_delivery()
+                if failure == "login":
+                    WORLD[OPERATOR]["password"] = "rotated-yesterday"
+                else:
+                    real_uid = FakeIMAP.uid
+                    counters = {}
+                    def uid(self, command, *args):
+                        if self.address == OPERATOR and command == "SEARCH":
+                            FakeIMAP.asked.append((self.address, self.folder, args))
+                            if failure == "search":
+                                return "NO", [b""]
+                            self._last = [NOW] * 450
+                            self._matched = [COLLEAGUE] * 450
+                            return "OK", [b" ".join(str(i + 1).encode() for i in range(450))]
+                        if self.address == OPERATOR and command == "FETCH":
+                            counters[self.folder] = counters.get(self.folder, 0) + 1
+                            if counters[self.folder] == 2:
+                                return "NO", [None]
+                        return real_uid(self, command, *args)
+                    FakeIMAP.uid = uid
+                try:
+                    kwargs = {"commit": False}
+                    if call is not campaign_mod.reconcile:
+                        kwargs["now"] = NOW
+                    result = call(settings, "c1", **kwargs)
+                finally:
+                    if failure != "login":
+                        FakeIMAP.uid = real_uid
+                assert not result["ok"] and "evidence incomplete" in result.get("blocked", ""), (label, failure, result)
+                assert OPERATOR in result["blocked"]
+                if failure != "login":
+                    assert ("SearchFailed" if failure == "search" else "ChunkFetchFailed") in result["blocked"]
+                assert OPERATOR_PW not in result["blocked"]
+                _assert_owner_not_opened_or_asked()
+                assert not MUTATIONS
+    print("PASS: every gate still refuses login/SEARCH/second-chunk failure despite a deliberate owner skip")
 
 
 def main() -> int:
@@ -561,6 +699,10 @@ def main() -> int:
         _test_dossier_verdict_fails_closed(db)
         _test_dossier_verdict_is_about_ever_not_about_the_window(db)
         _test_review_notes_but_never_retires(db)
+        _test_colleague_outbox_does_not_count_as_reply(db)
+        _test_real_colleague_reply_blocks_from_the_other_side(db)
+        _test_colleague_dedup_keeps_every_other_sender(db)
+        _test_owner_skip_never_hides_unreadable_or_read_failure(db)
     print("test_send_gates_fanout: all assertions passed")
     return 0
 

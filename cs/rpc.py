@@ -241,6 +241,7 @@ async def chat(
     role: "Role | None" = None,
     approval_predicate: Callable[[str, dict], bool] | None = None,
     read_only: bool = False,
+    assignment_thread_key: str | None = None,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -288,6 +289,8 @@ async def chat(
 
     from . import model_config
 
+    if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
+        raise ValueError("assignment draft scope cannot be combined with other mutation or routing policy")
     if read_only:
         return await _read_only_chat(
             settings,
@@ -339,9 +342,13 @@ async def chat(
 
     async with EngineClient(settings, on_notification=on_notify) as c:
         client = c
-        result = await c.call(
-            "chat.send", {"message": message, "conversation_id": conv}, timeout=timeout
-        )
+        params = {"message": message, "conversation_id": conv}
+        if assignment_thread_key is not None:
+            capabilities = await c.call("system.capabilities", {}, timeout=60)
+            if not isinstance(capabilities, dict) or capabilities.get("assignment_draft_policy") != 1:
+                raise RuntimeError("engine does not support required assignment draft policy version 1")
+            params.update(assignment_thread_key=assignment_thread_key, assignment_policy_version=1)
+        result = await c.call("chat.send", params, timeout=timeout)
         return {"result": result, "approvals": approvals, "notifications": c.notifications}
 
 

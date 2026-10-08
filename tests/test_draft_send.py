@@ -7,6 +7,8 @@ import asyncio
 import io
 import types
 
+from assignment_fixture import normal_projection
+
 from cs import cli, config as cfg, rpc
 
 
@@ -14,6 +16,7 @@ DRAFT_ID = "452ddb83-69c9-479c-98ab-b6f690eab2a7"
 DRAFT = {
     "id": DRAFT_ID,
     "status": "draft",
+    "thread_id": "<root@example.test>",
     "to_addresses": ["james@example.test"],
     "subject": "Re: Specialty coffee",
 }
@@ -24,6 +27,8 @@ def run_case(*, approval_input=None, approvals=True, final_status="sent",
     calls = []
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         assert method == "drafts.list", method
         status = params.get("status") or "draft"
         calls.append(status)
@@ -46,7 +51,7 @@ def run_case(*, approval_input=None, approvals=True, final_status="sent",
         return {"result": {"response": "done", "metadata": metadata},
                 "approvals": rows, "notifications": []}
 
-    cfg.load = lambda: types.SimpleNamespace()
+    cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
     rpc.call_sync = fake_call_sync
     rpc.chat = fake_chat
     args = types.SimpleNamespace(draft_id=DRAFT_ID, timeout=30)
@@ -76,7 +81,7 @@ def main():
     assert calls == ["draft", "sent", "draft", "sending", "failed"], calls
 
     # Exact ids only: a prefix never reaches chat.
-    cfg.load = lambda: types.SimpleNamespace()
+    cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
     rpc.call_sync = lambda *a, **k: [DRAFT]
     args = types.SimpleNamespace(draft_id=DRAFT_ID[:8], timeout=30)
     err = io.StringIO()
@@ -131,7 +136,7 @@ def main():
 
     try:
         out = asyncio.run(rpc.chat(
-            types.SimpleNamespace(), "send exact", allow_tools={"send_draft"},
+            types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={}), "send exact", allow_tools={"send_draft"},
             approval_predicate=approve_one_exact,
         ))
     finally:

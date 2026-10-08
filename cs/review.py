@@ -364,6 +364,26 @@ def gather(settings) -> dict:
             out["campaigns_error"] = f"{type(e).__name__}: {e}"
     out["campaigns"] = camps
 
+    from . import task_assignment
+    try:
+        assignments = task_assignment.listing(settings)
+        out["assignments"] = [task_assignment.provenance(task_assignment.project(settings, row["thread_key"]),
+                              None) for row in assignments["items"]]
+    except Exception as exc:
+        out["assignments"] = []
+        out["assignments_error"] = f"Assignment authority UNKNOWN ({type(exc).__name__}); no absence established"
+
+    from . import unanswered
+    try:
+        sweep = unanswered.sweep(settings, days=14)
+        out["human_work"] = sweep.get("human_work", [])
+        out["assignment_audit"] = sweep.get("assignment_audit", [])
+        if sweep.get("assignment_incomplete"):
+            out["assignments_error"] = "Assignment authority UNKNOWN in current thread scope; held work stays visible"
+    except Exception as exc:
+        out["human_work"] = []
+        out["assignments_error"] = f"Current assignment work UNKNOWN ({type(exc).__name__}); no absence established"
+
     # 4. Last cron tick
     out["last_tick"] = _last_log_lines(settings)
     return out
@@ -418,6 +438,23 @@ def render(d: dict) -> str:
     if d.get("engine_drafts_error"):
         L.append(f"  ! drafts.list failed: {d['engine_drafts_error']}")
 
+    from . import task_assignment
+    L.append("\nEngine thread assignments / closed audit:")
+    rendered_threads = set()
+    escalation_records = {item["email"]: item for item in d.get("escalated", [])}
+    for item in d.get("human_work", []):
+        detail = task_assignment.render(item["assignment"])
+        escalation = escalation_records.get(item["email"])
+        if escalation and any(origin["basis"] == "address_escalation" for origin in item["assignment"].get("provenance", [])):
+            detail += (f"; with {escalation.get('owner') or 'you'} for {escalation.get('days')}d "
+                       f"({escalation.get('escalated_on') or '?'}); release: `cs escalated <email> --undo --commit`")
+        L.append("  " + item["email"] + ": " + detail)
+        rendered_threads.add(item["thread_key"])
+    for item in d.get("assignments", []):
+        if item["thread_key"] not in rendered_threads:
+            L.append("  " + task_assignment.render(item))
+    if d.get("assignments_error"):
+        L.append("  " + d["assignments_error"])
     tasks = d.get("tasks", [])
     L.append(f"\nOpen engine tasks ({len(tasks)}) — these need you:")
     for t in tasks:
@@ -429,7 +466,9 @@ def render(d: dict) -> str:
     # counterweight to "these need you" — the same question ("what is there to
     # do") answered with "these are already yours". Never omitted while a record
     # exists, and always with the age.
-    taken = d.get("escalated", [])
+    surfaced = {item["email"] for item in d.get("human_work", [])
+                if any(origin["basis"] == "address_escalation" for origin in item["assignment"].get("provenance", []))}
+    taken = [item for item in d.get("escalated", []) if item["email"] not in surfaced]
     if taken:
         # A per-row name: most rows are the operator's own, but one can name a
         # colleague, and a header saying "you" would be wrong for exactly the
@@ -448,11 +487,14 @@ def render(d: dict) -> str:
 
     handled = d.get("handled_out_of_band", [])
     if handled:
-        L.append(f"\nResolved out of band — no longer raised ({len(handled)}), "
+        L.append(f"\nLocal out-of-band records — engine closure requires acknowledgement ({len(handled)}), "
                  f"most recent first:")
+        held_addresses = {item["email"] for item in d.get("human_work", []) if item["assignment"]["hold_auto_reply"]}
         for h in handled[:5]:
             L.append(f"  - {(h.get('email') or '?'):30.30} {h.get('handled_on') or '?'}  "
                      f"{h.get('reason') or ''}")
+            if h.get("email") in held_addresses:
+                L.append("      engine assignment remains HELD / unconfirmed; local record does not settle it")
         L.append("  (to put one back on the list: `cs handled <email> --undo`)")
     if d.get("handled_out_of_band_error"):
         L.append(f"  ! reading the out-of-band records failed: "

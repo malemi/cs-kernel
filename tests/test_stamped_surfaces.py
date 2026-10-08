@@ -149,6 +149,54 @@ def italian_hits(text: str) -> list[str]:
             if re.search(rf"\b{re.escape(w)}\b", low)]
 
 
+def _fanout_contract(clone: Path, label: str) -> None:
+    """Read the actual stamped workflow's decision order and scope contract."""
+    triage = (clone / ".claude/skills/cs-triage-mail/SKILL.md").read_text()
+    decision = triage.split("Then for EACH candidate,", 1)[1].split("## 1b.", 1)[0]
+    incomplete = decision.index("If any mailbox is unreadable")
+    authority = decision.index("Check assignment state before answered subtraction")
+    ordinary = decision.index("With complete scope and no assignment hold")
+    check(incomplete < authority < ordinary,
+          f"[{label}] incomplete evidence and assignment holds precede ordinary Sent decisions")
+    check("even if another mailbox found messages" in decision
+          and "do not drop or draft" in decision and "report the named mailbox" in decision,
+          f"[{label}] positive partial reads cannot authorize drop or draft")
+    check("Both verbs exit 3" in decision and "positive rows may remain visible" in decision,
+          f"[{label}] incomplete positive history remains visible without authorizing action")
+    check("Deliberate self-owner skips alone are complete" in decision,
+          f"[{label}] a deliberate skip must not become an unreadable refusal")
+    check("A colleague's outbox to third parties is not a reply" in triage,
+          f"[{label}] third-party outbox rows cannot authorize ANSWERED")
+    check("unanswered --days 14 --json --all-buckets" in triage
+          and "assignment_audit" in triage and "human_work" in triage,
+          f"[{label}] the candidate feed retains human work and closed audit")
+    check("ANSWERED. Drop it." not in triage and "→ **SKIP** — already handled" not in triage,
+          f"[{label}] arbitrary Sent rows and completed contact tasks cannot silence assignments")
+    check("Scope an engine-assignment dossier `STOP` to its named exact thread" in triage
+          and "Address takeover" in triage and "unreadable evidence still impose `STOP`" in triage,
+          f"[{label}] unrelated thread work survives assignment holds while contact safety holds remain")
+    check("--thread-id '<exact-thread-key>'" in triage and "before writing" in triage,
+          f"[{label}] composing requires exact thread and actual prewrite authority")
+    for skill in ("cs-triage-mail", "cs-operator", "cs-customer"):
+        text = (clone / f".claude/skills/{skill}/SKILL.md").read_text()
+        check(all(word in text for word in ("candidate", "unknown", "conflict", "assignee")),
+              f"[{label}] {skill} retains candidate/unknown/conflict and human identity")
+        check("inbound identity" in text and "handled" in text,
+              f"[{label}] {skill} separates acknowledged closure, local handled and later inbound")
+    for rel in ("AGENTS.md", "docs/ARCHITECTURE.md",
+                ".claude/skills/cs-customer/SKILL.md"):
+        text = (clone / rel).read_text().lower()
+        check("self-owner skip" in text or "never asked about its own owner" in text,
+              f"[{label}] {rel} qualifies configured scope with owner exclusion")
+        check(all(word in text for word in ("read", "unreadable", "skipped")),
+              f"[{label}] {rel} exposes all three scope outcomes")
+    for skill in ("cs-triage-mail", "cs-operator", "cs-customer"):
+        canonical = (clone / f".claude/skills/{skill}/SKILL.md").read_bytes()
+        for host in (".agents", ".opencode"):
+            check((clone / host / f"skills/{skill}/SKILL.md").read_bytes() == canonical,
+                  f"[{label}] {host} receives the same updated {skill} decisions")
+
+
 # ---------------------------------------------------------------------- A
 
 def _one_canonical_text() -> None:
@@ -259,6 +307,9 @@ def _init_render() -> None:
                   f"{path.relative_to(dest)} is stamped for every company in "
                   f"every market and carries Italian: {hits}")
 
+        project_init.install_agent_surfaces(dest)
+        _fanout_contract(dest, "init")
+
         manifest = (dest / "manifest.toml").read_text()
         check(f'operator_voice = "{project_init.DEFAULT_OPERATOR_VOICE}"' in manifest,
               "the stamped manifest declares the voice the clone can edit")
@@ -368,6 +419,8 @@ def _update_render() -> None:
                 check((declared or project_init.DEFAULT_OPERATOR_VOICE) in text,
                       f"[{label}] the voice the MANIFEST declares must reach the "
                       f"stamp without re-running cs init ({rel})")
+
+            _fanout_contract(clone, f"update {label}")
 
             instructions = clone / ".claude/skills/cs-instructions/SKILL.md"
             check(instructions.is_file(), f"[{label}] update adds standing-rule skill")

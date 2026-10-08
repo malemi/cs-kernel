@@ -283,7 +283,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project instructions; do
+for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project instructions assignment; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -296,6 +296,11 @@ done
 for tv in create close; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs tasks "$tv" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs tasks $tv --help"; tree_fail=1
+  fi
+done
+for av in status preview export commit; do
+  if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs assignment "$av" --help >>"$HELPLOG" 2>&1); then
+    echo "FAIL: cs assignment $av --help"; tree_fail=1
   fi
 done
 for pv in new; do
@@ -462,6 +467,7 @@ VERBS = [
     "instructions", "rpc instructions.store",
     "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
+    "assignment preview", "assignment export", "assignment commit", "rpc tasks.assignment.commit",
     "rpc update.run", "rpc memory.reconsolidate_now", "rpc memory.join",
     "rpc memory.reset", "rpc memory.restore_version", "rpc preparation.resume",
 ]
@@ -1125,6 +1131,9 @@ step "46c. a contact who is also one of our mailboxes is not asked about themsel
 # refuse that colleague forever.
 if "$VENV/bin/python" "$ROOT/tests/test_own_mailbox_exclusion.py"; then echo "OK"; else echo "FAIL: the own-mailbox exclusion regressed"; FAIL=1; fi
 
+step "46d. bounded header reads preserve rows and report incomplete direct-call evidence"
+if "$VENV/bin/python" "$ROOT/tests/test_bounded_header_readers.py"; then echo "OK"; else echo "FAIL: bounded header readers or dossier recovery regressed"; FAIL=1; fi
+
 step "47. cs memory — the ten-store map, resolved on this machine, never contents"
 # The memory layer worked because one operator held it in his head; nothing
 # carried it to the next clone. Guards: build() emits exactly the ten
@@ -1350,6 +1359,9 @@ if "$VENV/bin/python" "$ROOT/tests/test_instructions.py"; then echo "OK"; else e
 
 step "60b. native instruction evidence parsing stays honest without invoking native hosts"
 if "$VENV/bin/python" "$ROOT/tests/test_live_instructions_fixture.py"; then echo "OK"; else echo "FAIL: native instruction fixture evidence parsing regressed"; FAIL=1; fi
+
+step "61. engine assignment consumers preserve exact scope and hold uncertainty"
+if "$VENV/bin/python" "$ROOT/tests/test_task_assignment.py"; then echo "OK"; else echo "FAIL: assignment consumer lifecycle or authority boundary regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

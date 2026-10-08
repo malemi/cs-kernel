@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: 959f197d53d70999cfe34757c8b8612ed0d1f52e
+doc_baseline_commit: eae4d260ee09a04aaa90c4558bccaf77e6d53c61
 doc_baseline_date: 2026-10-08
 ---
 
@@ -13,6 +13,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 <!-- doc-scope:end -->
 
 ## State now
+
+Candidate [thread assignments](task-assignment.md) pass local CLI/transport,
+full-suite and nine native workflow cases across Claude, Codex and OpenCode.
+Version `v0.51.0` is prepared for authorized release. Both clone candidates pass
+current scoped FULL acceptance and real bounded provider reads; the legacy July
+harness remains red on the installed `v0.50.0` baseline. Production trust,
+activation and original-clone upgrades remain pending. Local hardening is closed
+with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
 
 The unattended operator runs through Claude Code; engine APIs and kernel direct
 classifiers have separate models, billing and stop controls. See
@@ -42,9 +50,12 @@ operator activity, and CS_PAUSE does not stop engine processing.
 - `cs-triage-mail` reads an optional clone-owned
   `company/customer-service-playbook.md`; the shared skill retains send and
   tool-approval boundaries across all three agent surfaces.
-- Cross-mailbox history includes configured profiles and read mailboxes.
-  Incomplete evidence refuses applicable sends; send_first remains deliberately
-  ungated. Sent/All Mail owns message-existence evidence; the engine owns judgement.
+- Candidate `v0.51.0` adds bounded cross-mailbox reads with a fixed self-owner
+  skip and named read/unreadable/skipped scope. Incomplete evidence refuses
+  applicable sends; `send-first` retains its existing ungated contact-state path.
+  [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md) records
+  real provider history, RFC-key parity and bounded FETCH latency on both clone
+  candidates. Publication and original-clone installation remain pending.
 - Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
   classifier. `cs memory` reports the ten-store memory map.
 - `cs ask` negotiates engine read-only chat policy version
@@ -94,9 +105,9 @@ operator activity, and CS_PAUSE does not stop engine processing.
   implemented; a Gmail send outside the engine can still leave a stale mirrored
   draft. Current pairing uses thread/recipient inference, and Gmail-only rows
   have no authored body in review. Dated inventory counts are in the archive.
-- Unanswered-mail disagreements and review-latency fixture gaps remain open.
-  `cs unanswered --all-buckets` can exit 3 after unreadable mail without stderr;
-  stamped skills do not explain that outcome.
+- Live unanswered-mail parity and review-latency acceptance remain open.
+  `cs unanswered --all-buckets` reports incomplete assignment authority and
+  exits 3; canonical triage guidance retains held threads.
 - Clone-local help routing and MrCall triage prose contain reviewed corrections
   beyond the tagged templates. Preserve these documentation adaptations on the
   next stamp; the factory help/triage descriptions still need alignment.

@@ -380,8 +380,8 @@ need it, not more onboarding.
 `accounts`, `cron`; **read-only**: `review`, `plan`, `dossier`, `ask`,
 `whoami`, `thread`, `contacted` (the re-contact gate: one mailbox, N days),
 `history` (the other question: has this company EVER written to or heard
-from this address, from any mailbox it can open — every answer prints the
-mailboxes it read and the ones it could not), `unanswered`, `tasks`, `business`,
+from this address across the configured scope — a mailbox is never asked
+about its own owner; every answer prints read, unreadable and skipped mailboxes), `unanswered`, `tasks`, `business`,
 `drive`, `llm`, `config` (the settings in force and which file declares
 each — ask it rather than reading the manifest and the `.env` chain);
 **gated writing**: `draft-reply` / `chat` (drafts only,
@@ -394,6 +394,16 @@ contact over, so nobody else writes to them and it is listed as his, with an
 age, instead of being handed out as work);
 **standing rules**: `instructions` (preview compiled company rules;
 `--commit` publishes them through the engine); **plumbing**: `rpc`, `project`.
+
+### Company thread assignments (release candidate)
+
+`cs assignment status`, `preview`, `export` and `commit` consume the engine's
+company task subtype. An independent host operator approves exact writes;
+unknown or human-held thread authority blocks the scoped draft workflow.
+`draft-reply` requires an exact `--thread-id` and compatible engine policy.
+A local `handled` record does not settle company ownership without an exact
+engine acknowledgement. Current availability and examples are in
+[the assignment guide](docs/task-assignment.md).
 
 ### The kernel's own model calls
 

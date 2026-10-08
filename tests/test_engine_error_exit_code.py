@@ -54,6 +54,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from assignment_fixture import normal_projection
+
 from cs import cli, config as cfg, rpc  # noqa: E402
 
 # The real captured SHAPE from the brief, with the error text genericised —
@@ -91,13 +93,13 @@ def _ok_envelope(text: str) -> dict:
 
 def _stub_chat(envelope: dict):
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None, read_only=False):
+                        echo=print, conversation_id=None, read_only=False, assignment_thread_key=None):
         return envelope
     return fake_chat
 
 
 def _install_common_stubs():
-    cfg.load = lambda: types.SimpleNamespace()
+    cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
 
 
 def test_helper_keys_on_metadata_error_never_on_response_prose():
@@ -186,7 +188,7 @@ def test_cmd_ask_success_is_byte_identical_to_before_the_fix():
 def test_cmd_chat_fails_loudly_through_the_same_shared_helper():
     _install_common_stubs()
     rpc.chat = _stub_chat(_failed_envelope())
-    args = types.SimpleNamespace(message="hello", allow=None, timeout=30)
+    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="hello", allow=None, timeout=30)
 
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
@@ -209,12 +211,14 @@ def test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step():
     list_calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         list_calls["n"] += 1
         assert method == "drafts.list", method
         return []
     rpc.call_sync = fake_call_sync
 
-    args = types.SimpleNamespace(message="reply to the customer", timeout=30)
+    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="reply to the customer", timeout=30)
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
         rc = cli.cmd_draft_reply(args)
@@ -251,6 +255,8 @@ def test_cmd_draft_reply_success_is_unchanged():
     calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         assert method == "drafts.list", method
         calls["n"] += 1
         return [] if calls["n"] == 1 else [fresh]
@@ -265,7 +271,7 @@ def test_cmd_draft_reply_success_is_unchanged():
         return "[Gmail]/Drafts", []
     gmail_drafts.append_draft = fake_append
 
-    args = types.SimpleNamespace(message="compose a reply", timeout=30)
+    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="compose a reply", timeout=30)
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
         rc = cli.cmd_draft_reply(args)

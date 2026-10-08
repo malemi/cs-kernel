@@ -112,6 +112,7 @@ class FakeIMAP:
         self.address = None
         self.folder = None
         self.dead = False
+        self.commands = []
         self.logged_out = False
         FakeIMAP.opened.append(self)
 
@@ -152,6 +153,7 @@ class FakeIMAP:
         return box["sent"] if "Sent" in (self.folder or "") else box["in"]
 
     def uid(self, command, *args):
+        self.commands.append((command, self.folder, args))
         if command == "SEARCH":
             if "All" in (self.folder or "") and MAILBOXES[self.address].get(
                 "fail_search_all"
@@ -165,16 +167,18 @@ class FakeIMAP:
             ]
             return "OK", [b" ".join(hits)]
         if command == "FETCH":
-            uid = args[0]
-            msg = self._messages()[int(uid) - 1]
-            raw = (
-                f"Date: {format_datetime(msg['date'])}\r\n"
-                f"From: {self.address if 'Sent' in self.folder else msg['peer']}\r\n"
-                f"To: {msg['peer'] if 'Sent' in self.folder else self.address}\r\n"
-                f"Subject: {msg['subject']}\r\n"
-                f"Message-ID: <{uid.decode()}@acme.example>\r\n\r\n"
-            ).encode()
-            return "OK", [(b"1 (BODY[HEADER])", raw)]
+            parts = []
+            for uid in args[0].split(b","):
+                msg = self._messages()[int(uid) - 1]
+                raw = (
+                    f"Date: {format_datetime(msg['date'])}\r\n"
+                    f"From: {self.address if 'Sent' in self.folder else msg['peer']}\r\n"
+                    f"To: {msg.get('to', msg['peer'] if 'Sent' in self.folder else self.address)}\r\n"
+                    f"Subject: {msg['subject']}\r\n"
+                    f"Message-ID: <{uid.decode()}@acme.example>\r\n\r\n"
+                ).encode()
+                parts.append((b"1 (BODY[HEADER])", raw))
+            return "OK", parts
         raise AssertionError(f"unexpected UID command {command}")
 
     def logout(self):
@@ -460,28 +464,11 @@ def _test_fanout_tags_rows_and_names_what_it_could_not_read() -> None:
     # (8) exactly two readers are fanned out, and they are the two that decide
     # nothing from "is this us".
     fanned = {n for n in dir(mailboxes) if n.endswith("_across")}
-    # `headers_since_across` is the third, and it is the EXCEPTION that proves
-    # the rule: it DOES decide from "is this us" — it refuses to ask a mailbox
-    # about its own owner. That is safe for `reconcile`, which is read-only,
-    # and unsafe for a send gate, where emptying the evidence moves a contact
-    # from no-send to send. So it is admitted here only together with the
-    # assertion below that its docstring carries that prohibition — extending
-    # the guard, never retiring it.
     assert fanned == {"sent_to_across", "inbound_since_across",
-                      "headers_since_across"}, (
-        f"unexpected fan-out surface {fanned}: `thread_with` and "
-        "`inbound_recent` derive direction from settings.email_address and "
-        "would misattribute every message in another mailbox"
-    )
-    # Whitespace-normalised on purpose: the phrase wraps across lines in the
-    # source, and a guard that a reflow can silently disarm is not a guard.
+                      "headers_since_across"}, fanned
     doc = " ".join((mailboxes.headers_since_across.__doc__ or "").split())
-    assert "SEND GATE MUST NOT CALL IT" in doc, (
-        "`headers_since_across` applies a self-exclusion that is unsafe inside "
-        "a send gate, and it returns the same Fanout type the gates already "
-        "consume — so it reads as a drop-in. The prohibition has to be on the "
-        "function, where the next caller will look."
-    )
+    assert "operator decision of 2026-10-06" in doc, doc
+    assert "self-owner skip" in doc and "Unreadable evidence still refuses" in doc, doc
 
     for reader in ("thread_with", "inbound_recent"):
         src = gmail_archive.__dict__[reader].__doc__ or ""
@@ -575,13 +562,11 @@ def _test_history_verb() -> None:
         assert FOUNDER_PW not in out, "the JSON shape leaked a mailbox password"
 
     with _world(settings):
-        # A POSITIVE answer does not depend on the scope being complete: the
-        # operator mailbox alone proves the contact was written to.
         MAILBOXES[OPERATOR]["sent"] = [_msg(CONTACT, "our own reply", 3)]
         MAILBOXES[FOUNDER]["password"] = "rotated-yesterday"
         code, out, err = _run(["history", CONTACT, "--json"])
         payload = json.loads(out)
-        assert code == 0, "a message that WAS found still answers YES"
+        assert code == 3, "a positive finding stays visible, but unreadable evidence exits 3"
         assert payload["found"] is True and payload["scope"]["complete"] is False
         assert payload["note"], "the degraded source must travel with the data"
 
@@ -701,7 +686,7 @@ def _test_declared_mailboxes_join_the_fanout() -> None:
         MAILBOXES[COLLEAGUE]["password"] = "rotated-yesterday"
         code, out, err = _run(["history", CONTACT, "--json"])
         payload = json.loads(out)
-        assert code == 0, "the founder's message is still found"
+        assert code == 3, "the founder's message stays found, but unreadable evidence exits 3"
         assert payload["scope"]["complete"] is False
         addrs = {u["address"] for u in payload["scope"]["unreadable"]}
         assert addrs == {COLLEAGUE, UNCREDENTIALED}, payload["scope"]
@@ -742,7 +727,11 @@ def _test_account_refusal_message() -> None:
     with _world(settings):
         code, out, err = _run(["--account", "founder", "history", CONTACT])
         assert code == 2, f"--account cannot select a scope history already reads: {code}"
-        assert "every account" in err.lower() and "engine profile" in err, err
+        assert "configured mailbox scope" in err, err
+        assert "fixed self-owner skip" in err, err
+        assert "naming read, unreadable and skipped mailboxes" in err, err
+        assert "switches only the engine profile" in err, err
+        assert "cannot narrow or widen that scope" in err, err
 
 
 def _test_load_targets_another_profiles_session() -> None:
@@ -780,6 +769,113 @@ def _test_load_targets_another_profiles_session() -> None:
                     os.environ[k] = v
 
 
+def _test_shared_single_address_owner_skip() -> None:
+    settings = _settings(read_mailboxes=COLLEAGUE,
+                         read_mailbox_passwords=f"{COLLEAGUE}:{COLLEAGUE_PW}")
+    for reader in (mailboxes.sent_to_across, mailboxes.inbound_since_across):
+        with _world(settings):
+            fan = reader(settings, f"  {COLLEAGUE.upper()}  ")
+            assert fan.complete and not fan.unreadable
+            assert [k.address for k in fan.skipped] == [COLLEAGUE]
+            assert COLLEAGUE not in {m.address for m in FakeIMAP.opened}
+            assert set(fan.read) == {OPERATOR, FOUNDER}
+            assert "2 of 3 mailbox(es) read" in fan.scope_line()
+            assert "not asked about their own owner" in fan.scope_line()
+    for key in ("TO", "FROM"):
+        with _world(settings):
+            fan = mailboxes.headers_since_across(settings, [COLLEAGUE], key)
+            assert [k.address for k in fan.skipped] == [COLLEAGUE]
+            assert COLLEAGUE not in {m.address for m in FakeIMAP.opened}
+            assert fan.complete
+    with _world(settings):
+        sent = mailboxes.sent_to_across(settings, COLLEAGUE)
+        inbound = mailboxes.inbound_since_across(settings, COLLEAGUE)
+        fan = mailboxes.merge_directions(sent, inbound)
+        assert len(fan.skipped) == 1 and fan.complete
+        assert "2 of 3 mailbox(es) read" in fan.scope_line()
+        assert fan.as_dict()["scope"]["skipped"][0]["address"] == COLLEAGUE
+
+
+def _test_history_owner_flip_and_other_side() -> None:
+    settings = _settings(read_mailboxes=COLLEAGUE,
+                         read_mailbox_passwords=f"{COLLEAGUE}:{COLLEAGUE_PW}")
+    for genuine in (False, True):
+        with _world(settings):
+            for box in MAILBOXES.values():
+                box["sent"], box["in"] = [], []
+            own_outbox = _msg(COLLEAGUE, "Sent only to a third party", 1)
+            own_outbox["to"] = "third-party@elsewhere.example"
+            MAILBOXES[COLLEAGUE]["in"] = [own_outbox]
+            if genuine:
+                MAILBOXES[OPERATOR]["in"] = [_msg(COLLEAGUE, "Actual answer to support", 1)]
+            for json_mode in (False, True):
+                argv = ["history", COLLEAGUE] + (["--json"] if json_mode else [])
+                code, out, err = _run(argv)
+                assert code == (0 if genuine else 1), (code, out, err)
+                assert not err
+                assert COLLEAGUE not in {m.address for m in FakeIMAP.opened}
+                if json_mode:
+                    data = json.loads(out)
+                    assert data["found"] is genuine and data["scope"]["complete"]
+                    assert data["scope"]["skipped"][0]["address"] == COLLEAGUE
+                    assert len(data["scope"]["skipped"]) == 1
+                    assert data["inbound"] == int(genuine)
+                else:
+                    assert "not asked about their own owner" in out
+                    assert ("YES" if genuine else "Its own mailbox was deliberately not asked") in out
+                    assert "no mailbox in scope has ever exchanged" not in out
+    with _world(settings):
+        MAILBOXES[FOUNDER]["password"] = "rotated-yesterday"
+        for genuine in (False, True):
+            MAILBOXES[OPERATOR]["in"] = [_msg(COLLEAGUE, "Actual answer", 1)] if genuine else []
+            code, out, err = _run(["history", COLLEAGUE, "--json"])
+            assert code == 3, (code, out, err)
+            data = json.loads(out)
+            assert data["found"] is genuine and not data["scope"]["complete"]
+            assert data["scope"]["unreadable"] and data["scope"]["skipped"]
+
+
+def _test_one_mailbox_owner_skip_and_unknown_credentials() -> None:
+    settings = _settings(accounts="")
+    for verb in ("history", "contacted"):
+        with _world(settings):
+            code, out, err = _run([verb, OPERATOR])
+            assert code == 1 and not err, (code, out, err)
+            assert "not asked about their own owner" in out
+            assert "0 of 1 mailbox(es) read" in out
+            assert not FakeIMAP.opened
+    with _world(settings):
+        fan = mailboxes.sent_to_here(settings, f"  {OPERATOR.upper()}  ")
+        assert fan.complete and len(fan.skipped) == 1 and not fan.read
+        assert not FakeIMAP.opened
+    missing = _settings(accounts=f"ops:{UID_OPS},ghost:unknown-profile",
+                        read_mailboxes=COLLEAGUE, read_mailbox_passwords="")
+    with _world(missing):
+        fan = mailboxes.inbound_since_across(missing, COLLEAGUE)
+        assert not fan.complete and len(fan.unreadable) == 2
+        assert not fan.skipped
+        assert {u.account for u in fan.unreadable} == {"ghost", mailboxes.DECLARED}
+        code, out, err = _run(["history", COLLEAGUE])
+        assert code == 3 and "UNKNOWN" in out
+
+
+def _test_merged_skip_union_and_distinct_denominator() -> None:
+    skipped = mailboxes.Skipped("declared", COLLEAGUE, "first reason")
+    other = mailboxes.Skipped("declared", f"  {COLLEAGUE.upper()}  ", "second reason")
+    left = mailboxes.Fanout([], [OPERATOR, COLLEAGUE], [], [skipped])
+    right = mailboxes.Fanout([], [OPERATOR.upper()], [], [other])
+    fan = mailboxes.merge_directions(left, right)
+    assert fan.read == [OPERATOR, COLLEAGUE]
+    assert len(fan.skipped) == 1 and fan.complete
+    assert "first reason" in fan.skipped[0].reason and "second reason" in fan.skipped[0].reason
+    assert "2 of 2 mailbox(es) read" in fan.scope_line(), fan.scope_line()
+    failed = mailboxes.Fanout([], [], [mailboxes.Unreadable("declared", f"  {COLLEAGUE.upper()}  ", "failed")], [skipped])
+    fan = mailboxes.merge_directions(left, failed)
+    assert fan.read == [OPERATOR] and not fan.complete
+    assert len(fan.skipped) == 1 and len(fan.unreadable) == 1
+    assert "1 of 2 mailbox(es) read" in fan.scope_line()
+
+
 def main() -> int:
     _test_imap_credential_argument()
     _test_credential_comes_from_the_engine()
@@ -792,6 +888,10 @@ def main() -> int:
     _test_declared_mailboxes_join_the_fanout()
     _test_account_refusal_message()
     _test_load_targets_another_profiles_session()
+    _test_shared_single_address_owner_skip()
+    _test_history_owner_flip_and_other_side()
+    _test_one_mailbox_owner_skip_and_unknown_credentials()
+    _test_merged_skip_union_and_distinct_denominator()
     print("test_contact_history: all assertions passed")
     return 0
 

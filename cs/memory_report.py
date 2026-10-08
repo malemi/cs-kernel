@@ -100,7 +100,7 @@ def _resolve_gmail_sent(settings: Any) -> tuple[str, str]:
     ids += sorted(settings.account_map.keys())
     ids += settings.read_mailbox_list
     location = ", ".join(ids) if ids else "(no mailbox declared)"
-    return location, "declared — `cs history` proves readability"
+    return location, "declared — `cs history` names read, unreadable and skipped scope"
 
 
 def _resolve_ledger(settings: Any) -> tuple[str, str]:
@@ -184,10 +184,11 @@ STORES: tuple[Store, ...] = (
     Store(
         "gmail-sent",
         "Gmail Sent/All Mail",
-        "Does this message exist — dedup ground truth, across every "
-        "mailbox in scope. Never 'what we know'.",
-        "`cs contacted` (one mailbox, one window), `cs history` (every "
-        "mailbox, unbounded), the pre-send dedup check — all over IMAP, "
+        "Does this message exist — dedup ground truth across the configured "
+        "scope, with the fixed self-owner skip. Contacted/history name read, "
+        "unreadable and skipped mailboxes. Never 'what we know'.",
+        "`cs contacted` (one mailbox, one window), `cs history` (configured scope, "
+        "self-owner skip, unbounded), the pre-send dedup check — all over IMAP, "
         "none touching the ledger",
         "every real send, including hand-sent mail — which is exactly why "
         "it is the ground truth",

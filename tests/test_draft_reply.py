@@ -22,6 +22,8 @@ import io
 import types
 from datetime import datetime, timedelta, timezone
 
+from assignment_fixture import normal_projection
+
 from cs import cli, config as cfg, rpc, gmail_drafts
 
 OLD = {
@@ -42,13 +44,15 @@ def run() -> None:
     appended: dict = {}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         assert method == "drafts.list", method
         calls["list"] += 1
         # 1st call = BEFORE compose (only the stale draft); 2nd = AFTER (stale + fresh)
         return [OLD] if calls["list"] == 1 else [OLD, FRESH]
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None):
+                        echo=print, conversation_id=None, assignment_thread_key=None):
         # draft-reply must be structurally send-incapable: empty allow set.
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
@@ -59,12 +63,12 @@ def run() -> None:
                         in_reply_to=in_reply_to, references=references, body_md=body_md)
         return "[Gmail]/Drafts", []
 
-    cfg.load = lambda: types.SimpleNamespace()          # settings unused by stubs
+    cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})          # settings unused by stubs
     rpc.call_sync = fake_call_sync
     rpc.chat = fake_chat
     gmail_drafts.append_draft = fake_append
 
-    args = types.SimpleNamespace(message="componi una risposta", timeout=30)
+    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="componi una risposta", timeout=30)
     rc = cli.cmd_draft_reply(args)
 
     assert rc == 0, f"cmd_draft_reply returned {rc}"
@@ -86,12 +90,14 @@ def _wire(before_rows, after_rows, *, appended):
     calls = {"list": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         assert method == "drafts.list", method
         calls["list"] += 1
         return before_rows if calls["list"] == 1 else after_rows
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None):
+                        echo=print, conversation_id=None, assignment_thread_key=None):
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 
@@ -100,11 +106,11 @@ def _wire(before_rows, after_rows, *, appended):
         appended.update(to=to, subject=subject, body=body)
         return "[Gmail]/Drafts", []
 
-    cfg.load = lambda: types.SimpleNamespace()
+    cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
     rpc.call_sync = fake_call_sync
     rpc.chat = fake_chat
     gmail_drafts.append_draft = fake_append
-    return types.SimpleNamespace(message="componi una risposta", timeout=30)
+    return types.SimpleNamespace(thread_id="<abc@example.com>", message="componi una risposta", timeout=30)
 
 
 def _stamp(seconds_from_now: float) -> str:

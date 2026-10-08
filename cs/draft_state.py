@@ -367,7 +367,7 @@ def _bulk_across(unreadable: dict[str, str], skipped: dict[str, str],
 
 
 def _across_inbound(unreadable: dict[str, str]):
-    """The default `inbound` read: the fan-out over every mailbox in scope,
+    """Injected `inbound` default: configured fan-out with the fixed self-owner skip,
     recording what it could not open into `unreadable` instead of raising.
 
     A closure rather than a module-level function because the collector belongs
@@ -506,7 +506,7 @@ def reconcile(
             # scope is unreadable for this run, and every `ready` row below
             # carries that gap on the row, not only in a note.
             unreadable.setdefault(
-                "every mailbox in scope",
+                "configured mailbox scope",
                 f"the cross-mailbox read failed: {type(e).__name__}: {e}")
     # Keyed by (contact, body): two rows carrying the same text to the same
     # person ask the identical question, and that pair is precisely the

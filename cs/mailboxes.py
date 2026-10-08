@@ -1,4 +1,4 @@
-"""Every mailbox this company answers from — read across, or named as UNREADABLE.
+"""Configured mailbox scope — read, unreadable or deliberately self-owner skipped.
 
 WHY THIS EXISTS: a company answers its customers from several mailboxes, and
 the operator's evidence is scoped to one of them. `gmail_archive` reads the
@@ -16,7 +16,9 @@ This module widens the evidence and, more importantly, makes its EDGE VISIBLE.
     `manifest.toml [operator].read_mailboxes`. Both registries are
     configuration, edited for other reasons, so the scope is coupled to lists
     nobody maintains with dedup in mind — which is exactly why every answer
-    prints the scope it actually read. There is no flag to widen or narrow it:
+    prints read, unreadable and deliberately skipped mailboxes. A mailbox is
+    never asked about its own owner; the shared rule applies to single-address
+    and multi-address reads, including send gates. There is no scope flag:
     a knob that let one clone gate on one mailbox and another on five is the
     dedup-source knob the charter forbids, wearing a different name.
 
@@ -139,8 +141,8 @@ class Fanout:
     """The answer plus the scope it was answered from.
 
     `rows` are the underlying reader's rows, each tagged with the `mailbox`
-    they came from. `read` is what was actually opened; `unreadable` is what
-    was not. A caller that ignores `unreadable` is reading an absence as a
+    they came from. `read` is what was actually opened; `unreadable` records failed required
+    reads; `skipped` records deliberate self-owner exclusions. A caller that ignores `unreadable` is reading an absence as a
     fact, which is the failure this whole module exists to prevent."""
 
     rows: list[dict]
@@ -164,10 +166,11 @@ class Fanout:
         # skipped — read for the other contacts, not asked about its own owner.
         # Counting it twice printed "2 of 3" over two mailboxes, which is the
         # same misleading arithmetic this line exists to prevent, inverted.
-        names = set(self.read)
-        names |= {u.address or u.account for u in self.unreadable}
-        names |= {k.address or k.account for k in self.skipped}
-        line = f"scope: {len(self.read)} of {len(names)} mailbox(es) read"
+        names = {a.strip().lower() for a in self.read}
+        read_count = len(names)
+        names |= {(u.address or u.account).strip().lower() for u in self.unreadable}
+        names |= {(k.address or k.account).strip().lower() for k in self.skipped}
+        line = f"scope: {read_count} of {len(names)} mailbox(es) read"
         if self.read:
             line += " — " + ", ".join(self.read)
         if self.skipped:
@@ -235,10 +238,16 @@ def merge_directions(sent: Fanout, inbound: Fanout) -> Fanout:
     fails both passes the same way) collapses to one."""
     rows = [{**r, "direction": "sent"} for r in sent.rows]
     rows += [{**r, "direction": "in"} for r in inbound.rows]
-    read = list(dict.fromkeys(list(sent.read) + list(inbound.read)))
+    read = []
+    seen = set()
+    for address in sent.read + inbound.read:
+        key = address.strip().lower()
+        if key not in seen:
+            read.append(address)
+            seen.add(key)
     merged: dict[tuple[str, str], Unreadable] = {}
     for u in list(sent.unreadable) + list(inbound.unreadable):
-        key = (u.account, u.address.lower())
+        key = (u.account, u.address.strip().lower())
         prev = merged.get(key)
         if prev is None:
             merged[key] = u
@@ -248,9 +257,18 @@ def merge_directions(sent: Fanout, inbound: Fanout) -> Fanout:
             )
     bad = list(merged.values())
     # A mailbox that failed either call is not a mailbox that was read.
-    failed = {u.address.lower() for u in bad if u.address}
-    read = [a for a in read if a.lower() not in failed]
-    return Fanout(rows=rows, read=read, unreadable=bad)
+    failed = {u.address.strip().lower() for u in bad if u.address}
+    read = [a for a in read if a.strip().lower() not in failed]
+    skipped: dict[tuple[str, str], Skipped] = {}
+    for item in sent.skipped + inbound.skipped:
+        key = (item.account, item.address.strip().lower())
+        previous = skipped.get(key)
+        if previous is None:
+            skipped[key] = item
+        elif item.reason != previous.reason and item.reason not in previous.reason:
+            skipped[key] = Skipped(previous.account, previous.address,
+                                   f"{previous.reason} / {item.reason}")
+    return Fanout(rows=rows, read=read, unreadable=bad, skipped=list(skipped.values()))
 
 
 class MailboxUnreadable(RuntimeError):
@@ -431,9 +449,11 @@ def operator_mailbox(settings: Settings) -> Mailbox:
 
 
 def readable(settings: Settings) -> tuple[list[Mailbox], list[Unreadable]]:
-    """Every mailbox in scope, split into the ones this process can open and
-    the ones it cannot. Deduped by address: an account registered twice, or one
-    whose profile serves the operator mailbox itself, is read once."""
+    """Configured credentials, split into available and unavailable identities.
+
+    This resolves credentials without opening IMAP. Deduped by address: an
+    account registered twice, or serving the operator identity, appears once.
+    The caller then applies the fixed self-owner skip before any IMAP open."""
     boxes: list[Mailbox] = []
     bad: list[Unreadable] = []
     seen: set[str] = set()
@@ -497,13 +517,27 @@ def readable(settings: Settings) -> tuple[list[Mailbox], list[Unreadable]]:
     return boxes, bad
 
 
+def _ask_addresses(mailbox: Mailbox, addresses: Iterable[str]) -> tuple[list[str], Skipped | None]:
+    """Remove known owner pairs and retain their named deliberate omission."""
+    wanted = [a.strip().lower() for a in addresses if a and a.strip()]
+    owner = mailbox.address.strip().lower()
+    ask = [a for a in wanted if not owner or a != owner]
+    if len(ask) == len(wanted):
+        return ask, None
+    reason = (f"not asked about its own owner {mailbox.address}" if ask else
+              "every address asked about is this mailbox's own owner — its "
+              "own outbox cannot say whether they wrote to us")
+    return ask, Skipped(mailbox.account, mailbox.address, reason)
+
+
 def _fan(
     settings: Settings,
     boxes: list[Mailbox],
     bad: list[Unreadable],
+    addr: str,
     run: Callable[[imaplib.IMAP4_SSL], list[dict]],
 ) -> Fanout:
-    """Run one read over each mailbox, tagging rows and collecting failures.
+    """Read each eligible mailbox, tagging rows, self-owner skips and failures.
 
     The `except` is deliberately broad and deliberately HERE: an IMAP LOGIN
     refusal raises `imaplib.IMAP4.error`, which `cli.main` does not catch (a
@@ -513,7 +547,12 @@ def _fan(
     rows: list[dict] = []
     read: list[str] = []
     failed = list(bad)
+    skipped: list[Skipped] = []
     for mb in boxes:
+        _ask, omission = _ask_addresses(mb, [addr])
+        if omission is not None:
+            skipped.append(omission)
+            continue
         try:
             M = session(settings, mb)
             got = run(M)
@@ -524,23 +563,21 @@ def _fan(
         for row in got:
             rows.append({**row, "mailbox": mb.address})
         read.append(mb.address)
-    return Fanout(rows=rows, read=read, unreadable=failed)
+    return Fanout(rows=rows, read=read, unreadable=failed, skipped=skipped)
 
 
 def headers_since_across(settings: Settings, addrs: Iterable[str], key: str,
                          since=None) -> Fanout:
-    """Every message involving any of `addrs`, across every mailbox in scope —
+    """Messages involving `addrs`, across the configured scope with self-owner skip —
     ONE search + chunked FETCH per mailbox, and a mailbox is never asked about
     its OWN owner.
 
-    **NOT a drop-in for `sent_to_across` / `inbound_since_across`, and a SEND
-    GATE MUST NOT CALL IT.** It sits beside them and returns the same `Fanout`
-    they consume, so it will read like one. It is not: it applies the
-    self-exclusion below, and inside a gate that exclusion empties `replies`
-    for a colleague contact, which short-circuits past the send branches in
-    `cs/campaign.py` and moves that contact from no-send to send. Widening a
-    send path is not something a read optimisation may do. This exists for
-    `cs/draft_state.reconcile`, which is read-only and human-supervised.
+    The single-address readers and this multi-address reader share the same
+    self-owner skip. The operator decision of 2026-10-06 permits it in send
+    gates: a colleague's outbox to third parties is not reply evidence.
+    Unreadable evidence still refuses; a real answer remains visible from
+    another in-scope mailbox. This bulk reader serves reconcile; the gates
+    continue to call their single-address readers.
 
     **The self-exclusion.** A mailbox is not asked about its own owner. Asking
     a colleague's own mailbox "has this colleague written" matches their entire
@@ -565,13 +602,10 @@ def headers_since_across(settings: Settings, addrs: Iterable[str], key: str,
     failed = list(bad)
     skipped: list[Skipped] = []
     for mb in boxes:
-        mine = mb.address.strip().lower()
-        ask = [a for a in addrs if a != mine]
+        ask, omission = _ask_addresses(mb, addrs)
+        if omission is not None:
+            skipped.append(omission)
         if not ask:
-            skipped.append(Skipped(
-                mb.account, mb.address,
-                "every address asked about is this mailbox's own owner — its "
-                "own outbox cannot say whether they wrote to us"))
             continue
         try:
             M = session(settings, mb)
@@ -584,37 +618,34 @@ def headers_since_across(settings: Settings, addrs: Iterable[str], key: str,
         for row in got:
             rows.append({**row, "mailbox": mb.address})
         read.append(mb.address)
-        if len(ask) < len(addrs):
-            skipped.append(Skipped(
-                mb.account, mb.address,
-                f"not asked about its own owner {mb.address}"))
+
     return Fanout(rows=rows, read=read, unreadable=failed, skipped=skipped)
 
 
 def sent_to_across(settings: Settings, addr: str, days: int | None = None) -> Fanout:
-    """"Has anyone here ever written to this address?" — Gmail Sent, every
-    mailbox in scope, unbounded by default.
+    """"Has anyone here ever written to this address?" — configured Gmail Sent
+    scope, fixed self-owner skip, unbounded by default.
 
     The window costs nothing to drop: `sent_to` fetches every matching UID's
     header and filters by Date afterwards, so `days=None` costs what `days=30`
     costs. And "have we ever" has no natural horizon — the case this exists for
     was 61 days old, which a 60-day gate misses by one."""
     boxes, bad = readable(settings)
-    return _fan(settings, boxes, bad, lambda M: gmail_archive.sent_to_on(M, addr, days))
+    return _fan(settings, boxes, bad, addr, lambda M: gmail_archive.sent_to_on(M, addr, days))
 
 
 def inbound_since_across(settings: Settings, addr: str, after=None) -> Fanout:
-    """"Has this address written to anyone here?" — All Mail, every mailbox in
-    scope. Safe to fan out for the same reason `sent_to` is: it decides nothing
+    """"Has this address written to anyone here?" — configured All Mail scope,
+    fixed self-owner skip. Safe to fan out for the same reason `sent_to`: no decision
     from "is this us"."""
     boxes, bad = readable(settings)
     return _fan(
-        settings, boxes, bad, lambda M: gmail_archive.inbound_since_on(M, addr, after)
+        settings, boxes, bad, addr, lambda M: gmail_archive.inbound_since_on(M, addr, after)
     )
 
 
 def sent_to_here(settings: Settings, addr: str, days: int | None = None) -> Fanout:
-    """`sent_to` over the OPERATOR mailbox alone, in the fan-out's shape.
+    """`sent_to` over the OPERATOR mailbox, with the fixed self-owner skip.
 
     Not a narrowing knob — the caller is the dedup verb, whose question really
     is about that one mailbox and whose window really is the re-contact policy.
@@ -631,4 +662,4 @@ def sent_to_here(settings: Settings, addr: str, days: int | None = None) -> Fano
                 str(e),
             )
         ]
-    return _fan(settings, boxes, bad, lambda M: gmail_archive.sent_to_on(M, addr, days))
+    return _fan(settings, boxes, bad, addr, lambda M: gmail_archive.sent_to_on(M, addr, days))

@@ -185,7 +185,16 @@ DENIED=(
     "Bash(python -m cs connection vonage allow-ip:*)" \
     "Bash(python3 -m cs connection vonage allow-ip:*)" \
     "Bash(cs connection vonage allow-ip:*)" \
+{% for action in ['preview', 'export', 'commit'] %}
+    "Bash(.venv/bin/python -m cs assignment {{ action }}:*)" \
+    "Bash(.venv/bin/python3 -m cs assignment {{ action }}:*)" \
+    "Bash(.venv/bin/cs assignment {{ action }}:*)" \
+    "Bash(python -m cs assignment {{ action }}:*)" \
+    "Bash(python3 -m cs assignment {{ action }}:*)" \
+    "Bash(cs assignment {{ action }}:*)" \
+{% endfor %}
 {% for method in [
+  'tasks.assignment.commit',
   'update.run',
   'memory.reconsolidate_now',
   'memory.join',

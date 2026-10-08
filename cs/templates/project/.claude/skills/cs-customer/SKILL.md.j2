@@ -95,10 +95,38 @@ For relevant primary contact emails:
 ```
 
 `dossier` runs on this workspace's default identity. Its prior-contact checks
-cover the declared mailboxes using Gmail Sent/All Mail, not the engine archive.
+use the configured scope with the fixed self-owner skip, using Gmail Sent/All
+Mail rather than the engine archive. Read, unreadable and skipped mailboxes are
+named; deliberate skips alone are complete.
 `STOP — evidence incomplete` names a mailbox that could not be read; do not
 contact anyone on that basis. `thread` and `ask` support other declared accounts;
 `dossier` does not switch identity with `--account`.
+
+For each relevant exact RFC thread found in correspondence, read the common
+assignment projection before recommending drop, draft or contact:
+
+```bash
+.venv/bin/python -m cs assignment status '<exact-thread-key>' --json
+```
+
+`needs-assignment`, `assigned`, `conflict`, `unknown` and incomplete scope hold
+an automatic reply and remain visible human work, even with a later Sent row
+or a local handled record. A nonautomatic member reply is a candidate requiring
+human verification, never proof from headers. Include assignee, task ID/revision,
+manual/supervised/address-escalation provenance and missing peer scope.
+Ordinary address takeover still holds the address; a different thread from the
+same sender remains separate when no such takeover exists.
+
+Complete `closed` is audit of exact covered inbound identities. A new inbound identity
+returns `later-inbound` operator work even with the same or older Date; it does
+not restore the old assignee. An active assignment keeps later inbound with its
+human. A completed ordinary task or local handled gesture does not close an
+assignment. Only an exact signed operation acknowledged by the original
+creator's source-owner engine can do that, with nonempty verified own inbound
+coverage. This context skill neither requests mutations nor signs them. Missing
+or unsupported authority is UNKNOWN, never evidence of no owner. Any subsequent
+reply uses `cs draft-reply "<instruction>" --thread-id '<exact-thread-key>'`
+under that workflow's separate authorization and prewrite guard.
 
 ## 4. Reconcile and report
 

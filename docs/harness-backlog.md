@@ -47,6 +47,14 @@ would prevent. Delete an entry as the enforcement lands.
   (`is_auto_reply` on `emails.list_by_thread`, and `emails.needs_reply` since
   `v0.26.0`), which is also the only place charter invariant 4 allows it to live.
 
+- [ ] **Dynamic kernel RPC call analysis is incomplete.** Owner: cs-kernel,
+  coordinated with Desktop contract tooling. The bounded 2026-10-07 AST inventory
+  identifies ten computed-method/variable-payload call sites without resolving
+  their dataflow; aliases outside its candidate names are unproved. Add reviewed
+  coverage before claiming an exhaustive caller/schema contract. Runtime value
+  and response schemas belong to the [Desktop backlog](../../mrcall-desktop/docs/harness-backlog.md)
+  and the [generated inventory](../../mrcall-desktop/docs/rpc-contract-inventory.json).
+
 ## Oversized docs — reviewed
 
 Verdicts recorded for every document the gate's size advisory names. `split` is

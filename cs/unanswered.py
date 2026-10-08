@@ -588,8 +588,13 @@ def sweep(settings: Settings, days: int) -> dict:
     if owed_note:
         note = f"{note}; {owed_note}" if note else owed_note
 
+    from . import task_assignment
+    assignment = task_assignment.projections(settings, ordered)
+    normal_inbound, human_work, assignment_audit, reopened = task_assignment.split_inbound(
+        inbound, assignment, taken, self_lc, ignore, datetime.now(timezone.utc)
+    )
     open_rows, held, mine, resumed, automatic, courtesy = _partition(
-        inbound,
+        normal_inbound,
         sent,
         self_addrs,
         ignore,
@@ -599,9 +604,14 @@ def sweep(settings: Settings, days: int) -> dict:
         views,
         settled,
     )
+    open_rows.extend(reopened)
+    open_rows.sort(key=lambda row: row["last_inbound_date"])
     for row in held:
         row["handled_reason"] = (records.get(row["email"]) or {}).get("reason", "")
     return {"open": open_rows, "handled": held, "escalated": mine,
+            "human_work": human_work, "assignment_audit": assignment_audit,
+            "assignment_incomplete": any(not row["complete"] for row in assignment.values()) or any(
+                not row["assignment"]["complete"] for row in human_work),
             "resumed": resumed, "automatic": automatic, "courtesy": courtesy,
             "note": note, "read_incomplete": read_incomplete}
 

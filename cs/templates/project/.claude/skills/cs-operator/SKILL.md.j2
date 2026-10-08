@@ -31,8 +31,13 @@ All commands run from the repo root with `.venv/bin/python -m cs …`.
 - **Whether free-form replies are sent or only drafted is `cs_triage_mode`,
   and step 2b is the ONLY place you learn its value.** While it resolves to
   `draft`, replies become engine drafts for the operator to review. The
-  sub-skills enforce whatever it resolves to; you do not override it, and you
-  never infer it.
+  sub-skills keep their own permission limits even when the configuration says
+  `send`: triage remains draft-only. You do not override or infer the value.
+- **Assignment holds survive this bootstrap.** The common sweep and exact-thread
+  assignment projection decide the boundary before Sent subtraction or drafting.
+  Candidate, assigned, conflict and unknown work remains named human work;
+  closed coverage stays audit, and a new inbound identity returns operator work
+  without restoring the old assignee. Keep ordinary address takeover visible.
 - **You do not self-authorize the out-of-scope actions in step 6.**
 
 ## 1. Kill-switch — `~/.{{ company_slug }}-cs/CS_PAUSE`
@@ -96,14 +101,20 @@ this step exists to prevent.
 Invoke the `cs-triage-mail` sub-skill using the host's native skill mechanism.
 
 It finds inbound {{ email_address }} mail needing a human answer, reads full bodies
-(not snippets) via the engine, and — under `CS_TRIAGE_MODE` — composes
-replies **through the engine** (memory + trained voice + threading). In
-`draft` mode it leaves engine drafts for the operator and **sends nothing**; it
+(not snippets) via the engine and composes drafts **through the engine**
+(memory + trained voice + exact threading). It leaves engine drafts for the
+operator and **sends nothing**, even if the effective mode says `send`; it
 escalates judgment calls / out-of-scope / angry mail rather than
-auto-answering, and marks handled threads so a later tick does not
-re-draft them. Capture what it reports (drafted / escalated / nothing to
+auto-answering. It checks existing exact-thread drafts without treating a
+draft as handled or closing an assignment. Capture what it reports (drafted / escalated / nothing to
 do). If it has nothing to do, that is a valid outcome — record it and move
 on.
+
+Keep the sub-skill's `human_work`, ordinary `escalated` owner/age, closed audit
+and reopened-thread decisions in the consolidated report. A positive reply
+candidate with an unreadable peer remains UNKNOWN; do not summarize it as
+answered or remove it because a local handled record exists. A nonautomatic
+member reply needs human verification and explicit assignment.
 
 ## 4. Recurring job — advance active campaigns
 
@@ -138,8 +149,11 @@ read-only.
 
 It is not the only step that SEES another mailbox: every prior-contact check
 (`cs history`, `cs dossier`, the campaign send gates) reads the Sent and All
-Mail of every mailbox in scope by itself, with no `--account` and no extra step
-from you. Their answers name the mailboxes they read.
+Mail across the configured scope, with no `--account` and no extra step from
+you. A mailbox is never asked about its own owner. `cs history` and `cs dossier`
+name read, unreadable and skipped scope; a deliberate skip alone is complete.
+Applicable campaign gates apply the same owner filter and refuse named
+unreadable sources; their result does not expose the full three-state scope.
 
 ```bash
 .venv/bin/python -m cs --account {{ founder_sweep_account }} tasks
@@ -195,6 +209,9 @@ performed**, even if a sub-skill surfaces them or it looks convenient:
 - touching the `{{ excluded_campaign }}` campaign, or removing its exclusion —
   a dedicated process owns it;
 {% endif %}
+- assignment preview/export/commit or raw `tasks.assignment.commit`, signing an
+  intent, or claiming a human has taken over from a reply header. These need
+  independent host approval; local handled records do not acknowledge closure;
 - changing campaign exclusions (`[campaigns].excluded_campaign`) or any other
   operator configuration;
 - installing / cutting over crontab lines;
@@ -223,6 +240,8 @@ Campaigns: <one line: N reconciled / N reminders / N SMS / N ack drafts / nothin
 {{ founder_sweep_account }}:   <one line, SURFACING ONLY (never drafts): N open to handle by hand / nothing>
 {% endif %}
 Waiting drafts: <one line: N ready / N to re-decide>
+Human work: <exact threads, states, assignees, task ID/revision, provenance and unknown scope>
+Closed audit / reopened: <acknowledged coverage or new inbound identity; never restore prior assignee>
 
 Escalations (need you):
 - <one line per item; omit the section if empty>

@@ -1,5 +1,70 @@
 # Changelog — cs-kernel
 
+## v0.51.0 — 2026-10-08 (MINOR, release candidate)
+
+### Bounded fan-out history and honest mailbox scope
+
+Shared Sent/inbound/correspondence readers fetch headers in 200-UID batches and
+raise `SearchFailed` or `ChunkFetchFailed` on refused reads instead of returning
+silent absence/short lists. Dossier prints named UNKNOWN correspondence and
+continues independent sections. All fan-outs apply one normalized self-owner
+skip before IMAP. History and dossier name read/unreadable/skipped scope;
+applicable campaign gates refuse named unreadable sources without exposing the
+full scope in their result. History exits 3 for unreadable scope even when
+another mailbox found messages.
+
+The authorized colleague reply correction excludes outbox-to-third-party rows,
+while genuine recipient-side replies, other-mailbox dedup and non-owner gate
+results remain effective. Explicit engine task assignment is the selected
+mechanism; its local consumer delivery is recorded separately below.
+
+MINOR required: the single-mailbox `sent_to` / `inbound_since` library wrappers
+now expose read-failure exceptions. FULL acceptance is required on both maintained
+clones before a separately authorized release, including enumeration/adaptation
+of their direct `ext/` callers to refuse-and-name, real history skip output and
+measured Gmail chunk latency. Current candidate acceptance is recorded below;
+publication and original-clone upgrades remain pending.
+
+### Explicit company thread assignments
+
+`cs assignment` reads status, previews/exports exact operations and submits
+independently approved grants to the engine. The kernel keeps no ownership
+ledger or signing key. Unanswered, review and dossier retain human work,
+unconfirmed candidates, unknown sources and closed audit per exact thread.
+A local handled record cannot replace acknowledged engine closure; new inbound
+identities reopen operator work without reviving the former assignee.
+
+Scoped draft composition requires `--thread-id` and negotiated engine enforcement
+before writing. Named assignment preview/export/commit and raw commit are denied
+in all six scheduled spellings. Existing escalation and private task authority
+remain separate. Workflow/native acceptance is tracked by the
+[local delivery plan](docs/execution-plans/2026-10-08-engine-task-assignment-consumer.md).
+
+MINOR required: new CLI and scoped-draft contracts. FULL checks on both maintained
+clones and production trust installation are required before authorized
+release/enablement. Current provider parity and latency checks pass; no hosted
+rollout is claimed.
+
+Migration: deploy the compatible engine and root-owned assignment trust before
+upgrading clones; refresh canonical skills and scheduled denials while preserving
+company-authored files and clone documentation harnesses. Older engines hold
+scoped draft requests instead of falling back to unverified authority.
+
+**Re-collaudo: both maintained clones, FULL before publication.** Send, mailbox
+read-failure and permission boundaries change. Both installed clone candidates
+pass the scoped current FULL checks: fourteen installed semantic fixtures,
+distinct-version dedup parity, canonical three-host workflows, preserved permissions
+and paused launchers. The legacy July harness remains red on installed `v0.50.0`;
+obsolete goldens and validator failures are retained, not overwritten. Raw candidate
+whoami format failures have separate authenticated JSON identity proofs. Real
+provider reads cover all configured mailboxes with explicit owner skips and matching
+RFC thread keys; maximum 200-UID FETCH times are 0.952 s and 1.134 s. No customer
+send, paid tick or installer GUI acceptance is established. Evidence is retained
+under `/home/mal/.local/state/codex-evidence/fanout-recovery-20261008/release/`:
+`kernel-full-acceptance-final.json`, `kernel-full-review.txt`, both
+`*-provider-read.json` files and `kernel-final-suite-result.json`.
+Production activation and original-clone upgrades remain pending.
+
 ## v0.50.0 — 2026-10-08 (MINOR)
 
 ### Conversational standing instructions

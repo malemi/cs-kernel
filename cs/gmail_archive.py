@@ -13,7 +13,7 @@ Read-only: SEARCH/FETCH headers only, never writes. Reuses the IMAP login from
 ONE mailbox per call — the operator's. Two readers here (`sent_to`,
 `inbound_since`) decide nothing from "is this us" and therefore also exist as
 `*_on(M, …)` variants that run on a caller-owned connection: that is what
-`cs/mailboxes.py` fans out over every mailbox the company answers from. The
+`cs/mailboxes.py` fans out over the configured scope with a fixed self-owner skip. The
 rest (`thread_with`, `inbound_recent`, `sent_recent`, `correspondence`) derive
 direction or self-ness from `settings.email_address` and would misattribute
 every message in somebody else's mailbox, so they stay single-mailbox.
@@ -67,6 +67,10 @@ class ChunkFetchFailed(Exception):
     `read_incomplete`, which is separate from `note` for exactly that reason."""
 
 
+class SearchFailed(Exception):
+    """A header SEARCH was refused, so matching messages could not be read."""
+
+
 def _fetch_headers(M, ids, chunk: int = 200):
     """Batch BODY.PEEK header FETCH over a list of UID byte-strings, yielding
     parsed email.message objects. One FETCH per `chunk` UIDs (not one per UID) —
@@ -97,11 +101,10 @@ def headers_for_addresses_on(M, addrs, key: str, flag: str, default: str,
     """Every message in one folder involving ANY of `addrs`, in ONE search plus
     chunked header FETCHes — the bulk twin of `sent_to_on` / `inbound_since_on`.
 
-    Those two answer about ONE address and issue one FETCH round trip per
-    matching UID. Asked once per contact per mailbox that is O(contacts x
-    mailboxes x messages) round trips, and on a mailbox that holds one of the
-    contacts' own sent history it was 21,637 of them for a single pair. This
-    asks the whole question once: `OR`-composed SEARCH, then `_fetch_headers`.
+    The single-address readers also batch headers through `_fetch_headers`.
+    This bulk reader instead combines multiple addresses in one OR-composed
+    SEARCH per folder, then buckets the batched headers by matching address.
+    The fan-out applies the same fixed self-owner skip to both paths.
 
     `key` is "TO" (Sent) or "FROM" (All Mail). Rows carry `date`, `subject`,
     `message_id` and `matched` — the address this row is evidence about, which
@@ -193,13 +196,12 @@ def sent_to_on(M, addr: str, days: int | None = None) -> list[dict]:
     sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
     M.select(f'"{sent}"', readonly=True)
     typ, d = M.uid("SEARCH", None, "TO", addr)
+    if typ != "OK":
+        raise SearchFailed("IMAP header SEARCH was refused — matching messages were not read")
     ids = d[0].split() if d and d[0] else []
     cutoff = datetime.now(timezone.utc) - timedelta(days=days) if days else None
     out = []
-    for uid in ids:
-        h = _hdr(M, uid)
-        if not h:
-            continue
+    for h in _fetch_headers(M, ids):
         raw = h.get("Date")
         dt = None
         if raw:
@@ -227,7 +229,7 @@ def sent_to(settings: Settings, addr: str, days: int | None = None) -> list[dict
 
     ONE mailbox: the operator's. It answers "did WE write", where "we" is this
     one mailbox — see `cs/mailboxes.sent_to_across` for the same question asked
-    of every mailbox the company answers from."""
+    across the configured scope with the fixed self-owner skip."""
     M = _imap(settings)
     try:
         return sent_to_on(M, addr, days)
@@ -352,7 +354,7 @@ def sent_body_match(settings: Settings, addr: str, body: str,
         pass
 
 
-def correspondence(settings: Settings, addr: str) -> list[dict]:
+def correspondence(settings: Settings, addr: str, *, assignment_metadata: bool = False) -> list[dict]:
     """Real history with `addr`, both directions, DRAFT-FREE by construction.
 
     - our sends = the Sent folder, TO `addr` (drafts live in Drafts, never Sent);
@@ -367,21 +369,23 @@ def correspondence(settings: Settings, addr: str) -> list[dict]:
         sent = _find_folder(M, "\\sent", "[Gmail]/Sent Mail")
         M.select(f'"{sent}"', readonly=True)
         typ, d = M.uid("SEARCH", None, "TO", addr)
-        for uid in (d[0].split() if d and d[0] else []):
-            h = _hdr(M, uid)
-            if h:
-                out.append({"date": h.get("Date"), "from": h.get("From") or "",
-                            "to": h.get("To") or "", "subject": h.get("Subject"),
-                            "direction": "sent"})
+        if typ != "OK":
+            raise SearchFailed("IMAP header SEARCH was refused — matching messages were not read")
+        ids = d[0].split() if d and d[0] else []
+        for h in _fetch_headers(M, ids):
+            out.append({"date": h.get("Date"), "from": h.get("From") or "",
+                        "to": h.get("To") or "", "subject": h.get("Subject"),
+                        "direction": "sent", **({"thread_key": thread_key(h.get("Message-ID"), h.get("References"), h.get("In-Reply-To")), "message_id": str(h.get("Message-ID") or "")} if assignment_metadata else {})})
         allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
         M.select(f'"{allm}"', readonly=True)
         typ, d = M.uid("SEARCH", None, "FROM", addr)
-        for uid in (d[0].split() if d and d[0] else []):
-            h = _hdr(M, uid)
-            if h:
-                out.append({"date": h.get("Date"), "from": h.get("From") or "",
-                            "to": h.get("To") or "", "subject": h.get("Subject"),
-                            "direction": "in"})
+        if typ != "OK":
+            raise SearchFailed("IMAP header SEARCH was refused — matching messages were not read")
+        ids = d[0].split() if d and d[0] else []
+        for h in _fetch_headers(M, ids):
+            out.append({"date": h.get("Date"), "from": h.get("From") or "",
+                        "to": h.get("To") or "", "subject": h.get("Subject"),
+                        "direction": "in", **({"thread_key": thread_key(h.get("Message-ID"), h.get("References"), h.get("In-Reply-To")), "message_id": str(h.get("Message-ID") or "")} if assignment_metadata else {})})
         return out
     finally:
         try:
@@ -400,12 +404,11 @@ def inbound_since_on(M, addr: str, after=None) -> list[dict]:
     allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
     M.select(f'"{allm}"', readonly=True)
     typ, d = M.uid("SEARCH", None, "FROM", addr)
+    if typ != "OK":
+        raise SearchFailed("IMAP header SEARCH was refused — matching messages were not read")
     ids = d[0].split() if d and d[0] else []
     out = []
-    for uid in ids:
-        h = _hdr(M, uid)
-        if not h:
-            continue
+    for h in _fetch_headers(M, ids):
         raw = h.get("Date")
         dt = None
         if raw:
@@ -428,7 +431,7 @@ def inbound_since(settings: Settings, addr: str, after=None) -> list[dict]:
     contact can never be one of our drafts, so this is draft-free by nature.
 
     ONE mailbox: the operator's. `cs/mailboxes.inbound_since_across` asks it of
-    every mailbox the company answers from."""
+    the configured scope with the fixed self-owner skip."""
     M = _imap(settings)
     try:
         return inbound_since_on(M, addr, after)

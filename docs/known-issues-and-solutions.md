@@ -3,6 +3,40 @@
 Issues with a confirmed fix, kept because the symptom is misleading enough that
 the next person would re-diagnose it from scratch.
 
+## 2026-10-06 — Self-owner history was mistaken for a colleague reply
+
+**Local candidate fix; release pending.** A fan-out asking a colleague's own
+mailbox for messages from that colleague reads their outbox to third parties as
+reply evidence. It can falsely report prior company contact, permanently block
+a colleague contact and generate one header FETCH per message.
+
+**Operator decision, 2026-10-06 (original quotation).** “non capisco. se un
+collega umano ha risposto, il thread diventa suo e il kernel lo deve mettere
+come non più suo. metti nel brief che bisogna capire come fare, ovviamente
+la cosa più normale sarebbe avere i task assegnati alle persone”. Only a real
+answer is reply evidence; human thread ownership has a separately reviewed
+[design](2026-10-07-human-thread-ownership-design.md). Explicit engine task
+assignment is now implemented in the compatible release candidate; production
+trust installation and clone acceptance remain release obligations. The
+quotation records the original authority.
+
+**Guard.** One shared self-owner filter skips normalized owner/address pairs
+before opening IMAP. Single-address and bulk readers use it; merged scope names
+read, unreadable and skipped mailboxes. Deliberate skips alone remain complete,
+while unreadable evidence refuses applicable sends. Batched shared readers use
+200-UID BODY.PEEK chunks and raise on non-OK SEARCH/FETCH. Dossier names unknown
+correspondence and preserves independent sections instead of deriving a verdict
+from an unread result. Fixtures preserve genuine exchanges and non-owner gate
+ASKED sets/verdicts, and prove the original false YES becomes no.
+
+**Explicitly excluded SEARCH-status holes.** `headers_for_addresses_on`,
+`sent_body_match`, `inbound_recent` and `sent_recent` still have non-OK SEARCH
+paths that can look like absence. This work does not fix their reconcile,
+duplicate-check or sweep semantics. Live per-chunk latency, both maintained
+clones' FULL acceptance and clone-owned direct wrapper callers remain release
+obligations in the [local plan](execution-plans/2026-10-06-fanout-bounded-reads.md).
+No tag, clone upgrade or live send is part of this candidate.
+
 ## A gated engine tool "hangs the engine" — it was our own client deadlocking
 
 **Fixed in `v0.3.7`.**

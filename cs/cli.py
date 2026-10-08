@@ -9,8 +9,8 @@ Code is the brain. These verbs are thin transport:
   rpc        generic JSON-RPC call: cs rpc <method> ['{"json": "params"}'].
   thread     all email threads exchanged with one address (both directions).
   contacted  did the operator write to this address in the last N days? (dedup)
-  history    has this company EVER exchanged mail with this address, from any
-             mailbox it can open — and which mailboxes it could not read.
+  history    has this company EVER exchanged mail with this address, across the
+             configured scope, naming read, unreadable and self-owner skips.
   unanswered inbound still awaiting a human reply (deterministic, Sent-anchored).
   handled    record that a contact was resolved OUT OF BAND (phone, WhatsApp,
              in person) — their mail up to that moment stops being open work.
@@ -282,12 +282,13 @@ def cmd_contacted(args) -> int:
 
 
 def cmd_history(args) -> int:
-    """Has this company EVER been in touch with this address — from ANY mailbox?
+    """Has this company ever exchanged mail across its configured mailbox scope?
 
-    The question `contacted` (one mailbox, one window), `thread` (the engine's
-    archive of that same mailbox) and `dossier` (both, per contact) cannot
-    answer, because they share one bound: mail that never passed through the
-    operator mailbox exists in none of them.
+    Each mailbox is skipped for its own owner before opening it. Read,
+    unreadable and skipped scope stays visible; unreadable evidence exits 3
+    even when another mailbox found messages. Unlike contacted, history has
+    no date window. Dossier reads the same unbounded cross-mailbox dedup scope,
+    then applies its recent-contact window to those rows.
     """
     settings = config.load()
     from . import gmail_archive, mailboxes
@@ -309,15 +310,12 @@ def cmd_history(args) -> int:
     )
     sent = [r for r in rows if r["direction"] == "sent"]
     inbound = [r for r in rows if r["direction"] == "in"]
-    # Found is found: a positive answer stands whatever else could not be read.
-    # Only a NEGATIVE one depends on the scope being complete, which is why the
-    # exit status splits three ways instead of two.
-    if rows:
-        code = 0
-    elif fan.complete:
-        code = 1
-    else:
+    if not fan.complete:
         code = 3
+    elif rows:
+        code = 0
+    else:
+        code = 1
 
     if getattr(args, "json", False):
         payload = fan.as_dict()
@@ -338,7 +336,9 @@ def cmd_history(args) -> int:
             f"'recently'."
         )
     elif fan.complete:
-        print(f"no — no mailbox in scope has ever exchanged mail with {email}.")
+        print(f"no — no exchange with {email} was found in the mailboxes read."
+              + (" Its own mailbox was deliberately not asked; see the scope below."
+                 if fan.skipped else ""))
     else:
         print(
             f"UNKNOWN — nothing found in the mailboxes that could be read, and "
@@ -409,13 +409,16 @@ def cmd_unanswered(args) -> int:
         if getattr(args, "all_buckets", False):
             d["crm_note"] = crm_note
             _print_json(d)
-            return _INCOMPLETE_RC if d.get("read_incomplete") else 0
+            return _INCOMPLETE_RC if d.get("read_incomplete") or d.get("assignment_incomplete") else 0
         # The open list, exactly as before: this is the triage skill's PRIMARY
         # candidate feed and its shape is a contract. The out-of-band and
         # taken-over sections below are for the human — a machine reader wants
         # the work it may do, not the explanation of what was left out (and for
         # the taken-over rows the whole point is that it may NOT do them).
         _print_json(rows)
+        if d.get("assignment_incomplete"):
+            print("Assignment authority UNKNOWN; held threads are visible in --all-buckets human_work", file=sys.stderr)
+            return 3
         if d.get("read_incomplete"):
             # stdout keeps its contract — a bare JSON list, the shape the triage
             # skill parses. The failure goes to STDERR and to the EXIT CODE,
@@ -428,7 +431,16 @@ def cmd_unanswered(args) -> int:
                   f"never as nobody waiting.", file=sys.stderr)
             return _INCOMPLETE_RC
         return 0
-    if not rows and not d.get("read_incomplete"):
+    from . import task_assignment
+    if d.get("human_work"):
+        print(f"Human work / assignment holds ({len(d['human_work'])}):")
+        for item in d["human_work"]:
+            print(f"  {item['email']}: {task_assignment.render(item['assignment'])}")
+    if d.get("assignment_audit"):
+        print(f"Acknowledged closed assignments ({len(d['assignment_audit'])}):")
+        for item in d["assignment_audit"]:
+            print(f"  {item['email']}: {task_assignment.render(item['assignment'])}")
+    if not rows and not d.get("read_incomplete") and not d.get("assignment_incomplete"):
         # The re-labelled rows below ARE unanswered inbound, so an unqualified
         # "none" above a list of them would read as a contradiction.
         #
@@ -658,6 +670,14 @@ def cmd_handled(args) -> int:
     settings = config.load()
     st = state_mod.State(settings.db_path)
     records = st.handled_out_of_band()
+    assignment_intent = getattr(args, "assignment_intent", None)
+    assignment_grant = getattr(args, "assignment_grant", None)
+    if assignment_intent and (not args.email or args.undo):
+        print("Signed engine closure requires one contact and cannot be combined with --undo", file=sys.stderr)
+        return 2
+    if bool(assignment_intent) != bool(assignment_grant):
+        print("Both --assignment-intent and --assignment-grant are required for engine closure", file=sys.stderr)
+        return 2
 
     if not args.email:  # bare `cs handled` = what is currently on record
         if not records:
@@ -723,6 +743,20 @@ def cmd_handled(args) -> int:
     else:
         moment = _time.now_utc()
     reason = (args.why or "").strip()
+    close_intent = close_grant = None
+    if assignment_intent:
+        from . import assignment_cli, gmail_archive, task_assignment
+        try:
+            close_intent = assignment_cli.read_object(assignment_intent)
+            close_grant = assignment_cli.read_object(assignment_grant)
+            if close_intent.get("operation") != "close" or close_intent.get("handled_ref") != email:
+                raise ValueError("signed close must name this contact as handled_ref")
+            correspondence = gmail_archive.correspondence(settings, email, assignment_metadata=True)
+            if close_intent.get("thread_key") not in {row.get("thread_key") for row in correspondence}:
+                raise ValueError("signed close thread is not in this contact's correspondence")
+        except (OSError, ValueError) as exc:
+            print(f"Assignment close not attempted: {type(exc).__name__}", file=sys.stderr)
+            return 3
 
     # Read before the write: mark_handled clears any takeover record (a thread
     # cannot be both over and still being written), and a state change the
@@ -740,12 +774,22 @@ def cmd_handled(args) -> int:
     else:
         print(f"recorded: {email} handled out of band on {when}"
               f"{' — ' + reason if reason else ''}")
-    print("  nothing they sent before that moment is open work; a later "
-          "message re-opens them on its own.")
+    print("  Local out-of-band record saved. This does not close an engine thread assignment; "
+          "only an exact independently approved assignment close acknowledged by the engine settles it.")
     if was_escalated:
         print(f"  the takeover record is cleared "
               f"(they were with {was_escalated.get('owner') or 'you'} since "
               f"{_fmt_local(was_escalated['escalated_at'], settings.timezone)}).")
+
+    if close_intent is not None:
+        try:
+            receipt = task_assignment.commit(settings, close_intent, close_grant)
+        except Exception as exc:
+            print(f"Engine assignment close UNKNOWN / not acknowledged ({type(exc).__name__}); "
+                  "local handled record does not settle it. Work remains held and visible.", file=sys.stderr)
+            return 3
+        print(f"Engine assignment close acknowledged: task={receipt['task_id']} revision={receipt['revision']} "
+              f"covered_inbound={len(receipt['covered_inbound'])}")
 
     # The task ledger is the OTHER place stale work piles up, so close it here
     # too — one command per real-world event, not two. actor="human" because a
@@ -980,13 +1024,25 @@ def cmd_dossier(args) -> int:
     # --- Gmail correspondence = GROUND TRUTH. The engine search misses mail sent
     # by hand and collapses replied-to threads out of folder:sent, so dedup must
     # read Gmail itself, not the engine. See cs/gmail_archive.py. ---
-    corr = gmail_archive.correspondence(settings, email)
+    correspondence_error = None
+    try:
+        corr = gmail_archive.correspondence(settings, email, assignment_metadata=True)
+    except Exception as exc:
+        password = settings.email_password or ""
+        correspondence_error = mailboxes._reason(
+            exc, password, password.replace(" ", "").strip()
+        )
+        corr = []
     sent_us = [m for m in corr if m["direction"] == "sent"]
     inbound = [m for m in corr if m["direction"] == "in"]
-    print(
-        f"-- Gmail correspondence ({len(corr)}): {len(sent_us)} sent by {me}, "
-        f"{len(inbound)} inbound [ground truth, drafts excluded] --"
-    )
+    if correspondence_error:
+        print(f"-- Gmail correspondence: UNKNOWN for {settings.email_address} — "
+              f"{correspondence_error} --")
+    else:
+        print(
+            f"-- Gmail correspondence ({len(corr)}): {len(sent_us)} sent by {me}, "
+            f"{len(inbound)} inbound [ground truth, drafts excluded] --"
+        )
     for m in sorted(corr, key=lambda x: x.get("date") or "", reverse=True)[:12]:
         tag = "SENT" if m["direction"] == "sent" else "IN  "
         print(f"  [{tag}] {str(m.get('date') or '?'):31.31} {(m.get('subject') or '')[:46]}")
@@ -994,7 +1050,7 @@ def cmd_dossier(args) -> int:
         print(f"  … {len(corr) - 12} older not shown")
 
     # The dedup gate — the one line of this dossier a caller acts on — reads
-    # EVERY mailbox this company answers from, not only the operator's. A
+    # The configured scope with the self-owner skip, not only the operator's. A
     # colleague's reply from his own address is on no header of the mailbox
     # above, so the correspondence section can be empty while the company has
     # been talking to this person for months.
@@ -1012,7 +1068,7 @@ def cmd_dossier(args) -> int:
     dated = [(gmail_archive._parse_date(m.get("date")), m) for m in ever]
     recent = [m for dt, m in dated if dt is not None and dt >= cutoff]
     print(
-        f"\n-- contacted in last {args.dedup_days}d (Gmail Sent, every mailbox "
+        f"\n-- contacted in last {args.dedup_days}d (Gmail Sent, configured mailbox "
         f"in scope): {'YES — do not cold-contact' if recent else 'no'} --"
     )
     for m in recent:
@@ -1047,6 +1103,17 @@ def cmd_dossier(args) -> int:
         print("  → do NOT draft, do NOT write, do NOT deliver a campaign to them")
 
     # --- resolved off-email? The one thing Gmail cannot know (cs handled). ---
+    from . import task_assignment
+    thread_keys = {row.get("thread_key") for row in corr if row.get("thread_key")}
+    assignments = task_assignment.projections(settings, thread_keys)
+    assignments = {key: task_assignment.provenance(value, taken) for key, value in assignments.items()}
+    if not thread_keys:
+        assignments[""] = task_assignment._unknown("", "exact correspondence thread scope unavailable")
+    print("\n-- engine thread assignments / closed audit --")
+    for projection in assignments.values():
+        print("  " + task_assignment.render(projection))
+    assignment_hold = any(row["hold_auto_reply"] for row in assignments.values())
+    assignment_reopened = any(row["state"] == "later-inbound" for row in assignments.values())
     rec = st_.handled_out_of_band().get(email.strip().lower())
     print("\n-- handled out of band (phone / WhatsApp / in person) --")
     if not rec:
@@ -1058,7 +1125,13 @@ def cmd_dossier(args) -> int:
         # parser (tz-aware, naive read as UTC) before comparing with the record.
         dates = [d for d in (gmail_archive._parse_date(m.get("date")) for m in inbound) if d]
         last_in = max(dates, default=None)
-        if last_in is not None and last_in <= rec["handled_at"]:
+        if correspondence_error:
+            print("  → UNKNOWN whether they have written since: correspondence was not read")
+        elif assignment_hold:
+            print("  → local record only: engine assignment is held / unconfirmed; work stays visible")
+        elif assignment_reopened:
+            print("  → new inbound identity after acknowledged close: operator work again, Date is irrelevant")
+        elif last_in is not None and last_in <= rec["handled_at"]:
             print("  → their last message predates it: NOT open work "
                   "(the sweeps stop raising it; a newer message re-opens them)")
         elif last_in is not None:
@@ -1073,13 +1146,35 @@ def cmd_dossier(args) -> int:
 
     _print_crm_section(settings, email)
 
-    if taken:
+    if assignment_hold:
+        verdict = "STOP — engine thread assignment HELD / UNKNOWN; inspect the named thread authority above"
+        if not fan.complete:
+            verdict += "; evidence incomplete: " + "; ".join(u.describe() for u in fan.unreadable)
+        elif ever:
+            verdict += "; older history exists in " + ", ".join(dict.fromkeys(m.get("mailbox") or "?" for m in ever))
+    elif taken:
         # First, ahead of the dedup window: this one is not a timing rule that
         # will lapse, it is somebody else's conversation.
         verdict = (
             f"STOP — taken over by {taken.get('owner') or 'you'}; still open, "
             f"but a human is answering it"
         )
+    elif not fan.complete:
+        # Fail-closed, like every send gate: this verdict is the mandatory
+        # pre-contact check, and "cold contact" read off a partial mailbox
+        # scan is precisely the sentence that produced an apology for two
+        # months of silence that had not happened.
+        verdict = (
+            "STOP — evidence incomplete: "
+            + "; ".join(u.describe() for u in fan.unreadable)
+            + ". Nobody can say this contact is cold until that mailbox is "
+              "readable again."
+        )
+    elif correspondence_error:
+        verdict = (f"STOP — correspondence UNKNOWN for {settings.email_address}; "
+                   "evidence incomplete")
+    elif assignment_reopened:
+        verdict = "REPLY IN THREAD — later inbound identity requires operator work; previous assignee is not restored"
     elif recent:
         who = ", ".join(dict.fromkeys(m.get("mailbox") or "?" for m in recent))
         verdict = f"STOP — already written to within the dedup window, from {who}"
@@ -1095,22 +1190,14 @@ def cmd_dossier(args) -> int:
             f"already wrote to them ({when}); older than the {args.dedup_days}d "
             f"window, so not a dedup block, but NOT a cold contact"
         )
-    elif not fan.complete:
-        # Fail-closed, like every send gate: this verdict is the mandatory
-        # pre-contact check, and "cold contact" read off a partial mailbox
-        # scan is precisely the sentence that produced an apology for two
-        # months of silence that had not happened.
-        verdict = (
-            "STOP — evidence incomplete: "
-            + "; ".join(u.describe() for u in fan.unreadable)
-            + ". Nobody can say this contact is cold until that mailbox is "
-              "readable again."
-        )
     elif sent_us or inbound:
         verdict = "REPLY IN THREAD — real history exists (not cold)"
     else:
         verdict = "cold contact — needs operator sign-off"
     print(f"\nverdict: {verdict}")
+    if correspondence_error:
+        print(f"evidence INCOMPLETE — correspondence UNKNOWN for {settings.email_address}: "
+              f"{correspondence_error}. {mailboxes.INCOMPLETE}")
     return 0
 
 
@@ -1233,6 +1320,14 @@ def cmd_draft_send(args) -> int:
         return 1
 
     draft = matches[0]
+    from . import task_assignment
+    from .thread_key import thread_key
+    key = draft.get("thread_id") or thread_key(None, " ".join(draft.get("references") or []) if isinstance(draft.get("references"), list) else draft.get("references"), draft.get("in_reply_to"))
+    try:
+        task_assignment.guard(settings, key)
+    except task_assignment.AssignmentUnavailable as exc:
+        print(f"Send HELD: {exc}", file=sys.stderr)
+        return 3
     recipients = ", ".join(draft.get("to_addresses") or []) or "(no recipient)"
     subject = draft.get("subject") or ""
     print(f"sending engine draft {draft_id}\nto: {recipients}\nsubject: {subject}")
@@ -1481,10 +1576,21 @@ def cmd_draft_reply(args) -> int:
     settings = config.load()
     from . import gmail_drafts
 
+    from . import task_assignment
+    try:
+        task_assignment.guard(settings, getattr(args, "thread_id", None) or "")
+    except task_assignment.AssignmentUnavailable as exc:
+        print(f"Draft HELD: {exc}", file=sys.stderr)
+        return 3
     turn_started = _utcnow()
     before = {d.get("id") for d in
               (rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or [])}
-    out = asyncio.run(rpc.chat(settings, args.message, allow_tools=set(), timeout=args.timeout))
+    try:
+        out = asyncio.run(rpc.chat(settings, args.message, allow_tools=set(), timeout=args.timeout,
+                                   assignment_thread_key=args.thread_id))
+    except RuntimeError as exc:
+        print(f"Draft HELD / UNKNOWN: {exc}", file=sys.stderr)
+        return 3
     res = out["result"] or {}
     rc = _chat_engine_error(res)
     if rc is not None:
@@ -1540,6 +1646,19 @@ def cmd_draft_reply(args) -> int:
     # `body` is the engine's freshly composed reply — always model output —
     # so body_md=True: send_guard's deterministic tells run and, on a hit,
     # log a WARNING and come back here to print, never to block the append.
+    from .thread_key import thread_key
+    references = d.get("references")
+    if isinstance(references, list):
+        references = " ".join(str(value) for value in references)
+    actual_key = d.get("thread_id") or thread_key(None, references, d.get("in_reply_to"))
+    if actual_key != args.thread_id:
+        print("Draft HELD / UNKNOWN: composed draft belongs to another thread; Gmail mirror refused", file=sys.stderr)
+        return 3
+    try:
+        task_assignment.guard(settings, args.thread_id)
+    except task_assignment.AssignmentUnavailable as exc:
+        print(f"Draft HELD before Gmail mirror: {exc}", file=sys.stderr)
+        return 3
     folder, guard_warnings = gmail_drafts.append_draft(
         settings,
         to=to,
@@ -1974,6 +2093,8 @@ def main(argv=None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
     from . import connection_cli
     connection_cli.register(sub)
+    from . import assignment_cli
+    assignment_cli.register(sub)
 
     # --- the "human verbs" (init/update/login): registered here ONLY so
     # `cs --help` tells the truth about what exists — see the double
@@ -2046,7 +2167,8 @@ def main(argv=None) -> int:
         "contacted",
         help="the re-contact gate: did the OPERATOR mailbox write to this "
         "address in the last N days? Exit 0 = yes, 1 = no, 3 = the mailbox "
-        "could not be read (which is not a no). For every mailbox, `history`.",
+        "could not be read (which is not a no). Its own owner is deliberately skipped. "
+        "For configured cross-mailbox scope with named read/unreadable/skipped, use `history`.",
     )
     pc.add_argument("email")
     pc.add_argument("--days", type=int, default=30)
@@ -2056,19 +2178,21 @@ def main(argv=None) -> int:
 
     pht = sub.add_parser(
         "history",
-        help="has this company EVER exchanged mail with this address, from ANY "
-        "mailbox it can open? Unbounded, both directions, per mailbox, and it "
-        "names the mailboxes it could NOT read. Exit 0 = yes, 1 = never, "
-        "3 = evidence incomplete.",
+        help="has this company EVER exchanged mail with this address across the "
+        "configured scope? Unbounded, both directions; a mailbox is never asked "
+        "about its own owner. Names read, unreadable and skipped mailboxes. "
+        "Exit 0 = exchange with complete scope, 1 = no exchange found with complete "
+        "scope (including deliberate skips), 3 = unreadable evidence even if "
+        "messages were found.",
     )
     pht.add_argument("email")
     pht.add_argument(
         "--json",
         action="store_true",
-        help="rows + the scope actually read + a degraded-source note",
+        help="rows + read, unreadable and skipped scope + a degraded-source note",
     )
-    # Reads the operator mailbox AND every account's, each with its own
-    # engine-held credential — so --account can neither widen nor narrow it.
+    # Uses the configured scope with each profile's engine-held credential and
+    # the fixed self-owner skip; --account can neither widen nor narrow it.
     pht.set_defaults(func=cmd_history, reads_every_mailbox=True)
 
     pun = sub.add_parser(
@@ -2116,6 +2240,8 @@ def main(argv=None) -> int:
         help="remove the record — the contact's earlier mail becomes open work "
         "again (engine tasks closed at the time stay closed)",
     )
+    phd.add_argument("--assignment-intent", help="exact independently approved close intent; handled_ref must be this email")
+    phd.add_argument("--assignment-grant", help="independent host operator grant for that exact close")
     phd.set_defaults(func=cmd_handled)
 
     pes = sub.add_parser(
@@ -2234,6 +2360,7 @@ def main(argv=None) -> int:
         "The headless-safe reply path.",
     )
     pdr.add_argument("message")
+    pdr.add_argument("--thread-id", help="exact RFC thread identity required before composing")
     pdr.add_argument("--timeout", type=float, default=600)
     # APPENDS the composed draft into the operator's own Gmail Drafts
     pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
@@ -2485,14 +2612,14 @@ def main(argv=None) -> int:
                 f"Answering anyway would report on the wrong mailbox. Ask a wider "
                 f"or an engine-backed question instead:\n"
                 f"  {settings.prog_name or 'cs'} history <email>"
-                f"   — every mailbox this kernel can open, in one answer\n"
+                f"   — configured scope with read, unreadable and self-owner skips\n"
                 f"  {settings.prog_name or 'cs'} --account {args.account} thread <email>\n"
                 f"  {settings.prog_name or 'cs'} --account {args.account} ask \"<question>\"",
                 file=sys.stderr,
             )
             return 2
-        # And this family already reads EVERY account's mailbox, each under its
-        # own profile's credential. `--account` could only change which engine
+        # This family already uses the configured scope with the self-owner skip
+        # and each profile's credential. `--account` could only change which engine
         # profile the retrieval starts from; it can neither widen nor narrow
         # the scope, and pretending it selects one would be the evidence-scope
         # knob the charter forbids.
@@ -2500,9 +2627,8 @@ def main(argv=None) -> int:
             args, "reads_every_mailbox", False
         ):
             print(
-                f"`{args.cmd}` already reads EVERY account in this project's "
-                f"registry — the operator mailbox plus each engine profile's own "
-                f"— and prints the scope it read.\n"
+                f"`{args.cmd}` uses the configured mailbox scope with the fixed "
+                f"self-owner skip, naming read, unreadable and skipped mailboxes.\n"
                 f"--account switches only the engine profile, so it cannot narrow "
                 f"or widen that scope. Run it without the flag; to ask about one "
                 f"account's engine archive instead:\n"

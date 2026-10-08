@@ -116,30 +116,32 @@ The Gmail-IMAP verbs — `contacted`, `unanswered`, `dossier`, `draft-reply`,
 account they REFUSE (exit 2) rather than answering about the wrong one. Use
 `thread` / `ask` there; both are engine-backed and honour the flag.
 
-`history` refuses the flag for the opposite reason: it already reads every
-mailbox in scope — {{ email_address }}, every registry account, and every address in
+`history` refuses the flag for the opposite reason: it already uses the configured
+mailbox scope — {{ email_address }}, every registry account, and every address in
 `[operator].read_mailboxes` — so `--account` could only narrow what is by
-design not narrowable. Every answer prints the mailboxes it read and the ones
-it could not.
+design not narrowable. A mailbox is never asked about its own owner. Every answer
+prints read, unreadable and skipped mailboxes; a deliberate skip alone is complete.
 
-### Prior-contact evidence is every mailbox in scope
+### Prior-contact evidence has a fixed configured scope
 
 "Have we already written to this person, and have they already answered
-somebody here" is asked of all of them, because a colleague answering from his
+somebody here" is asked across that scope, applying the fixed self-owner skip, because a colleague answering from his
 own address leaves nothing in {{ email_address }}. Addresses are declared in
 `manifest.toml [operator].read_mailboxes`; their IMAP passwords live in
 `~/.{{ company_slug }}-cs/.env` as `CS_READ_MAILBOX_PASSWORDS`, in no repo file. A declared
 mailbox with no password, or one whose password no longer works, is reported as
-UNREADABLE and named — never as an absence — and every send gate refuses while
-it is: reading and drafting continue, only delivery stops.
+UNREADABLE and named — never as an absence. History exits 3 even if another
+mailbox found messages. Applicable history-gated sends refuse; fixed-template
+`campaign send-first` uses contact state instead of this gate. Incomplete history
+does not authorize drafting or dropping a triage candidate.
 
 ### The pipeline (one daily run)
 
 1. **Worklist** — `cs plan`{% if producer_adapter == 'none' %} (reply-only — no producer wired; empty worklist){% else %}: ingest the `{{ producer_adapter }}` producer, self-filter (`SELF_UIDS`/`SELF_EMAILS`), suppression{% endif %}.
 2. **Dossier — MANDATORY before any contact** — `cs dossier <email>`: threads,
    recent-contact check, tasks, CRM. Dedup truth is Gmail's own Sent folder,
-   NOT the engine archive — read across every mailbox in scope
-   (`cs/mailboxes.py`), so the verdict is about the company and not about one
+   NOT the engine archive — read across the configured scope with the fixed
+   self-owner skip (`cs/mailboxes.py`), so the verdict is about the company and not about one
    inbox. `cs history <email>` asks the same question with no time bound.
 3. **Decide**: thread exists → reply in it; prior relationship → informed
    outreach; genuinely cold → cold template, flagged; contacted within

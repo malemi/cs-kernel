@@ -101,8 +101,8 @@ def list_campaigns(settings) -> list[dict]:
 
 def _sent_threads_to(settings, email: str, days: int) -> tuple[list[dict], list[str]]:
     """`(threads, unreadable)` — messages SENT TO `email` within `days` from
-    EVERY mailbox this company answers from, plus the mailboxes that could not
-    be read.
+    the configured scope with the fixed self-owner skip, plus the mailboxes
+    that could not be read.
 
     Ground truth is Gmail's own Sent folder, not the engine: the engine's
     `emails.search folder:sent` is blind to mail sent by hand and drops a
@@ -115,7 +115,8 @@ def _sent_threads_to(settings, email: str, days: int) -> tuple[list[dict], list[
     that could not have seen the answer, and four drafts were composed to a
     prospect a co-founder had answered the next day. The fan-out
     (`cs/mailboxes.py`) reads the operator mailbox, every account with an
-    engine profile, and every mailbox declared in the manifest.
+    engine profile, and every mailbox declared in the manifest, except the
+    subject's own mailbox. Other-mailbox sends still dedup; self-sends do not.
 
     `unreadable` is what makes the widening safe: a mailbox that could not be
     opened is NEVER an empty result. Callers must treat a non-empty
@@ -133,7 +134,9 @@ def _sent_threads_to(settings, email: str, days: int) -> tuple[list[dict], list[
 def _inbound_since(settings, email: str,
                    after: Optional[datetime]) -> tuple[list[dict], list[str]]:
     """`(messages, unreadable)` — inbound from `email` after `after`, across the
-    same set of mailboxes, read from Gmail All Mail rather than the engine.
+    same configured scope with the fixed self-owner skip, read from Gmail
+    All Mail rather than the engine. A colleague's outbox to third parties is
+    not reply evidence; a real answer remains visible in its recipient mailbox.
 
     'Did they reply' must not depend on the engine's sync state, and it must not
     depend on WHICH of this company's mailboxes they replied to: a customer who
@@ -149,7 +152,7 @@ def _inbound_since(settings, email: str,
 
 def _evidence_refusal(email: str, unreadable: list[str],
                       action: str) -> Optional[dict]:
-    """The fail-closed refusal: a gate that could not read every mailbox does
+    """The fail-closed refusal: a gate with any unreadable required mailbox does
     not send, and says which one to fix.
 
     Fail-open reproduces the incident at machine speed — an absence of evidence
@@ -444,7 +447,7 @@ def reconcile(settings, contact_id: str, *, commit: bool = False) -> dict:
     if not threads:
         # A found thread is found whatever else could not be read, so the
         # evidence check only guards the NEGATIVE: "no Sent thread" is a claim
-        # about every mailbox, and it cannot be made from a partial read.
+        # across the configured scope with self-owner skip, never from a partial read.
         blocked = _evidence_refusal(c["email"], unreadable, "decide this was never sent")
         if blocked:
             return blocked
@@ -550,7 +553,7 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
     if not _has_draft(c):
         return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
     # dedup truth: never re-mail what is already in Sent — in ANY of this
-    # company's mailboxes, and never on evidence that could not read them all.
+    # company's configured scope with self-owner skip; unreadable sources refuse.
     threads, unreadable = _sent_threads_to(settings, email, settings.dedup_days)
     if c["state"] == "sent" or threads:
         return {"ok": False, "email": email, "next": "reconcile",

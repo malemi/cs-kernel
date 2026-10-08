@@ -47,6 +47,8 @@ import types
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from assignment_fixture import normal_projection
+
 from cs import _time, campaign, cli, config as cfg, filter as filt, rpc, unanswered
 from cs.state import State
 
@@ -79,6 +81,8 @@ def _ago(days: int) -> datetime:
 def _settings(db_path: str):
     return types.SimpleNamespace(
         db_path=db_path,
+        engine_owner_uid="fixture-owner",
+        account_map={},
         timezone=TZ,
         prog_name="cs",
         email_address="support@example.test",
@@ -296,6 +300,11 @@ def _wiring(db_path: str) -> None:
         {"email": "mine@example.test", "name": "M", "date": _dt(6), "subject": "aiuto"},
         {"email": "cold@example.test", "name": "C", "date": _dt(4), "subject": "ciao"},
     ]
+    for message in inbound:
+        message["thread_key"] = f"<{message['email']}>"
+    previous_rpc = rpc.call_sync
+    rpc.call_sync = lambda selected, method, params=None, timeout=None: (normal_projection(selected, params)
+                    if method == "tasks.assignment.project" else previous_rpc(selected, method, params, timeout))
     gmail_archive.inbound_recent = lambda s, days: inbound
     gmail_archive.sent_recent = lambda s, days: []
 
@@ -385,7 +394,7 @@ def _dossier(db_path: str) -> None:
     cfg.load = lambda: settings
     State(db_path).mark_escalated("mine@example.test", owner="Andrea",
                                   reason="ci parlo io")
-    gmail_archive.correspondence = lambda s, e: [
+    gmail_archive.correspondence = lambda s, e, **kw: [
         {"direction": "in", "date": "Mon, 18 Aug 2026 09:00:00 +0200",
          "subject": "non risolto"}
     ]

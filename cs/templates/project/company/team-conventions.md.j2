@@ -17,10 +17,11 @@ check can see:
 ## Why it matters
 
 `/cs-triage-mail` reads this before deciding that a customer mail is unanswered,
-because every automated check it has looks at **{{ accounts_default }}@'s own
-Sent archive** — and a teammate replying from a mailbox that never touches
-{{ accounts_default }}@ is invisible to all of them.
+because the candidate sweep starts from **{{ accounts_default }}@'s own Sent
+archive**, while `cs history` checks the configured cross-mailbox scope. A mailbox
+is never asked about its own owner; read, unreadable and skipped mailboxes are
+named. Replies outside that configured scope remain invisible.
 
-While this file is empty the operator has to assume {{ accounts_default }}@'s
-Sent archive is the whole story. Where that is not true it will draft a reply to
-somebody a colleague has already answered. Write down what it cannot see.
+An empty file does not establish that the available Sent archive is the whole
+story. Check the printed scope and report unreadable sources before drafting or
+dropping a candidate. Write down team practices that the configured reads cannot see.
