@@ -432,8 +432,10 @@ def _update_render() -> None:
 
             # The skill with supporting files, on the path every existing
             # clone takes: this clone predates it, so `cs update` has to add
-            # all seven files — and nothing compiled. A `.pyc` here means a
-            # plain `.py` shipped in the template tree and pip compiled it.
+            # all seven files, and nothing compiled. A `.pyc` in the INSTALLED
+            # template tree stops `cs update` before this point, and the
+            # exit-code check above is what reports it; the bytecode check
+            # below holds the clone itself.
             legal = clone / ".claude/skills/cs-legal-research"
             for rel in LEGAL_FILES:
                 check((legal / rel).is_file(),

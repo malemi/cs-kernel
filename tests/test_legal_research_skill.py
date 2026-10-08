@@ -292,9 +292,15 @@ def _grants_nothing(clone: Path) -> None:
     skill = _text(clone / ".claude/skills" / SKILL / "SKILL.md")
     check("the skill sends legal customer mail to that branch",
           "Escalate branch of `cs-triage-mail`" in skill)
-    for rel in ("AGENTS.md", ".claude/skills/cs-help/SKILL.md"):
-        check(f"{rel} routes to the skill",
-              f"`{SKILL}`" in (clone / rel).read_text(encoding="utf-8"))
+    check("AGENTS.md lists the skill among the interactive ones",
+          f"`{SKILL}` (" in (clone / "AGENTS.md").read_text(encoding="utf-8"))
+    help_text = (clone / ".claude/skills/cs-help/SKILL.md").read_text(encoding="utf-8")
+    check("cs-help has the skill's table row with both invocations",
+          f"| `{SKILL}` | `/{SKILL}` | `${SKILL}` |" in help_text)
+    check("cs-help names the skill among those that fire on a matching request",
+          f"`{SKILL}`; `cs-operator`" in help_text)
+    check("cs-help gives a plain-words example that reaches the skill",
+          "which remedies do we have" in help_text)
 
 
 _INSTALLED_RENDER = """\
