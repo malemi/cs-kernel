@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import io
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -19,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from cs import project_init as pi  # noqa: E402
+from test_legal_research_skill import LEGAL_FILES  # noqa: E402
 
 FAILED = 0
 
@@ -151,6 +153,19 @@ def main() -> int:
               "BOTH `procedures.md` and `phone.md`" in text
               and "Do not delete/empty the file" in text)
 
+        # The one skill that carries supporting files: references, a
+        # provenance record and a helper sit beside its SKILL.md, and every
+        # host must resolve all of them, not just the entry point.
+        legal = rendered / ".claude/skills/cs-legal-research"
+        check("legal-research skill is rendered with its supporting files",
+              all((legal / rel).is_file() for rel in LEGAL_FILES))
+        for host in (".agents", ".opencode"):
+            hosted = rendered / host / "skills/cs-legal-research"
+            check(f"{host} resolves every legal-research file",
+                  all((hosted / rel).is_file() and (legal / rel).is_file()
+                      and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
+                      for rel in LEGAL_FILES))
+
         company_rendered = tmp / "company-cs"
         company_rendered.mkdir()
         with _legacy_prompts(tmp, "company-prompts"):
@@ -175,6 +190,7 @@ def main() -> int:
         print("a filesystem that refuses symlinks")
         nolink = _clone(tmp, "win-cs")
         (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
+        shutil.copytree(legal, nolink / ".claude/skills/cs-legal-research")
         real_symlink = Path.symlink_to
 
         def refuse(self, target, target_is_directory=False):
@@ -200,6 +216,13 @@ def main() -> int:
                 check(f"{host} copies standing-rule skill without symlinks",
                       (nolink / host / "skills/cs-instructions/SKILL.md").read_bytes()
                       == (nolink / ".claude/skills/cs-instructions/SKILL.md").read_bytes())
+            for host in (".agents", ".opencode"):
+                hosted = nolink / host / "skills/cs-legal-research"
+                check(f"{host} copies every legal-research file without symlinks",
+                      not (nolink / host / "skills").is_symlink()
+                      and all((hosted / rel).is_file()
+                              and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
+                              for rel in LEGAL_FILES))
             check("copy fallback is disclosed", "copied" in out.getvalue())
             check("AGENTS.md is untouched on a symlink-less filesystem",
                   (nolink / "AGENTS.md").read_text() == "# charter of win-cs\n")

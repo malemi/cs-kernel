@@ -1,0 +1,84 @@
+{% raw -%}
+import argparse
+import json
+from datetime import date, timedelta
+
+
+def parse_interval(value):
+    try:
+        start, end = map(date.fromisoformat, value.split(":"))
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("Use YYYY-MM-DD:YYYY-MM-DD") from exc
+    if start > end:
+        raise argparse.ArgumentTypeError("Exclusion interval is reversed")
+    return start, end
+
+
+def calculate(trigger, days, include_trigger=False, excluded=(), holidays=(), weekdays=()):
+    if not 1 <= days <= 36600:
+        raise ValueError("days must be between 1 and 36600")
+    if any(day not in range(7) for day in weekdays) or len(set(weekdays)) == 7:
+        raise ValueError("At least one expiry weekday must remain available")
+    if any(start > end for start, end in excluded):
+        raise ValueError("Exclusion interval is reversed")
+    day = trigger if include_trigger else trigger + timedelta(days=1)
+    counted = 0
+    first = None
+    while counted < days:
+        active = [(start, end) for start, end in excluded if start <= day <= end]
+        if active:
+            day = max(end for _, end in active) + timedelta(days=1)
+            continue
+        if first is None:
+            first = day
+        counted += 1
+        if counted < days:
+            day += timedelta(days=1)
+    raw = day
+    adjustments = []
+    while day in holidays or day.weekday() in weekdays:
+        adjustments.append({
+            "date": day.isoformat(),
+            "supplied_holiday": day in holidays,
+            "supplied_weekday": day.weekday() in weekdays,
+        })
+        day += timedelta(days=1)
+        if any(start <= day <= end for start, end in excluded):
+            raise ValueError("Expiry adjustment entered an excluded interval; this rule interaction is not supported")
+    return {
+        "status": "arithmetic_only_not_a_legal_deadline",
+        "inputs": {
+            "trigger": trigger.isoformat(), "days": days,
+            "include_trigger": include_trigger,
+            "excluded_intervals": [[a.isoformat(), b.isoformat()] for a, b in excluded],
+            "expiry_holidays": sorted(d.isoformat() for d in holidays),
+            "expiry_weekdays": sorted(set(weekdays)),
+        },
+        "first_counted_day": first.isoformat(),
+        "raw_last_counted_day": raw.isoformat(),
+        "expiry_adjustments": adjustments,
+        "result": day.isoformat(),
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Forward calendar-day arithmetic; all legal rules are external inputs.")
+    parser.add_argument("--trigger", type=date.fromisoformat, required=True)
+    parser.add_argument("--days", type=int, required=True)
+    parser.add_argument("--include-trigger", action="store_true")
+    parser.add_argument("--exclude", type=parse_interval, action="append", default=[])
+    parser.add_argument("--expiry-holiday", type=date.fromisoformat, action="append", default=[])
+    parser.add_argument("--roll-weekday", type=int, choices=range(7), action="append", default=[],
+                        help="0=Monday ... 6=Sunday; only adjusts expiry, not intervening days")
+    args = parser.parse_args()
+    try:
+        result = calculate(args.trigger, args.days, args.include_trigger, args.exclude,
+                           set(args.expiry_holiday), set(args.roll_weekday))
+    except (ValueError, OverflowError) as exc:
+        parser.error(str(exc))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()
+{% endraw %}

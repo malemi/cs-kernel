@@ -1363,6 +1363,19 @@ if "$VENV/bin/python" "$ROOT/tests/test_live_instructions_fixture.py"; then echo
 step "61. engine assignment consumers preserve exact scope and hold uncertainty"
 if "$VENV/bin/python" "$ROOT/tests/test_task_assignment.py"; then echo "OK"; else echo "FAIL: assignment consumer lifecycle or authority boundary regressed"; FAIL=1; fi
 
+step "62. the legal-research skill arrives whole on every host, and its helper only counts days"
+# The first kernel skill with supporting files: four references, a provenance
+# record and a date helper beside SKILL.md. Guards: every one of them is a
+# .j2 — a plain .py under cs/templates/ is byte-compiled by the pip install of
+# step 3, and both stamping walks then trip on the .pyc (cs init stamps it, cs
+# update dies reading it as text); a rendered clone holds exactly the seven
+# files, byte-identical through .agents and .opencode and from the installed
+# package; every relative link resolves; the description confines the skill
+# to the interactive human's own question; the stamped helper reproduces its
+# arithmetic cases and refusals through each host path; and neither
+# settings.json nor the cron wrapper names the skill or its helper.
+if "$VENV/bin/python" "$ROOT/tests/test_legal_research_skill.py"; then echo "OK"; else echo "FAIL: legal-research skill incomplete on a host, or its helper regressed"; FAIL=1; fi
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

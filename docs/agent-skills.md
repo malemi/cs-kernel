@@ -66,3 +66,46 @@ observed cases, not universal future selection,
 reply compliance, production Firebase verification or live clone adoption. The
 [execution record](execution-plans/2026-10-07-cs-instructions-skill.md) owns exact
 results and review status.
+
+## Supporting files
+
+A skill may carry files beside `SKILL.md`: reference documents, a helper
+script, a provenance record. Each one is a `.j2` template in the skill's
+directory whose whole body is a single raw block:
+
+    {% raw -%}
+    <the file, verbatim>
+    {% endraw %}
+
+It is stamped byte for byte to the same path without the suffix, through the
+same render, checksum ledger and host links as `SKILL.md`. The form is exact
+when the body starts with a non-whitespace character and contains no `endraw`
+tag; the contract gate compares the stamped bytes with the body. A supporting
+file is UTF-8 text with LF line endings.
+
+A plain `.py` never ships in the template tree. `pip install` byte-compiles
+it, and both stamping walks take every file they meet: `cs init` stamps the
+`.pyc` into the clone and `cs update` exits with `UnicodeDecodeError`. The
+installed-template inventory gate compares `*.j2` only, so a plain supporting
+file is also outside the packaging gate.
+
+A stamped helper is not executable. It is run with an interpreter by its
+canonical path under `.claude/skills/`, which is the same file on every host.
+`cs update` does not remove a file a later kernel stops shipping.
+
+`tests/test_legal_research_skill.py` gates this contract.
+
+## Legal research
+
+`cs-legal-research` gives the interactive human research on Italian and EU law
+for the company's own questions: source and citation checks, administrative
+remedies, deadlines and documentary evidence, plus a date-arithmetic helper
+whose output is labelled as arithmetic and not a legal deadline. The stamped
+`PROVENANCE.md` states its origin.
+
+Its interactive-only boundary is instruction-level. The skill's description
+and body exclude scheduled runs and customer mail, and `cs-triage-mail`
+escalates a legal-sensitive customer message. No permission rule enforces the
+boundary: the stamped settings allow the `Skill` tool and the cron wrapper
+denies no skill by name. The wrapper's send and draft boundaries do not depend
+on which skill a run loads, and the helper is on no allow list.
