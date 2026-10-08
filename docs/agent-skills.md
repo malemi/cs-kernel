@@ -13,12 +13,15 @@ change: Claude Code, Codex, and OpenCode. A skill change is incomplete until all
 three systems discover and execute the updated canonical instructions.
 
 This does not mean maintaining three implementations. The only authoring source
-is `cs/templates/project/.claude/skills/<name>/SKILL.md.j2`; it renders to
-`.claude/skills/<name>/SKILL.md`. `.agents/skills` and `.opencode/skills` resolve
-that rendered tree through repository links, with byte-identical copies only on
+is the skill's directory `cs/templates/project/.claude/skills/<name>/`:
+`SKILL.md.j2` and, for a skill that carries supporting files, the `.j2` files
+beside it. Each renders to the same path without the suffix under
+`.claude/skills/<name>/`. `.agents/skills` and `.opencode/skills` resolve that
+rendered tree through repository links, with byte-identical copies only on
 filesystems that refuse symlinks.
 
-Every skill change must therefore verify all of the following before completion:
+Every skill change must therefore verify all of the following before completion,
+for `SKILL.md` and for every supporting file of the skill:
 
 1. Claude Code reads the updated `.claude/skills/<name>/SKILL.md`.
 2. Codex resolves the same bytes through `.agents/skills/<name>/SKILL.md`.
