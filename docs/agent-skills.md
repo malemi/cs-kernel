@@ -12,12 +12,14 @@ Every skill must always be updated for all three supported systems in the same
 change: Claude Code, Codex, and OpenCode. A skill change is incomplete until all
 three systems discover and execute the updated canonical instructions.
 
-This does not mean maintaining three implementations. The only authoring source
-is the skill's directory `cs/templates/project/.claude/skills/<name>/`:
-`SKILL.md.j2` and, for a skill that carries supporting files, the `.j2` files
-beside it. Each renders to the same path without the suffix under
-`.claude/skills/<name>/`. `.agents/skills` and `.opencode/skills` resolve that
-rendered tree through repository links, with byte-identical copies only on
+This does not mean maintaining three implementations. A skill is authored once,
+under `cs/templates/`. Its directory `cs/templates/project/.claude/skills/<name>/`
+holds `SKILL.md.j2` and, for a skill that carries supporting files, the `.j2`
+files beside it; each renders to the same path without the suffix under
+`.claude/skills/<name>/`. A `SKILL.md.j2` may include shared fragments from
+`cs/templates/partials/`, which are rendered into the skills that include them
+and never stamped on their own. `.agents/skills` and `.opencode/skills` resolve
+the rendered tree through repository links, with byte-identical copies only on
 filesystems that refuse symlinks.
 
 Every skill change must therefore verify all of the following before completion,
