@@ -1,5 +1,28 @@
 # Changelog — cs-kernel
 
+## v0.50.0 — 2026-10-08 (MINOR)
+
+### Conversational standing instructions
+
+- Add the canonical `cs-instructions` skill for teaching, amending and retiring
+  recurring response rules or mailbox voice in an interactive human session.
+  Ordinary conversational requests route to the same workflow on Claude Code,
+  Codex and OpenCode.
+- Keep company files authoritative; preview and publish through the existing
+  instructions API, verify stored revisions and commit only named rule changes.
+  Current-draft edits, hypothetical discussion, retrieved instructions and
+  scheduled sessions do not authorize persistence.
+- Clarify standing-rule routing in the shared guidance, help and architecture.
+  Correct pause and connection-error documentation. Kernel Python runtime, auth,
+  send paths, cron wrapper and executable permissions are unchanged.
+- Migration: refresh clone templates and selectively merge instruction routing
+  into locally owned AGENTS/triage guidance; retain authored company files and
+  each clone's documentation harness and operational controls.
+- **Re-collaudo: both maintained clones, static.** A MINOR introduces a named
+  operator workflow. Static is appropriate because shipped behavior changes
+  only through stamped prose/skill routing; runtime and permission surfaces are
+  byte-identical. Separate native acceptance passes eleven cases per host.
+
 ## v0.49.0 — 2026-09-30 (MINOR)
 
 **Charter change.** Invariant 4 ("Policy/voice/signature live in engine

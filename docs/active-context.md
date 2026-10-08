@@ -19,7 +19,7 @@ classifiers have separate models, billing and stop controls. See
 [runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
 operator activity, and CS_PAUSE does not stop engine processing.
 
-- **Latest release tag: `v0.49.0`. Current HEAD status: untagged.** These
+- **Latest release tag: `v0.50.0`. Current HEAD status: tagged as `v0.50.0`.** These
   sentences are parsed by `tests/test_release_consistency.py`; preserve their
   wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
   Both maintained clones install the public `v0.49.0` tag at `1aea012` and
@@ -62,8 +62,8 @@ operator activity, and CS_PAUSE does not stop engine processing.
   production publication and Firebase authentication remain unverified.
 - `cs-instructions` provides a canonical interactive standing-rule workflow
   across Claude, Codex and OpenCode. All 33 native fixture cases pass with
-  independently checked publication, Git and refusal evidence. Final review,
-  release and live clone adoption remain pending under the
+  independently checked publication, Git and refusal evidence. Implementation
+  and final review are approved; live clone adoption remains pending under the
   [plan](execution-plans/2026-10-07-cs-instructions-skill.md).
 - Interactive `cs draft-send <full-engine-draft-id>`:
   it approves the exact engine draft and checks recorded sent status. The
