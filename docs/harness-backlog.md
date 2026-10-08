@@ -55,6 +55,16 @@ would prevent. Delete an entry as the enforcement lands.
   and response schemas belong to the [Desktop backlog](../../mrcall-desktop/docs/harness-backlog.md)
   and the [generated inventory](../../mrcall-desktop/docs/rpc-contract-inventory.json).
 
+- [ ] **Legacy Gmail review-copy admission is not atomic with assignment.**
+  Owner: kernel/Desktop provider-mirroring contract. `cs draft-reply` checks
+  current engine projection before Gmail APPEND, but that external review copy
+  occurs outside the company writer lock. The local contextual-email policy
+  certifies engine private draft writes and SMTP, not this preexisting mirror
+  or manual/external mailbox actions. A future atomic review-copy path requires
+  engine-owned provider admission; another unlocked precheck is insufficient.
+  The new contextual campaign queue copy is refused. Discovered: 2026-10-08;
+  boundary and acceptance in [the candidate contract](task-assignment.md).
+
 ## Oversized docs — reviewed
 
 Verdicts recorded for every document the gate's size advisory names. `split` is

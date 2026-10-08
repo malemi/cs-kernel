@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: 18242a4d3a573bb4dd22767fbb603520e6568557
+doc_baseline_commit: 9780920d4f742f16436bd407566a1ed2352da518
 doc_baseline_date: 2026-10-08
 ---
 
@@ -14,12 +14,18 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-Released [thread assignments](task-assignment.md) use signed engine authority,
-guarded scoped drafts and exact inbound coverage. Both maintained clones install
-`v0.51.0`; current scoped FULL and real bounded provider acceptance pass. The
-legacy July harness remains red on the retained `v0.50.0` baseline. Six hosted
-engines have verified assignment reads and root-owned trust. Local hardening is
-closed with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+Released [thread assignments](task-assignment.md) use signed engine authority, guarded scoped
+drafts and exact inbound coverage. Both maintained clones install `v0.51.0`; six hosted engines
+have verified assignment reads and root-owned trust. Local hardening is [closed with
+limits](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md). The legacy July harness
+remains red on the retained `v0.50.0` baseline.
+
+The local [contextual-email
+candidate](execution-plans/2026-10-08-contextual-email-assignment-guard.md) negotiates
+strengthened engine enforcement for chat and exact draft sending, carrying known original
+source/thread/draft context. Fixed-template bulk retains its existing path. It is unreleased;
+installed clones and hosted pins are unchanged. The separately owned MrCall launcher patch is an
+uninstalled handoff.
 
 The unattended operator runs through Claude Code; engine APIs and kernel direct
 classifiers have separate models, billing and stop controls. See

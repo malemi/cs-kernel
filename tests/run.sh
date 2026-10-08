@@ -319,6 +319,9 @@ if "$VENV/bin/python" "$ROOT/tests/test_pack.py"; then echo "OK"; else FAIL=1; f
 step "7. golden pack equivalence (env-driven)"
 if "$VENV/bin/python" "$ROOT/tests/test_golden_pack.py"; then echo "OK"; else FAIL=1; fi
 
+step "7c. contextual email source binding and authenticated engine transport"
+if "$VENV/bin/python" "$ROOT/tests/test_contextual_email.py"; then echo "OK"; else echo "FAIL: contextual email binding"; FAIL=1; fi
+
 step "8. draft-reply mirrors composed draft into Gmail Drafts (anti-regression)"
 # The engine composes into its own draft store, NOT the operator's Gmail Drafts.
 # cmd_draft_reply MUST APPEND the composed draft into Gmail Drafts or it is

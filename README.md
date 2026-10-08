@@ -385,7 +385,8 @@ about its own owner; every answer prints read, unreadable and skipped mailboxes)
 `drive`, `llm`, `config` (the settings in force and which file declares
 each — ask it rather than reading the manifest and the `.env` chain);
 **gated writing**: `draft-reply` (scoped drafts only) / `chat` (explicit tool
-approvals; generic chat has no assignment-thread scope guard), `campaign` (Sent-dedup, pause file), `draft-delete` (move
+approvals and contextual source binding in the unreleased candidate described
+below), `campaign` (Sent-dedup, pause file), `draft-delete` (move
 ONE named draft to Trash), `tasks
 create`/`close`, `handled` (this contact was resolved off-email — by phone,
 WhatsApp, in person — so their mail up to that moment stops being raised),
@@ -404,6 +405,16 @@ unknown or human-held thread authority blocks the scoped draft workflow.
 A local `handled` record does not settle company ownership without an exact
 engine acknowledgement. Current availability and examples are in
 [the assignment guide](docs/task-assignment.md).
+
+The local unreleased candidate negotiates `contextual_email_policy: 1` for
+`chat`, `draft-reply` and `draft-send`. For a contextual reply, use the original
+thread and exact source: `cs chat --thread-id '<root@example.com>' --reply-to
+'<inbound@example.com>' 'Prepare the reply'`. `--source-id` can supply the
+owner-scoped engine email ID; `--draft-id` binds an existing full draft ID.
+All supplied identities must agree. Send approval does not override a held
+assignment. Installed `v0.51.0` retains its previous scoped draft contract;
+candidate flags and final-send enforcement require compatible candidate engine
+and kernel code. See [contextual policy](docs/task-assignment.md#contextual-email-policy--unreleased-candidate).
 
 ### The kernel's own model calls
 

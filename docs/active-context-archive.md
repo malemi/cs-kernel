@@ -10,6 +10,15 @@ correct older company/triage guidance. Production standing-rule publication and
 paid draft/send behavior are outside these checks. The prior operational record
 is preserved verbatim in `docs/active-context-archive.md`.
 
+## 2026-10-08 — Before contextual email candidate reconciliation
+
+Released [thread assignments](task-assignment.md) use signed engine authority,
+guarded scoped drafts and exact inbound coverage. Both maintained clones install
+`v0.51.0`; current scoped FULL and real bounded provider acceptance pass. The
+legacy July harness remains red on the retained `v0.50.0` baseline. Six hosted
+engines have verified assignment reads and root-owned trust. Local hardening is
+closed with limits in the [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+
 ## 2026-10-08 — Superseded release state
 
 Both maintained clones install public `v0.50.0` at `29ab764` and report

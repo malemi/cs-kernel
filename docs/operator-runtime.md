@@ -81,8 +81,11 @@ A classifier's historical evaluation does not certify memory or merge quality.
 `cs ask` first requires `system.capabilities.chat_read_only_policy == 1`, then
 sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
 refuses an older engine rather than treating an empty approval allowlist as a
-mutation policy. Supervised `cs chat` and `cs draft-reply` keep their existing
-contracts. The scheduled wrapper also denies raw RPC entry points that run
+mutation policy. Published supervised `cs chat` and `cs draft-reply` retain
+their released contracts. The local unreleased [contextual-email candidate](task-assignment.md#contextual-email-policy--unreleased-candidate)
+requires strengthened engine capability negotiation for chat, scoped replies
+and exact draft sending; it preserves their separate approval boundaries.
+The scheduled wrapper also denies raw RPC entry points that run
 update, reconsolidation, memory join/reset/restore, preparation resume or
 `instructions.store` in every supported command spelling; the wrapper denies
 the `cs instructions` verb itself the same way — compiling and storing the

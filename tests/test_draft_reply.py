@@ -52,8 +52,9 @@ def run() -> None:
         return [OLD] if calls["list"] == 1 else [OLD, FRESH]
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None, assignment_thread_key=None):
+                        echo=print, conversation_id=None, assignment_thread_key=None, email_context=None):
         # draft-reply must be structurally send-incapable: empty allow set.
+        assert email_context == {"thread_key": "<abc@example.com>"}
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 
@@ -97,7 +98,8 @@ def _wire(before_rows, after_rows, *, appended):
         return before_rows if calls["list"] == 1 else after_rows
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
-                        echo=print, conversation_id=None, assignment_thread_key=None):
+                        echo=print, conversation_id=None, assignment_thread_key=None, email_context=None):
+        assert email_context == {"thread_key": "<abc@example.com>"}
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 

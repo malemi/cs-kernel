@@ -39,7 +39,8 @@ def run_case(*, approval_input=None, approvals=True, final_status="sent",
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
                         echo=print, conversation_id=None, role=None,
-                        approval_predicate=None):
+                        approval_predicate=None, email_context=None):
+        assert email_context == {"draft_id": DRAFT_ID}
         assert allow_tools == {"send_draft"}
         assert DRAFT_ID in message
         supplied = approval_input if approval_input is not None else {"draft_id": DRAFT_ID}

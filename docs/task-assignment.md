@@ -16,6 +16,67 @@ self-approves an operation. See the engine's
 [operational contract](../../mrcall-desktop/engine/docs/features/task-assignment.md)
 for fixed root-owned trust/signing paths and rollback restrictions.
 
+## Contextual email policy — unreleased candidate
+
+The local [contextual-email workstream](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+extends the engine boundary to reply draft updates and final sending, including
+already composed drafts. It is not included in the installed `v0.51.0` clones
+or the six hosted engine pins. The old `assignment_draft_policy: 1` capability
+proves only its scoped draft contract and cannot certify final-send enforcement.
+
+The engine owns durable [assignment enrollment](../../mrcall-desktop/engine/docs/features/assignment-enrollment.md).
+Missing trust or an empty ledger cannot turn a managed company into an unmanaged
+one. Fresh never-enabled local profiles retain contextual email without root
+configuration; ambiguous assignment-capable legacy profiles require trusted
+offline historical classification or privileged enrollment.
+
+Generic send-tool approval grants an effect permission, not an assignment
+exemption. Exact thread/source/draft context must survive composition, ordinary
+email-backed task routing and final send. Stale draft snapshots cannot clear or
+send around a newer binding. Source-free standalone messages keep ordinary
+approval rules; arbitrary prose is not semantically classified as reply intent.
+Kernel fixed-template bulk and first-contact delivery remain separate.
+
+The candidate requires `system.capabilities.contextual_email_policy: 1` for
+`cs chat`, `cs draft-reply` and `cs draft-send`; unavailable support refuses
+before chat generation or a draft effect. `draft-reply` also retains its existing
+assignment-draft policy negotiation and required exact thread flag.
+
+```bash
+cs chat --thread-id '<root@example.com>' --reply-to '<inbound@example.com>' 'Prepare this reply'
+cs chat --allow send_draft --thread-id '<root@example.com>' --source-id ENGINE_EMAIL_ID 'Send the approved reply'
+cs draft-reply 'Prepare this reply' --thread-id '<root@example.com>' --source-id ENGINE_EMAIL_ID
+cs draft-send FULL_ENGINE_DRAFT_ID
+```
+
+`cs chat` accepts `--thread-id`, `--source-id`, `--reply-to` and `--draft-id`.
+They bind the original RFC root, owner-scoped engine email, exact RFC target and
+existing draft respectively. All supplied identifiers must agree with stored
+source; they cannot name a different owner or strip an established reply binding.
+`draft-send` binds its exact draft automatically. The engine receives these as
+`chat.send.email_context` with `contextual_email_policy_version: 1`.
+
+Ordinary email-backed task context also constrains effects across chat and worker
+thread hops. Multiple original messages in one task are admissible only within
+the same exact thread; an explicit original source can narrow that set. Conflicting
+threads or unavailable identities remain held. A custom send launcher must pass
+the selected original thread and source explicitly; the separately owned MrCall
+launcher candidate is an uninstalled handoff, not a changed live schedule.
+
+Contextual campaign sending requires an exact existing engine draft and verifies
+its recorded sent state after the guarded engine lifecycle. A campaign's
+`queue-draft` cannot copy a contextual reply into Gmail: review its existing
+engine draft instead. A separate unlocked provider append would evade current
+assignment admission. Source-free campaign queueing retains its previous
+Gmail review surface.
+
+The existing `cs draft-reply` Gmail review-copy behavior remains compatible.
+It checks current assignment projection immediately before append, but the
+append is outside the engine/company lock and has no atomic assignment guarantee.
+Manual Gmail edits/sends and other external mailbox clients are outside engine
+enforcement. The strengthened capability certifies actual engine private draft
+writes and final transport, not a global lock on mailbox credentials or clients.
+
 ## Read and prepare an operation
 
 ```bash

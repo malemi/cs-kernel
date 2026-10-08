@@ -1238,9 +1238,20 @@ def _chat_engine_error(res: dict) -> int | None:
 def cmd_chat(args) -> int:
     settings = config.load()
     allow = {t.strip() for t in (args.allow or "").split(",") if t.strip()}
-    out = asyncio.run(
-        rpc.chat(settings, args.message, allow_tools=allow, timeout=args.timeout)
-    )
+    email_context = {}
+    for field, flag in (("thread_key", "thread_id"), ("source_email_id", "source_id"),
+                        ("target_message_id", "reply_to"), ("draft_id", "draft_id")):
+        value = getattr(args, flag, None)
+        if value:
+            email_context[field] = value
+    try:
+        out = asyncio.run(
+            rpc.chat(settings, args.message, allow_tools=allow, timeout=args.timeout,
+                     email_context=email_context or None, require_contextual_email_policy=True)
+        )
+    except RuntimeError as exc:
+        print(f"Chat HELD / UNKNOWN: {exc}", file=sys.stderr)
+        return 3
     res = out["result"] or {}
     rc = _chat_engine_error(res)
     if rc is not None:
@@ -1324,7 +1335,8 @@ def cmd_draft_send(args) -> int:
     from .thread_key import thread_key
     key = draft.get("thread_id") or thread_key(None, " ".join(draft.get("references") or []) if isinstance(draft.get("references"), list) else draft.get("references"), draft.get("in_reply_to"))
     try:
-        task_assignment.guard(settings, key)
+        if key:
+            task_assignment.guard(settings, key)
     except task_assignment.AssignmentUnavailable as exc:
         print(f"Send HELD: {exc}", file=sys.stderr)
         return 3
@@ -1350,15 +1362,20 @@ def cmd_draft_send(args) -> int:
         f"{draft_id}. Call send_draft exactly once with draft_id={draft_id}. "
         "Do not create, edit, select, or send any other draft."
     )
-    out = asyncio.run(
-        rpc.chat(
-            settings,
-            instruction,
-            allow_tools={"send_draft"},
-            timeout=args.timeout,
-            approval_predicate=exact_send,
+    try:
+        out = asyncio.run(
+            rpc.chat(
+                settings,
+                instruction,
+                allow_tools={"send_draft"},
+                timeout=args.timeout,
+                approval_predicate=exact_send,
+                email_context={"draft_id": draft_id},
+            )
         )
-    )
+    except RuntimeError as exc:
+        print(f"Send HELD / UNKNOWN: {exc}", file=sys.stderr)
+        return 3
     res = out["result"] or {}
     rc = _chat_engine_error(res)
     if rc is not None:
@@ -1587,7 +1604,8 @@ def cmd_draft_reply(args) -> int:
               (rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or [])}
     try:
         out = asyncio.run(rpc.chat(settings, args.message, allow_tools=set(), timeout=args.timeout,
-                                   assignment_thread_key=args.thread_id))
+                                   assignment_thread_key=args.thread_id,
+                                   email_context={"thread_key": args.thread_id, **({"source_email_id": args.source_id} if getattr(args, "source_id", None) else {})}))
     except RuntimeError as exc:
         print(f"Draft HELD / UNKNOWN: {exc}", file=sys.stderr)
         return 3
@@ -2333,6 +2351,10 @@ def main(argv=None) -> int:
         help="comma-separated tool names to approve (e.g. send_draft) — "
         "use only after operator review",
     )
+    ph.add_argument("--thread-id", help="exact RFC root of the known reply context")
+    ph.add_argument("--source-id", help="exact original engine email id")
+    ph.add_argument("--reply-to", help="exact original RFC Message-ID")
+    ph.add_argument("--draft-id", help="exact existing engine draft binding")
     ph.add_argument("--timeout", type=float, default=600)
     ph.set_defaults(func=cmd_chat)
 
@@ -2361,6 +2383,7 @@ def main(argv=None) -> int:
     )
     pdr.add_argument("message")
     pdr.add_argument("--thread-id", help="exact RFC thread identity required before composing")
+    pdr.add_argument("--source-id", help="exact original engine email id when known")
     pdr.add_argument("--timeout", type=float, default=600)
     # APPENDS the composed draft into the operator's own Gmail Drafts
     pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)

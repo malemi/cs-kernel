@@ -266,7 +266,7 @@ class Consumer(unittest.TestCase):
                 pass
             async def call(self, method, params, timeout=60):
                 calls.append((method, params))
-                return {"assignment_draft_policy": 1} if method == "system.capabilities" else {"response": "composed"}
+                return {"assignment_draft_policy": 1, "contextual_email_policy": 1} if method == "system.capabilities" else {"response": "composed"}
         with patch.object(rpc, "EngineClient", Client):
             result = asyncio.run(rpc.chat(settings(), "compose", assignment_thread_key=KEY))
         self.assertEqual(result["result"]["response"], "composed")

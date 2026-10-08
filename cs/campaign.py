@@ -571,6 +571,28 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
     body = c.get("draft_body") or ""
     mode = (settings.cs_triage_mode or "draft").lower()
     dossier = dict(c.get("dossier") or {})
+    from . import contextual_email
+    try:
+        contextual = contextual_email.campaign_draft(settings, c)
+    except RuntimeError as exc:
+        return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
+    if contextual is not None:
+        draft, email_context = contextual
+        # The original engine draft is the authoritative review surface; never
+        # reconstruct a contextual body into an independent cs-SMTP message.
+        if mode != "send" or not commit:
+            return {"ok": True, "email": email, "mode": mode,
+                    "engine_draft_id": draft["id"], "dry_run": not commit,
+                    "next": "review the existing engine draft"}
+        try:
+            mid = contextual_email.send_campaign_draft(settings, draft, email_context)
+        except RuntimeError as exc:
+            return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
+        rpc.call_sync(settings, "campaign.update_contact",
+                      {"contact_id": contact_id, "state": "sent", "message_id": mid})
+        _record_send(settings, contact_id=contact_id, email=email, subject=draft.get("subject") or "", message_id=mid)
+        return {"ok": True, "email": email, "mode": "send", "message_id": mid,
+                "engine_draft_id": draft["id"]}
 
     if mode != "send":  # draft mode — review surface, idempotent per contact
         if dossier.get("gmail_draft_pushed"):
@@ -659,6 +681,20 @@ def queue_draft(settings, contact_id: str, *, commit: bool = False,
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
     dossier = dict(c.get("dossier") or {})
+    from . import contextual_email
+    try:
+        contextual = contextual_email.campaign_draft(settings, c)
+    except RuntimeError as exc:
+        return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
+    if contextual is not None:
+        draft, _ = contextual
+        # A provider APPEND is a new reply write. This kernel path cannot hold
+        # the engine's assignment admission through that external transport;
+        # the existing engine-owned draft is the only contextual review surface.
+        return {"ok": False, "email": email, "refused": "contextual_email",
+                "engine_draft_id": draft["id"],
+                "error": "Contextual drafts cannot be mirrored into Gmail Drafts",
+                "next": "review the existing engine draft"}
     if dossier.get("gmail_draft_pushed"):
         return {"ok": True, "email": email, "noop": "draft already in Gmail Drafts"}
     if not commit:

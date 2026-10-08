@@ -1,5 +1,24 @@
 # Changelog — cs-kernel
 
+## Unreleased
+
+### Contextual email assignment enforcement
+
+Candidate `chat`, `draft-reply` and exact `draft-send` negotiate engine
+`contextual_email_policy: 1` before generation. Explicit thread, source, target
+and draft context constrains engine email effects; send-tool approval cannot
+override assignment holds. Contextual campaign drafts use the exact engine draft
+send lifecycle; contextual campaign queueing refuses a separate Gmail copy and
+retains engine review. Fixed-template first-contact/bulk delivery keeps its
+existing path. See [the candidate contract](docs/task-assignment.md).
+
+This is local development, without a tag, installed-clone change or hosted
+activation. MINOR required for the new CLI/capability behavior. **Re-collaudo:
+both maintained clones, FULL before publication** because send and authentication
+boundaries change. Future rollout requires compatible engine code, retained
+enrollment/history, privileged ordered enrollment where needed, and reviewed
+clone-specific caller adaptation; an older engine refuses candidate chat work.
+
 ## v0.51.0 — 2026-10-08 (MINOR)
 
 ### Bounded fan-out history and honest mailbox scope

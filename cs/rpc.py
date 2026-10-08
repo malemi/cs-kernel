@@ -242,6 +242,8 @@ async def chat(
     approval_predicate: Callable[[str, dict], bool] | None = None,
     read_only: bool = False,
     assignment_thread_key: str | None = None,
+    email_context: dict | None = None,
+    require_contextual_email_policy: bool = False,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -289,6 +291,8 @@ async def chat(
 
     from . import model_config
 
+    if email_context is not None and (read_only or role is not None):
+        raise ValueError("contextual email cannot use read-only/direct classifier routing")
     if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
         raise ValueError("assignment draft scope cannot be combined with other mutation or routing policy")
     if read_only:
@@ -343,8 +347,13 @@ async def chat(
     async with EngineClient(settings, on_notification=on_notify) as c:
         client = c
         params = {"message": message, "conversation_id": conv}
-        if assignment_thread_key is not None:
+        if email_context is not None or assignment_thread_key is not None or require_contextual_email_policy:
             capabilities = await c.call("system.capabilities", {}, timeout=60)
+            if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
+                raise RuntimeError("engine does not support required contextual email policy version 1")
+        if email_context is not None:
+            params.update(email_context=email_context, contextual_email_policy_version=1)
+        if assignment_thread_key is not None:
             if not isinstance(capabilities, dict) or capabilities.get("assignment_draft_policy") != 1:
                 raise RuntimeError("engine does not support required assignment draft policy version 1")
             params.update(assignment_thread_key=assignment_thread_key, assignment_policy_version=1)

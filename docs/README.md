@@ -25,3 +25,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Human thread ownership design](2026-10-07-human-thread-ownership-design.md) — reviewed lifecycle and selected engine mechanism.
 - [Engine-owned thread assignments](task-assignment.md) — CLI, queues, approval/source boundaries and compatibility; [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
 - [Bounded fan-out reads](execution-plans/2026-10-06-fanout-bounded-reads.md) — bounded readers, self-owner scope and live acceptance obligations.
+
+- [Contextual email assignment enforcement](execution-plans/2026-10-08-contextual-email-assignment-guard.md) — local unreleased guard, exact caller binding and verification; [brief](briefs/2026-10-08-contextual-email-assignment-guard.md).
