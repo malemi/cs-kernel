@@ -259,4 +259,19 @@ scheduled-run behavior or the quality of a legal answer.
 
 ### Closure
 
-Pending.
+The living documents are reconciled in `d091fa1`, `d3090fe` and `00a85f5`. The
+last two correct `docs/agent-skills.md`, which named `SKILL.md.j2` as a skill's
+only authoring source: a skill's directory can hold supporting templates, and
+four skills include shared fragments from `cs/templates/partials/`.
+
+The delegated `doc-critic` returns no stale claim and three it could not
+verify: no model run exercised the Codex `$cs-legal-research` invocation, no
+run observed the skill selected without being named, and the absence of
+translated passages from the upstream collection was sampled, not proved.
+
+Completion evidence is held by the documentation checker under the task
+`legal-research-skill-20261008`, with the retained artifacts in
+`~/.local/state/claude-evidence/legal-research-20261008/`: the approved versions
+of the brief, the plan and the M1 source, the reviewers' raw transcripts, the
+suite logs, the native transcripts and the critic's report. The final review
+and the baseline are recorded by that task.
