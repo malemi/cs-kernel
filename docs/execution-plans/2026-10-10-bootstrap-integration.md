@@ -38,8 +38,9 @@ the delegated critic verifies documentation without repairing it.
    promotion. Recheck main SHA and dirty-file digests. Switch the original dirty checkout
    to `work/preserved-main-bootstrap-20261010`, requiring identical file bytes
    and status. Free main can then be checked out in the integration worktree
-   and fast-forwarded to the exact approved merge commit only after preserved
-   checkout equality passes. The final read-only audit repeats ancestry,
+   and fast-forwarded to the reviewed merge with its separately verified
+   post-commit documentation closure only after preserved checkout equality
+   passes. The final read-only audit repeats ancestry,
    clean-main and preserved-checkout checks. If an unexpected concurrent edit
    invalidates that audit after promotion, retain both branches and evidence,
    report the discrepancy and do not rewind or overwrite any checkout.
@@ -77,7 +78,9 @@ automatic production merge tree, with only the approved unit-test exception.
 `integration-equivalence.json` owns these results; original frozen-parent native
 runtime and configuration qualifications remain in the bootstrap plan.
 
-Main promotion waits for M1, documentation closure and separate final approval.
+M1, integration documentation closure and separate final approval are complete.
+Merge commit `fd04b47` retains both reviewed parents. Main promotion requires
+post-commit documentation closure and the preservation checks in step 5.
 Original main remains at its saved tip with exact13 file/status/diff digests
 captured in `preserved-main-before.json` and its recoverable binary patch.
 The checked promotion sequence in step 5 remains mandatory after these gates.
