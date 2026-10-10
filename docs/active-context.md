@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 672d702211d04ba2f944daa71693570a7b8d6529
-doc_baseline_date: 2026-10-08
+doc_baseline_commit: eb6dc1a97709153e1f67e8b95d8ef2c4ad7bfde8
+doc_baseline_date: 2026-10-10
 ---
 
 # Active Context — cs-kernel
@@ -14,124 +14,107 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-Released [thread assignments](task-assignment.md) use signed engine authority, guarded scoped
-drafts and exact inbound coverage. Both maintained clones install `v0.51.0`; six hosted engines
-have verified assignment reads and root-owned trust. Local hardening is [closed with
-limits](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md). The legacy July harness
-remains red on the retained `v0.50.0` baseline.
-
-The local [contextual-email
-candidate](execution-plans/2026-10-08-contextual-email-assignment-guard.md) negotiates
-strengthened engine enforcement for chat and exact draft sending, carrying known original
-source/thread/draft context. Fixed-template bulk retains its existing path. It is unreleased;
-installed clones and hosted pins are unchanged. The separately owned MrCall launcher patch is an
-uninstalled handoff.
-
-The unattended operator runs through Claude Code; engine APIs and kernel direct
-classifiers have separate models, billing and stop controls. See
-[runtime boundaries](operator-runtime.md). Engine daily caps do not cover all
-operator activity, and CS_PAUSE does not stop engine processing.
-
-- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These
-  sentences are parsed by `tests/test_release_consistency.py`; preserve their
-  wording. Release verification records are in the [customer-service playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
-  Both maintained clones install public `v0.51.0` at `5609207` and report
-  `0.51.0`. Lock-only rebuilds resolve that exact tag; authenticated identity,
-  complete assignment-list and draft-policy capability reads pass on both.
-- Vonage supports clone-scoped reads, provisioning previews, supervised
-  domain/user creation and additive ACL changes with explicit credential
-  references. Headless/paused mutations refuse. See [integration](integrations/vonage.md).
-- Integration guides separate Vonage, Shopify, Drive and Faire. Faire application
-  setup is documented; authenticated use and a kernel adapter remain unverified
-  and unimplemented respectively.
-- The engine owns mail classification, task judgement and company memory.
-  Shared written projects are revisioned engine records; legacy clone folders
-  remain recoverable in private Git history.
-- `cs init --descriptor` consumes the explicit Desktop handoff. `cs setup` checks
-  workspace, identity, preparation evidence, memory and agent tools; preparation
-  counts do not certify reply quality or mailbox credential validity.
-- Stamped AGENTS.md owns workspace instructions. CLAUDE.md is a one-time
-  bootstrap; Claude Code, Codex and OpenCode share canonical skills.
-- `cs-triage-mail` reads an optional clone-owned
-  `company/customer-service-playbook.md`; the shared skill retains send and
-  tool-approval boundaries across all three agent surfaces.
-- Release `v0.51.0` adds bounded cross-mailbox reads with a fixed self-owner
-  skip and named read/unreadable/skipped scope. Incomplete evidence refuses
-  applicable sends; `send-first` retains its existing ungated contact-state path.
-  [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md) records
-  real provider history, RFC-key parity and bounded FETCH latency on both clone
-  candidates. Both original clones now install the immutable release.
-- Role routing is opt-in through CS_LLM_ROUTE; send guards can use a direct
-  classifier. `cs memory` reports the ten-store memory map.
-- `cs ask` negotiates engine read-only chat policy version
-  1 before sending a question. The scheduled wrapper denies all six command
-  spellings of each raw mutating memory/update/preparation RPC surface. Focused
-  policy tests, the deny-enumeration gate and `cs memory` pass.
-- `cs instructions` compiles
-  `company/customer-service-playbook.md`, `company/mailbox-identity.md` and
-  `company/mailboxes/<email>.md` into the engine's reserved
-  `operator-instructions` documents and, with `--commit`, stores them only
-  through `instructions.store`. `cs project new/save/import` refuse the
-  reserved slug; the cron wrapper denies the verb and the raw RPC in all six
-  spellings; `cs setup` and `cs memory` report the company files as the
-  standing-instructions store. The engine side is a separate `mrcall-desktop`
-  change. Publication is verified against the real loopback fixture;
-  production publication and Firebase authentication remain unverified.
-- `cs-instructions` provides a canonical interactive standing-rule workflow
-  across Claude, Codex and OpenCode. All 33 native fixture cases pass with
-  independently checked publication, Git and refusal evidence. Implementation
-  and final review are approved; both maintained clones install the workflow
-  through the [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
-- Interactive `cs draft-send <full-engine-draft-id>`:
-  it approves the exact engine draft and checks recorded sent status. The
-  supplied cron wrapper denies the command; the CLI has no headless/pause guard.
-  Guidance reserves ambient Gmail connectors for reviewing engine-owned drafts.
-- Scheduled Claude retries only after a proven pre-tool quota/payment refusal.
-  The optional OpenRouter model and per-tick budget are manifest knobs. Fixed
-  owner mail reports route/model changes and stops. Café 124 runs the generated
-  draft-only wrapper; MrCall runs its clone-owned send launcher through the
-  same supervisor. The supervisor checks each launcher's permissions against
-  its resolved triage mode before starting Claude. Both clones configure $4
-  fallback budgets. MrCall uses its clone-owned Anthropic API primary and
-  fixed missing/restored-key notices. Reply quality requires separate acceptance.
-
-- Pricing and triage integration and acceptance remain open under the
-  [pricing plan](execution-plans/2026-09-21-pricing-skill-production-economics.md),
-  with candidate work on `work/pricing-triage-20261001` at `d16e3e5`.
+- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+  Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
+  Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
+  harness remains red on retained `v0.50.0`. Release evidence belongs to the
+  [playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+- Released [assignments](task-assignment.md) use signed engine authority, scoped
+  drafts and exact inbound coverage. Six hosted engines have verified reads and
+  root-owned trust. Local hardening is closed with limits in the
+  [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+- The integrated [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and 19
+  qualified native observations pass for the frozen bootstrap parent; these are
+  retained observations, not fresh native execution of the integrated tree.
+  Canonical instructions and discovery read routes retain the reviewed parent
+  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
+  owns current kernel checks. Claude's standalone profile excludes identified
+  ai-kit injection while preserving permissions and non-kit hooks. Historical
+  runtime/configuration limits remain qualified; no universal compliance or
+  live-clone adoption is established.
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  negotiates strengthened engine enforcement for chat and exact draft sending,
+  carrying original source/thread/draft context. Fixed-template bulk retains its
+  existing path. It is unreleased; hosted pins and installed clones are unchanged.
+  The separately owned MrCall launcher remains an uninstalled handoff.
+- `cs-legal-research` is an untagged interactive Italian/EU legal-research skill
+  with four references and a date-arithmetic helper. Three-host discovery and
+  local gates pass; no maintained clone installs it. The instruction-level
+  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
+  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+- Company procedures and mailbox identity are authoritative clone-owned files.
+  `cs instructions` compiles them into reserved engine `operator-instructions`
+  documents; only `instructions.store` publishes them. Project verbs refuse
+  that slug. `cs setup` and `cs memory` expose this standing-instructions store.
+  Loopback publication is verified; production publication and Firebase
+  authentication for that acceptance remain unverified.
+- `cs-instructions` supplies the interactive teaching workflow on all three
+  hosts. Its predecessor has 33 accepted native cases for publication, narrow
+  Git commits and refusals; current explanation behavior passes its separate observed cases. Both clones install the predecessor; see the
+  [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
+  Hosts share canonical skills. `cs-triage-mail` reads the optional company
+  playbook while preserving send and approval boundaries.
+- The engine owns classification, task judgement and company memory. Written
+  projects are revisioned engine records; legacy folders remain in private Git.
+  `cs ask` negotiates read-only policy version 1. Scheduled launchers deny raw
+  mutating memory/update/preparation RPCs and instruction publication.
+- Cross-mailbox reads retain the fixed self-owner skip and explicit unreadable
+  scope. Incomplete evidence refuses applicable sends; `send-first` keeps its
+  existing contact-state path. [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md)
+  owns provider parity, RFC-key and bounded FETCH evidence on both clones.
+- Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine
+  draft and checks recorded sent status. Cron denies it; the CLI has no
+  headless/pause guard. Ambient Gmail connectors remain read/review tools.
+- Descriptor-based `cs init` and `cs setup` verify workspace, identity,
+  preparation evidence, memory and agent tools. Preparation counts do not
+  certify reply quality or mailbox credential validity.
+- Engine APIs, direct classifiers and unattended Claude have separate models,
+  billing and stop controls. Engine caps do not cover all operator activity;
+  CS_PAUSE blocks new guarded ticks, not running Claude or engine work.
+  [Runtime controls](operator-runtime.md) own details, including optional
+  CS_LLM_ROUTE, OpenRouter retry after proven pre-tool quota/payment refusal,
+  fixed owner notices and permission checks against resolved triage mode.
+  Both clones configure $4 fallback budgets; MrCall has its own Anthropic primary.
+- Vonage supports clone-scoped reads, previews, supervised domain/user creation
+  and additive ACLs with credential references; paused/headless mutations refuse.
+  [Provider guides](provider-connections.md) also cover Shopify, Drive and Faire.
+  Faire authenticated use and a kernel adapter remain unverified/unimplemented.
 
 ## Unresolved
 
-- Engine and direct-classifier failover remain separate from scheduled Claude
-  recovery; the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md)
-  is still active.
-
-- The [exact-draft-identity plan](execution-plans/2026-09-16-exact-draft-identity.md)
-  specifies preservation proof, exact pairing and reconciliation. These are not
-  implemented; a Gmail send outside the engine can still leave a stale mirrored
-  draft. Current pairing uses thread/recipient inference, and Gmail-only rows
-  have no authored body in review. Dated inventory counts are in the archive.
+- Bootstrap release and maintained-clone adoption remain separate authorization;
+  remote MCP remains a separate workstream.
+- Engine/direct-classifier failover remains separate from scheduled recovery;
+  the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
+- [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
+  preservation, pairing and reconciliation are unimplemented. Gmail sends can
+  leave stale mirrored drafts; current pairing uses thread/recipient inference,
+  and Gmail-only review rows have no authored body.
 - MrCall support and Mario share support's company space through a separately
-  authorized fenced join on the existing released engine. Both identities have
-  complete assignment and shared project reads; private tasks/mail remain isolated.
-  No real assignment is created. Live unanswered-mail parity and review-latency
-  acceptance remain open.
-  `cs unanswered --all-buckets` reports incomplete assignment authority and
-  exits 3; canonical triage guidance retains held threads.
-- Clone-local help routing and MrCall triage prose contain reviewed corrections
-  beyond the tagged templates. Preserve these documentation adaptations on the
-  next stamp; the factory help/triage descriptions still need alignment.
-
-- Paid agent-tick/live draft behavior remains outside read-only FULL checks.
-  Instruction tests do not establish agent-behavior proof or revoke ambient
-  permissions. Historical clone send posture requires checks in that clone.
-- Live SIP/customer-trunk acceptance, telephone-number association, PBX setup
-  and secondary-account onboarding remain separate from the release checks.
+  authorized fenced join. Assignment/project reads pass; private tasks/mail
+  remain isolated. No real assignment is created.
+- Live unanswered-mail parity and review latency remain open. Incomplete
+  assignment authority yields exit 3 from `cs unanswered --all-buckets`;
+  canonical triage guidance retains held threads.
+- Clone-local help/triage corrections beyond tagged templates need preservation
+  on update; factory descriptions still need alignment. Paid agent-tick/draft
+  behavior is outside read-only FULL checks. Instruction tests revoke no ambient
+  permissions; historical send posture needs checks in the actual clone.
+- [Pricing integration](execution-plans/2026-09-21-pricing-skill-production-economics.md)
+  and acceptance remain open on `work/pricing-triage-20261001` at `d16e3e5`.
+- Live SIP/customer trunks, number association, PBX and secondary-account
+  onboarding remain separate. Operator-facing update output still carries
+  internal verification terminology.
 
 ## Next
 
-1. Continue exact draft identity from its active plan; verify canonical send and
-   reconciliation before a new release/clone rollout. No send is part of doc-end.
-2. Diagnose unanswered-mail disagreement and close evidence/latency gaps in the
-   owning engine or kernel path rather than adding parallel judgement.
-3. Complete secondary-account onboarding when requested and replace internal
-   verification terminology in operator-facing update output.
+1. Release and adopt the integrated bootstrap candidate only under a separately
+   authorized release task.
+2. Continue exact draft identity and unanswered-mail evidence/latency work from
+   their existing plans before a corresponding release; doc-end sends no mail.
+3. Continue secondary-account onboarding when requested and correct internal
+   vocabulary in operator-facing update output.

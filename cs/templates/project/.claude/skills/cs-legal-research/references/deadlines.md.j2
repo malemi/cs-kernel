@@ -1,0 +1,49 @@
+{% raw -%}
+# Deadline selection and reproducible arithmetic
+
+A legally correct count requires a legally correct trigger and rule. A calendar tool proves arithmetic only. Do not treat a self-imposed reply date, document date, signature date, mail subject date or a prior assistant's calculation as the legal start without establishing the relevant rule.
+
+## Build one record per action
+
+Capture:
+
+- Remedy and specific act due: e.g. notification, administrative presentation, court deposit, response or opposition.
+- Governing rule, actual text and version; ordinary/special procedure and any transition.
+- Duration and unit; whether initial/final days count; forward or backward computation.
+- Trigger type and evidence; earliest credible alternative trigger if relevant; date, time and timezone when the rule depends on them.
+- Whether time is suspended or interrupted, and the authority for that effect. Distinguish the effect of suspension from a restart after interruption.
+- Holiday/weekend adjustments, exceptions, cutoff hour, and sender/recipient perfection rules where relevant.
+- Result and assumptions. Separate a legal outer limit from an earlier practical target.
+
+The date of reading an incoming PEC is not necessarily the legal date of communication. The sender's acceptance receipt is not a recipient's delivery receipt. If the user is the recipient, seek the original incoming certified message and its transport/certification data; do not demand a sender-only receipt they may not possess. Also check whether prior communication or full knowledge can matter under the chosen rule.
+
+Do not infer all missing inputs from “August rejection.” Ask for the minimal missing input and produce a conditional calculation only when useful. When alternatives remain, explain which evidence resolves them. Do not announce the latest plausible date as safe. An already elapsed date calls for investigation of any remaining lawful remedy, not invention of a new starting event.
+
+## Administrative-specific traps
+
+For TAR proceedings, inspect arts. 29, 41, 45 and 52–54 c.p.a., the applicable special procedure, and the relevant law on suspension. Establish whether the particular period is within the suspended class and whether a cautelare or other exception is relevant.
+
+For extraordinary appeals, verify D.P.R. 1199/1971 and current authority on its administrative character and computation. Do not copy the judicial August suspension. The CGARS Sicily 2025 guide linked in the administrative reference discusses its inapplicability, but is regional guidance: confirm the rule for the actual jurisdiction and check later changes. Do not treat that guide as current national legislation. Weekend/holiday expiry adjustment is a separate issue from August suspension.
+
+An access request, phone call, requested response date or autotutela application is not an assumed pause. Require the actual legal basis for any tolling, suspension or restarting claimed. A court deposit deadline is not an extra period for the initial notification.
+
+## Arithmetic helper
+
+`.claude/skills/cs-legal-research/scripts/count_days.py` — the same file on every agent host — counts **forward calendar-day periods** with explicitly supplied excluded intervals and expiry adjustments. It knows no law, holidays, jurisdiction, timezone, months, hours, working-day schedules or backward terms. Use a separately justified calculation for those cases. Supply every applicable holiday and rule; do not silently assume that its empty holiday list is a complete Italian calendar.
+
+Example of arithmetic, not advice on a real case:
+
+```bash
+.venv/bin/python .claude/skills/cs-legal-research/scripts/count_days.py \
+  --trigger 2026-08-10 --days 60 \
+  --exclude 2026-08-01:2026-08-31 --roll-weekday 5 --roll-weekday 6
+```
+
+This produces `2026-10-30`: with the trigger excluded and August omitted, September 1 is counted as day 1. A 120-day run from the same trigger **without** August exclusion produces December 8 before any separately supplied expiry holiday adjustment. Neither result proves which remedy or trigger applies.
+
+The JSON output includes inputs, the first counted day, raw last counted day, adjustment reasons and resulting date. Retain it with the rule and factual source. Check one boundary independently, especially when the trigger is inside a suspension or the last day crosses one. Do not relabel a conditional, unverified-input calculation as “confirmed” merely because the script ran.
+
+If an expiry adjustment enters an excluded interval, the helper refuses the combination. Resolve that interaction under the applicable law and calculate it separately; do not remove the exclusion just to obtain output.
+
+When the inputs and law are supported, do the count and report it with that basis; do not transfer all arithmetic to the user or a professional by default. Where a legal assumption is unresolved, mark that assumption specifically rather than saying every date is permanently unverifiable.
+{% endraw %}

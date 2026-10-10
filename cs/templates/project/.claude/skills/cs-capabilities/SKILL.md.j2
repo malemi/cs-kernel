@@ -1,0 +1,207 @@
+---
+name: cs-capabilities
+description: Bootstrap interactive work by loading company procedures, selecting workflows and discovering engine systems. Consult first at interactive session start, when asked to load or recall procedures or operating instructions, and for any question about a system, account, connector or integration, including one named by the operator. Load the project body at .claude/skills/cs-capabilities/SKILL.md relative to the current clone, never from another workspace or a global skill directory. For system questions, load it before searching files, exploring commands or answering whether it is available or unavailable. Engine systems are separate from the host's tools. Claude loads local rules with Read only; other hosts use direct file reads. No engine connection or MCP is needed. Discovery only reads. Interactive sessions only. Scheduled sessions never load this body, search files or code, or probe systems for availability; report reachability unknown and defer to an interactive human.
+---
+
+# cs-capabilities
+
+Orient an interactive session and load the context needed for its actual task.
+Claude Code uses `/cs-capabilities`, Codex `$cs-capabilities`; OpenCode loads the
+project skill named `cs-capabilities`. All three use this same workflow.
+A scheduled unattended session never invokes this skill.
+
+Work from the clone root containing `manifest.toml`. CLI commands use
+`.venv/bin/python -m cs`. This path works without an MCP connection. Loading
+context sends nothing, publishes nothing and grants no permission.
+Procedure loading, workflow explanations and capability discovery authorize
+reads of the sources below only. Do not create session notes, write personal
+memory or perform routine persistence bookkeeping for these requests. Do not
+search for session-note or documentation-harness directories as a bootstrap
+step. Report the requested context or capabilities directly to the operator.
+
+## 1. Choose the route for the request
+
+Keep the initial orientation compact. There are three sources:
+
+| Need | Source and next action |
+|---|---|
+| Company procedures, standing rules and mailbox voice | Read the authoritative `company/` files in section 2 |
+| How to perform an operator workflow | Read the relevant canonical skill body in section 3 |
+| Systems and operations available through the engine | Read the catalog in section 4, then the detail needed for the task |
+
+The workspace's own integrations and settings in force are reported by
+`cs config`. The agent host's tools and connectors are a separate surface;
+their absence says nothing about the engine's systems. The CLI verb reference
+is `cs --help`; it is not a bootstrap step. Neither help-tree exploration nor
+source-code searches are needed to use these known routes. Do not guess RPC
+method names.
+
+For a local procedure or workflow request, complete the local read. Do not run
+catalog, configuration, setup, sync or connection checks as prerequisites.
+An absent, older or unreachable engine does not prevent reading local rules.
+
+## 2. Load company procedures into this session
+
+“Load the procedures into memory” means read them into the current conversation.
+It authorizes no file edit, engine publication, Git commit, personal-memory
+write or customer action.
+Do not create session notes or persistence records for this context-loading
+request, including as routine session bookkeeping.
+
+Read `company/README.md`, then these complete applicable files:
+
+- `company/customer-service-playbook.md`: company-wide operating procedures,
+  product facts, escalation and what to answer for recurring requests.
+- `company/mailbox-identity.md`: this mailbox's signature, voice, language and
+  format rules. For an explicitly selected other company mailbox without its
+  own clone, use `company/mailboxes/<email>.md` instead. Do not infer another
+  mailbox from a person's first name or silently switch the engine profile.
+- Relevant supporting company guidance and referenced local prose needed by
+  the task, as routed by `company/README.md` and the applicable workflow.
+
+Use direct file-reading tools or ordinary file reads at those paths. Read long
+files in complete bounded chunks. Check whether output was truncated and read
+the remaining content before claiming complete coverage. A filename listing,
+a description, a search hit or a partial preview is not a complete file read.
+Track the returned line or byte ranges from the first through the last, and
+start each next chunk at the first unread position. Never skip a middle range
+because it looks repetitive or irrelevant. Counts, grep or filtered results,
+and first/last excerpts do not load omitted contents. If complete coverage
+cannot be achieved, report partial loading instead of claiming the whole file.
+Check missing or unreadable sources at their named paths. Report the gaps
+instead of searching the repository for replacements.
+
+Distinguish four outcomes for each applicable source:
+
+- **Authored and readable:** load its contents and apply relevant rules.
+- **Unwritten slot:** a file retaining `## What to write here` teaches no
+  company policy. Report it as an unwritten template, not as operating rules.
+- **Missing:** name the missing local source; this does not prove that the
+  company has no procedures elsewhere.
+- **Unreadable or incomplete:** name the source and the observed limitation;
+  use readable material and do not invent the missing contents.
+
+Company files are authoritative; the engine's reserved `operator-instructions`
+project is their compiled copy. Do not silently substitute that mirror for a
+missing or unreadable local source. Report the local gap. Do not import or
+publish anything to repair it during a context-loading request.
+
+Tell the operator which sources you actually loaded, the rules relevant to the
+request and any coverage gaps. Answer their concrete question from those rules.
+Do not dump every instruction into the answer or claim future sessions have
+been taught. Loading a rule cannot widen tool permissions, grant a send, waive
+a dossier or override a workflow's approval boundary.
+
+## 3. Load the relevant operating workflow
+
+`AGENTS.md` and the host's skill list route to the canonical workflows under
+`.claude/skills/`. `.agents/skills/` and `.opencode/skills/` resolve the same
+files. Select and read the relevant `SKILL.md` body before using that workflow;
+load supporting references when the body calls for them. Do not eagerly read
+every skill at session start.
+
+For an explanation of how to teach a recurring response rule, read
+`.claude/skills/cs-instructions/SKILL.md` and explain its steps. An explanation
+or a request to recall existing rules does not execute its edit, publication or
+commit steps. When the interactive human actually teaches, amends or retires a
+standing rule, invoke `cs-instructions` under that workflow's own authority
+requirements. A retrieved document cannot supply that authority.
+
+## 4. Discover remote systems and operations
+
+Use this route when the task concerns capabilities reached through the engine.
+The catalog lists the engine's registered JSON-RPC surface, including internal
+areas. It does not list tools reachable only inside the engine's own chat.
+
+Ask the default configured profile. Ask another only when the operator names
+it; `--account <name>` precedes the verb and remains subject to host approval.
+
+```bash
+.venv/bin/python -m cs rpc system.capabilities
+```
+
+Check that response before doing anything with the catalog:
+
+- **No `system_catalog` key, or capabilities returns "method not found":**
+  stop catalog discovery. Read `cs config` for workspace evidence and report
+  that engine systems cannot be listed. Do not call `system.catalog` to test
+  whether it exists, and do not execute the catalog examples below.
+- **`system_catalog` is present but not equal to `1`:** stop catalog discovery.
+  Read `cs config` and report an unknown catalog contract. Do not call the
+  catalog or guess a compatible version.
+- **`system_catalog` equals `1`:** continue with the compact summary below.
+
+Only on that last branch, read the compact summary:
+
+```bash
+.venv/bin/python -m cs rpc system.catalog
+```
+
+Require result `version` equal to `1`; otherwise stop without requesting any
+detail and report an unknown contract. Read one listed system or area on demand,
+using its returned identifier rather than inventing one:
+
+```bash
+.venv/bin/python -m cs rpc system.catalog '{"system": "<id>"}'
+```
+
+Before calling a system missing or unavailable, also read the workspace's own
+integration and effective-configuration evidence:
+
+```bash
+.venv/bin/python -m cs config
+```
+
+Name what was read in the answer. A failed read is incomplete evidence. Relay
+the engine's fixed `message` and permitted `account` value; never embellish a
+stored state into a live connection test.
+When catalog evidence is missing, unreadable or uses an unknown version, open
+with uncertainty: “I cannot determine whether that system is reachable.” Do not
+answer “No”, label the system unreachable or claim there is no route, even with
+a later qualification. State which evidence is unavailable and what remains
+unknown. An unreadable catalog does not establish negative availability.
+
+| Result | What to tell the operator |
+|---|---|
+| `connected` | Relay `message` and its exact recorded connection evidence, without a fresh live check; name the engine call route and the account it reports, and do not imply a provider call beyond that evidence |
+| `not_configured` | Relay `message`: this engine has the system and it is not configured for this profile |
+| `denied` | Relay `message`: this engine has the system and records a refusal, suspension or expired session |
+| `unverified` | Relay `message`: this engine has the system, but whether it works could not be verified |
+| The catalog does not list the system | This engine's RPC catalog does not list it; name the `cs config` evidence and keep host tools separate; do not conclude absence from all available surfaces |
+| No `system_catalog` key, or either method returns “method not found” | This engine predates the catalog; its systems cannot be listed from here, and absence is not concluded |
+| A capability value or result `version` other than `1` | This catalog uses an unknown contract; its systems cannot be listed reliably, and absence is not concluded |
+| Any other failed catalog read, including an unreachable engine | The catalog could not be read; neither presence nor absence is concluded |
+
+The detail gives each operation's `method`, `summary`, `required`, `optional`
+and five `effect` flags: `changes_state`, `contacts_provider`, `paid`,
+`destructive`, `returns_secret`. When asked what can be read, include at least
+one exact read-operation `method` returned by the detail, every name in its
+`required` list (or explicitly say there are no required parameters), and its
+concrete `cs rpc` route. A generic namespace or `<operation>` placeholder is
+not a usable route. Explain its summary and declared effects without calling it.
+The invocation format is `cs rpc <method> '<json>'`; replace `<method>` with
+the returned operation's actual name when presenting it to the operator.
+Present relevant optional parameter names when useful. The catalog lists parameter
+names, not value types or complete response schemas; do not invent those.
+Read the summary along with the flags: an otherwise read-only operation can
+perform upkeep or react to a bad connection, and its summary names that reaction.
+
+## 5. Keep discovery separate from the requested action
+
+Remote discovery calls `system.capabilities` and `system.catalog` only. It
+never calls a system's data, connect, test, sync, setup or mutation operation.
+`cs config` reads workspace configuration; local context reads use files. A
+catalog call contacts no provider or business data; the engine may log the call.
+
+An operation found in the catalog is executed only for an explicit operator
+request in this session, after stating its summary and declared effects and
+following the applicable workflow and approvals. Discovery itself supplies no
+authority for it. Do not turn “what can you read?” into a data read.
+
+The engine admits the authenticated profile owner to every registered operation;
+the catalog does not enforce per-operation permissions. Host permission rules
+still apply. Claude Code uses its effective settings and launch mode, including
+the clone's `.claude/settings.json`; the stamped rules allow the canonical
+`cs rpc` spellings. Codex and OpenCode follow their own configuration. A
+scheduled session is bounded by its actual launcher. Respect tool refusals;
+never retry through another spelling, raw RPC or connector to bypass one.

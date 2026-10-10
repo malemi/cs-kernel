@@ -58,6 +58,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cs import project_init, review  # noqa: E402
+from test_legal_research_skill import LEGAL_FILES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 TPL = ROOT / "cs" / "templates" / "project"
@@ -339,6 +340,8 @@ def _update_render() -> None:
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("CS_", "EMAIL_", "ENGINE_"))}
 
+    env["GIT_ALLOW_PROTOCOL"] = "file"
+
     with tempfile.TemporaryDirectory() as td:
         home = Path(td, "home"); home.mkdir()
         env["HOME"] = str(home)
@@ -422,12 +425,42 @@ def _update_render() -> None:
 
             _fanout_contract(clone, f"update {label}")
 
+            capabilities = clone / ".claude/skills/cs-capabilities/SKILL.md"
+            check(capabilities.is_file(), f"[{label}] update adds bootstrap skill")
+            for host in (".agents", ".opencode"):
+                hosted = clone / host / "skills/cs-capabilities/SKILL.md"
+                check(capabilities.is_file() and hosted.is_file()
+                      and hosted.read_bytes() == capabilities.read_bytes(),
+                      f"[{label}] {host} update resolves canonical bootstrap")
+
             instructions = clone / ".claude/skills/cs-instructions/SKILL.md"
             check(instructions.is_file(), f"[{label}] update adds standing-rule skill")
             for host in (".agents", ".opencode"):
                 check((clone / host / "skills/cs-instructions/SKILL.md").read_bytes()
                       == instructions.read_bytes(),
                       f"[{label}] {host} update resolves canonical standing-rule skill")
+
+            # The skill with supporting files, on the path every existing
+            # clone takes: this clone predates it, so `cs update` has to add
+            # all seven files, and nothing compiled. A `.pyc` in the INSTALLED
+            # template tree stops `cs update` before this point, and the
+            # exit-code check above is what reports it; the bytecode check
+            # below holds the clone itself.
+            legal = clone / ".claude/skills/cs-legal-research"
+            for rel in LEGAL_FILES:
+                check((legal / rel).is_file(),
+                      f"[{label}] update adds legal-research {rel} to a clone "
+                      f"that predates the skill")
+                for host in (".agents", ".opencode"):
+                    hosted = clone / host / "skills/cs-legal-research" / rel
+                    check((legal / rel).is_file() and hosted.is_file()
+                          and hosted.read_bytes() == (legal / rel).read_bytes(),
+                          f"[{label}] {host} update resolves canonical "
+                          f"legal-research {rel}")
+            compiled = sorted(str(p.relative_to(clone)) for p in clone.rglob("*")
+                              if p.suffix == ".pyc" or "__pycache__" in p.parts)
+            check(not compiled,
+                  f"[{label}] update stamps no bytecode into the clone: {compiled}")
             for rel, data in authored.items():
                 check((clone / rel).read_bytes() == data,
                       f"[{label}] update preserves authored {rel}")

@@ -44,7 +44,7 @@ import sys
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
-import websockets
+from websockets.exceptions import WebSocketException
 
 from . import _time, config, crm, ingest, rpc
 from ._version import kernel_version
@@ -2671,7 +2671,7 @@ def main(argv=None) -> int:
         print(f"{settings.prog_name or 'cs'}: {e}", file=sys.stderr)
         return 1
     except (ConnectionError, socket.gaierror, socket.timeout,
-            websockets.exceptions.WebSocketException) as e:
+            WebSocketException) as e:
         # Configuration/environment absence is a product state, not a bug: the
         # commonest cause by far is the mrcall-desktop app simply not running
         # yet, or its engine living on another machine. `websockets.connect`

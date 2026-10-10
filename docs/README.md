@@ -21,9 +21,13 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 
 - [Conversational standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md) — canonical three-host workflow; [brief](briefs/2026-10-07-cs-instructions-skill.md).
 
+- [Legal research skill](execution-plans/2026-10-08-legal-research-skill.md) — stamped `cs-legal-research` with supporting files and its three-host discovery record; [brief](briefs/2026-10-08-legal-research-skill.md).
+
 - [Desktop/kernel hardening closure](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md) — local contract/gate evidence and remaining owners; [brief](briefs/2026-10-07-desktop-kernel-hardening-closure.md).
 - [Human thread ownership design](2026-10-07-human-thread-ownership-design.md) — reviewed lifecycle and selected engine mechanism.
 - [Engine-owned thread assignments](task-assignment.md) — CLI, queues, approval/source boundaries and compatibility; [delivery plan](execution-plans/2026-10-08-engine-task-assignment-consumer.md).
 - [Bounded fan-out reads](execution-plans/2026-10-06-fanout-bounded-reads.md) — bounded readers, self-owner scope and live acceptance obligations.
+- [Interactive bootstrap](briefs/2026-10-08-capability-discovery.md) — local procedures, workflow context and engine capability discovery without MCP; [delivery plan](execution-plans/2026-10-08-capability-discovery.md).
 
 - [Contextual email assignment enforcement](execution-plans/2026-10-08-contextual-email-assignment-guard.md) — local unreleased guard, exact caller binding and verification; [brief](briefs/2026-10-08-contextual-email-assignment-guard.md).
+- [Local bootstrap integration](execution-plans/2026-10-10-bootstrap-integration.md) — parent preservation, integrated checks and local merge; [brief](briefs/2026-10-10-bootstrap-integration.md).

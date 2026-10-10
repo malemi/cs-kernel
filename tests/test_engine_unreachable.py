@@ -23,17 +23,21 @@ Guards:
        stderr names the configured engine URL and the mrcall-desktop app,
        and stderr contains NO "Traceback".
   (ii) the caught exception family is narrow (ConnectionError + DNS/timeout +
-       websockets.exceptions.WebSocketException), not bare `Exception` — a
-       `config.ConfigError` and an ordinary `ValueError` raised inside a verb
-       must still propagate as a real, unhandled failure (proving the fix
+       websockets.exceptions.WebSocketException), not bare `Exception` — an
+       ordinary `ValueError` raised inside a verb must still propagate as a
+       real, unhandled failure (proving the fix
        does not mask real bugs).
 """
 from __future__ import annotations
 
 import contextlib
 import io
+import os
+import signal
 import socket
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from cs import auth as auth_mod
@@ -153,7 +157,92 @@ def _test_other_exceptions_still_propagate() -> None:
         rpc_mod.call_sync = orig_call_sync
 
 
+def _fresh_case(case: str, url: str) -> int:
+    settings = Settings(
+        _env_file=(),
+        engine_owner_uid=UID,
+        email_address="ops@acme.example",
+        engine_ws_url=url,
+        prog_name="acme-cs",
+    )
+    config_mod.load = lambda: settings
+    auth_mod.get_id_token = lambda *a, **k: "fake-id-token"
+    if case == "malformed-json":
+        return cli.main(["rpc", "system.capabilities", "{"])
+    if case == "closed-port":
+        return cli.main(["whoami"])
+    if case == "invalid-uri":
+        from websockets.exceptions import InvalidURI
+
+        error = InvalidURI("invalid-engine-uri", "synthetic invalid URI")
+    else:
+        error = {
+            "value-error": ValueError("synthetic value failure"),
+            "missing-file": FileNotFoundError(2, "synthetic missing file", "/missing/input"),
+            "refused": ConnectionRefusedError("synthetic refused connection"),
+            "timeout": TimeoutError("synthetic timeout"),
+            "dns": socket.gaierror(-2, "synthetic unresolved host"),
+            "interrupt": KeyboardInterrupt(),
+            "system-exit": SystemExit(3),
+        }[case]
+
+    def fail(*args, **kwargs):
+        raise error
+
+    rpc_mod.call_sync = fail
+    return cli.main(["whoami"])
+
+
+def _test_fresh_interpreters() -> None:
+    cases = [
+        ("malformed-json", 1, "json.decoder.JSONDecodeError", False),
+        ("value-error", 1, "ValueError: synthetic value failure", False),
+        ("missing-file", 1, "FileNotFoundError: [Errno 2] synthetic missing file", False),
+        ("refused", 1, "ConnectionRefusedError", True),
+        ("timeout", 1, "TimeoutError", True),
+        ("dns", 1, "gaierror", True),
+        ("invalid-uri", 1, "InvalidURI", True),
+        ("closed-port", 1, "ConnectionRefusedError", True),
+        ("interrupt", -signal.SIGINT, "KeyboardInterrupt", False),
+        ("system-exit", 3, "", False),
+    ]
+    env = {key: value for key, value in os.environ.items() if not key.startswith("CS_")}
+    env["PYTHONPATH"] = str(Path(cli.__file__).resolve().parents[1])
+    env["NO_PROXY"] = env["no_proxy"] = "127.0.0.1,localhost"
+    with tempfile.TemporaryDirectory(prefix="cs-dispatch-") as directory:
+        for case, status, exception, connection_error in cases:
+            url = _closed_port_url()
+            result = subprocess.run(
+                [sys.executable, str(Path(__file__).resolve()), "--child", case, url],
+                cwd=directory, env=env, capture_output=True, text=True, timeout=30,
+            )
+            detail = f"{case}: status={result.returncode}\n{result.stdout}\n{result.stderr}"
+            assert result.returncode == status, detail
+            assert result.stdout == "", detail
+            assert "AttributeError" not in result.stderr, detail
+            if connection_error:
+                expected = (
+                    f"acme-cs: cannot reach the engine at {url!r}: {exception}: "
+                )
+                assert result.stderr.startswith(expected), detail
+                assert (
+                    "The mrcall-desktop app is probably not running, or its engine "
+                    "is on another machine — start it there, or point [engine].ws_url "
+                    "in manifest.toml at the machine that is running it."
+                ) in result.stderr, detail
+                assert "Traceback" not in result.stderr, detail
+            else:
+                assert "cannot reach the engine" not in result.stderr, detail
+                if case == "system-exit":
+                    assert result.stderr == "", detail
+                else:
+                    assert "Traceback" in result.stderr, detail
+                    assert result.stderr.rstrip().splitlines()[-1].startswith(exception), detail
+            print(f"fresh interpreter {case}: status={result.returncode}, passed")
+
+
 def main() -> int:
+    _test_fresh_interpreters()
     _test_whoami_against_unreachable_engine()
     _test_other_exceptions_still_propagate()
     print("test_engine_unreachable: all assertions passed")
@@ -161,4 +250,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--child":
+        raise SystemExit(_fresh_case(sys.argv[2], sys.argv[3]))
     raise SystemExit(main())
