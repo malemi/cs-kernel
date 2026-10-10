@@ -64,13 +64,76 @@ do not authorize persistence. Material conflicts require clarification. Schedule
 sessions cannot teach rules. Last-rule retirement uses a nonempty factual
 replacement because absent compiler inputs do not clear stored documents.
 
-Native fixture acceptance passes eleven cases on each supported host, including
+The description routes how-to questions to a read-only explanation: first read
+the canonical project body, then answer. This route authorizes no company-file
+or Git checks, CLI/help calls, session bookkeeping or publication.
+
+The predecessor teaching workflow passed eleven native cases on each supported host, including
 actual discovery, real WebSocket/SQLite publication and narrow Git commits.
-Independent state checks cover all 33 cases. Acceptance establishes only the
+Independent state checks cover those 33 historical cases. The bootstrap candidate
+preserves the numbered teaching body and compiler/publisher bytes; its new
+explanation description and stop guard pass their three observed native cases. Neither
+the historical matrix nor byte equality establishes current explanation behavior.
+Acceptance establishes only the
 observed cases, not universal future selection,
 reply compliance, production Firebase verification or live clone adoption. The
 [execution record](execution-plans/2026-10-07-cs-instructions-skill.md) owns exact
 results and review status.
+
+## Interactive bootstrap
+
+`cs-capabilities` ships through the same canonical template and three host
+paths. Its description selects procedure loading and engine discovery even
+when a clone retains locally edited AGENTS and help guidance. Its canonical
+body owns the read routes and authority boundaries; MCP is not a prerequisite.
+
+Render, copy-fallback and real update checks establish distribution. Native
+acceptance separately checks actual reads, use of company rules, local work
+with an unreachable engine, and remote catalog discovery on all three hosts.
+The nineteen-case matrix passes on the isolated candidate with independent
+review under the [bootstrap plan](execution-plans/2026-10-08-capability-discovery.md).
+Retained recordings are rechecked with the frozen current auditor and are not
+fresh native executions. This qualifies only the observed configurations. Static
+checks do not establish model behavior or live clone adoption. The skill's
+interactive-only limit is instructional; unchanged scheduled permission files
+do not themselves forbid the catalog RPCs.
+
+The exposed description tells a scheduled session to report unknown reachability
+and defer an availability question to an interactive human, without loading the
+body, searching files or probing systems. This remains an instruction-level limit;
+native evidence, rather than permissions alone, must establish the observed route.
+
+Bootstrap acceptance treats clones as standalone operator workspaces. A
+session-scoped Claude profile excludes identified ai-kit hooks while preserving
+permissions, authentication, project/local settings and non-kit hooks, including
+the send gate. Fixture code never writes global settings or maintained clones.
+Codex acceptance compares private configuration snapshots: prior projects and
+every other setting must remain equal; only a new trusted entry for the exact
+disposable clone may appear. The process responsible for that native addition
+is unverified. Acceptance in this profile does not establish ai-kit-enabled behavior.
+
+Acceptance binds all nineteen cases to one frozen host/runtime candidate and a
+separately frozen post-capture auditor. An audit-only repair can recheck complete
+retained native observations after exact runtime dependency equality is proved.
+Original captures and manifests remain immutable; replacement verdicts require
+actual replay and independent review. Missing cases and genuinely rejected
+behavior require fresh attempts. Replay is not a fresh native execution.
+Retained OpenCode captures expose effective MCP settings and observed host/model
+identity; equality of its complete historical effective configuration is
+unverified. Claude reports default permission mode despite the manual-mode
+CLI flag; an observed tool refusal proves that denial, not universal manual-mode
+semantics. Full hook arguments and aggregate skill-listing visibility also remain
+unverified.
+
+A successful native Skill result can prove complete canonical workflow body
+coverage through exact body bytes, matching identity and its resolved project
+base. YAML metadata omitted by that tool is not claimed as read. Ordinary file
+reads retain their complete-file coverage requirement.
+
+The native privacy audit checks all full seeded secrets against original logs.
+For short nonsecret numeric business markers, only validated OpenCode clocks and
+identities and matching structured stderr identities receive an exclusion.
+Malformed events and tool, answer, CLI and engine contents retain raw checks.
 
 ## Supporting files
 

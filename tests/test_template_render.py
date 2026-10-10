@@ -75,7 +75,7 @@ BAD = ("mrcall.ai", "mario", "eva fani", "cafe124", "centralix", "/home/mal")
 fails = 0
 templates = sorted(p.relative_to(TPL).as_posix() for p in TPL.rglob("*.j2"))
 expected_skills = {
-    "cs-account", "cs-campaign", "cs-campaign-tick", "cs-cron", "cs-customer",
+    "cs-account", "cs-campaign", "cs-campaign-tick", "cs-capabilities", "cs-cron", "cs-customer",
     "cs-find-document", "cs-help", "cs-instructions", "cs-legal-research", "cs-operator", "cs-review",
     "cs-sip-trunk", "cs-triage-mail",
 }

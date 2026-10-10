@@ -93,6 +93,13 @@ else claiming exception status needs the same standard of proof.
 
 ## 1. Where the machinery is written down
 
+- **Start interactive work with `cs-capabilities`** to choose the route for the
+  task: load company procedures and instructions from this clone, read the
+  relevant skill body, or discover systems connected to the engine. A request
+  to load procedures into session memory uses direct local reads and works
+  without MCP or a reachable engine. Invoke it before telling the operator that
+  a system, account, connector or integration is missing or unavailable; the
+  agent host's own tool list does not list the engine's systems.
 - **Engine daemon, headless auth, RPC response shapes, the daily pipeline** —
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) § How it works. Setup steps:
   [README.md](README.md) § Setup / config.
@@ -155,6 +162,8 @@ then `cs-campaign-tick`{% if founder_sweep_enabled %}, then the read-only `{{ fo
 Interactive skills are `cs-customer <name>` (mandatory before customer work),
 `cs-find-document`, `cs-review` (the one review bootstrap), `cs-account <name>`,
 `cs-instructions` (teaching/amending/retiring standing rules),
+`cs-capabilities` (interactive bootstrap: company procedures, workflow context
+and engine systems),
 `cs-legal-research` (Italian and EU legal research on the company's own
 questions, for the interactive human only — never a customer reply),
 `cs-help`, `cs-cron`, `cs-campaign`, and `cs-sip-trunk` (supervised Vonage SIP

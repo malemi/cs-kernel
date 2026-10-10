@@ -134,6 +134,14 @@ def main() -> int:
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
+        capabilities = rendered / ".claude/skills/cs-capabilities/SKILL.md"
+        check("capability bootstrap is rendered", capabilities.is_file())
+        for host in (".claude", ".agents", ".opencode"):
+            hosted = rendered / host / "skills/cs-capabilities/SKILL.md"
+            check(f"{host} resolves canonical bootstrap bytes",
+                  capabilities.is_file() and hosted.is_file()
+                  and hosted.read_bytes() == capabilities.read_bytes())
+
         instructions = rendered / ".claude/skills/cs-instructions/SKILL.md"
         check("standing-rule skill is rendered", instructions.is_file())
         text = instructions.read_text()
@@ -191,6 +199,7 @@ def main() -> int:
         nolink = _clone(tmp, "win-cs")
         (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
         shutil.copytree(legal, nolink / ".claude/skills/cs-legal-research")
+        shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-capabilities")
         real_symlink = Path.symlink_to
 
         def refuse(self, target, target_is_directory=False):
@@ -223,6 +232,12 @@ def main() -> int:
                       and all((hosted / rel).is_file()
                               and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
                               for rel in LEGAL_FILES))
+            for host in (".agents", ".opencode"):
+                hosted = nolink / host / "skills/cs-capabilities/SKILL.md"
+                check(f"{host} copies bootstrap without symlinks",
+                      not (nolink / host / "skills").is_symlink()
+                      and hosted.is_file()
+                      and hosted.read_bytes() == capabilities.read_bytes())
             check("copy fallback is disclosed", "copied" in out.getvalue())
             check("AGENTS.md is untouched on a symlink-less filesystem",
                   (nolink / "AGENTS.md").read_text() == "# charter of win-cs\n")

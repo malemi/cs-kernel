@@ -34,6 +34,7 @@ project-scoped skill in all three hosts; OpenCode loads the named skill from
 | `cs-instructions` | `/cs-instructions` | `$cs-instructions` | teach, amend or retire a recurring response rule or mailbox voice; ordinary conversational instructions invoke it too |
 | `cs-legal-research` | `/cs-legal-research` | `$cs-legal-research` | research a legal question of the company's own under Italian and EU law — sources, remedies, deadlines, a sourced draft. Interactive only, never a customer reply |
 | `cs-help` | `/cs-help` | `$cs-help` | this map |
+| `cs-capabilities` | `/cs-capabilities` | `$cs-capabilities` | load company procedures into the session, find the right workflow and discover engine systems; works without MCP and fires on ordinary requests |
 
 ## Or just ask
 
@@ -47,10 +48,12 @@ project-scoped skill in all three hosts; OpenCode loads the named skill from
 - *"When customers ask about invoices, answer with these steps"*
 - *"Stop using that standing signature rule"*
 - *"find the document about Y"*
+- *"load our company procedures and tell me how we handle a refund"*
+- *"is our bank account connected here, and what can you read?"*
 - *"which remedies do we have against this grant exclusion, and by when?"*
 
 Behind those sit the operator skills (`cs-triage-mail`,
-`cs-campaign-tick`, `cs-customer`, `cs-find-document`, `cs-instructions`,
+`cs-campaign-tick`, `cs-customer`, `cs-find-document`, `cs-instructions`, `cs-capabilities`,
 `cs-legal-research`; `cs-operator` is the headless cron bootstrap) — they fire
 on their own when the request matches.
 

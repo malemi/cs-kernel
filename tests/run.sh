@@ -721,7 +721,7 @@ step "21. rendered README hygiene (no example.com, no empty-var artifact, no Ita
 # the guard is a visibility toggle, not a silent feature delete).
 if "$VENV/bin/python" "$ROOT/tests/test_readme_hygiene.py"; then echo "OK"; else echo "FAIL: rendered README carries a kernel-authoring leftover"; FAIL=1; fi
 
-step "22. engine-unreachable — one clean line, never a raw traceback"
+step "22. pre-connection errors retain their cause; connection failures name the engine"
 # Every engine-backed verb but `cs login` let ConnectionRefusedError escape
 # cli.main() as a raw traceback when the mrcall-desktop app is not running —
 # verified live: 'ConnectionRefusedError: [Errno 111] Connect call failed
@@ -729,9 +729,11 @@ step "22. engine-unreachable — one clean line, never a raw traceback"
 # a bug (charter). Guards: `cs whoami` against a closed local port (no real
 # network egress) exits non-zero with ONE line naming the configured engine
 # URL and the mrcall-desktop app, no "Traceback" on stderr; and the caught
-# family stays narrow (OSError + websockets.exceptions.WebSocketException,
+# family stays narrow (ConnectionError, DNS/timeout + WebSocketException,
 # never bare Exception) — a non-connection exception injected into the same
 # verb still propagates uncaught, proving the fix cannot mask a real bug.
+# Fresh interpreters cover errors before any connection, including InvalidURI,
+# malformed JSON, interrupts and explicit exit statuses; import order is no guard.
 if "$VENV/bin/python" "$ROOT/tests/test_engine_unreachable.py"; then echo "OK"; else echo "FAIL: engine-unreachable error handling regressed"; FAIL=1; fi
 
 step "23. cs --version — the top-level flag (Task 1)"
@@ -1375,6 +1377,12 @@ step "62. the legal-research skill arrives whole on every host, and its helper o
 # arithmetic cases and refusals through each host path; and neither
 # settings.json nor the cron wrapper names the skill or its helper.
 if "$VENV/bin/python" "$ROOT/tests/test_legal_research_skill.py"; then echo "OK"; else echo "FAIL: legal-research skill incomplete on a host, or its helper regressed"; FAIL=1; fi
+
+step "63. interactive bootstrap routes local rules and remote systems across hosts"
+if "$VENV/bin/python" "$ROOT/tests/test_capabilities_skill.py"; then echo "OK"; else echo "FAIL: interactive bootstrap contract or scheduled surface regressed"; FAIL=1; fi
+
+step "63b. native bootstrap evidence rejects incomplete reads and forbidden activity"
+if "$VENV/bin/python" "$ROOT/tests/test_live_capabilities_fixture.py"; then echo "OK"; else echo "FAIL: native bootstrap evidence parsing regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

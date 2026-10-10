@@ -340,6 +340,8 @@ def _update_render() -> None:
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("CS_", "EMAIL_", "ENGINE_"))}
 
+    env["GIT_ALLOW_PROTOCOL"] = "file"
+
     with tempfile.TemporaryDirectory() as td:
         home = Path(td, "home"); home.mkdir()
         env["HOME"] = str(home)
@@ -422,6 +424,14 @@ def _update_render() -> None:
                       f"stamp without re-running cs init ({rel})")
 
             _fanout_contract(clone, f"update {label}")
+
+            capabilities = clone / ".claude/skills/cs-capabilities/SKILL.md"
+            check(capabilities.is_file(), f"[{label}] update adds bootstrap skill")
+            for host in (".agents", ".opencode"):
+                hosted = clone / host / "skills/cs-capabilities/SKILL.md"
+                check(capabilities.is_file() and hosted.is_file()
+                      and hosted.read_bytes() == capabilities.read_bytes(),
+                      f"[{label}] {host} update resolves canonical bootstrap")
 
             instructions = clone / ".claude/skills/cs-instructions/SKILL.md"
             check(instructions.is_file(), f"[{label}] update adds standing-rule skill")
