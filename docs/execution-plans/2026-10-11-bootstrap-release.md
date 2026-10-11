@@ -19,11 +19,16 @@ documentation and final result. Evidence remains outside source at
    Copy only reviewed README surfaces from `a3a3bc6`; no new runtime feature.
 2. Build isolated current-clone fixtures from both maintained manifests. Install
    the release candidate in separate environments, refresh templates preserving
-   authored guidance, compare effective settings/help/permissions, and run the
-   established read-only live verbs plus connection-failure and bootstrap
-   rendering/update checks. Never run paid ticks, generation or customer sends.
-   Keep the old July harness red evidence separate; declare scoped current
-   read-tier acceptance rather than claim the legacy baseline is green.
+   authored guidance and compare effective settings/help/permissions. Required
+   read-tier acceptance covers authenticated JSON identity, capabilities, tasks,
+   thread and prior-contact reads, plus connection-failure and bootstrap
+   rendering/update checks on both fixtures. Additional business/campaign/Drive
+   reads use bounded diagnostic calls. Wide dossier/review reads are retained
+   diagnostics: compare bounded baseline latency and exact unchanged command,
+   RPC and dependency behavior; do not describe timeout/termination as a pass.
+   Their existing full-mailbox latency workstream is outside this runtime change.
+   Never run paid ticks, generation or customer sends. Keep the old July harness
+   red evidence separate; declare only the scoped current read-tier result.
 3. Reconcile release documentation with actual state; retain superseded current
    narrative verbatim in the owned archive insertion. Run the full kernel suite
    on the clean, committed release candidate. Obtain M1 approval before tagging.
@@ -59,4 +64,21 @@ again. Do not reset/stash user work or alter pause/scheduling/send posture.
 
 ## Results
 
-Pending actual release and adoption evidence.
+The clean pre-release candidate `3e93509` passes `bash tests/run.sh` (exit 0;
+`pre-release-suite.log`, final all-gates-green result). All runtime modules
+except the explicit CLI WebSocket exception import equal v0.51.0; sending,
+authentication, campaign, settings and cron bytes are unchanged. Original clone
+bytes and schedules match the saved pre-work snapshots. Fixture new skills and
+supporting files resolve canonical bytes on all three host paths.
+
+Scoped read-tier checks pass on both fixtures: authenticated JSON identity,
+capabilities, tasks, thread and prior-contact reads; bounded campaign and Drive
+reads also pass. Installed dependencies and dossier/review ASTs match v0.51.0.
+Both baseline dossiers exceed a 60-second diagnostic bound; the candidate
+MrCall dossier reaches 600 seconds, while Café 124 completes in 133.5 seconds.
+Wide review termination and legacy default-whoami JSON-validator failures remain
+failed diagnostics, not passing acceptance. New skills have 24 canonical file
+paths across three hosts. The bounded verification plan has separate approval.
+
+Publication, at-tag checks and MrCall adoption remain pending. Raw fixture
+results and preservation proofs are in `fixtures/` under the retained evidence.
