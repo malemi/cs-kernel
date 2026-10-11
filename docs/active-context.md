@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: bf6ca918c3b07630fd3cd73101581781670f89ee
+doc_baseline_commit: cea04d476ac50679e2db479a168fd0201af9d1d7
 doc_baseline_date: 2026-10-11
 ---
 
@@ -16,10 +16,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 - **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
-  Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
-  Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
-  harness remains red on retained `v0.50.0`. Release evidence belongs to the
-  [playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+  MrCall installs public `v0.52.0` at `3c0e78c`; Café 124 remains on `v0.51.0`
+  at `5609207`. MrCall's lock-only rebuild, authenticated identity and scoped
+  read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
+  Historical FULL evidence and the red July harness remain separately retained.
 - Released [assignments](task-assignment.md) use signed engine authority, scoped
   drafts and exact inbound coverage. Six hosted engines have verified reads and
   root-owned trust. Local hardening is closed with limits in the
@@ -33,8 +33,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
   owns current kernel checks. Claude's standalone profile excludes identified
   ai-kit injection while preserving permissions and non-kit hooks. Historical
-  runtime/configuration limits remain qualified; no universal compliance or
-  live-clone adoption is established.
+  runtime/configuration limits remain qualified; no universal compliance is established.
 - The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
   negotiates strengthened engine enforcement for chat and exact draft sending,
   carrying original source/thread/draft context. Fixed-template bulk retains its
@@ -42,8 +41,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   The bootstrap tag preserves the released chat and sending contracts.
   The separately owned MrCall launcher remains an uninstalled handoff.
 - `cs-legal-research` is a released interactive Italian/EU legal-research skill
-  with four references and a date-arithmetic helper. Three-host discovery and
-  local gates pass; no maintained clone installs it. The instruction-level
+  with four references and a date-arithmetic helper. MrCall installs its canonical
+  files on all three host paths; Café 124 retains its previous pin. The instruction-level
   boundary and distribution contract live in [agent-skills.md](agent-skills.md),
   with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
 - Company procedures and mailbox identity are authoritative clone-owned files.
@@ -54,7 +53,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   authentication for that acceptance remain unverified.
 - `cs-instructions` supplies the interactive teaching workflow on all three
   hosts. Its predecessor has 33 accepted native cases for publication, narrow
-  Git commits and refusals; current explanation behavior passes its separate observed cases. Both clones install the predecessor; see the
+  Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
   [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
 - Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
   Hosts share canonical skills. `cs-triage-mail` reads the optional company
@@ -87,10 +86,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- The [authorized bootstrap release](execution-plans/2026-10-11-bootstrap-release.md)
-  passes pre-release and at-tag suites plus scoped read-tier fixture acceptance.
-  Publication and MrCall adoption remain pending; Café 124 stays on its existing
-  pin. Remote MCP remains separate. Wide dossier/review latency is still unresolved.
+- The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
+  are verified. Remote MCP remains separate; wide dossier/review latency remains
+  unresolved. Native observations still qualify their frozen parent configurations.
 - Engine/direct-classifier failover remains separate from scheduled recovery;
   the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
 - [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
@@ -115,8 +113,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Publish the verified bootstrap tag and complete authorized MrCall adoption
-   from the [release plan](execution-plans/2026-10-11-bootstrap-release.md).
+1. Test interactive procedure loading in a fresh MrCall session when requested;
+   its local bootstrap requires no MCP or engine catalog.
 2. Continue exact draft identity and unanswered-mail evidence/latency work from
    their existing plans before a corresponding release; doc-end sends no mail.
 3. Continue secondary-account onboarding when requested and correct internal

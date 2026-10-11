@@ -184,15 +184,14 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (2026-10-08): **`v0.51.0` on both maintained
-clones**. Both install public tag `5609207`, report `0.51.0`, and pass independent
-lock-only rebuilds resolving that exact commit. Scoped current FULL acceptance,
-real provider reads, preserved permissions, paused-launcher checks and authenticated
-identity/assignment/capability reads pass. Clone-local triage corrections and v9
-harness layouts are preserved. Six hosted engines have compatible source and trust;
-MrCall support/Mario remain separate company spaces. Customer sends, paid ticks,
-real assignment mutations and installer GUI acceptance are outside these checks.
-The prior operational record is preserved verbatim in `docs/active-context-archive.md`.
+**Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
+Current adoption is asymmetric: MrCall installs `v0.52.0` at `3c0e78c`; Café 124
+retains `v0.51.0` at `5609207`. MrCall's authenticated identity, scoped read-tier
+acceptance, canonical three-host files and exact lock-only rebuild pass.
+Company guidance, local harness edits, permissions, launchers and schedules are
+preserved. The previous shared FULL record is retained verbatim in
+`docs/active-context-archive.md`; this upgrade certifies no customer sends,
+paid ticks, assignment writes or fresh native model behavior.
 
 ## v0.48.0 — 2026-09-28
 

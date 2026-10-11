@@ -22,8 +22,8 @@ for fixed root-owned trust/signing paths and rollback restrictions.
 
 The local [contextual-email workstream](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
 extends the engine boundary to reply draft updates and final sending, including
-already composed drafts. It is not included in the installed `v0.51.0` clones
-or the six hosted engine pins. The old `assignment_draft_policy: 1` capability
+already composed drafts. It is excluded from public `v0.52.0`, both maintained clone installations
+and the six hosted engine pins. The old `assignment_draft_policy: 1` capability
 proves only its scoped draft contract and cannot certify final-send enforcement.
 
 The engine owns durable [assignment enrollment](../../mrcall-desktop/engine/docs/features/assignment-enrollment.md).

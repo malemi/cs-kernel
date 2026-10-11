@@ -27,6 +27,29 @@
 1. Release and adopt the integrated bootstrap candidate only under a separately
    authorized release task.
 
+## 2026-10-11 — Superseded pre-adoption state
+
+  Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
+  Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
+  harness remains red on retained `v0.50.0`. Release evidence belongs to the
+  [playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+
+- The [authorized bootstrap release](execution-plans/2026-10-11-bootstrap-release.md)
+  passes pre-release and at-tag suites plus scoped read-tier fixture acceptance.
+  Publication and MrCall adoption remain pending; Café 124 stays on its existing
+  pin. Remote MCP remains separate. Wide dossier/review latency is still unresolved.
+
+**Current operational pin** (2026-10-08): **`v0.51.0` on both maintained
+clones**. Both install public tag `5609207`, report `0.51.0`, and pass independent
+lock-only rebuilds resolving that exact commit. Scoped current FULL acceptance,
+real provider reads, preserved permissions, paused-launcher checks and authenticated
+identity/assignment/capability reads pass. Clone-local triage corrections and v9
+harness layouts are preserved. Six hosted engines have compatible source and trust;
+MrCall support/Mario remain separate company spaces. Customer sends, paid ticks,
+real assignment mutations and installer GUI acceptance are outside these checks.
+The prior operational record is preserved verbatim in `docs/active-context-archive.md`.
+
+
 ## 2026-10-11 — Pre-bootstrap release state
 
 - **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences

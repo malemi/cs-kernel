@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 ---
 
 # Bootstrap release and requested clone adoption
@@ -84,7 +84,7 @@ Both isolated installed candidates pass the real localhost connection-failure
 check and ten fresh-interpreter error-family/non-connection cases; logs are
 `mrcall-cs-connection-failure.log` and `124-cs-connection-failure.log`.
 
-Publication and MrCall adoption remain pending; at-tag checks pass. Raw fixture
+Publication and MrCall adoption pass; at-tag checks pass. Raw fixture
 results and preservation proofs are in `fixtures/` under the retained evidence.
 
 ### M2 — Immutable tag and main integration
@@ -94,5 +94,19 @@ to `3c0e78c533db91a17bd390657de58cf6931b5c73`; its first post-tag commit binds
 that immutable target. Main integration `bf6ca918c3b07630fd3cd73101581781670f89ee` retains the exact
 `cs/` tree from `a3a3bc6`; the strengthened email guard remains unreleased and
 is absent from the tag. Release consistency and mechanical gates pass on main.
-Tag and release version claims are classified in the retained sweeps. Publication
-and actual MrCall adoption remain pending their ordered gates.
+Tag and release version claims are classified in the retained sweeps. M2 approval
+precedes publication and actual MrCall adoption; M3 owns those outcomes.
+
+### M3 — Publication and MrCall adoption
+
+The authorized main and immutable v0.52.0 tag are public. MrCall adopts the
+exact tag through the supported cs update path. Installed source equals tag
+source; package, requirements pin, template ledger, architecture and regenerated
+lock agree. Lock-only installation resolves 3c0e78c. Authenticated identity,
+capabilities, tasks, thread and prior-contact checks pass; new bootstrap/legal
+files and instructions resolve canonically on all three host paths. Original
+company files, permissions, scheduled launchers, crontab and unrelated dirty
+work remain preserved. README/help merge local guidance with released bootstrap
+routes. The clone commit contains only upgrade deltas; prior work stays dirty.
+Café 124 and the original kernel worktree are unchanged. Evidence is retained
+under clone-adoption; wide reads and native observations retain their limits.
