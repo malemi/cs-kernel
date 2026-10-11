@@ -1,3 +1,62 @@
+## 2026-10-11 — Source integration before isolated bootstrap release
+
+- The integrated [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and 19
+  qualified native observations pass for the frozen bootstrap parent; these are
+  retained observations, not fresh native execution of the integrated tree.
+  Canonical instructions and discovery read routes retain the reviewed parent
+  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
+  owns current kernel checks. Claude's standalone profile excludes identified
+  ai-kit injection while preserving permissions and non-kit hooks. Historical
+  runtime/configuration limits remain qualified; no universal compliance or
+  live-clone adoption is established.
+
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  negotiates strengthened engine enforcement for chat and exact draft sending,
+  carrying original source/thread/draft context. Fixed-template bulk retains its
+  existing path. It is unreleased; hosted pins and installed clones are unchanged.
+  The separately owned MrCall launcher remains an uninstalled handoff.
+
+- `cs-legal-research` is an untagged interactive Italian/EU legal-research skill
+  with four references and a date-arithmetic helper. Three-host discovery and
+  local gates pass; no maintained clone installs it. The instruction-level
+  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
+  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+
+1. Release and adopt the integrated bootstrap candidate only under a separately
+   authorized release task.
+
+## 2026-10-11 — Pre-bootstrap release state
+
+- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+  Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
+  Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
+  harness remains red on retained `v0.50.0`. Release evidence belongs to the
+  [playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+
+# Archived active context
+
+## 2026-10-11 — Authorized bootstrap release boundary
+
+- The uncommitted [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and the
+  nineteen observed kernel cases on Claude Code, Codex and OpenCode pass with
+  independent review. Complete retained observations are rechecked by the frozen
+  current auditor; this is not a new native execution. Catalog negotiation stops
+  and explanation-only routing are verified for these cases. The standalone
+  Claude profile excludes identified ai-kit injection while preserving permissions
+  and non-kit hooks. Runtime/configuration limitations remain qualified in the
+  plan; no universal compliance or live-clone adoption is established.
+
+- Bootstrap release and maintained-clone adoption remain separate authorization;
+  remote MCP remains a separate workstream.
+
+1. Release and adopt the isolated bootstrap candidate only under a separately
+   authorized release task.
+
 ## 2026-10-10 — Bootstrap candidate before local integration
 
 - The uncommitted [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)

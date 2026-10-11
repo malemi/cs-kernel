@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences
+- **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
   Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
@@ -24,7 +24,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   drafts and exact inbound coverage. Six hosted engines have verified reads and
   root-owned trust. Local hardening is closed with limits in the
   [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
-- The integrated [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+- The released [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
   adds `cs-capabilities`: authoritative local procedures, canonical workflow
   bodies and engine catalog discovery without MCP. Engine acceptance and 19
   qualified native observations pass for the frozen bootstrap parent; these are
@@ -38,9 +38,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 - The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
   negotiates strengthened engine enforcement for chat and exact draft sending,
   carrying original source/thread/draft context. Fixed-template bulk retains its
-  existing path. It is unreleased; hosted pins and installed clones are unchanged.
+  existing path. It is excluded from `v0.52.0`; the hosted contextual policy remains unavailable.
+  The bootstrap tag preserves the released chat and sending contracts.
   The separately owned MrCall launcher remains an uninstalled handoff.
-- `cs-legal-research` is an untagged interactive Italian/EU legal-research skill
+- `cs-legal-research` is a released interactive Italian/EU legal-research skill
   with four references and a date-arithmetic helper. Three-host discovery and
   local gates pass; no maintained clone installs it. The instruction-level
   boundary and distribution contract live in [agent-skills.md](agent-skills.md),
@@ -86,8 +87,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Bootstrap release and maintained-clone adoption remain separate authorization;
-  remote MCP remains a separate workstream.
+- The [authorized bootstrap release](execution-plans/2026-10-11-bootstrap-release.md)
+  passes pre-release and at-tag suites plus scoped read-tier fixture acceptance.
+  Publication and MrCall adoption remain pending; Café 124 stays on its existing
+  pin. Remote MCP remains separate. Wide dossier/review latency is still unresolved.
 - Engine/direct-classifier failover remains separate from scheduled recovery;
   the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
 - [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
@@ -112,8 +115,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Release and adopt the integrated bootstrap candidate only under a separately
-   authorized release task.
+1. Publish the verified bootstrap tag and complete authorized MrCall adoption
+   from the [release plan](execution-plans/2026-10-11-bootstrap-release.md).
 2. Continue exact draft identity and unanswered-mail evidence/latency work from
    their existing plans before a corresponding release; doc-end sends no mail.
 3. Continue secondary-account onboarding when requested and correct internal

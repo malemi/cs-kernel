@@ -280,10 +280,9 @@ can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
 
 ### Load procedures and discover available systems
 
-The local unreleased bootstrap adds **`cs-capabilities`**: `/cs-capabilities`
+The interactive bootstrap is **`cs-capabilities`**: `/cs-capabilities`
 in Claude Code, `$cs-capabilities` in Codex, or the named skill in OpenCode.
-The release-tag setup above does not install this candidate yet. Its current
-verification and release boundary are in the
+Its acceptance qualifications are in the
 [bootstrap guide](docs/briefs/2026-10-08-capability-discovery.md).
 
 Ask *"Load our company procedures and explain how we handle refunds"*.
@@ -434,7 +433,7 @@ thread and exact source: `cs chat --thread-id '<root@example.com>' --reply-to
 '<inbound@example.com>' 'Prepare the reply'`. `--source-id` can supply the
 owner-scoped engine email ID; `--draft-id` binds an existing full draft ID.
 All supplied identities must agree. Send approval does not override a held
-assignment. Installed `v0.51.0` retains its previous scoped draft contract;
+assignment. Released `v0.52.0` retains its previous scoped draft contract;
 candidate flags and final-send enforcement require compatible candidate engine
 and kernel code. See [contextual policy](docs/task-assignment.md#contextual-email-policy--unreleased-candidate).
 

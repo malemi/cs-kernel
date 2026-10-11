@@ -31,3 +31,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 
 - [Contextual email assignment enforcement](execution-plans/2026-10-08-contextual-email-assignment-guard.md) — local unreleased guard, exact caller binding and verification; [brief](briefs/2026-10-08-contextual-email-assignment-guard.md).
 - [Local bootstrap integration](execution-plans/2026-10-10-bootstrap-integration.md) — parent preservation, integrated checks and local merge; [brief](briefs/2026-10-10-bootstrap-integration.md).
+
+- [Bootstrap release and requested clone adoption](execution-plans/2026-10-11-bootstrap-release.md) — release boundary and verification; [brief](briefs/2026-10-11-bootstrap-release.md).
