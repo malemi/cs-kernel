@@ -80,5 +80,9 @@ Wide review termination and legacy default-whoami JSON-validator failures remain
 failed diagnostics, not passing acceptance. New skills have 24 canonical file
 paths across three hosts. The bounded verification plan has separate approval.
 
+Both isolated installed candidates pass the real localhost connection-failure
+check and ten fresh-interpreter error-family/non-connection cases; logs are
+`mrcall-cs-connection-failure.log` and `124-cs-connection-failure.log`.
+
 Publication, at-tag checks and MrCall adoption remain pending. Raw fixture
 results and preservation proofs are in `fixtures/` under the retained evidence.
