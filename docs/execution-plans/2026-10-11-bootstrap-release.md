@@ -84,5 +84,15 @@ Both isolated installed candidates pass the real localhost connection-failure
 check and ten fresh-interpreter error-family/non-connection cases; logs are
 `mrcall-cs-connection-failure.log` and `124-cs-connection-failure.log`.
 
-Publication, at-tag checks and MrCall adoption remain pending. Raw fixture
+Publication and MrCall adoption remain pending; at-tag checks pass. Raw fixture
 results and preservation proofs are in `fixtures/` under the retained evidence.
+
+### M2 — Immutable tag and main integration
+
+Both full suites exit 0, including the exact release tag. `v0.52.0` resolves
+to `3c0e78c533db91a17bd390657de58cf6931b5c73`; its first post-tag commit binds
+that immutable target. Main integration `bf6ca918c3b07630fd3cd73101581781670f89ee` retains the exact
+`cs/` tree from `a3a3bc6`; the strengthened email guard remains unreleased and
+is absent from the tag. Release consistency and mechanical gates pass on main.
+Tag and release version claims are classified in the retained sweeps. Publication
+and actual MrCall adoption remain pending their ordered gates.
