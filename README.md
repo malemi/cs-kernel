@@ -273,9 +273,31 @@ just talk:
   standing rule in the authoritative company files. The workflow verifies
   engine publication and commits only the named rule changes; it sends no mail.
 
-Lost at any point? **`/cs-help`** shows the whole map. The skills are
+Lost at any point? **`/cs-help`** in Claude Code, **`$cs-help`** in Codex,
+or OpenCode's `cs-help` skill shows the whole map. The skills are
 the product surface; the CLI is plumbing the AI (and you, if you want)
 can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
+
+### Load procedures and discover available systems
+
+The local unreleased bootstrap adds **`cs-capabilities`**: `/cs-capabilities`
+in Claude Code, `$cs-capabilities` in Codex, or the named skill in OpenCode.
+The release-tag setup above does not install this candidate yet. Its current
+verification and release boundary are in the
+[bootstrap guide](docs/briefs/2026-10-08-capability-discovery.md).
+
+Ask *"Load our company procedures and explain how we handle refunds"*.
+The workflow reads the authoritative `company/` files into the current
+conversation and reports missing, unwritten or unreadable guidance. It works
+with the engine offline and requires neither MCP nor ai-kit. Loading existing
+rules does not edit them, publish them or teach future sessions. To teach or
+change a standing rule, use `cs-instructions` as described above.
+
+For *"Which systems are connected, and what can you read?"*, the workflow
+checks engine capabilities and, when supported, its read-only RPC catalog.
+Engine systems are separate from the host agent's connectors. Discovery
+explains available operations; executing one requires your request and its
+applicable approvals. An unreadable catalog leaves availability unknown.
 
 ---
 
@@ -287,7 +309,7 @@ Three pieces:
    the synced mailbox, the relationship memory, the tasks, and a writing
    voice trained on your own sent mail. It keeps working when your
    laptop doesn't.
-2. **Your session** — Claude Code / OpenCode opened in `acme-cs/`, with
+2. **Your session** — Codex, Claude Code or OpenCode opened in `acme-cs/`, with
    the pre-built skills (`/cs-review`, `/cs-account`, …) that read and
    drive the engine. This is where you talk to your customer service —
    and where you build on it.
@@ -542,7 +564,7 @@ cs update --check           # installed vs latest, plus the re-collaudo tier
 
 Every kernel upgrade owes a re-collaudo per the new tag's CHANGELOG
 entry — the prompt names the tier when the entry declares one. Then
-reopen `claude` / `opencode` in that folder.
+reopen `codex`, `claude` or `opencode` in that folder.
 
 ### Safety (defaults)
 

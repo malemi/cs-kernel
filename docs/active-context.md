@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: fd04b471ab9a4dbb9656ad49994964e8010a3792
-doc_baseline_date: 2026-10-10
+doc_baseline_commit: c5006df854dba1f9251cf01f41937c47271741b7
+doc_baseline_date: 2026-10-11
 ---
 
 # Active Context — cs-kernel
