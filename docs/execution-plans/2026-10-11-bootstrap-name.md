@@ -61,5 +61,9 @@ acceptance is claimed. The operator reports successful current v0.52.0 loading
 on Codex and Claude; those reports are separate from new-name acceptance.
 M1 review is APPROVED, including preservation of authored legacy host copies
 before copy-fallback refresh. Documentation is reconciled to the source and
-published-clone boundaries. Final documentation/final review gates, checker
-finalization and the authorized kernel-only commit precede completion.
+published-clone boundaries. Documentation critic and separate final review are
+APPROVED. The development completion check and checker finalization passed
+before kernel-only commit `baa9b0d`. Evidence: the retained
+`bootstrap-name-20261011/final-closure/finalize-result.json` and final-review
+reports in the external Codex evidence directory. MrCall remains on published
+v0.52.0; the new names and default instructions are not deployed.
