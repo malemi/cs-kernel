@@ -1,5 +1,40 @@
 # Changelog — cs-kernel
 
+## v0.52.0 — 2026-10-11 (MINOR)
+
+### Interactive bootstrap and legal research
+
+`cs-capabilities` loads authoritative company procedures and canonical workflow
+context into the current interactive conversation without MCP or ai-kit. Engine
+capabilities and its optional read-only catalog report remote availability;
+missing catalog support leaves availability unknown. Loading existing procedures
+neither teaches future sessions nor publishes instructions. `cs-help` routes
+natural requests; `cs-instructions` explains its canonical workflow before any
+teaching action. Claude Code, Codex and OpenCode share the same rendered skills.
+
+`cs-legal-research` provides interactive Italian/EU research guidance, supporting
+references and a date-arithmetic helper. Its scheduled/customer-mail exclusion
+is instructional, not a new permission rule. README onboarding names all hosts
+and the independent engine, cron and pause boundaries.
+
+The CLI imports `WebSocketException` explicitly so unavailable-engine failures
+retain the existing handled diagnostic. No CLI command, sending, authentication,
+campaign, permission or cron contract changes. The contextual-email assignment
+guard remains unreleased on main and is excluded from this immutable tag.
+
+Migration: `cs update`; preserve company files and clone-authored documentation
+harnesses. The new skill description routes procedure loading even when local
+AGENTS/help guidance is retained. Compatible engine catalog discovery is optional.
+
+**Re-collaudo: both maintained clones, read before publication.** The connection
+failure path can affect live reads. Below FULL is safe because all send/auth,
+campaign, permission and cron bytes equal v0.51.0. The kernel suite and isolated
+current-clone read checks pass; retained nineteen native observations apply to
+the frozen bootstrap parent with their recorded limits, not fresh model runs.
+Legacy July harness failures remain retained. No paid tick, generation, send or
+engine deployment is part of this release. Evidence:
+`/home/mal/.local/state/codex-evidence/bootstrap-release-20261011/`.
+
 ## v0.51.0 — 2026-10-08 (MINOR)
 
 ### Bounded fan-out history and honest mailbox scope

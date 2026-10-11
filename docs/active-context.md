@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences
+- **Latest release tag: `v0.52.0`. Current HEAD status: tagged as `v0.52.0`.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
   Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
@@ -24,7 +24,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   drafts and exact inbound coverage. Six hosted engines have verified reads and
   root-owned trust. Local hardening is closed with limits in the
   [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
-- The committed [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+- The tagged [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
   adds `cs-capabilities`: authoritative local procedures, canonical workflow
   bodies and engine catalog discovery without MCP. Engine acceptance and the
   nineteen observed kernel cases on Claude Code, Codex and OpenCode pass with
@@ -34,7 +34,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   Claude profile excludes identified ai-kit injection while preserving permissions
   and non-kit hooks. Runtime/configuration limitations remain qualified in the
   plan; no universal compliance or live-clone adoption is established.
-- `cs-legal-research` is an untagged interactive Italian/EU legal-research skill
+- `cs-legal-research` is a tagged interactive Italian/EU legal-research skill
   with four references and a date-arithmetic helper. Three-host discovery and
   local gates pass; no maintained clone installs it. The instruction-level
   boundary and distribution contract live in [agent-skills.md](agent-skills.md),

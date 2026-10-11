@@ -1,3 +1,12 @@
+## 2026-10-11 — Pre-bootstrap release state
+
+- **Latest release tag: `v0.51.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+  Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
+  Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
+  harness remains red on retained `v0.50.0`. Release evidence belongs to the
+  [playbook plan](execution-plans/2026-09-20-company-customer-service-playbooks.md).
+
 # Archived active context
 
 ## 2026-10-11 — Authorized bootstrap release boundary
