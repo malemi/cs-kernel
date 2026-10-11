@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.52.0`. Current HEAD status: tagged as `v0.52.0`.** These sentences
+- **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones install public `v0.51.0` at `5609207` and report `0.51.0`.
   Scoped FULL, provider acceptance and lock-only rebuilds pass; the legacy July
