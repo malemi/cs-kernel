@@ -41,6 +41,7 @@ from .project_init import (
     TEMPLATE_DEFAULTS,
     build_jinja_env,
     install_agent_surfaces,
+    migrate_company_systems,
     is_clone_authored,
     is_executable_target,
     load_existing_config,
@@ -573,6 +574,8 @@ def cmd_update(args: list[str]) -> int:
     # (see the branch that fills this list); what may not happen is that the
     # run ends without saying so.
     drifted: list[str] = []
+
+    migrate_company_systems(clone_root)
 
     # Walk template files
     for tpl_file in sorted(template_root.rglob("*")):

@@ -134,10 +134,10 @@ def main() -> int:
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
-        capabilities = rendered / ".claude/skills/cs-capabilities/SKILL.md"
+        capabilities = rendered / ".claude/skills/cs-bootstrap/SKILL.md"
         check("capability bootstrap is rendered", capabilities.is_file())
         for host in (".claude", ".agents", ".opencode"):
-            hosted = rendered / host / "skills/cs-capabilities/SKILL.md"
+            hosted = rendered / host / "skills/cs-bootstrap/SKILL.md"
             check(f"{host} resolves canonical bootstrap bytes",
                   capabilities.is_file() and hosted.is_file()
                   and hosted.read_bytes() == capabilities.read_bytes())
@@ -199,7 +199,14 @@ def main() -> int:
         nolink = _clone(tmp, "win-cs")
         (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
         shutil.copytree(legal, nolink / ".claude/skills/cs-legal-research")
-        shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-capabilities")
+        shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-bootstrap")
+        retired_content = {}
+        for host in (".agents", ".opencode"):
+            old = nolink / host / "skills/cs-capabilities"
+            old.mkdir(parents=True)
+            retired_content[host] = f"Authored legacy content for {host}.\n".encode()
+            (old / "SKILL.md").write_bytes(retired_content[host])
+            (old / "support.txt").write_bytes(b"Local supporting content.\n")
         real_symlink = Path.symlink_to
 
         def refuse(self, target, target_is_directory=False):
@@ -233,11 +240,23 @@ def main() -> int:
                               and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
                               for rel in LEGAL_FILES))
             for host in (".agents", ".opencode"):
-                hosted = nolink / host / "skills/cs-capabilities/SKILL.md"
+                hosted = nolink / host / "skills/cs-bootstrap/SKILL.md"
                 check(f"{host} copies bootstrap without symlinks",
                       not (nolink / host / "skills").is_symlink()
                       and hosted.is_file()
                       and hosted.read_bytes() == capabilities.read_bytes())
+            for host in (".agents", ".opencode"):
+                backup = nolink / ".claude/retired-skills" / f"cs-capabilities.{host[1:]}"
+                check(f"{host} authored legacy copy survives outside discovery",
+                      (backup / "SKILL.md").read_bytes() == retired_content[host]
+                      and (backup / "support.txt").read_bytes() == b"Local supporting content.\n"
+                      and not (nolink / host / "skills/cs-capabilities").exists())
+            with _legacy_prompts(tmp, "win-repeat-prompts"):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    pi.install_agent_surfaces(nolink)
+            check("copy-fallback retirement is idempotent",
+                  all((nolink / ".claude/retired-skills" / f"cs-capabilities.{host[1:]}" / "SKILL.md").read_bytes()
+                      == retired_content[host] for host in (".agents", ".opencode")))
             check("copy fallback is disclosed", "copied" in out.getvalue())
             check("AGENTS.md is untouched on a symlink-less filesystem",
                   (nolink / "AGENTS.md").read_text() == "# charter of win-cs\n")

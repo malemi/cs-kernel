@@ -198,7 +198,7 @@ class EvidenceTests(unittest.TestCase):
         (self.root / 'company').mkdir()
         self.file = self.root / 'company/rules.md'
         self.file.write_text('Distinct start rule.\nUnique middle rule.\nDistinct final rule.\n')
-        for skill in ('cs-capabilities', 'cs-instructions'):
+        for skill in ('cs-bootstrap', 'cs-instructions'):
             path = self.root / '.claude/skills' / skill / 'SKILL.md'
             path.parent.mkdir(parents=True)
             path.write_text(f'# {skill}\nComplete workflow body for {skill}.\n')
@@ -242,9 +242,9 @@ class EvidenceTests(unittest.TestCase):
                   f'\nBase directory for this skill: {path.parent}\n</skill_content>')
         variants = [output.replace(line, '') for line in body.splitlines(keepends=True)]
         variants += [output.replace('Unique middle rule.\n', 'Distinct last rule.\nUnique middle rule.\n'),
-                     output.replace('name="cs-instructions"', 'name="cs-capabilities"'),
-                     output.replace('# Skill: cs-instructions', '# Skill: cs-capabilities'),
-                     output.replace(str(path.parent), str(self.root / '.claude/skills/cs-capabilities')),
+                     output.replace('name="cs-instructions"', 'name="cs-bootstrap"'),
+                     output.replace('# Skill: cs-instructions', '# Skill: cs-bootstrap'),
+                     output.replace(str(path.parent), str(self.root / '.claude/skills/cs-bootstrap')),
                      output.replace(str(path.parent), '/outside/skills/cs-instructions'),
                      output.replace(str(path.parent), 'cs-instructions'),
                      output.replace('\n</skill_content>', '\nBase directory for this skill: duplicate\n</skill_content>'),
@@ -256,7 +256,7 @@ class EvidenceTests(unittest.TestCase):
                 self.assertFalse(read_coverage(evidence, path)['complete'])
         failed = audit_tools(opencode('skill', {'name': 'cs-instructions'}, output, status='error'), self.root)
         self.assertFalse(read_coverage(failed, path)['complete'])
-        wrong = audit_tools(opencode('skill', {'name': 'cs-capabilities'}, output), self.root)
+        wrong = audit_tools(opencode('skill', {'name': 'cs-bootstrap'}, output), self.root)
         self.assertFalse(read_coverage(wrong, path)['complete'])
         self.assertFalse(read_coverage(audit_tools(codex('cat company/rules.md', output), self.root), self.file)['complete'])
 
@@ -369,10 +369,10 @@ class EvidenceTests(unittest.TestCase):
     def test_skill_identity_and_alias(self):
         evidence = audit_tools(claude('Skill', {'skill': 'cs-instructions'}, 'Launching skill'), self.root)
         self.assertTrue(loaded(evidence, self.root, 'cs-instructions'))
-        self.assertFalse(loaded(evidence, self.root, 'cs-capabilities'))
-        skill = self.root / '.claude/skills/cs-capabilities/SKILL.md'
-        alias = codex('cat .agents/skills/cs-capabilities/SKILL.md', skill.read_text())
-        self.assertTrue(loaded(audit_tools(alias, self.root), self.root, 'cs-capabilities'))
+        self.assertFalse(loaded(evidence, self.root, 'cs-bootstrap'))
+        skill = self.root / '.claude/skills/cs-bootstrap/SKILL.md'
+        alias = codex('cat .agents/skills/cs-bootstrap/SKILL.md', skill.read_text())
+        self.assertTrue(loaded(audit_tools(alias, self.root), self.root, 'cs-bootstrap'))
         (self.root / 'company/escape.md').symlink_to('/etc/passwd')
         with self.assertRaises(AssertionError):
             audit_tools(claude('Read', {'file_path': 'company/escape.md'}, 'data'), self.root)
@@ -917,7 +917,7 @@ class EvidenceTests(unittest.TestCase):
         direct = codex('cat .claude/skills/cs-instructions/SKILL.md', path.read_text())
         result = check_case('workflow', 'codex', fixture, direct, [], [], config)
         self.assertTrue(result['coverage']['.claude/skills/cs-instructions/SKILL.md']['complete'])
-        extra = codex('cat .claude/skills/cs-capabilities/SKILL.md', (self.root / '.claude/skills/cs-capabilities/SKILL.md').read_text())
+        extra = codex('cat .claude/skills/cs-bootstrap/SKILL.md', (self.root / '.claude/skills/cs-bootstrap/SKILL.md').read_text())
         check_case('workflow', 'codex', fixture, extra + '\n' + direct, [], [], config)
         for output in ('', '# cs-instructions'):
             with self.assertRaises(AssertionError):
@@ -1006,7 +1006,7 @@ class EvidenceTests(unittest.TestCase):
         (self.root / 'company/companion.md').mkdir()
         reads = [claude('Read', {'file_path': str(path)}, path.read_text(), ident=str(i))
                  for i, path in enumerate(sorted((self.root / 'company').rglob('*'))) if path.is_file()]
-        body = self.root / '.claude/skills/cs-capabilities/SKILL.md'
+        body = self.root / '.claude/skills/cs-bootstrap/SKILL.md'
         prefix = [claude('Read', {'file_path': str(body)}, body.read_text(), ident='body'), *reads]
         listing = subprocess.run(['ls', '-la', 'company/'], cwd=self.root, text=True, capture_output=True, check=True).stdout
         directory = subprocess.run(['ls', '-la', 'company/companion.md/'], cwd=self.root, text=True, capture_output=True, check=True).stdout

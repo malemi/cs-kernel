@@ -82,17 +82,27 @@ results and review status.
 
 ## Interactive bootstrap
 
-`cs-capabilities` ships through the same canonical template and three host
+`cs-bootstrap` ships through the same canonical template and three host
 paths. Its description selects procedure loading and engine discovery even
 when a clone retains locally edited AGENTS and help guidance. Its canonical
 body owns the read routes and authority boundaries; MCP is not a prerequisite.
 
-Render, copy-fallback and real update checks establish distribution. Native
+Render, copy-fallback and real update checks establish distribution. The released predecessor is named `cs-capabilities`; its retained native
+observations use that name and its frozen auditor. The untagged `cs-bootstrap`
+name and host-neutral `company/other-systems.md` guide have distribution and
+migration checks, not fresh native acceptance. Plain invocation loads local
+procedures and mailbox identity and gives a brief confirmation; engine discovery
+requires a systems request. Old guide contents move before stamping when the
+new path is absent; collisions preserve both files and require reconciliation.
+Old bootstrap directories are preserved outside skill discovery in uniquely
+named `.claude/retired-skills/` backups.
+
+Native
 acceptance separately checks actual reads, use of company rules, local work
 with an unreachable engine, and remote catalog discovery on all three hosts.
 The nineteen-case matrix passes on the isolated candidate with independent
 review under the [bootstrap plan](execution-plans/2026-10-08-capability-discovery.md).
-Retained recordings are rechecked with the frozen current auditor and are not
+Retained recordings are rechecked with the frozen predecessor auditor and are not
 fresh native executions. This qualifies only the observed configurations. Static
 checks do not establish model behavior or live clone adoption. The skill's
 interactive-only limit is instructional; unchanged scheduled permission files

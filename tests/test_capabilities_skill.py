@@ -28,7 +28,7 @@ from test_project_update import _FULL_INIT_DATA
 
 BASE_COMMIT = "03b4449"
 TPL = ROOT / "cs/templates/project"
-SKILL_REL = ".claude/skills/cs-capabilities/SKILL.md"
+SKILL_REL = ".claude/skills/cs-bootstrap/SKILL.md"
 SCHEDULED = (
     ".claude/settings.json", "bin/cs_operator_cron.sh",
     ".claude/skills/cs-operator/SKILL.md",
@@ -52,9 +52,9 @@ def contains(text: str, *clauses: str) -> bool:
     return all(normalized(clause) in normalized(text) for clause in clauses)
 
 
-def base_templates(tmp: Path) -> Path:
+def base_templates(tmp: Path, revision: str = BASE_COMMIT) -> Path:
     proc = subprocess.run(
-        ["git", "archive", BASE_COMMIT, "cs/templates"], cwd=ROOT,
+        ["git", "archive", revision, "cs/templates"], cwd=ROOT,
         capture_output=True, check=True, timeout=30)
     dest = tmp / "base"
     with tarfile.open(fileobj=io.BytesIO(proc.stdout)) as archive:
@@ -116,7 +116,7 @@ def real_update(tmp: Path, old: Path, config: dict, candidate: Path) -> None:
         retained[rel] = path.read_bytes() + b"\nOperator note: preserve my local wording.\n"
         path.write_bytes(retained[rel])
         check(f"edited base guidance has no bootstrap hint: {rel}",
-              b"cs-capabilities" not in retained[rel] and b"system.catalog" not in retained[rel])
+              b"cs-bootstrap" not in retained[rel] and b"system.catalog" not in retained[rel])
     for rel in ("company/README.md", "company/customer-service-playbook.md",
                 "company/mailbox-identity.md"):
         path = clone / rel
@@ -138,7 +138,7 @@ def real_update(tmp: Path, old: Path, config: dict, candidate: Path) -> None:
         check(f"real update preserves {rel}", (clone / rel).read_bytes() == data)
     want = (candidate / SKILL_REL).read_bytes()
     for host in (".claude", ".agents", ".opencode"):
-        hosted = clone / host / "skills/cs-capabilities/SKILL.md"
+        hosted = clone / host / "skills/cs-bootstrap/SKILL.md"
         check(f"real update installs canonical bootstrap for {host}",
               hosted.is_file() and hosted.read_bytes() == want)
     updated = json.loads((clone / "template-manifest.json").read_text())
@@ -146,11 +146,73 @@ def real_update(tmp: Path, old: Path, config: dict, candidate: Path) -> None:
           updated["file_checksums"].get(SKILL_REL) == "sha256:" + hashlib.sha256(want).hexdigest())
 
 
+
+def rename_update(tmp: Path, config: dict, candidate: Path) -> None:
+    old = base_templates(tmp / "rename-base", "v0.52.0")
+    clone = tmp / "renamed-clone"
+    ledger = render(config, old, clone)
+    legacy = clone / ".claude/skills/cs-capabilities"
+    original = (legacy / "SKILL.md").read_bytes() + b"\nLocal bootstrap note.\n"
+    (legacy / "SKILL.md").write_bytes(original)
+    (legacy / "extra.txt").write_bytes(b"Local supporting content.\n")
+    retired = clone / ".claude/retired-skills/cs-capabilities"
+    retired.mkdir(parents=True)
+    (retired / "SKILL.md").write_bytes(b"Previous backup.\n")
+    company_old = clone / "company/claude-extra.md"
+    company_new = clone / "company/other-systems.md"
+    authored = b"# Authored systems\nInternal console access guide.\n"
+    company_old.write_bytes(authored)
+    (clone / "template-manifest.json").write_text(json.dumps({
+        "template_version": "1", "init_data": config, "file_checksums": ledger}))
+    home = tmp / "rename-home"
+    home.mkdir()
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith(("CS_", "EMAIL_", "ENGINE_"))}
+    env.update(HOME=str(home), GIT_ALLOW_PROTOCOL="file", GIT_TERMINAL_PROMPT="0")
+    def update():
+        proc = subprocess.run([sys.executable, "-m", "cs", "update"], cwd=clone,
+                              env=env, stdin=subprocess.DEVNULL,
+                              capture_output=True, text=True, timeout=60)
+        print("rename update output:\n" + proc.stdout + proc.stderr)
+        check("rename update succeeds", proc.returncode == 0)
+        return proc.stdout + proc.stderr
+    update()
+    check("old bootstrap leaves discovery", not legacy.exists())
+    backup = retired.with_name("cs-capabilities.1")
+    check("authored bootstrap and supporting content survive retirement",
+          (backup / "SKILL.md").read_bytes() == original
+          and (backup / "extra.txt").read_bytes() == b"Local supporting content.\n")
+    check("previous backup is preserved", (retired / "SKILL.md").read_bytes() == b"Previous backup.\n")
+    for host in (".claude", ".agents", ".opencode"):
+        check(f"rename exposes exactly one bootstrap through {host}",
+              (clone / host / "skills/cs-bootstrap/SKILL.md").read_bytes()
+              == (candidate / SKILL_REL).read_bytes()
+              and not (clone / host / "skills/cs-capabilities").exists())
+    check("authored company guide migrates byte-exactly",
+          not company_old.exists() and company_new.read_bytes() == authored)
+    update()
+    check("repeated update preserves guide and retirement backups",
+          company_new.read_bytes() == authored
+          and (backup / "SKILL.md").read_bytes() == original
+          and not retired.with_name("cs-capabilities.2").exists())
+    with contextlib.redirect_stdout(io.StringIO()):
+        ok, _ = pi.render_templates(config, TPL, clone)
+        pi.install_agent_surfaces(clone)
+    check("repeat init preserves migrated authored guide",
+          ok and company_new.read_bytes() == authored and not company_old.exists())
+    company_old.write_bytes(b"Conflicting old guide.\n")
+    output = update()
+    check("guide collision preserves both files and reports it",
+          company_old.read_bytes() == b"Conflicting old guide.\n"
+          and company_new.read_bytes() == authored
+          and "both company/claude-extra.md and company/other-systems.md" in output.lower())
+
+
 def contract(clone: Path) -> None:
     text = (clone / SKILL_REL).read_text()
     front, body = text.split("---", 2)[1:]
     description = re.search(r"^description:\s*(.+)$", front, re.M).group(1)
-    check("canonical skill name", "name: cs-capabilities" in front)
+    check("canonical skill name", "name: cs-bootstrap" in front)
     check(f"description fits discovery budget ({len(description)} characters)",
           len(description) <= 1000)
     check("description independently triggers interactive startup",
@@ -161,6 +223,18 @@ def contract(clone: Path) -> None:
           contains(description, "before", "system", "account", "connector", "integration", "unavailable"))
     check("description distinguishes engine and host and excludes scheduled work",
           contains(description, "engine", "host", "scheduled"))
+    check("plain invocation loads local procedures and mailbox identity only",
+          contains(body, "plain invocation", "defaults to", "section 2",
+                   "local company procedures and mailbox identity"))
+    check("default route avoids probes and unrelated workflow bodies",
+          contains(body, "do not run", "system.capabilities", "system.catalog",
+                   "cs config", "default route", "do not load unrelated workflow bodies"))
+    check("default confirms actual loading and gaps briefly",
+          contains(body, "at most three short lines", "sources actually loaded",
+                   "missing, unwritten or incomplete", "do not dump procedures"))
+    check("discovery requires a relevant request rather than plain invocation",
+          contains(body, "only a request about available systems", "selects section 4",
+                   "naming the skill alone is not a request for discovery"))
     check("body retains interactive instruction boundary",
           contains(body, "interactive", "human", "scheduled", "permission"))
     check("one template is the complete new skill",
@@ -233,18 +307,18 @@ def contract(clone: Path) -> None:
     sections = re.split(r"(?m)^## (\d+)\.", agents)
     by_number = dict(zip(sections[1::2], sections[2::2]))
     check("charter section 1 routes procedures and capabilities",
-          contains(by_number.get("1", ""), "cs-capabilities", "procedure", "system"))
-    check("charter section 4 lists bootstrap", "cs-capabilities" in by_number.get("4", ""))
+          contains(by_number.get("1", ""), "cs-bootstrap", "procedure", "system"))
+    check("charter section 4 lists bootstrap", "cs-bootstrap" in by_number.get("4", ""))
     check("charter section 10 remains last and within host budget",
           sections[-2] == "10" and len(agents.encode()) < 32768)
     help_text = (clone / ".claude/skills/cs-help/SKILL.md").read_text()
     check("help table has exactly one bootstrap routing row",
-          help_text.count("| `cs-capabilities` | `/cs-capabilities` | `$cs-capabilities` |") == 1)
+          help_text.count("| `cs-bootstrap` | `/cs-bootstrap` | `$cs-bootstrap` |") == 1)
     examples = help_text.split("Or just ask", 1)[-1]
     check("help gives natural-language procedure and bank examples",
           contains(examples, "procedures", "bank"))
     check("help automatic-selection list includes bootstrap",
-          any("cs-capabilities" in paragraph and "cs-operator" in paragraph
+          any("cs-bootstrap" in paragraph and "cs-operator" in paragraph
               for paragraph in help_text.split("\n\n")))
 
 
@@ -258,6 +332,7 @@ def main() -> int:
         contract(candidate)
         scheduled_surfaces(old)
         real_update(tmp, old, config, candidate)
+        rename_update(tmp, config, candidate)
     print("test_capabilities_skill: all assertions passed" if not FAILED
           else f"test_capabilities_skill: {FAILED} FAILURES")
     return int(bool(FAILED))

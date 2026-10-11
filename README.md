@@ -280,8 +280,11 @@ can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
 
 ### Load procedures and discover available systems
 
-The interactive bootstrap is **`cs-capabilities`**: `/cs-capabilities`
-in Claude Code, `$cs-capabilities` in Codex, or the named skill in OpenCode.
+The interactive bootstrap is **`cs-bootstrap`**: `/cs-bootstrap`
+in Claude Code, `$cs-bootstrap` in Codex, or the named skill in OpenCode.
+The published v0.52.0 clone still uses `cs-capabilities`; `cs-bootstrap` is the
+untagged source name. Plain invocation loads local procedures and mailbox
+identity with a brief confirmation; systems discovery requires a systems request.
 Its acceptance qualifications are in the
 [bootstrap guide](docs/briefs/2026-10-08-capability-discovery.md).
 

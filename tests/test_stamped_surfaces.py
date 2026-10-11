@@ -425,10 +425,10 @@ def _update_render() -> None:
 
             _fanout_contract(clone, f"update {label}")
 
-            capabilities = clone / ".claude/skills/cs-capabilities/SKILL.md"
+            capabilities = clone / ".claude/skills/cs-bootstrap/SKILL.md"
             check(capabilities.is_file(), f"[{label}] update adds bootstrap skill")
             for host in (".agents", ".opencode"):
-                hosted = clone / host / "skills/cs-capabilities/SKILL.md"
+                hosted = clone / host / "skills/cs-bootstrap/SKILL.md"
                 check(capabilities.is_file() and hosted.is_file()
                       and hosted.read_bytes() == capabilities.read_bytes(),
                       f"[{label}] {host} update resolves canonical bootstrap")

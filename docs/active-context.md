@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: cea04d476ac50679e2db479a168fd0201af9d1d7
+doc_baseline_commit: 9d1574aa1e55bd00779f096d5e419a99c22ef395
 doc_baseline_date: 2026-10-11
 ---
 
@@ -34,6 +34,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   owns current kernel checks. Claude's standalone profile excludes identified
   ai-kit injection while preserving permissions and non-kit hooks. Historical
   runtime/configuration limits remain qualified; no universal compliance is established.
+- Untagged source uses `cs-bootstrap` with a local-only plain invocation and
+  brief confirmation, and `company/other-systems.md` for other systems. Published
+  `v0.52.0` and MrCall retain `cs-capabilities` and `company/claude-extra.md`.
+  Old guide bytes and bootstrap directories are preserved during restamping;
+  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) owns checks.
 - The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
   negotiates strengthened engine enforcement for chat and exact draft sending,
   carrying original source/thread/draft context. Fixed-template bulk retains its

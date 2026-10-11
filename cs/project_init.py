@@ -1059,12 +1059,27 @@ def build_jinja_env(template_dir: Path) -> jinja2.Environment:
     return env
 
 
+def migrate_company_systems(dest_dir: Path) -> None:
+    """Move the old host-named company guide without replacing authored content."""
+    old = dest_dir / "company" / "claude-extra.md"
+    new = old.with_name("other-systems.md")
+    if not (old.exists() or old.is_symlink()):
+        return
+    if new.exists() or new.is_symlink():
+        print("Both company/claude-extra.md and company/other-systems.md exist; "
+              "both preserved. Reconcile the guides in company/other-systems.md.")
+        return
+    old.rename(new)
+    print("Company systems guide moved to company/other-systems.md.")
+
+
 def render_templates(config: dict, template_dir: Path, dest_dir: Path):
     """Render Jinja2 templates and copy other files to destination."""
     jinja_env = build_jinja_env(template_dir)
 
     # Create destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)
+    migrate_company_systems(dest_dir)
 
     # The ledger of a clone being restamped in place — the one proof that a
     # clone-authored file is still the kernel's own default and may take the
@@ -1333,6 +1348,24 @@ def install_agent_surfaces(dest_dir: Path) -> None:
         if removed:
             print(f"Retired {removed} obsolete command/prompt entr{'y' if removed == 1 else 'ies'}.")
         return
+    if (claude_skills / "cs-bootstrap" / "SKILL.md").is_file():
+        for host in (".claude", ".agents", ".opencode"):
+            skills = dest_dir / host / "skills"
+            if skills.is_symlink():
+                continue
+            old_bootstrap = skills / "cs-capabilities"
+            if not (old_bootstrap.exists() or old_bootstrap.is_symlink()):
+                continue
+            retired_skills = dest_dir / ".claude" / "retired-skills"
+            retired_skills.mkdir(parents=True, exist_ok=True)
+            name = "cs-capabilities" + (f".{host[1:]}" if host != ".claude" else "")
+            backup = retired_skills / name
+            suffix = 0
+            while backup.exists() or backup.is_symlink():
+                suffix += 1
+                backup = retired_skills / f"{name}.{suffix}"
+            old_bootstrap.rename(backup)
+            print(f"Bootstrap renamed to cs-bootstrap; previous files saved in {backup.relative_to(dest_dir)}.")
     copied = False
 
     copied |= _link_or_copy(dest_dir / ".agents" / "skills",

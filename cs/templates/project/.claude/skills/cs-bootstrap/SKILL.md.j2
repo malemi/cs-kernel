@@ -1,13 +1,13 @@
 ---
-name: cs-capabilities
-description: Bootstrap interactive work by loading company procedures, selecting workflows and discovering engine systems. Consult first at interactive session start, when asked to load or recall procedures or operating instructions, and for any question about a system, account, connector or integration, including one named by the operator. Load the project body at .claude/skills/cs-capabilities/SKILL.md relative to the current clone, never from another workspace or a global skill directory. For system questions, load it before searching files, exploring commands or answering whether it is available or unavailable. Engine systems are separate from the host's tools. Claude loads local rules with Read only; other hosts use direct file reads. No engine connection or MCP is needed. Discovery only reads. Interactive sessions only. Scheduled sessions never load this body, search files or code, or probe systems for availability; report reachability unknown and defer to an interactive human.
+name: cs-bootstrap
+description: Bootstrap interactive work by loading company procedures, selecting workflows and discovering engine systems. Consult at interactive session start, to load or recall company procedures or operating instructions, and for questions about a system, account, connector or integration. Load the project body at .claude/skills/cs-bootstrap/SKILL.md relative to the current clone, never from another workspace or a global skill directory. For system questions, load it before searching files, exploring commands or answering whether it is available or unavailable. Engine systems are separate from the host's tools. Claude loads local rules with Read only; other hosts use direct file reads. Plain invocation loads local procedures only and confirms briefly. Systems requests use read-only discovery. No MCP needed. Interactive sessions only. Scheduled sessions never load this body, search files or code, or probe systems for availability; report reachability unknown and defer to an interactive human.
 ---
 
-# cs-capabilities
+# cs-bootstrap
 
 Orient an interactive session and load the context needed for its actual task.
-Claude Code uses `/cs-capabilities`, Codex `$cs-capabilities`; OpenCode loads the
-project skill named `cs-capabilities`. All three use this same workflow.
+Claude Code uses `/cs-bootstrap`, Codex `$cs-bootstrap`; OpenCode loads the
+project skill named `cs-bootstrap`. All three use this same workflow.
 A scheduled unattended session never invokes this skill.
 
 Work from the clone root containing `manifest.toml`. CLI commands use
@@ -21,7 +21,25 @@ step. Report the requested context or capabilities directly to the operator.
 
 ## 1. Choose the route for the request
 
-Keep the initial orientation compact. There are three sources:
+A plain invocation (`/cs-bootstrap`, `$cs-bootstrap` or the named skill with
+no task), or a generic request to bootstrap/load this session, defaults to
+section 2: load local company procedures and mailbox identity. Do not run
+`system.capabilities`, `system.catalog`, `cs config`, setup, sync or connection
+checks on this default route. Do not load unrelated workflow bodies. Read the
+company index and the complete applicable procedure/identity files; supporting
+guidance is loaded only when required by those procedures or a concrete task.
+A default bootstrap ends with at most three short lines: confirm the sources
+actually loaded and name any missing, unwritten or incomplete sources. Do not
+dump procedures, configuration tables, integration inventories or a checklist
+of actions you did not perform. Use the loaded rules when the operator gives
+a task; a request such as "what needs doing?" selects the relevant review
+workflow at that time.
+
+Only a request about available systems, accounts, connectors, integrations or
+engine operations selects section 4. Naming the skill alone is not a request
+for discovery. A specific workflow question selects section 3 instead.
+
+Keep the requested orientation compact. There are three sources:
 
 | Need | Source and next action |
 |---|---|

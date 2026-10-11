@@ -93,7 +93,7 @@ else claiming exception status needs the same standard of proof.
 
 ## 1. Where the machinery is written down
 
-- **Start interactive work with `cs-capabilities`** to choose the route for the
+- **Start interactive work with `cs-bootstrap`** to choose the route for the
   task: load company procedures and instructions from this clone, read the
   relevant skill body, or discover systems connected to the engine. A request
   to load procedures into session memory uses direct local reads and works
@@ -124,7 +124,7 @@ else claiming exception status needs the same standard of proof.
   divergence; `cs setup` reports it too.
 - **Any OTHER system this operator may reach** — an internal API, an admin
   console, a back-office the {{ email_address }} identity is authorised for — is
-  written up in [company/claude-extra.md](company/claude-extra.md). Read it
+  written up in [company/other-systems.md](company/other-systems.md). Read it
   before assuming the engine is the only thing you can call.
 
 ## 2. CLI (thin transport)
@@ -162,7 +162,7 @@ then `cs-campaign-tick`{% if founder_sweep_enabled %}, then the read-only `{{ fo
 Interactive skills are `cs-customer <name>` (mandatory before customer work),
 `cs-find-document`, `cs-review` (the one review bootstrap), `cs-account <name>`,
 `cs-instructions` (teaching/amending/retiring standing rules),
-`cs-capabilities` (interactive bootstrap: company procedures, workflow context
+`cs-bootstrap` (interactive bootstrap: company procedures, workflow context
 and engine systems),
 `cs-legal-research` (Italian and EU legal research on the company's own
 questions, for the interactive human only — never a customer reply),

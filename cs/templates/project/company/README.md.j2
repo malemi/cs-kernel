@@ -1,9 +1,11 @@
 # company/ — the per-company prose slots
 
 Every file in this directory is **yours to author**. The kernel stamps a blank
-starting point once, when the clone is created, and never touches these files
-again: `cs update` adds a slot only if it is missing, so nothing you write here
-is overwritten, and you are never asked about it.
+starting point once, when the clone is created, and never overwrites authored
+content. `cs update` adds a slot only if it is missing. The old
+`claude-extra.md` guide moves to `other-systems.md` when that destination is
+absent; if both exist, both survive and the conflict is reported. Existing
+company indexes remain yours: update any local references to the old guide.
 
 They hold the variance `manifest.toml` cannot express. The manifest carries
 values — addresses, adapters, knobs. These files carry the sentences somebody
@@ -21,7 +23,7 @@ has to write down, and the skills read them at run time to know what is true of
 | `campaign-product-notes.md` | `/cs-campaign-tick` | your own automatic replies, so they are never read as a human answer |
 | `operator-out-of-scope.md` | `/cs-operator` | what the unattended tick must escalate and never do itself |
 | `drive-visible-note.md` | `/cs-find-document` | which Shared Drives this project may search |
-| `claude-extra.md` | `AGENTS.md` | other systems this operator may reach, and how |
+| `other-systems.md` | `AGENTS.md` | other systems this operator may reach, and how |
 | `clone-notes.md` | `docs/ARCHITECTURE.md` | how this clone is really built — everything the manifest cannot express |
 
 `customer-service-playbook.md` and `mailbox-identity.md` are the authoritative

@@ -457,7 +457,7 @@ def require_no_mcp(host, transcript, config):
 
 
 def require_scheduled(evidence, frames, answer, root):
-    assert not loaded(evidence, root, 'cs-capabilities'), 'Scheduled run loaded interactive bootstrap'
+    assert not loaded(evidence, root, 'cs-bootstrap'), 'Scheduled run loaded interactive bootstrap'
     assert not frames, 'Scheduled run called discovery'
     assert re.search(r'bank|banc', answer, re.I), 'Scheduled run did not address queued question'
     assert not re.search(r'whoami|quota|permission.*(?:denied|required)|cannot start|unable to start', answer, re.I), 'Scheduled run stopped before task consideration'

@@ -85,14 +85,14 @@ assert ok
         for rel in ('AGENTS.md', '.claude/skills/cs-help/SKILL.md'):
             path = self.clone / rel
             text = path.read_text() + '\nOperator note: preserve my local wording.\n'
-            assert 'cs-capabilities' not in text and 'system.catalog' not in text
+            assert 'cs-bootstrap' not in text and 'system.catalog' not in text
             path.write_text(text)
             self.retained[rel] = text
         update = subprocess.run([python, '-m', 'cs', 'update'], cwd=self.clone, env=env, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=90)
         (root / 'build.log').write_text(build + update.stdout + update.stderr)
         assert update.returncode == 0 and 'failed to render' not in update.stdout + update.stderr
         assert all((self.clone / rel).read_text() == content for rel, content in self.retained.items())
-        assert (self.clone / '.claude/skills/cs-capabilities/SKILL.md').is_file()
+        assert (self.clone / '.claude/skills/cs-bootstrap/SKILL.md').is_file()
         self.bin = root / 'bin'
         self.bin.mkdir()
         runner = root / 'cli.py'

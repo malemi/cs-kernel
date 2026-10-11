@@ -98,7 +98,7 @@ def check_case(case, host, fixture, transcript, frames, providers, config, respo
         assert all(row['argv'] in (['whoami'], ['config']) for row in cli), 'Scheduled case attempted catalog, publication or refused bootstrap CLI'
         require_scheduled(evidence, frames, answer, fixture.clone)
     elif case != 'workflow':
-        assert loaded(evidence, fixture.clone, 'cs-capabilities'), 'Bootstrap body loading not evidenced'
+        assert loaded(evidence, fixture.clone, 'cs-bootstrap'), 'Bootstrap body loading not evidenced'
     if case == 'workflow':
         for call in evidence:
             inputs = json.dumps(call['input'])
