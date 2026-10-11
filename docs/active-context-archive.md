@@ -1,3 +1,24 @@
+# Archived active context
+
+## 2026-10-11 — Authorized bootstrap release boundary
+
+- The uncommitted [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and the
+  nineteen observed kernel cases on Claude Code, Codex and OpenCode pass with
+  independent review. Complete retained observations are rechecked by the frozen
+  current auditor; this is not a new native execution. Catalog negotiation stops
+  and explanation-only routing are verified for these cases. The standalone
+  Claude profile excludes identified ai-kit injection while preserving permissions
+  and non-kit hooks. Runtime/configuration limitations remain qualified in the
+  plan; no universal compliance or live-clone adoption is established.
+
+- Bootstrap release and maintained-clone adoption remain separate authorization;
+  remote MCP remains a separate workstream.
+
+1. Release and adopt the isolated bootstrap candidate only under a separately
+   authorized release task.
+
 ## 2026-10-10 — Bootstrap evidence-definition predecessor snapshot
 
 - The uncommitted [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)

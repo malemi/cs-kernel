@@ -17,7 +17,8 @@ stamped from `manifest.toml`).
   mailbox, holds entity memory, a writing voice trained on the mailbox's own
   sent mail, tasks, and the compose/draft/send tools. One engine profile per mailbox.
 - **Brain** = this repo (`cs`, a thin CLI installed from the pinned `cs-kernel`)
-  + Claude Code skills. The brain decides; the engine does the mail work.
+  and the shared skills used by Codex, Claude Code or OpenCode. The engine owns
+  task judgement and contextual mail generation; the session follows the workflows.
 - **You** = the human who reviews the drafts and sends them. Until you flip the
   trust switch, the operator **only drafts** — by config *and* by permission.
 
@@ -47,29 +48,45 @@ accounts are never mixed in (different repos, config, registries).
 The operator tick is `claude -p "/cs-operator"` (triage + cs-campaign-tick).
 Turn it on from any session with **`/cs-cron`** (or by hand:
 `cs cron install`; declared intent `{{ cron_schedule }}` — verify the live
-crontab). Whether a tick may send a free-form reply or only draft it is
-`cs_triage_mode`: run **`cs config`** for the value in force and the file that
-declares it, rather than believing a value written on this page. Every tick
+crontab). Run **`cs config`** for the effective `cs_triage_mode` and the file
+that declares it. The supplied cron wrapper keeps customer-send commands
+denied independently of that mode and interactive permissions. Every tick
 escalates on uncertainty. New campaigns are designed in a session too —
 **`/cs-campaign`** builds the pack and the tick advances it.
 
-**Kill-switch:** `touch ~/.{{ company_slug }}-cs/CS_PAUSE` stops every tick instantly;
-delete the file to resume.
+**Pause:** `touch ~/.{{ company_slug }}-cs/CS_PAUSE` prevents subsequent guarded
+ticks and campaign sends; delete the file to resume. It does not terminate
+running processes or stop independent engine work.
 
 ## What YOU do
 
 1. **See what's ready** — open Gmail → **Drafts**: review and edit.
    Replies return to the mailbox and re-ingest automatically.
-2. **Or open a Claude session** here (`claude`) and start with
-   `/cs-review` — the one review bootstrap. Deep-dive on a single
-   account with `/cs-account <name>`, or just ask. Lost? `/cs-help`
-   shows the whole map.
+2. **Or open your agent** here (`codex`, `claude` or `opencode`). Start with
+   `$cs-review` in Codex, `/cs-review` in Claude Code, or OpenCode's named
+   `cs-review` skill. Deep-dive with `cs-account`, or just ask. `cs-help`
+   shows the whole map with the invocation for your host.
 3. **Send** — always your call, after review: use
    `cs draft-send <full-engine-draft-id>`, with the ID printed by
    `cs review --json`. This is the one contextual-send path; Gmail/Superhuman
    connector sends bypass the engine lifecycle and are not used here.
 
 > The operator is **draft-first**. You are the send button.
+
+### Load procedures into this session
+
+Ask *"Load our company procedures and explain how we handle refunds"*, or invoke
+`$cs-capabilities` in Codex, `/cs-capabilities` in Claude Code, or the named
+`cs-capabilities` skill in OpenCode. It reads the authoritative `company/`
+files into this conversation and reports missing or unwritten guidance.
+Local procedure loading works offline, without MCP or ai-kit. It changes no
+rules and publishes nothing; teaching or changing a standing rule uses
+`cs-instructions`.
+
+For questions about connected systems, the same skill checks engine capabilities
+and its catalog when supported. Discovery explains operations without executing
+them; an unreadable catalog leaves availability unknown. Host connectors are
+separate from the engine's systems.
 
 The CLI itself: `cs --help` is the reference (one line per verb,
 `cs <verb> --help` for details); the verb map by risk class is in the
@@ -94,7 +111,8 @@ kernel README, [The `cs` CLI](https://github.com/malemi/cs-kernel#the-cs-cli).
 - Never writes to anyone without their dossier; never cold-mails an address that
   already has a thread; never re-contacts within `DEDUP_DAYS` (default {{ dedup_days }}).
 - Never touches another project's accounts.
-- `~/.{{ company_slug }}-cs/CS_PAUSE` = instant global stop.
+- `~/.{{ company_slug }}-cs/CS_PAUSE` blocks subsequent guarded ticks and campaign
+  sends; running processes and engine work have separate controls.
 
 ## Map
 

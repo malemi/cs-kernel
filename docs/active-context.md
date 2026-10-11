@@ -24,7 +24,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   drafts and exact inbound coverage. Six hosted engines have verified reads and
   root-owned trust. Local hardening is closed with limits in the
   [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
-- The uncommitted [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
+- The committed [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)
   adds `cs-capabilities`: authoritative local procedures, canonical workflow
   bodies and engine catalog discovery without MCP. Engine acceptance and the
   nineteen observed kernel cases on Claude Code, Codex and OpenCode pass with
@@ -80,8 +80,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Bootstrap release and maintained-clone adoption remain separate authorization;
-  remote MCP remains a separate workstream.
+- The authorized [bootstrap release](execution-plans/2026-10-11-bootstrap-release.md)
+  targets the frozen reviewed source and MrCall adoption. Publication and adoption
+  remain pending actual verification; Café 124 stays on its existing pin. Remote
+  MCP remains a separate workstream.
 - Engine/direct-classifier failover remains separate from scheduled recovery;
   the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
 - [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
@@ -103,8 +105,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Release and adopt the isolated bootstrap candidate only under a separately
-   authorized release task.
+1. Complete the authorized bootstrap release and MrCall adoption from the
+   [release plan](execution-plans/2026-10-11-bootstrap-release.md).
 2. Continue exact draft identity and unanswered-mail evidence/latency work from
    their existing plans before a corresponding release; doc-end sends no mail.
 3. Continue secondary-account onboarding when requested and correct internal
