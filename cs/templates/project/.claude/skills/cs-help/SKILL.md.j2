@@ -33,6 +33,7 @@ project-scoped skill in all three hosts; OpenCode loads the named skill from
 | `cs-sip-trunk` | `/cs-sip-trunk` | `$cs-sip-trunk` | inspect or provision a Vonage SIP trunk using this clone's connection; preview first, supervised changes |
 | `cs-instructions` | `/cs-instructions` | `$cs-instructions` | teach, amend or retire a recurring response rule or mailbox voice; ordinary conversational instructions invoke it too |
 | `cs-legal-research` | `/cs-legal-research` | `$cs-legal-research` | research a legal question of the company's own under Italian and EU law — sources, remedies, deadlines, a sourced draft. Interactive only, never a customer reply |
+| `cs-stripe` | `/cs-stripe` | `$cs-stripe` | explicit interactive Stripe customer/payment/invoice/subscription lookups through Desktop; read only |
 | `cs-help` | `/cs-help` | `$cs-help` | this map |
 | `cs-bootstrap` | `/cs-bootstrap` | `$cs-bootstrap` | load company procedures into the session, find the right workflow and discover engine systems; works without MCP and fires on ordinary requests |
 
@@ -54,7 +55,7 @@ project-scoped skill in all three hosts; OpenCode loads the named skill from
 
 Behind those sit the operator skills (`cs-triage-mail`,
 `cs-campaign-tick`, `cs-customer`, `cs-find-document`, `cs-instructions`, `cs-bootstrap`,
-`cs-legal-research`; `cs-operator` is the headless cron bootstrap) — they fire
+`cs-stripe`, `cs-legal-research`; `cs-operator` is the headless cron bootstrap) — they fire
 on their own when the request matches.
 
 ## The hard lines (always true)

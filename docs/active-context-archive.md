@@ -1,3 +1,11 @@
+## 2026-10-16 — Stripe source state before operator adoption
+
+- The [Stripe candidate](../../docs/execution-plans/2026-10-16-stripe-connection.md)
+  adds an interactive shared skill and typed bridge to Desktop-owned private
+  reads. Credential setup belongs to Desktop; no provider write, scheduled
+  enrichment or automatic memory retention is authorized. Source/native/provider
+  acceptance and publication remain separate gates.
+
 ## 2026-10-11 — Source integration before isolated bootstrap release
 
 - The integrated [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)

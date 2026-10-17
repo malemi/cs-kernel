@@ -14,6 +14,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
+- Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of
+  generic finance chat/history. Bootstrap routes advertised systems to their
+  installed workflow even without the general catalog. Both maintained clones
+  expose the updated skill on all three host paths; support has authenticated
+  connected/live status and one bounded invoice read, Café reports disconnected.
+  Package pins, permissions, cron and hosted engines are preserved. Native model
+  selection/full package release remain separate; [Stripe](integrations/stripe.md)
+  owns the route and verification limits.
+
 - **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   MrCall installs public `v0.52.0` at `3c0e78c`; Café 124 remains on `v0.51.0`

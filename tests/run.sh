@@ -1387,6 +1387,10 @@ if "$VENV/bin/python" "$ROOT/tests/test_capabilities_skill.py"; then echo "OK"; 
 step "63b. native bootstrap evidence rejects incomplete reads and forbidden activity"
 if "$VENV/bin/python" "$ROOT/tests/test_live_capabilities_fixture.py"; then echo "OK"; else echo "FAIL: native bootstrap evidence parsing regressed"; FAIL=1; fi
 
+step "64. Stripe read-only bridge and three-host skill distribution"
+if "$VENV/bin/python" "$ROOT/tests/test_stripe_cli.py"; then echo "OK"; else echo "FAIL: Stripe bridge or canonical skill distribution regressed"; FAIL=1; fi
+
+
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi
 echo "RESULT: all gates green"

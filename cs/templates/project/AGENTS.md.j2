@@ -153,6 +153,7 @@ and `--undo`. The `cs-review` skill reports these records but never creates
 them. When they may be recorded at all is a NEVER — § 5 below.
 
 ## 4. Skills — each file carries its own procedure
+Use `cs-stripe` for Stripe/accounting reads through fixed `cs rpc stripe.*` methods; never finance chat.
 
 All workflows live under `.claude/skills/`; Codex resolves the same bytes
 through `.agents/skills`, OpenCode through `.opencode/skills`. Claude Code
@@ -166,6 +167,7 @@ Interactive skills are `cs-customer <name>` (mandatory before customer work),
 and engine systems),
 `cs-legal-research` (Italian and EU legal research on the company's own
 questions, for the interactive human only — never a customer reply),
+`cs-stripe` (Stripe/accounting reads through fixed `cs rpc stripe.*`, not finance chat),
 `cs-help`, `cs-cron`, `cs-campaign`, and `cs-sip-trunk` (supervised Vonage SIP
 provisioning). Each file owns its own write and send
 boundary.

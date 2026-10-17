@@ -6,6 +6,8 @@ Each integration has its own capability and configuration reference:
   provisioning, with explicit credential references per clone.
 - [Shopify](integrations/shopify.md): existing customer-lookup CRM adapter.
 - [Google Drive](integrations/google-drive.md): existing read-only document access.
+- [Stripe](integrations/stripe.md): interactive read-only engine connection, configured
+  in Desktop Settings; keys and provider requests remain engine-owned.
 - [Faire](integrations/faire.md): existing clone-level credential setup;
   authenticated API access unverified and no reusable kernel adapter.
 
