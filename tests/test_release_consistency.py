@@ -82,6 +82,7 @@ HEAD_TAGGED_RE = re.compile(
 # Published release tags never move. Pin each object so a force-move cannot
 # be described away in prose.
 IMMUTABLE_TAG_TARGETS = {
+    "v0.53.0": "4f4f027fac51d676b369548021a387d136be4917",
     "v0.52.0": "3c0e78c533db91a17bd390657de58cf6931b5c73",
     "v0.51.0": "560920726ee17b56249a56c0ca992dc20b20fb55",
     "v0.50.0": "29ab764432bc5fbf962471f4cadb5d950e17ebf1",

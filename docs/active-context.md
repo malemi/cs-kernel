@@ -20,13 +20,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   expose the updated skill on all three host paths; support has authenticated
   connected/live status and one bounded invoice read, Café reports disconnected.
   Package pins, permissions, cron and hosted engines are preserved. Native model
-  selection/full package release remain separate; [Stripe](integrations/stripe.md)
+  selection and installed package adoption remain separate; [Stripe](integrations/stripe.md)
   owns the route and verification limits.
 
-- **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
+- **Latest release tag: `v0.53.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
-  MrCall installs public `v0.52.0` at `3c0e78c`; Café 124 remains on `v0.51.0`
-  at `5609207`. MrCall's lock-only rebuild, authenticated identity and scoped
+  Both maintained clones pin public `v0.52.0` at `3c0e78c`; active repair layers
+  remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
   read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
   Historical FULL evidence and the red July harness remain separately retained.
 - Released [assignments](task-assignment.md) use signed engine authority, scoped
