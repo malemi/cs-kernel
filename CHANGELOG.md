@@ -1,5 +1,39 @@
 # Changelog — cs-kernel
 
+## Unreleased
+
+## v0.53.0 — 2026-10-18 (MINOR)
+
+### Stripe read-only operator connection
+
+Adds typed `cs stripe` status, customer, payment, invoice, subscription and detail
+reads through the existing owner-authenticated engine RPC. The canonical
+`cs-stripe` skill reaches Claude Code, Codex and OpenCode from one rendered body.
+The existing `cs-capabilities` bootstrap routes advertised systems through their
+installed workflow even when the optional general catalog is unavailable.
+
+Desktop Settings owns restricted keys and connection changes. Stripe evidence
+reaches the invoking agent and host transcript; no automatic memory retention,
+provider write, scheduled enrichment or sending is authorized. The interactive
+restriction is instructional; existing host permission rules are unchanged.
+
+This immutable release starts from v0.52.0 and excludes main's unreleased email
+assignment guard, bootstrap rename and draft-retirement work. Authentication,
+existing backend behavior, campaign/send paths, permissions and scheduled
+instructions remain byte-identical to v0.52.0.
+
+Migration: `cs update --pin v0.53.0` in an eligible clone. Installed operational
+repair layers require owner-coordinated composition before package replacement;
+public publication does not replace those layers or change their operational pin.
+The selected engine must advertise Stripe capability version 1. Native automatic
+selection and stable Desktop installer publication remain separate acceptance.
+
+**Re-collaudo: both maintained clones, +live read-only.** The MINOR is for the new
+read CLI. FULL is unnecessary because no existing authentication, send, campaign
+or permission surface changes. Full deterministic suites, controlled authenticated
+CLI/distribution tests and actual owner identity/Stripe status reads establish
+this scoped release; they do not certify unrelated operational candidates.
+
 ## v0.52.0 — 2026-10-11 (MINOR)
 
 ### Interactive bootstrap and legal research
