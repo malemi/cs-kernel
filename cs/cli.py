@@ -2095,6 +2095,8 @@ def main(argv=None) -> int:
     connection_cli.register(sub)
     from . import assignment_cli
     assignment_cli.register(sub)
+    from . import stripe_cli
+    stripe_cli.register(sub)
 
     # --- the "human verbs" (init/update/login): registered here ONLY so
     # `cs --help` tells the truth about what exists — see the double

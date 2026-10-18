@@ -184,3 +184,24 @@ discovery taken from the host's own report. That is one observed case per
 host; it does not establish automatic selection from a plain-language
 question. The [execution record](execution-plans/2026-10-08-legal-research-skill.md)
 owns the evidence.
+
+## Stripe lookups
+
+`cs-stripe` is an explicit interactive read-only route through the engine-owned
+Stripe connection. The canonical workflow uses existing `cs rpc stripe.*`
+commands for status, bounded customer/payment/invoice/subscription lists and detail
+reads; the convenience `cs stripe` CLI offers typed filters. Desktop Settings owns test, save,
+replacement and disconnect; no clone configuration stores a Stripe key.
+
+The skill discloses that CLI evidence reaches the invoking agent and may enter
+its selected model and host transcript. Desktop managed finance history does
+not cover these reads. Disconnect cannot retract disclosed evidence. Results
+are never automatically retained in shared memory or used for sends.
+
+The interactive-only boundary is instructional, with existing host permissions
+unchanged. Render and controlled authenticated CLI tests verify canonical
+Claude Code, Codex and OpenCode paths with links and copy fallback. They do not
+establish native model selection. Separate scoped adoption verifies the installed
+three-host paths on both maintained clones, their owner-authenticated status and
+one bounded support live invoice read. It preserves installed package pins.
+See [Stripe](integrations/stripe.md) for commands and acceptance limits.

@@ -13,3 +13,6 @@ The `[connections.vonage]` configuration belongs to the new connection surface.
 Shopify and Drive retain their own configuration paths. Each reference states
 the supported operations, limits and verification evidence; appearing in this
 list does not imply a common API or the same readiness level.
+
+- [Stripe](integrations/stripe.md): interactive read-only engine connection, configured
+  in Desktop Settings; keys and provider requests remain engine-owned.

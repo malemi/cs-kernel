@@ -26,6 +26,7 @@ project-scoped skill in all three hosts; OpenCode loads the named skill from
 
 | Skill | Claude Code | Codex | When |
 |---|---|---|---|
+| `cs-stripe` | `/cs-stripe` | `$cs-stripe` | explicit interactive Stripe customer/payment/invoice/subscription lookups through Desktop; read only |
 | `cs-review` | `/cs-review` | `$cs-review` | **the one you invoke when you sit down.** Settings in force, whether the unattended run is running, every draft with a verdict and its handles, open tasks and escalations, the 45-day support queue with customers separated out{% if producer_adapter != 'none' %}, the day's outreach candidates{% endif %}, what changed in the repo and what is waiting on you |
 | `cs-account` | `/cs-account <name>` | `$cs-account <name>` | deep-dive on one account (read-only) |
 | `cs-cron` | `/cs-cron` | `$cs-cron` | the scheduled unattended run: status, install/remove (confirmed), pause/resume |
@@ -77,3 +78,5 @@ on their own when the request matches.
 
 End by asking what they want to do — and if this looks like the start of
 a work session, suggest `/cs-review` in Claude Code or `$cs-review` in Codex.
+
+Use `cs-stripe` for Stripe account, customer, payment, invoice and subscription reads.
