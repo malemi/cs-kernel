@@ -13,7 +13,7 @@ base observations are retained in active-context-archive.md.
 
 ## State now
 
-- **Latest release tag: `v0.53.0`. Current HEAD status: tagged as `v0.53.0`.**
+- **Latest release tag: `v0.53.0`. Current HEAD status: untagged.**
 - This branch adds Stripe read CLI and canonical workflow routing to immutable
   v0.52.0. Bootstrap remains `cs-capabilities`; unreleased bootstrap renaming,
   contextual email changes and retirement work are excluded. Existing backend,
