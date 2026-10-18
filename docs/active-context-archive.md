@@ -1,19 +1,5 @@
 ## 2026-10-18 — Immutable base snapshot before isolated Stripe release
 
----
-doc_baseline_commit: 03b444936cdc288e795d0edef481d5a883fbcab9
-doc_baseline_date: 2026-10-10
----
-
-# Active Context — cs-kernel
-
-<!-- doc-scope:start -->
-Scope: current source capabilities, untagged development and unresolved work.
-Durable rules live in the [kernel charter](kernel-charter.md), release history in
-[`CHANGELOG.md`](../CHANGELOG.md), and dated operational observations in
-[`active-context-archive.md`](active-context-archive.md).
-<!-- doc-scope:end -->
-
 ## State now
 
 - **Latest release tag: `v0.52.0`. Current HEAD status: tagged as `v0.52.0`.** These sentences
