@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 ---
 # Explicit Stripe Payment Links
 
@@ -33,17 +33,27 @@ Before any activation, obtain primary-owner clearance for an exact complete cand
 
 Brief/plan and engine/kernel integration reviews APPROVED. Engine Stripe fixtures pass20; combined Stripe/RPC contract fixtures pass46; CLI/distribution fixtures pass9. Full kernel free suite passes all gates after exact scheduled-policy regression expectations were updated and reviewed. Source commits: Desktop1a8938d9, kernelb360b47. Runtime staging preserves the complete current owner root plus five Stripe files; clone staging adds only the raw headless guard, canonical Stripe skill and exact permission/cron delta with matching ledger entries. Actual installed state is established only by the retained activation-result.json and authenticated readback in /tmp/stripe-payment-links-20261020, not by these fixture checks. No real Stripe objects or charges are created by acceptance. Public tag and installer release remain separate.
 
-## Current activation stop condition
+## Installed activation and remaining release boundaries
 
-Source is committed and pushed in Desktop PR20 and kernel PR1, with all CI gates
-passing. Three prospective activation windows produced no live changes: first
-an expired automatic-update idle window, then insufficient remaining clearance,
-then actual ongoing preparation at 17:57 UTC. Runtime remains the original B2
-root and PID3953282; both installed clone postimages remain unapplied. No
-activation-result.json exists. The next dependent action awaits the operator's
-answer about a temporary preparation/automatic-update pause with restoration of
-original controls. No further timed retry or control change is authorized by an
-elapsed window. If allowed, review the bounded maintenance/restore procedure and
-obtain a new owner window/baseline before activation; then verify authenticated
-capability/status and headless refusal and complete this plan. Real Stripe
-creation, public tagging and installer acceptance remain separate.
+The reviewed Stripe-only composition is active on Café production@cafe124.it.
+The actual activation receipt records root stripe-payment-links-62563e070a8f,
+PID479093 and the preserved voice interpreter. Its complete prior cs package is
+byte-identical; only the five reviewed Stripe zylch files differ. Ten owned
+installed clone files across Café and support carry the raw headless guard,
+canonical three-host skill and exact interactive/cron permission changes.
+Startup, voice-listener and protected configuration checks pass. Original
+AUTO_UPDATE_ENABLED=y, preparation paused=false and every profile env byte
+are restored and verified by maintenance-restored.json.
+
+Authenticated installed readback confirms stripe_payment_links=1, Stripe live
+connected, account acct_1HPUlLDktrbAiFrm and generation1. Missing required creation
+inputs refuse with -32602 before provider access. Both installed clones refuse
+headless creation with exit1 before connection. No provider object, charge or
+message was created by acceptance. Actual receipts are activation-result.json,
+readback.json and headless-installed-{0,1}.log in
+/tmp/stripe-payment-links-20261020. Both runtime owners received END plus the
+new complete manifest; the accounting session received the canonical skill
+reload handoff. Subsequent unrelated runtime changes require their own current
+composition and authority. Public tagging, broader engine adoption and installer
+acceptance remain separate; installed activation acceptance is complete; documentation closure is pending
+the approved checker transition from active to completed.
