@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: baa9b0d7245089c1d046fe67860165746bb19148
-doc_baseline_date: 2026-10-11
+doc_baseline_commit: b360b47f4921cf217bf4cf50062a9478ef484dc8
+doc_baseline_date: 2026-10-20
 ---
 
 # Active Context — cs-kernel
@@ -14,14 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of
-  generic finance chat/history. Bootstrap routes advertised systems to their
-  installed workflow even without the general catalog. Both maintained clones
-  expose the updated skill on all three host paths; support has authenticated
-  connected/live status and one bounded invoice read, Café reports disconnected.
-  Package pins, permissions, cron and hosted engines are preserved. Native model
-  selection and installed package adoption remain separate; [Stripe](integrations/stripe.md)
-  owns the route and verification limits.
+- Stripe has source support for explicitly requested fixed EUR Payment Links,
+  alongside its fixed RPC reads. Creation uses a stable request identifier,
+  encrypted engine retry state and separate write permissions. Scheduled typed
+  and raw CLI creation refuses; canonical Claude settings ask interactively and
+  cron denies the mutation. Fixture checks and installed activation are distinct;
+  [Stripe](integrations/stripe.md) owns the contract. Existing clone pins and
+  repair overrides remain preserved; this capability has no new public tag.
 
 - **Latest release tag: `v0.53.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.

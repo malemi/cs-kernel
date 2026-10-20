@@ -203,7 +203,7 @@ owns the evidence.
 
 ## Stripe lookups
 
-`cs-stripe` is an explicit interactive read-only route through the engine-owned
+`cs-stripe` is an explicit interactive route through the engine-owned
 Stripe connection. The canonical workflow uses existing `cs rpc stripe.*`
 commands for status, bounded customer/payment/invoice/subscription lists and detail
 reads; the untagged convenience `cs stripe` CLI is separate. Desktop Settings owns test, save,
@@ -214,8 +214,7 @@ its selected model and host transcript. Desktop managed finance history does
 not cover these reads. Disconnect cannot retract disclosed evidence. Results
 are never automatically retained in shared memory or used for sends.
 
-The interactive-only boundary is instructional, with existing host permissions
-unchanged. Render and controlled authenticated CLI tests verify canonical
+Reads retain an instructional interactive boundary. Explicit fixed EUR link creation uses stable request identifiers; typed/raw CLI headless guards and cron denies exclude scheduled commands. Canonical Claude ASK rules preserve explicit interactive use. These text patterns do not sandbox other clients. Render and controlled authenticated CLI tests verify canonical
 Claude Code, Codex and OpenCode paths with links and copy fallback. They do not
 establish native model selection. Separate scoped adoption verifies the installed
 three-host paths on both maintained clones, their owner-authenticated status and
