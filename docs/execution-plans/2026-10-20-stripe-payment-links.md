@@ -32,3 +32,18 @@ Before any activation, obtain primary-owner clearance for an exact complete cand
 ## Evidence
 
 Brief/plan and engine/kernel integration reviews APPROVED. Engine Stripe fixtures pass20; combined Stripe/RPC contract fixtures pass46; CLI/distribution fixtures pass9. Full kernel free suite passes all gates after exact scheduled-policy regression expectations were updated and reviewed. Source commits: Desktop1a8938d9, kernelb360b47. Runtime staging preserves the complete current owner root plus five Stripe files; clone staging adds only the raw headless guard, canonical Stripe skill and exact permission/cron delta with matching ledger entries. Actual installed state is established only by the retained activation-result.json and authenticated readback in /tmp/stripe-payment-links-20261020, not by these fixture checks. No real Stripe objects or charges are created by acceptance. Public tag and installer release remain separate.
+
+## Current activation stop condition
+
+Source is committed and pushed in Desktop PR20 and kernel PR1, with all CI gates
+passing. Three prospective activation windows produced no live changes: first
+an expired automatic-update idle window, then insufficient remaining clearance,
+then actual ongoing preparation at 17:57 UTC. Runtime remains the original B2
+root and PID3953282; both installed clone postimages remain unapplied. No
+activation-result.json exists. The next dependent action awaits the operator's
+answer about a temporary preparation/automatic-update pause with restoration of
+original controls. No further timed retry or control change is authorized by an
+elapsed window. If allowed, review the bounded maintenance/restore procedure and
+obtain a new owner window/baseline before activation; then verify authenticated
+capability/status and headless refusal and complete this plan. Real Stripe
+creation, public tagging and installer acceptance remain separate.
