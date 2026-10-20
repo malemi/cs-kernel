@@ -98,8 +98,22 @@ def scheduled_surfaces(old: Path) -> None:
                 rendered_sets[variant][rel] = after
                 old_hash = hashlib.sha256(before).hexdigest()
                 new_hash = hashlib.sha256(after).hexdigest()
-                check(f"scheduled bytes {shape}/{variant}/{rel} base={old_hash} candidate={new_hash}",
-                      before == after)
+                # Only the separately reviewed Stripe mutation policy may differ.
+                spells = (".venv/bin/python -m cs", ".venv/bin/python3 -m cs", ".venv/bin/cs", "python -m cs", "python3 -m cs", "cs")
+                stripe_rules = [f"Bash({prefix} {command}:*)" for command in ("rpc stripe.payment_link_create", "stripe payment-link-create") for prefix in spells]
+                if rel == ".claude/settings.json":
+                    previous, current = json.loads(before), json.loads(after)
+                    check("only reviewed interactive Stripe ASK added", current["permissions"].get("ask") == stripe_rules)
+                    current = json.loads(after)
+                    current["permissions"].pop("ask", None)
+                    unchanged = previous == current
+                elif rel == "bin/cs_operator_cron.sh":
+                    addition = "".join('    "' + rule + '" ' + chr(92) + "\n" for rule in stripe_rules).encode()
+                    check("exact reviewed Stripe cron deny block exists once", after.count(addition) == 1)
+                    unchanged = before == after.replace(addition, b"", 1)
+                else:
+                    unchanged = before == after
+                check(f"scheduled bytes excluding reviewed Stripe policy {shape}/{variant}/{rel} base={old_hash} candidate={new_hash}", unchanged)
         for rel in ("bin/cs_operator_cron.sh", ".claude/skills/cs-operator/SKILL.md",
                     ".claude/skills/cs-triage-mail/SKILL.md"):
             check(f"conditional fixture exercises {shape}/{rel}",

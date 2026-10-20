@@ -159,6 +159,9 @@ def cmd_whoami(args) -> int:
 
 
 def cmd_rpc(args) -> int:
+    if args.method == "stripe.payment_link_create" and os.environ.get("CS_OPERATOR_HEADLESS"):
+        _print_json({"error": "stripe_unavailable", "message": "Payment Link creation requires an interactive human request."})
+        return 1
     settings = config.load()
     params = json.loads(args.params) if args.params else {}
     _print_json(rpc.call_sync(settings, args.method, params, timeout=args.timeout))
