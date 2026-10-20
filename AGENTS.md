@@ -2,8 +2,15 @@
 ## Documentation lifecycle (harness v9)
 This repository's managed protocol lives here in AGENTS.md; no CLAUDE.md read is
 required. Use this v9 entry instead of any older kit instruction to load CLAUDE.md.
-When repository `.agents/skills/` provides doc-start/doc-end/doc-critic, load those
-copies; do not select same-named older global workflows.
+Resolve skills from their exact current catalog paths, expanding only declared
+root aliases. For doc-start/doc-end/doc-critic, prefer each repository
+`.agents/skills/<name>/SKILL.md` only if that file exists; otherwise use its
+declared installed source. A directory or CS-workflow symlink proves no entry.
+Use `python3 "${MRCALL_KIT_HOME:-$HOME/.config/mrcall-ai-kit}/skill-path.py"
+--declared <catalog-path>` with `--local <entry>` only for a required override.
+Resolve every input before batching reads; nonzero exit or partial output is
+not a completed read. Missing declared sources require a clear diagnostic,
+not a guessed namespace, copied global skill, or suppressed failure.
 
 The lead, before source reads, searches, diagnosis, edits, or delegation for ANY repository
 request (including questions, fast-path fixes, briefs, and reviews), invoke

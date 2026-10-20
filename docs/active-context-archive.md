@@ -6,6 +6,18 @@
   enrichment or automatic memory retention is authorized. Source/native/provider
   acceptance and publication remain separate gates.
 
+## 2026-10-20 — Prior Stripe snapshot
+
+- Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of
+  generic finance chat/history. Bootstrap routes advertised systems to their
+  installed workflow even without the general catalog. Both maintained clones
+  expose the updated skill on all three host paths; support has authenticated
+  connected/live status and one bounded invoice read, Café reports disconnected.
+  Package pins, permissions, cron and hosted engines are preserved. Native model
+  selection and installed package adoption remain separate; [Stripe](integrations/stripe.md)
+  owns the route and verification limits.
+
+
 ## 2026-10-11 — Source integration before isolated bootstrap release
 
 - The integrated [bootstrap candidate](execution-plans/2026-10-08-capability-discovery.md)

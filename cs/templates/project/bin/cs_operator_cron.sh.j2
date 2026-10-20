@@ -107,6 +107,18 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # a sandbox. A script that must be unreachable whatever happens should not be
 # executable by the user the tick runs as.
 DENIED=(
+    "Bash(.venv/bin/python -m cs rpc stripe.payment_link_create:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc stripe.payment_link_create:*)" \
+    "Bash(.venv/bin/cs rpc stripe.payment_link_create:*)" \
+    "Bash(python -m cs rpc stripe.payment_link_create:*)" \
+    "Bash(python3 -m cs rpc stripe.payment_link_create:*)" \
+    "Bash(cs rpc stripe.payment_link_create:*)" \
+    "Bash(.venv/bin/python -m cs stripe payment-link-create:*)" \
+    "Bash(.venv/bin/python3 -m cs stripe payment-link-create:*)" \
+    "Bash(.venv/bin/cs stripe payment-link-create:*)" \
+    "Bash(python -m cs stripe payment-link-create:*)" \
+    "Bash(python3 -m cs stripe payment-link-create:*)" \
+    "Bash(cs stripe payment-link-create:*)" \
     "Bash(.venv/bin/python -m cs draft-send:*)" \
     "Bash(.venv/bin/python3 -m cs draft-send:*)" \
     "Bash(.venv/bin/cs draft-send:*)" \

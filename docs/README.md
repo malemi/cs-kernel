@@ -35,3 +35,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Bootstrap release and requested clone adoption](execution-plans/2026-10-11-bootstrap-release.md) — release boundary and verification; [brief](briefs/2026-10-11-bootstrap-release.md).
 
 - [Bootstrap names and default route](execution-plans/2026-10-11-bootstrap-name.md) — untagged skill and company-guide names, local loading default and safe restamping; [brief](briefs/2026-10-11-bootstrap-name.md).
+
+- [Explicit Stripe Payment Links](execution-plans/2026-10-20-stripe-payment-links.md) — bounded EUR creation, retry safety and activation limits; [brief](briefs/2026-10-20-stripe-payment-links.md).

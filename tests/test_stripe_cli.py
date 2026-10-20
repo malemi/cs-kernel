@@ -5,6 +5,7 @@ import asyncio
 import contextlib
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -33,6 +34,8 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
         self.calls = []
         self.status = 'connected'
         self.error = None
+        self.error_message = 'SECRET provider error'
+        self.link_override = {}
         self.mode = 'test'
         self.generation = 4
         self.account = 'acct_fixture'
@@ -52,11 +55,17 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
             self.calls.append((method, params))
             response = {'jsonrpc': '2.0', 'id': frame['id']}
             if self.error:
-                response['error'] = {'code': self.error, 'message': 'SECRET provider error', 'data': 'SECRET'}
+                response['error'] = {'code': self.error, 'message': self.error_message, 'data': 'SECRET'}
             elif method == 'stripe.status':
                 response['result'] = {'status': self.status, 'generation': 4,
                     'account': {'id': 'acct_fixture', 'name': 'Fixture'}, 'mode': 'test',
                     'capabilities': ['customers', 'payments', 'invoices', 'subscriptions']}
+            elif method == 'stripe.payment_link_create':
+                response['result'] = {'account_id': self.account, 'mode': self.mode,
+                    'generation': self.generation, 'retrieved_at_utc': '2026-10-20T00:00:00Z',
+                    'request_id': params['request_id'], 'currency': 'eur', 'amount_minor': params['amount_minor'],
+                    'id': 'plink_fixture', 'price_id': 'price_fixture', 'url': 'https://buy.stripe.com/fixture',
+                    **self.link_override}
             else:
                 row = {'id': params.get('id', 'pi_fixture'), 'amount': 12345678901234567,
                     'currency': 'jpy', 'status': 'succeeded'}
@@ -119,6 +128,44 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn('pi_fixture', out)
             setattr(self, field, previous)
 
+    async def test_explicit_creation_exact_params_and_evidence(self):
+        args = ('payment-link-create', '--amount-minor', '3500', '--label', 'Human item', '--request-id', 'human-request-0001')
+        code, out, err = await self.command(*args)
+        self.assertEqual((code, err), (0, ''))
+        self.assertEqual(json.loads(out)['amount_minor'], 3500)
+        self.assertEqual(self.calls[-1], ('stripe.payment_link_create', {'amount_minor': 3500, 'label': 'Human item', 'request_id': 'human-request-0001'}))
+        for field, value in [('amount_minor', 35), ('currency', 'usd'), ('request_id', 'other'), ('url', 'https://evil.example/x')]:
+            self.link_override = {field: value}
+            code, out, _ = await self.command(*args)
+            self.assertEqual(code, 1)
+            self.assertNotIn('https://', out)
+
+    async def test_headless_typed_and_raw_create_refuse_before_rpc(self):
+        with patch.dict(os.environ, {'CS_OPERATOR_HEADLESS': '1'}):
+            code, out, _ = await self.command('payment-link-create', '--amount-minor', '3500', '--label', 'Human item', '--request-id', 'human-request-0001')
+            self.assertEqual(code, 1)
+            self.assertIn('interactive', out)
+            runner = RUNNER.replace("main(['stripe',", "main(['rpc',")
+            code, out, _ = await self.command('stripe.payment_link_create', '{}', runner=runner)
+            self.assertEqual(code, 1)
+            self.assertIn('interactive', out)
+        self.assertEqual(self.calls, [])
+
+    async def test_write_permission_errors_safe_and_actionable(self):
+        from cs import stripe_cli, rpc
+        class Client:
+            async def call(self, *args, **kwargs):
+                raise rpc.EngineError(-32045, 'price_write_permission: SECRET')
+        with self.assertRaisesRegex(stripe_cli.StripeClientError, 'Prices and Products'):
+            await stripe_cli.call(Client(), 'stripe.payment_link_create', {})
+        self.assertEqual(self.calls, [])
+
+    async def test_invalid_creation_refuses_before_rpc(self):
+        for amount, label, request in [('0', 'Item', 'human-request-0001'), ('3500', '', 'human-request-0001'), ('3500', 'Item', '../bad')]:
+            code, out, _ = await self.command('payment-link-create', '--amount-minor', amount, '--label', label, '--request-id', request)
+            self.assertEqual(code, 1)
+        self.assertEqual(self.calls, [])
+
     async def test_invalid_limits_and_write_or_key_verbs_rejected_before_rpc(self):
         for args in (('customers', '--limit', '0'), ('customers', '--limit', '51'),
                      ('connect',), ('refund',), ('detail', 'arbitrary', 'x'), ('customers', '--api-key', 'SECRET')):
@@ -160,8 +207,17 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
                 self.assertIn('cs rpc stripe.status', canonical.decode())
                 for marker in ('host transcript', 'untrusted evidence', 'shared memory', 'Interactive-only'):
                     self.assertIn(marker, canonical.decode())
-                for rel in ('.claude/settings.json', 'bin/cs_operator_cron.sh'):
-                    self.assertNotIn('cs-stripe', (clone / rel).read_text())
+                spells = ('.venv/bin/python -m cs', '.venv/bin/python3 -m cs', '.venv/bin/cs', 'python -m cs', 'python3 -m cs', 'cs')
+                settings = json.loads((clone / '.claude/settings.json').read_text())['permissions']
+                cron = (clone / 'bin/cs_operator_cron.sh').read_text()
+                for prefix in spells:
+                    for cmd in ('rpc stripe.payment_link_create', 'stripe payment-link-create'):
+                        rule = f'Bash({prefix} {cmd}:*)'
+                        self.assertIn(rule, settings['ask'])
+                        self.assertNotIn(rule, settings['deny'])
+                        self.assertIn(rule, cron)
+                self.assertIn('stripe.payment_link_create', canonical.decode())
+                self.assertIn('SAME', canonical.decode())
 
 
 if __name__ == '__main__':

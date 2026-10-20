@@ -102,6 +102,20 @@
       "Glob",
       "Grep"
     ],
+    "ask": [
+          "Bash(.venv/bin/python -m cs rpc stripe.payment_link_create:*)",
+          "Bash(.venv/bin/python3 -m cs rpc stripe.payment_link_create:*)",
+          "Bash(.venv/bin/cs rpc stripe.payment_link_create:*)",
+          "Bash(python -m cs rpc stripe.payment_link_create:*)",
+          "Bash(python3 -m cs rpc stripe.payment_link_create:*)",
+          "Bash(cs rpc stripe.payment_link_create:*)",
+          "Bash(.venv/bin/python -m cs stripe payment-link-create:*)",
+          "Bash(.venv/bin/python3 -m cs stripe payment-link-create:*)",
+          "Bash(.venv/bin/cs stripe payment-link-create:*)",
+          "Bash(python -m cs stripe payment-link-create:*)",
+          "Bash(python3 -m cs stripe payment-link-create:*)",
+          "Bash(cs stripe payment-link-create:*)"
+    ],
     "deny": [
       "Bash(.venv/bin/python -m cs campaign send-draft:*)",
       "Bash(.venv/bin/python3 -m cs campaign send-draft:*)",
