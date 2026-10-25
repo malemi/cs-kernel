@@ -1045,7 +1045,47 @@ def _publication_lock(directory):
         os.close(descriptor)
 
 
+def _publication_failure(settings, stage, exc):
+    try:
+        from . import operator_inventory_material as material
+        from .observability_causal import decision
+        from .observability_producers import emit, error_metadata
+        if isinstance(exc, material.MaterialValidationError):
+            diagnostic = decision("discovery_publication", exc.cause, layer="source", phase="discovery",
+                command="unanswered", method="operator.discovery." + stage,
+                review_material=exc.review_material, gmail_draft_material=exc.gmail_draft_material)
+        else:
+            diagnostic = decision("causal_evidence", "unknown", layer="source", phase="discovery",
+                command="unanswered", method="operator.discovery." + stage, outcome="unknown")
+        emit(settings, "discovery", "failed", level="ERROR", reason="incomplete-input",
+            effect_certainty="none", command="unanswered", method="operator.discovery." + stage,
+            causal=diagnostic, **error_metadata(exc))
+        exc._cs_publication_diagnostic = True
+    except Exception:
+        pass
+
+
 def _publish_discovery(result):
+    try:
+        return _publish_discovery_impl(result)
+    except Exception as exc:
+        current = exc
+        recorded = False
+        for unused in range(8):
+            recorded = recorded or getattr(current, "_cs_publication_diagnostic", False) is True
+            current = current.__cause__
+            if current is None:
+                break
+        if not recorded:
+            try:
+                from . import config
+                _publication_failure(config.load(), "prepare", exc)
+            except Exception:
+                pass
+        raise
+
+
+def _publish_discovery_impl(result):
     import os
     import sys
     from pathlib import Path
@@ -1127,26 +1167,32 @@ def _publish_discovery_locked(result, settings, context, directory):
         "output_sha256": hashlib.sha256(output).hexdigest(), "discovery": value},
         ensure_ascii=False, default=str).encode()}
     from . import operator_inventory_material as material
-    raw = expected["discovery.json"]
-    record = material.parse(raw)
-    binding = view.binding_for(raw, record, context)
-    text = view.produce(record, binding)
-    records, sources = material.load_sources(directory, context, record["discovery"], view.read_private)
-    raw_view = material.append(text, records).encode()
-    envelope = {"schema": "cs.semantic_inventory.envelope.v2", **binding,
-        "supervisor": context["supervisor"], "view_sha256": hashlib.sha256(raw_view).hexdigest(),
-        "view_bytes": len(raw_view), "page_plan": [view._page_text(directory / "inventory-view.jsonl", begin, end)
-            for begin, end in view._pages(raw_view)], "workset_sources": sources}
-    expected["inventory-view.jsonl"] = raw_view
-    expected["inventory-view-envelope.json"] = view.envelope_bytes(envelope)
-    expected["inventory-view-progress.json"] = json.dumps(view.progress_value(
-        envelope, directory / "inventory-view.jsonl", 0, raw_view)).encode()
     snapshots = {}
+    stage = "parse"
     try:
+        raw = expected["discovery.json"]
+        stage = "parse"
+        record = material.parse(raw)
+        binding = view.binding_for(raw, record, context)
+        stage = "view"
+        text = view.produce(record, binding)
+        stage = "material"
+        records, sources = material.load_sources(directory, context, record["discovery"], view.read_private)
+        raw_view = material.append(text, records).encode()
+        envelope = {"schema": "cs.semantic_inventory.envelope.v2", **binding,
+            "supervisor": context["supervisor"], "view_sha256": hashlib.sha256(raw_view).hexdigest(),
+            "view_bytes": len(raw_view), "page_plan": [view._page_text(directory / "inventory-view.jsonl", begin, end)
+                for begin, end in view._pages(raw_view)], "workset_sources": sources}
+        expected["inventory-view.jsonl"] = raw_view
+        expected["inventory-view-envelope.json"] = view.envelope_bytes(envelope)
+        expected["inventory-view-progress.json"] = json.dumps(view.progress_value(
+            envelope, directory / "inventory-view.jsonl", 0, raw_view)).encode()
+        stage = "capture"
         remaining()
         operator_health.capture(output, value, code, settings.engine_owner_uid)
         snapshots = _publication_snapshot(directory, expected)
         remaining()
+        stage = "verify"
         loaded_path, raw_view, envelope = view.load(context)
         expected["inventory-view.jsonl"] = raw_view
         expected["inventory-view-envelope.json"] = view.envelope_bytes(envelope)
@@ -1199,8 +1245,16 @@ def _publish_discovery_locked(result, settings, context, directory):
             remaining()
         if time.monotonic() >= result["final_deadline"]:
             raise TimeoutError("discovery final deadline")
+        from .observability_causal import decision
+        from .observability_producers import emit
+        diagnostic = decision("discovery_publication", "publication_prepared", layer="source",
+            phase="discovery", command="unanswered", method="operator.discovery.publication",
+            outcome="accepted", expected=4, observed=len(snapshots))
+        emit(settings, "discovery", "verified", reason="none", effect_certainty="verified",
+            command="unanswered", method="operator.discovery.publication", causal=diagnostic)
         return (output.decode() if legacy_directory is not None else output.decode() + "Ordinary discovery artifact: " + str(directory / "discovery.json") + "\n"), code
     except Exception as exc:
+        _publication_failure(settings, stage, exc)
         try:
             snapshots = _publication_snapshot(directory, expected)
         except Exception:

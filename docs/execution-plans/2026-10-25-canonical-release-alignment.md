@@ -27,6 +27,41 @@ Verification: focused previously failing tests pass for demonstrated reasons; fu
 Run new diagnostic/integrity regression paths explicitly if not yet wired into the harness. Preserve failure receipts and actual command/output hashes.
 Review M2 before dependent package acceptance.
 
+
+### Reopened M2 — actual draft material compatibility and publication diagnostics
+
+Canonical executor owns only `cs/operator_inventory_material.py`, the actual
+publication/fallback boundary in `cs/unanswered.py`, and focused regressions;
+the lead owns retained-input replay and a fresh blind diagnostic check. The
+verified failed input is `run-ojxx7tc9/workset-review.json`: six Gmail draft
+fields (`bcc`, `from`, `identity_headers_valid`, `is_draft`, `mime_plain_only`,
+`mime_structure`) are rejected before discovery capture. Retained tasks validate.
+Add only the typed optional fields justified by the actual Gmail producer and
+full retained rows, including nested MIME shape where present. Preserve the
+closed schema, unknown-field/type rejection, owner/nonce/digest/source bindings,
+full material projection, privacy and all assignment/action guards. Never drop
+fields, ignore invalid material or replace the private inventory with a summary.
+
+Make every pre-capture publication failure retain a finite sanitized cause,
+actual stage/check and source origin under the existing trace/run identity.
+The guard must cover material parsing, view production and material loading as
+well as capture; a generic scheduled fallback must not erase that diagnostic.
+Unknown causes stay explicit. Do not expose mail/header/body values, raw exception
+text, credentials or local private payloads. Keep failure exit3, containment and
+no-action behavior; logging does not grant execution authority.
+
+Verification before any paid retry: validate both exact retained worksets; run
+the real scheduled publication/CLI path with retained local input and demonstrate
+complete bound discovery/view/envelope output. Exercise all six producer fields,
+nested values and absent optional fields; reject a seventh unknown field, invalid
+types, mismatched binding and publication failure at each guarded stage. Assert
+safe finite diagnostics survive the scheduled fallback and appear through the
+installed log/inbox path; a fresh blind reviewer must infer the failed check and
+possible cause without the private truth. Run focused material/publication,
+complete native receipt and causal regression suites plus `bash tests/run.sh`
+with the genuine golden inputs. Fresh affected M2/M3 integration review is needed;
+prior M1–M3 approvals remain historical scoped evidence, not approval of new code.
+
 ## M3 — add a minimal release-bound installed integrity check
 Canonical executor owns one operator-visible read-only CLI route,extending existing CLI/package inventory surfaces; no watchdog,repair daemon or new monitoring infrastructure.
 Compare the actual imported installed cs files and packaged resources,including unexpected files,against independently obtained immutable release content. Resolve the declared tag and expected commit from the truthful clone pin/lock; verify the requested immutable commit before constructing a clean package reference.
@@ -34,7 +69,7 @@ Do not trust version text,installed RECORD or a reference manifest copied from t
 The command reports release identity and exact mismatches and never repairs site-packages. Normal recovery is reinstalling a reviewed immutable package through supported installation.
 Verification: clean isolated release installation passes; modifying Python and a packaged template fails; an unexpected package file fails; editing RECORD to bless modified bytes still fails; wrong revision/import shadowing and unavailable reference yield explicit non-success; source and installer paths remain separate.
 Document network/reference requirements and the limit that this is accidental-drift verification,not attestation against a malicious interpreter or command.
-Implementation refinement: use the single `cs verify-install` route described by the retained integrity design; compare actual imported package files against independently resolved immutable Git object content, not dirty reference files or installed RECORD. The final installed-only native consumer also requires actual discovery producer root/PYTHONPATH fields beside its existing payload digest; add and test those two observed private receipt fields without changing discovery output, business guards or deadlines. This bounded diagnostic linkage is reviewed with M3 before FULL. Review M3 before final source freeze. Reconcile shipping documentation and obtain prepublication semantic/source review before freezing. Run the green suite, commit all shipping source and final release metadata for the next unused MINOR (currently0.54.0), and create its local immutable tag immediately. Capture that exact commit/tag and built artifact; no shipping code or metadata may change after acceptance without a new candidate and applicable review.
+Implementation refinement: use the single `cs verify-install` route described by the retained integrity design; compare actual imported package files against independently resolved immutable Git object content, not dirty reference files or installed RECORD. The final installed-only native consumer also requires actual discovery producer root/PYTHONPATH fields beside its existing payload digest; add and test those two observed private receipt fields without changing discovery output, business guards or deadlines. This bounded diagnostic linkage is reviewed with M3 before FULL. Review M3 before final source freeze. Reconcile shipping documentation and obtain prepublication semantic/source review before freezing. Run the green suite, commit all shipping source and final release metadata for the next unused MINOR (currently0.55.0), and create its local immutable tag immediately. Capture that exact commit/tag and built artifact; no shipping code or metadata may change after acceptance without a new candidate and applicable review.
 
 ## M4 — prove FULL behavior on both exact candidate installations before publication
 Lead owns safe-run coordination and spending limits; the existing protected-fixture runner owner owns live execution; independent verifier owns provider/engine readback.
@@ -46,11 +81,42 @@ Verification: original signed fresh FULL result validates the exact final packag
 The current FULL policy has missing historical temporary paths and no release evidence. Reconstruct supported authentic references where possible. If producer enrollment is hard-coded to historical paths, a separately reviewed candidate-neutral enrollment correction may bind the actual immutable package without weakening any oracle, signature, owner, effect or native-job check; orient the owning repository first and retain its own source/tests/review evidence. Never use a path alias, fake receipt or mode relabeling to evade validation. Missing safe fixture,credentials,runner capability,approved bounded budget or required authority blocks publication while independent canonical work continues. Do not classify incomplete jobs or legitimate unrelated holds as completed proof without the existing structural evidence.
 Review M4 before publication; any substantive candidate edit returns to affected checks and fresh candidate-bound acceptance.
 
+
+### Replacement candidate and one repaired M4 attempt
+
+Keep local `v0.54.0` at `e5f68b2` immutable and unpublished as the failed candidate.
+Its already installed version must not acquire different bytes. After the named
+M2 repair and applicable approvals, recheck remote tags and freeze the next unused
+MINOR, currently `v0.55.0` (remote exact-tag query returned no reference during
+this amendment). Build a fresh artifact and independently bind every shipped
+Python/resource file to its new immutable commit. Rebuild both clone environments
+through supported package installation, preserving dependency versions and all
+captured rollback/control state. Refresh actual consumer artifact/manifest/native
+digest bindings and genuine review references; do not relabel v54 evidence as55.
+Before paid execution, BOTH actual `full_runtime_identity` paths, actor preflight,
+cron inventory, retained-input publication and installed integrity must pass.
+
+The lead explicitly permits exactly ONE fresh repaired FULL attempt for this
+verified schema/publication cause, inside the original USD16 aggregate ceiling.
+Spent native cost is USD1.3509014. Cap each of the next three native jobs at USD4;
+the resulting maximum aggregate is USD13.3509014. Keep existing absolute deadlines,
+strict provider/signature/native oracle, SEND/DRAFT modes and dependency order.
+Use fresh exact originals/nonces; preserve old originals, failed evidence and any
+uncertain effects. Independent verification confirms the old crontab is restored,
+both enrollments absent and all recorded owned process identities gone. Do not
+replay an uncertain old fixture or retry another failure automatically. Any new
+paid attempt beyond this one requires a new named cause and explicit bounded lead
+decision without exceeding USD16; this amendment grants none.
+
+Only fresh successful signed two-clone evidence for55 can close M4 and permit
+publication under the existing authorization. No engine migration, new business
+feature, oracle relaxation, technical SMTP or automatic diagnostic agent is added.
+
 ## M5 — close documentation and publish the new immutable release
 Lead owns reconciliation,doc-end,version claims and publication; fresh reviewers own semantic documentation and separate final review.
 Reconcile durable docs,unchanged contracts,missing coverage and active-context shape; archive historical narrative verbatim. Explain release-only adoption,integrity verification and insufficient-log handling. Preserve explicit unresolved historical acceptance limits.
 Run doc-end mechanical completion check and explicit doc-critic; repair STALE and retain UNVERIFIABLE. Final review must inspect actual final-user evidence and refuse missing required gates.
-Recheck remote tags; v0.53.0=4f4f027 remains untouched. Select next unused MINOR,currently v0.54.0. Commit all approved shipping source before release steps; the already frozen release metadata records why/what/migration and FULL BOTH-clone tier.
+Recheck remote tags; v0.53.0=4f4f027 remains untouched. Select next unused MINOR,currently v0.55.0. Commit all approved shipping source before release steps; the already frozen release metadata records why/what/migration and FULL BOTH-clone tier.
 The final local release tag already exists before M4. Follow release-procedure.md: run bash tests/run.sh at that exact tag, retain M4 FULL proof, then make the post-tag untagged-context and immutable-anchor commit. Complete the kernel version sweep. Prepublication review does not advance the final completion baseline; adoption evidence and a separate post-adoption final review remain required.
 Publish main and new tag under the user's existing authorization. Never move an already published tag.
 Verification: release-consistency check at tag and post-tag state; frozen tested package content including metadata equals the tagged artifact; remote new tag/commit and package version match; full version-sweep inventory classifies every hit.
@@ -88,3 +154,54 @@ Current immutable candidate: local tag `v0.54.0` at `e5f68b2cbf061cfcec50e9ac386
 Both actual clone environments were replaced through UV clean builds, preserving exact non-kernel dependency versions and retaining old environments outside clone repositories. All158 Python/resource files equal immutable tag objects, with zero extras. Both actual `cs whoami` calls succeed as their respective owner. Pins and template-manifest init_data are54; final public VCS installation, public lock-only proof and publication remain pending. Prior custom permissions and company workflows are preserved during template refresh.
 
 The first real installed-consumer policy check found two preflight defects missed by fixture coverage: Path-component versus relative-string ordering in payload digest, and UV's exact reviewed wheel URL with empty archive metadata. The bounded R4 consumer correction unifies string ordering and admits only the exact reviewed local wheel URI/optional matching hash fragment, still requiring independent wheel hash and complete actual payload equality. Fifteen focused checks and actual two-clone policy validation pass; fresh preflight review and genuine FULL remain required. These are consumer-enrollment repairs, not claims of successful business acceptance.
+
+## Current M4 outcome and publication blocker
+
+The genuine root-owned run `full-installed-v54-r3` failed. Both synthetic originals
+were independently received and narrowly enrolled. MrCall ended naturally with
+supervisor exit1 and failed health; its native model returned success but generated
+no response or draft. Discovery exited3 with incomplete assignment input and no
+required discovery/inventory artifacts; full read inspection could not complete.
+Café and signup jobs did not start. The native cost was USD1.3509014, below its
+USD4 tick cap; no paid retry is running. Model success did not override the failed
+native/business gate. The exact failed packet and raw stream are retained.
+
+The scheduling-window restoration record is true; independent cleanup verification
+owns remaining process/enrollment assertions. Source/installed integrity and local
+lock-only proofs still pass, but they do not satisfy M4. Publication, public VCS
+installation and public-reference lock-only verification remain unmet. The lead
+has no authority to call FULL passed or silently waive AGENTS' before-publication
+requirement. The operator's outstanding deferral question has not been answered.
+
+Three remaining cloned-document authority contradictions were reconciled after
+the terminal run using the already reviewed canonical v54 wording: MrCall's
+AGENTS and architecture now distinguish authenticated legacy/managed authority;
+Café's bootstrap no longer claims unavailable published reads can use offline
+local files. No package, company rule, executable, permission or mode changed.
+Fresh semantic review and final review must evaluate these post-run prose changes;
+no signed final-composition or successful FULL claim is made.
+
+
+Current continuation decision: the verified material-schema/publication failure
+reopens the affected source gate; no publication waiver is assumed. The named
+repair, fresh review and unique replacement candidate precede the one bounded
+retry. The three post-terminal clone authority-prose corrections require fresh
+semantic and final review against unchanged effective guards. This amendment
+establishes scope/order/budget only. It does not establish repaired source,
+publication success, installed55 equality, blind diagnostic success or FULL pass.
+
+Maintenance coordination: the lead owns temporary `CS_PAUSE` markers on both
+clones, captured in the private evidence root's `v55-maintenance-controls.json`.
+They block new ticks during supported replacement, not running or engine work.
+Remove only marker files whose bytes match that receipt, restoring the original
+unpaused state before FULL or any handoff/yield. The unrelated Café tick finished
+naturally; no normal job was killed or replayed for package adoption.
+
+The bounded repair is source-APPROVED after precise schema/diagnostic tests and
+four real retained-input CLI controls. Optional automatic publication recovery was
+removed entirely: source errors stay available for manual diagnosis. A fresh blind
+read of the final logs distinguishes the two schema causes and preserves unknowns.
+The root-owned whole harness R3 completed exit0/all gates green; the packaged
+bootstrap clarification also passes42templates x3configs and semantic critic.
+The release metadata freezes unique55 next; fresh at-tag verification, supported
+both-clone installation and the single bounded native retry remain required.

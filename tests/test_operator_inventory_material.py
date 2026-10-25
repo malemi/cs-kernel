@@ -93,3 +93,32 @@ class MaterialTests(unittest.TestCase):
             if payload in invalid:
                 with self.assertRaises(ValueError):material.load_sources(Path('.'),context,{'triage_workset':{}},lambda path:files[path.name])
             else:material.load_sources(Path('.'),context,{'triage_workset':{}},lambda path:files[path.name])
+
+
+    def test_actual_gmail_mime_producer_fields_are_typed_optional_material(self):
+        from email.message import EmailMessage
+        from cs import gmail_drafts
+        message = EmailMessage()
+        message['From'] = 'sender@example.test'
+        message['To'] = 'receiver@example.test'
+        message['Bcc'] = 'private@example.test'
+        message['Subject'] = 'Neutral draft'
+        message.set_content('Private body')
+        row = {**gmail_drafts._header_evidence(message),
+               **gmail_drafts._mime_evidence(message.as_bytes()), 'is_draft': True}
+        row = json.loads(json.dumps(row))
+        path = 'workset-review.json:/payload/gmail_drafts/*'
+        material.validate(row, path)
+        material.validate({}, path)
+        for key, bad in [('bcc', []), ('from', None), ('identity_headers_valid', 1),
+                         ('is_draft', 'true'), ('mime_plain_only', 0),
+                         ('mime_structure', 'plain'), ('mime_structure', [[None, None, None]]),
+                         ('mime_structure', [['text/plain', None]]),
+                         ('mime_structure', [['text/plain', {}, None]])]:
+            with self.subTest(key=key, bad=bad), self.assertRaises(material.MaterialValidationError):
+                material.validate({**row, key: bad}, path)
+        with self.assertRaises(material.MaterialValidationError) as failure:
+            material.validate({**row, 'unrecognized_secret': 'PRIVATE_SENTINEL'}, path)
+        self.assertEqual(failure.exception.cause, 'material_unknown_field')
+        self.assertTrue(failure.exception.gmail_draft_material)
+        self.assertNotIn('PRIVATE_SENTINEL', str(failure.exception))

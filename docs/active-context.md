@@ -15,9 +15,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - Local immutable `v0.54.0` and its clean built package are installed on both
-  maintained clones. All 158 package files equal the tag; the source suite also
-  passes at the tag. Public publication, FULL and final adoption remain open.
-  Installed file overlays are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
+  maintained clones; all 158 files equal the tag and the at-tag source suite passes.
+  Current FULL failed on MrCall before fixture response/draft generation: required
+  discovery inventories were absent. Café's tick did not run. Publication remains
+  blocked by this gate; no paid retry is underway. Installed overlays are prohibited.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns evidence and remaining delivery.
 
 - Both maintained clones have DEBUG-first logs, ten-minute private filesystem collection and
   reviewed causal supervisor diagnostics. Ordinary trace/inbox access preserves the actual failed
@@ -43,7 +45,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   references block whole-task closure; [the plan](execution-plans/2026-10-24-stripe-payment-method-link.md)
   owns remaining gates. Public package pins and other engine services are preserved.
 
-- **Latest release tag: `v0.54.0`. Current HEAD status: untagged.** These sentences
+- **Latest release tag: `v0.55.0`. Current HEAD status: tagged as `v0.55.0`.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones now pin local `v0.54.0` at `e5f68b2`; publication and
   public Git provenance remain pending. The previously tainted environments are
@@ -63,7 +65,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 - [Bounded review reads](execution-plans/2026-10-13-bounded-review-assignment-reads.md) retain
   assignment validation, incomplete-scope holds and per-request bounds. There is no universal
   90-second whole-review guarantee.
-- [Scheduled intake and compatible callers](operator-runtime.md) retain their hosted override and
+- [Scheduled intake and compatible callers](operator-runtime.md) retain reviewed hosted engines and
   deterministic health checks. Technical notices now retain filesystem evidence; legitimate holds
   remain separate from technical failures.
 - Reviewed assignment, address, activity, conflict and action-failure repairs remain installed on
@@ -133,4 +135,4 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 3. Validate native Gmail browser/mobile/API edit/send preservation before
    enabling automatic reconciliation.
 4. Publish/adopt only after explicit publication authorization, preserving the
-   distinction between the local override and public installer provenance.
+   distinction between the clean local release artifact and public Git provenance.

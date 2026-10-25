@@ -2853,3 +2853,10 @@ closure. No public release, engine, permission, budget or scheduler change.
   remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
   read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
   Historical FULL evidence and the red July harness remain separately retained.
+
+## 2026-10-25 — Candidate before native FULL outcome
+
+- Local immutable `v0.54.0` and its clean built package are installed on both
+  maintained clones. All 158 package files equal the tag; the source suite also
+  passes at the tag. Public publication, FULL and final adoption remain open.
+  Installed file overlays are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.

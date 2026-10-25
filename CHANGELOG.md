@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## v0.55.0 — 2026-10-25 (MINOR)
+
+Canonical release packages, complete discovery material and attributable diagnostics.
+This is the public recovery candidate after the unpublished, failed local v0.54.0;
+that earlier tag and artifact remain immutable and are not publication evidence.
+
+- Recover the reviewed kernel composition and replace installed file overlays with
+  one immutable package on both maintained clones. `cs verify-install --json`
+  checks actual imported Python/resources against independently resolved Git objects.
+- Accept the provider's six optional Gmail-draft fields with strict types, including
+  MIME triples. Unknown fields and wrong types still refuse; no assignment or send
+  authority follows from material publication.
+- Preserve complete private inventory publication for the actual task/review shape.
+  Pre-capture failures retain finite schema/stage cause and safe origin in logs,
+  preserve exit3 and remove partial artifacts. Publication success is component
+  evidence; source incidents remain available for manual diagnosis.
+- Retain DEBUG-first filesystem collection, manual-only `cs-diagnose`, disabled
+  technical SMTP and the reviewed source-corroboration diagnostics. No parser or
+  business guard is bypassed.
+
+Migration: clean supported package installation, truthful tag/lock/template pins,
+actual-byte verification and lock-only rebuilding on BOTH clones. Never patch
+installed files or inject source into normal execution.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+recovered composition touches send, authentication and permission boundaries;
+source-suite success and historical native evidence do not replace this gate.
+
 ## v0.54.0 — 2026-10-25 (MINOR)
 
 ### Canonical packages, causal diagnostics and retained operator contracts

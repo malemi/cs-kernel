@@ -672,5 +672,32 @@ except BlockingIOError:raise SystemExit(0)
         self.assertEqual(restored[0]['provider_uidvalidity'],'42')
 
 
+
+    def test_precapture_material_error_retains_source_cause_through_cli_fallback(self):
+        from cs import operator_inventory_material as material
+        with self.reservation_publication_fixture() as (fixture, discovery, result, workset):
+            def invalid(*args):
+                material.validate({'foreign': 'PRIVATE_SENTINEL'},
+                    'workset-review.json:/payload/gmail_drafts/*')
+            with patch.object(material, 'load_sources', side_effect=invalid), \
+                 patch.object(unanswered, '_scheduled_discovery', return_value=result), \
+                 contextlib.redirect_stdout(io.StringIO()) as output, \
+                 contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(cli.main(['unanswered', '--days', '14', '--json', '--all-buckets']), 3)
+            self.assertTrue(json.loads(output.getvalue())['assignment_incomplete'])
+            self.assertTrue(all(not (fixture.directory/name).exists() for name in unanswered._PUBLICATION_PATHS))
+            events=[]
+            for path in (fixture.settings.state_dir/'observability').rglob('events-*.jsonl'):
+                events.extend(json.loads(line) for line in path.read_text().splitlines())
+            failed=[row for row in events if row.get('stage')=='discovery' and row.get('status')=='failed']
+            self.assertTrue(failed)
+            row=failed[-1]
+            self.assertEqual(row['causal']['cause'], 'material_unknown_field')
+            self.assertEqual(row['method'], 'operator.discovery.material')
+            self.assertTrue(row['causal']['facts']['gmail_draft_material'])
+            self.assertEqual(row['error_file'], 'cs/operator_inventory_material.py')
+            self.assertNotIn('PRIVATE_SENTINEL', json.dumps(failed))
+
+
 if __name__ == '__main__':
     unittest.main()

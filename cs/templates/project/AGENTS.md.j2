@@ -94,10 +94,10 @@ else claiming exception status needs the same standard of proof.
 ## 1. Where the machinery is written down
 
 - **Start interactive work with `cs-bootstrap`** to choose the route for the
-  task: load company procedures and instructions from this clone, read the
-  relevant skill body, or discover systems connected to the engine. A request
-  to load procedures into session memory uses direct local reads and works
-  without MCP or a reachable engine. Invoke it before telling the operator that
+  task: read effective published procedures, the relevant workflow context,
+  or systems connected to the engine. Procedure loading uses authenticated
+  `cs standing-instructions` and requires a reachable engine. Local notes never
+  replace an unavailable published read. Invoke it before telling the operator that
   a system, account, connector or integration is missing or unavailable; the
   agent host's own tool list does not list the engine's systems.
 - **Engine daemon, headless auth, RPC response shapes, the daily pipeline** —

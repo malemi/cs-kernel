@@ -112,6 +112,15 @@ controls, unknown exceptions and unavailable logging. Installed release acceptan
 remains owned by the current release plan. The historical ACCOUNTING trace itself
 is not rewritten, and its source-body parser behavior is unchanged.
 
+Discovery publication provides another regression boundary: a successful native
+model cannot compensate for a missing inventory. Validate retained real task/review
+payloads against the actual producer contract, exercise the scheduled publication CLI,
+and test both complete artifact/source commitments and failure containment. Precise
+pre-capture schema/stage evidence supports a log-only hypothesis; an unclassified view
+failure remains explicitly unknown. A later verified publication is component evidence;
+source publication incidents remain retained for manual diagnosis and are never
+cleared by an unrelated supervisor success.
+
 This workflow is recurring. A passing previous trial does not certify all paths,
 all future incidents or customer-service autonomy. Every newly observed problem
 reopens these two questions for its own actual diagnostic path.

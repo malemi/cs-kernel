@@ -45,9 +45,9 @@ with tempfile.TemporaryDirectory(prefix='cs-integrity-test-') as temporary:
         packaged = {name for name in archive.namelist() if name.startswith('cs/') and not name.endswith('/')}
     assert packaged == tracked, {'missing': sorted(tracked-packaged), 'extra': sorted(packaged-tracked)}
     environment = base / 'venv'
-    venv.EnvBuilder(with_pip=True, system_site_packages=True).create(environment)
+    venv.EnvBuilder(with_pip=True).create(environment)
     python = environment / 'bin/python'
-    run([python, '-m', 'pip', 'install', '--no-deps', '--ignore-installed', wheel], base)
+    run([python, '-m', 'pip', 'install', wheel], base)
     clone = base / 'clone'
     clone.mkdir()
     env = dict(os.environ)
@@ -61,8 +61,8 @@ with tempfile.TemporaryDirectory(prefix='cs-integrity-test-') as temporary:
     def check(label, ok=False, error=None, options=None, environment_override=None):
         result = subprocess.run(options or command, cwd=clone, env=environment_override or env,
                                 capture_output=True, text=True, timeout=90)
-        value = json.loads(result.stdout)
         assert 'Traceback' not in result.stderr, (label, result.stderr)
+        value = json.loads(result.stdout)
         assert (result.returncode == 0) == ok and value['ok'] == ok, (label, result.returncode, value, result.stderr)
         if error:
             assert value.get('error') == error, (label, value)

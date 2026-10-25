@@ -119,6 +119,24 @@ The [log-driven diagnosis workflow](log-diagnosis-workflow.md) defines the
 mandatory detect → explain → improve → blind-check loop, its evidence standards,
 acceptance cases and current coverage limits.
 
+## Discovery publication diagnostics
+
+Scheduled discovery validates complete retained task/review material before publishing
+its private inventory. The Gmail draft schema includes the provider's optional Bcc,
+From, identity flags and typed MIME triples; unknown keys or wrong types still refuse.
+These observations grant no assignment, source-inspection or send authority.
+
+The `discovery_publication` source check identifies material unknown-field/type
+errors and complexity refusal. Source-binding and otherwise unclassified failures
+retain an explicit unknown cause with their publication stage. Its finite
+`operator.discovery.*` method identifies parse, view, material, capture or verification.
+Safe boolean facts distinguish review and Gmail-draft material; raw exceptions, field
+values and message bodies never enter the diagnostic event. Failed publication keeps
+exit3 and removes owned partial artifacts. A complete verified publication emits
+`publication_prepared` as component evidence for all four artifacts. Source publication
+incidents remain retained for operator diagnosis; this signal and supervisor/model
+success do not automatically clear them. No automatic incident-closure feature is added.
+
 ## Interactive source-corroboration diagnostics
 
 Draft preparation preserves a separate failed local check alongside the original

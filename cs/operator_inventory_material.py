@@ -160,7 +160,15 @@ SCHEMA_ROWS = [
     ('workset-review.json:/payload/escalated/*/owner', 'str', ''),
     ('workset-review.json:/payload/escalated/*/reason', 'str', ''),
     ('workset-review.json:/payload/gmail_drafts', 'list', ''),
-    ('workset-review.json:/payload/gmail_drafts/*', 'dict', 'body,body_complete,body_note,cc,date,engine_draft_id,engine_owner_uid,fingerprint,in_reply_to,message_id,references,subject,thread_key,to,uid,uidvalidity'),
+    ('workset-review.json:/payload/gmail_drafts/*', 'dict', 'bcc,body,body_complete,body_note,cc,date,engine_draft_id,engine_owner_uid,fingerprint,from,identity_headers_valid,in_reply_to,is_draft,message_id,mime_plain_only,mime_structure,references,subject,thread_key,to,uid,uidvalidity'),
+    ('workset-review.json:/payload/gmail_drafts/*/bcc', 'NoneType,str', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/from', 'str', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/identity_headers_valid', 'bool', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/is_draft', 'bool', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/mime_plain_only', 'bool', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/mime_structure', 'list', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/mime_structure/*', 'list', ''),
+    ('workset-review.json:/payload/gmail_drafts/*/mime_structure/*/*', 'NoneType,str', ''),
     ('workset-review.json:/payload/gmail_drafts/*/body', 'str', ''),
     ('workset-review.json:/payload/gmail_drafts/*/body_complete', 'bool', ''),
     ('workset-review.json:/payload/gmail_drafts/*/body_note', 'NoneType,str', ''),
@@ -447,20 +455,30 @@ def parse(raw):
 def commitment(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
 
+class MaterialValidationError(ValueError):
+    def __init__(self, cause, path, message):
+        super().__init__(message)
+        self.cause = cause
+        self.review_material = path.startswith('workset-review.json:')
+        self.gmail_draft_material = path.startswith('workset-review.json:/payload/gmail_drafts')
+
+
 def validate(value, path, depth=0, counter=None):
     counter = [0] if counter is None else counter
     counter[0] += 1
     if depth > 64 or counter[0] > 250000:
-        raise ValueError('material complexity')
+        raise MaterialValidationError('material_complexity', path, 'material complexity')
     shape = SCHEMA.get(path)
     if shape is None or type(value).__name__ not in shape[0]:
-        raise ValueError('unclassified material type at '+path)
+        raise MaterialValidationError('material_type_invalid', path, 'unclassified material type at '+path)
     if type(value) is dict:
         if set(value)-shape[1]:
-            raise ValueError('unknown material field at '+path)
+            raise MaterialValidationError('material_unknown_field', path, 'unknown material field at '+path)
         for key, item in value.items():
             validate(item, path+'/'+key, depth+1, counter)
     elif type(value) is list:
+        if path == 'workset-review.json:/payload/gmail_drafts/*/mime_structure/*' and (len(value) != 3 or type(value[0]) is not str):
+            raise MaterialValidationError('material_type_invalid', path, 'invalid MIME material tuple')
         for item in value:
             validate(item, path+'/*', depth+1, counter)
 
