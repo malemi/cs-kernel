@@ -14,10 +14,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Canonical release alignment targets the next unused MINOR, `v0.54.0`. Recovered
-  source and immutable-byte verification have focused approval; two-clone FULL,
-  publication and public-tag adoption remain required. Installed file overlays
-  are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
+- Local immutable `v0.54.0` and its clean built package are installed on both
+  maintained clones. All 158 package files equal the tag; the source suite also
+  passes at the tag. Public publication, FULL and final adoption remain open.
+  Installed file overlays are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
 
 - Both maintained clones have DEBUG-first logs, ten-minute private filesystem collection and
   reviewed causal supervisor diagnostics. Ordinary trace/inbox access preserves the actual failed
@@ -45,10 +45,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 - **Latest release tag: `v0.54.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
-  Both maintained clones pin public `v0.52.0` at `3c0e78c`; active repair layers
-  remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
-  read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
-  Historical FULL evidence and the red July harness remain separately retained.
+  Both maintained clones now pin local `v0.54.0` at `e5f68b2`; publication and
+  public Git provenance remain pending. The previously tainted environments are
+  retained outside clone repositories for rollback. The shared operational
+  sign-off remains `v0.51.0` until current acceptance closes. Historical FULL
+  evidence remains separately retained.
 - [Exact draft lifecycle](draft-lifecycle.md) has real IMAP/SMTP acceptance and authenticated exact
   retirement/Sent recording on both hosted engines. Owner/full-ID provider mirrors and ordinary
   exact-ID interactive sending are verified. Automatic reconciliation is off; native Gmail edit/send

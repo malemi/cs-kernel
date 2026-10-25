@@ -2841,3 +2841,15 @@ Historical replay proves the framing correction without new model/provider calls
 it does not establish new native/Café/provider behavior or USD4 feasibility.
 The plan stays active pending separately authorized ordinary acceptance and final
 closure. No public release, engine, permission, budget or scheduler change.
+
+## 2026-10-25 — Pre-adoption release state
+
+- Canonical release alignment targets the next unused MINOR, `v0.54.0`. Recovered
+  source and immutable-byte verification have focused approval; two-clone FULL,
+  publication and public-tag adoption remain required. Installed file overlays
+  are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
+
+  Both maintained clones pin public `v0.52.0` at `3c0e78c`; active repair layers
+  remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
+  read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
+  Historical FULL evidence and the red July harness remain separately retained.
