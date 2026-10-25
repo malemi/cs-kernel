@@ -220,3 +220,31 @@ whether to defer that mandatory gate for immediate publication of this exact
 verified candidate; no answer is inferred from elapsed time. Without an explicit
 derogation, the one approved repaired native run remains required. Temporary
 maintenance markers are still owned and must be restored before that run/yield.
+
+## Bounded publication-anchor correction (review before mutation)
+
+The frozen55snapshot accidentally requires unpublished failed tag54 in its
+published-tag test inventory. Fresh public checkout would fail CI when that
+private candidate correctly stays unpublished. Neither54 nor55 is remote.
+Correct only this release bookkeeping: preserve initial55commit f446dee under
+an immutable local non-release candidate reference; remove unpublished54/55
+anchors from the new tag's test snapshot, create a test/docs-only correction
+commit and retarget only the still-unpublished local55reference. Then add the
+corrected55anchor in the normal post-tag untagged commit. Never publish54 or
+force-move any remote tag.
+
+This exception permits reuse of exact-package FULL across that source-provenance
+correction only if independent review proves the complete cs Git tree, pyproject,
+README/license/other wheel inputs and the actual built wheel remain byte-identical.
+The actual installed environments, manifests/policies enrolled in running FULL and
+hosted engines must remain untouched until that run terminates. Preserve every
+initial manifest/report/signed or failed result; record both source commits and
+new-tag equivalence separately. This changes no package version, behavior, budget,
+authority, oracle or required FULL outcome and authorizes no extra paid attempt.
+
+Before publication, separately review actual new-tag equivalence and a fresh
+checkout containing only public release refs plus corrected55. Run the complete
+source suite at the corrected local tag while native FULL continues against the
+identical immutable wheel. Final public-origin adoption must verify actual bytes
+against the corrected public Git commit. Missing equality or evidence blocks
+publication and invalidates this exception; do not silently relabel old proof.

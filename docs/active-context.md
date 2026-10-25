@@ -46,7 +46,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   references block whole-task closure; [the plan](execution-plans/2026-10-24-stripe-payment-method-link.md)
   owns remaining gates. Public package pins and other engine services are preserved.
 
-- **Latest release tag: `v0.55.0`. Current HEAD status: untagged.** These sentences
+- **Latest release tag: `v0.55.0`. Current HEAD status: tagged as `v0.55.0`.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones now pin local `v0.55.0` at `f446dee`; publication and
   public Git provenance remain pending. The previously tainted environments are
