@@ -113,9 +113,10 @@ adds a private per-attempt discovery artifact to the canonical `/cs-operator`
 run. Its nonce, owner and actual process ancestry bind the bounded complete CLI
 result to that attempt. Ordinary output supplies its path; protected runs can
 read the existing current health context instead. Capture grants no authority.
-Clipped native discovery requires contiguous matching bounded `dd` reads through
-EOF of the full raw artifact or the validated semantic view AND envelope before
-recognized drafting. Native identity, configuration, tasks, discovery,
+Clipped native discovery requires complete genuine current automatic context or
+contiguous matching bounded `dd` reads through EOF of the validated semantic view
+AND envelope before recognized drafting. Scheduled v2 recurring material cannot
+be replaced by raw discovery alone. Native identity, configuration, tasks, discovery,
 campaign and review results are required, plus enabled founder reads.
 
 Health assessment, filesystem recording and pending-recording retry are deterministic
@@ -212,11 +213,10 @@ close. These client limits do not cancel actual server ingestion. The separately
 reviewed engine contract retains its synchronization lock until actual work
 finishes. Failed or malformed intake stops before either model and records a
 credential-free operational problem; the next eligible scheduled tick tries again.
-Source checks pass and both ordinary clone interpreters use the reviewed
-[hosted source override](execution-plans/2026-10-13-hosted-kernel-repair-adoption.md).
-The retained R9 controlled hosted acceptance passes for its frozen base; it
-does not certify all ordinary queues. The ordinary-health repair above addresses
-the later clipped-discovery failure. Overrides remain separate from public pins.
+Both normal clone interpreters use clean immutable local release packages;
+`cs verify-install` and the current release plan own their actual-byte verification.
+Historical hosted-override and R9 evidence certifies only its frozen candidate,
+not current ordinary queues or public Git installation provenance.
 
 ## Scheduled reply origin — local candidate
 
@@ -437,13 +437,15 @@ inventory-view-progress.json beside unchanged discovery.json. The readable view
 keeps every global root/group/ordered occurrence, ownership/hold/error/reason,
 material fact, workset selection and ordered observation semantic judgement.
 Opaque commitments and selected message/provider navigation stay RAW REF, not
-native-inspected case detail. Unknown fields/material shapes refuse compact use;
-the genuine complete raw route remains supported even on the current package.
+native-inspected case detail. Unknown fields/material shapes refuse compact use.
+Scheduled v2 requires the paired material view and envelope, including tasks and
+review rows; raw discovery alone cannot replace that recurring material.
 
 Envelope/raw/view hashes, owner/nonce/ancestry/supervisor/source bind the exact
 projection. Actor independently recomputes its typed field/universe parity and
-matches native stream commitments/process/session to exact successful bounded dd
-results for BOTH envelope and view through EOF before recognized effects. Current
+matches native stream commitments/process/session to complete genuine automatic
+context or exact successful bounded dd results for BOTH envelope and view through
+EOF before recognized effects. Current
 engine guards and fresh selected-root deep reads remain required. The assessment
 is after terminal, not an additional runtime action-prevention gate; separate
 ordinary inspection status prevents clean native terminal from implying success.
@@ -456,8 +458,9 @@ calls may be issued together; no shell loop/script/summarizer or synthetic nativ
 messages are introduced. No extra model requests or permission/budget/engine/
 scheduler change. The historical pre-framing replay uses six view pages plus one envelope
 (43,313 bytes); about56% fewer bytes and46.15% fewer calls than13
-raw reads, withoutUSD4 or compliance guarantees. The117-file semantic payload is installed and independently verified offline in both clones. Actual current Café compact/native path and ordinary/provider
-acceptance remain separate unverified obligations.
+raw reads, withoutUSD4 or compliance guarantees. The historical117-file semantic payload retains its offline evidence; current
+installed package identity belongs to `cs verify-install` and the release plan.
+Current compact/native and ordinary/provider acceptance remain separate gates.
 
 ## Source-bound business read outcomes
 
@@ -530,56 +533,44 @@ paid case or release follows.
 
 ## Native inventory context delivery and retained EOF framing
 
-Both normal clones now use120-file payload
-`6b71cb5b0b3f4bf8c601699e3323c51f10b8072f2556a260904942f8114096a9`.
-Historical117-file `38ba43b9` EOF and `ad65ef1b` normalization installations
-remain retained evidence. The current payload preserves their framing and guards.
+The canonical producer offers48 bounded slots at both PostToolUse and
+UserPromptSubmit. Both normal clone interpreters must pass `cs verify-install`
+against the declared immutable release before adoption is considered verified.
+Hook settings alone do not prove native delivery or ordinary acceptance.
 
-The supervisor adds only a private hook settings overlay and native hook events.
-Sixteen fixed slots at PostToolUse and UserPromptSubmit can deliver the current
-validated envelope and view. Each complete visible value must stay below10000
-UTF-16 units; reserved reminder markers, capacity overflow, stale/foreign files,
-nonce/session/source/process mismatch and missing parts grant no compact proof.
-Valid literal paging remains supported. Hook input is bounded at4MiB, including
-large tool responses. Initial background completion may have no artifact; a
-later valid boundary can deliver it, but cannot repair an earlier effect.
+Each slot carries at most7000 characters of the exact paired envelope and view.
+Every complete visible value must remain below10000 UTF-16 units. Input is
+bounded at4MiB. Reserved markers, stale or foreign files, wrong owner/nonce/
+session/source/process, duplicate parts and missing parts grant no compact proof.
+An initial boundary without published artifacts is not a technical error; a later
+boundary can deliver current artifacts but cannot repair an earlier effect.
+
+A valid snapshot requiring more slots records finite `discovery_context_capacity`
+/ `context_slots_exhausted` evidence with required and available counts and the
+safe producer origin. The private diagnostic contains no mailbox content or
+exception text. Capacity refusal grants no inspection credit; valid complete
+literal paging remains supported. Diagnostic recording does not authorize replay.
 
 Kernel assessment and the independent Actor consumer require complete genuine
-paired payloads before effects. Indexed reconstruction preserves actual event
-order; generic hook execution or progress grants no coverage. Deduplication is
-per exact snapshot/session/part. A failed write after its dedup marker can leave
-missing proof; this grants no replay authority. Assessment remains post-terminal,
-with current engine action guards and fresh selected-root reads mandatory.
+paired payloads before effects. Indexed reconstruction preserves exact bytes and
+actual event order. Complete current automatic context is an alternative to the
+literal page plan; generic hook execution, partial context and progress are not
+coverage. Every retained task/review row, hold, root and semantic judgement remains
+mandatory. RAW REF details require fresh selected-root authority, thread, dossier,
+history and dedup reads before effects. Existing engine action guards remain
+mandatory; inspection assessment is post-terminal.
 
-Fresh source/activation reviews and free component controls pass. Actual local
-protocol fixtures show equal effective model/tools/permissionMode and baseline
-plus32 hook-response multiplicities. Both isolated scratch globals are normalized
-by the host from opus to opus[1m]; live source settings remain unchanged. Individual
-empty-hook identities and ordinary allow/deny argv retain explicit fixture limits.
-No real provider reasoning or ordinary/background mailbox acceptance follows.
-V27 is the latest strict ordinary result: FAILED. Seven genuine parts pass
-independent pre-effect context/projection verification (42484-byte view and
-1665-byte envelope). The scheduled selected-root dossier completes in35.545747
-seconds with cleanup and explicit task-context completeness UNVERIFIED. MrCall
-creates/sends one reply; the own-fixture counterparty independently receives its
-correct content. Native event757 denies the required read-only assignment status
-command for the second selected root. The strict consumer rejects that native
-permission_denied event, so the supervisor cannot certify a complete lifecycle.
-Do not waive the denial or reinterpret the false discovery phase as a proven
-technical CLI failure. Café/signup/ACK do not run; original V27 remains FAILED.
-Two native counters2.4732952/2.5531282 are not a whole-case aggregate. Cleanup
-preserves source1116/fa356, both120-file6b71 payloads, original cron, receipt-only
-nonce-absence evidence,158 job identities plus outer driver (159 independent
-union), four free locks and seven exact runtime bindings. A prospective exact
-read-permission exception awaits fresh review; no new paid case is authorized.
-Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v27/`.
+Deduplication is per exact snapshot/session/part. Failed delivery after writing its
+marker can leave missing proof; no replay is authorized. Runtime budgets, quota
+and deadlines remain unchanged. A forecast of future cost does not prove budget
+exhaustion or justify abandoning unread material; actual limits leave incomplete
+inspection visibly failed. Source checks establish protocol behavior only.
+Genuine native retention, affordability and strict BOTH-clone FULL remain required
+for the candidate's release acceptance. The release plan owns current results.
 
 Scheduled dossiers retain complete correspondence/Sent and fresh exact selected-root
 assignment authority inside a600-second lifecycle including20-second cleanup.
-Task-list rows are observed auxiliary context, never proof of complete absence;
-malformed/explicit failures refuse. Ready clears only a read-failure marker,
-not fresh engine draft/send guards. In-progress/failed attempts hold their roots.
-The current blocker is a host denial of an existing read-only status route, not
-the repaired dossier latency. Permissions remain unchanged pending separate
-review. Actor test runner uses4200/2700 inside5400; main-runner1800 and general
-30-minute contracts remain distinct. No release/reconciliation change follows.
+Task-list rows provide auxiliary context, never complete absence. Malformed or
+explicit failures refuse; ready clears only a read-failure marker. Fresh engine
+draft/send guards remain mandatory. In-progress/failed attempts hold their roots.
+Actor runner timing and native permission acceptance remain separate obligations.

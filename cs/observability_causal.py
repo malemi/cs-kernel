@@ -9,6 +9,7 @@ import re
 import uuid
 
 PAIRS = {
+    'discovery_context_capacity': {'context_slots_exhausted'},
     'discovery_publication': {'publication_prepared', 'material_unknown_field', 'material_type_invalid', 'material_complexity'},
     'draft_source_body': {'provider_authored_unquoted_tail', 'engine_authored_unquoted_tail', 'source_authored_ambiguous', 'source_body_different'},
     'draft_source_identity': {'source_identity_uncorroborated'},
@@ -40,8 +41,8 @@ PAIRS = {
 }
 PHASES = {'identity', 'configuration', 'tasks', 'discovery', 'review', 'campaigns', 'founder_tasks', 'founder_ask'}
 COMMANDS = {'whoami', 'config', 'tasks', 'unanswered', 'review', 'campaign', 'ask', 'dossier', 'contacted', 'history', 'assignment', 'draft-reply', 'draft-send', 'chat'}
-METHODS = {'operator.discovery.publication', 'operator.discovery.prepare', 'operator.discovery.parse', 'operator.discovery.view', 'operator.discovery.material', 'operator.discovery.capture', 'operator.discovery.verify', 'draft.prepare', 'sync.run', 'operator.notice', 'operator.health.assess', 'operator.health.inspection', 'operator.health.native_read', 'operator.native.terminal', 'operator.tick'}
-FACTS = {'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
+METHODS = {'operator.discovery.context', 'operator.discovery.publication', 'operator.discovery.prepare', 'operator.discovery.parse', 'operator.discovery.view', 'operator.discovery.material', 'operator.discovery.capture', 'operator.discovery.verify', 'draft.prepare', 'sync.run', 'operator.notice', 'operator.health.assess', 'operator.health.inspection', 'operator.health.native_read', 'operator.native.terminal', 'operator.tick'}
+FACTS = {'available', 'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
 REFS = ('run_id', 'attempt_id', 'child_event_id', 'cause_event_id', 'tool_id_hash', 'session_id_hash')
 _STATE = contextvars.ContextVar('causal_decision', default=None)
 

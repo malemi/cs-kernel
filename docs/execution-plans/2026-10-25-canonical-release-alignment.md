@@ -282,3 +282,105 @@ current55waiver question is unanswered. Required delivery still includes that
 outcome/authority, publication of main plus55only, public VCS adoption/rebuilds,
 operational-pin signoff, final doc-end/independent review and baseline advancement.
 No completion, final approval, successful FULL or public provenance is claimed.
+
+
+## Reopened M2/M4 — complete inspection delivery, unique56, no waiver
+
+This continuation supersedes the preceding unanswered-waiver and no-further-retry
+statements. The operator rejected deferral and requires the genuine FULL gate.
+Keep failed54 and failed55 local, immutable and unpublished. Installed55 must not
+acquire different package bytes. The next behavior-changing candidate is unique56,
+subject to a fresh remote-tag check. Preserve all failed receipts and original
+source workspace bytes; only the isolated release worktree receives source work.
+
+### Named cause and smallest decided repair
+
+Actual retained run `run-dxbrr4n1` has a290,253-byte semantic view and6,585-byte
+envelope, totaling296,694 Unicode characters. Its complete view needs36 literal
+pages. Actual `operator_context_delivery.parts` rejects it:16slots x7,000characters
+cannot hold the current snapshot. The model then inspected only the first literal
+page and abandoned inspection based on a forecast, although its actual cost was
+USD1.3365518 below the enforced USD4cap. This establishes delivery overflow and
+premature abandonment; it does not establish that full inspection costs overUSD4.
+The six-field schema repair worked: all four artifacts exist and verify.
+
+Canonical executor owns `cs/operator_context_delivery.py`, the corresponding
+operator/triage skill templates, and focused delivery/coverage regressions.
+Extend the existing bounded delivery capacity from16to48slots without changing
+7,000-character chunks, per-native-part limits, bindings, owner/session/ancestry,
+source hashes, native-result authenticity, exact EOF coverage or effects ordering.
+Do not add a delivery mechanism or weaken the auditor. Align triage with the
+operator's existing complete-current automatic-context route. Explicitly require
+continuing complete current inspection rather than declaring budget exhaustion
+from a forecast; actual launcher budget/quota/deadline failures remain terminal
+and incomplete. Production and per-job monetary limits stay unchanged.
+
+The offline process-only48slot experiment produces43parts, maximum7,853UTF-16
+units per part below the10,000 limit, with exact envelope+view reconstruction.
+Source and artifact bytes were untouched. This is shape proof, not genuine native
+hook delivery or FULL success. The executor must verify the actual installed
+hook path emits and the native transcript retains all43parts before effects;
+configured hooks alone establish no inspection. If native capacity rejects this,
+stop the paid route and retain the exact actual limit, without inventing coverage.
+
+Do not strip material to meet a target size. Typed definitions account for only
+24,240bytes; tasks47,161,assignment coverage43,987,RAWREF index33,723,human work
+30,635,drafts20,797,and engine drafts17,524dominate instead. Bodies already are
+explicit UNINSPECTED RAWREF. No additional field has been justified for exclusion.
+The smallest repair preserves the entire290,253-byte view byte-for-byte rather
+than redesigning its semantic representation. Fresh selected-root assignment,
+body,dossier,history,dedup reads and all engine guards remain mandatory.
+
+### Free acceptance before a paid attempt
+
+1. Fresh plan reviewer approves this cause, bounded change and unchanged authority.
+2. Regression with the exact retained view/envelope proves old capacity refusal,
+   new43part exact reconstruction, all original rows/roots/holds/reasons and source
+   commitments unchanged. Check largest UTF-16 part bound, non-ASCII boundaries,
+   capacity overflow fallback, altered/missing/duplicate/foreign/late part rejection,
+   and effects before complete delivery. Exact bytes, not a passing model answer,
+   are the oracle. No private values appear in reports or checked-in fixtures.
+3. Run the real retained-input publication CLI, then the installed read-only hook
+   path with authentic current session/process binding. Inspect complete outputs
+   and genuine native evidence. Existing regression/native receipt/causal suites
+   and full `bash tests/run.sh` remain required. A fresh blind reader must identify
+   incomplete inspection and its delivery/capacity investigation route from logs;
+   preserve unknown affordability instead of claiming a quota failure.
+4. Fresh affected integration review approves source, rendered BOTH-clone skills,
+   measured delivery shape and unchanged complete-inspection audit. Add no company
+   literals or business functionality. Update present-system durable docs through
+   doc-end; historical failures remain historical evidence.
+
+### Freeze56 and one bounded genuine final attempt
+
+Review and freeze unique56 after checking remote refs. Reconcile all active
+version claims, at-tag metadata and public-tag test anchors: failed54/55 are not
+public release dependencies and must not be pushed. Preserve original55 tag and
+runtime-tested reference. Build56from its immutable Git revision, independently
+prove all shipping inputs/wheel bytes, and use supported clean installation on
+BOTH clones with exact non-kernel dependencies, effective permissions, company
+rules,SEND/DRAFT modes and rollback/control preimages preserved. Run actual
+identity, installed integrity, local lock-only, actor and cron preflight on BOTH.
+No direct site-packages edit, source overlay or same-version replacement.
+
+The lead owns the explicit budget decision for exactly ONE further genuine FULL
+attempt after these free gates and fresh review. Named cause: automatic delivery
+capacity overflow followed by speculative budget abandonment. Native aggregate
+spent isUSD2.6874532. Keep each of at most three existing native jobs cappedUSD4;
+one complete attempt costs at mostUSD12, bounding aggregateUSD14.6874532 below
+originalUSD16. Do not raise production budgets, loop unattended or retry another
+failure automatically. Use fresh fixture identities and preserve uncertain effects.
+Restore only owned controls and independently verify cleanup before yielding.
+
+Only genuine strict FULL success for BOTH exact56installations closes M4. Then
+execute existing M5/M6 authorization: source-at-tag suite, release metadata sweep,
+post-tag immutable anchor, semantic documentation and separate final reviews,
+publish main plus56only, adopt the public immutable Git tag on BOTH clones,
+public lock-only rebuilds and actual-byte integrity, operational-pin signoff,
+post-adoption doc-end/critic/final review and completion baseline advancement.
+
+This amendment establishes a measured capacity repair and bounded delivery order.
+It does not establish native delivery affordability, source approval, genuine43part
+native inspection, FULL success, public provenance or completion. Evidence:
+`/tmp/mrcall-ai-kit/20261025-release-alignment/inspection-size-analysis.json` and
+`inspection-plan-report.md` under that same private evidence root.

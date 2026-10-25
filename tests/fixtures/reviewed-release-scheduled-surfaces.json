@@ -1,7 +1,7 @@
 {
   "baseline_commit": "03b4449",
   "review_receipt": "reviewed-release-scheduled-surfaces.md",
-  "review_receipt_sha256": "b411d58b1b0bf42730a66ac96de08922c6f3f0d4a793514a21dc5cd15d71d2f9",
+  "review_receipt_sha256": "be7bc13701d155284a42438c9d67e0d7e1b5b7dbd2e5a037b78ca4eac5a2c124",
   "templates": {
     ".claude/settings.json": {
       "current_sha256": "6c6835be39b47eb8da9426176ad9c2e74a28da607125a6cdac864598663d012c",
@@ -14,12 +14,12 @@
       "baseline_source": "03b4449:cs/templates/project/bin/cs_operator_cron.sh.j2"
     },
     ".claude/skills/cs-operator/SKILL.md": {
-      "current_sha256": "f8fffebf306ee9315ad05986a20dffa87572daff760663f7e6c299b67213c4aa",
+      "current_sha256": "72c24a968b051e19c320b623c5a594cd0de58f2423d403d547c7a4574f936d93",
       "baseline_sha256": "e8dc64f3c80e342c5ac4e988533dc1933a270537c13fcee52df007f44b856feb",
       "baseline_source": "03b4449:cs/templates/project/.claude/skills/cs-operator/SKILL.md.j2"
     },
     ".claude/skills/cs-triage-mail/SKILL.md": {
-      "current_sha256": "24d9d625c66d79231f2872d523ad51e28e3320d644d15a1639926a14a79da281",
+      "current_sha256": "f0583848dc62253af8484ebd6a37f29ffa5902f625b971da778433f1541f6b0c",
       "baseline_sha256": "b7b655f5cc613b16ec8a9be465e78448de9dc2ac515b3263fb5f9da2240c567a",
       "baseline_source": "03b4449:cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2"
     },

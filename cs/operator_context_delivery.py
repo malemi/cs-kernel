@@ -10,9 +10,34 @@ from pathlib import Path
 import shlex
 import sys
 
-SLOTS = 16
+SLOTS = 48
 CHARS = 7000
 SCHEMA = 'cs.inventory.context.v1'
+
+
+class CapacityError(ValueError):
+    def __init__(self, required):
+        super().__init__('context capacity exceeded; literal paging required')
+        self.required = required
+
+
+def capacity_failure(exc, *, emit=False):
+    from .observability_causal import decision
+    value = decision('discovery_context_capacity', 'context_slots_exhausted',
+        layer='source', phase='discovery', command='unanswered',
+        method='operator.discovery.context', required=exc.required, available=SLOTS)
+    if emit:
+        try:
+            from .config import load
+            from .observability_producers import emit as record, inherited_context
+            from .observability import context
+            with context(inherited_context()):
+                record(load(), 'discovery', 'failed', reason='incomplete-input',
+                    command='unanswered', method='operator.discovery.context', causal=value,
+                    error_file='cs/operator_context_delivery.py')
+        except Exception:
+            pass
+    return value
 
 
 def parts(view, envelope_raw, envelope, session):
@@ -22,7 +47,7 @@ def parts(view, envelope_raw, envelope, session):
         raise ValueError('reserved native context marker')
     chunks = [combined[i:i + CHARS] for i in range(0, len(combined), CHARS)]
     if not chunks or len(chunks) > SLOTS:
-        raise ValueError('context capacity exceeded; literal paging required')
+        raise CapacityError(len(chunks))
     binding = {k: envelope[k] for k in ('owner_uid', 'nonce', 'source_identity',
         'supervisor', 'native_invocation', 'raw_sha256', 'view_sha256')}
     result = []
@@ -94,6 +119,13 @@ def main():
         exclusive(path / ('context-delivered-' + token), b'')
         print(json.dumps({'hookSpecificOutput': {'hookEventName': event['hook_event_name'],
             'additionalContext': values[index]}}, ensure_ascii=False))
+    except CapacityError as exc:
+        if index == 0:
+            from .observability import context
+            from .observability_producers import inherited_context
+            with context(inherited_context()):
+                capacity_failure(exc, emit=True)
+        return
     except (OSError, ValueError, KeyError, TypeError, IndexError, RecursionError):
         # No artifact yet (including initial background Bash) is not delivery.
         # Missing/invalid/late content receives no audit coverage or replay.
@@ -117,7 +149,7 @@ def delivered(events, view, envelope_raw, envelope):
     try:
         expected = parts(view, envelope_raw, envelope, sessions.pop())
     except ValueError:
-        return False  # Unsupported compact payload keeps valid literal paging.
+        return False
     seen, early = set(), False
     for index, event in enumerate(events):
         if index in indices and event.get('subtype') == 'hook_response' and event.get('hook_event') in ('PostToolUse', 'UserPromptSubmit'):
