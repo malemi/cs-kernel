@@ -2,40 +2,40 @@
 
 ## Unreleased
 
-### Exact mirrored-draft identity and retirement
+## v0.54.0 — 2026-10-25 (MINOR)
 
-New review copies carry the full engine draft and owner IDs. Review pairs exact
-unique identities first, labels legacy inference, and compares conservative
-newly authored MIME content. `cs draft-retire` previews both copies and commits
-only unchanged Gmail/engine snapshots, reporting partial outcomes. Sent-mirror
-cleanup preserves edited and inferred copies. New effect surfaces are denied
-in every scheduled command spelling and retirement refuses headless execution.
+### Canonical packages, causal diagnostics and retained operator contracts
 
-The engine counterpart independently verifies an explicitly named Sent message
-before recording an external delivery. Automatic reconciliation stays disabled.
-Live Gmail edit/send preservation, hosted activation and installed-clone adoption
-remain unverified; controlled fixtures do not certify those boundaries.
+Recover the maintained kernel composition from its reviewed source and installed
+variants into one immutable release. Both clones must use the same package;
+direct installed-file patches and normal source overlays are prohibited.
+`cs verify-install` compares actual imported Python/resources with immutable Git
+objects, checks pin/lock/origin/version claims and detects extra or altered files.
 
-MINOR required for the new CLI surface. **Re-collaudo: both maintained clones,
-FULL before publication** because draft lifecycle and permission surfaces change.
-This local implementation releases nothing and cleans no production draft.
+DEBUG-first bounded observability, ten-minute filesystem collection and manually
+invoked diagnosis retain current logging health and historical loss. Technical
+user mail remains suppressed. Supervisor and interactive source-corroboration
+decisions retain precise safe causes through ordinary traces and the incident
+inbox; parser, uncertainty and source/send guards remain intact.
 
-### Contextual email assignment enforcement
+The recovered composition includes bounded ordinary discovery/native worksets,
+exact draft identity and retirement, interactive review/send completion,
+authenticated engine workflow routing and managed-versus-legacy standing-rule
+reads. Stronger advertised engine contracts remain negotiated; unavailable
+authority remains held. No automatic reconciliation or diagnostic model is enabled.
+Direct Anthropic API-key headers remain explicit across supported SDK versions.
 
-Candidate `chat`, `draft-reply` and exact `draft-send` negotiate engine
-`contextual_email_policy: 1` before generation. Explicit thread, source, target
-and draft context constrains engine email effects; send-tool approval cannot
-override assignment holds. Contextual campaign drafts use the exact engine draft
-send lifecycle; contextual campaign queueing refuses a separate Gmail copy and
-retains engine review. Fixed-template first-contact/bulk delivery keeps its
-existing path. See [the candidate contract](docs/task-assignment.md).
+Migration: perform a clean package-manager installation, preserve company-authored
+configuration and existing send/draft authority, refresh canonical templates,
+regenerate locks and verify complete installed bytes. Hidden unrecorded package
+files require clean-environment rebuilding rather than a file overlay.
 
-This is local development, without a tag, installed-clone change or hosted
-activation. MINOR required for the new CLI/capability behavior. **Re-collaudo:
-both maintained clones, FULL before publication** because send and authentication
-boundaries change. Future rollout requires compatible engine code, retained
-enrollment/history, privileged ordered enrollment where needed, and reviewed
-clone-specific caller adaptation; an older engine refuses candidate chat work.
+**Re-collaudo: both maintained clones, FULL before publication.** Send, provider
+identity and permission surfaces require genuine protected native/provider proof
+on the exact frozen installed artifact. Historical acceptance certifies only its
+retained candidate. Native Gmail manual-client preservation and broader customer
+queue health remain separate claims. The canonical release execution plan owns
+actual current verification and publication/adoption evidence.
 
 ## v0.53.0 — 2026-10-18 (MINOR)
 
