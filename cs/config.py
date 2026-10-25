@@ -276,6 +276,7 @@ class Settings(BaseSettings):
 
     # Provider bindings are manifest-only; env layers supply referenced secrets.
     connections: manifest_mod.Connections = Field(default_factory=manifest_mod.Connections)
+    observability: manifest_mod.Observability = Field(default_factory=manifest_mod.Observability)
     _connection_env_files: tuple[str, ...] = PrivateAttr(default=())
 
     # --- company / operator identity (manifest [company] / [operator]) ---
@@ -589,7 +590,7 @@ class Settings(BaseSettings):
         for source in (env_settings, dotenv_settings):
             source.env_vars = {
                 key: value for key, value in source.env_vars.items()
-                if key.lower() != "connections"
+                if key.lower() not in {"connections", "observability"}
             }
         return (
             init_settings,
@@ -675,6 +676,7 @@ def load(engine_owner_uid: str | None = None) -> Settings:
     settings = Settings(
         _env_file=tuple(env_files),
         connections=m.connections if m else manifest_mod.Connections(),
+        observability=m.observability if m else manifest_mod.Observability(),
         **kwargs,
     )
     settings._connection_env_files = tuple(str(Path(f).expanduser().resolve()) for f in env_files)
@@ -708,3 +710,18 @@ def connection_credentials(settings: Settings, provider: str = "vonage") -> tupl
             raise ConfigError(f"Vonage credential is missing: set {name} in this clone's env layers")
         resolved.append(value)
     return resolved[0], resolved[1]
+
+
+def observability_credential(settings: Settings, *, credential_env: str | None = None) -> str:
+    """Resolve a diagnostic credential from only the selected clone's env layers."""
+    name = credential_env or settings.observability.reader_token_env
+    if not name:
+        raise ConfigError("Configure [observability].reader_token_env for the independent reader")
+    values = {}
+    for filename in settings._connection_env_files:
+        values.update(dotenv_values(filename, interpolate=False))
+    values.update(os.environ)
+    value = values.get(name)
+    if not value or not value.strip() or any(c in value for c in "\r\n"):
+        raise ConfigError("Independent diagnostic reader credential is unavailable")
+    return value

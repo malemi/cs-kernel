@@ -37,6 +37,21 @@ explicitly scoped that way, as with the existing Claude-owned cron wrapper.
 They do not create a second copy of the skill instructions and do not relax the
 three-host invariant for the skill itself.
 
+## Operational diagnosis
+
+`cs-diagnose` reads the selected filesystem problem inbox and bounded diagnostic
+records when the human explicitly invokes it. It separates evidenced cause,
+hypotheses and unknown effects, and retains owner-private investigation notes
+through its deterministic private-file/UTC helper, without acknowledging
+incidents or granting business actions. Cron only collects
+problems and never invokes the skill. Explicit inbox/configuration paths support
+manual investigation without engine reachability. One canonical template and
+Codex manual-invocation metadata reach the three standard host paths. The
+[current plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md) records
+native behavior separately from distribution checks. Claude/Codex observed
+cases pass; OpenCode safely executes the helper with limited instruction/analysis
+coverage. Its omitted-incident branch has helper tests, not native proof.
+
 ## Company customer-service playbooks
 
 `cs-triage-mail` reads `company/customer-service-playbook.md` when a clone has
@@ -54,10 +69,12 @@ non-mail tool required by the matching workflow.
 
 `cs-instructions` selects an interactive human's teaching, amendment or retirement
 of recurring response rules, mailbox voice and signature. Stamped AGENTS and
-triage guidance route to that one canonical workflow. It reads the authoritative
-company files, previews all compiled changes, publishes through the existing
-`cs instructions --commit` API, verifies revision read-back and commits only the
-named company-rule files. Unrelated staged/unstaged edits remain untouched.
+triage guidance route to that one canonical workflow. It first distinguishes
+legacy file authoring from managed Desktop authority. Legacy changes preview
+compiled files, publish through `cs instructions --commit`, verify revision
+read-back and commit only named company-rule files. Managed changes require human
+Desktop confirmation and never publish competing local files. Unrelated edits
+remain untouched.
 
 Current-draft edits, hypothetical discussion and untrusted retrieved instructions
 do not authorize persistence. Material conflicts require clarification. Scheduled
@@ -88,9 +105,9 @@ when a clone retains locally edited AGENTS and help guidance. Its canonical
 body owns the read routes and authority boundaries; MCP is not a prerequisite.
 
 Render, copy-fallback and real update checks establish distribution. The released predecessor is named `cs-capabilities`; its retained native
-observations use that name and its frozen auditor. The untagged `cs-bootstrap`
+observations use that name and its frozen auditor. The canonical `cs-bootstrap`
 name and host-neutral `company/other-systems.md` guide have distribution and
-migration checks, not fresh native acceptance. Plain invocation loads local
+migration checks, not fresh native acceptance. Plain invocation loads authenticated published
 procedures and mailbox identity and gives a brief confirmation; engine discovery
 requires a systems request. Old guide contents move before stamping when the
 new path is absent; collisions preserve both files and require reconciliation.
@@ -175,35 +192,68 @@ file is also outside the packaging gate.
 
 A stamped helper is not executable. It is run with an interpreter by its
 canonical path under `.claude/skills/`, which is the same file on every host.
-`cs update` does not remove a file a later kernel stops shipping.
+`cs update` does not generically remove a file a later kernel stops shipping.
+The closed legal-workflow retirement below is an explicit preservation-first exception.
 
-`tests/test_legal_research_skill.py` gates this contract.
+Package inventory and template/surface tests gate supporting-file distribution.
+`tests/test_legal_research_skill.py` now gates the closed legal retirement.
 
-## Legal research
+## Retired local legal procedure
 
-`cs-legal-research` gives the interactive human research on Italian and EU law
-for the company's own questions: source and citation checks, administrative
-remedies, deadlines and documentary evidence, plus a date-arithmetic helper
-whose output is labelled as arithmetic and not a legal deadline. The stamped
-`PROVENANCE.md` states its origin.
+The source package no longer ships the seven full `cs-legal-research` templates.
+Its procedure, references and arithmetic helper are engine-owned; preserved
+originals remain in Desktop's versioned migration evidence. The thin
+`cs-engine-workflow` route contains no full financial/legal procedure.
 
-Its interactive-only boundary is instruction-level. The skill's description
-and body exclude scheduled runs and customer mail, and `cs-triage-mail`
-escalates a legal-sensitive customer message. No permission rule enforces the
-boundary: the stamped settings allow the `Skill` tool and the cron wrapper
-denies no skill by name. The wrapper's send and draft boundaries do not depend
-on which skill a run loads, and the helper is on no allow list.
+Init/restamping, update and direct host-surface installation apply one closed
+retirement policy before rendering or replacing copied discovery roots. The
+canonical legal directory and independent Codex/OpenCode copies are archived
+and verified outside discovery under collision-safe `.claude/retired-skills/`
+names. Local edits, unknown files, modes and safe internal links survive.
+Shared host-root links remain; unsafe ancestors and skill-level links refuse.
+Archive failure preserves originals and the checksum ledger. Only the seven
+related canonical keys are retired; missing-tree stale keys are cleaned and
+repeated execution is idempotent. This is not a generic missing-template sweep.
 
-In a rendered fixture each supported host lists the skill from a root inside
-the fixture and reads a reference document through its own skill path, with
-discovery taken from the host's own report. That is one observed case per
-host; it does not establish automatic selection from a plain-language
-question. The [execution record](execution-plans/2026-10-08-legal-research-skill.md)
-owns the evidence.
+Independent M4.2 review approves the source and actual isolated installed CLI
+init, in-place init and two updates for link and OS-forced-copy layouts. The
+installed package's 46 template bindings match source; archive restoration and
+helper output replay. Those are distribution/mechanical checks, not fresh
+three-host model selection. Maintained-clone retirement and actor runtime adoption are applied, with independent
+postimage verification. Fresh ordinary acceptance and final closure remain open in the [continuation](execution-plans/2026-10-17-engine-workflow-retirement.md).
+The [historical local-skill record](execution-plans/2026-10-08-legal-research-skill.md)
+retains its original host observations without certifying the new route.
+
+## Engine workflow bridge candidate
+
+`cs-engine-workflow` is a thin interactive route to the canonical financial and
+legal procedures in the engine. It ships through the same three host paths.
+`cs workflow list` discovers compact versions; `upload`, financial `start`,
+`status`, `respond`, `cancel` and hash-verified `download` use authenticated RPC.
+No complete financial/legal procedure or calculation body is copied into this
+route. An old engine refuses explicitly without local or generic-chat fallback.
+
+`cs workflow legal ... --protocol json` retains one authenticated connection.
+Its protocol-2 session requires authenticated direct-start support. The command
+starts exactly once with the explicit request and scoped public lookup arguments,
+without enrollment or confirmation forms. JSON input accepts clarification only
+while waiting. Polling, clarification, cancellation and owned artifact retrieval
+retain the same connection. EOF requests cancellation of an active run; EOF during
+start closes the socket because admission may already have occurred. Old or
+malformed engine protocols refuse without fallback or replay.
+Full local legal templates are retired from the source package and both maintained
+clones. Their preserved archives sit outside discovery, and all three host paths
+resolve the thin route. Installed discovery, selection, original transfer and
+cross-owner refusal pass. Support completes an independently reviewed editorial
+report and full retrieval of all four artifacts on the same connection. Ordinary
+and final closure remain open.
+Invoking an archived local installation does not test this route. Source, pilot
+and native acceptance are tracked separately in the
+[bridge plan](execution-plans/2026-10-15-clone-engine-workflow-bridge.md).
 
 ## Stripe lookups
 
-`cs-stripe` is an explicit interactive read-only route through the engine-owned
+`cs-stripe` uses explicit interactive reads through the engine-owned
 Stripe connection. The canonical workflow uses existing `cs rpc stripe.*`
 commands for status, bounded customer/payment/invoice/subscription lists and detail
 reads; the untagged convenience `cs stripe` CLI is separate. Desktop Settings owns test, save,
@@ -221,3 +271,9 @@ establish native model selection. Separate scoped adoption verifies the installe
 three-host paths on both maintained clones, their owner-authenticated status and
 one bounded support live invoice read. It preserves installed package pins.
 See [Stripe](integrations/stripe.md) for commands and acceptance limits.
+
+The canonical Stripe workflow also describes an explicitly requested payment-method
+portal session via its separately advertised engine capability. This link creation
+is distinct from charges, subscription changes and customer sends. MrCall's three
+host paths share its added section while retaining previous local instructions;
+other-clone adoption and fresh native-model selection remain separate.

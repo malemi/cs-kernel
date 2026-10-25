@@ -149,6 +149,9 @@ def _fill(model_cls):
             application_ids=["11111111-1111-4111-8111-111111111111"], region="eu",
         )
 
+    if model_cls is manifest_mod.Observability:
+        return model_cls(reader_url="https://diagnostics.example.test", reader_token_env="EXAMPLE_READER_TOKEN")
+
     kwargs = {}
     for name, info in model_cls.model_fields.items():
         ann = info.annotation

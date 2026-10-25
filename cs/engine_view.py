@@ -76,7 +76,7 @@ class ThreadView:
         return int(when.astimezone(timezone.utc).timestamp()) in self.auto_at
 
 
-def classify(settings, thread_ids, timeout: int = 60) -> tuple[dict[str, ThreadView], str | None]:
+def classify(settings, thread_ids, timeout: int = 60, *, deadline=None, owned_process_group=None) -> tuple[dict[str, ThreadView], str | None]:
     """Ask the engine to classify each conversation. `(views, degradation note)`.
 
     One `emails.list_by_thread` per thread. That is a local SQLite read behind a
@@ -90,31 +90,41 @@ def classify(settings, thread_ids, timeout: int = 60) -> tuple[dict[str, ThreadV
     first failure and how many threads it cost, once — a line per thread would
     bury the queue it is supposed to annotate.
     """
-    from . import rpc
+    from . import rpc_reads
 
     views: dict[str, ThreadView] = {}
     note: str | None = None
     failures = 0
-    for tid in thread_ids:
-        if not tid or tid in views:
-            continue
+    ids = dict.fromkeys(tid for tid in thread_ids if tid)
+    try:
+        outcomes = rpc_reads.read_many(settings, "emails.list_by_thread",
+                                      {tid: {"thread_id": tid} for tid in ids}, request_timeout=timeout,
+                                      **({"deadline": deadline} if deadline is not None else {}),
+                                      **({"owned_process_group": owned_process_group} if owned_process_group is not None else {}))
+    except Exception as exc:
+        outcomes = {tid: rpc_reads.ReadOutcome(error=exc) for tid in ids}
+    for tid, outcome in outcomes.items():
         try:
-            res = rpc.call_sync(settings, "emails.list_by_thread", {"thread_id": tid},
-                                timeout=timeout)
-        except Exception as e:  # noqa: BLE001 — degradation is the contract
+            if outcome.error is not None:
+                raise outcome.error
+            res = outcome.value
+            if not isinstance(res, dict):
+                raise ValueError("engine conversation response is not an object")
+            msgs = res.get("emails") or []
+            if not isinstance(msgs, list) or any(not isinstance(m, dict) for m in msgs):
+                raise ValueError("engine conversation messages are malformed")
+            auto_at: set[int] = set()
+            for m in msgs:
+                if not m.get("is_auto_reply"):
+                    continue
+                when = _parse(m.get("date"))
+                if when is not None:
+                    auto_at.add(int(when.timestamp()))
+            views[tid] = ThreadView(tid, auto_at, len(msgs))
+        except Exception as e:
             failures += 1
             if note is None:
                 note = f"{type(e).__name__}: {e}"
-            continue
-        msgs = (res or {}).get("emails") or []
-        auto_at: set[int] = set()
-        for m in msgs:
-            if not m.get("is_auto_reply"):
-                continue
-            when = _parse(m.get("date"))
-            if when is not None:
-                auto_at.add(int(when.timestamp()))
-        views[tid] = ThreadView(tid, auto_at, len(msgs))
     if failures and note:
         note = f"{note} ({failures} thread(s) unclassified)"
     return views, note

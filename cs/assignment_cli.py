@@ -41,10 +41,26 @@ def run(args) -> int:
     settings = config.load()
     try:
         if args.assignment_action == "status":
+            if os.environ.get("CS_OPERATOR_HEALTH_CONTEXT"):
+                from .operator_workset import require_root, WorksetError
+                try:
+                    require_root(settings, args.thread_key)
+                except WorksetError:
+                    print("Scheduled assignment read deferred outside selected workset", file=sys.stderr)
+                    return 3
             if args.thread_key:
                 result = authority.project(settings, args.thread_key)
-                print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else authority.render(result))
-                return 0 if result["complete"] else 3
+                output = json.dumps(result, ensure_ascii=False, indent=2) if args.json else authority.render(result)
+                code = 0 if result["complete"] else 3
+                if args.json and code == 3:
+                    from .operator_read_outcomes import capture
+                    try:
+                        capture((output + "\n").encode(), result, code, settings.engine_owner_uid,
+                                getattr(settings, "account_map", {}))
+                    except Exception:
+                        pass
+                print(output)
+                return code
             result = authority.listing(settings)
             result["projections"] = authority.projections(settings, [row["thread_key"] for row in result["items"]])
             print(json.dumps(result, ensure_ascii=False, indent=2))

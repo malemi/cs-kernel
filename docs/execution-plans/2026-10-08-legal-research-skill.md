@@ -1,8 +1,22 @@
 ---
-status: active
+status: completed
 ---
 
 # Legal-research kernel skill execution plan
+
+## Current disposition
+
+The kernel delivery is complete. Implementation, focused and full-suite checks,
+and native discovery/reference reads on all three supported hosts are recorded
+under Results. The skill is included in released `v0.52.0`; the current clone
+adoption and acceptance limits remain in
+[active-context.md](../active-context.md) and
+[agent-skills.md](../agent-skills.md).
+
+The operator reports that moving the skill into the mrcall-desktop engine is
+in progress. That migration is a separate workstream; this plan neither claims
+it is complete nor reopens the completed kernel delivery. The original delivery
+steps and evidence below are retained as the historical execution record.
 
 Approved brief: [2026-10-08-legal-research-skill.md](../briefs/2026-10-08-legal-research-skill.md).
 Brief review: first pass REVISE on `5158e14`; re-review APPROVED on

@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### Exact mirrored-draft identity and retirement
+
+New review copies carry the full engine draft and owner IDs. Review pairs exact
+unique identities first, labels legacy inference, and compares conservative
+newly authored MIME content. `cs draft-retire` previews both copies and commits
+only unchanged Gmail/engine snapshots, reporting partial outcomes. Sent-mirror
+cleanup preserves edited and inferred copies. New effect surfaces are denied
+in every scheduled command spelling and retirement refuses headless execution.
+
+The engine counterpart independently verifies an explicitly named Sent message
+before recording an external delivery. Automatic reconciliation stays disabled.
+Live Gmail edit/send preservation, hosted activation and installed-clone adoption
+remain unverified; controlled fixtures do not certify those boundaries.
+
+MINOR required for the new CLI surface. **Re-collaudo: both maintained clones,
+FULL before publication** because draft lifecycle and permission surfaces change.
+This local implementation releases nothing and cleans no production draft.
+
 ### Contextual email assignment enforcement
 
 Candidate `chat`, `draft-reply` and exact `draft-send` negotiate engine

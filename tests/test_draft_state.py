@@ -302,7 +302,7 @@ def _review_surface() -> None:
 
     g, e = [gmail()], [engine(id="eng-9", key="<t9@example.test>")]
 
-    def _list_drafts(_s):
+    def _list_drafts(_s, *, observation=None):
         return g
 
     def _call_sync(_s, method, params=None, **kw):
@@ -326,7 +326,7 @@ def _review_surface() -> None:
     review.draft_state.reconcile = _reconcile
     review.campaign.list_campaigns = lambda _s: []
     try:
-        d = review.gather(settings)
+        d = review._aggregate(settings)
     finally:
         (review.gmail_drafts.list_drafts, review.rpc.call_sync,
          review.draft_state.reconcile, review.campaign.list_campaigns) = orig

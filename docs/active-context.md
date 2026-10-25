@@ -14,14 +14,34 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of
-  generic finance chat/history. Bootstrap routes advertised systems to their
-  installed workflow even without the general catalog. Both maintained clones
-  expose the updated skill on all three host paths; support has authenticated
-  connected/live status and one bounded invoice read, Café reports disconnected.
-  Package pins, permissions, cron and hosted engines are preserved. Native model
-  selection and installed package adoption remain separate; [Stripe](integrations/stripe.md)
-  owns the route and verification limits.
+- Canonical release alignment targets the next unused MINOR, `v0.54.0`. Recovered
+  source and immutable-byte verification have focused approval; two-clone FULL,
+  publication and public-tag adoption remain required. Installed file overlays
+  are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
+
+- Both maintained clones have DEBUG-first logs, ten-minute private filesystem collection and
+  reviewed causal supervisor diagnostics. Ordinary trace/inbox access preserves the actual failed
+  check, safe observations and run/attempt/child/cause links. Eight installed causal tests pass on
+  each clone; natural collection is verified. A fresh blind trial distinguishes five local causes,
+  healthy/hold controls and a genuinely unknown case. Historical missing causes remain unknown.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) governs every operational problem: logs must
+  expose malfunction and support a specific hypothesis/investigation route; gaps require improved
+  evidence and regression/blind checks. Interactive source-corroboration diagnostics have real
+  CLI/inbox and fresh blind proof; parser behavior is preserved. Release adoption remains pending. `cs-diagnose` is manual-only; technical SMTP/scanners/watchdogs remain
+  disabled. The [existing plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md) owns evidence;
+  the earlier failed attempt and unrelated business/native acceptance limits remain separate.
+- Interactive review/send-completion source and clone installation retain their scoped proof in the
+  [completion plan](execution-plans/2026-10-22-interactive-send-completion.md). Fresh ordinary send
+  and unattended acceptance remain open.
+
+- Stripe's canonical source skill supports fixed reads and explicitly requested
+  payment-method portal links. The support engine exposes the new capability and
+  returns a validated live existing-customer session. MrCall's three host paths
+  share the added instructions, preserving its prior payment-link section.
+  Five CLI/distribution checks pass; native-model selection, other-clone adoption
+  and full ordinary acceptance remain unverified. Missing pre-existing acceptance
+  references block whole-task closure; [the plan](execution-plans/2026-10-24-stripe-payment-method-link.md)
+  owns remaining gates. Public package pins and other engine services are preserved.
 
 - **Latest release tag: `v0.53.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
@@ -29,107 +49,87 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
   read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
   Historical FULL evidence and the red July harness remain separately retained.
-- Released [assignments](task-assignment.md) use signed engine authority, scoped
-  drafts and exact inbound coverage. Six hosted engines have verified reads and
-  root-owned trust. Local hardening is closed with limits in the
-  [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
-- The released [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
-  adds `cs-capabilities`: authoritative local procedures, canonical workflow
-  bodies and engine catalog discovery without MCP. Engine acceptance and 19
-  qualified native observations pass for the frozen bootstrap parent; these are
-  retained observations, not fresh native execution of the integrated tree.
-  Canonical instructions and discovery read routes retain the reviewed parent
-  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
-  owns current kernel checks. Claude's standalone profile excludes identified
-  ai-kit injection while preserving permissions and non-kit hooks. Historical
-  runtime/configuration limits remain qualified; no universal compliance is established.
-- Untagged source uses `cs-bootstrap` with a local-only plain invocation and
-  brief confirmation, and `company/other-systems.md` for other systems. Published
-  `v0.52.0` and MrCall retain `cs-capabilities` and `company/claude-extra.md`.
-  Old guide bytes and bootstrap directories are preserved during restamping;
-  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) owns checks.
-- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
-  negotiates strengthened engine enforcement for chat and exact draft sending,
-  carrying original source/thread/draft context. Fixed-template bulk retains its
-  existing path. It is excluded from `v0.52.0`; the hosted contextual policy remains unavailable.
-  The bootstrap tag preserves the released chat and sending contracts.
-  The separately owned MrCall launcher remains an uninstalled handoff.
-- `cs-legal-research` is a released interactive Italian/EU legal-research skill
-  with four references and a date-arithmetic helper. MrCall installs its canonical
-  files on all three host paths; Café 124 retains its previous pin. The instruction-level
-  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
-  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
-- Company procedures and mailbox identity are authoritative clone-owned files.
-  `cs instructions` compiles them into reserved engine `operator-instructions`
-  documents; only `instructions.store` publishes them. Project verbs refuse
-  that slug. `cs setup` and `cs memory` expose this standing-instructions store.
-  Loopback publication is verified; production publication and Firebase
-  authentication for that acceptance remain unverified.
-- `cs-instructions` supplies the interactive teaching workflow on all three
-  hosts. Its predecessor has 33 accepted native cases for publication, narrow
-  Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
-  [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
-- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
-  Hosts share canonical skills. `cs-triage-mail` reads the optional company
-  playbook while preserving send and approval boundaries.
-- The engine owns classification, task judgement and company memory. Written
-  projects are revisioned engine records; legacy folders remain in private Git.
-  `cs ask` negotiates read-only policy version 1. Scheduled launchers deny raw
-  mutating memory/update/preparation RPCs and instruction publication.
-- Cross-mailbox reads retain the fixed self-owner skip and explicit unreadable
-  scope. Incomplete evidence refuses applicable sends; `send-first` keeps its
-  existing contact-state path. [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md)
-  owns provider parity, RFC-key and bounded FETCH evidence on both clones.
-- Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine
-  draft and checks recorded sent status. Cron denies it; the CLI has no
-  headless/pause guard. Ambient Gmail connectors remain read/review tools.
-- Descriptor-based `cs init` and `cs setup` verify workspace, identity,
-  preparation evidence, memory and agent tools. Preparation counts do not
-  certify reply quality or mailbox credential validity.
-- Engine APIs, direct classifiers and unattended Claude have separate models,
-  billing and stop controls. Engine caps do not cover all operator activity;
-  CS_PAUSE blocks new guarded ticks, not running Claude or engine work.
-  [Runtime controls](operator-runtime.md) own details, including optional
-  CS_LLM_ROUTE, OpenRouter retry after proven pre-tool quota/payment refusal,
-  fixed owner notices and permission checks against resolved triage mode.
-  Both clones configure $4 fallback budgets; MrCall has its own Anthropic primary.
-- Vonage supports clone-scoped reads, previews, supervised domain/user creation
-  and additive ACLs with credential references; paused/headless mutations refuse.
-  [Provider guides](provider-connections.md) also cover Shopify, Drive and Faire.
-  Faire authenticated use and a kernel adapter remain unverified/unimplemented.
+- [Exact draft lifecycle](draft-lifecycle.md) has real IMAP/SMTP acceptance and authenticated exact
+  retirement/Sent recording on both hosted engines. Owner/full-ID provider mirrors and ordinary
+  exact-ID interactive sending are verified. Automatic reconciliation is off; native Gmail edit/send
+  preservation and public kernel adoption remain separate, unverified boundaries.
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md) retains signed R9 FULL acceptance for its exact historical hosted candidate. Current
+  recovery requires separate acceptance. Public installer equivalence and native Gmail edit/send
+  preservation remain unverified.
+- Optional [complete discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
+  checks complete native inspection; canonical guidance is installed in both clones. Historical
+  native FULL proof belongs to its retained candidate.
+- [Bounded review reads](execution-plans/2026-10-13-bounded-review-assignment-reads.md) retain
+  assignment validation, incomplete-scope holds and per-request bounds. There is no universal
+  90-second whole-review guarantee.
+- [Scheduled intake and compatible callers](operator-runtime.md) retain their hosted override and
+  deterministic health checks. Technical notices now retain filesystem evidence; legitimate holds
+  remain separate from technical failures.
+- Reviewed assignment, address, activity, conflict and action-failure repairs remain installed on
+  six company engines and both clone kernels. Current recovery has no strict ordinary acceptance:
+  historical V27 remains FAILED. Selected dossiers and task absence grant no authority. Its separate
+  documentation/final obligations and prospective read-permission exception remain open in the
+  [recovery plan](execution-plans/2026-10-15-ordinary-assignment-recovery.md). No new paid recovery
+  case or release is authorized by this work.
+
+- Released [assignments](task-assignment.md) use signed engine authority, scoped drafts and exact
+  inbound coverage. Six hosted engines have verified reads and root-owned trust. MrCall support and
+  Mario share support's company space through a separately authorized fenced join; private
+  tasks/mail remain isolated.
+- Published bootstrap exposes `cs-capabilities` and `company/claude-extra.md`. The local [name
+  candidate](execution-plans/2026-10-11-bootstrap-name.md) uses `cs-bootstrap` and `company/other-systems.md`; old authored bytes are preserved during restamping. [Bootstrap
+  integration](execution-plans/2026-10-10-bootstrap-integration.md) retains its reviewed parent
+  boundaries and qualified native observations.
+- Authenticated standing-instruction reads distinguish legacy clone-file authoring from managed
+  Desktop authority. Managed changes require human Desktop confirmation; scheduled sessions cannot
+  publish rules or replace unavailable published evidence with stale local files. [Shared project memory](briefs/2026-09-10-shared-project-memory.md)
+  remains revisioned engine-owned written records.
+- Engine-owned finance/legal workflows retain authenticated protocol-2 direct start, shared routes
+  on all three hosts, cross-owner refusal and full artifact transfer. Support has an independently
+  reviewed report and four retrieved artifacts. The [client](execution-plans/2026-10-16-authenticated-legal-client.md) and [retirement plan](execution-plans/2026-10-17-engine-workflow-retirement.md) retain exact verification limits; fresh ordinary
+  operations and final closure remain separate. No release follows from that acceptance.
+- `cs-instructions` remains installed on all three hosts. `cs-pricing` remains company-local in
+  Café; shared kernel integration is superseded.
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md) remains undeployed on hosted engines. Explicit newer caller bindings require its
+  stronger policy; ordinary workflows retain released compatible guards. Its public `v0.52.0`
+  exclusion and separately owned launcher limits remain.
+- Gmail Sent/All Mail remains dedup ground truth. Cross-mailbox reads retain fixed self-owner
+  skipping and explicit unreadable scope; incomplete applicable authority holds action. [Fan-out
+  acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md) owns provider parity and bounded
+  FETCH evidence.
+- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap. Hosts share
+  canonical skills. Company-specific files remain clone-owned.
+- Engine generation, direct classifiers and unattended Claude have separate models, billing and stop
+  controls. Both clones configure $4 fallback budgets; MrCall has its own Anthropic primary.
+  CS_PAUSE blocks new guarded ticks, not running Claude or engine work. [Runtime controls](operator-runtime.md) own details.
+- Descriptor setup verifies identity, preparation, memory and agent tools; preparation counts do not
+  certify reply quality or mailbox credentials. [Provider guides](provider-connections.md) own
+  Vonage, Shopify, Drive and Faire boundaries; Faire authenticated use and its kernel adapter remain
+  unverified.
 
 ## Unresolved
 
-- The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
-  are verified. Remote MCP remains separate; wide dossier/review latency remains
-  unresolved. Native observations still qualify their frozen parent configurations.
-- Engine/direct-classifier failover remains separate from scheduled recovery;
-  the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
-- [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
-  preservation, pairing and reconciliation are unimplemented. Gmail sends can
-  leave stale mirrored drafts; current pairing uses thread/recipient inference,
-  and Gmail-only review rows have no authored body.
-- MrCall support and Mario share support's company space through a separately
-  authorized fenced join. Assignment/project reads pass; private tasks/mail
-  remain isolated. No real assignment is created.
-- Live unanswered-mail parity and review latency remain open. Incomplete
-  assignment authority yields exit 3 from `cs unanswered --all-buckets`;
-  canonical triage guidance retains held threads.
-- Clone-local help/triage corrections beyond tagged templates need preservation
-  on update; factory descriptions still need alignment. Paid agent-tick/draft
-  behavior is outside read-only FULL checks. Instruction tests revoke no ambient
-  permissions; historical send posture needs checks in the actual clone.
-- [Pricing integration](execution-plans/2026-09-21-pricing-skill-production-economics.md)
-  and acceptance remain open on `work/pricing-triage-20261001` at `d16e3e5`.
-- Live SIP/customer trunks, number association, PBX and secondary-account
-  onboarding remain separate. Operator-facing update output still carries
-  internal verification terminology.
+- OpenCode native coverage remains qualified: the omitted-incident branch and fresh reading of its
+  conditional instructions have helper/distribution tests, not native proof. Normal findings persist
+  safely; its analysis is terse and preserves unknown cause/effect.
+
+- Current recovery awaits joint strict ordinary acceptance of the actual final composition. V14
+  remains failed; the later Café guarded draft attempt passed. Historical R9 certifies only its
+  retained candidate; public installer equivalence and native Gmail remain open.
+- Wide dossier latency and live unanswered parity retain their existing owners. Incomplete
+  assignment authority yields exit 3 and keeps named threads held.
+- Engine/direct-classifier failover remains separate from scheduled recovery; the [broader
+  plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
+- Clone-local help/triage changes require preservation on update; factory help descriptions and
+  internal vocabulary in update output retain their existing issues.
+- Live SIP/customer trunks, PBX and secondary-account onboarding remain separate.
 
 ## Next
 
-1. Test interactive procedure loading in a fresh MrCall session when requested;
-   its local bootstrap requires no MCP or engine catalog.
-2. Continue exact draft identity and unanswered-mail evidence/latency work from
-   their existing plans before a corresponding release; doc-end sends no mail.
-3. Continue secondary-account onboarding when requested and correct internal
-   vocabulary in operator-facing update output.
+1. Use `cs-diagnose` for collected operational problems; keep business-mail acceptance separate.
+2. Finish joint ordinary acceptance and documentation/final review; preserve
+   the exact failed V11/V14 candidates and the separate successful draft proof.
+3. Validate native Gmail browser/mobile/API edit/send preservation before
+   enabling automatic reconciliation.
+4. Publish/adopt only after explicit publication authorization, preserving the
+   distinction between the local override and public installer provenance.

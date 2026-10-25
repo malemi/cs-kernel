@@ -72,6 +72,12 @@ def main() -> int:
         print("FAIL: source package substituted for installed package")
         return 1
     failures = differences(source_root / "cs/templates", installed_package / "templates")
+    retired = installed_package / "templates/project/.claude/skills/cs-legal-research"
+    if any(retired.rglob("*.j2")):
+        failures.append("retired legal templates remain installed")
+    thin = installed_package / "templates/project/.claude/skills/cs-engine-workflow/SKILL.md.j2"
+    if not thin.is_file():
+        failures.append("thin engine workflow template is missing")
     if failures:
         for failure in failures:
             print(f"FAIL: {failure}")

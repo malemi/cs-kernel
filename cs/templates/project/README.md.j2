@@ -77,10 +77,11 @@ running processes or stop independent engine work.
 
 Ask *"Load our company procedures and explain how we handle refunds"*, or invoke
 `$cs-bootstrap` in Codex, `/cs-bootstrap` in Claude Code, or the named
-`cs-bootstrap` skill in OpenCode. It reads the authoritative `company/`
-files into this conversation and reports missing or unwritten guidance.
-Local procedure loading works offline, without MCP or ai-kit. It changes no
-rules and publishes nothing; teaching or changing a standing rule uses
+`cs-bootstrap` skill in OpenCode. It reads authenticated published procedures
+and mailbox identity into this conversation and reports missing or unwritten
+guidance. Published reads require engine reachability, without MCP or ai-kit.
+Legacy file authoring and managed Desktop authority remain distinct. It changes
+no rules and publishes nothing; teaching or changing a standing rule uses
 `cs-instructions`.
 
 For questions about connected systems, the same skill checks engine capabilities
@@ -98,9 +99,9 @@ kernel README, [The `cs` CLI](https://github.com/malemi/cs-kernel#the-cs-cli).
   (skill prose slots); everything else is stamped by `cs init` / `cs update`.
 - `~/.{{ company_slug }}-cs/.env` holds the secrets + real account uids
   (see [.env.example](.env.example)).
-- Standing instructions (voice / policy) authored in `company/*.md`, then
-  `cs instructions --commit` to compile and store them in the engine.
-- `.venv` with the pinned kernel: `pip install -r requirements.txt`.
+- Legacy standing instructions use `company/*.md` and `cs instructions --commit`;
+  managed authority requires human Desktop confirmation instead of local publication.
+- `.venv` with the pinned kernel: `uv pip install --python .venv/bin/python -r requirements.txt`.
 - `cs login` once — signs this clone in from the mrcall-desktop app's profile
   descriptor and stores the session at `~/.{{ company_slug }}-cs/refresh_token-<uid>.json`.
   Every engine verb refuses with "not signed in" until you have.

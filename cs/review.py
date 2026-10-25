@@ -24,6 +24,14 @@ where you review and authorise. Mutates nothing.
 from __future__ import annotations
 
 import sys
+import hashlib
+import json
+import os
+import secrets
+import subprocess
+import tempfile
+from contextvars import ContextVar
+from pathlib import Path
 import time
 from contextlib import contextmanager
 from typing import Optional
@@ -43,6 +51,28 @@ from . import _time, campaign, draft_state, engine_view, gmail_drafts, rpc
 # looking exactly like the 25-minute run this fix was written from.
 CAMPAIGN_CONTACTS_TIMEOUT_SECONDS = 60
 ENGINE_SETTLED_TIMEOUT_SECONDS = 120
+TOTAL_SECONDS = 540
+WORK_SECONDS = 525
+CLEANUP_SECONDS = 10
+MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
+_CONTEXT = ContextVar("review_context", default=None)
+
+
+def _remaining(normal):
+    context = _CONTEXT.get()
+    if context is None or context["deadline"] is None:
+        return normal
+    remaining = context["deadline"] - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("review work deadline exhausted")
+    return min(normal, remaining)
+
+
+def _checkpoint(phase):
+    context = _CONTEXT.get()
+    if context is not None:
+        context["phase"] = phase
+        context["checkpoint"](context["out"], phase)
 
 
 def _progress(msg: str) -> None:
@@ -68,15 +98,26 @@ def _stage(name: str):
     catches its own exception right after — this only adds the stderr trail
     around that existing degradation, it changes no return value.
     """
-    _progress(f"{name}: starting")
-    t0 = time.monotonic()
+    context = _CONTEXT.get()
+    stages = context.setdefault("stages", []) if context is not None else []
+    stages.append(name)
     try:
-        yield
-    except Exception:
-        _progress(f"{name}: FAILED ({time.monotonic() - t0:.1f}s)")
-        raise
-    else:
-        _progress(f"{name}: done ({time.monotonic() - t0:.1f}s)")
+        _checkpoint(name)
+        _remaining(TOTAL_SECONDS)
+        _progress(f"{name}: starting")
+        t0 = time.monotonic()
+        try:
+            yield
+        except Exception:
+            _progress(f"{name}: FAILED ({time.monotonic() - t0:.1f}s)")
+            raise
+        else:
+            _progress(f"{name}: done ({time.monotonic() - t0:.1f}s)")
+            _checkpoint(name)
+    finally:
+        stages.pop()
+        if stages:
+            _checkpoint(stages[-1])
 
 
 def _settled_with_timeout(settings, thread_ids):
@@ -93,7 +134,7 @@ def _settled_with_timeout(settings, thread_ids):
     with _stage("engine_view.settled"):
         try:
             return engine_view.settled(settings, thread_ids,
-                                       timeout=ENGINE_SETTLED_TIMEOUT_SECONDS)
+                                       timeout=_remaining(ENGINE_SETTLED_TIMEOUT_SECONDS))
         except TimeoutError as e:
             # `reconcile` turns whatever this raises into a note via
             # `f"{type(e).__name__}: {e}"` (`cs/draft_state.py:326`), and a
@@ -117,7 +158,7 @@ def _campaign_contacts(settings, camp: dict) -> list:
         try:
             return rpc.call_sync(settings, "campaign.contacts",
                                  {"campaign_id": camp["id"]},
-                                 timeout=CAMPAIGN_CONTACTS_TIMEOUT_SECONDS)
+                                 timeout=_remaining(CAMPAIGN_CONTACTS_TIMEOUT_SECONDS))
         except TimeoutError as e:
             raise TimeoutError(
                 f"campaign.contacts for {camp['name']!r} exceeded "
@@ -222,15 +263,46 @@ def engine_freshness(settings, days: int = 3) -> dict:
     return out
 
 
-def gather(settings) -> dict:
-    out: dict = {}
+def _record_roots(out, roots, source):
+    sources = out.setdefault("_root_sources", {})
+    for root in roots:
+        if root:
+            categories = sources.setdefault(root, [])
+            if source not in categories:
+                categories.append(source)
+    out["_known_roots"] = list(dict.fromkeys(out.get("_known_roots", []) + list(sources)))
+
+
+def _root_coverage(out, *, owner_uid=None):
+    from . import task_assignment
+    completed = out.get("_completed_projections", {})
+    order = list(dict.fromkeys(out.get("_projection_order", []) + out.get("_known_roots", [])))
+    return {"requested_order": out.get("_projection_order", []), "roots": [
+        {"thread_key": root, "sources": out.get("_root_sources", {}).get(root, []),
+         "projection": completed.get(root, task_assignment._unknown(root, "review projection unavailable", owner_uid=owner_uid))}
+        for root in order]}
+
+
+def _aggregate(settings, *, deadline=None, owned_process_group=None, checkpoint=lambda out, phase: None) -> dict:
+    out: dict = {"review_coverage": {"assignment_listing": "unknown", "mailbox_discovery": "unknown"}}
+    token = _CONTEXT.set({"deadline": deadline, "out": out, "checkpoint": checkpoint})
+    try:
+        return _gather(settings, out, deadline, owned_process_group)
+    finally:
+        _CONTEXT.reset(token)
+
+
+def _gather(settings, out, deadline, owned_process_group) -> dict:
 
     # 1a. Gmail Drafts — cs-SMTP outreach queued via `campaign queue-draft`
     #     (IMAP review surface; you review + send these). Each row carries its
     #     `uid` — the handle `draft-delete` takes to remove a bad one.
     with _stage("Gmail draft listing"):
         try:
-            out["gmail_drafts"] = gmail_drafts.list_drafts(settings)
+            out["gmail_drafts_observation"] = {}
+            out["gmail_drafts"] = gmail_drafts.list_drafts(settings, observation=out["gmail_drafts_observation"])
+            _record_roots(out, [root for row in out["gmail_drafts"]
+                if (root := draft_state._gmail_row(row)["thread_key"])], "gmail_draft")
         except Exception as e:  # noqa: BLE001 — a mailbox hiccup must not kill the digest
             out["gmail_drafts"] = []
             out["gmail_drafts_error"] = f"{type(e).__name__}: {e}"
@@ -240,9 +312,19 @@ def gather(settings) -> dict:
     #     in the engine DB. Exposed by the read-only `drafts.list` RPC.
     with _stage("engine drafts.list"):
         try:
-            res = rpc.call_sync(settings, "drafts.list", {}, timeout=60)
+            res = rpc.call_sync(settings, "drafts.list", {}, timeout=_remaining(60))
             # campaign.list/tasks.list return bare arrays; handle a wrapper too.
-            out["engine_drafts"] = res if isinstance(res, list) else res.get("drafts", [])
+            if isinstance(res, list):
+                drafts = res
+            elif isinstance(res, dict) and set(res) == {"drafts"} and isinstance(res["drafts"], list):
+                drafts = res["drafts"]
+            else:
+                raise ValueError("drafts.list inventory shape is incomplete or unknown")
+            if any(not isinstance(row, dict) for row in drafts):
+                raise ValueError("drafts.list contains malformed rows")
+            out["engine_drafts"] = drafts
+            _record_roots(out, [root for row in drafts
+                if (root := draft_state._engine_row(row)["thread_key"])], "engine_draft")
         except Exception as e:  # noqa: BLE001
             out["engine_drafts"] = []
             out["engine_drafts_error"] = f"{type(e).__name__}: {e}"
@@ -264,13 +346,22 @@ def gather(settings) -> dict:
         except Exception as e:  # noqa: BLE001
             out["drafts"] = []
             out["drafts_notes"] = [f"{type(e).__name__}: {e}"]
+            out["drafts_reconcile_error"] = True
+
+    out["drafts_inventory"] = draft_state.inventory_proof(
+        out["gmail_drafts"], out["engine_drafts"], out["drafts"],
+        out.get("gmail_drafts_observation"))
+    if out.get("gmail_drafts_error") or out.get("engine_drafts_error") or out.get("drafts_reconcile_error"):
+        out["drafts_inventory"]["complete"] = False
 
     # 2. Open engine tasks (triage escalations + general inbound needing a human)
     with _stage("tasks.list"):
         try:
-            res = rpc.call_sync(settings, "tasks.list", {"limit": 200}, timeout=120)
+            res = rpc.call_sync(settings, "tasks.list", {"limit": 200}, timeout=_remaining(120))
             tasks = res if isinstance(res, list) else res.get("tasks", [])
             out["tasks"] = [_task_row(t) for t in tasks]
+            _record_roots(out, [root for t in tasks if (root := t.get("thread_key") or t.get("thread_id")
+                    or (t.get("sources") or {}).get("thread_id"))], "task")
         except Exception as e:  # noqa: BLE001
             out["tasks"] = []
             out["tasks_error"] = f"{type(e).__name__}: {e}"
@@ -365,17 +456,33 @@ def gather(settings) -> dict:
     out["campaigns"] = camps
 
     from . import task_assignment
+    listed_roots = []
+    observed_roots = out.get("_known_roots", [])
     try:
-        assignments = task_assignment.listing(settings)
-        out["assignments"] = [task_assignment.provenance(task_assignment.project(settings, row["thread_key"]),
-                              None) for row in assignments["items"]]
+        with _stage("assignment listing"):
+            assignments = task_assignment.listing(settings, **({"deadline": deadline} if deadline is not None else {}))
+            listed_roots = [row["thread_key"] for row in assignments["items"]]
+            _record_roots(out, listed_roots, "company_assignment")
+            out["review_coverage"] = {"assignment_listing": "complete", "mailbox_discovery": "unknown"}
     except Exception as exc:
         out["assignments"] = []
         out["assignments_error"] = f"Assignment authority UNKNOWN ({type(exc).__name__}); no absence established"
 
     from . import unanswered
     try:
-        sweep = unanswered.sweep(settings, days=14)
+        def discovered(phase, roots):
+            if phase == "inbound projection roots":
+                out["_projection_order"] = list(roots)
+            else:
+                _record_roots(out, roots, "inbound")
+            _checkpoint(phase)
+        def projected(projections):
+            out["_completed_projections"] = projections
+            out["assignments"] = [task_assignment.provenance(projections.get(root, task_assignment._unknown(root, "review projection unavailable", owner_uid=getattr(settings, "engine_owner_uid", None))), None) for root in listed_roots]
+            _checkpoint("inbound assignment projection")
+        sweep = unanswered.sweep(settings, days=14, deadline=deadline, owned_process_group=owned_process_group,
+                                 progress=discovered, listed_roots=observed_roots + listed_roots, projection_observer=projected)
+        out.setdefault("review_coverage", {})["mailbox_discovery"] = "incomplete" if sweep.get("read_incomplete") else "complete"
         out["human_work"] = sweep.get("human_work", [])
         out["assignment_audit"] = sweep.get("assignment_audit", [])
         if sweep.get("assignment_incomplete"):
@@ -383,9 +490,12 @@ def gather(settings) -> dict:
     except Exception as exc:
         out["human_work"] = []
         out["assignments_error"] = f"Current assignment work UNKNOWN ({type(exc).__name__}); no absence established"
+        _incomplete(out, "current assignment discovery interrupted", owner_uid=getattr(settings, "engine_owner_uid", None))
 
     # 4. Last cron tick
     out["last_tick"] = _last_log_lines(settings)
+    out.setdefault("review_coverage", {}).setdefault("aggregation", "complete")
+    _checkpoint("complete")
     return out
 
 
@@ -397,7 +507,11 @@ def _handles(row: dict) -> str:
     if row.get("gmail_uid"):
         parts.append(f"uid {row['gmail_uid']}")
     if row.get("engine_id"):
-        parts.append(f"engine {str(row['engine_id'])[:8]}")
+        parts.append(f"engine {row['engine_id']}")
+    if row.get("identity_evidence"):
+        parts.append(row["identity_evidence"])
+    if row.get("identity_conflict"):
+        parts.append("identity conflict")
     return ", ".join(parts) or "no handle"
 
 
@@ -519,3 +633,140 @@ def render(d: dict) -> str:
         for ln in tick:
             L.append(f"  {ln}")
     return "\n".join(L)
+
+def _save_checkpoint(path, value):
+    raw = json.dumps(value, sort_keys=True, default=str, separators=(",", ":")).encode()
+    if len(raw) > MAX_CHECKPOINT_BYTES:
+        raise ValueError("review checkpoint capacity exceeded")
+    fd, name = tempfile.mkstemp(prefix=".checkpoint-", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(name, path)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def _read_checkpoint(path, binding):
+    from .operator_health import private
+    private(path)
+    if path.stat().st_size > MAX_CHECKPOINT_BYTES:
+        raise ValueError("review checkpoint capacity exceeded")
+    record = json.loads(path.read_bytes())
+    if (record.get("binding") != binding or not isinstance(record.get("out"), dict)
+            or not isinstance(record.get("phase"), str) or type(record.get("complete")) is not bool):
+        raise ValueError("review checkpoint binding invalid")
+    return record
+
+
+def _incomplete(out, reason, *, cleanup_complete=True, owner_uid=None):
+    from . import task_assignment
+    out.setdefault("gmail_drafts", [])
+    out.setdefault("engine_drafts", [])
+    out.setdefault("drafts", [])
+    if not cleanup_complete or "drafts_inventory" not in out:
+        out["drafts_inventory"] = {"version": 1, "complete": False}
+        out["drafts_reconcile_error"] = True
+        for row in out["drafts"]:
+            row.setdefault("workset_hold_reasons", []).append("mailbox_unreadable")
+    out["review_incomplete"] = reason
+    out["assignments_error"] = "Review interrupted; undiscovered coverage UNKNOWN; no absence established"
+    out.setdefault("review_coverage", {}).update(aggregation="incomplete", cleanup_complete=cleanup_complete)
+    existing = {row["thread_key"] for row in out.get("assignments", [])}
+    out.setdefault("assignments", []).extend(task_assignment.provenance(out.get("_completed_projections", {}).get(root, task_assignment._unknown(root, reason, owner_uid=owner_uid)))
+        for root in out.get("_known_roots", []) if root not in existing)
+    return out
+
+
+def _public(out, *, owner_uid=None):
+    public = {key: value for key, value in out.items() if not key.startswith("_")}
+    public["assignment_coverage"] = _root_coverage(out, owner_uid=owner_uid)
+    return public
+
+
+def _supervise(settings, *, worker_command=None, total_seconds=TOTAL_SECONDS,
+               work_seconds=WORK_SECONDS, cleanup_seconds=CLEANUP_SECONDS):
+    from .operator_health import identity
+    from .operator_dossier import _stop
+    started = time.monotonic()
+    if not 0 < work_seconds < work_seconds + cleanup_seconds < total_seconds:
+        raise ValueError("invalid review lifecycle")
+    work_deadline = started + work_seconds
+    cleanup_deadline = work_deadline + cleanup_seconds
+    configuration = settings.model_dump(mode="json")
+    digest = hashlib.sha256(json.dumps(configuration, sort_keys=True).encode()).hexdigest()
+    binding = {"attempt": secrets.token_hex(32), "owner_uid": settings.engine_owner_uid,
+               "configuration_sha256": digest}
+    out = {}
+    phase = "setup"
+    complete = False
+    clean = False
+    proc = None
+    stamp = None
+    with tempfile.TemporaryDirectory(prefix="cs-review-") as directory:
+        path = Path(directory) / "checkpoint.json"
+        try:
+            command = worker_command or (sys.executable, "-B", "-m", "cs.review", "--worker")
+            env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+            with tempfile.TemporaryFile() as stdout:
+                proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stdout,
+                                        stderr=None, start_new_session=True, env=env)
+                stamp, _ = identity(proc.pid)
+                binding["worker"] = stamp
+                payload = {"settings": configuration, "binding": binding, "path": str(path),
+                           "deadline": work_deadline}
+                try:
+                    proc.communicate(json.dumps(payload).encode(), timeout=max(.001, work_deadline-time.monotonic()))
+                except subprocess.TimeoutExpired:
+                    pass
+                finally:
+                    clean = _stop(proc, stamp, cleanup_deadline)
+            record = _read_checkpoint(path, binding)
+            out, phase = record["out"], record["phase"]
+            complete = record["complete"] and proc.returncode == 0 and clean
+        except Exception:
+            if proc is not None and proc.poll() is None:
+                clean = _stop(proc, stamp, cleanup_deadline)
+        if not complete:
+            _progress(f"{phase}: incomplete (deadline, worker or checkpoint failure); cleanup {'complete' if clean else 'incomplete'}")
+            out = _incomplete(out, "review deadline or worker failure during " + phase, cleanup_complete=clean, owner_uid=getattr(settings, "engine_owner_uid", None))
+        return _public(out, owner_uid=getattr(settings, "engine_owner_uid", None))
+
+
+def gather(settings) -> dict:
+    return _supervise(settings)
+
+
+def _worker(payload):
+    from .config import Settings
+    from .operator_health import identity
+    settings = Settings.model_validate(payload["settings"])
+    binding = payload["binding"]
+    digest = hashlib.sha256(json.dumps(settings.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
+    path = Path(payload["path"])
+    if (binding["worker"] != identity(os.getpid())[0] or os.getpgrp() != os.getpid()
+            or binding["owner_uid"] != settings.engine_owner_uid
+            or binding["configuration_sha256"] != digest or path.parent.resolve() != path.parent):
+        raise ValueError("review worker identity changed")
+    def checkpoint(out, phase):
+        _save_checkpoint(path, {"binding": binding, "out": out, "phase": phase, "complete": False})
+    out = _aggregate(settings, deadline=payload["deadline"], owned_process_group=os.getpid(), checkpoint=checkpoint)
+    _save_checkpoint(path, {"binding": binding, "out": out, "phase": "complete", "complete": True})
+    return 0
+
+
+def main():
+    if sys.argv[1:] != ["--worker"]:
+        return 3
+    try:
+        payload = json.loads(sys.stdin.buffer.read(MAX_CHECKPOINT_BYTES + 1))
+        return _worker(payload)
+    except Exception:
+        return 3
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -109,7 +109,7 @@ def _campaigns() -> None:
     review.campaign.list_campaigns = _list_campaigns
     review.rpc.call_sync = _call_sync
     try:
-        d = review.gather(settings)
+        d = review._aggregate(settings)
     finally:
         review.campaign.list_campaigns = orig_list
         review.rpc.call_sync = orig_rpc

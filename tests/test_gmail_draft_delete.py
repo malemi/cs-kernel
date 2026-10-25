@@ -282,6 +282,19 @@ def test_account_flag_refuses_the_verb() -> None:
     assert called["n"] == 0, "the verb ran against the wrong mailbox"
 
 
+def test_uidvalidity_recheck_uses_real_imap_response_semantics() -> None:
+    import imaplib
+
+    connection = object.__new__(imaplib.IMAP4)
+    connection.untagged_responses = {"UIDVALIDITY": [b"6"]}
+    assert gmail_drafts._uidvalidity(connection) == "6"
+    assert gmail_drafts._uidvalidity(connection) == "6"
+    assert connection.untagged_responses["UIDVALIDITY"] == [b"6"]
+    # A newly selected folder still changes the observed validity.
+    connection.untagged_responses["UIDVALIDITY"] = [b"7"]
+    assert gmail_drafts._uidvalidity(connection) == "7"
+
+
 def run() -> None:
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

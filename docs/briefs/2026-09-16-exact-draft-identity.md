@@ -110,3 +110,20 @@ instruction. Headless execution continues to deny both halves.
 5. The retire preview names both handles and commit cannot widen either selector.
 6. A partial retire or uncertain send is loud and never invites a blind retry.
 7. Legacy drafts remain visible with explicitly inferred identity.
+
+## Current implementation boundary
+
+This execution implements and verifies the local kernel/engine contracts with
+disposable controlled IMAP, RPC and storage fixtures. It authorizes no customer
+send, production draft cleanup, release, hosted deployment or clone upgrade.
+Live Gmail preservation through provider-side editing and sending is deferred;
+controlled MIME round trips do not establish that provider behavior.
+
+Exact pairing and interactive retirement may use an identifier actually read
+from a current mirror, with strict owner and identity checks. A missing,
+duplicate or conflicting identifier cannot authorize a mutation or fall back
+to inferred pairing. Automatic external-send reconciliation remains disabled
+until provider preservation is separately proven. The same gate applies to
+any Message-ID fallback: generating that mapping alone is not preservation
+evidence. Retain explicit unverified transport status in the implementation
+plan and do not claim full live rollout acceptance at local completion.

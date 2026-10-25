@@ -23,30 +23,37 @@ DRAFT = {
 
 
 def run_case(*, approval_input=None, approvals=True, final_status="sent",
-             engine_error=None):
+             engine_error=None, draft=None, held=False, duplicate=False):
     calls = []
+    selected = DRAFT if draft is None else draft
 
     def fake_call_sync(settings, method, params, timeout=None):
         if method == "tasks.assignment.project":
-            return normal_projection(settings, params)
+            result = normal_projection(settings, params)
+            if held:
+                result.update(state="unknown", complete=False, hold_auto_reply=True)
+            return result
         assert method == "drafts.list", method
         status = params.get("status") or "draft"
         calls.append(status)
         if len(calls) == 1:
             assert status == "draft"
-            return [DRAFT]
-        return [dict(DRAFT, status=status)] if status == final_status else []
+            return [selected]
+        return [dict(selected, status=status)] if status == final_status else []
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
                         echo=print, conversation_id=None, role=None,
                         approval_predicate=None, email_context=None):
-        assert email_context == {"draft_id": DRAFT_ID}
+        assert email_context is None
         assert allow_tools == {"send_draft"}
         assert DRAFT_ID in message
         supplied = approval_input if approval_input is not None else {"draft_id": DRAFT_ID}
         mode = "once" if approval_predicate("send_draft", supplied) else "deny"
         rows = ([{"tool": "send_draft", "mode": mode, "input": supplied}]
                 if approvals else [])
+        if duplicate:
+            assert not approval_predicate("send_draft", supplied)
+            rows.append({"tool": "send_draft", "mode": "deny", "input": supplied})
         metadata = ({"error": engine_error, "error_detail": "boom"}
                     if engine_error else {})
         return {"result": {"response": "done", "metadata": metadata},
@@ -65,7 +72,7 @@ def run_case(*, approval_input=None, approvals=True, final_status="sent",
 def main():
     real_chat = rpc.chat
     rc, err, calls = run_case()
-    assert rc == 0, (rc, err)
+    assert rc == 5 and "Do not retry sending" in err, (rc, err)
     assert calls == ["draft", "sent"], calls
 
     rc, err, _ = run_case(approval_input={"draft_id": "wrong-id"})
@@ -80,6 +87,15 @@ def main():
     rc, err, calls = run_case(final_status="sending")
     assert rc == 5 and "Delivery is uncertain" in err, (rc, err)
     assert calls == ["draft", "sent", "draft", "sending", "failed"], calls
+
+    rc, err, calls = run_case(duplicate=True)
+    assert rc == 5 and "Do not retry sending" in err and calls == ["draft", "sent"], (rc, err, calls)
+
+    rc, err, calls = run_case(draft={k: v for k, v in DRAFT.items() if k != "thread_id"})
+    assert rc == 3 and "HELD" in err and calls == ["draft"], (rc, err, calls)
+
+    rc, err, calls = run_case(held=True)
+    assert rc == 3 and "HELD" in err and calls == ["draft"], (rc, err, calls)
 
     # Exact ids only: a prefix never reaches chat.
     cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})

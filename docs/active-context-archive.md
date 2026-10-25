@@ -1,3 +1,647 @@
+## 2026-10-24 — Stripe read-only workflow snapshot
+
+- Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of generic finance
+  chat/history. Bootstrap routes advertised systems to their installed workflow even without the
+  general catalog. Both maintained clones expose the updated skill on all three host paths; support
+  has authenticated connected/live status and one bounded invoice read, Café reports disconnected.
+  Package pins, permissions, cron and hosted engines are preserved. Native model selection/full
+  package release remain separate; [Stripe](integrations/stripe.md) owns the route and verification
+  limits.
+
+## 2026-10-25 — Before canonical release alignment
+
+- Both maintained clones have DEBUG-first logs, ten-minute private filesystem collection and
+  reviewed causal supervisor diagnostics. Ordinary trace/inbox access preserves the actual failed
+  check, safe observations and run/attempt/child/cause links. Eight installed causal tests pass on
+  each clone; natural collection is verified. A fresh blind trial distinguishes five local causes,
+  healthy/hold controls and a genuinely unknown case. Historical missing causes remain unknown.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) governs every operational problem: logs must
+  expose malfunction and support a specific hypothesis/investigation route; gaps require improved
+  evidence and regression/blind checks. ACCOUNTING's reported interactive draft-parser gap remains
+  unverified and unrepaired. `cs-diagnose` is manual-only; technical SMTP/scanners/watchdogs remain
+  disabled. The [existing plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md) owns evidence;
+  the earlier failed attempt and unrelated business/native acceptance limits remain separate.
+- Company procedures and mailbox identity are authoritative clone-owned files. Only interactive `cs instructions --commit` publishes compiled standing rules through `instructions.store`; scheduled
+  callers cannot publish them. [Shared project memory](briefs/2026-09-10-shared-project-memory.md)
+  remains revisioned engine-owned written records.
+
+## 2026-10-24 — Supervisor causal diagnostics
+
+- Both maintained clones use DEBUG-first logs, ten-minute filesystem collection and private
+  `problems.json`/investigations. Current engine write health is recovered; retained logging loss
+  remains WARNING under the original incident ID, with unknown historical cause/count preserved.
+  Fresh writer events and authenticated readers bind six distinct installed engine families.
+  `cs-diagnose` is manual-only on all three host paths; Claude/Codex native cases pass and OpenCode
+  retains qualified instruction coverage. Old scanner/SMTP services and TEST watchdogs are disabled.
+  The [current plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md) owns evidence and closure;
+  the earlier observability plan stays failed. No business-mail certification follows.
+
+
+## 2026-10-23 — Retained interactive completion evidence
+
+- Interactive review preparation and conservative send completion are installed
+  in the requesting clone after two concordant Astra approvals. Existing-row
+  updates use material snapshots; RFC2047 subjects decode consistently. Exact
+  interactive sends verify provider Sent and retire only an unchanged mirror;
+  incomplete cleanup reports delivered-but-incomplete without another send.
+  Source and actual installed focused suites pass69 tests. The four actual cases
+  have three provider Sent replies and one fiscal review draft; this does not
+  certify a new live send through the repaired completion branch or an unattended
+  tick. The [completion plan](execution-plans/2026-10-22-interactive-send-completion.md)
+  owns the exact candidate, failed controls and current acceptance limits.
+
+## 2026-10-24 — Logging health continuation
+
+- Both maintained clones have DEBUG-first kernel logs, ten-minute filesystem collection and private
+  `problems.json`/investigation directories. Natural cron execution is verified; `cs logs` retains
+  authenticated engine-reader access. `cs-diagnose` is installed on all three host paths;
+  Claude/Codex native cases pass; OpenCode safely executes the helper with limited instruction coverage. Old
+  scanner/SMTP services and TEST watchdog workloads are disabled. The [current plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md) owns delivery evidence; the earlier observability
+  plan stays failed. No automated diagnosis, technical user mail or business-mail certification
+  follows.
+
+
+## 2026-10-23 — Replaced technical-mail monitoring
+
+- Owner-scoped observability is installed on both maintained clone kernels and
+  six company engine services. `cs logs` exposes local, independent engine-reader
+  and bounded off-host evidence. Two separate monitors and owner SMTP services
+  run outside cron; two TEST-cluster receivers retain watchdogs and signed
+  non-mail subscriber inboxes. Actual owner mail receipt, primary-route failure,
+  monitor absence and recovery are verified. The excluded banking daemon and
+  original cron are preserved. [The active plan](execution-plans/2026-10-23-operator-observability-and-monitoring.md)
+  retains the strict ordinary draft/send and final closure obligations; these
+  infrastructure checks do not certify current mail reliability.
+
+- [Scheduled intake and compatible callers](operator-runtime.md) retain their
+  reviewed hosted override. Deterministic discovery/phase checks and SMTP alerts
+  are installed on both clones; actual failure notices reached both owner inboxes.
+  Human holds remain distinct from technical failures and monitoring uses no LLM.
+
+- [Operator notices](operator-runtime.md) retain existing business-run reporting.
+  Independent monitoring adds owner-only SMTP admission/Inbox evidence and a
+  separate signed non-mail recipient. Monitoring uses no model calls; the optional
+  analyst remains disabled. The two compute hosts share a cloud region, so whole
+  cloud-provider outage coverage is not claimed.
+
+## 2026-10-23 — Observability source-only checkpoint
+
+- The operator reports current missing drafts and sends. Historical focused or
+  provider evidence does not establish current reliability. The
+  [observability candidate](operator-observability.md) adds owner-scoped events,
+  `cs logs`, an independent deterministic monitor and watchdog in local source.
+  Installed adoption, independent alert receipt and ordinary outcomes remain
+  unverified; [the active plan](execution-plans/2026-10-23-operator-observability-and-monitoring.md)
+  retains those obligations. No monitoring service is activated by this work.
+- [Operator notices](operator-runtime.md) identify evidenced failures and repairs.
+  One Café technical-failure notification has actual SMTP/Inbox acceptance;
+  broader notice cases retain local fixture evidence. No independent host/cron
+  heartbeat is installed.
+
+
+## 2026-10-22 — Superseded four-customer acceptance claim
+
+- Interactive review preparation is installed in the requesting clone after
+  two independent Astra approvals of the same candidate. Real hosted legacy
+  composition creates exact engine/Gmail drafts even when assignments hold sends;
+  two requested replies are verified Sent and two remain review drafts. The
+  newer supervised contract retains source tests, without hosted deployment.
+  The [continuity plan](execution-plans/2026-10-22-interactive-draft-continuity.md)
+  owns source, installed-byte, provider and remaining-send evidence.
+
+# Pruned active context
+
+## 2026-10-22 — Interactive continuity and condensed current references
+
+- Explicit supervised review preparation has a reviewed local MAIN/kernel source
+  candidate. Held own-source threads can prepare drafts while sending retains its
+  checks; real provider verification and hosted adoption remain pending. Current
+  hosted policy1 services cannot negotiate this contract. The [plan](execution-plans/2026-10-21-supervised-review-draft.md)
+  owns source tests, runtime compatibility and remaining acceptance.
+
+- Reviewed assignment, folded-address, member-activity, typed-conflict, Draft-root
+  and action-failure repairs are installed on six company engines and both clone
+  kernels. The retained free proof covers 230 original actor/root obligations with
+  zero terminal technical UNKNOWN; its reviewed assessment and exact scope remain
+  in the [recovery plan](execution-plans/2026-10-15-ordinary-assignment-recovery.md).
+
+  Current recovery has no strict ordinary acceptance. Historical V27 remains
+  FAILED and cannot certify the current source. The [recovery plan](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  retains exact candidate, native denial, cleanup and provider qualifications.
+  Selected-dossier context is installed; task absence grants no authority.
+  Its documentation/final obligations and the prospective exact-read permission
+  exception remain open. No new paid case or baseline advancement is authorized.
+
+- The engine financial/legal migration has combined native MCP M3 approval and
+  installed actor/clone acceptance, with explicit financial and legal limits.
+  Both actors advertise protocol-2 direct start and pass discovery/selection,
+  original transfer and cross-owner refusal. The [authenticated client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  completes a Support report and all four full artifact transfers on one connection,
+  with independent result approval. Both actors preserve workflow routes after
+  the reviewed ordinary-reply and MCP amendments; final actual protocol-2 client
+  checks pass. All three host paths
+  share the thin route, and old procedures survive outside discovery. The
+  [retirement continuation](execution-plans/2026-10-17-engine-workflow-retirement.md)
+  retains approved archive/rollback and installed link/copy checks. Fresh ordinary
+  operations, documentation and final closure remain open. No release is implied.
+
+
+## 2026-10-21 — Retained recovery observation detail
+
+  V27 is the latest strict ordinary result: FAILED. Seven genuine parts pass
+  independent pre-effect context/projection verification (42484-byte view and
+  1665-byte envelope). The scheduled selected-root dossier completes in35.545747
+  seconds with cleanup and explicit task-context completeness UNVERIFIED. MrCall
+  creates/sends one reply; the own-fixture counterparty independently receives its
+  correct content. Native event757 denies the required read-only assignment status
+  command for the second selected root. The strict consumer rejects that native
+  permission_denied event, so the supervisor cannot certify a complete lifecycle.
+  Do not waive the denial or reinterpret the false discovery phase as a proven
+  technical CLI failure. Café/signup/ACK do not run; original V27 remains FAILED.
+  Two native counters2.4732952/2.5531282 are not a whole-case aggregate. Cleanup
+  preserves source1116/fa356, both120-file6b71 payloads, original cron, receipt-only
+  nonce-absence evidence,158 job identities plus outer driver (159 independent
+  union), four free locks and seven exact runtime bindings. A prospective exact
+  read-permission exception awaits fresh review; no new paid case is authorized.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v27/`.
+
+- The [selected dossier](execution-plans/2026-10-19-selected-root-dossier-authority.md)
+  is installed and independently verified in both normal clones:120 files, payload
+  `6b71cb5b0b3f4bf8c601699e3323c51f10b8072f2556a260904942f8114096a9`.
+  It preserves context delivery, EOF framing, normalization and fresh effect guards.
+  Tasks remain observed business context with completeness unverified; absence
+  never grants authority. The two narrowly corrected provenance references pass
+  normal-user runtime-policy checks. Historical free host settings comparisons
+  retain their explicit scratch model/empty-hook qualifications. V27 proves actual
+  pre-effect context and bounded dossier completion, not whole-run acceptance.
+  The [read-permission brief](briefs/2026-10-19-assignment-status-read-permission.md)
+  proposes an explicit prospective exception; current permissions are unchanged.
+  All original workflow, EOF, normalization, context, selected-dossier and docbridge
+  critics/final/completion obligations remain open. No release/baseline advancement.
+
+## 2026-10-19 — V26 snapshot superseded by V27
+
+Source: docs/active-context.md; preserved verbatim.
+
+  V26 is the latest strict ordinary result: FAILED. Complete native inventory
+  delivery passes before effects: seven genuine parts reconstruct the44167-byte
+  view and1663-byte envelope, with independent projection/context verification.
+  No draft or send runs. The mandatory contact dossier exceeds the host's120-second
+  foreground plus600-second background lifecycle and is stopped; its exact inner
+  RPC stage is not captured. The operator holds the case. Café/signup/ACK do not
+  run. The original failed result stays unchanged. USD2.945314 is the native
+  terminal counter only, not a whole-case cost. Cleanup verifies unchanged1114-entry
+  source, original cron, two removed enrollments,347 quiescent process identities,
+  four free locks and seven preserved engine/Qonto bindings. Scheduled dossier
+  repair, fresh ordinary acceptance and all original final closures remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v26/`.
+
+- The [automatic context delivery](execution-plans/2026-10-19-native-inventory-context-delivery.md)
+  is installed and independently verified in both normal clones:119 files, payload
+  `454176727952d0b294c5dccd756505db5da940f9cdfa853da4417bb5ed04518f`.
+  Historical117-file EOF/normalization installations remain retained. The free
+  host comparisons preserve actual model/tools/permissionMode and baseline plus32
+  hook-response multiplicities. Both scratch globals migrate from opus to
+  opus[1m]; all four live settings remain exact, and empty-hook identities retain
+  their explicit qualification. V26 adds actual MrCall pre-effect complete
+  context/projection proof; it does not establish whole-run business acceptance.
+  The [selected dossier brief](briefs/2026-10-19-selected-root-dossier-authority.md)
+  owns the new read-scope/budget mismatch. All original workflow, EOF, normalization
+  and docbridge final reviews remain open. No release or baseline advancement.
+
+
+## Ordinary V24 snapshot superseded by V25 — 2026-10-19
+
+## 2026-10-19 — superseded V25 and pre-V26 component snapshots
+
+Source: `docs/active-context.md primary`, preserved verbatim.
+
+  V25 is the latest ordinary result: FAILED after an authorized structural stop.
+  Native drafting and sending succeed; one exact Sent message and an independent
+  counterparty receipt are retained. Complete global inventory delivery is absent
+  before those actions: raw inspection is false and view/envelope coverage is zero.
+  The driver is stopped only after actions are quiescent; Café/signup do not run.
+  The original incomplete result and same-session cost counters remain unchanged;
+  no complete-cost or signed PASS claim follows. Exact source/runtime bindings,
+  original cron, enrollment removal, 297 owned process identities and four idle
+  locks are verified. The normalization/scanner repair remains independently
+  verified and installed. Automatic complete context delivery, fresh ordinary
+  acceptance and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v25/`.
+
+Source: `docs/active-context.md component`, preserved verbatim.
+
+- The [automatic context delivery](execution-plans/2026-10-19-native-inventory-context-delivery.md)
+  is installed in both normal clones as119 files, payload `454176727952d0b294c5dccd756505db5da940f9cdfa853da4417bb5ed04518f`.
+  It preserves the earlier EOF framing and scoped draft normalization;117-file
+  `38ba43b9` and `ad65ef1b` identify historical installations. Fresh source and
+  activation reviews approve this component. The actual single activation retains
+  its receipt; six engine bindings and the protected finance policy are unchanged.
+  Free local host comparisons show equal effective model/tools/permissionMode
+  and baseline plus32 hook-response multiplicities. Both scratch globals are
+  normalized by the host from opus to opus[1m]; all four live source settings stay
+  exact. Individual empty-hook identities remain qualified.
+  These constructed local responses establish no ordinary/background mailbox
+  acceptance. V25 remains FAILED. Fresh ordinary acceptance, independent proof
+  closure and every original workflow/EOF/normalization/docbridge final gate remain
+  open; there is no release or baseline advancement.
+
+## 2026-10-19 — historical EOF installation snapshot
+
+Source: `docs/active-context.md`, preserved verbatim before current transport reconciliation.
+
+- The [native EOF framing repair](execution-plans/2026-10-19-native-inventory-eof-framing.md)
+  preserves the complete semantic inventory and independent exact byte checks.
+  The mandatory envelope exposes bounded safe commands before view reads; optional
+  progress gives no inspection authority. JSON metadata values stay unchanged, the
+  view omits its optional final LF, and UTF-8/whitespace boundaries remain safe.
+  Both clones run the independently verified117-file payload `38ba43b9…`; MrCall
+  retains exact-ID send mode and Café draft-only. Assessment is post-terminal;
+  engine action guards and fresh selected-root reads remain mandatory. V23 is
+  FAILED after the prior framing stop; new native/provider/USD4 results and final
+  closure remain open. No public release follows from installed offline checks.
+
+
+
+## 2026-10-19 — historical EOF runtime installation
+
+Source: `docs/operator-runtime.md`, preserved verbatim.
+
+
+## 2026-10-19 — prior runtime local settings description
+
+protocol fixtures preserve model/tools/permissionMode and baseline plus32 hook
+response multiplicities while source settings remain unchanged; individual empty
+hook identities and ordinary allow/deny argv retain explicit fixture limits.
+
+## 2026-10-19 — prior finite local settings description
+
+  Free local host checks preserve model/tools/permissionMode and baseline plus32
+  hook-response multiplicities; individual empty-hook identities remain qualified.
+
+  V24 is the latest ordinary result: FAILED. With the reviewed 117-file framing
+  repair installed, genuine native reads cover all 43,277 view bytes and all 1,663
+  envelope bytes before action. `create_draft` then fails (attempt_6a23f543f2b2db96): actual daemon logs
+  show the exact-thread guard refused a bare RFC ID against the authorized
+  bracketed root before storage writes. No persistent attempt journal exists.
+  Read-only provider checks find no exact matching draft or reply; the default
+  engine draft list is not an all-status absence proof. A later optional local
+  Python summary is denied; this does not explain the earlier action failure.
+  The driver exits naturally with code 2. Source/runtime bindings, exact cron,
+  enrollment removal, 290 owned process identities and all four idle locks are
+  verified. No native terminal or cost is available; Café/signup do not run and
+  no signed PASS exists. Both clones and all six company engines now install
+  the reviewed normalization/scanner repair, with independent installed and
+  normal-user verification. Fresh ordinary acceptance and final closure remain open.
+
+## Ordinary V24 snapshot before normalization adoption — 2026-10-19
+
+  V24 is the latest ordinary result: FAILED. With the reviewed 117-file framing
+  repair installed, genuine native reads cover all 43,277 view bytes and all 1,663
+  envelope bytes before action. `create_draft` then fails (attempt_6a23f543f2b2db96): actual daemon logs
+  show the exact-thread guard refused a bare RFC ID against the authorized
+  bracketed root before storage writes. No persistent attempt journal exists.
+  Read-only provider checks find no exact matching draft or reply; the default
+  engine draft list is not an all-status absence proof. A later optional local
+  Python summary is denied; this does not explain the earlier action failure.
+  The driver exits naturally with code 2. Source/runtime bindings, exact cron,
+  enrollment removal, 290 owned process identities and all four idle locks are
+  verified. No native terminal or cost is available; Café/signup do not run and
+  no signed PASS exists. Action diagnosis, ordinary acceptance and final closure
+  remain open.
+
+## Ordinary V23 snapshot superseded by V24 — 2026-10-19
+
+  V23 is the latest ordinary result: FAILED after a structural stop. The compact
+  route is used, but the original native result omits the final LF byte, leaving
+  exact inspection incomplete. No draft/send command is observed before the stop;
+  Café/signup do not start. Source equality, exact cron restoration, enrollment
+  removal, owned-process quiescence and all four idle locks are verified. The
+  partial runner result is retained; native terminal cost is unavailable and no
+  signed PASS exists. Both clones install the reviewed 117-file byte-framing correction,
+  with independent offline verification. Fresh ordinary acceptance and final
+  closure remain open.
+
+## 2026-10-19 — Superseded V23 pre-EOF-correction status
+
+  V23 is the latest ordinary result: FAILED after a structural stop. The compact
+  route is used, but the original native result omits the final LF byte, leaving
+  exact inspection incomplete. No draft/send command is observed before the stop;
+  Café/signup do not start. Source equality, exact cron restoration, enrollment
+  removal, owned-process quiescence and all four idle locks are verified. The
+  partial runner result is retained; native terminal cost is unavailable and no
+  signed PASS exists. Both clones retain the reviewed 117-file semantic payload. A bounded
+  byte-framing repair, fresh ordinary acceptance and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v23/`.
+
+## 2026-10-19 — State before installed native EOF framing
+
+- The [semantic inventory component](execution-plans/2026-10-19-semantic-complete-inventory-view.md)
+  has reviewed source and independently verified installed offline controls.
+  Global roots, holds, ordered observations and selection stay visible; raw case
+  detail requires fresh selected-root reads. Native envelope/view EOF is audited
+  after terminal; engine action guards remain authoritative. Both clones run the verified117-file semantic payload;
+  MrCall is exact-ID send-capable and Café draft-only. No current ordinary PASS
+  or public release follows from this component.
+
+## 2026-10-19 — Superseded V22 workflow snapshot
+
+  V22 is the latest ordinary result: FAILED. Native MrCall ends cleanly at
+  USD1.8873254, with strict lifecycle and all six phase checks passing. Its
+  supervisor refuses incomplete full-inventory inspection. Neither selected
+  thread is worked; no draft or send is attempted. Café/signup do not start.
+  Exact candidate, cron, enrollment and process cleanup checks pass; no signed
+  PASS exists. Both clones install the reviewed 117-file semantic inventory
+  correction, with independent offline verification. Fresh ordinary acceptance
+  and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v22/`.
+
+## 2026-10-19 — Superseded V22 pre-semantic-installation status
+
+  V22 is the latest ordinary result: FAILED. Native MrCall ends cleanly at
+  USD1.8873254, with strict lifecycle and all six phase checks passing. Its
+  supervisor refuses incomplete full-inventory inspection. Neither selected
+  thread is worked; no draft or send is attempted. Café/signup do not start.
+  Exact candidate, cron, enrollment and process cleanup checks pass; no signed
+  PASS exists. The reviewed 116-file typed-read correction remains installed
+  and independently free-verified. Bounded offline diagnosis, fresh ordinary
+  acceptance and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v22/`.
+
+## 2026-10-19 — State before verified semantic inventory installation
+
+- The [semantic inventory component](execution-plans/2026-10-19-semantic-complete-inventory-view.md)
+  has reviewed source and independent offline projection/inspection controls.
+  Global roots, holds, ordered observations and selection stay visible; raw case
+  detail requires fresh selected-root reads. Native envelope/view EOF is audited
+  after terminal; engine action guards remain authoritative. Locked installed
+  adoption remains pending. Both clones retain the116-file typed-read payload;
+  MrCall is exact-ID send-capable and Café draft-only. No current ordinary PASS
+  or public release follows from this component.
+
+## 2026-10-19 — State before semantic inventory component
+
+- The reviewed116-file local payload `e4b49f97571a51866d667c51e5811712631a3cd6e0f6689911896cbfac33e148` is installed in both clones.
+  Its [typed read outcomes](execution-plans/2026-10-19-native-business-read-outcomes.md) bind exact assignment human holds and complete contacted/history
+  absence to source, process, command and native result. Other read/action errors
+  remain unhealthy; observations grant no action authority. Guides constrain
+  factual reads to selected roots and inspect complete task output through Read.
+  Independent installed/free checks pass. MrCall retains exact-ID send mode;
+  Café stays draft-only. V21 remains FAILED; no new paid case or release follows.
+
+
+## 2026-10-19 — Superseded V21 workflow snapshot
+
+  V21 is the latest ordinary result: FAILED. Scoped generation and exact-ID send
+  produce one reply independently received by Café, with exact mirror retirement.
+  The supervisor rejects an optional typed assignment-status hold on a disjoint
+  thread; no action or authority comes from that hold. A later off-workset raw RPC
+  read also refuses. Native cost is USD2.341826.
+  Café/signup do not start. Candidate bytes, cron, enrollment and process cleanup
+  checks pass. No signed PASS exists. The finite typed read-outcome correction is
+  installed in both clones with independent source, byte-preservation and free
+  runtime approval. Fresh ordinary acceptance and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v21/`.
+
+## 2026-10-19 — Superseded V21 pre-installation status
+
+  V21 is the latest ordinary result: FAILED. Scoped generation and exact-ID send
+  produce one reply independently received by Café, with exact mirror retirement.
+  The supervisor rejects an optional typed assignment-status hold on a disjoint
+  thread; no action or authority comes from that hold. A later off-workset raw RPC
+  read also refuses. Native cost is USD2.341826.
+  Café/signup do not start. Candidate bytes, cron, enrollment and process cleanup
+  checks pass. No signed PASS exists. A finite typed read-outcome correction is
+  under local review; fresh ordinary acceptance and final closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v21/`.
+
+## 2026-10-19 — State superseded by typed read-outcome adoption
+
+- The reviewed115-file development payload `7debbe46a5ab5bc0c0e66569f57ba2e36aa1a904b1dd18b79f4adabb3e25aa84` is installed in both
+  clones, including canonical foreground discovery, typed draft inventory and
+  [root-bound send compatibility](execution-plans/2026-10-19-bound-send-workset-compatibility.md). MrCall uses scoped draft-reply then exact-ID draft-send with a
+  same-run metadata snapshot; changed/foreign drafts refuse before sending.
+  Café remains draft-only. Symbolic health also checks exact-send failures.
+  Free source/installed checks pass; current ordinary/provider acceptance remains
+  FAILED at V20, and no further paid attempt or public release is authorized.
+
+
+## 2026-10-19 — Superseded V20 workflow snapshot
+
+  V20 is the latest strict ordinary result: FAILED. Native composition, complete
+  discovery and required phases pass; MrCall's final chat operation is refused.
+  The fixture root is selected, but legacy send guidance omits the binding now
+  required by the workset guard. Café/signup do not start. Native cost is
+  USD3.21011. Cron, enrollment and process cleanup pass; a post-run generated
+  cache change was retained and explicitly restored, not hidden as equality.
+  No signed PASS exists. The root-bound draft generation/exact-send route is
+  installed and free-verified; ordinary acceptance remains open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-19/ordinary-assignment-recovery-v20/`.
+
+## 2026-10-19 — Superseded send-route status
+
+  No signed PASS exists. The existing root-bound draft generation/exact-send
+  route is under local compatibility review; no broader authority is added.
+
+## 2026-10-19 — Recovery state superseded by root-bound send adoption
+
+- The reviewed115-file bounded-workset/Bash payload
+  `8eabd1ae0759f58ab0d80403a46b038083ccecfb3c101635c22e6808174b4ed9`
+  and primary-budget emitter export are installed in both clones. Independent
+  imports, guidance preservation and exact health-source provenance readback pass.
+- The local [foreground/inventory repair](execution-plans/2026-10-18-native-foreground-held-composition.md)
+  adds symbolic refusal diagnostics, physically joined canonical foreground3 and
+  typed draft identity coverage with per-root holds. Component reviews and focused
+  tests pass; source changes remain uninstalled. One zero-model raw snapshot of
+  both actors has complete UID/identity coverage, with every projected verdict
+  explicitly unobserved/held. Final source checks and operational recovery remain
+  open; no paid retry, budget change or release follows these observations.
+
+
+
+## 2026-10-19 — Superseded V19 terminal status
+
+  V19 remains the latest strict ordinary result: FAILED. MrCall produced one
+  genuine successful native terminal for USD1.5609326, but required review exit3
+  failed workset observation; its clipped output does not reveal the exact predicate.
+  Café/signup did not start. Exact candidate/cron and owned cleanup checks pass;
+  no signed PASS exists. V18's reply and Café draft remain separate observations.
+
+## 2026-10-19 — Prior foreground-repair boundary
+
+  V19 is the latest strict ordinary result: FAILED. MrCall's native process
+  exits zero with one complete result and no Agent calls, costing USD1.5609326.
+  Its supervisor rejects foreground review exit 3; Café/signup do not start.
+  The exact candidate, original cron, enrollment and process cleanup checks pass.
+  No signed PASS exists. V18's received reply and usable Café draft remain
+  separate observations. A source-only foreground review-observer repair and replay
+  checks are open; no new paid case follows this failure.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-18/ordinary-assignment-recovery-v19/`.
+
+- The local [bounded workset](execution-plans/2026-10-18-bounded-triage-workset.md)
+  and [Bash composition](execution-plans/2026-10-18-native-bash-lifecycle-composition.md)
+  are jointly installed in both ordinary clones as the reviewed115-file payload
+  `8eabd1ae0759f58ab0d80403a46b038083ccecfb3c101635c22e6808174b4ed9`.
+  Independent installed readback confirms imports, guidance preservation and the
+  primary-budget launcher's separate emitter export. Version2 preserves original
+  init/results and literal known telemetry, binds complete foreground/automatic
+  tasks and retains typed canonical held3. Actor's stale current health-source
+  provenance pin was rebased to the identical approved/installed source.
+  Final ordinary/native/provider acceptance and whole-run latency remain open;
+  no signed PASS or budget change follows installation.
+
+
+
+## 2026-10-18 — Superseded V18 terminal status
+
+  V18 is the latest strict ordinary result: FAILED. MrCall and signup pass.
+  Independent received-reply, usable owner-bound Café provider draft, no-send,
+  no-duplicate and candidate checks pass. Café reaches its 45-minute limit;
+  its clean terminal and required normal guarded route remain unproven.
+  Exact before/after candidate and cron, enrollment and process cleanup pass.
+  Both clones install the reviewed same-session native-background continuation
+  repair, proved against one genuine USD0.0419878 probe and full local tests.
+  No signed PASS exists. Retained-stream diagnosis and final acceptance/closure
+  remain open; no retry or budget/permission increase follows this result.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-17/ordinary-assignment-recovery-v18/`.
+
+## 2026-10-18 — Prior joint-adoption boundary
+
+- The local [bounded workset](execution-plans/2026-10-18-bounded-triage-workset.md)
+  and [Bash composition](execution-plans/2026-10-18-native-bash-lifecycle-composition.md)
+  have source/offline checks and independent component approval. They are
+  uninstalled. Version2 preserves original init/results and literal known telemetry,
+  binds complete foreground/automatic tasks and retains typed canonical held3.
+  The primary-budget launcher's separate emitter export is staged for joint
+  adoption. Final ordinary/native/provider acceptance and whole-run latency remain
+  open; no paid retry, signed PASS or budget change follows source approval.
+
+
+## 2026-10-18 — Prior native composition source boundary
+
+- The local [bounded-triage workset](execution-plans/2026-10-18-bounded-triage-workset.md)
+  has scoped source approval and a passing final full suite, including secondary-account
+  preservation. It is uninstalled. Native asynchronous discovery and
+  whole-run latency remain open; no new paid acceptance is inferred.
+
+
+## 2026-10-18 — Superseded V17 terminal status
+
+  V17 is the latest strict ordinary result: FAILED. Its complete protected
+  discovery receipt matches nonce, owner, source and process identities; eleven
+  native bounded reads cover EOF. The supervisor rejects two identical session
+  initialization IDs before joining the receipt. Exact terminal events were not
+  retained, so a valid continuation is unproven. Café/signup did not start.
+  Independent checks verify unchanged candidate, exact cron, removed enrollments
+  and no owned live processes. No signed PASS exists. V16's received reply and
+  usable Café draft remain separate observations. Diagnostic source work and fresh
+  ordinary acceptance/closure remain open; no budget or permission change follows.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-17/ordinary-assignment-recovery-v17/`.
+
+
+## 2026-10-18 — Superseded release-tag observation
+
+**Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+
+
+## 2026-10-18 — Superseded V16 terminal status
+
+  V16 is the latest strict ordinary result: FAILED. The received MrCall reply
+  and usable Café provider draft pass independent identity, content and source
+  checks, without Café send or duplicates. Café exceeds its 30-minute limit and
+  its required normal guarded route/native fixture discovery remain unproven.
+  The exact candidate is unchanged; owned processes end and cron/enrollments are
+  restored. No signed PASS exists. Café retains installed lossless JSON, reply-thread
+  repair and MCP B2. Latency diagnosis and final acceptance/closure remain open.
+  Evidence: `/home/mal/.local/share/mrcall-operational-evidence/2026-10-17/ordinary-assignment-recovery-v16/`.
+
+
+## 2026-10-18 — Superseded pre-V16 terminal status
+
+  V14 remains the last strict ordinary result: FAILED. MrCall reply receipt and
+  signup passed; Café's historical chat cause remains unproven. Café has reviewed
+  safe symbolic chat diagnostics. Its one guarded draft attempt has independent
+  engine/Gmail acceptance: one draft, exact identity/body/thread, correct result
+  and no send. That is not full scheduled or signed exact-candidate acceptance.
+  Café now loads the reviewed lossless tool-JSON repair with full package
+  preservation and independent installed approval. Workflow owners have finished;
+  MCP B2 ended without activation. Fresh strict joint acceptance remains open.
+  Evidence: `/home/mal/.local/share/ordinary-assignment-recovery-resume/`.
+
+
+
+
+## 2026-10-18 — Superseded pre-repair workflow status
+
+  with independent result approval. Café's four connection hooks are installed;
+  its other 539 package files preserve their prior bytes. All three host paths
+
+
+## 2026-10-18 — Superseded partial installed-workflow status
+
+- The engine financial/legal migration has independent combined M3 approval:
+  qualified financial evidence and a native MCP reviewed legal revision, with
+  explicit accuracy and applicability limits. Both actor runtimes and maintained
+  clones now install the reviewed workflow routes. All three host paths share
+  the thin route; retired local procedures are preserved outside discovery.
+  Independent postimage verification passes 123 checks. Installed discovery,
+  selection, original-byte transfer and cross-owner refusal pass on both actors.
+  The [authenticated client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  still needs its completed hosted report journey; Café's reviewed WebSocket
+  connection repair awaits natural idle. Technical source retrieval needs the
+  scoped official-domain policy repair. The [retirement continuation](execution-plans/2026-10-17-engine-workflow-retirement.md)
+  retains approved archive, rollback and installed link/copy checks. Fresh ordinary
+  operations, documentation and final review remain open; no release is implied.
+
+## 2026-10-18 — Superseded pre-adoption workflow snapshot
+
+- The engine financial/legal migration has independent combined M3 approval:
+  qualified retained financial evidence and a new normal MCP reviewed legal
+  revision. This is reviewed-draft acceptance, not autonomous legal accuracy.
+  The [authenticated client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  retains protocol-2 source/package approval. The [retirement continuation](execution-plans/2026-10-17-engine-workflow-retirement.md)
+  has independently approved archives, scratch rollback and kernel init/update
+  retirement, including installed link/copy CLI checks. Installed clone/runtime adoption, ordinary two-clone operations
+  and final closure remain pending. Local legal installations remain available.
+
+
+## 2026-10-18 — Superseded recovery snapshot
+
+- The [assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  V11 projection is active on six company engines; both clone interpreters use
+  the reviewed scheduler and reader override. Current finance/Stripe/Qonto,
+  voice/MCP resources, permissions, budgets and public pins are preserved.
+  Provider reads have finite 120/150/180-second bounds and a 3600-second bulk
+  budget. Other read methods retain their 60/90-second defaults.
+  The captured 27-root native replay passes all 54 original and two canonical
+  observations, with zero technical errors and all 56 children reaped in 403.981
+  seconds. The strict ordinary V11 case failed: MrCall finished naturally,
+  but scheduled send rejected the draft's bare RFC root and no reply arrived.
+  A reviewed storage-boundary compatibility repair is in progress; Café/signup
+  did not run. Prior failures remain failures.
+
+
+
+## 2026-10-17 — Retirement state before source approval
+
+- The engine financial/legal migration has independent combined M3 approval:
+  qualified retained financial evidence and a new normal MCP reviewed legal
+  revision. This is reviewed-draft acceptance, not autonomous legal accuracy.
+  The [authenticated client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  retains protocol-2 source/package approval. The [retirement continuation](execution-plans/2026-10-17-engine-workflow-retirement.md)
+  has verified archives and scratch rollback; kernel init/update retirement is
+  in progress. Installed clone/runtime adoption, ordinary two-clone operations
+  and final closure remain pending. Local legal installations remain available.
+
+
+## 2026-10-17 — Workflow state before combined M3 acceptance
+
+- The [clone workflow bridge](execution-plans/2026-10-15-clone-engine-workflow-bridge.md) retains support-only discovery/transfer evidence for its reviewed pilot. The [authenticated legal client candidate](execution-plans/2026-10-16-authenticated-legal-client.md) adapts direct protocol-2 start without enrollment/forms; source and package review approves 17 WebSocket/terminal checks and three-host link/copy rendering. It changes no installed clone or engine. New native and ordinary acceptance remain open; Desktop MCP report quality is not accepted.
+- `cs-instructions` and `cs-legal-research` are installed on all three hosts.
+  Legal research's engine migration remains separately owned work in progress.
+  `cs-pricing` remains company-local in Café; shared kernel integration is superseded.
+
 ## 2026-10-16 — Stripe source state before operator adoption
 
 - The [Stripe candidate](../../docs/execution-plans/2026-10-16-stripe-connection.md)
@@ -5,6 +649,529 @@
   reads. Credential setup belongs to Desktop; no provider write, scheduled
   enrichment or automatic memory retention is authorized. Source/native/provider
   acceptance and publication remain separate gates.
+
+## 2026-10-17 — Assignment recovery before V11 activation
+
+- [Scheduled intake and compatible callers](operator-runtime.md) retain their
+  reviewed hosted override. R9's tested base is `9857f1bb…`; Café additionally
+  uses the reviewed [ordinary-health repair](execution-plans/2026-10-15-ordinary-operator-health.md).
+  Complete native discovery inspection and required phases are checked in code.
+  Technical failures alert and return nonzero despite a clean model terminal;
+  legitimate human holds do not. Monitoring and queued SMTP retry use no LLM.
+  Both clones are installed and have independently received real failure alerts.
+  Their 15 October ordinary ticks exited1; Café produced one useful customer draft.
+  The [assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  V9 provider-read source is active on all six company engines. Both ordinary
+  clones retain their previous kernel pending complete free batch acceptance.
+  Twelve captured MrCall scopes now yield legitimate human holds. Café's three
+  scopes pass after two same-source affected rechecks; their earlier provider
+  timeouts remain recorded failures with an unidentified stalled command.
+  Current native-input composition passes all 1077 finance receipts without a
+  paid call. The fresh ordinary MrCall batch failed with technical assignment
+  incompleteness; Café and signup acceptance did not run. A free whole-batch
+  replay isolated cumulative read-budget exhaustion. The reviewed kernel scheduling
+  correction is in progress; no healthy operational outcome is claimed.
+
+## 2026-10-16 — Legal client source verification checkpoint
+
+- The [clone workflow bridge](execution-plans/2026-10-15-clone-engine-workflow-bridge.md) retains support-only discovery/transfer evidence for its reviewed pilot. The [authenticated legal client candidate](execution-plans/2026-10-16-authenticated-legal-client.md) adapts direct protocol-2 start without enrollment/forms; source verification is pending. It changes no installed clone or engine. New native and ordinary acceptance remain open; Desktop MCP report quality is not accepted.
+
+## 2026-10-16 — Bridge compatibility checkpoint
+
+- The [clone workflow bridge](execution-plans/2026-10-15-clone-engine-workflow-bridge.md) is active on MrCall support with authenticated installed discovery and a hash-verified synthetic document round trip. Café remains unapplied while its Desktop connection is open. Native host and fresh operational acceptance remain open; MCP tests are deferred.
+
+## 2026-10-16 — Before V9 engine adoption
+
+---
+doc_baseline_commit: d31978f38339be6bb1bc2c7e2aebadf736746f03
+doc_baseline_date: 2026-10-15
+---
+
+# Active Context — cs-kernel
+
+<!-- doc-scope:start -->
+Scope: current source capabilities, untagged development and unresolved work.
+Durable rules live in the [kernel charter](kernel-charter.md), release history in
+[`CHANGELOG.md`](../CHANGELOG.md), and dated operational observations in
+[`active-context-archive.md`](active-context-archive.md).
+<!-- doc-scope:end -->
+
+## State now
+
+- The [Stripe candidate](../../docs/execution-plans/2026-10-16-stripe-connection.md)
+  adds an interactive shared skill and typed bridge to Desktop-owned private
+  reads. Credential setup belongs to Desktop; no provider write, scheduled
+  enrichment or automatic memory retention is authorized. Source/native/provider
+  acceptance and publication remain separate gates.
+
+- **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+  Both maintained clones pin public `v0.52.0` at `3c0e78c`; shared operational
+  sign-off remains `v0.51.0` until the applicable adoption gates pass.
+- [Exact draft lifecycle](draft-lifecycle.md) has real IMAP/SMTP acceptance
+  and authenticated exact retirement/Sent recording on both hosted engines.
+  Owner/full-ID provider mirrors and ordinary exact-ID interactive sending are
+  verified. Automatic reconciliation is off; native Gmail edit/send preservation
+  and public kernel adoption remain separate, unverified boundaries.
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 FULL acceptance for its exact historical hosted candidate.
+  Current recovery requires separate acceptance. Public installer equivalence
+  and native Gmail edit/send preservation remain unverified.
+- Optional [complete discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
+  checks complete native inspection; canonical guidance is installed in both
+  clones. Historical native FULL proof belongs to its retained candidate.
+- [Bounded review reads](execution-plans/2026-10-13-bounded-review-assignment-reads.md)
+  retain assignment validation, incomplete-scope holds and per-request bounds.
+  There is no universal 90-second whole-review guarantee.
+- [Scheduled intake and compatible callers](operator-runtime.md) retain their
+  reviewed hosted override. R9's tested base is `9857f1bb…`; Café additionally
+  uses the reviewed [ordinary-health repair](execution-plans/2026-10-15-ordinary-operator-health.md).
+  Complete native discovery inspection and required phases are checked in code.
+  Technical failures alert and return nonzero despite a clean model terminal;
+  legitimate human holds do not. Monitoring and queued SMTP retry use no LLM.
+  Both clones are installed and have independently received real failure alerts.
+  Their 15 October ordinary ticks exited1; Café produced one useful customer draft.
+  The [assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  V8 source is active on all six company engines and both ordinary clones.
+  Twelve captured MrCall scopes now yield legitimate human holds. Café's three
+  scopes pass after two same-source affected rechecks; their earlier provider
+  timeouts remain recorded failures with an unidentified stalled command.
+  Current native-input composition passes all 1077 finance receipts without a
+  paid call. The fresh ordinary MrCall batch failed with technical assignment
+  incompleteness; Café and signup acceptance did not run. A free whole-batch
+  replay isolated cumulative read-budget exhaustion. The reviewed kernel scheduling
+  correction is in progress; no healthy operational outcome is claimed.
+- Released [assignments](task-assignment.md) use signed engine authority, scoped
+  drafts and exact inbound coverage. Six hosted engines have verified reads and
+  root-owned trust. MrCall support and Mario share support's company space
+  through a separately authorized fenced join; private tasks/mail remain isolated.
+- Published bootstrap exposes `cs-capabilities` and `company/claude-extra.md`.
+  The local [name candidate](execution-plans/2026-10-11-bootstrap-name.md)
+  uses `cs-bootstrap` and `company/other-systems.md`; old authored bytes are
+  preserved during restamping. [Bootstrap integration](execution-plans/2026-10-10-bootstrap-integration.md)
+  retains its reviewed parent boundaries and qualified native observations.
+- Company procedures and mailbox identity are authoritative clone-owned files.
+  Only interactive `cs instructions --commit` publishes compiled standing rules
+  through `instructions.store`; scheduled callers cannot publish them.
+  [Shared project memory](briefs/2026-09-10-shared-project-memory.md) remains
+  revisioned engine-owned written records.
+- The [clone workflow bridge](execution-plans/2026-10-15-clone-engine-workflow-bridge.md) is active on MrCall support with authenticated installed discovery and a hash-verified synthetic document round trip. Café remains unapplied while its Desktop connection is open. Native host and fresh operational acceptance remain open; MCP tests are deferred.
+- `cs-instructions` and `cs-legal-research` are installed on all three hosts.
+  Legal research's engine migration remains separately owned work in progress.
+  `cs-pricing` remains company-local in Café; shared kernel integration is superseded.
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  remains undeployed on hosted engines. Explicit newer caller bindings require
+  its stronger policy; ordinary workflows retain released compatible guards.
+  Its public `v0.52.0` exclusion and separately owned launcher limits remain.
+- Gmail Sent/All Mail remains dedup ground truth. Cross-mailbox reads retain
+  fixed self-owner skipping and explicit unreadable scope; incomplete applicable
+  authority holds action. [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md)
+  owns provider parity and bounded FETCH evidence.
+- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
+  Hosts share canonical skills. Company-specific files remain clone-owned.
+- Engine generation, direct classifiers and unattended Claude have separate
+  models, billing and stop controls. Both clones configure $4 fallback budgets;
+  MrCall has its own Anthropic primary. CS_PAUSE blocks new guarded ticks, not
+  running Claude or engine work. [Runtime controls](operator-runtime.md) own details.
+- [Operator notices](operator-runtime.md) identify evidenced failures and repairs.
+  One Café technical-failure notification has actual SMTP/Inbox acceptance;
+  broader notice cases retain local fixture evidence. No independent host/cron
+  heartbeat is installed.
+- Descriptor setup verifies identity, preparation, memory and agent tools;
+  preparation counts do not certify reply quality or mailbox credentials.
+  [Provider guides](provider-connections.md) own Vonage, Shopify, Drive and Faire
+  boundaries; Faire authenticated use and its kernel adapter remain unverified.
+
+## Unresolved
+
+- Current recovery lacks healthy ordinary acceptance: the MrCall full batch
+  failed with assignment incompleteness. Historical R9 passes its own retained
+  candidate; public installer equivalence and native Gmail preservation remain open.
+- Wide dossier latency and live unanswered parity retain their existing owners.
+  Incomplete assignment authority yields exit 3 and keeps named threads held.
+- Engine/direct-classifier failover remains separate from scheduled recovery;
+  the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
+- Clone-local help/triage changes require preservation on update; factory help
+  descriptions and internal vocabulary in update output retain their existing issues.
+- Live SIP/customer trunks, PBX and secondary-account onboarding remain separate.
+
+## Next
+
+1. Complete the reviewed kernel scheduler repair, verify the whole batch without
+   models, then verify one fresh ordinary two-clone case. Preserve prior failures.
+2. Validate native Gmail browser/mobile/API edit/send preservation before
+   enabling automatic reconciliation.
+3. Publish/adopt only after explicit publication authorization, preserving the
+   distinction between the local override and public installer provenance.
+
+## 2026-10-16 — Superseded acceptance summary
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  has strict hosted development FULL acceptance: genuine r9 passes all seven
+  final checks, both natural operator terminals, signup policy, correct reply,
+  exact Café engine/provider draft with no send, complete AUTOMATIC Sent authority
+  and ACK/no-loop. Cleanup, source preservation and the signed original proof
+  are retained with the entire tested candidate. Historical r5–r8 remain FAILED.
+  The six engine deadline-cleanup repairs and both ordinary `9857f1bb…` packages
+  were verified for R9; Café has the health repair below. Qonto is preserved. Public release and native Gmail UI
+  preservation remain separate, unverified boundaries.
+- Optional [complete discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
+  is source-approved and narrowly integrated. Historical genuine clipped-native
+  joins retain their exact earlier hashes; controlled real-CLI exit-0/3 stress
+  cases are software evidence. The current combined source has genuine native FULL acceptance; final
+  independent transcript review qualifies model inspection. Canonical guidance is installed in both
+  clones through all three host paths; permissions and company rules are preserved.
+- [Bounded review reads](execution-plans/2026-10-13-bounded-review-assignment-reads.md)
+  use concurrent read-only RPC batches with unchanged assignment validation.
+  Source and semantic comparison checks pass. Actual read-only reviews on both
+  clones pass; current hosted development FULL passes. There is no universal
+  90-second whole-review guarantee.
+- Integrated checks pass, including the three exact approved guidance changes
+  and all unknown-edit, identity and authority refusal cases. Combined source review and actual hosted FULL pass; public installer
+  equivalence remains unverified.
+- The genuine MrCall reply, Café draft/no-send, acknowledgement/no-loop,
+  signup policy, natural terminals and cleanup pass on the hosted development route.
+  Publication/adoption and native Gmail edit/send preservation are not established.
+
+## 2026-10-16 — Superseded pre-batch recovery claim
+
+paid call. Fresh two-clone operational acceptance remains pending.
+
+## 2026-10-16 — Superseded recovery snapshot
+
+  routing. Twelve MrCall historical Sent scopes still need the reviewed compatibility
+  correction. Fresh ordinary acceptance failed because ordinary composition hit a
+  separately owned finance-history guard; no primary reply or Café job completed.
+
+## 2026-10-15 — Superseded assignment observation
+
+  projections recover PROVA and recipient routing, while one component still
+  reports technical UNKNOWN. Fresh ordinary acceptance is pending.
+
+## 2026-10-15 — Superseded health activation boundary
+
+  Café installation and one real Inbox-delivered alert pass. Fresh ordinary
+  scheduled completion and other clone activation remain unverified.
+
+## 2026-10-15 — Clone bridge before support activation
+
+
+- The [clone workflow bridge](execution-plans/2026-10-15-clone-engine-workflow-bridge.md) has approved source and controlled CLI-to-engine checks; installed activation awaits quiescent engines. MCP tests remain deferred.
+
+## 2026-10-15 — Ordinary operator health reconciliation
+
+- [Scheduled email intake](execution-plans/2026-10-13-scheduled-mail-intake.md)
+  and actionable notices are source-approved and installed through the reviewed
+  [hosted override](execution-plans/2026-10-13-hosted-kernel-repair-adoption.md)
+  in both ordinary clone interpreters. The [compatible caller](execution-plans/2026-10-13-released-email-caller-compatibility.md)
+  restores released chat/scoped-draft/exact-ID send contracts; explicit new
+  contextual bindings still refuse unsupported engines. The current source digest
+  is `9857f1bb…`, distinct from public metadata/pins; the preceding compatible
+  snapshot `1cbf6d3…` remains historical evidence. The bootstrap reads primary tasks before
+  triage; current hosted development FULL passes.
+
+- The local [operator-notice candidate](execution-plans/2026-10-13-operator-actionable-diagnostics.md)
+  identifies evidenced provider/account failures and concrete repairs. Local
+  checks and installed source adoption pass; real owner-notice SMTP delivery
+  remains unverified.
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  has strict hosted development FULL acceptance: genuine r9 passes all seven
+  final checks, both natural operator terminals, signup policy, correct reply,
+  exact Café engine/provider draft with no send, complete AUTOMATIC Sent authority
+  and ACK/no-loop. Cleanup, source preservation and the signed original proof
+  are retained with the entire tested candidate. Historical r5–r8 remain FAILED.
+  The six engine deadline-cleanup repairs and both ordinary `9857f1bb…` packages
+  are verified adopted; Qonto is preserved. Public release and native Gmail UI
+  preservation remain separate, unverified boundaries.
+
+1. Preserve the accepted installed development route, exact provenance and
+   rollback; retain the original signed tested candidate unchanged.
+
+
+## 2026-10-13 — Stronger caller availability before compatibility closure
+
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  requires strengthened engine capability negotiation and exact source/thread/draft
+  context. Its public `v0.52.0` exclusion and separately owned launcher limits remain.
+
+## 2026-10-13 — Superseded pre-r5 acceptance snapshot
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  preserves exact-original authority and ordinary customer guards. The latest
+  complete three-job result remains FAILED/unsigned; prior positive provider
+  observations do not establish natural cron completion or acknowledgement/no-loop.
+  The [live plan](execution-plans/2026-10-13-exact-draft-live-acceptance.md)
+  owns real delivery evidence and scoped release preparation.
+
+
+## 2026-10-13 — Source state before released caller compatibility
+
+  in both ordinary clone interpreters. Package digest `d3a96c6…` is distinct from
+  public metadata/pins. Engine email-only synchronization retains actual-work
+  serialization; fresh genuine cron acceptance remains required.
+
+## 2026-10-13 — Caller description before released compatibility repair
+
+extends the engine boundary to reply draft updates and final sending, including
+already composed drafts. It is excluded from public `v0.52.0`, both maintained clone installations
+and the six hosted engine pins. The old `assignment_draft_policy: 1` capability
+proves only its scoped draft contract and cannot certify final-send enforcement.
+
+The candidate requires `system.capabilities.contextual_email_policy: 1` for
+`cs chat`, `cs draft-reply` and `cs draft-send`; unavailable support refuses
+before chat generation or a draft effect. `draft-reply` also retains its existing
+assignment-draft policy negotiation and required exact thread flag.
+
+## 2026-10-13 — Intake before local package adoption
+
+- [Scheduled email intake](execution-plans/2026-10-13-scheduled-mail-intake.md)
+  is a local candidate before model launch. The current cron lacks that
+  prerequisite while paid automatic updates are disabled; fresh provider mail
+  can therefore be absent from engine storage. Strict email-only synchronization,
+  engine serialization, integrated checks and genuine acceptance own the repair.
+
+## 2026-10-13 — Review measurement obligation replaced
+
+  Source and semantic comparison checks pass. Real review measurements on both
+  clones and final integrated acceptance remain open; there is no universal
+  90-second whole-review guarantee.
+
+## 2026-10-13 — Living snapshot before combined operator integration
+
+## State now
+
+- **Exact draft identity has real provider acceptance; full cron acceptance remains incomplete.**
+  The configured Café operator produces one correct Gmail draft with the same
+  full engine ID and production-owner UID as the single engine draft; independent
+  observations verify no fixture send. Signup respects its documented policy
+  and sends no mail. MrCall's native send is refused by automatic review; a
+  subsequent exact-ID interactive CLI send is independently received once and
+  recorded in engine Sent. Café's test process is deliberately cancelled after
+  provider verification, so no complete cron pass or acknowledgement/no-loop
+  acceptance is claimed. All three schedules are restored, temporary enrollments
+  removed and owned processes quiescent. Public adoption remains pending;
+  automatic reconciliation is off.
+- **Latest release tag: `v0.52.0`. Current HEAD status: untagged.** These sentences
+  are parsed by `tests/test_release_consistency.py`; preserve their wording.
+  Both maintained clones install public `v0.52.0` at `3c0e78c`; Café 124
+  has installed-package and pin readback. The shared operational sign-off stays
+  at `v0.51.0` until the applicable adoption gates pass. Historical FULL evidence
+  remains separately retained.
+- Released [assignments](task-assignment.md) use signed engine authority, scoped
+  drafts and exact inbound coverage. Six hosted engines have verified reads and
+  root-owned trust. Local hardening is closed with limits in the
+  [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
+- The released [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and 19
+  qualified native observations pass for the frozen bootstrap parent; these are
+  retained observations, not fresh native execution of the integrated tree.
+  Canonical instructions and discovery read routes retain the reviewed parent
+  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
+  owns current kernel checks. Claude's standalone profile excludes identified
+  ai-kit injection while preserving permissions and non-kit hooks. Historical
+  runtime/configuration limits remain qualified; no universal compliance is established.
+- Untagged source uses `cs-bootstrap` with a local-only plain invocation and
+  brief confirmation, and `company/other-systems.md` for other systems. Published
+  `v0.52.0` and MrCall retain `cs-capabilities` and `company/claude-extra.md`.
+  Old guide bytes and bootstrap directories are preserved during restamping;
+  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) owns checks.
+- The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  negotiates strengthened engine enforcement for chat and exact draft sending,
+  carrying original source/thread/draft context. Fixed-template bulk retains its
+  existing path. It is excluded from `v0.52.0`; the hosted contextual policy remains unavailable.
+  The bootstrap tag preserves the released chat and sending contracts.
+  The separately owned MrCall launcher remains an uninstalled handoff.
+- `cs-legal-research` is a released interactive Italian/EU legal-research skill
+  with four references and a date-arithmetic helper. Both maintained clones
+  install its complete canonical files through all three host paths on `v0.52.0`.
+  The instruction-level boundary and distribution contract live in
+  [agent-skills.md](agent-skills.md), with evidence in the
+  [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+  Engine migration remains separately owned work in progress.
+- Company procedures and mailbox identity are authoritative clone-owned files.
+  `cs instructions` compiles them into reserved engine `operator-instructions`
+  documents; only `instructions.store` publishes them. Project verbs refuse
+  that slug. `cs setup` and `cs memory` expose this standing-instructions store.
+  Loopback publication is verified; production publication and Firebase
+  authentication for that acceptance remain unverified.
+- `cs-instructions` supplies the interactive teaching workflow on all three
+  hosts. Both maintained clones install the current description and rendered
+  body. Native teaching and explanation observations retain their original
+  configurations; installed byte equality establishes no fresh native execution.
+  See the [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
+  Hosts share canonical skills. `cs-triage-mail` reads the optional company
+  playbook while preserving send and approval boundaries.
+- `cs-pricing` is locally maintained in Cafe 124 and shared across its three
+  host paths. [Kernel integration](execution-plans/2026-09-21-pricing-skill-production-economics.md)
+  is superseded; company-specific pricing is outside the shared kernel.
+- The engine owns classification, task judgement and company memory. Written
+  projects are revisioned engine records; legacy folders remain in private Git.
+  `cs ask` negotiates read-only policy version 1. Scheduled launchers deny raw
+  mutating memory/update/preparation RPCs and instruction publication.
+- Cross-mailbox reads retain the fixed self-owner skip and explicit unreadable
+  scope. Incomplete evidence refuses applicable sends; `send-first` keeps its
+  existing contact-state path. [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md)
+  owns provider parity, RFC-key and bounded FETCH evidence on both clones.
+- Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine
+  draft and checks recorded sent status. Cron denies it; the CLI has no
+  headless/pause guard. Ambient Gmail connectors remain read/review tools.
+- Descriptor-based `cs init` and `cs setup` verify workspace, identity,
+  preparation evidence, memory and agent tools. Preparation counts do not
+  certify reply quality or mailbox credential validity.
+- Engine APIs, direct classifiers and unattended Claude have separate models,
+  billing and stop controls. Engine caps do not cover all operator activity;
+  CS_PAUSE blocks new guarded ticks, not running Claude or engine work.
+  [Runtime controls](operator-runtime.md) own details, including optional
+  CS_LLM_ROUTE, OpenRouter retry after proven pre-tool quota/payment refusal,
+  fixed owner notices and permission checks against resolved triage mode.
+  Both clones configure $4 fallback budgets; MrCall has its own Anthropic primary.
+- Vonage supports clone-scoped reads, previews, supervised domain/user creation
+  and additive ACLs with credential references; paused/headless mutations refuse.
+  [Provider guides](provider-connections.md) also cover Shopify, Drive and Faire.
+  Faire authenticated use and a kernel adapter remain unverified/unimplemented.
+
+## Unresolved
+
+- The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
+  are verified. Remote MCP remains separate; wide dossier/review latency remains
+  unresolved. Native observations still qualify their frozen parent configurations.
+- The local [operator-notice candidate](execution-plans/2026-10-13-operator-actionable-diagnostics.md)
+  captures provider/account evidence and distinguishes specific repair actions
+  from unresolved diagnostic steps. Local real-child and mail-capture checks pass;
+  installed clone adoption and real mail delivery remain outside this change.
+- Engine/direct-classifier failover remains separate from scheduled recovery;
+  the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
+- [Exact draft lifecycle](draft-lifecycle.md) has real IMAP/SMTP acceptance
+  and authenticated exact retirement/Sent recording on both hosted engines.
+  Clone permission protections are installed; CLI acceptance uses the scoped
+  kernel candidate. Native Gmail edit/send preservation and public kernel
+  adoption remain open; automatic reconciliation is disabled. Legacy copies
+  stay inferred. The [live plan](execution-plans/2026-10-13-exact-draft-live-acceptance.md) owns evidence and release preparation.
+- MrCall support and Mario share support's company space through a separately
+  authorized fenced join. Assignment/project reads pass; private tasks/mail
+  remain isolated. No real assignment is created.
+- Live unanswered-mail parity and review latency remain open. Incomplete
+  assignment authority yields exit 3 from `cs unanswered --all-buckets`;
+  canonical triage guidance retains held threads.
+- Clone-local help/triage corrections beyond tagged templates need preservation
+  on update; factory descriptions still need alignment. Paid agent-tick/draft
+  behavior is outside read-only FULL checks. Instruction tests revoke no ambient
+  permissions; historical send posture needs checks in the actual clone.
+- Live SIP/customer trunks, number association, PBX and secondary-account
+  onboarding remain separate. Operator-facing update output still carries
+  internal verification terminology.
+
+## Next
+
+1. Test interactive procedure loading in a fresh MrCall session when requested;
+   its local bootstrap requires no MCP or engine catalog.
+2. Finish scoped kernel publication/adoption after explicit publication approval;
+   keep native Gmail preservation unverified and automatic reconciliation off.
+   Continue unanswered-mail evidence/latency from its existing plan.
+3. Continue secondary-account onboarding when requested and correct internal
+   vocabulary in operator-facing update output.
+
+
+## 2026-10-13 — Acceptance state before exact-ID interactive delivery
+
+- **Exact draft identity has real provider acceptance; full cron acceptance remains incomplete.**
+  The configured Café operator produces one correct Gmail draft with the same
+  full engine ID and production-owner UID as the single engine draft; independent
+  observations verify no fixture send. Signup respects its documented policy
+  and sends no mail. The fresh MrCall send is refused by automatic review;
+  its earlier correct received reply remains separate evidence. Café's test
+  process is deliberately cancelled after provider verification, so no complete
+  cron pass or acknowledgement/no-loop acceptance is claimed. All three
+  schedules are restored, temporary enrollments removed and owned processes
+  quiescent. Public adoption remains pending; automatic reconciliation is off.
+
+## 2026-10-13 — Acceptance state before final diagnostic
+
+- **Normal exact-draft acceptance remains incomplete.** MrCall's generated
+  fixture reply is independently received with the correct result and thread.
+  The preliminary run fails while collecting native proof; clone source drift
+  also prevents unchanged-candidate acceptance. Café and signup are not executed
+  after the failed prerequisite. All three schedules are restored, temporary
+  enrollments are removed and owned processes are quiescent. A reviewed producer
+  repair and fresh complete run remain required; automatic reconciliation is off.
+
+
+## 2026-10-13 — Exact draft live acceptance supersedes local-only state
+
+- [Exact draft lifecycle](draft-lifecycle.md) has local identity, MIME and
+  snapshot-bound retirement checks. Provider edit/send preservation, hosted
+  engine activation, both-clone FULL acceptance and release/adoption remain open;
+  automatic external reconciliation is disabled. Legacy copies stay inferred.
+
+## 2026-10-13 — Preliminary shared acceptance state
+
+- **Normal exact-draft acceptance remains unverified.** The shared preliminary
+  run loads the reviewed combined actor source and preserved exact extension.
+  Native generation has approval refusals; both clone source identities differ
+  from their start observations. The run cannot establish unchanged-candidate
+  acceptance. Provider outcomes and cleanup remain pending; automatic external
+  delivery reconciliation stays disabled.
+
+## 2026-10-13 — Earlier maintained skill installation state
+
+- `cs-legal-research` is a released interactive Italian/EU legal-research skill
+  with four references and a date-arithmetic helper. MrCall installs its canonical
+  files on all three host paths; Café 124 retains its previous pin. The instruction-level
+  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
+  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+  Migration into the mrcall-desktop engine is operator-reported work in progress,
+  separate from the completed kernel delivery.
+
+- `cs-instructions` supplies the interactive teaching workflow on all three
+  hosts. Its predecessor has 33 accepted native cases for publication, narrow
+  Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
+  [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+
+## 2026-10-13 — Shared preliminary exact-draft run
+
+- **Fresh normal exact-draft acceptance is running on the shared reviewed
+  candidate.** The assignment-maintenance pauses are restored, the exact
+  extension is preserved in both actor engines and the runner temporarily
+  excludes only the three applicable schedules. Actual reply/draft and complete
+  native-phase outcomes remain unverified until the run finishes and cleans up.
+
+## 2026-10-13 — Coordinated assignment maintenance pause
+
+- **Both maintained scheduled operators are temporarily paused** by the
+  independently owned assignment-maintenance window. Normal exact-draft
+  acceptance awaits coordinated reviewed activation and a fresh shared run;
+  existing send/draft modes and independently running engines retain their controls.
+
+
+## 2026-10-13 — Exact draft live acceptance supersedes local-only state
+
+  MrCall installs public `v0.52.0` at `3c0e78c`; Café 124 remains on `v0.51.0`
+  at `5609207`. MrCall's lock-only rebuild, authenticated identity and scoped
+  read-tier checks pass. The shared operational sign-off stays at `v0.51.0`.
+  Historical FULL evidence and the red July harness remain separately retained.
+
+
+## 2026-10-13 — Draft identity before the local candidate
+
+- [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
+  preservation, pairing and reconciliation are unimplemented. Gmail sends can
+  leave stale mirrored drafts; current pairing uses thread/recipient inference,
+  and Gmail-only review rows have no authored body.
+
+## 2026-10-13 — Superseded notice candidate
+
+- The local [operator-notice candidate](execution-plans/2026-10-13-operator-notice-clarity.md)
+  distinguishes completed runs from stopped work and provides cause-specific
+  recovery instructions. Local message capture and supervisor checks pass;
+  installed clone adoption and real mail delivery are outside this change.
+
+## 2026-10-13 — Superseded kernel pricing integration
+
+- [Pricing integration](execution-plans/2026-09-21-pricing-skill-production-economics.md)
+  and acceptance remain open on `work/pricing-triage-20261001` at `d16e3e5`.
 
 ## 2026-10-11 — Source integration before isolated bootstrap release
 
@@ -746,12 +1913,12 @@ doc_baseline_date: 2026-09-08
 
 # Active Context — cs-kernel
 
-<!-- doc-scope:start -->
+&lt;!-- doc-scope:start --&gt;
 Scope: the volatile state of this kernel — the tag in force, what each clone
 actually runs, and what is still open. Durable rules live in
 [`AGENTS.md`](../AGENTS.md), per-tag detail in [`CHANGELOG.md`](../CHANGELOG.md),
 and pruned narrative in [`active-context-archive.md`](active-context-archive.md).
-<!-- doc-scope:end -->
+&lt;!-- doc-scope:end --&gt;
 
 ## State now
 
@@ -1443,3 +2610,234 @@ rank per-call cost (deepseek-v4-pro: 2.8× cheaper per token, 1.8× dearer
 per call — it thinks in 434 tokens). Full record with per-item tables:
 meta-repo `docs/briefs/2026-07-28-multi-provider-llm-ab.md` (quotes customer
 mail; never enters this repo).
+
+
+## 2026-10-14 — superseded provenance deployment snapshot
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  has genuine three-job natural completion, correct real reply/draft and no-send
+  evidence. Overall acceptance remains FAILED/unsigned: post-reply authority and
+  observer bindings are incomplete. The [provenance repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
+  preserves explicit automation intent and requires an origin-only current-authority
+  gate before SMTP, complete Sent References and verified automation headers.
+  Kernel source checks pass; engine integration and fresh acceptance remain pending.
+
+
+## 2026-10-14 — superseded installed-source binding
+
+  contextual bindings still refuse unsupported engines. Source digest `1cbf6d3…`
+  is distinct from public metadata/pins.
+
+
+## 2026-10-14 — superseded pre-R6 snapshot
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  has genuine three-job natural completion, correct real reply/draft and no-send
+  evidence. Overall acceptance remains FAILED/unsigned: post-reply authority and
+  observer bindings are incomplete. The [provenance repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
+  preserves explicit automation intent and requires an origin-only current-authority
+  gate before SMTP, complete Sent References and verified automation headers.
+  Source checks and independent engine activation pass; both ordinary clone
+  packages now contain the approved caller. Fresh complete cron acceptance remains pending.
+
+
+## 2026-10-14 — superseded pre-M4-source status
+
+  clarifies current authority and complete inspection; implementation is pending.
+
+
+## 2026-10-14 — superseded pre-r7 acceptance snapshot
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  remains FAILED/unsigned. Historical r5 produced the correct reply/draft and
+  three natural jobs, but failed post-reply authority. The latest genuine r6
+  completed all six MrCall phases naturally without reply or draft: it kept a
+  transient UNKNOWN hold despite later complete normal authority and skipped a
+  middle receipt range. Café/signup did not run; cleanup and source preservation
+  pass. The [reviewed workflow repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
+  clarifies current authority and complete inspection; source checks and fresh
+  source review pass; shared workflows and both ordinary packages are adopted.
+  Both hosted origin engines and ordinary caller packages are independently
+  verified active; fresh complete cron acceptance remains required.
+
+
+## 2026-10-14 — Pre-cleanup runtime snapshot
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  remains FAILED/unsigned. Latest genuine r7 completes all three jobs naturally,
+  delivers the correct MrCall reply and Café draft/no-send, and verifies ACK/no-loop.
+  It still fails final authority: the engine's own Sent source is unavailable,
+  so post-reply projection is UNKNOWN and held. Cleanup, exact source preservation
+  and durable tested-candidate retention pass. The [workflow repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
+  and both ordinary packages are verified adopted; the engine source comparison
+  remains under bounded diagnosis. Historical r5/r6 failures are retained.
+
+
+
+## 2026-10-14 — Pre-cleanup runtime snapshot
+
+The two hosted ACTOR engines are independently verified active and advertise
+integer capability 1.
+
+
+## 2026-10-14 — Before ordinary checkpoint failure
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  remains FAILED/unsigned pending fresh FULL. The latest genuine r7 has correct
+  reply, draft/no-send, ACK/no-loop and natural terminals, but failed final Sent
+  authority. The reviewed IMAP deadline cleanup repair is now independently
+  verified active on six own-baseline runtimes. An authenticated read of the same
+  r7 Sent source now returns complete AUTOMATIC evidence and NORMAL/unheld root
+  authority. Qonto is preserved. This proves the repair, not acceptance of r7.
+  Both ordinary kernel packages remain verified at `9857f1bb…`; the fresh combined
+  runtime/test binding review is approved. New complete operational acceptance
+  and documentation closure remain required. Historical failures are retained.
+
+
+## 2026-10-14 — Before successful integrated acceptance
+
+- The [protected operator protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  remains FAILED/unsigned pending fresh FULL. The latest genuine r7 has correct
+  reply, draft/no-send, ACK/no-loop and natural terminals, but failed final Sent
+  authority. The reviewed IMAP deadline cleanup repair is now independently
+  verified active on six own-baseline runtimes. An authenticated read of the same
+  r7 Sent source now returns complete AUTOMATIC evidence and NORMAL/unheld root
+  authority. Qonto is preserved. This proves the repair, not acceptance of r7.
+  Both ordinary kernel packages remain verified at `9857f1bb…`; the fresh combined
+  runtime/test binding review is approved. New complete operational acceptance
+  and documentation closure remain required. Historical failures are retained.
+  Fresh r8 remains FAILED/unsigned: Café ordinary discovery omitted the original
+  after successful provider receipt/admission, so the owned test was aborted.
+  Cron, processes, enrollment cleanup and exact source preservation are verified.
+  A current read-only inlet/body check passes; the original omitted-stage cause
+  is unverifiable. The driver must stop before paid jobs on checkpoint failure.
+
+
+
+## 2026-10-14 — Superseded acceptance obligations
+
+- Optional [complete discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
+  is source-approved and narrowly integrated. Historical genuine clipped-native
+  joins retain their exact earlier hashes; controlled real-CLI exit-0/3 stress
+  cases are software evidence. Final combined-source native execution and full
+  model inspection remain required. Canonical guidance is installed in both
+  clones through all three host paths; permissions and company rules are preserved.
+
+- [Bounded review reads](execution-plans/2026-10-13-bounded-review-assignment-reads.md)
+  use concurrent read-only RPC batches with unchanged assignment validation.
+  Source and semantic comparison checks pass. Actual read-only reviews on both
+  clones pass; final integrated acceptance remains open. There is no universal
+  90-second whole-review guarantee.
+
+- [Scheduled email intake](execution-plans/2026-10-13-scheduled-mail-intake.md)
+  and actionable notices are source-approved and installed through the reviewed
+  [hosted override](execution-plans/2026-10-13-hosted-kernel-repair-adoption.md)
+  in both ordinary clone interpreters. The [compatible caller](execution-plans/2026-10-13-released-email-caller-compatibility.md)
+  restores released chat/scoped-draft/exact-ID send contracts; explicit new
+  contextual bindings still refuse unsupported engines. The current source digest
+  is `9857f1bb…`, distinct from public metadata/pins; the preceding compatible
+  snapshot `1cbf6d3…` remains historical evidence. The bootstrap reads primary tasks before
+  triage; fresh genuine cron acceptance remains required.
+
+- The local [operator-notice candidate](execution-plans/2026-10-13-operator-actionable-diagnostics.md)
+  identifies evidenced provider/account failures and concrete repairs. Local
+  checks pass; installed adoption and real notice delivery remain separate.
+
+- Integrated checks pass, including the three exact approved guidance changes
+  and all unknown-edit, identity and authority refusal cases. Fresh combined
+  review and final actual-source acceptance precede operational certification.
+
+- The final genuine MrCall reply, Café draft/no-send, actual acknowledgement/no-loop,
+  signup policy result, natural terminals and cleanup remain mandatory acceptance.
+  Publication/adoption and native Gmail edit/send preservation are not established.
+
+## Next
+
+1. Finish integrated checks and consumer selection, freeze participating sources,
+   then run the genuine three-job acceptance with independent provider readback.
+2. Close documentation and separate final review against actual outcomes; preserve
+   tested-source evidence and any post-closure release-proof limitation explicitly.
+3. Publish/adopt only after explicit publication authorization, with native Gmail
+   preservation unverified and automatic reconciliation off.
+
+
+## 2026-10-14 — Superseded verification state
+
+current hosted development FULL passes; closure remains in progress.
+
+
+## 2026-10-14 — Superseded verification state
+
+Source integration tests pass; installed clone latency and complete operational
+acceptance still require the plan's live checks.
+
+
+## 2026-10-14 — Superseded verification state
+
+Local source checks pass. Historical genuine joins retain their original source
+hashes; final combined-source operational acceptance remains a separate gate.
+
+
+## 2026-10-14 — Previous authority-recovery failure
+
+Genuine R6 remains FAILED: later complete authority existed, but the operator kept
+the old hold and skipped a receipt range. Current native hosted acceptance passes as recorded below.
+
+
+## 2026-10-16 — state before V8 activation
+
+  The [assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  is source-approved and installed on both clones and six engines; current
+  projections recover all three captured Café cases, including PROVA and recipient
+  routing. V5 remains inactive: current read-only checks find six legitimate human
+  holds, five deadline failures and one reply-source failure in the twelve captured
+  MrCall scopes. Current native-input composition replays pass all 1077 retained
+  finance receipts without a paid call; actual operational acceptance is pending.
+
+## 2026-10-17 — Before ordinary V11 thread-root failure
+
+- The [assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  V11 projection is active on six company engines; both clone interpreters use
+  the reviewed scheduler and reader override. Current finance/Stripe/Qonto,
+  voice/MCP resources, permissions, budgets and public pins are preserved.
+  Provider reads have finite 120/150/180-second bounds and a 3600-second bulk
+  budget. Other read methods retain their 60/90-second defaults.
+  The captured 27-root native replay passes all 54 original and two canonical
+  observations, with zero technical errors and all 56 children reaped in 403.981
+  seconds. The fresh strict ordinary V11 case is running; healthy end-to-end
+  delivery remains pending its independent result. Prior failures remain failures.
+
+## 2026-10-18 — Before lossless runtime adoption
+
+  V14 remains the last strict ordinary result: FAILED. MrCall reply receipt and
+  signup passed; Café's historical chat cause remains unproven. Café has reviewed
+  safe symbolic chat diagnostics. Its one guarded draft attempt has independent
+  engine/Gmail acceptance: one draft, exact identity/body/thread, correct result
+  and no send. That is not full scheduled or signed exact-candidate acceptance.
+  Joint ordinary acceptance awaits the separately owned MCP/workflow compositions.
+  Evidence: `/home/mal/.local/share/ordinary-assignment-recovery-resume/`.
+
+
+
+
+## Native inventory EOF framing
+
+Both normal clone installations use the reviewed117-file EOF candidate
+`38ba43b9d777172f15a2411b7326487849a6978019554ac4b0a776108b21200f`.
+The readable UTF-8 view has no optional final LF. The already mandatory envelope
+contains the initial literal page plan, using standard ASCII JSON/space escapes
+that preserve every decoded value and command. Its pages have no trim-sensitive
+wire bytes. View commands use counts1..8192, UTF-8/non-whitespace boundaries,
+maximum8064-byte advance and at least128-byte overlap. No advancing plan means
+compact capture refuses before artifact creation and full raw inspection remains.
+Optional progress shares the same plan and grants no coverage. Actual native
+results remain unmodified and exact; no byte, schema, authority or action waiver.
+
+Independent installed offline checks pass on both normal interpreters, including
+constructed real-dd/multipage/trimming/negative controls, Settings and incomplete
+export refusal. Historical V23 remains FAILED and unsigned after an authorized
+structural stop; its original raw result and unknown terminal cost are preserved.
+Historical replay proves the framing correction without new model/provider calls;
+it does not establish new native/Café/provider behavior or USD4 feasibility.
+The plan stays active pending separately authorized ordinary acceptance and final
+closure. No public release, engine, permission, budget or scheduler change.

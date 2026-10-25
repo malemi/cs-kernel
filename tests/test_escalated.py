@@ -302,6 +302,12 @@ def _wiring(db_path: str) -> None:
     ]
     for message in inbound:
         message["thread_key"] = f"<{message['email']}>"
+    from cs import rpc_reads
+    rpc_reads.read_many = lambda selected, method, requests, **kwargs: {
+        key: rpc_reads.ReadOutcome(value=normal_projection(selected, params)
+            if method == "tasks.assignment.project" else {"emails": []})
+        for key, params in requests.items()
+    }
     previous_rpc = rpc.call_sync
     rpc.call_sync = lambda selected, method, params=None, timeout=None: (normal_projection(selected, params)
                     if method == "tasks.assignment.project" else previous_rpc(selected, method, params, timeout))
@@ -359,11 +365,11 @@ def _review(db_path: str) -> None:
                                   escalated_at=_ago(12))
     State(db_path).mark_escalated("other@example.test", owner="Andrea",
                                   escalated_at=_ago(1))
-    gmail_drafts.list_drafts = lambda s: []
+    gmail_drafts.list_drafts = lambda s, *, observation=None: []
     campaign_mod.list_campaigns = lambda s: []
     rpc.call_sync = lambda *a, **k: []
 
-    d = review.gather(settings)
+    d = review._aggregate(settings)
     assert [r["email"] for r in d["escalated"]] == [
         "mine@example.test", "other@example.test"
     ], "oldest first — the top row is the one most likely to have been forgotten"

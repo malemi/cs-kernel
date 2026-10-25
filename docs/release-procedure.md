@@ -11,6 +11,33 @@ this file is the procedure that finds them all, every time.
 it.** Anything else is either derived (computed from the owner), historical
 (append-only records, never edited), or a defect.
 
+## Installed packages are immutable release artifacts
+
+Never modify Python or resources inside an installed `cs-kernel` package, use a
+source `PYTHONPATH` overlay for normal clone execution, or retain a release number
+after replacing its code. Recover required fixes into canonical source, review
+and test them, then publish a new immutable tag and install that tag normally.
+Company-authored configuration remains outside the kernel package.
+
+`cs verify-install --json` resolves the clone requirements Git tag independently
+and compares actual imported package bytes with that commit's Git objects.
+Modified, missing, extra, symlinked or shadowed files, editable installs, wrong
+version/commit and inconsistent lock claims fail verification. Installed RECORD
+and a dirty reference worktree cannot bless edits. Only bytecode caches are
+excluded. Default remote reference retrieval needs network access; unavailable
+reference is a failure, not clean evidence. An explicit offline reference uses
+all three flags: `--reference-repo PATH --tag TAG --expected-commit SHA`.
+
+A supported upgrade must remove obsolete unrecorded package files as well as
+replace registered files. Rebuild a clean environment from retained dependency
+versions when reinstalling alone would leave extras. Capture rollback first and
+coordinate in-flight jobs; install through the package manager, never a file
+copy. Verify both actual clone interpreters from outside source checkout paths,
+then prove lock-only rebuilding and compare complete installed package payloads.
+Prepublication FULL uses the exact frozen local release commit and clean built
+artifact; record that candidate state, then complete public-tag provenance after
+publication. Keep the same tested code and truthful version throughout.
+
 ## The sweep — mandatory at every release AND every clone upgrade
 
 Run in the kernel repo and in EVERY clone. Match ALL versions from `0.1.0`

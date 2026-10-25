@@ -1,10 +1,11 @@
 # Stripe
 
-Stripe is an engine-owned read-only connection for explicit interactive customer,
+Stripe provides engine-owned explicit interactive customer,
 payment, invoice and subscription lookups. Configure it in Desktop Settings:
 test a restricted key, confirm the returned account and test/live mode, then
 save. Key replacement and disconnect use the same Desktop connection card.
-The kernel never requests, stores or reads back the key.
+The kernel never requests, stores or reads back the key. Explicit payment-method
+portal sessions are a separate capability described below.
 
 ## Operator surface
 
@@ -37,7 +38,8 @@ no customer, payment or outstanding debt.
 
 Only the fixed Stripe RPC methods are used. Stripe lookup does not use `cs ask`,
 `chat.send`, Qonto tools or managed finance history and needs no new conversation.
-Desktop Settings owns connection changes; the workflow grants no provider write.
+Desktop Settings owns connection changes; reads grant no provider write. The separately requested portal operation below
+creates only a session link.
 The untagged `cs stripe` convenience CLI remains separately implemented/tested;
 surface-only adoption does not install that new verb or change package pins.
 
@@ -63,3 +65,25 @@ Desktop acceptance. Scoped installed-clone evidence verifies identical three-hos
 paths, owner-authenticated status on both maintained clones and one bounded live
 invoice read on support. It does not establish native model selection on every
 host or a full package release. Release and package upgrades remain separate.
+
+## Payment-method update links
+
+The canonical source skill supports explicitly requested interactive links through
+`stripe.payment_method_update_link(customer,request_id)`, gated by
+`system.capabilities.stripe_payment_method_links = 1`. Customer portal Write is
+required in ordinary key Permissions; Desktop Settings owns key replacement.
+The portal must allow payment-method updates. Existing read permissions remain.
+
+Resolve the exact customer first, preserve one16–128character request ID and
+verify account/mode/generation/customer and returned flow. A session URL is on
+exactly HTTPS billing.stripe.com, with current root/deep-flow secret-query or
+legacy path-token form. Never open it on behalf of the customer. An uncertain
+submission uses the same request ID; no generic chat or direct provider fallback.
+Creation does not charge, create a subscription, modify payment details or send
+mail. Scheduled callers and automatic enrichment are excluded by instructions.
+
+The engine implementation and scoped support activation have independent reviews
+and a real provider result. MrCall's three installed host paths share the added
+instructions while preserving its older payment-link section. Fixture distribution
+checks pass; new native-model selection, other-clone adoption and full operational
+acceptance remain unverified. No package release follows.

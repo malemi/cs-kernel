@@ -41,6 +41,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from cs import cli, review  # noqa: E402
 
+review.gather = review._aggregate
+
 
 def _settings():
     """A settings object real enough for `gather()`'s non-mocked reads
@@ -85,7 +87,7 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
 
     calls = []
 
-    def _list_drafts(_s):
+    def _list_drafts(_s, *, observation=None):
         return gmail_fixture
 
     def _call_sync(_s, method, params=None, timeout=None, **kw):
@@ -283,7 +285,7 @@ def test_full_gather_survives_a_campaign_timeout_without_raising():
     undone by a later one timing out."""
     settings = _settings()
 
-    def _list_drafts(_s):
+    def _list_drafts(_s, *, observation=None):
         return []
 
     def _call_sync(_s, method, params=None, timeout=None, **kw):

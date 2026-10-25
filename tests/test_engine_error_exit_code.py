@@ -47,6 +47,7 @@ directly against the helper, not inferred from the two verbs that use it.
 from __future__ import annotations
 
 import io
+import os
 import sys
 import types
 from contextlib import redirect_stderr, redirect_stdout
@@ -213,6 +214,8 @@ def test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step():
     def fake_call_sync(settings, method, params, timeout=None):
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         list_calls["n"] += 1
         assert method == "drafts.list", method
         return []
@@ -257,6 +260,8 @@ def test_cmd_draft_reply_success_is_unchanged():
     def fake_call_sync(settings, method, params, timeout=None):
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         assert method == "drafts.list", method
         calls["n"] += 1
         return [] if calls["n"] == 1 else [fresh]
@@ -266,7 +271,8 @@ def test_cmd_draft_reply_success_is_unchanged():
     appended: dict = {}
 
     def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None, body_md=False):
+                    references=None, html=None, cc=None, body_md=False,
+                    engine_draft_id=None, engine_owner_uid=None):
         appended.update(to=to, subject=subject)
         return "[Gmail]/Drafts", []
     gmail_drafts.append_draft = fake_append
@@ -289,6 +295,7 @@ if __name__ == "__main__":
     test_cmd_ask_fails_loudly_on_the_captured_payload()
     test_cmd_ask_success_is_byte_identical_to_before_the_fix()
     test_cmd_chat_fails_loudly_through_the_same_shared_helper()
+    os.environ["CS_OPERATOR_HEADLESS"] = "1"
     test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step()
     test_cmd_draft_reply_success_is_unchanged()
     print("test_engine_error_exit_code: all assertions passed")

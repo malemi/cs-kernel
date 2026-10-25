@@ -113,6 +113,7 @@ SECRET_REPORT: tuple[str, ...] = (
 # asserts this map stays in step with `manifest.settings_overrides`.
 MANIFEST_KEYS: dict[str, tuple[str, ...]] = {
     "connections": ("connections",),
+    "observability": ("observability",),
     "company_name": ("company", "name"),
     "company_display_name": ("company", "display_name"),
     "email_from_name": ("company", "from_name"),
@@ -336,7 +337,7 @@ class Scan:
         info = type(self.settings).model_fields[name]
         fld = Setting(
             name=name,
-            resolved=(self.settings.connections.model_dump() if name == "connections"
+            resolved=(getattr(self.settings, name).model_dump() if name in {"connections", "observability"}
                       else getattr(self.settings, name)),
             secret=name in SECRET_FIELDS,
         )
@@ -345,15 +346,15 @@ class Scan:
         if tpath and self.manifest_raw:
             present, val = _toml_lookup(self.manifest_raw, tpath)
             if present:
-                if name == "connections":
-                    val = self.manifest_overrides["connections"]
+                if name in {"connections", "observability"}:
+                    val = self.manifest_overrides[name]
                 fld.declarations.append(
                     Declaration(
                         "manifest", _manifest_where(self.manifest_display, tpath), val
                     )
                 )
 
-        if name == "connections":
+        if name in {"connections", "observability"}:
             return fld  # ambient JSON is not a provider binding source
 
         names = _env_names(name, info)

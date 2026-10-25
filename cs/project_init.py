@@ -14,6 +14,7 @@ import shlex
 import tomllib
 from pathlib import Path
 import hashlib
+import stat
 from datetime import datetime
 import jinja2
 from dotenv import dotenv_values
@@ -1073,12 +1074,102 @@ def migrate_company_systems(dest_dir: Path) -> None:
     print("Company systems guide moved to company/other-systems.md.")
 
 
+RETIRED_LEGAL_FILES = (
+    "PROVENANCE.md", "SKILL.md", "references/administrative-remedies.md",
+    "references/deadlines.md", "references/evidence.md", "references/sources.md",
+    "scripts/count_days.py",
+)
+RETIRED_LEGAL_KEYS = frozenset(
+    f".claude/skills/cs-legal-research/{name}" for name in RETIRED_LEGAL_FILES
+)
+
+
+def _retirement_inventory(tree: Path) -> dict:
+    entries = {}
+    for path in [tree, *sorted(tree.rglob("*"))]:
+        info = path.lstat()
+        rel = path.relative_to(tree).as_posix()
+        mode = stat.S_IMODE(info.st_mode)
+        if path.is_symlink():
+            target = os.readlink(path)
+            if Path(target).is_absolute() or not path.resolve().is_relative_to(tree.resolve()):
+                raise OSError(f"Unsafe retired skill link: {path}")
+            entries[rel] = ("link", mode, target)
+        elif path.is_dir():
+            entries[rel] = ("directory", mode)
+        elif path.is_file():
+            entries[rel] = ("file", mode, hashlib.sha256(path.read_bytes()).hexdigest())
+        else:
+            raise OSError(f"Unsupported retired skill entry: {path}")
+    return entries
+
+
+def retire_legal_research(dest_dir: Path) -> int:
+    root = dest_dir.resolve()
+    canonical = root / ".claude/skills/cs-legal-research"
+    trees = []
+    for host in (".claude", ".agents", ".opencode"):
+        parent = root / host
+        skills = parent / "skills"
+        if parent.is_symlink():
+            raise OSError(f"Unsafe retired skill ancestor: {parent}")
+        if skills.is_symlink():
+            if host == ".claude" or skills.resolve() != canonical.parent:
+                raise OSError(f"Unsafe retired skill surface: {skills}")
+            continue
+        path = skills / "cs-legal-research"
+        if path.is_symlink():
+            raise OSError(f"Unsafe retired skill link: {path}")
+        elif path.exists():
+            if not path.is_dir():
+                raise OSError(f"Retired skill is not a directory: {path}")
+            trees.append((host, path, _retirement_inventory(path)))
+    ledger_path = root / "template-manifest.json"
+    ledger = json.loads(ledger_path.read_text()) if ledger_path.is_file() else None
+    archive_root = root / ".claude/retired-skills"
+    if (root / ".claude").is_symlink() or archive_root.is_symlink():
+        raise OSError(f"Unsafe retired skill archive: {archive_root}")
+    archives = []
+    for host, path, before in trees:
+        archive_root.mkdir(parents=True, exist_ok=True)
+        name = "cs-legal-research" + (f".{host[1:]}" if host != ".claude" else "")
+        backup = archive_root / name
+        number = 0
+        while backup.exists() or backup.is_symlink():
+            number += 1
+            backup = archive_root / f"{name}.{number}"
+        shutil.copytree(path, backup, symlinks=True)
+        if _retirement_inventory(backup) != before or _retirement_inventory(path) != before:
+            raise OSError(f"Retired skill archive verification failed: {path}")
+        archives.append((path, backup, before))
+    for path, backup, before in archives:
+        if _retirement_inventory(path) != before or _retirement_inventory(backup) != before:
+            raise OSError(f"Retired skill changed before removal: {path}")
+    for path, backup, before in archives:
+        shutil.rmtree(path)
+        print(f"Retired cs-legal-research; preserved {backup.relative_to(root)}.")
+    if ledger is not None:
+        checksums = ledger.get("file_checksums") or {}
+        if RETIRED_LEGAL_KEYS.intersection(checksums):
+            ledger["file_checksums"] = {key: value for key, value in checksums.items()
+                                      if key not in RETIRED_LEGAL_KEYS}
+            temporary = ledger_path.with_name(ledger_path.name + ".retirement-tmp")
+            temporary.write_text(json.dumps(ledger, indent=2, ensure_ascii=False) + "\n")
+            temporary.replace(ledger_path)
+    return len(archives)
+
+
 def render_templates(config: dict, template_dir: Path, dest_dir: Path):
     """Render Jinja2 templates and copy other files to destination."""
     jinja_env = build_jinja_env(template_dir)
 
     # Create destination directory
     dest_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        retire_legal_research(dest_dir)
+    except OSError as exc:
+        print(f"Legal skill retirement failed: {exc}", file=sys.stderr)
+        return False, {}
     migrate_company_systems(dest_dir)
 
     # The ledger of a clone being restamped in place — the one proof that a
@@ -1340,6 +1431,7 @@ def install_agent_surfaces(dest_dir: Path) -> None:
     The exact five command-era OpenCode and home-global Codex entries are
     retired idempotently. Unrelated files are never touched.
     """
+    retire_legal_research(dest_dir)
     removed = _remove_retired_entries(dest_dir / ".opencode" / "commands")
     removed += _remove_retired_entries(LEGACY_CODEX_PROMPTS)
 

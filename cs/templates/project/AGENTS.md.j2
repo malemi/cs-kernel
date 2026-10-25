@@ -103,7 +103,14 @@ else claiming exception status needs the same standard of proof.
 - **Engine daemon, headless auth, RPC response shapes, the daily pipeline** —
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) § How it works. Setup steps:
   [README.md](README.md) § Setup / config.
-- **Standing instructions are recorded in this repo’s company files.** [company/customer-service-playbook.md](company/customer-service-playbook.md)
+- **Read effective standing instructions with `cs standing-instructions`.**
+  Authenticated engine publication supplies this mailbox's identity and company
+  procedures. Failed reads hold drafting; never substitute stale local rules.
+  `cs standing-instructions --authority-only` distinguishes `legacy` file
+  authoring from `managed` Desktop authority before any rule edit. In managed
+  mode propose changes for human confirmation in Desktop; preserve local files
+  and never publish a competing file copy. The following file workflow applies
+  only in legacy mode. **Legacy standing instructions use company files.** [company/customer-service-playbook.md](company/customer-service-playbook.md)
   holds company-wide support procedures — what to do and write per kind of
   request, product facts, escalation.
   [company/mailbox-identity.md](company/mailbox-identity.md) holds this
@@ -165,8 +172,7 @@ Interactive skills are `cs-customer <name>` (mandatory before customer work),
 `cs-instructions` (teaching/amending/retiring standing rules),
 `cs-bootstrap` (interactive bootstrap: company procedures, workflow context
 and engine systems),
-`cs-legal-research` (Italian and EU legal research on the company's own
-questions, for the interactive human only — never a customer reply),
+`cs-engine-workflow` (authenticated financial and legal workflows owned by the engine),
 `cs-stripe` (Stripe/accounting reads through fixed `cs rpc stripe.*`, not finance chat),
 `cs-help`, `cs-cron`, `cs-campaign`, and `cs-sip-trunk` (supervised Vonage SIP
 provisioning). Each file owns its own write and send
@@ -313,6 +319,7 @@ set — `cs memory` is what states each store's authority.)
 nothing that reaches a customer** — per-developer, not in git, not portable.
 Written project records go to the engine through `cs project save`; entity
 facts use the separate memory-write procedure in the customer skill. Clone-wide
-company configuration remains in `company/*.md`. Never keep the only copy in
+company configuration remains in `company/*.md`; managed standing rules are
+read through `cs standing-instructions` and confirmed in Desktop. Never keep the only copy in
 an assistant conversation or personal memory.
 

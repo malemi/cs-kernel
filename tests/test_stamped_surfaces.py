@@ -58,7 +58,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cs import project_init, review  # noqa: E402
-from test_legal_research_skill import LEGAL_FILES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 TPL = ROOT / "cs" / "templates" / "project"
@@ -153,7 +152,7 @@ def italian_hits(text: str) -> list[str]:
 def _fanout_contract(clone: Path, label: str) -> None:
     """Read the actual stamped workflow's decision order and scope contract."""
     triage = (clone / ".claude/skills/cs-triage-mail/SKILL.md").read_text()
-    decision = triage.split("Then for EACH candidate,", 1)[1].split("## 1b.", 1)[0]
+    decision = triage.split("Then for EACH selected candidate,", 1)[1].split("## 1b.", 1)[0]
     incomplete = decision.index("If any mailbox is unreadable")
     authority = decision.index("Check assignment state before answered subtraction")
     ordinary = decision.index("With complete scope and no assignment hold")
@@ -176,7 +175,9 @@ def _fanout_contract(clone: Path, label: str) -> None:
     check("Scope an engine-assignment dossier `STOP` to its named exact thread" in triage
           and "Address takeover" in triage and "unreadable evidence still impose `STOP`" in triage,
           f"[{label}] unrelated thread work survives assignment holds while contact safety holds remain")
-    check("--thread-id '<exact-thread-key>'" in triage and "before writing" in triage,
+    check("--thread-id '<exact-thread-key>'" in triage and "before\nwriting" in triage
+          and "negotiate the engine draft policy before composition" in triage
+          and "validates\nthe source locally before composition" in triage,
           f"[{label}] composing requires exact thread and actual prewrite authority")
     for skill in ("cs-triage-mail", "cs-operator", "cs-customer"):
         text = (clone / f".claude/skills/{skill}/SKILL.md").read_text()
@@ -440,23 +441,11 @@ def _update_render() -> None:
                       == instructions.read_bytes(),
                       f"[{label}] {host} update resolves canonical standing-rule skill")
 
-            # The skill with supporting files, on the path every existing
-            # clone takes: this clone predates it, so `cs update` has to add
-            # all seven files, and nothing compiled. A `.pyc` in the INSTALLED
-            # template tree stops `cs update` before this point, and the
-            # exit-code check above is what reports it; the bytecode check
-            # below holds the clone itself.
-            legal = clone / ".claude/skills/cs-legal-research"
-            for rel in LEGAL_FILES:
-                check((legal / rel).is_file(),
-                      f"[{label}] update adds legal-research {rel} to a clone "
-                      f"that predates the skill")
-                for host in (".agents", ".opencode"):
-                    hosted = clone / host / "skills/cs-legal-research" / rel
-                    check((legal / rel).is_file() and hosted.is_file()
-                          and hosted.read_bytes() == (legal / rel).read_bytes(),
-                          f"[{label}] {host} update resolves canonical "
-                          f"legal-research {rel}")
+            for host in (".claude", ".agents", ".opencode"):
+                check(not (clone / host / "skills/cs-legal-research").exists(),
+                      f"[{label}] {host} update never restores retired legal procedures")
+                thin = clone / host / "skills/cs-engine-workflow/SKILL.md"
+                check(thin.is_file(), f"[{label}] {host} retains the thin engine workflow")
             compiled = sorted(str(p.relative_to(clone)) for p in clone.rglob("*")
                               if p.suffix == ".pyc" or "__pycache__" in p.parts)
             check(not compiled,

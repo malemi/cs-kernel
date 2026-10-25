@@ -1,0 +1,20 @@
+[Unit]
+Description=Independent operator evidence monitor
+After=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_MONITOR_USER
+UMask=0077
+EnvironmentFile=/etc/operator-monitor/monitor.env
+ExecStart=/opt/operator/bin/python -m cs monitor run --config /etc/operator-monitor/monitor.json
+Restart=on-failure
+RestartSec=60
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/lib/operator-monitor /var/lib/operator-state
+
+[Install]
+WantedBy=multi-user.target

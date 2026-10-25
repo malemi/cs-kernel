@@ -183,6 +183,46 @@ class VonageConnection(BaseModel):
         return self
 
 
+class Observability(BaseModel):
+    """Explicit diagnostic-reader route; credentials remain in referenced env layers."""
+
+    model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True)
+    reader_url: str = ""
+    reader_token_env: str = ""
+    monitor_config_path: str = ""
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
+
+    @field_validator("monitor_config_path")
+    @classmethod
+    def monitor_path(cls, value: str) -> str:
+        if value and (not Path(value).is_absolute() or any(part == ".." for part in Path(value).parts) or len(value) > 4096 or any(ord(char) < 32 for char in value)):
+            raise ValueError("monitor_config_path must be a bounded absolute path")
+        return value
+
+    @field_validator("reader_token_env")
+    @classmethod
+    def token_reference(cls, value: str) -> str:
+        if value and not re.fullmatch(r"[A-Z_][A-Z0-9_]*", value):
+            raise ValueError("must be an uppercase environment variable name")
+        return value
+
+    @field_validator("reader_url")
+    @classmethod
+    def endpoint(cls, value: str) -> str:
+        from urllib.parse import urlsplit
+        if value:
+            parts = urlsplit(value)
+            if parts.scheme != "https" or not parts.hostname or parts.username or parts.password or parts.query or parts.fragment:
+                raise ValueError("reader_url must be an HTTPS endpoint without credentials")
+        return value
+
+    @model_validator(mode="after")
+    def complete_route(self):
+        if bool(self.reader_url) != bool(self.reader_token_env):
+            raise ValueError("reader_url and reader_token_env must be configured together")
+        return self
+
+
 class Connections(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True)
     vonage: VonageConnection = Field(default_factory=VonageConnection)
@@ -200,6 +240,7 @@ class Manifest(_Table):
     drive: Drive = Drive()
     env: EnvTable = EnvTable()
     connections: Connections = Field(default_factory=Connections)
+    observability: Observability = Field(default_factory=Observability)
 
 
 def find_manifest_path() -> Path | None:
@@ -228,13 +269,20 @@ def load_manifest(path: Path) -> Manifest:
     try:
         return Manifest.model_validate(data)
     except ValidationError as e:
+        if any(err["loc"] and err["loc"][0] == "observability" for err in e.errors()):
+            locations = ", ".join(".".join(map(str, err["loc"])) for err in e.errors())
+            raise ManifestError(
+                f"{path} failed validation at {locations}: observability requires strict "
+                "known fields, a DEBUG/INFO/WARNING/ERROR/CRITICAL log level, "
+                "an HTTPS reader URL without credentials and a credential env reference"
+            ) from None
         if any(err["loc"] and err["loc"][0] == "connections" for err in e.errors()):
             # Validation can encounter a secret pasted where a reference belongs.
             # Never let pydantic's input repr expose it in CLI errors.
             locations = ", ".join(".".join(map(str, err["loc"])) for err in e.errors())
             raise ManifestError(
                 f"{path} failed validation at {locations}: connections require strict "
-                "known fields, env variable references, a supported region and UUID "
+                "known fields, env variable references, HTTPS diagnostic routes, a supported region and UUID "
                 "application IDs; enabled Vonage requires both references and an allowlist"
             ) from None
         raise ManifestError(f"{path} failed validation:\n{e}") from None
@@ -249,6 +297,7 @@ def settings_overrides(m: Manifest) -> dict:
     an omitted table is a no-op)."""
     out: dict = {}
     out["connections"] = m.connections.model_dump()
+    out["observability"] = m.observability.model_dump()
 
     def put(key: str, val) -> None:
         if isinstance(val, str):

@@ -283,7 +283,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete review catchup drive accounts config memory chat campaign project instructions assignment; do
+for v in verify-install init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete draft-retire review catchup drive accounts config memory chat campaign project instructions assignment; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -328,14 +328,25 @@ step "8. draft-reply mirrors composed draft into Gmail Drafts (anti-regression)"
 # invisible to the operator ("draft not in Gmail" — a recurring regression).
 if "$VENV/bin/python" "$ROOT/tests/test_draft_reply.py"; then echo "OK"; else echo "FAIL: draft-reply no longer appends to Gmail Drafts"; FAIL=1; fi
 
+step "8a. interactive review drafts retain source, persistence and send boundaries"
+if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_supervised_review_draft.py"; then echo "OK"; else echo "FAIL: supervised review drafts"; FAIL=1; fi
+
 step "8b. draft-send names, input-gates and verifies one engine draft"
 if "$VENV/bin/python" "$ROOT/tests/test_draft_send.py"; then echo "OK"; else echo "FAIL: canonical contextual send regressed"; FAIL=1; fi
+
+step "8c. exact mirror identity, authored MIME and logical retirement"
+for draft_test in test_draft_identity.py test_draft_lifecycle.py; do
+  if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/$draft_test"; then echo "OK"; else echo "FAIL: $draft_test"; FAIL=1; fi
+done
 
 step "9. unanswered open-logic (deterministic Sent-anchored sweep)"
 # `cs unanswered` replaced a NON-DETERMINISTIC LLM discovery query (incident
 # 2026-07-16). This guards the pure open-logic: Sent-after-inbound closes a
 # sender, Sent-before does not, self/ignore excluded, oldest-first ordering.
 if "$VENV/bin/python" "$ROOT/tests/test_unanswered.py"; then echo "OK"; else echo "FAIL: unanswered open-logic regressed"; FAIL=1; fi
+
+step "9b. protected operational originals retain ordinary assignment and suppression"
+if "$VENV/bin/python" "$ROOT/tests/test_operational_fixture.py"; then echo "OK"; else echo "FAIL: operational fixture admission"; FAIL=1; fi
 
 step "10. tasks create/close verbs write the engine ledger (params guard)"
 # `cs tasks create` / `cs tasks close` are the triage sweep's reconciliation
@@ -466,13 +477,16 @@ SPELLINGS = [
     "cs",
 ]
 VERBS = [
-    "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update",
+    "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update", "monitor",
     "instructions", "rpc instructions.store",
-    "handled", "escalated", "draft-delete", "rpc drafts.discard",
+    "handled", "escalated", "draft-delete", "draft-retire", "rpc drafts.discard",
+    "rpc drafts.discard_exact", "rpc drafts.reconcile_external",
     "connection vonage provision", "connection vonage allow-ip",
-    "assignment preview", "assignment export", "assignment commit", "rpc tasks.assignment.commit",
+    "assignment preview", "assignment export", "assignment commit",
+    "rpc operator.rules.decide", "rpc operator.rules.import_confirm", "rpc tasks.assignment.commit",
     "rpc update.run", "rpc memory.reconsolidate_now", "rpc memory.join",
     "rpc memory.reset", "rpc memory.restore_version", "rpc preparation.resume",
+
 ]
 
 # The expansion a clone-local executable gets, rebuilt here INDEPENDENTLY of
@@ -512,7 +526,8 @@ except (OSError, json.JSONDecodeError) as exc:
 deny = settings.get("permissions", {}).get("deny", [])
 allow = settings.get("permissions", {}).get("allow", [])
 
-for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip"):
+for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip",
+             "draft-retire", "rpc drafts.discard_exact", "rpc drafts.reconcile_external"):
     for spelling in SPELLINGS:
         entry = "Bash(%s %s:*)" % (spelling, verb)
         if entry not in deny:
@@ -795,6 +810,9 @@ step "27. every agent reads the same project skills"
 # bytes, AGENTS.md stays the rendered charter (never a link), exact legacy command/prompt cleanup
 # preserves unrelated files, and a symlink-less filesystem gets copies.
 if "$VENV/bin/python" "$ROOT/tests/test_agent_surfaces.py"; then echo "OK"; else echo "FAIL: agent surfaces drifted"; FAIL=1; fi
+
+step "27b. manual incident diagnosis ships through every agent skill surface"
+if "$VENV/bin/python" "$ROOT/tests/test_diagnose_skill.py"; then echo "OK"; else echo "FAIL: manual diagnostic skill distribution regressed"; FAIL=1; fi
 
 step "28. RATE_CAP fully removed (send_draft no longer blocks on it)"
 # 2026-08-23: a per-day send quota did not prevent the failure it existed for,
@@ -1348,6 +1366,17 @@ if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else e
 
 step "59. scheduled Claude retry requires a proven pre-work refusal"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_native_stream.py"; then echo "OK"; else echo "FAIL: private native stream diagnostics changed acceptance or lost evidence"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_native_lifecycle.py"; then echo "OK"; else echo "FAIL: native background continuation lost strict lifecycle binding"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_native_composition.py"; then echo "OK"; else echo "FAIL: native Bash composition lost actual task/result binding"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_discovery_receipt.py"; then echo "OK"; else echo "FAIL: native discovery lost full physical capture binding"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_read_outcomes.py"; then echo "OK"; else echo "FAIL: native business reads lost source-bound outcome evidence"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_health.py"; then echo "OK"; else echo "FAIL: ordinary discovery or deterministic operator health"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_causal_logging.py"; then echo "OK"; else echo "FAIL: causal supervisor evidence lost across ordinary diagnostics"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_causal_contract_edges.py"; then echo "OK"; else echo "FAIL: causal predicate distinctions or private diagnostic failure safety"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_inventory_view.py"; then echo "OK"; else echo "FAIL: semantic inventory projection, private binding or native inspection"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_notices.py"; then echo "OK"; else echo "FAIL: operator notices hide stopped work or its remedy"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_diagnostics.py"; then echo "OK"; else echo "FAIL: operator diagnostics lose repair evidence or account boundaries"; FAIL=1; fi
 
 step "60. cs instructions — compile rules, diff classification, --commit's one door"
 # The verb that replaced engine USER_NOTES: compiles company/*.md into the
@@ -1390,6 +1419,18 @@ if "$VENV/bin/python" "$ROOT/tests/test_live_capabilities_fixture.py"; then echo
 step "64. Stripe read-only bridge and three-host skill distribution"
 if "$VENV/bin/python" "$ROOT/tests/test_stripe_cli.py"; then echo "OK"; else echo "FAIL: Stripe bridge or canonical skill distribution regressed"; FAIL=1; fi
 
+step "65. bounded ordinary mail worksets preserve scope, fairness, complete inventory and private state"
+if "$VENV/bin/python" "$ROOT/tests/test_operator_workset.py" && "$VENV/bin/python" "$ROOT/tests/test_operator_workset_cli.py" && "$VENV/bin/python" "$ROOT/tests/test_review_inventory.py"; then echo "OK"; else echo "FAIL: ordinary workset scheduling, inventory coverage or CLI scope enforcement regressed"; FAIL=1; fi
+
+step "66. ordinary diagnostic persistence, request traces and independent monitoring stay bounded and owner-scoped"
+if "$VENV/bin/python" "$ROOT/tests/test_draft_source_logging.py"; then echo "OK"; else echo "FAIL: exact draft-source diagnostic logging regressed"; FAIL=1; fi
+if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p 'test_observability*.py'; then echo "OK"; else echo "FAIL: diagnostic persistence, lifecycle evidence or retention regressed"; FAIL=1; fi
+if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p test_logs_cli.py; then echo "OK"; else echo "FAIL: operator log discovery, bounded exports or ownership regressed"; FAIL=1; fi
+if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p 'test_monitor*.py'; then echo "OK"; else echo "FAIL: independent monitoring, watchdog or alert safety regressed"; FAIL=1; fi
+if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p test_operational_inbox.py; then echo "OK"; else echo "FAIL: filesystem collection, forward progress or technical-notice retention regressed"; FAIL=1; fi
+
+step "67. installed package bytes match immutable release content"
+if "$VENV/bin/python" "$ROOT/tests/test_package_integrity.py"; then echo "OK"; else echo "FAIL: immutable installed package integrity verification regressed"; FAIL=1; fi
 
 echo
 if [ "$FAIL" -ne 0 ]; then echo "RESULT: FAIL"; exit 1; fi

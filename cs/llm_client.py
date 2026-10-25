@@ -97,6 +97,8 @@ def build_client(*, base_url: str | None = None, api_key: str | None = None) -> 
 
     kwargs: dict[str, Any] = _credential_kwargs(resolved_base, resolved_key)
     kwargs["base_url"] = resolved_base or ANTHROPIC_DEFAULT_BASE_URL
+    if "api_key" in kwargs:
+        kwargs["default_headers"] = {"X-Api-Key": resolved_key, "Authorization": anthropic.omit}
 
     client = anthropic.Anthropic(**kwargs)
     if "auth_token" in kwargs:

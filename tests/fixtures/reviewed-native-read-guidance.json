@@ -1,0 +1,16 @@
+{
+  ".claude/skills/cs-triage-mail/SKILL.md": {
+    "before_sha256": "ff49dc4ed860eecc97e7d95c66fe0ddf037f8b025fea0a2ab79a71490db06588",
+    "after_sha256": "51278cf5229e6956121401efed2eba231618386a379ce1e8e71f3eb7eb2d74f2",
+    "edits": [
+      {
+        "before": "",
+        "after": "Inspect completed native task output with the built-in Read tool, paging through\nthe complete file when needed. Do not execute Python or shell summarizers to\ninspect that output, and do not repeat the review. Preserve the complete actual\ninventory and its verdicts; clipped output is not a complete inventory.\n\n"
+      },
+      {
+        "before": "",
+        "after": "\n\nScheduled runs keep the same source requirements within the selected workset.\nAny direct `emails.list_by_thread` call, including fact sourcing or post-compose\nverification, must name a canonical RFC root in `triage_workset`'s `selected`\nroots. The broad Sent-search examples below are interactive guidance: do not run\n`emails.search` or inspect another root during a scheduled tick. A message ID,\nsource reference or draft citation does not select that conversation. If required\ncorroboration lies outside the reservation, report the candidate and missing\nevidence as deferred without issuing the forbidden RPC. Preserve queue order,\ncurrent holds and every evidence requirement; never guess or widen the scope."
+      }
+    ]
+  }
+}

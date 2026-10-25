@@ -1,0 +1,38 @@
+{
+  "baseline_commit": "03b4449",
+  "review_receipt": "reviewed-release-scheduled-surfaces.md",
+  "review_receipt_sha256": "b411d58b1b0bf42730a66ac96de08922c6f3f0d4a793514a21dc5cd15d71d2f9",
+  "templates": {
+    ".claude/settings.json": {
+      "current_sha256": "6c6835be39b47eb8da9426176ad9c2e74a28da607125a6cdac864598663d012c",
+      "baseline_sha256": "0950216a66cfe4d54174840373f839ad89929596deac6d83fcb80012299d11d4",
+      "baseline_source": "03b4449:cs/templates/project/.claude/settings.json.j2"
+    },
+    "bin/cs_operator_cron.sh": {
+      "current_sha256": "ea12e2a1b37669040cc2d0d83877c75ba20645d488a9768f344824b7f030469b",
+      "baseline_sha256": "e55ae9790163fecbe4395c3223bd0fedd27d55b459d150db5784b33ae354ced8",
+      "baseline_source": "03b4449:cs/templates/project/bin/cs_operator_cron.sh.j2"
+    },
+    ".claude/skills/cs-operator/SKILL.md": {
+      "current_sha256": "f8fffebf306ee9315ad05986a20dffa87572daff760663f7e6c299b67213c4aa",
+      "baseline_sha256": "e8dc64f3c80e342c5ac4e988533dc1933a270537c13fcee52df007f44b856feb",
+      "baseline_source": "03b4449:cs/templates/project/.claude/skills/cs-operator/SKILL.md.j2"
+    },
+    ".claude/skills/cs-triage-mail/SKILL.md": {
+      "current_sha256": "24d9d625c66d79231f2872d523ad51e28e3320d644d15a1639926a14a79da281",
+      "baseline_sha256": "b7b655f5cc613b16ec8a9be465e78448de9dc2ac515b3263fb5f9da2240c567a",
+      "baseline_source": "03b4449:cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2"
+    },
+    ".claude/skills/cs-campaign-tick/SKILL.md": {
+      "current_sha256": "1ea7177a02e83d1d2c25cc0ac8c8d5c1942a9390c08c957e6245c8c515479c16",
+      "baseline_sha256": "1a98336ef736f83cda0bee102d30796566514f70eaca5271762c8a1237878baf",
+      "baseline_source": "03b4449:cs/templates/project/.claude/skills/cs-campaign-tick/SKILL.md.j2"
+    }
+  },
+  "partial_review_receipt": "reviewed-release-scheduled-partials.md",
+  "partial_review_receipt_sha256": "0de419cab13bc8e33e863e99890139e3abba79cb7a32217763db8addc3c3b273",
+  "partials": {
+    "cs/templates/partials/desk-preamble.md.j2": "7a55e11ab6989eaf1cc2aceb6754d8e7bb2d285d9a991c6023a04c1ec1dcdfbc",
+    "cs/templates/partials/outbound-fact-sourcing.md.j2": "74b4c23f11611d978ca6273809e4da13e7fa8d3a6488bef247f7d6a0d0b85b32"
+  }
+}

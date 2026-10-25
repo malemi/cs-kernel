@@ -1,0 +1,43 @@
+---
+name: cs-engine-workflow
+description: Use when an interactive human explicitly requests engine-owned financial statements or Italian/EU legal research for the company's own affairs. Never use for scheduled work or customer-mail legal reasoning.
+---
+
+# Engine workflows
+
+Run `.venv/bin/python -m cs workflow list` to discover the engine's workflow names and versions.
+Use `.venv/bin/python -m cs workflow suggest '<request>'` when selection needs clarification. Ask the
+human to resolve ambiguity before starting. This route uses the engine's owned
+procedure; do not run the old local `cs-legal-research` procedure, a global skill,
+generic chat or another provider as fallback. If the engine is unavailable or
+unsupported, report that limit and stop.
+
+Upload only explicitly supplied local originals with `.venv/bin/python -m cs workflow upload <path>`.
+Retain returned opaque document IDs and extraction limitations. Start finance
+with `.venv/bin/python -m cs workflow start '<request>' --document <id> --wait`; omit the document
+flag when there is no upload. `--qonto` requests existing engine bank authority
+only when the human requests that source. It grants no new bank authority.
+Use `.venv/bin/python -m cs workflow status <run_id> --wait`, and answer a waiting finance question
+with `.venv/bin/python -m cs workflow respond '<answer>' <run_id> --wait`.
+
+For legal, retain a persistent process:
+`.venv/bin/python -m cs workflow legal '<request>' --protocol json --document <id>`.
+Pass explicitly scoped public lookup objects through `--public-queries` and individual
+URLs through repeated `--approved-url`. The authenticated command starts once directly;
+it does not require session enrollment or confirmation forms. Keep the same process open.
+An unsupported engine refuses before starting; do not retry through obsolete endpoints.
+
+The process polls and emits progress. Forward a human's clarification only when
+waiting, with `{"action":"respond","message":"<actual answer>"}` on the same
+stdin. Reconnecting loses legal continuation authority. Send `{"action":"status"}`
+for current state, or `{"action":"cancel"}` to cancel. EOF closes the connection and
+requests cancellation of an active run. EOF during start may race with admission;
+verify the run state before continuing. Never keep an unattended legal session running.
+
+For a legal artifact, send `{"action":"download","artifact_id":"<id>","output":"<explicit-local-file>"}`
+on the same process stdin. Download a finance artifact with `.venv/bin/python -m cs workflow download <artifact_id> --output
+<explicit-local-file>` and report the verified output path and run ID. Use
+`--document-original` to retrieve an uploaded original. Server filenames never
+choose the output destination. `.venv/bin/python -m cs workflow cancel <run_id>` cancels a finance
+run. Reports remain private; sending, filing, payment and publishing need their
+own authorization.

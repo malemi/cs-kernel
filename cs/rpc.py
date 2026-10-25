@@ -16,7 +16,9 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import os
 import sys
+import time
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
 import websockets
@@ -68,6 +70,8 @@ class EngineClient:
         self._pending: dict[Any, asyncio.Future] = {}
         self._handlers: set[asyncio.Task] = set()
         self._ids = itertools.count(1)
+        self._observability = False
+        self._observability_negotiated = False
 
     @property
     def url(self) -> str:
@@ -79,21 +83,26 @@ class EngineClient:
         return f"{base}/ws/{self.settings.engine_owner_uid}"
 
     async def __aenter__(self) -> "EngineClient":
-        token = self._id_token or auth.get_id_token(self.settings)
-        self._ws = await websockets.connect(
-            self.url,
-            additional_headers={"Authorization": f"Bearer {token}"},
-            max_size=32 * 1024 * 1024,  # email bodies / search results can be large
-            open_timeout=30,
-            # A turn the engine is still working on must not be killed by
-            # our own keepalive: the library default gives the pong 20 s,
-            # which a briefly busy engine loop can exceed. The engine
-            # sets the same deadline on its side.
-            ping_interval=WS_PING_INTERVAL_SECONDS,
-            ping_timeout=WS_PING_TIMEOUT_SECONDS,
-        )
-        self._recv_task = asyncio.create_task(self._recv_loop())
-        return self
+        try:
+            token = self._id_token or auth.get_id_token(self.settings)
+            self._ws = await websockets.connect(
+                self.url,
+                additional_headers={"Authorization": f"Bearer {token}"},
+                max_size=32 * 1024 * 1024,  # email bodies / search results can be large
+                open_timeout=30,
+                # A turn the engine is still working on must not be killed by
+                # our own keepalive: the library default gives the pong 20 s,
+                # which a briefly busy engine loop can exceed. The engine
+                # sets the same deadline on its side.
+                ping_interval=WS_PING_INTERVAL_SECONDS,
+                ping_timeout=WS_PING_TIMEOUT_SECONDS,
+            )
+            self._recv_task = asyncio.create_task(self._recv_loop())
+            return self
+        except BaseException as exc:
+            from .observability_producers import emit, error_reason, error_metadata
+            emit(self.settings, 'rpc', 'failed', reason=error_reason(exc), method='engine.connect', **error_metadata(exc))
+            raise
 
     async def __aexit__(self, *exc) -> None:
         if self._recv_task:
@@ -185,18 +194,57 @@ class EngineClient:
         to that connection when it goes away. The client is finished with
         the socket either way, since a timeout is fatal to the run.
         """
+        from .observability import current_context, store_for
+        deadline = time.monotonic() + timeout
+        if current_context() and not self._observability_negotiated and method != "system.capabilities" and not method.startswith("diagnostics."):
+            self._observability_negotiated = True
+            probe_id = next(self._ids)
+            probe = asyncio.get_running_loop().create_future()
+            self._pending[probe_id] = probe
+            try:
+                await self._ws.send(json.dumps({"jsonrpc":"2.0","id":probe_id,"method":"system.capabilities","params":{}}))
+                caps = await asyncio.wait_for(probe, timeout=min(1.0, max(.001, timeout/10)))
+                self._observability = isinstance(caps, dict) and type(caps.get('observability')) is int and caps['observability'] == 1
+            except Exception:
+                self._observability = False
+            finally:
+                self._pending.pop(probe_id, None)
+        store = None
+        diagnostic = bool(current_context()) and not method.startswith('diagnostics.')
+        if diagnostic:
+            try:
+                store = store_for(self.settings)
+            except Exception:
+                diagnostic = False
+        if diagnostic:
+            store.emit('rpc', 'start', method=method, reason='none' if self._observability else 'unsupported')
         rid = next(self._ids)
         fut: asyncio.Future = asyncio.get_event_loop().create_future()
         self._pending[rid] = fut
         try:
-            await self._ws.send(
-                json.dumps(
-                    {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
-                )
-            )
-            return await asyncio.wait_for(fut, timeout=timeout)
+            frame = {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
+            if self._observability and not method.startswith("diagnostics."):
+                from .observability import current_context, diagnostic_envelope
+                if current_context():
+                    frame["diagnostics"] = diagnostic_envelope()
+            await self._ws.send(json.dumps(frame))
+            result = await asyncio.wait_for(fut, timeout=max(.001, deadline-time.monotonic()))
+            if method == "system.capabilities":
+                version = result.get("observability") if isinstance(result, dict) else None
+                self._observability = type(version) is int and version == 1
+                self._observability_negotiated = True
+            if diagnostic:
+                store.emit('rpc', 'result', method=method, rpc_id=rid, reason='none' if self._observability else 'unsupported')
+            return result
         except asyncio.TimeoutError:
+            if diagnostic:
+                store.emit('rpc', 'unknown-effect', method=method, rpc_id=rid, reason='timeout')
             await self._abandon(rid, method, timeout)
+            raise
+        except BaseException as exc:
+            if diagnostic:
+                from .observability_producers import error_metadata, error_reason
+                store.emit('rpc', 'unknown-effect', method=method, rpc_id=rid, reason=error_reason(exc), **error_metadata(exc))
             raise
         finally:
             self._pending.pop(rid, None)
@@ -244,6 +292,7 @@ async def chat(
     assignment_thread_key: str | None = None,
     email_context: dict | None = None,
     require_contextual_email_policy: bool = False,
+    supervised_review: bool = False,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -291,7 +340,10 @@ async def chat(
 
     from . import model_config
 
-    if email_context is not None and (read_only or role is not None):
+    if supervised_review and (assignment_thread_key is None or read_only or role is not None or allow_tools
+                              or any(os.environ.get(k) for k in ("CS_OPERATOR_HEADLESS", "CS_HEADLESS_SEND", "CS_OPERATOR_HEALTH_CONTEXT"))):
+        raise ValueError("supervised review requires an interactive draft-only exact thread")
+    if (email_context is not None or require_contextual_email_policy) and (read_only or role is not None):
         raise ValueError("contextual email cannot use read-only/direct classifier routing")
     if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
         raise ValueError("assignment draft scope cannot be combined with other mutation or routing policy")
@@ -322,6 +374,7 @@ async def chat(
                 "notifications": []}
 
     allow = allow_tools or set()
+    operator_reply = os.environ.get("CS_HEADLESS_SEND") == "1" and "send_draft" in allow
     conv = conversation_id or f"cs-{uuid.uuid4().hex[:16]}"
     client: EngineClient | None = None
     approvals: list[dict] = []
@@ -347,10 +400,21 @@ async def chat(
     async with EngineClient(settings, on_notification=on_notify) as c:
         client = c
         params = {"message": message, "conversation_id": conv}
-        if email_context is not None or assignment_thread_key is not None or require_contextual_email_policy:
+        if email_context is not None or assignment_thread_key is not None or require_contextual_email_policy or operator_reply:
             capabilities = await c.call("system.capabilities", {}, timeout=60)
-            if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
-                raise RuntimeError("engine does not support required contextual email policy version 1")
+            if email_context is not None or require_contextual_email_policy:
+                if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
+                    raise RuntimeError("engine does not support required contextual email policy version 1")
+        if supervised_review:
+            version = capabilities.get("supervised_review_draft_policy") if isinstance(capabilities, dict) else None
+            if type(version) is not int or version != 1:
+                raise RuntimeError("engine upgrade required for supervised review drafts; nothing was generated")
+            params["supervised_review_draft_policy_version"] = 1
+        if operator_reply:
+            version = capabilities.get("operator_reply_provenance") if isinstance(capabilities, dict) else None
+            if type(version) is not int or version != 1:
+                raise RuntimeError("engine does not support required operator reply provenance version 1")
+            params.update(operator_origin="scheduled_operator", operator_origin_version=1)
         if email_context is not None:
             params.update(email_context=email_context, contextual_email_policy_version=1)
         if assignment_thread_key is not None:

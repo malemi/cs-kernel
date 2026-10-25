@@ -46,6 +46,8 @@ def run() -> None:
     def fake_call_sync(settings, method, params, timeout=None):
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         assert method == "drafts.list", method
         calls["list"] += 1
         # 1st call = BEFORE compose (only the stale draft); 2nd = AFTER (stale + fresh)
@@ -54,14 +56,17 @@ def run() -> None:
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
                         echo=print, conversation_id=None, assignment_thread_key=None, email_context=None):
         # draft-reply must be structurally send-incapable: empty allow set.
-        assert email_context == {"thread_key": "<abc@example.com>"}
+        assert email_context is None
+        assert assignment_thread_key == "<abc@example.com>"
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 
     def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None, body_md=False):
+                    references=None, html=None, cc=None, body_md=False,
+                    engine_draft_id=None, engine_owner_uid=None):
         appended.update(to=to, subject=subject, body=body,
-                        in_reply_to=in_reply_to, references=references, body_md=body_md)
+                        in_reply_to=in_reply_to, references=references, body_md=body_md,
+                        engine_draft_id=engine_draft_id, engine_owner_uid=engine_owner_uid)
         return "[Gmail]/Drafts", []
 
     cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})          # settings unused by stubs
@@ -83,6 +88,8 @@ def run() -> None:
     # it body_md=True so send_guard's deterministic tells run (warn, never
     # block) on the Gmail-draft path. See cs/gmail_drafts.py + cs/send_guard.py.
     assert appended["body_md"] is True, appended
+    assert appended["engine_draft_id"] == FRESH["id"], appended
+    assert appended["engine_owner_uid"] == "fixture-owner", appended
     print("OK: draft-reply mirrors the freshly composed engine draft into Gmail Drafts")
 
 
@@ -93,18 +100,22 @@ def _wire(before_rows, after_rows, *, appended):
     def fake_call_sync(settings, method, params, timeout=None):
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         assert method == "drafts.list", method
         calls["list"] += 1
         return before_rows if calls["list"] == 1 else after_rows
 
     async def fake_chat(settings, message, *, allow_tools=None, timeout=600,
                         echo=print, conversation_id=None, assignment_thread_key=None, email_context=None):
-        assert email_context == {"thread_key": "<abc@example.com>"}
+        assert email_context is None
+        assert assignment_thread_key == "<abc@example.com>"
         assert allow_tools == set(), f"draft-reply must pass allow_tools=set(), got {allow_tools!r}"
         return {"result": {"response": "composed"}, "approvals": [], "notifications": []}
 
     def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None, body_md=False):
+                    references=None, html=None, cc=None, body_md=False,
+                    engine_draft_id=None, engine_owner_uid=None):
         appended.update(to=to, subject=subject, body=body)
         return "[Gmail]/Drafts", []
 
@@ -187,6 +198,9 @@ def run_still_reports_when_nothing_was_composed() -> None:
 
 
 if __name__ == "__main__":
+    # These original fixtures cover the unchanged scheduled policy1 path.
+    import os
+    os.environ["CS_OPERATOR_HEADLESS"] = "1"
     run()
     run_warns_about_the_drafts_it_does_not_mirror()
     run_distinguishes_a_reused_draft_from_no_draft()

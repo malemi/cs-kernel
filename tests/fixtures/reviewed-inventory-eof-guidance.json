@@ -1,0 +1,22 @@
+{
+  ".claude/skills/cs-operator/SKILL.md": {
+    "before_sha256": "84e1c94a5884dea5cb916700f868ae22813fc54a5ad8204237993cdf9fe1077f",
+    "after_sha256": "46551819b3e2b9c040ab3edee904386bdf1d608ab6ed58029a07e0785e5405a0",
+    "edits": [
+      {
+        "before": "calls. Start the view at offset 0, then 8064, 16128 and onward through its\nactual length. This readable semantic inventory preserves global rows, roots,",
+        "after": "calls. The already mandatory envelope contains the initial literal `page_plan`.\nFollow its exact emitted skip/count commands: counts are at most8192, offsets\nadvance at most8064 with at least128-byte overlap, and boundaries avoid whitespace\nand partial UTF-8 characters. Do not assume fixed offsets or counts. The view\nomits its optional final newline; native results are still compared byte for byte.\nThis readable semantic inventory preserves global rows, roots,"
+      }
+    ]
+  },
+  ".claude/skills/cs-triage-mail/SKILL.md": {
+    "before_sha256": "31d9a5bc4385d5a33eb2be055eecdd52297fd2917d1f1c2ace9abbee1faf9c0d",
+    "after_sha256": "a3c050bcd98959ecadc766bb7fe4f72ae4ef5c697c0490fbd87756e78b6b4cf7",
+    "edits": [
+      {
+        "before": "calls. Start the view at offset 0, then 8064, 16128 and onward through its\nactual length. This readable semantic inventory preserves global rows, roots,",
+        "after": "calls. The already mandatory envelope contains the initial literal `page_plan`.\nFollow its exact emitted skip/count commands: counts are at most8192, offsets\nadvance at most8064 with at least128-byte overlap, and boundaries avoid whitespace\nand partial UTF-8 characters. Do not assume fixed offsets or counts. The view\nomits its optional final newline; native results are still compared byte for byte.\nThis readable semantic inventory preserves global rows, roots,"
+      }
+    ]
+  }
+}

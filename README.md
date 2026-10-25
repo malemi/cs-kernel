@@ -270,8 +270,8 @@ just talk:
   review and approve it
 - *"From now on, ask for the order number before handling returns"* →
   `cs-instructions`; an interactive human can teach, amend or withdraw a
-  standing rule in the authoritative company files. The workflow verifies
-  engine publication and commits only the named rule changes; it sends no mail.
+  standing rule. Legacy mode verifies file publication and commits only named
+  changes; managed mode requires human Desktop confirmation. It sends no mail.
 
 Lost at any point? **`/cs-help`** in Claude Code, **`$cs-help`** in Codex,
 or OpenCode's `cs-help` skill shows the whole map. The skills are
@@ -282,16 +282,16 @@ can call — map in [The `cs` CLI](#the-cs-cli) under Reference.
 
 The interactive bootstrap is **`cs-bootstrap`**: `/cs-bootstrap`
 in Claude Code, `$cs-bootstrap` in Codex, or the named skill in OpenCode.
-The published v0.52.0 clone still uses `cs-capabilities`; `cs-bootstrap` is the
-untagged source name. Plain invocation loads local procedures and mailbox
+Older releases use `cs-capabilities`; `cs-bootstrap` is the canonical name. Plain invocation loads published procedures and mailbox
 identity with a brief confirmation; systems discovery requires a systems request.
 Its acceptance qualifications are in the
 [bootstrap guide](docs/briefs/2026-10-08-capability-discovery.md).
 
 Ask *"Load our company procedures and explain how we handle refunds"*.
-The workflow reads the authoritative `company/` files into the current
-conversation and reports missing, unwritten or unreadable guidance. It works
-with the engine offline and requires neither MCP nor ai-kit. Loading existing
+The workflow reads authenticated published procedures and mailbox identity into
+this conversation and reports missing, unwritten or unreadable guidance. Published
+reads require engine reachability, without MCP or ai-kit. Legacy file authoring
+and managed Desktop authority remain distinct. Loading existing
 rules does not edit them, publish them or teach future sessions. To teach or
 change a standing rule, use `cs-instructions` as described above.
 

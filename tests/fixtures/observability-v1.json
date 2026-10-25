@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "required_event_keys": [
+    "schema_version",
+    "event_id",
+    "timestamp",
+    "monotonic_ns",
+    "sequence",
+    "component",
+    "owner_uid",
+    "pid",
+    "process_start",
+    "trace_id",
+    "span_id",
+    "stage",
+    "status",
+    "reason",
+    "effect_certainty",
+    "version",
+    "source_digest",
+    "source_digest_scope"
+  ],
+  "stages": [
+    "acquisition",
+    "alert",
+    "authority",
+    "cleanup",
+    "cli",
+    "context",
+    "discovery",
+    "generation",
+    "job",
+    "launch",
+    "monitor",
+    "persistence",
+    "provider",
+    "rpc",
+    "selection",
+    "verification"
+  ],
+  "statuses": [
+    "accepted",
+    "cancelled",
+    "completed",
+    "deferred",
+    "delivered-cleanup-incomplete",
+    "disabled",
+    "failed",
+    "held",
+    "lock-skipped",
+    "not-attempted",
+    "paused",
+    "result",
+    "running",
+    "start",
+    "unknown",
+    "unknown-effect",
+    "verified"
+  ],
+  "reasons": [
+    "auth",
+    "cancelled",
+    "incomplete-input",
+    "logging",
+    "none",
+    "permission",
+    "persistence",
+    "policy-hold",
+    "provider-rejection",
+    "quota",
+    "timeout",
+    "unknown",
+    "unsupported"
+  ],
+  "effect_certainty": [
+    "accepted",
+    "none",
+    "recipient-received",
+    "unknown",
+    "verified"
+  ],
+  "rpc_methods": [
+    "diagnostics.locations",
+    "diagnostics.events",
+    "diagnostics.health"
+  ],
+  "diagnostics": {
+    "version": 1,
+    "trace_id": "12345678123456781234567812345678",
+    "span_id": "87654321876543218765432187654321"
+  }
+}

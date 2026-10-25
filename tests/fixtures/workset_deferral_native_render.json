@@ -1,0 +1,7 @@
+{
+  "source_stream_sha256": "1483f2957c5525496723e67d9aec11d7a41adf4c89cbe65bca7d727a47ea3954",
+  "source_event_index": 41,
+  "native_content": "Exit code 3\nScheduled work deferred outside selected workset",
+  "native_metadata": "Error: Exit code 3\nScheduled work deferred outside selected workset",
+  "qualification": "Actual pinned 2.1.296 native rendering from a failed free fixture; source capture contains LF, native omits exactly final LF. Not successful acceptance."
+}

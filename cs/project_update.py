@@ -41,6 +41,7 @@ from .project_init import (
     TEMPLATE_DEFAULTS,
     build_jinja_env,
     install_agent_surfaces,
+    retire_legal_research,
     migrate_company_systems,
     is_clone_authored,
     is_executable_target,
@@ -542,6 +543,12 @@ def cmd_update(args: list[str]) -> int:
             "Run `cs update` from the clone root (where template-manifest.json lives).",
             file=sys.stderr,
         )
+        return 1
+
+    try:
+        retire_legal_research(clone_root)
+    except OSError as exc:
+        print(f"error: legal skill retirement failed: {exc}", file=sys.stderr)
         return 1
 
     # Bare `cs update` opens with the release offer (prompted, default No);

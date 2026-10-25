@@ -438,20 +438,73 @@ class EvidenceTests(unittest.TestCase):
         current = current.split(b'---', 2)[2]
         start = current.index(b'For an explanation-only question')
         end = current.index(b'Run commands from the clone root', start)
-        self.assertEqual(current[:start] + current[end:], previous)
+        current = current[:start] + current[end:]
+        managed = b"""## 2. Check instruction authority before any file edit
+
+```bash
+.venv/bin/python -m cs standing-instructions --authority-only
+```
+
+If this fails, stop without editing or publishing. If it reports `managed`, read
+`cs standing-instructions` and route the proposed change to Desktop for
+owner confirmation. Do not edit local company rules, call `instructions.store`,
+confirm a proposal/import through raw RPC, or commit a supposed rule update.
+Only Desktop's authenticated human confirmation changes managed instructions.
+The remaining file-authoring steps apply only when authority is `legacy`.
+
+### Read the legacy authoritative files and Git state"""
+        self.assertEqual(current.count(managed), 1)
+        current = current.replace(managed, b"## 2. Read the authoritative files and Git state", 1)
+        qualifier = b"In legacy mode company files are authoritative."
+        self.assertEqual(current.count(qualifier), 1)
+        current = current.replace(qualifier, b"Company files are authoritative.", 1)
+        self.assertEqual(current, previous)
         source = 'cs/instructions.py'
         self.assertEqual((ROOT / source).read_bytes(), subprocess.check_output(['git', 'show', BASE + ':' + source], cwd=ROOT))
-        # Contextual-email policy evolves chat independently of instruction
-        # publication. Keep every other RPC definition, import and constant
-        # identical, including call_sync, EngineClient and read-only transport.
         source = 'cs/rpc.py'
         previous = subprocess.check_output(['git', 'show', BASE + ':' + source], cwd=ROOT)
-        modules = [ast.parse(previous), ast.parse((ROOT / source).read_bytes())]
-        for module in modules:
-            module.body = [node for node in module.body if not (
-                isinstance(node, ast.AsyncFunctionDef) and node.name == 'chat')]
-        self.assertEqual(ast.dump(modules[0], include_attributes=False),
-                         ast.dump(modules[1], include_attributes=False))
+        current_rpc = (ROOT / source).read_bytes()
+
+        approved_diagnostics = {'__init__': '5e927da389f7ae5d74b889498bc9630f7d907f0efabaed04681c91a80bde5681', '__aenter__': 'de84c7d62e816276a8fa57e10521fa45bb0cd22ab90cceda9beefd1aa4c9609f', 'call': '5aedfcd10e8f4804d65035abc5bf4906b395a42c9ea1e51e13629c16ca7464c3'}
+
+        def require_preserved_rpc(candidate):
+            import hashlib
+            modules = [ast.parse(previous), ast.parse(candidate)]
+            for index, module in enumerate(modules):
+                def added_import(node):
+                    return (isinstance(node, ast.Import) and len(node.names) == 1
+                            and node.names[0].name in {'os', 'time'}
+                            and node.names[0].asname is None)
+                for name in ('os', 'time'):
+                    self.assertEqual(sum(added_import(node) and node.names[0].name == name
+                                         for node in module.body), index)
+                client = next(node for node in module.body
+                              if isinstance(node, ast.ClassDef) and node.name == 'EngineClient')
+                observed = {node.name: hashlib.sha256(ast.unparse(node).encode()).hexdigest()
+                            for node in client.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                            and node.name in approved_diagnostics}
+                if index:
+                    self.assertEqual(observed, approved_diagnostics)
+                client.body = [node for node in client.body if not (
+                    isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    and node.name in approved_diagnostics)]
+                module.body = [node for node in module.body if not (
+                    isinstance(node, ast.AsyncFunctionDef) and node.name == 'chat'
+                    or added_import(node))]
+            self.assertEqual(ast.dump(modules[0], include_attributes=False),
+                             ast.dump(modules[1], include_attributes=False))
+
+        require_preserved_rpc(current_rpc)
+        for changed in (
+            current_rpc + b'\nimport os\n',
+            current_rpc.replace(b'self._observability = False', b'self._observability = True', 1),
+            current_rpc.replace(b'import os\n', b'import os as renamed\n', 1),
+            current_rpc + b'\nimport math\n',
+            current_rpc + b'\nUNREVIEWED_CONSTANT = 1\n',
+            current_rpc + b'\ndef unreviewed_helper():\n    return 1\n',
+        ):
+            with self.subTest(changed=changed[-80:]), self.assertRaises(AssertionError):
+                require_preserved_rpc(changed)
 
     def test_listing_is_not_a_body_read(self):
         evidence = audit_tools(opencode('glob', {'path': 'company', 'pattern': '*.md'}, self.file.read_text()), self.root)

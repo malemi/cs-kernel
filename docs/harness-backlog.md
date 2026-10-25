@@ -12,14 +12,12 @@ would prevent. Delete an entry as the enforcement lands.
   step refuses to tag while `bash tests/run.sh` exits 1. A pre-tag hook or a
   `make release` that runs the suite first would close it.
 
-- [ ] **Nothing verifies that a clone's pin is actually installed, or that the
-  three pin sites agree** — Discovered: 2026-07-27 (`mrcall-cs`) — that clone ran
-  for days with `requirements.txt` and `manifest.toml` at one tag while
-  `requirements.lock` still named the **`v0.3.2`** commit; a venv rebuilt from the
-  lock would have had neither the threading headers nor `thread_with()`, i.e. a
-  loop that opens a new thread per reply and cannot read a customer's body. A
-  `cs doctor`-style check (all three pin sites equal, and equal to what is
-  installed in the venv) would have caught it instantly.
+- [ ] **Release integrity is not automatically enforced on every normal command.**
+  `cs verify-install` explicitly compares the requirements tag, applicable lock
+  and installed origin/version/content against immutable Git objects. The upgrade
+  procedure also aligns the template-manifest stamp. No prelaunch or scheduled
+  enforcement automatically runs this verification; operators must use the
+  release procedure and retain its proof.
 
 - [ ] **Running any `cs` command with the CWD inside this repo silently bypasses
   the pin** — Discovered: 2026-07-27 — Python puts the CWD on `sys.path`, so `cs`
@@ -72,6 +70,7 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 
 | doc | lines at review | verdict | date |
 |---|---|---|---|
+| docs/execution-plans/2026-10-19-semantic-complete-inventory-view.md | 443 | keep whole — approved experimental history and bounded runtime plan; read by milestone | 2026-10-19 |
 | docs/execution-plans/2026-10-08-capability-discovery.md | 402 | keep whole — one approved delivery plan; read acceptance and historical Results by section | 2026-10-10 |
 | docs/sessions/fccb0d91-e8bc-4b0d-b92a-e5cd72d306ed.md | 993 | keep whole — per-session scratch reconciled by its owning session, not maintained reference | 2026-10-01 |
 | docs/execution-plans/2026-07-28-eternal-operator-loop.md | 631 | keep whole — one argument, read start to finish when the plan is unblocked | 2026-08-26 |
@@ -82,3 +81,5 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/briefs/2026-09-07-review-latency.md | 557 | keep whole — one brief, one argument, read start to finish | 2026-09-08 |
 | docs/sessions/f1bfd7e1-d81f-42cf-9205-60aeefece296.md | 409 | keep whole — gitignored per-session scratch, closed at consolidation, not repository knowledge | 2026-09-08 |
 | docs/sessions/6b2b4c2e-107c-442d-af0b-61b1fe961552.md | 1578 | keep whole — per-session scratch reconciled separately, not maintained reference | 2026-09-11 |
+| docs/execution-plans/2026-10-15-ordinary-assignment-recovery.md | 499 | keep whole — one active recovery dependency plan; read acceptance and retained evidence by section | 2026-10-16 |
+| docs/operator-runtime.md | 457 | keep whole — one runtime/control contract with distinct execution boundaries; read by section | 2026-10-19 |

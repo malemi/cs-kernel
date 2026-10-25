@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "monitor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "owner_uid": "REPLACE_UID",
+  "state_dir": "/var/lib/operator-monitor/REPLACE_UID",
+  "expected_start_utc": 0,
+  "components": [
+    {
+      "id": "operator",
+      "kind": "kernel",
+      "local_root": "/var/lib/operator-state/observability/owner-2ef74a17168d9a6d967aa27a1afcc84cf3d2e8a95c285e522afb1454d26759fe",
+      "legacy_state_dir": "/var/lib/operator-state",
+      "schedule": {
+        "every_seconds": 7200,
+        "anchor_utc": 0,
+        "cron": "0 8-18/2 * * 1-5",
+        "timezone": "UTC",
+        "pause_marker": "/var/lib/operator-state/CS_PAUSE"
+      }
+    },
+    {
+      "id": "engine",
+      "kind": "engine",
+      "reader": {
+        "url": "https://engine-reader.example.net",
+        "token_env": "OPERATOR_READER_TOKEN"
+      }
+    }
+  ],
+  "alert": {
+    "url": "https://alerts.example.net/operator",
+    "token_env": "OPERATOR_ALERT_TOKEN"
+  },
+  "watchdog": {
+    "url": "https://watchdog.example.net/heartbeat",
+    "token_env": "OPERATOR_WATCHDOG_TOKEN"
+  }
+}

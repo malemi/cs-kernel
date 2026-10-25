@@ -22,9 +22,12 @@ for fixed root-owned trust/signing paths and rollback restrictions.
 
 The local [contextual-email workstream](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
 extends the engine boundary to reply draft updates and final sending, including
-already composed drafts. It is excluded from public `v0.52.0`, both maintained clone installations
-and the six hosted engine pins. The old `assignment_draft_policy: 1` capability
-proves only its scoped draft contract and cannot certify final-send enforcement.
+already composed drafts. The stronger engine feature is excluded from public
+`v0.52.0` and hosted engine pins. The old `assignment_draft_policy: 1` capability
+proves only its scoped draft contract and cannot certify stronger final-send enforcement.
+The [compatible caller repair](execution-plans/2026-10-13-released-email-caller-compatibility.md)
+restores the released ordinary chat, exact-thread draft and exact-ID send contract
+without activating persistent enrollment or advertising contextual policy v1.
 
 The engine owns durable [assignment enrollment](../../mrcall-desktop/engine/docs/features/assignment-enrollment.md).
 Missing trust or an empty ledger cannot turn a managed company into an unmanaged
@@ -39,10 +42,18 @@ send around a newer binding. Source-free standalone messages keep ordinary
 approval rules; arbitrary prose is not semantically classified as reply intent.
 Kernel fixed-template bulk and first-contact delivery remain separate.
 
-The candidate requires `system.capabilities.contextual_email_policy: 1` for
-`cs chat`, `cs draft-reply` and `cs draft-send`; unavailable support refuses
-before chat generation or a draft effect. `draft-reply` also retains its existing
-assignment-draft policy negotiation and required exact thread flag.
+Explicit contextual bindings require `system.capabilities.contextual_email_policy: 1`
+and unavailable support refuses before generation. This applies to the new chat
+context flags, scheduled `draft-reply --source-id`, and direct RPC
+contextual/required-policy requests. Interactive review preparation has its
+separate locally validated contract below. A failed bound request is never
+retried as an unbound operation.
+
+Ordinary generic chat retains its released approval contract. Scheduled
+`draft-reply` with only its exact thread requires `assignment_draft_policy: 1`
+and sends the original assignment scope/version. Ordinary `draft-send FULL_ID` requires current assignment
+admission, approves exactly one matching send and verifies the exact Sent row;
+it does not assert stronger contextual-policy enforcement on older engines.
 
 ```bash
 cs chat --thread-id '<root@example.com>' --reply-to '<inbound@example.com>' 'Prepare this reply'
@@ -55,8 +66,9 @@ cs draft-send FULL_ENGINE_DRAFT_ID
 They bind the original RFC root, owner-scoped engine email, exact RFC target and
 existing draft respectively. All supplied identifiers must agree with stored
 source; they cannot name a different owner or strip an established reply binding.
-`draft-send` binds its exact draft automatically. The engine receives these as
-`chat.send.email_context` with `contextual_email_policy_version: 1`.
+Explicit bindings are carried as `chat.send.email_context` with
+`contextual_email_policy_version: 1`. Ordinary exact-ID sending retains its separate
+released full-ID approval and Sent verification contract.
 
 Ordinary email-backed task context also constrains effects across chat and worker
 thread hops. Multiple original messages in one task are admissible only within
@@ -72,12 +84,114 @@ engine draft instead. A separate unlocked provider append would evade current
 assignment admission. Source-free campaign queueing retains its previous
 Gmail review surface.
 
-The existing `cs draft-reply` Gmail review-copy behavior remains compatible.
+The scheduled `cs draft-reply` Gmail review-copy behavior remains compatible.
 It checks current assignment projection immediately before append, but the
 append is outside the engine/company lock and has no atomic assignment guarantee.
 Manual Gmail edits/sends and other external mailbox clients are outside engine
 enforcement. The strengthened capability certifies actual engine private draft
 writes and final transport, not a global lock on mailbox credentials or clients.
+
+## Interactive review preparation
+
+An explicit interactive `draft-reply` request prepares a review draft even when
+assignment or takeover evidence holds sending. The command selects its route
+before composition: engines advertising the supervised-review contract retain
+that path; supported legacy engines use their existing generic interactive chat
+for draft composition, with all send approvals denied. The legacy route provides
+source/recipient/header validation before a Gmail review copy, not a claim of
+newer engine-enforced source scope. Missing or ambiguous originals and invalid
+returned drafts refuse. Failed generation is never replayed through another route.
+
+Source corroboration inventories recent All Mail headers across participants,
+starting one day before the earlier of the selected source Date and current UTC
+time. The window permits at most 1,000 headers with exact batched UID coverage;
+normalized RFC-root filtering precedes at most 100 full message reads. Gmail's
+References search is not completeness evidence. Provider UID arrival order,
+known direction/date and matching source content establish the selected original.
+Incomplete search, fetch, header or draft-label evidence refuses.
+
+The selected plain body must match the engine source. Complete additional raw
+plain/HTML representations reach the engine as untrusted source material;
+presentation differences alone do not discard material or prevent preparation.
+Incomplete decoding, clipping or more than 65,536 retained source characters
+refuses before generation. An unrelated message's body defect cannot invalidate
+complete source inventory. One narrow quoted-envelope form accepts a repeated
+known address as its unquoted display name; it does not relax actual From-header
+validation or omit the provider's quoted tail.
+
+A prepared review draft does not clear an assignment or authorize sending.
+`draft-send` keeps its existing exact-ID and current-assignment admission checks.
+Scheduled callers retain scoped assignment negotiation and workset restrictions.
+This local candidate's actual source and hosted checks are recorded in the
+[continuity plan](execution-plans/2026-10-22-interactive-draft-continuity.md).
+
+## Scheduled reply origin — local candidate
+
+The [scheduled provenance repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
+negotiates `operator_reply_provenance: 1` independently of contextual policy.
+It carries authenticated caller automation intent only for the existing scheduled
+send marker plus actual send-tool authorization. Intent is not permission or
+proof of human ownership. The opted-in engine route must check existing complete
+assignment authority and exact owner, original root and reply target immediately
+before SMTP. Assigned, pending, conflicting or UNKNOWN inputs remain held.
+This origin-specific final gate is new; generic released approval alone does not
+supply it. It does not activate the separate enrollment/contextual-policy rollout.
+
+Normal projections use `current_message_ids` for exact current inbound identity;
+`current_inbound` carries a closed task's digested snapshot and can be empty in a
+complete normal projection. The kernel preserves both fields without inventing
+identity or treating an incomplete reply observation as absence. Actual automatic
+reply headers distinguish a new automated delivery from a potential human answer;
+caller prose and local Sent storage alone cannot establish that fact. Source
+checks pass, both reviewed ACTOR engines are active and both ordinary clone
+packages contain the approved caller. Historical signed R9 certifies only its retained hosted candidate. The reviewed
+scheduling repair is installed; current ordinary acceptance belongs to the
+[recovery plan](execution-plans/2026-10-15-ordinary-assignment-recovery.md). Historical failed cases retain their failed status.
+
+## Current authority after incomplete discovery
+
+The source-approved ordinary workflow treats discovery authority as a snapshot.
+A held UNKNOWN row remains visible until the existing once-only exact-thread
+status read returns new current peer-merged authority. Only the same authenticated
+actor/source owner/company/root with the exact original RFC identity in
+`current_message_ids`, typed complete normal state and no hold can supersede that
+older incomplete observation. Preserve both observations in the report.
+
+Candidate, active, conflicting and closed-coverage holds are not transient UNKNOWN
+recovery; current incomplete/UNKNOWN or wrong identity still refuses. Address
+human takeover, unreadable mailbox, suppression, applicable dossier STOP and dedup
+retain their independent force. Actual source bodies and current effect-time
+assignment guards remain required. This adds no RPC retry, permission or assignment
+mutation. Complete consecutive discovery inspection must reach EOF before
+eligibility decisions; software checks do not prove native model inspection.
+
+The [M4 plan](execution-plans/2026-10-13-scheduled-reply-provenance.md) owns the
+source approval, shared canonical insertion, new package adoption and fresh FULL.
+Historical R6 remains FAILED; signed historical R9 acceptance belongs to its
+retained candidate, as recorded below.
+
+## Incomplete exact-message human observations
+
+The reviewed legacy-Sent consumer recognizes only the paired engine extension
+`authority_complete: false` and `hold_scope: exact_observed_message` on the exact
+held observation. This is incomplete component authority, not task absence.
+Malformed or contradictory flags refuse. Component canonicalization and a closed
+creator read cannot promote it to complete NORMAL or closed coverage; existing
+tasks and independently failed peers keep their own held disposition. The source
+is implemented and installed on both maintained clones. Healthy current ordinary
+acceptance remains unmet in the recovery plan.
+
+## Incomplete structural ancestry conflicts
+
+The exact typed `RFC_ANCESTRY_CONFLICT` observation is incomplete, human-held
+conflict work, not complete task absence. It requires `state=conflict`,
+`complete=false`, `hold_auto_reply=true`, no task or reply/coverage evidence,
+a singleton requested component and matching actor/source owner; component scope
+is explicitly unavailable. The consumer and deterministic health classifier
+share the same strict shape predicate. Malformed shapes and other failures
+remain technical UNKNOWN. The discovery CLI may still exit 3 for held work;
+recognizing this human hold never authorizes automatic drafting, assignment or
+closure. Explicit interactive review preparation follows its separate contract.
 
 ## Read and prepare an operation
 
@@ -140,11 +254,13 @@ Manual assignment, supervised source confirmation and local address escalation
 retain separate provenance. Different or unverifiable escalation/assignee
 identities hold action rather than choosing an authority silently.
 
-`cs draft-reply` requires exact `--thread-id` before composition. The negotiated
-engine assignment draft policy must also enforce that scope before a draft write;
-a post-compose check alone cannot establish this boundary. An older engine without
-the required policy cannot safely compose this scoped workflow. Existing send
-authorization remains separate from assignment status.
+`cs draft-reply` requires exact `--thread-id` before composition. Scheduled
+composition negotiates engine assignment scope before a draft write; a
+post-compose check alone cannot establish that engine boundary. An older engine
+without the required policy cannot compose the scheduled scoped workflow.
+Interactive review preparation instead selects the contract documented above
+before generation. Existing send authorization remains separate from assignment
+status.
 
 ## Handled resolution
 
@@ -160,6 +276,39 @@ inbound with their human. No address-wide handled cutoff overrides these identit
 
 ## Compatibility and remaining acceptance
 
+The reviewed untagged [ordinary assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+kernel override prioritizes useful inbound work using the existing engine
+classification, then newest receipt first. Each authenticated actor admits one
+active projection RPC; other actors advance independently. At most four reads
+run globally, including reserved timed-out work. Required canonical observations
+retain their originating root's priority before later historical roots.
+
+Assignment projection has a 120-second engine deadline and 150-second caller
+limit. Bulk projection explicitly selects 150-second requests and 180-second
+isolated batches, with one shared 3600-second budget including authentication and
+cleanup. Supervised reads permit these higher finite caps only for opted-in
+`tasks.assignment.project`; defaults and other allowed methods remain 60/90
+seconds. Blocked authentication or DNS cannot outlive the supervised boundary.
+A timed-out lane retains its physical reservation for the rest of the run;
+undispatched or unavailable scopes remain explicitly incomplete and held.
+Only batch discovery permits one fresh read per authenticated actor and exact
+thread key after a completed, fully validated SOURCE_UNAVAILABLE response.
+Original and canonical observations share that retry budget and the original
+global deadline. Transport failures, invalid responses and other holds do not
+retry. Final guards and mutations retain their separate authority. No
+cross-request authority cache or arbitrary queue-coverage guarantee is added.
+The recovery plan owns exact source, installed adoption and ordinary acceptance.
+
+Optional engine component metadata binds the requested anchor to its authoritative
+thread key and authenticated local component. Stored task keys remain unchanged.
+An empty peer mailbox does not establish an alternative component; canonical
+fallback retains original conflicts and all applicable holds. Multiple existing
+tasks, malformed metadata or unavailable required peers remain held. Old engines
+without the extension retain exact-root validation. Source and installed identity
+checks pass. The reviewed scheduling repair is installed; fresh ordinary
+acceptance remains a separate requirement in the recovery plan. Earlier
+R9 acceptance below certifies its retained candidate only.
+
 Protocol version 1 and configured peer identity/company are checked explicitly.
 Unavailable methods, malformed responses and unreadable source are unknown;
 no fallback turns them into successful absence. The delivery plan retains
@@ -167,5 +316,32 @@ canonical workflow and scheduled-wrapper verification.
 Offline fixtures alone do not establish live mailbox parity or latency.
 Separately authorized release checks verify scoped current FULL on both clones,
 real provider reads, root key permissions, six hosted activations and reproducible
-clone locks. Customer sends, paid ticks, real assignment mutations and installed
-Desktop GUI behavior remain unverified.
+clone locks. General customer workloads, real assignment mutations and installed Desktop
+GUI behavior remain unverified. Hosted development ticks have the R9 acceptance
+recorded below; that does not certify the public installer.
+
+## Historical hosted development acceptance
+
+Genuine r9 (`ecc64a8400e35d6f699a9c193ba5e399`) passes the unchanged strict
+seven-check matrix on the actual installed kernel `9857f1bb…` and repaired
+six engine runtimes. MrCall sends the correct 212 reply; Café creates exact
+engine draft `71589012-ba68-4e7d-8e31-f45df722c349` with result311 and one
+provider mirror without sending. Both operators terminate naturally with exit0.
+Signup's documented policy passes with legacy exit1, not three zero exits.
+The new Sent source is complete AUTOMATIC, root authority complete NORMAL/unheld,
+and the actually received reply is classified automatic with no additional
+received/sent/provider-draft/engine-draft effects. No manual intake or substituted
+model output supplies native generation. Cleanup restores exact cron759ab3,
+removes owned enrollments/markers/processes and preserves six runtimes plus Qonto.
+
+The original signed result and complete pre/post1053-object tested source are
+retained before documentation edits at `/home/mal/.local/share/mrcall-operational-evidence/2026-10-14/after-repair-full-checkpoint-guard-r9`. Retention manifest SHA-256:
+`0701b581b092c6c0360d159dc36cedd3bbe949e33e6ec5c9b229b11ce08b8482`.
+This is `development_hosted` acceptance; public installer/release and native
+Gmail browser/mobile/API edit/send preservation remain unverified. Automatic
+reconciliation remains off. Earlier failed runs stay failed and unsigned.
+Operational acceptance remains separate from checker-governed documentation
+completion and public release.
+Independent operational APPROVED: `/tmp/mrcall-ai-kit/r9-acceptance-verification/report.md`,
+SHA-256 `7de3884807f781e8a0aa5391113c6652ba059f378d6fe764a3aee124492435bc`.
+Actual native inspection covers both complete physical receipts through EOF.

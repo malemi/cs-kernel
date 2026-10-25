@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -35,12 +36,107 @@ def task(state="assigned"):
             "state": state, "assignee_uid": "human", "covered_inbound": [], "source_confirmation": None}
 
 
+def malformed_observation():
+    return projection("needs-assignment", complete=False) | {"authoritative_thread_key": KEY,
+        "component_thread_keys": [KEY], "component_scope_present": False, "source_owner_uid": "operator",
+        "authority_complete": False, "hold_scope": "exact_observed_message", "reply_evidence": [{
+            "version": 1, "actor_uid": "operator", "space_id": "company", "source_id": "source-id",
+            "thread_key": KEY, "complete": True, "judgement": "MALFORMED_OWN_SENT_REQUIRES_HUMAN_VERIFICATION",
+            "reason": "NEEDS_HUMAN_VERIFICATION", "source": {"actor_uid": "operator", "mailbox_id": "mailbox-id",
+                "message_id": KEY, "thread_key": KEY, "provider": {"folder": "Sent", "uidvalidity": 5, "uid": 123},
+                "route_digest": "a" * 64, "raw_header_digest": "b" * 64, "observation_only": True}, "digest": "c" * 64}]}
+
+
+def captured_partial_component():
+    requested = "<CAJ1mzbGNjyvm+m8FyFTiCLO0bnxgwk-w77VvMzLA9Bppiw0SeA@mail.gmail.com>"
+    canonical = "<CAK0A7__rTwERFKyhQZfU6XcNgmerb-XRwT4Vb4Kg=wtAFVfX+g@mail.gmail.com>"
+    component = sorted([requested, canonical,
+        "<49227237-5E25-4892-818E-8E5B953D9BA5@gmail.com>",
+        "<CAG1bvutnbQcuWwfhKB6=V-b3_39jw+NQMnFRSC77jQhRGYB9HQ@mail.gmail.com>",
+        "<CAJ1mzbEwB10-d=kUeaGvhcDQMJJ1yJ-bJcUNuzot9Bi=ysgryQ@mail.gmail.com>",
+        "<CAJ1mzbFrPc4yJU0uLhe3KNDz0Di=sY2ks5q5bjZX20RauXpZeA@mail.gmail.com>",
+        "<CAJ1mzbHEYW=6f-ugmw827uMg8Yz5o+0WLHfOCRDAz7Sn8pd2HA@mail.gmail.com>"])
+    local = sorted([requested, component[0], component[1],
+        "<CAJ1mzbFrPc4yJU0uLhe3KNDz0Di=sY2ks5q5bjZX20RauXpZeA@mail.gmail.com>"])
+    primary = projection() | {"thread_key": requested, "authoritative_thread_key": canonical,
+        "component_thread_keys": component, "component_scope_present": True,
+        "reply_evidence": [{"scope": "primary"}]}
+    peer = projection() | {"actor_uid": "peer", "thread_key": requested, "authoritative_thread_key": requested,
+        "component_thread_keys": local, "component_scope_present": True,
+        "reply_evidence": [{"scope": "original-peer"}]}
+    fallback = projection() | {"actor_uid": "peer", "thread_key": canonical, "authoritative_thread_key": canonical,
+        "component_thread_keys": [canonical], "component_scope_present": False,
+        "reply_evidence": [{"scope": "canonical-peer"}]}
+    return requested, canonical, primary, peer, fallback
+
+
 def inbound(key=KEY, *, mid="<in@customer.example>", date=NOW):
     return {"email": EMAIL, "name": "Customer", "date": date, "subject": key,
             "message_id": mid, "thread_key": key}
 
 
 class Consumer(unittest.TestCase):
+    def test_typed_ancestry_conflict_exact_shape(self):
+        raw = projection("conflict", complete=False) | {"reason": "RFC_ANCESTRY_CONFLICT",
+            "authoritative_thread_key": KEY, "component_thread_keys": [KEY],
+            "component_scope_present": False, "source_owner_uid": "operator"}
+        self.assertEqual(assignment._validate_projection(settings(), KEY, raw), raw)
+        changes = [("version", True), ("actor_uid", "peer"), ("space_id", ""),
+            ("complete", True), ("state", "normal"), ("hold_auto_reply", False), ("task", task()),
+            ("component_scope_present", True), ("component_scope_present", 0),
+            ("authoritative_thread_key", OTHER), ("component_thread_keys", sorted([KEY, OTHER])),
+            ("source_owner_uid", "peer"), ("authority_complete", True), ("hold_scope", "exact_observed_message")]
+        changes += [(key, ["forged"]) for key in ("events", "covered_inbound", "current_inbound",
+            "covered_message_ids", "current_message_ids", "reply_evidence")]
+        malformed = [raw | {key: value} for key, value in changes]
+        malformed += [{k: v for k, v in raw.items() if k != key} for key in raw]
+        for changed in malformed:
+            with self.subTest(changed=changed), self.assertRaises(assignment.AssignmentUnavailable):
+                assignment._validate_projection(settings(), KEY, changed)
+
+    def test_typed_ancestry_conflict_merge_guards_and_uncertainty(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        for conflict_actor in ("operator", "peer"):
+            for mode in ("normal", "unknown", "offline", "assigned", "canonical", "untyped"):
+                def call(account, method, params, timeout=60):
+                    uid = account.engine_owner_uid
+                    if uid == conflict_actor:
+                        return projection("conflict", complete=False) | {"actor_uid": uid,
+                            "source_owner_uid": uid, "reason": "fixture" if mode == "untyped" else "RFC_ANCESTRY_CONFLICT",
+                            "authoritative_thread_key": KEY, "component_thread_keys": [KEY], "component_scope_present": False}
+                    if mode == "offline":
+                        raise ConnectionError("fixture")
+                    result = projection("unknown", complete=False) if mode == "unknown" else projection("assigned", task=task()) if mode == "assigned" else projection()
+                    result["actor_uid"] = uid
+                    if mode == "canonical":
+                        result.update(authoritative_thread_key=OTHER, component_thread_keys=sorted([KEY, OTHER]), component_scope_present=True)
+                    return result
+                def many(account, method, requests, **kwargs):
+                    values = {}
+                    for key, params in requests.items():
+                        try:
+                            values[key] = assignment.rpc_reads.ReadOutcome(value=call(account, method, params))
+                        except Exception as exc:
+                            values[key] = assignment.rpc_reads.ReadOutcome(error=exc)
+                    return values
+                with self.subTest(actor=conflict_actor, mode=mode), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+                    single = assignment.project(selected, KEY)
+                    self.assertEqual(single, assignment.projections(selected, [KEY])[KEY])
+                    self.assertEqual(single["state"], "conflict" if mode == "normal" else "unknown")
+                    self.assertFalse(single["complete"])
+                    self.assertTrue(single["hold_auto_reply"])
+                    self.assertIsNone(single["task"])
+                    self.assertIsNot(single.get("component_scope_present"), True)
+                    self.assertEqual(single.get("component_thread_keys", [KEY]), [KEY])
+                    if mode == "normal":
+                        self.assertEqual(single["actor_uid"], conflict_actor)
+                        self.assertEqual(single["reason"], "RFC_ANCESTRY_CONFLICT")
+                    with self.assertRaises(assignment.AssignmentUnavailable):
+                        assignment.guard(selected, KEY)
+                    with patch.object(rpc, "chat") as chat, contextlib.redirect_stderr(io.StringIO()):
+                        self.assertEqual(cli.main(["draft-reply", "reply", "--thread-id", KEY]), 3)
+                        chat.assert_not_called()
+
     def test_unavailable_and_malformed_scope_never_empty_success(self):
         for response in (None, {}, [], projection() | {"version": 2}, projection() | {"actor_uid": "forged"},
                          projection() | {"thread_key": OTHER}, projection("assigned", task=task()) | {"hold_auto_reply": False}):
@@ -49,6 +145,317 @@ class Consumer(unittest.TestCase):
                 self.assertEqual(result["state"], "unknown")
                 self.assertFalse(result["complete"])
                 self.assertTrue(result["hold_auto_reply"])
+
+    def test_observation_only_hold_validates_bound_evidence_without_inventing_authority(self):
+        raw = malformed_observation()
+        self.assertEqual(assignment._validate_projection(settings(), KEY, raw), raw)
+        mutations = []
+        for key, value in (("authority_complete", True), ("authority_complete", 0), ("hold_scope", "thread"),
+                           ("complete", True), ("state", "normal"), ("hold_auto_reply", False), ("task", task()),
+                           ("component_scope_present", True), ("source_owner_uid", "peer"), ("covered_inbound", ["forged"]),
+                           ("current_inbound", ["forged"]), ("current_message_ids", [KEY]), ("covered_message_ids", [KEY])):
+            mutations.append(raw | {key: value})
+        for key in ("authority_complete", "hold_scope"):
+            mutations.append({name: value for name, value in raw.items() if name != key})
+        mutations.append(raw | {"reply_evidence": []})
+        mutations.append(raw | {"reply_evidence": raw["reply_evidence"] * 2})
+        for path, value in (("version", True), ("actor_uid", "peer"), ("space_id", "foreign"), ("source_id", ""),
+                            ("thread_key", OTHER), ("complete", False), ("digest", "bad"), ("judgement", "AUTOMATIC"),
+                            ("source.actor_uid", "peer"), ("source.mailbox_id", ""), ("source.message_id", OTHER),
+                            ("source.thread_key", OTHER), ("source.observation_only", False), ("source.raw_header_digest", "bad"),
+                            ("source.route_digest", "bad"), ("source.provider.uid", True), ("source.provider.uidvalidity", 0),
+                            ("source.provider.folder", "")):
+            changed = copy.deepcopy(raw)
+            target = changed["reply_evidence"][0]
+            fields = path.split(".")
+            for field in fields[:-1]:
+                target = target[field]
+            target[fields[-1]] = value
+            mutations.append(changed)
+        mutations.append(raw | {"state": "normal", "complete": True, "hold_auto_reply": False})
+        for changed in mutations:
+            with self.subTest(changed=changed), self.assertRaises(assignment.AssignmentUnavailable):
+                assignment._validate_projection(settings(), KEY, changed)
+        with patch.object(rpc, "call_sync", return_value=raw | {"state": "normal", "complete": True, "hold_auto_reply": False}):
+            with self.assertRaises(assignment.AssignmentUnavailable):
+                assignment.guard(settings(), KEY)
+
+    def test_observed_message_hold_cannot_clear_peer_failure_or_assignment(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        for mode in ("healthy", "unknown", "offline", "assigned", "company", "actor", "malformed-peer"):
+            primary = malformed_observation() if mode != "malformed-peer" else projection()
+            peer = malformed_observation() if mode == "malformed-peer" else projection("unknown", complete=False) if mode == "unknown" else projection("assigned", task=task()) if mode == "assigned" else projection()
+            peer |= {"actor_uid": "peer"}
+            if mode == "malformed-peer":
+                peer["source_owner_uid"] = "peer"
+                peer["reply_evidence"][0]["actor_uid"] = "peer"
+                peer["reply_evidence"][0]["source"]["actor_uid"] = "peer"
+            if mode == "company":
+                peer["space_id"] = "foreign"
+            if mode == "actor":
+                peer["actor_uid"] = "forged"
+            def call(account, method, params, timeout=60):
+                if mode == "offline" and account.engine_owner_uid == "peer":
+                    raise ConnectionError("fixture peer unavailable")
+                return copy.deepcopy(primary if account.engine_owner_uid == "operator" else peer)
+            def many(account, method, requests, **kwargs):
+                result = {}
+                for key, params in requests.items():
+                    try:
+                        result[key] = assignment.rpc_reads.ReadOutcome(value=call(account, method, params))
+                    except Exception as exc:
+                        result[key] = assignment.rpc_reads.ReadOutcome(error=exc)
+                return result
+            with self.subTest(mode=mode), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+                single = assignment.project(selected, KEY)
+                bulk = assignment.projections(selected, [KEY])[KEY]
+                self.assertEqual(single, bulk)
+                self.assertFalse(single["complete"])
+                self.assertTrue(single["hold_auto_reply"])
+                self.assertEqual(single["state"], "needs-assignment" if mode in {"healthy", "malformed-peer"} else "conflict" if mode in {"assigned", "ancestry"} else "unknown")
+                self.assertIn("MALFORMED_OWN_SENT_REQUIRES_HUMAN_VERIFICATION", [item.get("judgement") for item in single["reply_evidence"]])
+                self.assertEqual(single["current_inbound"], [])
+                self.assertEqual(single["covered_inbound"], [])
+                self.assertIsNot(single.get("authority_complete"), True)
+                with self.assertRaises(assignment.AssignmentUnavailable):
+                    assignment.guard(selected, KEY)
+
+    def test_observation_cannot_be_promoted_by_closed_creator_or_alias_assignment(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        for state in ("closed", "later-inbound", "assigned"):
+            for failed_peer in (False, True):
+                current = selected.model_copy(update={"accounts": "peer:peer,offline:offline"}) if failed_peer else selected
+                shared = task("assigned" if state == "assigned" else "closed") | {"thread_key": OTHER, "creator_uid": "peer"}
+                def call(account, method, params, timeout=60):
+                    if account.engine_owner_uid == "offline":
+                        raise ConnectionError("fixture peer unavailable")
+                    key = params["thread_key"]
+                    if account.engine_owner_uid == "operator" and key == KEY:
+                        return malformed_observation()
+                    if account.engine_owner_uid == "operator":
+                        return projection("assigned" if state == "assigned" else "unknown", complete=state == "assigned", task=shared) | {
+                            "thread_key": key, "authoritative_thread_key": key, "component_thread_keys": [key],
+                            "component_scope_present": False, "reason": "HUMAN_ASSIGNMENT_ACTIVE" if state == "assigned" else "SOURCE_OWNER_REQUIRED", "source_owner_uid": "peer"}
+                    return projection(state, task=shared) | {"actor_uid": "peer", "thread_key": key,
+                        "authoritative_thread_key": OTHER, "component_thread_keys": sorted([KEY, OTHER]), "component_scope_present": True}
+                def many(account, method, requests, **kwargs):
+                    result = {}
+                    for key, params in requests.items():
+                        try:
+                            result[key] = assignment.rpc_reads.ReadOutcome(value=call(account, method, params))
+                        except Exception as exc:
+                            result[key] = assignment.rpc_reads.ReadOutcome(error=exc)
+                    return result
+                with self.subTest(state=state, failed_peer=failed_peer), patch.object(config, "load", side_effect=lambda **kw: current.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+                    single = assignment.project(current, KEY)
+                    bulk = assignment.projections(current, [KEY])[KEY]
+                    self.assertEqual(single, bulk)
+                    self.assertEqual(single["state"], "unknown")
+                    self.assertFalse(single["complete"])
+                    self.assertIs(single["authority_complete"], False)
+                    self.assertTrue(single["hold_auto_reply"])
+                    self.assertEqual(single["task"], shared)
+                    self.assertIn("MALFORMED_OWN_SENT_REQUIRES_HUMAN_VERIFICATION", [item.get("judgement") for item in single["reply_evidence"]])
+                    if failed_peer:
+                        self.assertIn("offline", single["reason"])
+                    with self.assertRaises(assignment.AssignmentUnavailable):
+                        assignment.guard(current, KEY)
+
+    def test_component_metadata_requires_exact_bound_shape(self):
+        valid = projection("assigned", task=task() | {"thread_key": OTHER}) | {
+            "authoritative_thread_key": OTHER, "component_thread_keys": sorted([KEY, OTHER]),
+            "component_scope_present": True}
+        self.assertEqual(assignment._validate_projection(settings(), KEY, valid)["task"]["thread_key"], OTHER)
+        for changes in ({"component_scope_present": False}, {"component_scope_present": 1},
+                        {"component_thread_keys": [OTHER]}, {"component_thread_keys": [KEY, KEY, OTHER]},
+                        {"component_thread_keys": ["bad", KEY, OTHER]}, {"authoritative_thread_key": KEY},
+                        {"component_thread_keys": None}):
+            with self.subTest(changes=changes), self.assertRaises(assignment.AssignmentUnavailable):
+                assignment._validate_projection(settings(), KEY, valid | changes)
+        for field in ("authoritative_thread_key", "component_thread_keys", "component_scope_present"):
+            with self.assertRaises(assignment.AssignmentUnavailable):
+                assignment._validate_projection(settings(), KEY, {k: v for k, v in valid.items() if k != field})
+
+    def test_sparse_peer_canonical_fallback_preserves_original_hold_and_evidence(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        shared = task() | {"thread_key": OTHER}
+        primary = projection("assigned", task=shared) | {"authoritative_thread_key": OTHER,
+            "component_thread_keys": sorted([KEY, OTHER]), "component_scope_present": True}
+        for original_state in ("normal", "needs-assignment", "unknown"):
+            calls = []
+            def call(account, method, params, timeout):
+                calls.append((account.engine_owner_uid, params["thread_key"]))
+                if account.engine_owner_uid == "operator":
+                    return primary
+                key = params["thread_key"]
+                result = projection("assigned", task=shared) if key == OTHER else projection(original_state,
+                    complete=original_state != "unknown")
+                return result | {"actor_uid": "peer", "thread_key": key, "authoritative_thread_key": key,
+                    "component_thread_keys": [key], "component_scope_present": False,
+                    "reply_evidence": [{"original": True}] if key == KEY else []}
+            with patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call):
+                result = assignment.project(selected, KEY)
+            self.assertEqual(result["thread_key"], KEY)
+            self.assertTrue(result["hold_auto_reply"])
+            self.assertEqual(result["task"], shared)
+            self.assertIn({"original": True}, result["reply_evidence"])
+            self.assertEqual(result["state"], "unknown" if original_state == "unknown" else "assigned")
+            self.assertIn(("peer", OTHER), calls)
+
+    def test_sparse_alias_fallback_cannot_clear_original_candidate_or_bad_peer(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        primary = projection() | {"authoritative_thread_key": OTHER,
+            "component_thread_keys": sorted([KEY, OTHER]), "component_scope_present": True}
+        for mode in ("candidate", "unknown", "conflict", "normal-held", "company", "actor", "task", "authority", "offline"):
+            def call(account, method, params, timeout=60):
+                if account.engine_owner_uid == "operator":
+                    return primary
+                key = params["thread_key"]
+                result = projection("needs-assignment" if key == KEY and mode == "candidate" else "unknown"
+                    if key == KEY and mode == "unknown" else "normal", complete=not (key == KEY and mode == "unknown"))
+                if key == KEY and mode in {"conflict", "normal-held"}:
+                    result.update(state="conflict" if mode == "conflict" else "normal", hold_auto_reply=True)
+                result |= {"actor_uid": "peer", "thread_key": key, "authoritative_thread_key": key,
+                    "component_thread_keys": [key], "component_scope_present": False,
+                    "reply_evidence": [{"original": True}] if key == KEY else []}
+                if key == OTHER:
+                    if mode == "offline":
+                        raise ConnectionError("fixture")
+                    if mode == "company":
+                        result["space_id"] = "foreign"
+                    if mode == "actor":
+                        result["actor_uid"] = "forged"
+                    if mode == "task":
+                        result.update(state="assigned", hold_auto_reply=True, task=task() | {"thread_key": OTHER})
+                if key == KEY and mode == "authority":
+                    result["component_scope_present"] = True
+                    result["component_thread_keys"] = sorted([KEY, OTHER])
+                return result
+            def many(account, method, requests, **kwargs):
+                outcomes = {}
+                for key, params in requests.items():
+                    try:
+                        outcomes[key] = assignment.rpc_reads.ReadOutcome(value=call(account, method, params))
+                    except Exception as exc:
+                        outcomes[key] = assignment.rpc_reads.ReadOutcome(error=exc)
+                return outcomes
+            with self.subTest(mode=mode), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+                single = assignment.project(selected, KEY)
+                bulk = assignment.projections(selected, [KEY])[KEY]
+                self.assertEqual(single, bulk)
+                self.assertTrue(single["hold_auto_reply"])
+                self.assertIn(single["state"], {"needs-assignment", "unknown", "conflict"})
+                self.assertIn({"original": True}, single["reply_evidence"])
+
+    def test_captured_partial_component_requires_canonical_scope_and_keeps_every_hold(self):
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        for mode in ("normal", "primary-candidate", "primary-unknown", "original-conflict", "original-unknown",
+                     "original-candidate", "canonical-unknown", "canonical-conflict", "canonical-candidate",
+                     "non-subset", "canonical-known", "equal-components", "canonical-authority",
+                     "canonical-company", "canonical-actor", "canonical-offline", "task-race", "shared-task", "original-task"):
+            requested, canonical, primary, peer, fallback = captured_partial_component()
+            if mode.startswith("primary-") and mode != "primary-sparse":
+                state = "needs-assignment" if mode == "primary-candidate" else "unknown"
+                primary.update(state=state, complete=False, hold_auto_reply=True)
+            if mode.startswith("original-") and mode != "original-task":
+                state = {"original-conflict": "conflict", "original-unknown": "unknown", "original-candidate": "needs-assignment"}[mode]
+                peer.update(state=state, complete=state == "conflict", hold_auto_reply=True)
+            if mode in {"canonical-unknown", "canonical-conflict", "canonical-candidate"}:
+                state = {"canonical-unknown": "unknown", "canonical-conflict": "conflict", "canonical-candidate": "needs-assignment"}[mode]
+                fallback.update(state=state, complete=state == "conflict", hold_auto_reply=True)
+            if mode == "non-subset":
+                peer["component_thread_keys"] = sorted([*peer["component_thread_keys"], "<outside@example.test>"])
+            if mode == "canonical-known":
+                peer["component_thread_keys"] = sorted([*peer["component_thread_keys"], canonical])
+            if mode == "equal-components":
+                peer["component_thread_keys"] = primary["component_thread_keys"]
+            if mode == "canonical-authority":
+                fallback.update(authoritative_thread_key=requested, component_thread_keys=sorted([requested, canonical]), component_scope_present=True)
+            if mode == "canonical-company":
+                fallback["space_id"] = "foreign"
+            if mode == "canonical-actor":
+                fallback["actor_uid"] = "forged"
+            if mode in {"task-race", "shared-task"}:
+                primary.update(state="assigned", hold_auto_reply=True, task=task() | {"thread_key": canonical})
+                fallback.update(state="assigned", hold_auto_reply=True, task=task() | {"thread_key": canonical,
+                    "revision": 2 if mode == "task-race" else 1})
+            if mode == "original-task":
+                peer.update(state="assigned", hold_auto_reply=True, task=task() | {"thread_key": requested})
+            calls = []
+            deadlines = []
+            def call(account, method, params, timeout=60):
+                key = params["thread_key"]
+                calls.append((account.engine_owner_uid, key))
+                if account.engine_owner_uid == "operator":
+                    self.assertEqual(key, requested)
+                    return copy.deepcopy(primary)
+                if key == requested:
+                    return copy.deepcopy(peer)
+                self.assertEqual(key, canonical)
+                if mode == "canonical-offline":
+                    raise ConnectionError("fixture canonical scope unavailable")
+                return copy.deepcopy(fallback)
+            def many(account, method, requests, **kwargs):
+                self.assertEqual(kwargs["request_timeout"], 150)
+                self.assertEqual(kwargs["batch_timeout"], 180)
+                deadlines.append(kwargs["deadline"])
+                outcomes = {}
+                for key, params in requests.items():
+                    try:
+                        outcomes[key] = assignment.rpc_reads.ReadOutcome(value=call(account, method, params))
+                    except Exception as exc:
+                        outcomes[key] = assignment.rpc_reads.ReadOutcome(error=exc)
+                return outcomes
+            with self.subTest(mode=mode), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+                single = assignment.project(selected, requested)
+                with patch.object(assignment.time, "monotonic", return_value=10):
+                    bulk = assignment.projections(selected, [requested])[requested]
+                self.assertEqual(single, bulk)
+                self.assertEqual(single["thread_key"], requested)
+                self.assertEqual(set(deadlines), {3610})
+                if mode == "normal":
+                    self.assertEqual(single["state"], "normal")
+                    self.assertTrue(single["complete"])
+                    self.assertFalse(single["hold_auto_reply"])
+                else:
+                    self.assertTrue(single["hold_auto_reply"])
+                    self.assertIn(single["state"], {"unknown", "conflict", "needs-assignment", "assigned"})
+                if mode in {"non-subset", "canonical-known", "equal-components"}:
+                    self.assertNotIn(("peer", canonical), calls)
+                else:
+                    self.assertIn(("peer", canonical), calls)
+                expected_state = {"normal": "normal", "primary-candidate": "needs-assignment", "original-candidate": "needs-assignment",
+                    "canonical-candidate": "needs-assignment", "original-conflict": "conflict", "canonical-conflict": "conflict",
+                    "task-race": "conflict", "original-task": "conflict", "shared-task": "assigned"}.get(mode, "unknown")
+                self.assertEqual(single["state"], expected_state)
+                if mode == "shared-task":
+                    self.assertEqual(single["task"], primary["task"])
+                if mode == "primary-unknown":
+                    self.assertEqual(single["state"], "unknown")
+                    self.assertNotIn("contradictory component authority", single["reason"])
+                self.assertIn({"scope": "primary"}, single["reply_evidence"])
+                self.assertIn({"scope": "original-peer"}, single["reply_evidence"])
+                if mode not in {"non-subset", "canonical-known", "equal-components", "canonical-company", "canonical-actor", "canonical-offline"}:
+                    self.assertIn({"scope": "canonical-peer"}, single["reply_evidence"])
+
+    def test_partial_component_requires_primary_proof_before_selecting_between_peer_authorities(self):
+        requested, canonical, primary, peer, fallback = captured_partial_component()
+        selected = settings().model_copy(update={"accounts": "peer:peer,second:second"})
+        sparse = projection() | {"thread_key": requested, "authoritative_thread_key": requested,
+            "component_thread_keys": [requested], "component_scope_present": False}
+        values = {"operator": sparse, "peer": primary | {"actor_uid": "peer"}, "second": peer | {"actor_uid": "second"}}
+        def call(account, method, params, timeout=60):
+            self.assertEqual(params["thread_key"], requested)
+            return copy.deepcopy(values[account.engine_owner_uid])
+        def many(account, method, requests, **kwargs):
+            return {key: assignment.rpc_reads.ReadOutcome(value=call(account, method, params)) for key, params in requests.items()}
+        with patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(assignment.rpc_reads, "read_many", side_effect=many):
+            single = assignment.project(selected, requested)
+            bulk = assignment.projections(selected, [requested])[requested]
+        self.assertEqual(single, bulk)
+        self.assertEqual(single["state"], "unknown")
+        self.assertTrue(single["hold_auto_reply"])
+        self.assertIn("contradictory component authority", single["reason"])
 
     def test_candidate_pending_confirmation_remains_named_candidate(self):
         with patch.object(rpc, "call_sync", return_value=projection("needs-assignment", complete=False)):
@@ -198,6 +605,7 @@ class Consumer(unittest.TestCase):
         with patch.object(config, "load", return_value=s.model_copy(update={"engine_owner_uid": "peer"})), patch.object(rpc, "call_sync", side_effect=call):
             self.assertEqual(assignment.project(s, KEY)["state"], "unknown")
 
+    @patch.dict(os.environ, {"CS_OPERATOR_HEADLESS": "1"})
     def test_draft_guard_precedes_every_write(self):
         for p in [projection(state, task=task() if state == "assigned" else None) for state in assignment.HOLD_STATES]:
             with patch.object(config, "load", return_value=settings()), patch.object(rpc, "call_sync", return_value=p) as calls, patch.object(rpc, "chat") as chat, contextlib.redirect_stderr(io.StringIO()):
@@ -209,6 +617,7 @@ class Consumer(unittest.TestCase):
             self.assertEqual(cli.main(["draft-reply", "reply"]), 3)
             calls.assert_not_called()
 
+    @patch.dict(os.environ, {"CS_OPERATOR_HEADLESS": "1"})
     def test_gmail_mirror_rechecks_live_authority_and_exact_composed_thread(self):
         async def chat(*args, **kwargs):
             return {"result": {"response": "composed"}}
@@ -218,6 +627,8 @@ class Consumer(unittest.TestCase):
                 if method == "tasks.assignment.project":
                     calls["projection"] += 1
                     return projection() if calls["projection"] == 1 else projection("assigned", task=task())
+                if method == "emails.list_by_thread":
+                    return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
                 self.assertEqual(method, "drafts.list")
                 calls["drafts"] += 1
                 return [] if calls["drafts"] == 1 else [{"id": "fresh", "to_addresses": [EMAIL], "body": "Reply",
@@ -266,7 +677,7 @@ class Consumer(unittest.TestCase):
                 pass
             async def call(self, method, params, timeout=60):
                 calls.append((method, params))
-                return {"assignment_draft_policy": 1, "contextual_email_policy": 1} if method == "system.capabilities" else {"response": "composed"}
+                return {"assignment_draft_policy": 1} if method == "system.capabilities" else {"response": "composed"}
         with patch.object(rpc, "EngineClient", Client):
             result = asyncio.run(rpc.chat(settings(), "compose", assignment_thread_key=KEY))
         self.assertEqual(result["result"]["response"], "composed")
@@ -310,6 +721,80 @@ class Consumer(unittest.TestCase):
             self.assertNotIn("body", row)
         stripped = [{k: v for k, v in row.items() if k not in {"message_id", "thread_key"}} for row in projected]
         self.assertEqual(readers.typed(stripped), readers.typed(readers.expected(raw, "sent") + readers.expected(raw, "in")))
+
+
+class ObservationTransport(unittest.IsolatedAsyncioTestCase):
+    async def test_real_cli_and_health_preserve_observed_hold_and_other_peer_failures(self):
+        import asyncio
+        import base64
+        import os
+        import time
+        import websockets
+        from cs import engine_view, operator_health
+        current = {"mode": "healthy"}
+        dispatch = []
+        async def handler(ws):
+            uid = ws.request.path.rsplit("/", 1)[-1]
+            async for raw in ws:
+                frame = json.loads(raw)
+                self.assertEqual(frame["method"], "tasks.assignment.project")
+                self.assertEqual(frame["params"], {"thread_key": KEY})
+                dispatch.append((current["mode"], uid))
+                if uid == "peer" and current["mode"] == "offline":
+                    await ws.close()
+                    continue
+                response = malformed_observation() if uid == "operator" else projection("assigned", task=task()) if current["mode"] == "assigned" else projection("unknown", complete=False) if current["mode"] == "unknown" else projection()
+                if current["mode"] in {"ancestry", "ancestry-unknown"}:
+                    response = (projection("conflict", complete=False) | {"reason": "RFC_ANCESTRY_CONFLICT",
+                        "authoritative_thread_key": KEY, "component_thread_keys": [KEY],
+                        "component_scope_present": False, "source_owner_uid": "operator"}) if uid == "operator" else projection("unknown", complete=False) if current["mode"] == "ancestry-unknown" else projection()
+                response["actor_uid"] = uid
+                if uid == "operator" and current["mode"] == "contradictory":
+                    response.update(state="normal", complete=True, hold_auto_reply=False)
+                await ws.send(json.dumps({"jsonrpc": "2.0", "id": frame["id"], "result": response}))
+        token = "fixture." + base64.urlsafe_b64encode(json.dumps({"exp": int(time.time()) + 3600}).encode()).decode().rstrip("=") + ".fixture"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for uid in ("operator", "peer"):
+                (root / (uid + ".json")).write_text(json.dumps({"uid": uid, "id_token": token}))
+            async with websockets.serve(handler, "127.0.0.1", 0) as server:
+                port = server.sockets[0].getsockname()[1]
+                selected = settings().model_copy(update={"accounts": "peer:peer", "db_path": str(root / "state.db"),
+                    "engine_ws_url": f"ws://127.0.0.1:{port}", "firebase_web_api_key": "fixture-public-key"})
+                def load(**kwargs):
+                    uid = kwargs.get("engine_owner_uid", "operator")
+                    return selected.model_copy(update={**kwargs, "token_cache_path": str(root / (uid + ".json"))})
+                for mode in ("healthy", "offline", "unknown", "assigned", "contradictory", "ancestry", "ancestry-unknown"):
+                    current["mode"] = mode
+                    output = io.StringIO()
+                    with patch.object(config, "load", side_effect=load), patch.object(gmail_archive, "inbound_recent", return_value=[inbound()]), patch.object(gmail_archive, "sent_recent", return_value=[]), patch.object(engine_view, "classify", return_value=({}, None)), patch.object(engine_view, "settled", return_value=({}, None)), patch.dict(os.environ, {}, clear=False), contextlib.redirect_stdout(output):
+                        os.environ.pop("CS_OPERATOR_HEALTH_CONTEXT", None)
+                        os.environ.pop("CS_OPERATOR_ACCEPTANCE_RECEIPT", None)
+                        code = await asyncio.to_thread(cli.main, ["unanswered", "--json", "--all-buckets"])
+                    discovery = json.loads(output.getvalue())
+                    self.assertEqual(code, 3)
+                    self.assertEqual(discovery["open"], [])
+                    self.assertTrue(discovery["assignment_incomplete"])
+                    held = discovery["human_work"][0]["assignment"]
+                    self.assertEqual(held["state"], "needs-assignment" if mode == "healthy" else "conflict" if mode in {"assigned", "ancestry"} else "unknown")
+                    self.assertFalse(held["complete"])
+                    self.assertTrue(held["hold_auto_reply"])
+                    if mode not in {"contradictory", "ancestry", "ancestry-unknown"}:
+                        self.assertIs(held["authority_complete"], False)
+                        self.assertEqual(held["hold_scope"], "exact_observed_message")
+                    health_dir = root / mode
+                    health_dir.mkdir(mode=0o700)
+                    context = {"directory": str(health_dir), "nonce": "fixture-" + mode,
+                        "supervisor": {"pid": 100, "started_ticks": 1}}
+                    child = {"pid": 101, "started_ticks": 2}
+                    payload = (json.dumps(discovery, ensure_ascii=False, indent=2, default=str) + "\n").encode()
+                    record = {"nonce": context["nonce"], "owner_uid": "operator", "ancestry": [child, {"pid": 102, "started_ticks": 3}, context["supervisor"]],
+                        "exit_code": code, "output_sha256": hashlib.sha256(payload).hexdigest(), "discovery": discovery}
+                    artifact = health_dir / "discovery.json"
+                    artifact.write_text(json.dumps(record))
+                    artifact.chmod(0o600)
+                    self.assertEqual(operator_health.assess(context, child, "operator"), "" if mode in {"healthy", "ancestry"} else "assignment_read_incomplete")
+                    self.assertEqual({uid for case, uid in dispatch if case == mode}, {"operator", "peer"})
 
 
 if __name__ == "__main__":

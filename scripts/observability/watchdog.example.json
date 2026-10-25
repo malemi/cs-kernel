@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "monitor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "owner_uid": "REPLACE_UID",
+  "state_dir": "/var/lib/operator-watchdog/REPLACE_UID",
+  "token_env": "OPERATOR_WATCHDOG_TOKEN",
+  "expected_start_utc": 0,
+  "port": 8127,
+  "alert": {
+    "url": "https://independent-alerts.example.net/watchdog",
+    "token_env": "OPERATOR_INDEPENDENT_ALERT_TOKEN"
+  }
+}

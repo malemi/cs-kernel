@@ -1,0 +1,70 @@
+{
+  ".claude/skills/cs-operator/SKILL.md": {
+    "before_sha256": "8a456f55d13dda253f0956dc1b4a0fe40237540c1782926870b7f71d65b78305",
+    "after_sha256": "3bf93bfd3f9b6f5732dc307741bb45ba73f4d687b9cdbb4ee7972603d867e49e",
+    "edits": [
+      {
+        "before": "\nIn step 3, have triage inspect this metadata without truncation and process\nthese originals first through its ordinary exact-thread assignment, dossier,\nhistory, dedup and contextual engine generation path. Keep the configured mode\nand actual launcher permissions: draft-only remains draft-only. No fixture\n",
+        "after": "\nIn step 3, have triage inspect this metadata without truncation and process\nselected originals through its ordinary exact-thread assignment, dossier,\nhistory, dedup and contextual engine generation path. Keep the configured mode\nand actual launcher permissions: draft-only remains draft-only. No fixture\n"
+      },
+      {
+        "before": "Preserve and report held customer work;\na hold on another exact thread does not hold a complete eligible thread.\nThen finish every ordinary recurring step and report its actual result.\n\n### Current authority after a transient UNKNOWN snapshot\n",
+        "after": "Preserve and report held customer work;\na hold on another exact thread does not hold a complete eligible thread.\nThe ordinary symbolic workset supplies their scheduling order and limit, with\nno fixture-specific priority. Then finish every ordinary recurring step and\nreport its actual result, preserving unselected originals as deferred work.\n\n### Current authority after a transient UNKNOWN snapshot\n"
+      },
+      {
+        "before": "## 3. Recurring job \u2014 triage inbound {{ email_address }} mail\n\nInvoke the `cs-triage-mail` sub-skill using the host's native skill mechanism.\n\n",
+        "after": "## 3. Recurring job \u2014 triage inbound {{ email_address }} mail\n\nBefore invoking triage, read the complete waiting-draft inventory once:\n\n```bash\n.venv/bin/python -m cs review --json\n```\n\nTogether with step 2c's actual tasks result, this supplies the current run's\nsymbolic workset inputs. Reuse these same complete results in triage and step\n4c; do not issue duplicate full reads. Missing/incomplete inputs remain UNKNOWN.\nScheduled discovery emits `triage_workset`: at most two exact conversation\nrevisions across inbound, task-only work and draft replacements share one\nreservation. Deep reads and composition outside it are refused by the CLI.\nStart no evidence subagents and no waiting/poll loops. Preserve full inventories,\nnamed held work and every deferred root in the final report; reservation and\ndeferral do not mean answered, handled or closed. Continue all recurring phases.\n\nInvoke the `cs-triage-mail` sub-skill using the host's native skill mechanism.\n\n"
+      },
+      {
+        "before": "conversation moves on whether or not anybody is at the desk.\n\n```bash\n.venv/bin/python -m cs review --json\n```\n\n`drafts[]` contains one row per logical draft.\n",
+        "after": "conversation moves on whether or not anybody is at the desk.\n\nUse the complete actual `cs review --json` result already read before triage;\ndo not run a second full review. State its observation time and report this\ntick's actually created drafts separately; do not invent refreshed verdicts.\n\n`drafts[]` contains one row per logical draft.\n"
+      },
+      {
+        "before": "{% endif %}\nWaiting drafts: <one line: N ready / N to re-decide>\nHuman work: <exact threads, states, assignees, task ID/revision, provenance and unknown scope>\nClosed audit / reopened: <acknowledged coverage or new inbound identity; never restore prior assignee>\n",
+        "after": "{% endif %}\nWaiting drafts: <one line: N ready / N to re-decide>\nDeferred mail: <exact roots and workset reasons; never report deferred as done>\nHuman work: <exact threads, states, assignees, task ID/revision, provenance and unknown scope>\nClosed audit / reopened: <acknowledged coverage or new inbound identity; never restore prior assignee>\n"
+      }
+    ]
+  },
+  ".claude/skills/cs-triage-mail/SKILL.md": {
+    "before_sha256": "ed5305fd83bd5eb74e2c209c18df12f6f3ae3a4925994b00d647e178a528d2da",
+    "after_sha256": "ff49dc4ed860eecc97e7d95c66fe0ddf037f8b025fea0a2ab79a71490db06588",
+    "edits": [
+      {
+        "before": "time instead of completing `discovery`. All ordinary business guards remain.\n\n## Protected operational originals before ordinary queue order\n\nRead the complete `cs unanswered --days 14 --json --all-buckets` result and its\n",
+        "after": "time instead of completing `discovery`. All ordinary business guards remain.\n\n## Protected operational originals within ordinary queue order\n\nRead the complete `cs unanswered --days 14 --json --all-buckets` result and its\n"
+      },
+      {
+        "before": "all other SELF mail and acknowledgement replies remain excluded.\n\nProcess these exact originals before the ordinary queue, using the same\nassignment status, dossier, contacted, history and existing-draft checks below.\nResolve sender and ask from the actual engine thread; metadata alone supplies\n",
+        "after": "all other SELF mail and acknowledgement replies remain excluded.\n\nProcess selected exact originals within the ordinary workset, using the same\nassignment status, dossier, contacted, history and existing-draft checks below.\nResolve sender and ask from the actual engine thread; metadata alone supplies\n"
+      },
+      {
+        "before": "bypass a required recipient-level dedup refusal; report it if one applies. If any applies to the original, retain it as held work and\nreport why. For every other thread, retain its existing holds and continue\neligible work independently. After the protected originals, complete the\nordinary triage and remaining bootstrap steps; priority is not an early exit.\n\n### Current authority after a transient UNKNOWN snapshot\n",
+        "after": "bypass a required recipient-level dedup refusal; report it if one applies. If any applies to the original, retain it as held work and\nreport why. For every other thread, retain its existing holds and continue\neligible selected work independently. Preserve unselected originals as deferred\nwork under the same ordering as every other root. Complete the remaining\nbootstrap steps; an original's successful draft is not an early exit.\n\n### Current authority after a transient UNKNOWN snapshot\n"
+      },
+      {
+        "before": "## 1. Find work and preserve every held thread\n\nRead the common sweep before deciding to drop or draft any item:\n\n",
+        "after": "## 1. Find work and preserve every held thread\n\nFor a scheduled run, reuse this run's complete actual tasks and review results\nfrom the bootstrap. If invoked without that bootstrap, run `cs tasks --json`\nand `cs review --json` in their own native calls before discovery. These are\nthe existing inventory reads, not additional copies. Do not start evidence\nsubagents or polling/wait loops.\n\nRead the common sweep before deciding to drop or draft any item:\n\n"
+      },
+      {
+        "before": "```\n\n```bash\n.venv/bin/python -m cs tasks --json\n```\n\nThe sweep groups exact RFC conversations before rolling up addresses. `open`\n",
+        "after": "```\n\nReuse the complete actual tasks inventory read before discovery.\n\nThe sweep groups exact RFC conversations before rolling up addresses. `open`\n"
+      },
+      {
+        "before": "is not a complete historical mailbox inventory.\n\nThen for EACH candidate, preserve the exact `thread_key` and read current\nassignment authority before any Sent-based decision:\n\n",
+        "after": "is not a complete historical mailbox inventory.\n\nIn a scheduled run, require typed `triage_workset.complete=true` and use only\nits `selected` exact roots for deep triage. The same at-most-two-root reservation\ncovers inbound candidates, task-only candidates and \u00a74b draft re-decisions.\nKeep all original discovery buckets, held assignments, task identities and\ndraft verdicts visible. List unselected roots under deferred work without\ndeep reads or generation; a deferral never resolves a task or an assignment.\nAn absent/incomplete workset grants no unrestricted fallback. CLI scope guards\nrefuse unselected deep reads and composition. The workset selects scheduling\nonly; all current authority, history, dedup and contextual generation guards\nbelow remain mandatory for selected roots. Interactive triage keeps its existing\nscope and performs no scheduled reservation.\n\nThen for EACH selected candidate, preserve the exact `thread_key` and read current\nassignment authority before any Sent-based decision:\n\n"
+      },
+      {
+        "before": "## 1b. Reconcile context without silencing assignment work\n\nUse ordinary engine tasks for the customer's ask and execution history:\n\n```bash\n.venv/bin/python -m cs tasks --json\n```\n\n```bash\n.venv/bin/python -m cs rpc tasks.list '{\"include_completed\":true}'\n```\n\nMatch the exact conversation, not only `contact_email`. An OPEN ordinary task\n",
+        "after": "## 1b. Reconcile context without silencing assignment work\n\nUse the complete actual ordinary task inventory already read for this run for\nthe customer's ask and execution history. Do not reread it or expand the\nscheduled workset. Task-only roots participate in that same reservation:\n\nIn an interactive session, the ordinary `cs tasks --json` and\n`cs rpc tasks.list '{\"include_completed\":true}'` reads remain available.\n\nMatch the exact conversation, not only `contact_email`. An OPEN ordinary task\n"
+      },
+      {
+        "before": "ordinary answered subtraction to them. This step is where it is looked at.\n\n```bash\n.venv/bin/python -m cs review --json\n```\n\n`drafts[]` contains one row per logical draft.\n",
+        "after": "ordinary answered subtraction to them. This step is where it is looked at.\n\nUse the complete actual review inventory read before scheduled discovery;\ndo not issue a second full review. Interactive triage reads `cs review --json`.\n\n`drafts[]` contains one row per logical draft.\n"
+      },
+      {
+        "before": "- `settled` \u2014 the engine reads that conversation as owing nothing.\n\nFor each such row, apply \u00a7 2's judgement \u2014 read the thread, and ask whether\ntheir own last message still asks what the draft answers. It is the same\nquestion, applied to a row \u00a7 1 never returns. Then, exactly one of:\n",
+        "after": "- `settled` \u2014 the engine reads that conversation as owing nothing.\n\nUnselected rows retain their actual verdict and handles as deferred re-decisions;\ndo not read their full threads, replace drafts or classify them as resolved.\n\nFor each such row whose exact root is selected in a scheduled run, apply \u00a7 2's\njudgement \u2014 read the thread, and ask whether\ntheir own last message still asks what the draft answers. It is the same\nquestion, applied to a row \u00a7 1 never returns. Then, exactly one of:\n"
+      }
+    ]
+  }
+}

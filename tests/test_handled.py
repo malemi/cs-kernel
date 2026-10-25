@@ -267,6 +267,12 @@ def _wiring(db_path: str) -> None:
     ]
     for message in inbound:
         message["thread_key"] = f"<{message['email']}>"
+    from cs import rpc_reads
+    rpc_reads.read_many = lambda selected, method, requests, **kwargs: {
+        key: rpc_reads.ReadOutcome(value=normal_projection(selected, params)
+            if method == "tasks.assignment.project" else {"emails": []})
+        for key, params in requests.items()
+    }
     previous_rpc = rpc.call_sync
     rpc.call_sync = lambda selected, method, params=None, timeout=None: (normal_projection(selected, params)
                     if method == "tasks.assignment.project" else previous_rpc(selected, method, params, timeout))
@@ -300,11 +306,11 @@ def _review(db_path: str) -> None:
     State(db_path).mark_handled(
         "phoned@example.test", reason="chiamato, risolto", handled_at=_dt(33)
     )
-    gmail_drafts.list_drafts = lambda s: []
+    gmail_drafts.list_drafts = lambda s, *, observation=None: []
     campaign.list_campaigns = lambda s: []
     rpc.call_sync = lambda *a, **k: []
 
-    d = review.gather(settings)
+    d = review._aggregate(settings)
     assert d["handled_out_of_band"] == [
         {
             "email": "phoned@example.test",

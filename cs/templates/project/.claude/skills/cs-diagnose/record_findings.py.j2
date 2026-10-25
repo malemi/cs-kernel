@@ -1,0 +1,185 @@
+{% raw -%}
+"""Retain private diagnostic findings with evidence-derived identity and UTC times."""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import json
+import math
+import os
+from pathlib import Path
+import re
+import stat
+import sqlite3
+import sys
+import tempfile
+import time
+
+LIMIT = 262144
+
+
+def checked(path: Path, *, directory=False, private=True):
+    for parent in (path, *path.parents):
+        if parent.is_symlink():
+            raise ValueError("Unsafe diagnostic path")
+    info = path.lstat()
+    expected = stat.S_ISDIR if directory else stat.S_ISREG
+    if not expected(info.st_mode) or info.st_uid != os.geteuid() or info.st_nlink != 1 and not directory:
+        raise ValueError("Foreign diagnostic path")
+    if private and info.st_mode & 0o077:
+        raise ValueError("Diagnostic path is not private")
+    return info
+
+
+def read(path: Path, *, private=True, maximum=LIMIT):
+    checked(path, private=private)
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, 'rb') as stream:
+        content = stream.read(maximum + 1)
+    if len(content) > maximum:
+        raise ValueError("Diagnostic input limit")
+    return content.decode('utf-8')
+
+
+def stamp(value):
+    if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+        raise ValueError("Invalid evidence timestamp")
+    return datetime.fromtimestamp(value, timezone.utc).isoformat().replace('+00:00', 'Z')
+
+
+def exact_incident(inbox_path: Path, inbox: dict, incident_id: str):
+    """Read an omitted incident only from the same selected owner's existing store."""
+    path = inbox_path.parent / 'monitor.sqlite3'
+    if checked(path).st_size > 64 * 1024**2:
+        raise ValueError("Diagnostic store size limit")
+    for suffix in ('-journal', '-wal', '-shm'):
+        sibling = Path(str(path) + suffix)
+        if sibling.exists() or sibling.is_symlink():
+            checked(sibling)
+    db = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True, timeout=0.1)
+    try:
+        deadline = time.monotonic() + 2
+        db.set_progress_handler(lambda: int(time.monotonic() > deadline), 1000)
+        db.execute('PRAGMA query_only=ON')
+        db.execute('PRAGMA trusted_schema=OFF')
+        for table, required in (
+            ('identity', {'owner'}),
+            ('incidents', {'id', 'component', 'cause', 'first', 'last', 'active', 'revision', 'detail'}),
+        ):
+            if db.execute('SELECT type FROM sqlite_schema WHERE name=?', (table,)).fetchone() != ('table',):
+                raise ValueError("Invalid diagnostic store schema")
+            columns = {row[1] for row in db.execute('PRAGMA table_info(' + table + ')')}
+            if not required.issubset(columns):
+                raise ValueError("Invalid diagnostic store schema")
+        if db.execute('SELECT owner FROM identity LIMIT 2').fetchall() != [(inbox.get('owner_uid'),)]:
+            raise ValueError("Foreign diagnostic store owner")
+        row = db.execute(
+            'SELECT first,last,revision,detail FROM incidents WHERE id=? AND length(CAST(detail AS BLOB))<=32768',
+            (incident_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError("Exact incident unavailable in selected store")
+        first, last, revision, detail = row
+        evidence = json.loads(detail)
+        if not isinstance(evidence, dict):
+            raise ValueError("Invalid exact incident evidence")
+        return {'id': incident_id, 'clone': inbox.get('clone'), 'revision': revision,
+                'first_observed': first, 'last_observed': last, 'evidence': evidence,
+                'investigation_path': str(inbox_path.parent / 'investigations' / (incident_id + '.md'))}
+    finally:
+        db.close()
+
+
+def record(inbox_path: Path, incident_id: str, analysis_path: Path):
+    if not re.fullmatch(r'[a-f0-9]{64}', incident_id):
+        raise ValueError("Exact incident ID required")
+    inbox_path = inbox_path.absolute()
+    checked(inbox_path.parent, directory=True)
+    inbox = json.loads(read(inbox_path))
+    if inbox.get('schema_version') != 1 or not isinstance(inbox.get('problems'), list):
+        raise ValueError("Unsupported problem inbox")
+    selected = [row for row in inbox['problems'] if row.get('id') == incident_id]
+    if len(selected) > 1:
+        raise ValueError("Duplicate incident identity")
+    problem = selected[0] if selected else exact_incident(inbox_path, inbox, incident_id)
+    root = inbox_path.parent / 'investigations'
+    if Path(inbox['investigations_path']) != root:
+        raise ValueError("Foreign investigation root")
+    checked(root, directory=True)
+    target = root / (incident_id + '.md')
+    if Path(problem['investigation_path']) != target:
+        raise ValueError("Foreign investigation destination")
+    previous = read(target) if target.exists() or target.is_symlink() else ''
+    analysis = json.loads(read(analysis_path.absolute(), private=False, maximum=32768))
+    if set(analysis) != {'analysis', 'next_action'} or not all(
+        isinstance(analysis[key], str) and 0 < len(analysis[key]) <= 12000
+        for key in ('analysis', 'next_action')
+    ):
+        raise ValueError("Bounded analysis and next action required")
+    clone = problem.get('clone')
+    owner = inbox.get('owner_uid')
+    revision = problem.get('revision')
+    if clone != inbox.get('clone') or not isinstance(clone, str) or not re.fullmatch(r'[A-Za-z0-9_.-]{1,80}', clone):
+        raise ValueError("Invalid clone identity")
+    if not isinstance(owner, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', owner) or type(revision) is not int or revision < 1:
+        raise ValueError("Invalid incident identity")
+    evidence = problem.get('evidence', {})
+    refs = []
+    for key in ('event_id', 'trace_id', 'span_id'):
+        value = evidence.get(key)
+        if value is not None:
+            if not isinstance(value, str) or not re.fullmatch(r'[a-f0-9]{16,64}', value):
+                raise ValueError("Invalid evidence reference")
+            refs.append(f'- {key}: {value}')
+    section = (
+        f'# Investigation: {clone}\n\n'
+        f'- Incident: {incident_id}\n- Revision: {revision}\n- Owner: {owner}\n'
+        f'- First observed UTC: {stamp(problem["first_observed"])}\n'
+        f'- Last observed UTC: {stamp(problem["last_observed"])}\n'
+        f'- Inbox generated UTC: {stamp(inbox["generated_at"])}\n'
+        + ('- Event UTC: ' + stamp(evidence['at']) + '\n' if 'at' in evidence else '')
+        + '\n'.join(refs) + '\n\n'
+        '## Analysis\n\n' + analysis['analysis'].strip() + '\n\n'
+        '## Next action\n\n' + analysis['next_action'].strip() + '\n'
+    )
+    content = (previous + '\n\n---\n\n' if previous else '') + section
+    raw = content.encode('utf-8')
+    if len(raw) > LIMIT:
+        raise ValueError("Findings capacity exhausted; prior findings preserved")
+    descriptor, temporary = tempfile.mkstemp(prefix='.findings-', dir=root)
+    try:
+        with os.fdopen(descriptor, 'wb') as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+        directory = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+    return {'findings_path': str(target), 'incident': incident_id, 'revision': revision}
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--inbox', required=True, type=Path)
+    parser.add_argument('--incident', required=True)
+    parser.add_argument('--analysis-file', required=True, type=Path)
+    args = parser.parse_args()
+    try:
+        result = record(args.inbox, args.incident, args.analysis_file)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, OverflowError, sqlite3.Error):
+        print('Findings persistence unconfirmed; inspect selected private evidence and destination', file=sys.stderr)
+        return 2
+    print(json.dumps(result, separators=(',', ':')))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
+{% endraw %}

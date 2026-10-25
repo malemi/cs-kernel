@@ -20,6 +20,16 @@ classify the human message, and route. **You are Opus here on purpose
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
+Run each `cs` command below in its own native Bash tool call. Use the literal
+`.venv/bin/python -m cs` spelling shown; do not combine commands, add a shell
+`timeout`, pipe or redirect their output, wrap them in another program, or run
+these reads in the background. Identity, configuration, discovery, tasks,
+review and founder reads must each retain their own actual result and exit.
+Use the native Bash `timeout: 600000` for discovery and review and omit
+`run_in_background`; this is a tool timeout, not another shell command. A
+refusal or incomplete read is reported under the existing guards, never
+converted to success with `|| true` or hidden behind a later command.
+
 ## 0. Hard rules (read before acting)
 
 - **Identity is ALWAYS `{{ email_address }}`.** Enforced by the engine
@@ -80,6 +90,17 @@ for {{ company_display_name }} today).
 {% endif %}
 
 ## 2. Pull each campaign's worklist
+
+First read the complete global worklist in its own native Bash call:
+
+```bash
+.venv/bin/python -m cs campaign pending
+```
+
+Inspect every campaign entry, including held and unreadable evidence, before
+working the existing per-campaign lists below. A global read sends nothing and
+changes no campaign decision. `--name` remains valid for the narrower reads;
+it does not replace this global inventory or widen an exclusion or send gate.
 
 {% if excluded_campaign %}
 For each campaign that is **not** `{{ excluded_campaign }}`:

@@ -71,6 +71,10 @@ class NoLabelError(ValueError):
     """The model answered, but with nothing from the allowed label set."""
 
 
+from .observability_producers import observe as _diagnostic_observe
+
+
+@_diagnostic_observe("generation", success="result", effect="unknown")
 def call(
     prompt: str,
     *,

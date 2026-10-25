@@ -1,0 +1,20 @@
+[Unit]
+Description=Operator watchdog on an independent host
+After=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_WATCHDOG_USER
+UMask=0077
+EnvironmentFile=/etc/operator-watchdog/watchdog.env
+ExecStart=/opt/operator/bin/python -m cs monitor watchdog --config /etc/operator-watchdog/watchdog.json
+Restart=on-failure
+RestartSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/operator-watchdog
+
+[Install]
+WantedBy=multi-user.target

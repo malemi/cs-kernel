@@ -22,8 +22,12 @@ PAUSE="$STATE/CS_PAUSE"
 mkdir -p "$STATE"
 
 ts() { date -u +%FT%TZ; }
+diag() { (cd "$ROOT" && "$ROOT/.venv/bin/python" -m cs.observability_producers "$@") || true; }
+export CS_DIAGNOSTIC_CONTEXT="$(diag start)"
+trap 'diagnostic_rc=$?; diag result "$diagnostic_rc" >/dev/null' EXIT
 
 if [ -f "$PAUSE" ]; then
+  diag paused >/dev/null
   echo "$(ts) {{ company_prog_name }}: paused (CS_PAUSE present) — skip" >>"$LOG"
   exit 0
 fi
@@ -31,11 +35,13 @@ fi
 # Non-blocking lock: if the previous tick is still running, skip this one.
 exec 9>"$LOCK"
 if ! flock -n 9; then
+  diag lock-skipped >/dev/null
   echo "$(ts) {{ company_prog_name }}: previous tick still running — skip" >>"$LOG"
   exit 0
 fi
 
-cd "$ROOT" || { echo "$(ts) {{ company_prog_name }}: cannot cd $ROOT" >>"$LOG"; exit 1; }
+diag running >/dev/null
+cd "$ROOT" || { diag failed >/dev/null; echo "$(ts) {{ company_prog_name }}: cannot cd $ROOT" >>"$LOG"; exit 1; }
 # Provider mutations also enforce the headless boundary inside their CLI.
 export CS_OPERATOR_HEADLESS=1
 echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
@@ -137,6 +143,12 @@ DENIED=(
     "Bash(python -m cs rpc settings.update:*)" \
     "Bash(python3 -m cs rpc settings.update:*)" \
     "Bash(cs rpc settings.update:*)" \
+    "Bash(.venv/bin/python -m cs monitor:*)" \
+    "Bash(.venv/bin/python3 -m cs monitor:*)" \
+    "Bash(.venv/bin/cs monitor:*)" \
+    "Bash(python -m cs monitor:*)" \
+    "Bash(python3 -m cs monitor:*)" \
+    "Bash(cs monitor:*)" \
     "Bash(.venv/bin/python -m cs instructions:*)" \
     "Bash(.venv/bin/python3 -m cs instructions:*)" \
     "Bash(.venv/bin/cs instructions:*)" \
@@ -167,12 +179,30 @@ DENIED=(
     "Bash(python -m cs draft-delete:*)" \
     "Bash(python3 -m cs draft-delete:*)" \
     "Bash(cs draft-delete:*)" \
+    "Bash(.venv/bin/python -m cs draft-retire:*)" \
+    "Bash(.venv/bin/python3 -m cs draft-retire:*)" \
+    "Bash(.venv/bin/cs draft-retire:*)" \
+    "Bash(python -m cs draft-retire:*)" \
+    "Bash(python3 -m cs draft-retire:*)" \
+    "Bash(cs draft-retire:*)" \
     "Bash(.venv/bin/python -m cs rpc drafts.discard:*)" \
     "Bash(.venv/bin/python3 -m cs rpc drafts.discard:*)" \
     "Bash(.venv/bin/cs rpc drafts.discard:*)" \
     "Bash(python -m cs rpc drafts.discard:*)" \
     "Bash(python3 -m cs rpc drafts.discard:*)" \
     "Bash(cs rpc drafts.discard:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.discard_exact:*)" \
+    "Bash(.venv/bin/cs rpc drafts.discard_exact:*)" \
+    "Bash(python -m cs rpc drafts.discard_exact:*)" \
+    "Bash(python3 -m cs rpc drafts.discard_exact:*)" \
+    "Bash(cs rpc drafts.discard_exact:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.reconcile_external:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.reconcile_external:*)" \
+    "Bash(.venv/bin/cs rpc drafts.reconcile_external:*)" \
+    "Bash(python -m cs rpc drafts.reconcile_external:*)" \
+    "Bash(python3 -m cs rpc drafts.reconcile_external:*)" \
+    "Bash(cs rpc drafts.reconcile_external:*)" \
     "Bash(.venv/bin/python -m cs connection vonage provision:*)" \
     "Bash(.venv/bin/python3 -m cs connection vonage provision:*)" \
     "Bash(.venv/bin/cs connection vonage provision:*)" \
@@ -194,6 +224,8 @@ DENIED=(
     "Bash(cs assignment {{ action }}:*)" \
 {% endfor %}
 {% for method in [
+  'operator.rules.decide',
+  'operator.rules.import_confirm',
   'tasks.assignment.commit',
   'update.run',
   'memory.reconsolidate_now',

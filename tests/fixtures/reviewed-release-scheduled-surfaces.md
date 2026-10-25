@@ -1,0 +1,17 @@
+## Done
+- Verdict: APPROVED
+- Changed: none (repository); scratch receipt only.
+- Checked surface: exact five current templates, complete deltas against git 03b4449, four historical fixture ledgers, scheduled-contract reversal logic, both included partials, and implementations of the two added read grants.
+- What: current template deltas preserve scheduled draft-only/send/auth/permission boundaries, managed no-publication, non-authoritative metadata, and private receipt guidance. New allows are exactly four spellings each of authenticated standing-instructions and assignment status reads; mutation denies are strengthened.
+- What: interactive held-draft preparation is explicitly restricted to human-requested interactive work; it does not admit scheduled held roots. Current-authority recovery requires exact identity/root/message and never clears independent holds.
+- What: diagnostic wrapper additions pass only fixed lifecycle statuses and exit codes to the existing producer; they introduce no technical-mail sender or model call. Existing deterministic owner-alert prose does not grant agent mail authority.
+- Verified: focused Python assertions PASS: exact read-only allow delta, no removed settings denies, bash -n and all six spellings of twelve critical cron denies across generic/as-built and normal/conditional renderings.
+- Sources: git 03b4449:cs/templates/project/<relative>.j2; tests/test_capabilities_skill.py; tests/fixtures/reviewed-{workset,native-read,semantic-inventory,inventory-eof}-guidance.json.
+- Receipt rule: this is a fresh current-byte review, not authentication of historical reviewer claims. Preserve historical fixtures verbatim; a fresh ledger may bind only these exact current bytes and its explicitly reconstructed prior bytes.
+- SHA-256 .claude/settings.json.j2: 6c6835be39b47eb8da9426176ad9c2e74a28da607125a6cdac864598663d012c
+- SHA-256 bin/cs_operator_cron.sh.j2: ea12e2a1b37669040cc2d0d83877c75ba20645d488a9768f344824b7f030469b
+- SHA-256 .claude/skills/cs-operator/SKILL.md.j2: f8fffebf306ee9315ad05986a20dffa87572daff760663f7e6c299b67213c4aa
+- SHA-256 .claude/skills/cs-triage-mail/SKILL.md.j2: 24d9d625c66d79231f2872d523ad51e28e3320d644d15a1639926a14a79da281
+- SHA-256 .claude/skills/cs-campaign-tick/SKILL.md.j2: 1ea7177a02e83d1d2c25cc0ac8c8d5c1942a9390c08c957e6245c8c515479c16
+- Unverified: runtime host/engine enforcement, full release acceptance, historical approval authenticity, and downstream capability-test repair. This receipt approves only the scheduled-surface invariants of these exact template bytes.
+- Evidence: /tmp/mrcall-ai-kit/20261025-release-alignment/scheduled-surface-hashes.json (current/base hashes and immutable baseline source references).

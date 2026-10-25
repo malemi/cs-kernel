@@ -1,0 +1,22 @@
+{
+  ".claude/skills/cs-operator/SKILL.md": {
+    "before_sha256": "3bf93bfd3f9b6f5732dc307741bb45ba73f4d687b9cdbb4ee7972603d867e49e",
+    "after_sha256": "84e1c94a5884dea5cb916700f868ae22813fc54a5ad8204237993cdf9fe1077f",
+    "edits": [
+      {
+        "before": "",
+        "after": ".\n\nWhen `<directory>/inventory-view-envelope.json` and `inventory-view.jsonl` exist,\nread the complete envelope and view with the same exact bounded native `dd`\ncalls. Start the view at offset 0, then 8064, 16128 and onward through its\nactual length. This readable semantic inventory preserves global rows, roots,\nholds, reasons and selection; its identity legend resolves every typed ID.\nIt is not a full case archive. RAW REF details remain UNINSPECTED: before any\neffect, read fresh selected-root assignment authority, thread bodies, applicable\ncurrent/covered messages, dossier, history and dedup evidence as required below.\nHeld and deferred roots remain ineligible for action. Unknown schema or missing\ncompact artifacts requires the existing complete raw route; never narrow scope.\nAfter a successful view page, a separate bounded `dd` read of\n`<directory>/inventory-view-progress.json` can show the remaining range and next\nexact page command. Progress is advisory; never poll it or treat it as evidence\nthat a page was read. Preserve genuine results through EOF before effects.\nThe supervisor audits this ordering after the run; engine action guards remain\nthe actual action gates. Neither a clean terminal nor retained proof establishes\ninspection or authenticates original MIME/header bytes"
+      }
+    ]
+  },
+  ".claude/skills/cs-triage-mail/SKILL.md": {
+    "before_sha256": "51278cf5229e6956121401efed2eba231618386a379ce1e8e71f3eb7eb2d74f2",
+    "after_sha256": "31d9a5bc4385d5a33eb2be055eecdd52297fd2917d1f1c2ace9abbee1faf9c0d",
+    "edits": [
+      {
+        "before": "",
+        "after": ".\n\nWhen `<directory>/inventory-view-envelope.json` and `inventory-view.jsonl` exist,\nread the complete envelope and view with the same exact bounded native `dd`\ncalls. Start the view at offset 0, then 8064, 16128 and onward through its\nactual length. This readable semantic inventory preserves global rows, roots,\nholds, reasons and selection; its identity legend resolves every typed ID.\nIt is not a full case archive. RAW REF details remain UNINSPECTED: before any\neffect, read fresh selected-root assignment authority, thread bodies, applicable\ncurrent/covered messages, dossier, history and dedup evidence as required below.\nHeld and deferred roots remain ineligible for action. Unknown schema or missing\ncompact artifacts requires the existing complete raw route; never narrow scope.\nAfter a successful view page, a separate bounded `dd` read of\n`<directory>/inventory-view-progress.json` can show the remaining range and next\nexact page command. Progress is advisory; never poll it or treat it as evidence\nthat a page was read. Preserve genuine results through EOF before effects.\nThe supervisor audits this ordering after the run; engine action guards remain\nthe actual action gates. Neither a clean terminal nor retained proof establishes\ninspection or authenticates original MIME/header bytes"
+      }
+    ]
+  }
+}

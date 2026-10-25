@@ -46,7 +46,7 @@ def main():
                 request = json.loads(raw)
                 method = request["method"]
                 seen.append(method)
-                results = {"account.who_am_i": identity, "setup.state": state,
+                results = {"system.capabilities": {}, "account.who_am_i": identity, "setup.state": state,
                            "memory.status": {"has_key": True, "available": True, "private": TOKEN},
                            "settings.get": {"values": {"IMAP_HOST": "mail.example", "IMAP_PORT": "993",
                                                        "SMTP_HOST": "out.example", "SMTP_PORT": "587", "PRIVATE": TOKEN}},
@@ -149,7 +149,7 @@ def main():
             finally:
                 os.chdir(old_cwd)
                 server.shutdown()
-            assert set(seen) <= {"settings.get", "settings.get_secret", "account.who_am_i", "setup.state", "memory.status"}
+            assert set(seen) <= {"system.capabilities", "settings.get", "settings.get_secret", "account.who_am_i", "setup.state", "memory.status"}
     print("test_setup_journey: all assertions passed")
 
 

@@ -1,15 +1,29 @@
 ---
 title: "From the Giada campaign loop to an eternal support operator — analysis and proposed changes"
-status: blocked
+status: superseded
 created: 2026-07-28
-updated: 2026-08-03 — moved from mrcall-cs (2026-07-31); BLOCKED on the
-  task-ledger contract per the 2026-08-01 operator-redesign decision (a 3-agent
-  evaluation found this plan never engages the engine task system — it needs a
-  task-first rewrite before any build)
+updated: 2026-10-13
 owner: mrcall-cs
 decides: nothing yet — this is a proposal, no code is written and no loop is started
 supersedes: nothing
 ---
+
+# Current disposition
+
+This proposal is superseded by the cron-driven operator described in
+[operator-runtime.md](../operator-runtime.md). The kernel provides cron
+installation and status, a guarded tick supervisor, and the canonical
+`cs-operator` workflow for mail triage, campaign advancement, draft review and
+escalation. Engine-owned task and assignment authority follows
+[task-assignment.md](../task-assignment.md).
+
+Superseded does not mean every proposed phase below is implemented. The local
+state tables, CRM cache, memory redesign and backfill are historical proposals,
+not completion claims or pending obligations of this plan. Any remaining need
+requires a separately scoped plan against the current engine contracts.
+This status records architectural replacement, not verification of current
+cron execution on either clone. The original proposal below is retained as
+historical context, including its original questions and implementation claims.
 
 # 0. What was asked, and what this is
 

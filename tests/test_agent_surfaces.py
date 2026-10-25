@@ -20,7 +20,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from cs import project_init as pi  # noqa: E402
-from test_legal_research_skill import LEGAL_FILES  # noqa: E402
 
 FAILED = 0
 
@@ -117,8 +116,11 @@ def main() -> int:
         triage = rendered / ".claude/skills/cs-triage-mail/SKILL.md"
         check("written projects are not initialized in docs", not (rendered / "docs/projects").exists())
         check("project usage guide is available", (rendered / "docs/project-memory.md").is_file())
-        check("triage reads an optional company customer-service playbook",
-              "company/customer-service-playbook.md" in triage.read_text())
+        triage_text = " ".join(triage.read_text().split())
+        check("triage reads effective published procedures before composing",
+              "cs standing-instructions" in triage_text
+              and "unavailable read holds drafting" in triage_text
+              and "Never fall back to local company rule files" in triage_text)
         agents_text = (rendered / "AGENTS.md").read_text()
         check("AGENTS.md names the customer-service playbook slot",
               "company/customer-service-playbook.md" in agents_text)
@@ -161,18 +163,11 @@ def main() -> int:
               "BOTH `procedures.md` and `phone.md`" in text
               and "Do not delete/empty the file" in text)
 
-        # The one skill that carries supporting files: references, a
-        # provenance record and a helper sit beside its SKILL.md, and every
-        # host must resolve all of them, not just the entry point.
-        legal = rendered / ".claude/skills/cs-legal-research"
-        check("legal-research skill is rendered with its supporting files",
-              all((legal / rel).is_file() for rel in LEGAL_FILES))
-        for host in (".agents", ".opencode"):
-            hosted = rendered / host / "skills/cs-legal-research"
-            check(f"{host} resolves every legal-research file",
-                  all((hosted / rel).is_file() and (legal / rel).is_file()
-                      and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
-                      for rel in LEGAL_FILES))
+        for host in (".claude", ".agents", ".opencode"):
+            check(f"{host} has no retired legal procedure",
+                  not (rendered / host / "skills/cs-legal-research").exists())
+            check(f"{host} retains the thin engine workflow",
+                  (rendered / host / "skills/cs-engine-workflow/SKILL.md").is_file())
 
         company_rendered = tmp / "company-cs"
         company_rendered.mkdir()
@@ -198,7 +193,6 @@ def main() -> int:
         print("a filesystem that refuses symlinks")
         nolink = _clone(tmp, "win-cs")
         (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
-        shutil.copytree(legal, nolink / ".claude/skills/cs-legal-research")
         shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-bootstrap")
         retired_content = {}
         for host in (".agents", ".opencode"):
@@ -232,13 +226,9 @@ def main() -> int:
                 check(f"{host} copies standing-rule skill without symlinks",
                       (nolink / host / "skills/cs-instructions/SKILL.md").read_bytes()
                       == (nolink / ".claude/skills/cs-instructions/SKILL.md").read_bytes())
-            for host in (".agents", ".opencode"):
-                hosted = nolink / host / "skills/cs-legal-research"
-                check(f"{host} copies every legal-research file without symlinks",
-                      not (nolink / host / "skills").is_symlink()
-                      and all((hosted / rel).is_file()
-                              and (hosted / rel).read_bytes() == (legal / rel).read_bytes()
-                              for rel in LEGAL_FILES))
+            for host in (".claude", ".agents", ".opencode"):
+                check(f"{host} copy fallback has no retired legal procedure",
+                      not (nolink / host / "skills/cs-legal-research").exists())
             for host in (".agents", ".opencode"):
                 hosted = nolink / host / "skills/cs-bootstrap/SKILL.md"
                 check(f"{host} copies bootstrap without symlinks",

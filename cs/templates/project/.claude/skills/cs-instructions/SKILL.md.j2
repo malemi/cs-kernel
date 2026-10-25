@@ -45,7 +45,20 @@ conflict; do not ask the human to authorize the same clear instruction again.
 State the concrete interpretation in the exchange. Never invent product policy,
 service commitments, exceptions or facts to fill gaps.
 
-## 2. Read the authoritative files and Git state
+## 2. Check instruction authority before any file edit
+
+```bash
+.venv/bin/python -m cs standing-instructions --authority-only
+```
+
+If this fails, stop without editing or publishing. If it reports `managed`, read
+`cs standing-instructions` and route the proposed change to Desktop for
+owner confirmation. Do not edit local company rules, call `instructions.store`,
+confirm a proposal/import through raw RPC, or commit a supposed rule update.
+Only Desktop's authenticated human confirmation changes managed instructions.
+The remaining file-authoring steps apply only when authority is `legacy`.
+
+### Read the legacy authoritative files and Git state
 
 Read `company/README.md`, the complete applicable company files, and any current
 rule they refer to before editing. Select destinations by scope:
@@ -58,7 +71,7 @@ rule they refer to before editing. Select destinations by scope:
   using its actual address. A mailbox with its own clone owns its identity there;
   do not create a competing copy here. Resolve uncertain ownership first.
 
-Company files are authoritative. The engine's reserved `operator-instructions`
+In legacy mode company files are authoritative. The engine's reserved `operator-instructions`
 project is their compiled copy; personal assistant memory is not a rule store.
 
 Inspect `git status --short`, `git diff -- <named-rule-files>` and

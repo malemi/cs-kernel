@@ -51,7 +51,10 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
             method, params = frame['method'], frame['params']
             self.calls.append((method, params))
             response = {'jsonrpc': '2.0', 'id': frame['id']}
-            if self.error:
+            if method == 'system.capabilities':
+                self.assertEqual(params, {})
+                response['result'] = {}
+            elif self.error:
                 response['error'] = {'code': self.error, 'message': 'SECRET provider error', 'data': 'SECRET'}
             elif method == 'stripe.status':
                 response['result'] = {'status': self.status, 'generation': 4,
@@ -79,7 +82,8 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
         code, out, err = await self.command('stripe.invoices', '{"limit":1}', runner=runner)
         self.assertEqual((code, err), (0, ''))
         self.assertEqual(json.loads(out)['account_id'], 'acct_fixture')
-        self.assertEqual(self.calls, [('stripe.status', {}), ('stripe.invoices', {'limit': 1})])
+        self.assertEqual(self.calls, [('system.capabilities', {}), ('stripe.status', {}),
+            ('system.capabilities', {}), ('stripe.invoices', {'limit': 1})])
 
     async def test_typed_reads_preserve_exact_money_pagination_and_filters(self):
         for action in ('customers', 'payments', 'invoices', 'subscriptions'):
@@ -95,14 +99,14 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((code, err), (0, ''))
         self.assertEqual(json.loads(out)['data']['id'], 'ch_fixture')
         self.assertEqual(self.calls[-1], ('stripe.detail', {'resource': 'charges', 'id': 'ch_fixture'}))
-        self.assertTrue(all(method.startswith('stripe.') and method not in {'stripe.connect', 'stripe.test'} for method, _ in self.calls))
+        self.assertTrue(all(method == 'system.capabilities' or method.startswith('stripe.') and method not in {'stripe.connect', 'stripe.test'} for method, _ in self.calls))
 
     async def test_disconnected_old_revoked_and_changed_context_never_disclose(self):
         self.status = 'disconnected'
         code, out, _ = await self.command('customers')
         self.assertEqual(code, 1)
         self.assertIn('Desktop Settings', out)
-        self.assertEqual([method for method, _ in self.calls], ['stripe.status'])
+        self.assertEqual([method for method, _ in self.calls], ['system.capabilities', 'stripe.status'])
         self.status = 'connected'
         for error in (-32601, -32000):
             self.error = error

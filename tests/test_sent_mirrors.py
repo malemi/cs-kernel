@@ -22,7 +22,10 @@ Asserted here, on plain dicts — no IMAP, no engine:
 """
 from __future__ import annotations
 
-from cs.draft_state import sent_orphans
+from cs.draft_state import sent_orphans as _sent_orphans
+
+def sent_orphans(sent, mirrors):
+    return _sent_orphans(sent, mirrors, expected_owner_uid="fixture-owner")
 
 SENT_AT = "2026-09-22T10:00:00"
 BEFORE = "Tue, 22 Sep 2026 09:00:00 +0000"
@@ -38,7 +41,8 @@ def _sent(engine_id="E1", to="cliente@example.test", subject="Re: assistenza",
 def _mirror(uid="10", to="Cliente <cliente@example.test>",
             subject="Re: assistenza", date=BEFORE, thread="<T1@mrcall.ai>"):
     return {"uid": uid, "to": to, "subject": subject, "date": date,
-            "thread_key": thread}
+            "thread_key": thread, "engine_draft_id": "E1",
+            "engine_owner_uid": "fixture-owner"}
 
 
 def _by_uid(rows):
@@ -101,7 +105,26 @@ def an_escaped_engine_thread_still_pairs() -> None:
     print("OK: an escaped engine thread id still pairs with its mirror")
 
 
+def legacy_is_only_inferred() -> None:
+    row = _mirror()
+    row.pop("engine_draft_id")
+    row.pop("engine_owner_uid")
+    rows = sent_orphans([_sent()], [row])
+    assert len(rows) == 1 and rows[0]["retire"] is False
+    assert rows[0]["identity_evidence"] == "legacy-inferred"
+    print("OK: legacy copies remain visible without automatic retirement")
+
+
+def one_sided_thread_is_a_conflict() -> None:
+    for sent, mirror in ((_sent(), _mirror(thread="")), (_sent(thread=""), _mirror())):
+        rows = sent_orphans([sent], [mirror])
+        assert rows and rows[0]["retire"] is False and rows[0]["identity_conflict"]
+    print("OK: one-sided thread identity cannot authorize retirement")
+
+
 def run() -> None:
+    legacy_is_only_inferred()
+    one_sided_thread_is_a_conflict()
     the_mirror_of_a_sent_draft_is_an_orphan()
     a_compose_pairs_on_subject()
     a_newer_draft_is_left_alone()

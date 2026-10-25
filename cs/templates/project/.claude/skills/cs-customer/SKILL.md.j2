@@ -170,3 +170,13 @@ a document. For an explicitly requested durable non-mail fact:
 Both tool names are required by the engine's existing approval contract. Verify
 persistence even after a timeout; do not infer success from a polite reply or
 absence of an error. Mail-sourced facts follow the normal sync/memory pipeline.
+
+## Requested interactive review draft
+
+A human takeover or assignment hold forbids sending automatically. If the
+interactive operator explicitly asks for a reply or draft, continue the thread
+and dossier reads and prepare a review copy with `cs draft-reply` for that exact
+thread. Keep the hold and owner visible; do not close tasks, clear assignments
+or send the draft while sending remains held. Missing source, suppression and
+SELF-contact checks remain in force. This exception changes interactive draft
+preparation only, not unattended work or send authority.

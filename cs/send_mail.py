@@ -206,3 +206,18 @@ def _mirror_to_sent(settings: Settings, msg: EmailMessage) -> None:
                 M.logout()
             except Exception:  # noqa: BLE001
                 pass
+
+
+def send_operational_notice(settings: Settings, reference: str, kind: str, count: int, *, incident_reference: str | None = None) -> str:
+    """Retain a technical notice in the filesystem inbox without sending mail."""
+    if (not re.fullmatch(r"[a-f0-9]{32}", reference) or kind not in {"incident", "watchdog"}
+            or type(count) is not int or not 1 <= count <= 200):
+        raise ValueError("Invalid operational notice")
+    if incident_reference is not None and not re.fullmatch(r"[a-f0-9]{64}", incident_reference):
+        raise ValueError("Invalid operational incident reference")
+    from .operational_inbox import record_notice
+
+    return record_notice(settings, {
+        "status": kind, "reference": reference,
+        "incident_reference": incident_reference, "count": count,
+    })

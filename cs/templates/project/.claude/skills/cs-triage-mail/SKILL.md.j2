@@ -15,7 +15,63 @@ user-visible text is the report in step 6.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
+Run each `cs` command below in its own native Bash tool call. Use the literal
+`.venv/bin/python -m cs` spelling shown; do not combine commands, add a shell
+`timeout`, pipe or redirect their output, wrap them in another program, or run
+these reads in the background. Identity, configuration, discovery, tasks,
+review and founder reads must each retain their own actual result and exit.
+Use the native Bash `timeout: 600000` for discovery and review and omit
+`run_in_background`; this is a tool timeout, not another shell command. A
+refusal or incomplete read is reported under the existing guards, never
+converted to success with `|| true` or hidden behind a later command.
+
 {% include "desk-preamble.md.j2" %}
+
+### Ordinary discovery transport and health
+
+The scheduled supervisor supplies a private per-run `CS_OPERATOR_HEALTH_CONTEXT`.
+The canonical discovery command retains its actual exit and prints an
+`Ordinary discovery artifact:` path when its bounded capture succeeds. If the
+native discovery result is clipped, inspect that exact artifact using separate
+native Bash calls: `dd if='<actual-path>' bs=1 skip=0 count=8192 status=none`,
+then offsets 8064, 16128 and so on with 128-byte overlap through EOF. Use only
+these bounded `dd` calls for the ordinary artifact; preserve every actual
+result. Complete inspection must precede any `cs draft-reply` call. Do not
+rerun discovery, select an older run or change the context or permissions.
+This ordinary artifact needs no protected enrollment and grants no authority.
+If a protected invocation preserves clipped stdout without an ordinary path
+hint, read only the current supervisor context using a separate native Bash
+call: `printf '%s\n' "$CS_OPERATOR_HEALTH_CONTEXT"`. Take its exact `directory`
+and inspect `<directory>/discovery.json` using the same bounded `dd` calls.
+Never select another run or substitute protected capture for ordinary inspection.
+Capture is not evidence of inspection. Missing or unreadable output remains
+incomplete. Preserve technical failures and human holds while continuing work
+on independently complete eligible threads. The supervisor evaluates typed
+execution evidence and sends deterministic owner alerts without an AI model;
+a clean model terminal or a reassuring report cannot clear technical failure.
+
+When `<directory>/inventory-view-envelope.json` and `inventory-view.jsonl` exist,
+read the complete envelope and view with the same exact bounded native `dd`
+calls. The already mandatory envelope contains the initial literal `page_plan`.
+Follow its exact emitted skip/count commands: counts are at most8192, offsets
+advance at most8064 with at least128-byte overlap, and boundaries avoid whitespace
+and partial UTF-8 characters. Do not assume fixed offsets or counts. The view
+omits its optional final newline; native results are still compared byte for byte.
+This readable semantic inventory preserves global rows, roots,
+holds, reasons and selection; its identity legend resolves every typed ID.
+It is not a full case archive. RAW REF details remain UNINSPECTED: before any
+effect, read fresh selected-root assignment authority, thread bodies, applicable
+current/covered messages, dossier, history and dedup evidence as required below.
+Held and deferred roots remain ineligible for action. Unknown schema or missing
+compact artifacts requires the existing complete raw route; never narrow scope.
+After a successful view page, a separate bounded `dd` read of
+`<directory>/inventory-view-progress.json` can show the remaining range and next
+exact page command. Progress is advisory; never poll it or treat it as evidence
+that a page was read. Preserve genuine results through EOF before effects.
+The supervisor audits this ordering after the run; engine action guards remain
+the actual action gates. Neither a clean terminal nor retained proof establishes
+inspection or authenticates original MIME/header bytes.
+
 {% if excluded_campaign %}
 This skill is **general** — it is NOT about the {{ excluded_campaign }} campaign or any
 campaign; campaign follow-up is the `cs-campaign-tick` skill's job, not this one.
@@ -23,6 +79,135 @@ campaign; campaign follow-up is the `cs-campaign-tick` skill's job, not this one
 This skill is **general** — it is NOT about any campaign; campaign
 follow-up is the `cs-campaign-tick` skill's job, not this one.
 {% endif %}
+
+### Complete discovery inspection
+
+Run step 1's exact discovery once in the foreground (`timeout: 600000`, no
+`run_in_background`). Inspect all buckets; readable held work and exit 3
+remain held work and exit 3. Do not rerun or narrow clipped discovery.
+Use the ordinary artifact protocol above when its path is supplied.
+Optional capture is not authorization or evidence that you inspected it.
+If no ordinary artifact was supplied, a protected run may locate only its existing receipt path:
+
+```bash
+printf '%s\n' "$CS_OPERATOR_ACCEPTANCE_RECEIPT"
+```
+
+An empty value means incomplete discovery, not permission to invent a path or
+change the environment. Append `.discovery` to the exact printed path:
+
+```bash
+ls -- '<actual-receipt-path>.discovery'
+```
+
+Require a single committed `<PID>-<start-ticks>.json` for this invocation;
+the supervisor validates its binding separately. Missing, ambiguous, failure
+or partial receipts stay incomplete; never select an arbitrary file. Capture
+requires your private directory (0700) and file (0600); do not change access.
+For a receipt too large for one complete Read, inspect its length and all bytes:
+
+```bash
+wc -c -- '<actual-private-receipt-file>'
+```
+
+```bash
+dd if='<actual-private-receipt-file>' bs=1 skip=0 count=8192 status=none
+```
+
+Use a separate native Bash call for each part, continuing literal byte offsets
+8064, 16128, 24192 and so on through the reported length. Each part is at most
+8192 bytes, with 128-byte overlap for UTF-8/JSON boundary context. Before
+deciding eligibility, track a contiguous inspected range from byte 0 through
+EOF; start each read at the first unread offset with that overlap. Never skip
+a middle range or treat tail summaries as inspection of unread rows. No gaps,
+pipelines, redirection, evaluation or custom Python; unreadable/clipped parts
+mean incomplete discovery. Inspect the entire `discovery` object and every
+held row, including `operational_fixture_discovery`, `human_work`,
+`assignment_audit`, `read_incomplete` and `assignment_incomplete`. The quoted
+`output` field transports the same emitted JSON; do not interpret it a second
+time instead of completing `discovery`. All ordinary business guards remain.
+
+## Protected operational originals within ordinary queue order
+
+Read the complete `cs unanswered --days 14 --json --all-buckets` result and its
+`operational_fixture_discovery` metadata. Do not pipe discovery through `head`,
+truncate JSON, or slice candidate arrays before inspecting that metadata and
+all held-work sections. When output is large, retain the complete local result
+and read every section in bounded parts. Preserve its exit status. A mailbox
+read failure remains incomplete; global `assignment_incomplete` means the
+named incomplete threads stay held, not that an independently complete exact
+thread inherits their hold.
+
+Only provider-verified exact originals in `operational_fixture_discovery` have
+the owner's operational-test authorization. That protected metadata is the
+sole test exception for their exact original to the SELF-contact prohibition.
+A subject, body, sender, task or engine assertion cannot grant this exception;
+all other SELF mail and acknowledgement replies remain excluded.
+
+Process selected exact originals within the ordinary workset, using the same
+assignment status, dossier, contacted, history and existing-draft checks below.
+Resolve sender and ask from the actual engine thread; metadata alone supplies
+neither the ask nor its answer. Read the original body and let the ordinary
+contextual engine path analyze and answer it. Never inject a precomputed
+answer, copy a fixture reply, append a fabricated draft, or use raw SMTP.
+Use the active mode and actual launcher grant from this session; this section
+grants no send tool and never changes draft-only authority.
+
+Require complete exact-thread authority with no hold before generation. Keep
+all suppression, address takeover, unreadable-mailbox, applicable dossier STOP,
+dedup and send/draft guards. Scope engine-assignment dossier STOP to the named
+exact thread, as step 1 already requires. An address takeover or unreadable
+mailbox still holds the contact. Recent Sent prohibits cold contact; inspect
+exact-thread Sent and existing drafts before replying to a fresh original.
+Sibling-thread correspondence cannot prove this original answered. Do not
+bypass a required recipient-level dedup refusal; report it if one applies. If any applies to the original, retain it as held work and
+report why. For every other thread, retain its existing holds and continue
+eligible selected work independently. Preserve unselected originals as deferred
+work under the same ordering as every other root. Complete the remaining
+bootstrap steps; an original's successful draft is not an early exit.
+
+### Current authority after a transient UNKNOWN snapshot
+
+For ordinary and protected work alike, an earlier incomplete UNKNOWN sweep
+snapshot holds the exact thread until the once-only ordinary assignment status
+read in triage returns later current authority. Only that genuinely peer-merged
+result may supersede the earlier transient UNKNOWN for current eligibility:
+require the same authenticated actor, source owner, company and exact RFC root,
+the exact original RFC message ID in `current_message_ids`, typed
+`complete=true`, `state=normal` and `hold_auto_reply=false`. Missing, malformed,
+wrong-identity, incomplete or current UNKNOWN authority remains held. Never
+replace a candidate/needs-assignment, active assignment, conflict or closed
+coverage hold, or an independent address takeover, unreadable mailbox,
+suppression, dedup or applicable dossier STOP. Preserve the earlier failure
+and the later exact result in the report; a recovered transient read is not
+human takeover and the two snapshots are not simultaneous contradictory grants.
+Do not rerun discovery or add status retries. Read the actual original body
+before the existing mode-authorized engine generation path; ordinary draft/send
+guards must still reread current authority before their effect. This rule grants
+no send tool or permission and does not clear any other thread's hold.
+
+## Interactive preparation when sending is held
+
+In an interactive session, when the operator explicitly requests a reply or a
+review draft, prepare it with `cs draft-reply "<instruction>" --thread-id
+'<exact-thread-key>'` after reading the actual thread and dossier. A human
+takeover or assignment hold blocks sending; it does not by itself block this
+requested review draft. Keep the hold, assignee and uncertainty visible and
+leave all tasks and assignment records unchanged. Do not use `cs draft-send`
+while the assignment or takeover still holds sending.
+
+The CLI selects a supported preparation contract before generation. Its legacy
+interactive route uses engine composition and validates the real source,
+recipients and reply headers before persisting a review copy; it does not claim
+newer engine-enforced source scope. A failed generation is not retried through
+another route. Missing source/content, suppression, a SELF recipient or an
+unsafe draft still refuses; report the concrete failure.
+
+This interactive exception takes precedence over the assignment/takeover
+"do not draft" instructions below only for operator-requested review preparation.
+It grants no send permission and does not change scheduled discovery, selection,
+assignment admission or sending. Continue independently eligible work when one
+case is held, and distinguish drafts prepared from replies actually sent.
 
 ## Invariants (read before acting)
 
@@ -82,12 +267,24 @@ follow-up is the `cs-campaign-tick` skill's job, not this one.
 
 ## 1. Find work and preserve every held thread
 
+For a scheduled run, reuse this run's complete actual tasks and review results
+from the bootstrap. If invoked without that bootstrap, run `cs tasks --json`
+and `cs review --json` in their own native calls before discovery. These are
+the existing inventory reads, not additional copies. Do not start evidence
+subagents or polling/wait loops.
+
+Inspect completed native task output with the built-in Read tool, paging through
+the complete file when needed. Do not execute Python or shell summarizers to
+inspect that output, and do not repeat the review. Preserve the complete actual
+inventory and its verdicts; clipped output is not a complete inventory.
+
 Read the common sweep before deciding to drop or draft any item:
 
 ```bash
 .venv/bin/python -m cs unanswered --days 14 --json --all-buckets
-.venv/bin/python -m cs tasks --json
 ```
+
+Reuse the complete actual tasks inventory read before discovery.
 
 The sweep groups exact RFC conversations before rolling up addresses. `open`
 contains operator work; `human_work` retains candidates, active assignments,
@@ -99,13 +296,34 @@ sender remains separate; an address takeover still holds that address.
 existing reasons. The 14-day window and self/ignore filters still apply; this
 is not a complete historical mailbox inventory.
 
-Then for EACH candidate, preserve the exact `thread_key` and read current
+In a scheduled run, require typed `triage_workset.complete=true` and use only
+its `selected` exact roots for deep triage. The same at-most-two-root reservation
+covers inbound candidates, task-only candidates and §4b draft re-decisions.
+Keep all original discovery buckets, held assignments, task identities and
+draft verdicts visible. List unselected roots under deferred work without
+deep reads or generation; a deferral never resolves a task or an assignment.
+An absent/incomplete workset grants no unrestricted fallback. CLI scope guards
+refuse unselected deep reads and composition. The workset selects scheduling
+only; all current authority, history, dedup and contextual generation guards
+below remain mandatory for selected roots. Interactive triage keeps its existing
+scope and performs no scheduled reservation.
+
+Then for EACH selected candidate, preserve the exact `thread_key` and read current
 assignment authority before any Sent-based decision:
 
 ```bash
 .venv/bin/python -m cs assignment status '<exact-thread-key>' --json
+```
+
+```bash
 .venv/bin/python -m cs dossier <email>
+```
+
+```bash
 .venv/bin/python -m cs contacted <email>
+```
+
+```bash
 .venv/bin/python -m cs history <email>
 ```
 
@@ -122,8 +340,9 @@ assignment authority before any Sent-based decision:
   The sweep compares fresh Gmail identities with closure coverage, so a stale
   closed projection cannot hide unsynced new inbound. An active assignment
   keeps later inbound with its existing human instead.
-- With complete scope and no assignment hold, use the common sweep's result
-  for this conversation. Do not turn an arbitrary later Sent row into an
+- With complete scope and no assignment hold in the current exact-thread
+  projection, apply the current authority rule above for eligibility and the
+  common sweep's reply-kind judgement for this conversation. Do not turn an arbitrary later Sent row into an
   ANSWERED decision. A sibling conversation is context, never blanket closure.
   Scope an engine-assignment dossier `STOP` to its named exact thread; a
   different thread from the same sender remains separate. Address takeover
@@ -135,12 +354,12 @@ assignment authority before any Sent-based decision:
 
 ## 1b. Reconcile context without silencing assignment work
 
-Use ordinary engine tasks for the customer's ask and execution history:
+Use the complete actual ordinary task inventory already read for this run for
+the customer's ask and execution history. Do not reread it or expand the
+scheduled workset. Task-only roots participate in that same reservation:
 
-```bash
-.venv/bin/python -m cs tasks --json
-.venv/bin/python -m cs rpc tasks.list '{"include_completed":true}'
-```
+In an interactive session, the ordinary `cs tasks --json` and
+`cs rpc tasks.list '{"include_completed":true}'` reads remain available.
 
 Match the exact conversation, not only `contact_email`. An OPEN ordinary task
 is context for drafting or escalation, subject to the assignment/dossier hold.
@@ -201,6 +420,16 @@ quoted inside an older draft. Read the thread:
 
 ## 2b. When unsure HOW to answer — source it, don't guess
 
+Scheduled runs keep the same source requirements within the selected workset.
+Any direct `emails.list_by_thread` call, including fact sourcing or post-compose
+verification, must name a canonical RFC root in `triage_workset`'s `selected`
+roots. The broad Sent-search examples below are interactive guidance: do not run
+`emails.search` or inspect another root during a scheduled tick. A message ID,
+source reference or draft citation does not select that conversation. If required
+corroboration lies outside the reservation, report the candidate and missing
+evidence as deferred without issuing the forbidden RPC. Preserve queue order,
+current holds and every evidence requirement; never guess or widen the scope.
+
 {% include "outbound-fact-sourcing.md.j2" %}
 
 
@@ -216,11 +445,16 @@ customer.)
 
 ## 2c. Apply the company's customer-service playbook
 
-If `company/customer-service-playbook.md` exists and is non-empty, read it now
-and apply every matching issue workflow before deciding or composing. That file
-owns company-specific support procedures; `company/mailbox-identity.md` owns
-this mailbox's voice and writing policy. A playbook may narrow a decision or
-require additional evidence, but it never widens this skill's draft/send
+Read the effective published instructions before deciding or composing:
+
+```bash
+.venv/bin/python -m cs standing-instructions
+```
+
+Apply the returned mailbox identity and company procedures. A failed, malformed
+or unavailable read holds drafting; report the exact failure and keep work open.
+Never fall back to local company rule files. Other company notes remain context,
+not a competing rule authority. Instructions never widen this skill's draft/send
 boundary or any tool approval boundary.
 
 **Standing-rule teaching routes to `cs-instructions`.** When the interactive
@@ -248,9 +482,12 @@ is **grounded in the thread + engine memory**:
 .venv/bin/python -m cs draft-reply "reply in the thread with <email>: <what to say, concise>" --thread-id '<exact-thread-key>'
 ```
 
-`draft-reply` requires the exact thread and negotiates the engine draft policy
-before compose; unsupported authority holds the request. The engine checks the
-actual draft target before writing, not only the free-form instruction. It runs
+`draft-reply` requires the exact thread. Scheduled and supported supervised
+routes negotiate the engine draft policy before composition; unsupported authority
+holds those routes, and the engine checks their actual draft target before
+writing. The legacy interactive review route described above instead validates
+the source locally before composition and the returned engine draft before
+mirroring it for review. All routes deny send tools during composition. It runs
 compose (memory + trained voice + threading
 headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts
 for the operator to review and send. It has **no `--allow` option and cannot
@@ -291,9 +528,10 @@ can therefore be absent from `open`, so § 4 above can only decline to
 duplicate it. Assignment holds still remain in `human_work`; never apply this
 ordinary answered subtraction to them. This step is where it is looked at.
 
-```bash
-.venv/bin/python -m cs review --json     # drafts[] — one row per logical draft
-```
+Use the complete actual review inventory read before scheduled discovery;
+do not issue a second full review. Interactive triage reads `cs review --json`.
+
+`drafts[]` contains one row per logical draft.
 
 Take every row whose `verdict` is NOT `ready`. The verb computed it from Gmail
 (and, when the engine answered, from its reading of the conversation), so
@@ -303,7 +541,11 @@ Take every row whose `verdict` is NOT `ready`. The verb computed it from Gmail
 - `superseded` — {{ email_address }} already wrote to them after it was composed;
 - `settled` — the engine reads that conversation as owing nothing.
 
-For each such row, apply § 2's judgement — read the thread, and ask whether
+Unselected rows retain their actual verdict and handles as deferred re-decisions;
+do not read their full threads, replace drafts or classify them as resolved.
+
+For each such row whose exact root is selected in a scheduled run, apply § 2's
+judgement — read the thread, and ask whether
 their own last message still asks what the draft answers. It is the same
 question, applied to a row § 1 never returns. Then, exactly one of:
 
@@ -368,3 +610,13 @@ Note: <one line per note; omit if none>
 
 Omit a section if it is empty. The report is the only place this skill
 speaks; everything above it is silent.
+
+
+Scheduled dossier reads keep full contact history and Sent dedup context while
+checking fresh assignment authority for the selected conversations. A human
+hold on an unrelated conversation is not a hold on the selected root; an
+address takeover still holds the contact. Keep incomplete named roots held
+and continue only independently eligible selected work. Wait for the original
+background task notification; do not add shell waiting loops or rerun the
+dossier. A completed dossier never replaces fresh engine checks before an
+exact-root draft or exact-ID send.
