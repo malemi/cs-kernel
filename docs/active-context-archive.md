@@ -2869,3 +2869,13 @@ closure. No public release, engine, permission, budget or scheduler change.
   discovery inventories were absent. Café's tick did not run. Publication remains
   blocked by this gate; no paid retry is underway. Installed overlays are prohibited.
   The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns evidence and remaining delivery.
+
+## 2026-10-25 — Candidate before55native outcome
+
+- Both maintained clones run the clean immutable `v0.55.0` local artifact at
+  `f446dee`; all158files match the tag. The source suite passes before and at the
+  tag; actual identities, locks and installed-only preflight pass on both clones.
+  The retained54FULL failed on schema drift. Typed optional Gmail-draft fields
+  and attributable pre-capture diagnostics now have real CLI and blind proof.
+  Native55FULL, public provenance and final closure remain pending. No installed
+  overlays or automatic source-incident closure are used. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns delivery.

@@ -248,3 +248,37 @@ source suite at the corrected local tag while native FULL continues against the
 identical immutable wheel. Final public-origin adoption must verify actual bytes
 against the corrected public Git commit. Missing equality or evidence blocks
 publication and invalidates this exception; do not silently relabel old proof.
+
+## Current result and remaining authority
+
+Corrected local55 is8ce4039dbef31218f5fd2a2d3d2b82c9e1b08d6e. Independent
+review confirms identical158files/shipping inputs/exact5a9wheel; a fresh public-ref
+checkout without failed54passes release consistency. The complete corrected-tag
+suite completed exit0/all gates green. Original f446 enrollment and evidence stay
+unchanged under the preserved local candidate ref. No public ref has been pushed.
+
+The single repaired native55attempt FAILED after MrCall's natural terminal:
+all4inventory artifacts exist and installed view.load verifies their content and
+source commitments, but the agent inspected only page1of36. The ordinary ERROR
+reports discovery_inspection_incomplete in discovery despite process_exit0. Native
+costUSD1.3365518 remained below USD4; the model anticipated future overspend,
+not an actual hard quota refusal. Affordability of complete inspection is unproved.
+No generation/send or other business-mutation commands appear. Café/signup did
+not run, so the required joint FULL is not established. Total native test cost
+isUSD2.6874532. The approved repaired attempt is consumed; no new paid retry or
+business/budget/coverage-policy change is undertaken in this release task.
+
+Independent checks prove exact crontab restoration, absent protected enrollments
+and no remaining owned PID/start identities. Maintenance pauses were restored to
+their original absent state before the run; there are no outstanding owned control
+changes. Both current locks now resolve corrected8ce, actual offline integrity and
+fresh local lock-only rebuilds match158files on each clone; public Git adoption
+and public-reference rebuilding remain pending. Current docs retain the failed54
+and55evidence instead of rewriting it as successful acceptance.
+
+The indispensable publication gate remains: AGENTS requires FULL on both clones
+before tag shipping, or the operator must explicitly authorize an exception. The
+current55waiver question is unanswered. Required delivery still includes that
+outcome/authority, publication of main plus55only, public VCS adoption/rebuilds,
+operational-pin signoff, final doc-end/independent review and baseline advancement.
+No completion, final approval, successful FULL or public provenance is claimed.

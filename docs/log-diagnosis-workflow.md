@@ -121,6 +121,18 @@ failure remains explicitly unknown. A later verified publication is component ev
 source publication incidents remain retained for manual diagnosis and are never
 cleared by an unrelated supervisor success.
 
+For incomplete inspection, first distinguish failed inventory publication from
+successful publication that the native agent did not finish reading. Compare the
+ordinary failed check/phase with the matching private envelope, bounded native
+read proofs and terminal accounting. These protected artifacts retain page counts
+and native cost; do not claim every number is already an ordinary event field.
+A projected cost refusal is not an observed quota failure. Process exit0 or actual
+cost below the limit proves neither coverage nor affordability of the remaining
+work. If a needed fact is unavailable, improve its bounded producer/propagation
+path; retain an explicit unknown instead of inferring an authentication, engine or
+budget failure. Do not raise budgets, shrink required coverage or replay work merely
+to obtain a passing result without the appropriate scope and evidence.
+
 This workflow is recurring. A passing previous trial does not certify all paths,
 all future incidents or customer-service autonomy. Every newly observed problem
 reopens these two questions for its own actual diagnostic path.

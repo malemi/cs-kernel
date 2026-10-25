@@ -14,13 +14,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Both maintained clones run the clean immutable `v0.55.0` local artifact at
-  `f446dee`; all158files match the tag. The source suite passes before and at the
-  tag; actual identities, locks and installed-only preflight pass on both clones.
-  The retained54FULL failed on schema drift. Typed optional Gmail-draft fields
-  and attributable pre-capture diagnostics now have real CLI and blind proof.
-  Native55FULL, public provenance and final closure remain pending. No installed
-  overlays or automatic source-incident closure are used. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns delivery.
+- Both maintained clones run the same clean `v0.55.0` package: all158files
+  match corrected local tag `8ce4039`. Its wheel and shipping inputs are identical
+  to the tested `f446dee` snapshot; only release-test/docs provenance changed.
+  Both tag suites, installed checks, identities and local lock-only rebuilds pass.
+  Native55FULL failed: inventory publication works, but the agent read1of36pages
+  and stopped anticipating its USD4budget (actual costUSD1.3365518). Café/signup
+  never ran. Publication requires successful FULL or an explicit operator waiver;
+  no further paid attempt is underway. [The release plan](execution-plans/2026-10-25-canonical-release-alignment.md) retains the exact blocker and evidence.
 
 - Both maintained clones have DEBUG-first logs, ten-minute private filesystem collection and
   reviewed causal supervisor diagnostics. Ordinary trace/inbox access preserves the actual failed
@@ -46,9 +47,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   references block whole-task closure; [the plan](execution-plans/2026-10-24-stripe-payment-method-link.md)
   owns remaining gates. Public package pins and other engine services are preserved.
 
-- **Latest release tag: `v0.55.0`. Current HEAD status: tagged as `v0.55.0`.** These sentences
+- **Latest release tag: `v0.55.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
-  Both maintained clones now pin local `v0.55.0` at `f446dee`; publication and
+  Both maintained clones now pin local `v0.55.0` at `8ce4039`; publication and
   public Git provenance remain pending. The previously tainted environments are
   retained outside clone repositories for rollback. The shared operational
   sign-off remains `v0.51.0` until current acceptance closes. Historical FULL
