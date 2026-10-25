@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## v0.57.0 — 2026-10-25 (MINOR)
+
+Strict native hook progress compatibility and bounded complete stream retention.
+Failed unpublished54/55/56 artifacts remain immutable local evidence and do not
+become public release dependencies.
+
+- Accept exactly one observed full-output progress duplicate per pending known
+  hook, with the same identity/session/boundary and an exact successful final.
+  Missing, changed, foreign, repeated or partial progress still refuses. Progress
+  grants no inspection or terminal credit; original event hashes are preserved.
+- Bound private native capture at4MB. Free real-byte tests retain the unchanged
+  genuine prefix and finite continuation beyond the old2MB limit, while overflow
+  above4MB still refuses complete proof. Privacy and write-failure guards remain.
+- Preserve48-slot exact inventory delivery, complete material and fresh selected
+  root reads, immutable-package integrity, DEBUG-first causal logs and manually
+  invoked diagnosis. Technical user emails remain disabled.
+
+Migration: install the same frozen package on BOTH clones through the supported
+package manager; verify Git objects, actual resources and lock-only rebuilding.
+Never patch installed files or replace code under an existing version.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** This
+composition touches send/authentication/permission evidence. Free retained-prefix
+replay supplies no synthetic terminal or new-package business acceptance.
+
 ## v0.56.0 — 2026-10-25 (MINOR)
 
 Complete automatic inventory delivery for the actual retained mailbox material.

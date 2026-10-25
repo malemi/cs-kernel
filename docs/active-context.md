@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.56.0`. Current HEAD status: untagged.** Both maintained
+- **Latest release tag: `v0.57.0`. Current HEAD status: tagged as `v0.57.0`.** Both maintained
   clones run the same clean local56 package at `5d372ea`; all158files, actual
   installed48-hook controls, identities and lock-only rebuilds pass. Strict56 FULL
   was interrupted after genuine hook progress proved its validator incompatible;
