@@ -241,8 +241,9 @@ Sent source now verifies as complete AUTOMATIC with NORMAL/unheld root authority
 This read-only recovery proves the repair, not complete operational acceptance.
 Both ACTOR engines advertise integer capability 1. R9 verified both ordinary
 clone interpreters on the approved 116-file workflow/provenance base `9857f1bb…`.
-Café now includes the separate ordinary-health repair above; public pins remain
-unchanged. The retained genuine hosted acceptance is recorded below. Activation and adoption evidence live
+Both maintained clones now run the clean local57release candidate; its fresh
+FULL and public-tag provenance remain pending. Earlier scoped hosted acceptance
+is retained below. Activation and adoption evidence live
 under `/tmp/operator-operational-evidence/full-completion-plan/postterminal-authority-observer/activation/`
 and `/tmp/mrcall-ai-kit/exact-draft-live/scheduled-reply-provenance/`.
 
@@ -401,8 +402,9 @@ binds ordinary scheduled task metadata to the known prelaunch-pinned executable
 and actual child. Direct launches resolve the executable before launch. An
 explicit CS_OPERATOR_NATIVE_BINARY separately identifies the emitter behind an
 exec launcher; the launcher, its arguments and its authentication/budget behavior
-remain intact. The MrCall clone's one-line primary-branch emitter export is activated with
-the reviewed115-file package; the budget wrapper and public pins stay unchanged.
+remain intact. The MrCall clone's one-line primary-branch emitter export remains
+active with the clean158-file57candidate. Its existing budget wrapper is preserved;
+public-tag provenance and current whole-workflow acceptance remain pending.
 
 Version2 preserves every original init and result in order, strict indexed
 successful terminals and actual callback origins. Complete foreground, explicit
@@ -424,10 +426,10 @@ held-only3. Full inspection precedes contextual draft-reply and chat. The Actor
 consumer checks explicit version2 producer/child/session, hashes, counts, task,
 removal and actual callback bindings before accepting multiple init IDs.
 
-The115-file producer/configuration was jointly adopted and independently read
-back. V19 then failed on technical review observation: the native process emitted
-a genuine success result, but review3 lacks complete inventory evidence. No signed
-ordinary PASS exists; V18's zero-result Café failure remains immutable.
+Producer/configuration readback establishes component adoption. Complete ordinary
+acceptance additionally requires inventory inspection, actual provider outcomes
+and signed candidate-specific evidence in the current release plan. Failed
+historical cases remain retained there.
 
 ## Complete semantic global inventory
 

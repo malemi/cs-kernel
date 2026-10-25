@@ -276,8 +276,8 @@ inbound with their human. No address-wide handled cutoff overrides these identit
 
 ## Compatibility and remaining acceptance
 
-The reviewed untagged [ordinary assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
-kernel override prioritizes useful inbound work using the existing engine
+The [ordinary assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+implementation in the clean local57candidate prioritizes useful inbound work using the existing engine
 classification, then newest receipt first. Each authenticated actor admits one
 active projection RPC; other actors advance independently. At most four reads
 run globally, including reserved timed-out work. Required canonical observations

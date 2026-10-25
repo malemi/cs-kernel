@@ -113,3 +113,49 @@ actually loaded. The frozen57kernel requires no new kernel workaround for this
 engine representation bug. Existing plans own ordered execution and closure.
 Private evidence: create-draft-argument-wiring.md and
 v56/create-draft-argument-proof.json under the existing release-alignment root.
+
+
+## Source-evidence repair dependency
+
+The genuine57attempt sent its protected reply successfully but failed whole-tick
+health on two actual source-correspondence defects. Lower-level readonly probes
+in the actual service mount namespaces establish a support Sent source with9
+provider References versus0stored, and one genuine peer Sent source absent from
+its owner/mailbox archive. Probe-only DNS/login failures outside those namespaces
+are refuted as production causes. Preserve the original failed case.
+
+Repair only these two provider-backed archive records through existing native
+fetch/conversion/storage code after exact owner/mailbox, RFC hash, UIDVALIDITY,
+UID and nondraft checks. This is acquisition of actual mail evidence, never
+assignment creation, closure, manual SQL, guard relaxation or replay. Preserve
+existing row identities and processing/business fields; the newly acquired Sent
+record remains subject to normal downstream handling. No new sync API, broad
+resynchronization, peer code deployment, source patch or model call is authorized
+by this dependency. Prove the selected native storage path is model-free before
+execution; otherwise stop and reassess. Retain private preimages and per-field
+delta evidence, and verify actual guarded projections independently afterward.
+No passing projection, new FULL or publication is presumed from source repair.
+
+
+For the existing support record, an explicitly reviewed, one-off conditional
+update through the native Email ORM/session is permitted when the existing
+whole-row storage operation cannot preserve concurrent changes safely. Its
+only assigned business column is References, sourced from the exact verified
+provider message; exact owner,mailbox,rowID,RFCID and original References are
+mandatory predicates and affected rowcount must be1. Native updated_at may
+advance. No raw SQL, fabricated header, source patch, content/state/identity
+rewrite, general repair API or recurring job is permitted. Retain private
+preimage and prove every other column is unchanged; refuse concurrent References
+changes. This bounded maintenance exception is not assignment/send authority
+and does not waive any independent projection or FULL gate.
+
+
+For the absent peer Sent record, the same bounded maintenance exception permits
+a plain native Email ORM insertion built from the existing native provider
+conversion and native storage-record expression, with cached local embedding.
+The native owner/mailbox/RFC uniqueness constraint must refuse a concurrent
+insert and roll back; never run ON CONFLICT UPDATE or overwrite an existing row.
+This exception assigns only actual provider-derived fields and normal native
+model defaults; it neither fabricates an assignment nor changes an existing mail.
+Persist the complete selected postimage immediately after either mutation, before
+validation assertions, so failed verification retains actual effects.

@@ -647,3 +647,268 @@ Café LIVE voice/activity safety are still separate E2gates. No engine deploymen
 new paid FULL, public package provenance or final closure follows from these
 source/package receipts. Existing owned repair pauses remain until coordinated
 adoption/preflight or explicit scope resolution.
+
+
+### Superseded stop condition — service authority obtained
+
+All57kernel source/at-tag/package/installed/local-lock and mechanical checks pass;
+scoped doc-critic finds no STALE claim. Both clones run the clean immutable local57
+artifact. The engine normalization fix and its canonical24-test replay are reviewed.
+The two preserved-family candidates and source/configuration rollback artifacts are
+also reviewed after foreign-unit inventory and file-mode protections were repaired.
+No hosted file, drop-in or engine process has been changed.
+
+The operator has been asked to authorize applying the prepared fix and controlled
+restarts of support and Café engines, including possible interruption of LIVE voice
+and chats. That indispensable authority is pending; no reply is inferred. Exact
+owned temporary repair pauses are removed while preserving original schedules.
+After authority: complete activity/drain handling, reviewed immutable two-actor
+adoption and actual readback, replace hosted bindings with fresh reviewed evidence,
+then run the existing ONE57FULL attempt under the recorded lead budget. Successful
+FULL, public57publication and supported public-origin adoption/rebuilds on BOTH,
+joint operational pin, final doc-end/review and baseline advancement remain owed.
+Never reuse failed56or historicalR9 as new success, and never retry uncertain work.
+Private resumption state is retained in v57/pending-service-authority.json.
+
+
+### Authorized actor adoption and genuine57 attempt
+
+The operator explicitly instructed completion after the disclosed restart question.
+Both reviewed actor artifacts were applied through the owned rollout helper; the
+support and Café services restarted with new PIDs2454319/2455705. Complete437/457
+file inventories, canonical single-module deltas, modes/ownership, source-load
+ordering and retained unit controls pass independent row review. Four peers and
+excluded Qonto retain their exact source/runtime bindings. No new permission,
+model, budget, voice configuration or key was introduced.
+
+The newly enrolled hosted manifest has canonical digest
+`8e221f0c01ea73ade5b05884b18df95c788962bd4b731481b5afd4317997abd1`.
+Separate integration review binds it to the unchanged57artifact and R6consumer;
+policy validation and actual actor/cron preflight pass. The fresh root-owned57FULL
+is active under v57/full-installed-v57, with five-minute read-only controls in
+v57/five-minute-control.jsonl. No successful terminal, business acceptance,
+publication or baseline advancement is claimed while that run remains incomplete.
+
+
+### Genuine57 terminal and source-evidence blocker
+
+The immutable v57/full-installed-v57 case failed. Native run-ewmxfc45 ended
+naturally with clean terminal and USD2.7948136 cost. Accepted complete automatic
+context and intact2,077,919-byte capture establish the protocol repairs. The
+actual support reply reached the independent Café mailbox exactly once without
+response errors. The supervisor still rejects assignment_read_incomplete: two
+unknown projections carry SOURCE_UNAVAILABLE and SENT_REPLY_NOT_SYNCED;24other
+human holds are legitimate. Café/signup phases did not run. Independent cleanup
+confirms original schedules restored and controlled jobs quiescent. This is no
+FULL acceptance and no publication authority waiver.
+
+The existing historical source row exists; retained logs discarded its actual
+exception origin. Sent correspondence can mean zero or multiple synchronized
+rows, not necessarily a missing row. Existing owner-wide sync is not an exact
+historical backfill API. Fresh isolated DNS/authentication probe failures are
+separate observations until connected to the actual historical failure. Preserve
+failed case, source/authority guards and uncertain effects. No paid retry follows
+without a named cause, freely demonstrated repair and a fresh finite resource
+decision/review. Actual proof references: v57/failed57-independent-reply.json,
+failed57-cleanup.json, assignment-gate-safe-proof.json, sent-failure-safe-proof.json
+and source-exception-probe-output.json under the retained release evidence root.
+
+
+### Bounded native source-evidence acquisition amendment (pending review)
+
+Dependency facts are retained in source-validation-safe-proof.json and
+sent-peer-namespace-proof.json. Existing peer sync.run silently lacks the newer
+email-only scope branch; do not invoke it under a false email-only claim. Its
+actual native authentication succeeds inside its real mount namespace, so no
+authentication bypass or fabricated session is necessary. Ordinary incremental
+sync skips known Message-IDs and cannot refresh the stale support References.
+
+After fresh brief/plan approval and model-free storage-path proof, acquire ONLY
+support SentUID4934 and peer SentUID11381 using each actual service's native
+IMAPClient.fetch_messages_by_uid and EmailArchiveManager._store_messages with
+bound owner/mailbox and unmodified live source modules. Before write, verify
+UIDVALIDITY5, selected folder/nondraft and exact source RFC hashes from the retained
+probes; ensure unique existing support row and absent peer row. Private0600
+preimages retain selected records. Invoke no models, SMTP, assignment mutation,
+globalcursor rewrites, source deployment or restart. Reject concurrent source/row
+changes or any selected storage path that cannot meet these constraints.
+Before any write, compare EVERY native converted field with the existing support
+row and refuse unrelated body, labels, dates or business-field differences; only
+the independently evidenced source References correction is allowed. Do not use
+post-write comparisons as permission to overwrite unrelated data. Preflight local
+fastembed CPU and existing cached model assets; refuse downloads and all remote
+embedding/model/provider dispatch before writes. Missing cache is a stop condition.
+
+Compare per-field postimages: preserve support row ID, created_at, owner/mailbox,
+processing/business marks and authored content; changed source headers must agree
+with independently fetched provider data. The absent peer Sent row is a genuine
+new acquisition and may enter ordinary downstream processing. Verify its exact
+scoped cardinality1 and unchanged unrelated rows/cursors. Do not restore stale
+business data blindly on failure; retain failure/preimages and reassess.
+
+Then obtain existing authenticated complete assignment projections model-free
+where supported, preserving all24legitimate holds. If classification would invoke
+a model, require a separate finite resource decision rather than fake a result.
+Repair success alone does not pass prior57case. A fresh BOTH-clone FULL needs an
+explicit finite reviewed budget decision and original fixtures; prior failed
+evidence remains immutable. All publication/adoption/doc-end gates stay open.
+
+
+### References-only native storage refinement
+
+Readonly actual-provider conversion refuses the support full-message UPSERT: it
+would change thread_id,date,date_timestamp,snippet,body_html as well as References.
+Do not execute that conversion. For the existing support row, use the existing
+Storage.store_emails_batch entry with an exact existing-row-shaped input, replacing
+ONLY References with the independently verified native provider References.
+Preserve native datetime/string/JSON semantics and map id to its existing gmail_id
+as required by that entry. The actual native record-construction AST preflight
+proves References is its only changed nonmetadata field. All omitted pin/read/
+archive/delete timestamps are currentlyNULL and read_events exactly'[]'; require
+these exact predicates again before writing, since this native entry would
+otherwise reset them. Preserve identity,created_at,processing marks,body,labels,
+thread_id,dates,attachments and all unrelated rows/cursors. Allowed derived
+metadata differences are updated_at and the existingNULLembedding becoming a
+localCPU-derived embedding. No remote model/download is allowed.
+
+The absent peer Sent record may use the original native fresh-provider archive
+conversion/storage path with exact scope/header checks. Retain both private
+preimages and full safe field-delta evidence; fail prewrite if actual predicates
+change. This refinement changes no installed code, schema, assignment guard or
+business classification and does not grant replay/send authority. Require a
+fresh plan review of this exact refinement and execution-script review before
+application. Verify no unrelated field/source/business mutation afterward.
+
+
+### Atomic native-model alternative for the existing header
+
+The native batch lacks an expected-row predicate and opens its own session.
+Prefer a narrowly scoped conditional update through the existing native Email
+SQLAlchemy model/session for ONLY the support References field: match exact
+owner,mailbox,rowID,RFCID and original References, assign the provider-verified
+References, require rowcount1 and verify postimage. Other concurrently changed
+columns remain untouched; do not serialize their old values back into the row.
+This uses the native storage model, not raw SQL/data fabrication or a modified
+installed module. No content,thread,date,labels,processing,identity or cursor
+field may be assigned. Native updated_at maintenance is the only permitted
+derived side effect; no embedding is needed for this header-only operation.
+
+This alternative preserves the approved provider/source/UIDVALIDITY/nondraft
+checks, private preimage and actual namespace/OS-owner execution. A changed
+References value or nonunique target refuses the update. The peer record still
+uses the independently reviewed fresh-provider archive conversion and native
+store path, with local cached CPU embedding and zero remote-model/download
+dispatch. Require fresh review and executable-script review before application.
+
+
+### Concurrent-safe peer insertion refinement
+
+Do not invoke the peer native archive UPSERT: it lacks transaction-held absence
+checks and could overwrite a concurrently synchronized row. Use the explicit
+brief exception: fresh native provider conversion, the exact native batch
+record-construction expression and warmed cached local embedding produce a
+native Email model; Session.add/flush/commit performs INSERT ONLY. Verify the
+existing owner/mailbox/RFC uniqueness constraint. Any concurrent duplicate must
+raise IntegrityError and roll back without touching the existing row. Never
+implement ON CONFLICT UPDATE. Preserve exact provider/source guards and scoped
+cardinality0 before insertion,1 after. No engine freeze/restart is necessary.
+For BOTH actions, retain full selected postimages immediately after mutation
+before any assertion, including verification failures; do not blindly restore
+stale data. Execution remains gated on fresh brief/plan/script approval.
+
+
+### Finite post-source-repair acceptance decision (pending review)
+
+After independently verified two-record maintenance and BOTH native authenticated
+affected-root reads with complete technical reply evidence and only legitimate
+NEEDS_HUMAN_VERIFICATION holds (not unknown source failures), allow ONE fresh
+genuine BOTH-clone FULL
+with new original fixtures and the unchanged57artifact, R6consumer and hosted
+source bindings. No paid retry follows a further failure. Source repair and the
+affected-root projection path use zero model calls. Capture actual cleanup and
+signed final proof; prior failed57case remains failed.
+
+The lead's nominal cumulative reserve becomes USD22, replacing its previous20
+planning reserve: known54/55cost2.6874532 plus conservative interrupted56reserve4
+plus knownfailed57cost2.7948136 equals9.4822668; one3job trial reserves12 at the
+unchanged4/job launcher settings, total21.4822668. This is a finite planning
+reserve, not a claim that provider billing has a new hardcap. Preserve actual
+models, daily limits, perjob controls and5400-second overall timeout. Reassess
+any unexpected spending before another paid action; never start another FULL
+on this decision. Root cause/fielddelta/nativeprojection proof and fresh resource
+review are prerequisites, not assumed successful outcomes.
+
+
+### Applied source maintenance receipt
+
+The exact reviewed script45d97a11ced7acda566860af7041f2a785120fafea158857cc20231eddc04144
+and coordinated driver26bed87859c20f248afcb84093e66309ecfa151600085137eea6d12978cc5c3c
+applied successfully. Support selected postimage differs ONLY in References;
+peer has exactly1new native provider-backed row. Complete other-table/row digests
+remain unchanged; preimages/postimages are private0600. All three original cron
+lines are restored exactly. No code,identity,processing,assignment,model/budget
+setting or source guard changed. Independent native authenticated affected-root
+projections are now under verification; no FULL/publication follows until complete.
+Proof: v57/source-repair-coordinated-result.json and source-repair-script-review-r2.md.
+
+
+The affected-root projection receipt now passes native authentication on BOTH
+actors with zero model calls. All reply_evidence entries are complete; states
+are needs-assignment/NEEDS_HUMAN_VERIFICATION, which intentionally retain
+projection.complete=false until a human business decision. This is the existing
+legitimate-hold contract, not a remaining technical read fault and not permission
+to assign/close work for acceptance. The unchanged kernel discovery/health path
+must accept the actual result through operator_health.assess before a new FULL.
+Legitimate human holds retain assignment_incomplete=true and CLIexit3; neither
+flag rewriting nor forcing exit0 is permitted. Independent repair
+verification passes actual provider/currentDB comparisons and exact cron restore
+in v57/source-repair-independent-proof.json.
+
+
+The additional pre-FULL actual discovery is a single ordinary readonly
+`.venv/bin/python -m cs unanswered --days 14 --json --all-buckets` invocation.
+Its emails.needs_reply path can use one batch model call, so do not call it
+model-free. Reserve up to0.50nominal for that ONE call inside the22reserve:
+9.4822668+0.50+12=21.9822668. Preserve engine model/daily controls; this is not
+a new provider hardcap. No repeated discovery or FULL on failure. Evaluate its
+actual complete retained inventory with the unchanged health predicate and
+preserve legitimate human holds. Capture any observed charge or explicit unknown;
+unexpected spending triggers reassessment before the FULL. This adds no write,
+assignment, send, source modification or acceptance exception.
+
+
+### Eliminate the redundant standalone health precondition
+
+The ONE added standalone discovery reached the diagnostic wrapper's360-second
+timeout during inbound assignment projection; its ordinary inbound/sent discovery,
+classification and settlement stages finished. It produced no accepted captured
+discovery. The wrapper/helper and CLI are quiescent; this failed diagnostic is
+preserved and never reported as health acceptance. Actual charge remains unknown
+inside the reserved0.50. Do not repeat this standalone scan.
+
+Supersede ONLY the newly added requirement for a second complete discovery before
+starting FULL. The unchanged genuine FULL already executes that same actual
+publication/ancestry/digest/health assessment under its normal runtime controls.
+It remains mandatory for acceptance and publication. This removes duplicate
+preflight work, not a shipping criterion: no FULL or health success is inferred.
+The independently verified two-record correction and BOTH genuine authenticated
+affected-root reads with complete technical reply evidence are the actual free
+repair preconditions. Current installed/source/hosted/instruction preflight passes.
+
+Under fresh plan review, proceed directly to the previously bounded ONE fresh
+BOTH-clone FULL with original fixtures, unchanged57/R6composition, USD22nominal
+reserve including the consumed0.50standalone allowance, and5400-second limit.
+No further standalone discovery or paid FULL retry follows any new failure.
+Preserve original failed57and standalone evidence; no flags, holds, validator,
+coverage, costs or outcomes may be rewritten to obtain a pass.
+
+
+### Fresh source-repaired FULL started
+
+Fresh root-owned case f489c1c28eda7805028d16707db0e753 is active under
+v57/full-installed-v57-source-repaired-r1. The unchanged driver/consumer uses
+actual57installed kernels and the same reviewed hosted source/policy composition.
+A separate observer records five-minute status under
+v57/five-minute-control-source-repaired.jsonl. No terminal/provider success,
+health acceptance, publication or baseline advancement is inferred while active.
+The old failed57and standalone-timeout cases remain separately preserved.

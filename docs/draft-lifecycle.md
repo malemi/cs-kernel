@@ -97,8 +97,10 @@ Recording an existing delivery does not authorize a new send.
 There is no automatic reconciliation caller. Both selected hosted engines
 expose the exact methods; real Sent recording, conflict-safe replay and guarded
 retirement pass through authenticated runtime calls. The scoped kernel candidate
-passes both-clone CLI acceptance, but maintained kernel packages retain their
-public pin. Scheduled settings and launchers already deny the new mutations.
+passes scoped both-clone CLI acceptance. Both maintained kernel packages now
+run the identical clean local57candidate; public provenance and fresh release
+acceptance remain pending in the canonical release plan. Scheduled settings
+and launchers already deny the new mutations.
 
 Real Gmail IMAP APPEND/replacement and owner-to-self SMTP preserve the custom
 identity headers. Replacement-edit and stale-fingerprint refusal pass on both

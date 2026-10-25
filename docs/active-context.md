@@ -14,18 +14,26 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.57.0`. Current HEAD status: untagged.** Both maintained
-  clones run the same clean local57 package at `e3e8799`; all158files, actual
-  installed48-hook/progress/capture controls, identities and lock-only rebuilds pass. Strict56 FULL
-  was interrupted after genuine hook progress proved its validator incompatible;
-  no successful FULL or public provenance is claimed. The shared operational sign-off
-  stays51. Existing tainted environment backups remain outside clone repositories.
-- The installed57 candidate supports one exact native hook progress duplicate
-  only with its matching successful final and expands private capture to4MB.
-  Progress grants no inspection. Automatic inventory delivery has48bounded slots. The original production snapshot reconstructs43parts; the later genuine56prefix
-  validates with the repaired reader and preserves actual paired context. Genuine57native retention, affordability and BOTH-clone FULL remain required. Publication is authorized; no waiver is
-  authorized. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
-  owns the bounded trial, immutable release and both-clone adoption obligations.
+- **Latest release tag: `v0.57.0`. Current HEAD status: untagged.** This local
+  tag is unpublished. Both
+  maintained clones run the identical clean local artifact at `e3e8799`; all158
+  installed files, identities and lock-only rebuilds match. Public provenance and
+  BOTH-clone FULL acceptance are pending; shared operational sign-off stays51.
+  Tainted environment backups remain outside clone repositories.
+- The57candidate supports48bounded automatic inventory hooks, one exact progress
+  duplicate with its matching successful final, and4MBprivate capture. Progress
+  grants no inspection. Genuine complete native context, intact2,077,919-byte
+  capture and an independently received support reply pass. Whole-tick acceptance
+  fails on two historical unknown assignment projections. The
+  [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  diagnosis, finite resource decisions, strict FULL and public adoption.
+  Publication is authorized; acceptance waiver is not. One fresh BOTH-clone
+  FULL is active after source repair; no new success or public provenance is claimed.
+- The reviewed exact-RFC argument adapter is active on support and Café through
+  immutable preserved-family artifacts. Complete source/unit inventories and
+  unchanged peer/Qonto bindings are independently verified. Reviewed source
+  maintenance changes only one support References field and acquires one genuine
+  peer Sent record; all unrelated data and original schedules remain unchanged.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   Supervisor decisions retain safe checks, causes, counts and correlation links;
   interactive source-corroboration diagnostics preserve the parser's held behavior.
@@ -73,15 +81,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Engine draft creation received HTML-escaped RFC identifiers and correctly hit
-  its exact-thread guard. The canonical narrow adapter fix passes24 real guarded
-  storage tests and source review, preserving owner/root/header checks. Actual
-  two-actor rollout remains gated on exact restart authority and activity/drain
-  handling; Café's engine also serves voice. No hosted adoption is claimed.
-
-- Current release requires the reviewed engine RFC-encoding fix deployment,
-  genuine BOTH-clone FULL, publication and public Git
-  installation/lock verification. Failed candidates stay failed and immutable.
+- Current release requires successful genuine BOTH-clone FULL with its unchanged whole-inventory
+  health check after the independently verified source-evidence repair,
+  publication and public Git installation/lock verification. The prior57case
+  remains failed despite its correctly received reply. Current affected-root
+  reads retain complete reply evidence and legitimate human-verification holds.
+- Original assignment-source exception origins remain lost; restricted provider
+  and database inspection establishes the current correspondence defects only.
+  The [diagnosis workflow](log-diagnosis-workflow.md) records this causal logging
+  gap and the required finite producer evidence. No historical cause is invented.
 - [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
   retains failed V27 and separate permission/ordinary-acceptance obligations;
   earlier V14 and later successful Café draft evidence certify only their cases.
@@ -97,7 +105,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Complete the bounded capacity repair's installed/native and strict FULL gates.
+1. Observe the active strict FULL and verify its actual terminal, provider
+   outcomes and cleanup; retain prior failures and all legitimate human holds.
 2. Publish the new immutable release and verify supported adoption on BOTH clones.
 3. Finish documentation/final review with actual evidence and preserved failures.
 4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.

@@ -83,3 +83,4 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/sessions/6b2b4c2e-107c-442d-af0b-61b1fe961552.md | 1578 | keep whole — per-session scratch reconciled separately, not maintained reference | 2026-09-11 |
 | docs/execution-plans/2026-10-15-ordinary-assignment-recovery.md | 499 | keep whole — one active recovery dependency plan; read acceptance and retained evidence by section | 2026-10-16 |
 | docs/operator-runtime.md | 457 | keep whole — one runtime/control contract with distinct execution boundaries; read by section | 2026-10-19 |
+| docs/execution-plans/2026-10-25-canonical-release-alignment.md | 914 | keep whole — existing release recovery plan and immutable failed-case decisions; read current acceptance and bounded continuation by section | 2026-10-25 |

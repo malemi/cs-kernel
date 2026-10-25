@@ -19,7 +19,7 @@ file (`../AGENTS.md`), and volatile state only in `active-context.md`.
 
 - [Optional local metadata denial](execution-plans/2026-10-20-optional-metadata-denial.md) — finite recorded nonexecution compatibility with unchanged mandatory acceptance; [brief](briefs/2026-10-20-optional-metadata-denial.md).
 
-- [Automatic native inventory context delivery](execution-plans/2026-10-19-native-inventory-context-delivery.md) — installed119-file transport; strict ordinary acceptance remains open.
+- [Automatic native inventory context delivery](execution-plans/2026-10-19-native-inventory-context-delivery.md) — native transport design; current installed acceptance belongs to the canonical release plan.
 
 - [Native inventory EOF framing](execution-plans/2026-10-19-native-inventory-eof-framing.md) — installed exact-byte transport repair and mandatory initial page plan; ordinary acceptance remains open.
 
@@ -96,7 +96,7 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 
 - [Scheduled mail intake](execution-plans/2026-10-13-scheduled-mail-intake.md) — deterministic email-only synchronization before operator reasoning; [brief](briefs/2026-10-13-scheduled-mail-intake.md).
 
-- [Hosted kernel repair adoption](execution-plans/2026-10-13-hosted-kernel-repair-adoption.md) — preserved local package override for ordinary cron, separate from public release; [brief](briefs/2026-10-13-hosted-kernel-repair-adoption.md).
+- [Hosted kernel repair adoption](execution-plans/2026-10-13-hosted-kernel-repair-adoption.md) — historical local-override predecessor, superseded by release-only adoption; [brief](briefs/2026-10-13-hosted-kernel-repair-adoption.md).
 
 - [Released email caller compatibility](execution-plans/2026-10-13-released-email-caller-compatibility.md) — supported hosted callers, explicit stronger-policy refusal and mandatory native tasks read; [brief](briefs/2026-10-13-released-email-caller-compatibility.md).
 

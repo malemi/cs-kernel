@@ -136,3 +136,55 @@ to obtain a passing result without the appropriate scope and evidence.
 This workflow is recurring. A passing previous trial does not certify all paths,
 all future incidents or customer-service autonomy. Every newly observed problem
 reopens these two questions for its own actual diagnostic path.
+
+
+## Native protocol and scoped identifier failures
+
+Artifact files and delivery markers do not establish accepted native inspection.
+Compare the original stream with the pinned lifecycle validator. An unsupported
+host event is a distinct protocol fault; preserve its exact type, ordering and
+source, and test compatibility without filtering events or inventing a terminal.
+A captured prefix may prove one complete context delivery while the whole run
+remains failed. Keep constructed capacity cases separate from genuine execution.
+
+For a failed draft action, follow its trace into engine persistence diagnostics.
+The failed method, finite error code and relative guard origin can identify a
+scope rejection before any storage write. Check whether identifiers retain the
+exact authorized representation before blaming delivery, payment or quota.
+Use bounded equality results and hashes; never publish the private body or tool
+arguments. A generic wrapper failure does not erase a more precise engine event.
+Representation normalization grants no owner/root authority and does not permit
+replaying an uncertain attempt. Verify actual provider/store effects first.
+
+
+## Provider evidence and archive correspondence
+
+A Sent source can exist in the provider while its owner/mailbox archive is
+missing or retains different ancestry headers. SENT_REPLY_NOT_SYNCED alone
+does not distinguish zero from multiple scoped rows. SOURCE_UNAVAILABLE alone
+does not establish authentication, transport, missing mail or header disagreement.
+Check exact source identity, scoped cardinality and provider-versus-stored
+References/In-Reply-To before proposing synchronization or data repair. Preserve
+all business holds and verify ordinary technical health independently.
+
+Hosted probes must use the actual service mount namespace, selected profile,
+working directory, environment and OS identity. A probe outside that namespace
+can use a different resolver and produce misleading DNS or login failures.
+Report probe setup failures separately from failures of the actual service.
+Readonly SQLite diagnostic engines must support the native RPC thread model;
+a diagnostic connection's thread-affinity exception is not a production cause.
+
+The observed assignment-evidence path still loses precise exceptions behind
+SOURCE_UNAVAILABLE and a metadata privacy filter. Restricted source inspection
+can identify a current ancestry mismatch but cannot reconstruct the original
+historical exception. This is an explicit causal logging gap: future producer
+work must retain an allowlisted failed predicate and relative origin through the
+ordinary log/inbox path, without raw headers, bodies or exception text. Existing
+supervisor diagnostic acceptance does not certify causal coverage of this path.
+
+Never repair an archive by blindly re-storing a fetched message: native
+conversion can change content, thread identity, dates or read/processing marks.
+A reviewed one-off source correction needs exact provider identity, private
+preimages, narrow assigned fields, concurrency-safe writes and complete
+postimages retained before verification can fail. A newly acquired Sent record
+is normal source evidence; acquisition grants no assignment or sending authority.
