@@ -2860,3 +2860,12 @@ closure. No public release, engine, permission, budget or scheduler change.
   maintained clones. All 158 package files equal the tag; the source suite also
   passes at the tag. Public publication, FULL and final adoption remain open.
   Installed file overlays are prohibited. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns actual gates.
+
+## 2026-10-25 — Failed54candidate before55freeze
+
+- Local immutable `v0.54.0` and its clean built package are installed on both
+  maintained clones; all 158 files equal the tag and the at-tag source suite passes.
+  Current FULL failed on MrCall before fixture response/draft generation: required
+  discovery inventories were absent. Café's tick did not run. Publication remains
+  blocked by this gate; no paid retry is underway. Installed overlays are prohibited.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns evidence and remaining delivery.
