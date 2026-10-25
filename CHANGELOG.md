@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v0.56.0 — 2026-10-25 (MINOR)
+
+Complete automatic inventory delivery for the actual retained mailbox material.
+The failed unpublished54/55 candidates remain immutable local evidence and are
+not required public release anchors.
+
+- Expand existing bounded automatic context delivery from16 to48 slots. Keep
+  exact complete envelope/view bytes, semantic material, source/process/session
+  bindings and strict pre-effect inspection. Literal complete paging remains
+  available; missing or partial delivery grants no coverage.
+- Record finite context-capacity refusal with required/available counts and safe
+  producer origin. Preserve privacy, current budgets and all business guards.
+- Align canonical operator/triage guidance on complete current automatic context;
+  an anticipated cost is not an observed quota failure. Actual limits still stop
+  incomplete work. Preserve fresh selected-root reads and exact send authority.
+- Include canonical package-integrity, discovery-schema and DEBUG-first causal
+  logging recovery from the previous local candidates. Technical user emails
+  remain disabled; diagnosis remains explicitly human-invoked.
+
+Migration: clean supported package installation and truthful tag/lock/template
+pins on BOTH clones; verify actual imported bytes and lock-only rebuilding.
+Never patch installed package files or inject source into ordinary execution.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+recovered composition touches send, authentication and permission boundaries;
+source protocol tests do not establish genuine native or provider acceptance.
+
 ## v0.55.0 — 2026-10-25 (MINOR)
 
 Canonical release packages, complete discovery material and attributable diagnostics.

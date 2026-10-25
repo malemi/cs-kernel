@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.55.0`. Current HEAD status: untagged.** Both maintained
+- **Latest release tag: `v0.56.0`. Current HEAD status: tagged as `v0.56.0`.** Both maintained
   clones retain the same clean local55 package at `8ce4039`; public provenance
   and strict ordinary acceptance remain pending. The shared operational sign-off
   stays51. Existing tainted environment backups remain outside clone repositories.
