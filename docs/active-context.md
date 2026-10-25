@@ -43,7 +43,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   references block whole-task closure; [the plan](execution-plans/2026-10-24-stripe-payment-method-link.md)
   owns remaining gates. Public package pins and other engine services are preserved.
 
-- **Latest release tag: `v0.54.0`. Current HEAD status: tagged as `v0.54.0`.** These sentences
+- **Latest release tag: `v0.54.0`. Current HEAD status: untagged.** These sentences
   are parsed by `tests/test_release_consistency.py`; preserve their wording.
   Both maintained clones pin public `v0.52.0` at `3c0e78c`; active repair layers
   remain owner-held. Public `v0.53.0` is the isolated Stripe-only release; adoption is pending. MrCall's lock-only rebuild, authenticated identity and scoped
