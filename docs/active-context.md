@@ -14,13 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.57.0`. Current HEAD status: tagged as `v0.57.0`.** Both maintained
-  clones run the same clean local56 package at `5d372ea`; all158files, actual
-  installed48-hook controls, identities and lock-only rebuilds pass. Strict56 FULL
+- **Latest release tag: `v0.57.0`. Current HEAD status: untagged.** Both maintained
+  clones run the same clean local57 package at `e3e8799`; all158files, actual
+  installed48-hook/progress/capture controls, identities and lock-only rebuilds pass. Strict56 FULL
   was interrupted after genuine hook progress proved its validator incompatible;
   no successful FULL or public provenance is claimed. The shared operational sign-off
   stays51. Existing tainted environment backups remain outside clone repositories.
-- The active57 source candidate supports one exact native hook progress duplicate
+- The installed57 candidate supports one exact native hook progress duplicate
   only with its matching successful final and expands private capture to4MB.
   Progress grants no inspection. Automatic inventory delivery has48bounded slots. The original production snapshot reconstructs43parts; the later genuine56prefix
   validates with the repaired reader and preserves actual paired context. Genuine57native retention, affordability and BOTH-clone FULL remain required. Publication is authorized; no waiver is
@@ -73,7 +73,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Current release requires review/free verification of57, genuine BOTH-clone FULL, publication and public Git
+- Engine draft creation received HTML-escaped RFC identifiers and correctly hit
+  its exact-thread guard. The canonical narrow adapter fix passes24 real guarded
+  storage tests and source review, preserving owner/root/header checks. Actual
+  two-actor rollout remains gated on exact restart authority and activity/drain
+  handling; Café's engine also serves voice. No hosted adoption is claimed.
+
+- Current release requires the reviewed engine RFC-encoding fix deployment,
+  genuine BOTH-clone FULL, publication and public Git
   installation/lock verification. Failed candidates stay failed and immutable.
 - [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
   retains failed V27 and separate permission/ordinary-acceptance obligations;

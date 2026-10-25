@@ -627,3 +627,23 @@ finish existing publication,public Git adoption/rebuilds,version sweeps,signoff,
 doc-end/critic and separate final review/baseline gates. This amendment proves
 scope/order only: source repair,authority/risk clearance,actual hosted adoption,
 SMTP/provider outcomes,FULL and completion remain unestablished until verified.
+
+
+###57 package preflight receipt and engine dependency gate
+
+Unique57 is frozen at `e3e879974d6eab078395e51c2bf741e852821aa3`.
+Source and at-tag suites each end all67gates green. Independent metadata/package
+review passes all158Git/wheel/actual installed files on BOTH clones. Actual
+48hook, progress and4MBcapture controls, identities and local lock-only rebuilds
+pass; all protected configuration and nonkernel dependencies remain unchanged.
+Published-ref-only consistency needs57only; failed54/55/56 remain unpublished.
+
+Canonical engine adapter commit `9e82549d422c81c16c66c7dc2730b515c2f08ae3`
+contains only the owned normalization/test hunks; normal HEAD/index and foreign
+work remain intact. Actual Tool→guardedStorage and canonical-archive replay each
+pass24tests, including literal identifiers and invalid-scope zero-write controls.
+Source review is APPROVED. Exact actor-family postimages, rollout authority and
+Café LIVE voice/activity safety are still separate E2gates. No engine deployment,
+new paid FULL, public package provenance or final closure follows from these
+source/package receipts. Existing owned repair pauses remain until coordinated
+adoption/preflight or explicit scope resolution.
