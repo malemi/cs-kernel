@@ -65,6 +65,14 @@ with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"HOME": tmp})
         assert manifest["stream_sha256"] == hashlib.sha256(raw).hexdigest()
         assert manifest["child_identity"]["pid"] > 0
 
+        medium = encoded([INIT, {'type': 'assistant', 'text': 'x' * 2_023_527}, RESULT])
+        assert 2_000_000 < len(medium) < recovery.MAX_CAPTURE_BYTES == 4_000_000
+        attempt, directory, manifest, _ = run_child(root, medium)
+        assert not attempt.overflow and manifest['retention_complete']
+        assert (directory / 'native-stream.jsonl').read_bytes() == medium
+        with patch.object(recovery, 'MAX_CAPTURE_BYTES', 2_000_000):
+            attempt, directory, manifest, _ = run_child(root, medium)
+            assert attempt.overflow and not manifest['retention_complete']
         lifecycle = [INIT, RESULT, {"type": "system", "subtype": "task_notification"}, INIT, RESULT]
         raw = encoded(lifecycle)
         attempt, directory, manifest, _ = run_child(root, raw)

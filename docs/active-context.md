@@ -16,13 +16,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 - **Latest release tag: `v0.56.0`. Current HEAD status: untagged.** Both maintained
   clones run the same clean local56 package at `5d372ea`; all158files, actual
-  installed48-hook controls, identities and lock-only rebuilds pass. Strict
-  ordinary FULL is running; public provenance remains pending. The shared operational sign-off
+  installed48-hook controls, identities and lock-only rebuilds pass. Strict56 FULL
+  was interrupted after genuine hook progress proved its validator incompatible;
+  no successful FULL or public provenance is claimed. The shared operational sign-off
   stays51. Existing tainted environment backups remain outside clone repositories.
-- The active release candidate expands automatic inventory delivery from16 to48
-  bounded slots. The retained production snapshot needs43parts and reconstructs
-  exactly in free checks. Genuine native-host retention, affordability
-  and BOTH-clone FULL remain required. Publication is authorized; no waiver is
+- The active57 source candidate supports one exact native hook progress duplicate
+  only with its matching successful final and expands private capture to4MB.
+  Progress grants no inspection. Automatic inventory delivery has48bounded slots. The original production snapshot reconstructs43parts; the later genuine56prefix
+  validates with the repaired reader and preserves actual paired context. Genuine57native retention, affordability and BOTH-clone FULL remain required. Publication is authorized; no waiver is
   authorized. The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
   owns the bounded trial, immutable release and both-clone adoption obligations.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
@@ -72,7 +73,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Current release requires genuine BOTH-clone FULL, publication and public Git
+- Current release requires review/free verification of57, genuine BOTH-clone FULL, publication and public Git
   installation/lock verification. Failed candidates stay failed and immutable.
 - [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
   retains failed V27 and separate permission/ordinary-acceptance obligations;

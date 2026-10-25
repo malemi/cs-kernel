@@ -413,3 +413,217 @@ are active under `v56/full-installed-v56` and `v56/five-minute-control.jsonl`.
 FULL, publication, public-reference adoption/rebuilds, operational signoff and
 final doc-end/review/baseline remain pending. No successful business acceptance
 or public provenance is inferred from these component receipts.
+
+
+## Reopened M2/M4 — observed hook progress, unique57, strict acceptance
+
+This continuation supersedes the consumed56attempt and the preceding running56
+status. Local56 stays immutable and unpublished; its failed native stream is not
+successful FULL evidence. The lead stopped only the exact controlled paid job
+once independent free checks established that its retained events cannot pass.
+The lead independently verifies process, schedule and enrollment cleanup because
+the interrupted runner's result does not attest every finally-block action.
+Preserve all uncertain provider/engine effects; do not replay the old originals.
+
+### Named cause and narrowly observed compatibility
+
+The unfiltered1541-event retained prefix contains23system/hook_progress events,
+first at index800. Normal installed56hook_indices and delivered reject it before
+composition normalization or paging fallback. There is no existing progress
+normalizer in the kernel or current consumer. More model work cannot remove that
+existing rejection. The full source and exact56tag suites remain valid component
+evidence, but missed this real native-host shape.
+
+Actual complete evidence shows exactly ONE progress event on each of23hooks.
+Each is strictly between its matching start and successful final response, with
+identical session/hook identity/name/event. Its exact keys are the existing base
+hook keys plus stdout,stderr,output. Progress output equals stdout and equals the
+complete final stdout; stderr is empty and equals final stderr. The observed
+stdout lengths are8423through9184characters. Every progress-bearing hook has its
+final response; the retained prefix ends with no pending hook. The prefix has no
+whole-run success claim. Private content remains outside repository artifacts.
+
+This is substantial compatibility work at an evidence/security boundary. The
+canonical executor owns cs/operator_native_hooks.py and directly affected hook,
+composition and inventory-inspection regressions. Extend the EXISTING lifecycle
+validator, not a parallel transport or an event-filtering workaround. Admit only
+that single observed full-output progress duplicate per pending known hook.
+Require exact keys/types, unchanged bounds, matching identity/binding/order,
+nonempty output, output/stdout equality and exact successful final stdout/stderr
+equality. Reject generic chunk/prefix variants, repeated or empty progress,
+unknown shape, foreign sessions/hooks, progress before start/after final, missing
+final, changed final, wrong exit/outcome and duplicate identity. A progress event
+alone grants ZERO inspection, tool-result or lifecycle completion credit. Only
+existing complete genuine final responses may prove the exact paired inventory.
+Preserve every original event and original/projected hashes and removal indices.
+Current complete material, source/session/process bindings, first-effect ordering,
+selected-root reads, engine guards, budgets and business permissions stay intact.
+
+### Bounded private retention capacity in the same repair
+
+The actual retained prefix is1,915,431bytes before a successful terminal. The
+existing shared MAX_CAPTURE_BYTES=2,000,000 limits both aggregate stdout admission
+and the private diagnostic stream. Measured649realempty hook pairs cost at least
+563bytes each. Four further48-hook boundaries alone cost at least108,096bytes;
+a constructed continuation therefore exceeds2M at2,023,527bytes even before its
+native control/result/terminal records. This establishes a finite capacity risk,
+not a claim the interrupted actual run necessarily would have overflowed.
+
+The same executor owns only the shared constant in cs/operator_recovery.py and
+its direct capture/aggregate-overflow regressions: set the private bounded limit
+to4,000,000bytes. Preserve the existing single cap owner, exact raw event retention,
+redaction, private file/directory checks, overflow/failure flags and fail-closed
+ordinary/FULL proof. This changes neither model input/tool output limits nor
+business behavior or permissions. Add a labelled constructed complete native
+workflow based on the actual prefix and four further safe boundaries: old2M must
+refuse complete retention,4M must retain every byte. Test4M+1 overflow refusal,
+failed writes, no partial coverage and agreement of aggregate and stream limits.
+Never synthesize a terminal into real failed evidence. The Desktop consumer has
+no discovered independent2Mconstant; verify its unchanged native/source checks.
+These free checks and fresh review precede any paid execution.
+
+### Ordered free gates, ownership and release identity
+
+1. Fresh plan reviewer approves this exact observed shape and bounded authority.
+   Before coding, preserve and hash the complete original capture; retain all
+   failed56receipts. Reproduce56refusal from actual installed imports.
+2. The canonical executor proves the new hook validator against the unchanged
+   complete1541-event prefix, then verifies actual paired context reconstruction
+   before effects. Never change original source identities or synthesize a native
+   terminal. The interrupted prefix MUST remain unaccepted as whole-run FULL.
+   Add nearby negative controls for each condition above and altered/missing/
+   duplicate context parts and early effects. Old genuine fixtures remain valid.
+   Fresh integration review precedes dependent installation or paid execution.
+   Confirm the independent Desktop consumer remains byte-identical and all strict
+   checks unchanged; any necessary consumer edit requires its own scoped review.
+3. Run the existing focused hook/composition/inspection/causal checks and whole
+   kernel suite. Reconcile affected docs through doc-end and preserve historical
+   failure. Check remote refs again: the scoped exact57query returned no ref;
+   freeze the next unused MINOR, currently57, with truthful new metadata. Never
+   change installed56bytes, retarget published refs or make failed54/55/56public
+   test dependencies. Run the complete suite at the new immutable tag and prove
+   a checkout with published refs plus57only passes release consistency.
+4. The lead/adoption executor installs the exact frozen57artifact on BOTH clones
+   through supported package management, preserving dependencies, company rules,
+   modes, permissions, technical-mail suppression and controls. Verify full Git/
+   wheel/installed equality, all48actual hook commands, new progress controls,
+   local lock-only rebuilds, identities and actual actor/cron preflight. Keep the
+   original dirty source checkout untouched. Fresh candidate-bound package and
+   rendered-surface review is mandatory before another paid attempt.
+
+### Explicit lead resource decision and remaining mandatory delivery
+
+The lead owns the plan's acceptance spending decision. This amendment replaces
+its earlier lead-chosen USD16nominal ceiling with USD20for exactly ONE further
+named-cause repaired attempt after every free gate and independent cleanup pass.
+Prior reported native spend isUSD2.6874532. Interrupted56cost is unknown, never
+zero; conservatively reserve its existing USD4tick allowance. At most three new
+existing jobs retain USD4each: nominal aggregate admission isUSD18.6874532.
+The native flag is a soft guard, so this arithmetic is not a guaranteed provider
+bill. Preserve actual known costs, disclose unknowns and stop when the lead's
+spending threshold is reached. No production budget/configuration increase,
+engine migration, new business functionality, unattended loop, automatic retry,
+or more paid56execution is authorized by this amendment. A new failure requires
+another named cause, fresh free proof and explicit finite lead resource decision.
+
+Only genuine strict BOTH-clone FULL for the exact57installations closes M4.
+Then retain M5/M6: publish main plus57only under existing operator authority,
+verify public Git tag/commit and both supported public-origin installations,
+public lock-only rebuilds, full version sweep, joint operational-pin signoff,
+doc-end/critic, separate final review and checker-governed baseline advancement.
+This plan establishes scope, order and bounded lead admission; it establishes
+neither a source repair, genuine native compatibility, affordability, successful
+FULL, cleanup, publication nor final delivery. Evidence: private
+hook-progress-shape.json and v56/hook-progress-refutation.md/.json under the
+existing release-alignment evidence root.
+
+
+## Required engine dependency — scoped RFC representation compatibility
+
+The fresh brief approval in engine-encoding-brief-review.md governs this bounded
+continuation. The canonical57kernel shipping code and its existing free evidence
+remain frozen; this dependency adds no kernel workaround or new business feature.
+The retained failed56journal proves escaped thread/reply/reference operands differ
+from the trusted literal root before the correct unchanged guard. Model owner_id
+is not an input. Keep failed originals, private journals and uncertain effects.
+
+### E1 — canonical argument adapter and free guarded-storage proof
+
+The engine executor owns only engine/zylch/tools/gmail_tools.py and the smallest
+real argument/guard/storage regressions. Capture the current dirty file, modes,
+complete diff and hashes outside source before any edit; never overwrite unrelated
+work. Apply one deterministic pass for unambiguous HTML-escaped RFC identifiers
+in thread_id,in_reply_to,references before the EXISTING owner/root/header checks.
+Literal RFC and supported opaque provider IDs, order,body,subject,recipients and
+other arguments stay byte-identical. Reject CR/LF,malformed,ambiguous or double
+encoding; never invent missing headers/scope or replace a foreign root with the
+trusted one. Authenticated construction still owns owner_id; every guard and the
+actual storage route remains binding.
+
+Run real canonical adapter-to-guard-to-storage tests with disposable state and
+controlled external boundaries, no SMTP or model calls. Assert exact stored
+literal identities for escaped/literal same-root inputs and preserve opaque IDs
+and unrelated content. Exercise missing root/reply headers,foreign owner/root,
+changed References/In-Reply-To,malformed/double encoding and CR/LF; rejected cases
+must create no draft or SMTP effect. Fresh source integration review is required.
+If canonical commits are needed, stage ONLY the reviewed owned hunks using an
+isolated temporary Git index seeded from HEAD and an exact reviewed unified patch;
+prove its tree excludes prior dirty hunks and preserve the ordinary index/WIP.
+Never commit the entire pre-dirty file merely because this repair touches it.
+
+### E2 — exact two-actor authority, rollout and rollback gate
+
+The lead owns operational authority/risk and coordination. The pre-existing
+Desktop brief includes scoped engine delivery; its exact applicability to this
+repair, TWO affected service changes and any required restart must be established
+by a fresh rollout reviewer AFTER E1 provides a concrete reviewable free patch.
+Café's actor can serve LIVE voice or other active work: require current activity
+and drain/quiescence proof plus exact restart authority. Scoped source repair is
+not blanket authority to interrupt that traffic. If authority or safe inactivity
+cannot be established, bring only that indispensable decision to the CTO after
+the tested,reviewed patch and concrete rollback are ready; do not restart first.
+Support actor PID2737112 and Café actor PID2614933 are identity baselines, not
+permission to signal a reused PID. Recheck owner/profile,process start,actual
+loaded imports and current source before acting. If authority is unestablished
+or material risk unresolved, mark hosted deployment BLOCKED; continue feasible
+free source verification and preparation, without inventing operator approval.
+
+The adoption executor captures complete current actor source-family and activation
+preimages, guarded service/interpreter/environment descriptors and rollback.
+Build separate immutable preserved source families for these TWO actors only.
+Apply only reviewed owned adapter hunks to each exact actual actor baseline with
+context/hash guards; preserve every other deployed source byte and prior repair.
+A conflict blocks that actor instead of replacing its module with unrelated
+canonical WIP. Do not edit site-packages or installed clone code. Reuse the
+reviewed immutable-family activation mechanism, not a new unsupported overlay.
+Preserve the four peer engines,Qonto,keys,profile/data/schema,company rules,
+budgets,permissions,technical-mail suppression and current runtime controls.
+Coordinate in-flight affected work and record uncertainty; never replay it.
+
+Fresh complete baseline/delta/source-binding and proposed deployment manifests
+must review the exact new actor composition and rollback before activation.
+Use dedicated new raw reports/artifacts, never overwrite old hosted proofs or
+failed-run policy packets. Refresh the aggregate hosted manifest for TWO changed
+actor rows and unchanged peer/excluded rows. Any affected restart is bounded to
+its reviewed service identity; rollback restores captured activation and source
+family, never stale mailbox/business data. Verify unrelated fleet identities and
+controls are unchanged after actual adoption.
+
+### E3 — installed proof, candidate-bound FULL and existing delivery
+
+Before paid execution, exercise both actual actor engine adapter/guard/storage
+paths in disposable state without SMTP and verify normal loaded normalization
+read-only through the actual imports. Bind complete new payloads,source-load
+ordering and process identities; compare current guard/content behavior and
+preserved control/fleet state. Fresh hosted/package integration review, both57
+clone integrity/identity/local-lock checks and actual actor/cron preflight are
+required. Kernel work and independent free checks may proceed in parallel.
+
+The existing ONE57FULL admission and nominal lead USD20ceiling stay unchanged;
+this dependency authorizes no extra paid retry,production budget change or mail.
+Only a fresh genuine strict FULL on BOTH exact57installations against this
+actually loaded reviewed engine composition supplies business acceptance. Then
+finish existing publication,public Git adoption/rebuilds,version sweeps,signoff,
+doc-end/critic and separate final review/baseline gates. This amendment proves
+scope/order only: source repair,authority/risk clearance,actual hosted adoption,
+SMTP/provider outcomes,FULL and completion remain unestablished until verified.

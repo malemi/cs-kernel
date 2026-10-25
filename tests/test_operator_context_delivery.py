@@ -51,6 +51,36 @@ for bad in (b'<system-reminder>', b'</system-reminder>', b'x' * (delivery.SLOTS*
     try: delivery.parts(bad, raw, envelope, 'constructed-session')
     except ValueError: pass
     else: raise AssertionError('unsafe/capacity payload accepted')
+progress_events = fixture(values)
+for index in range(len(progress_events) - 1, 0, -1):
+    final = progress_events[index]
+    if final.get('subtype') == 'hook_response':
+        progress = {key: value for key, value in final.items() if key not in ('exit_code', 'outcome')}
+        progress.update(subtype='hook_progress', uuid=final['uuid'] + '-progress')
+        progress_events.insert(index, progress)
+assert delivery.delivered(progress_events, view, raw, envelope)
+progress_index = next(i for i, event in enumerate(progress_events) if event.get('subtype') == 'hook_progress')
+for mutation in ('empty', 'repeat', 'altered', 'foreign', 'before', 'after', 'missing_final', 'wrong_final', 'unknown', 'stderr', 'duplicate_uuid'):
+    bad = copy.deepcopy(progress_events)
+    item = bad[progress_index]
+    if mutation == 'empty': item.update(stdout='', output='')
+    elif mutation == 'repeat': bad.insert(progress_index, {**item, 'uuid': 'repeat-progress'})
+    elif mutation == 'altered': item.update(stdout='prefix', output='prefix')
+    elif mutation == 'foreign': item['session_id'] = 'foreign'
+    elif mutation == 'before': bad[progress_index-1], bad[progress_index] = bad[progress_index], bad[progress_index-1]
+    elif mutation == 'after': bad[progress_index+1], bad[progress_index] = bad[progress_index], bad[progress_index+1]
+    elif mutation == 'missing_final': del bad[progress_index+1]
+    elif mutation == 'wrong_final': bad[progress_index+1]['exit_code'] = 2
+    elif mutation == 'unknown': item['unknown'] = True
+    elif mutation == 'stderr': item['stderr'] = 'x'
+    elif mutation == 'duplicate_uuid': item['uuid'] = bad[progress_index-1]['uuid']
+    try:
+        assert not delivery.delivered(bad, view, raw, envelope), mutation
+    except ValueError:
+        pass
+first_final = progress_index + 1
+assert not delivery.delivered(progress_events[:first_final] + [effect] + progress_events[first_final:], view, raw, envelope)
+print('Observed full-output progress: exact final required;11 nearby mutations and pre-final effect refusal PASS')
 stale = {**envelope, 'source_identity': 'd' * 64}
 try:
     delivery.delivered(fixture(values), view, raw, stale)

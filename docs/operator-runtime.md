@@ -263,7 +263,7 @@ ordinary-run health has the separate current verification above.
 ## Optional complete discovery evidence
 
 The local [native-stream diagnostic candidate](execution-plans/2026-10-18-private-native-stream.md)
-retains ordered stdout lines admitted by the supervisor's existing two-million-byte
+retains ordered stdout lines admitted by the supervisor's bounded four-million-byte
 cap as `native-stream.jsonl` in its private per-attempt run directory. The saved
 bytes preserve whitespace and malformed data; the existing fallback-key redaction
 also applies before storage. `native-stream.json` records the retained-byte digest,
@@ -574,3 +574,19 @@ Task-list rows provide auxiliary context, never complete absence. Malformed or
 explicit failures refuse; ready clears only a read-failure marker. Fresh engine
 draft/send guards remain mandatory. In-progress/failed attempts hold their roots.
 Actor runner timing and native permission acceptance remain separate obligations.
+
+
+The hook validator admits one observed full-output `hook_progress` duplicate per
+pending known hook. Its exact identity/session/name/event and field set must
+match; output is nonempty, equals stdout and must exactly equal the later
+successful final stdout, with matching empty stderr. Missing, repeated, foreign,
+changed, out-of-order or otherwise unsupported progress refuses. Progress alone
+grants no context, tool-result or terminal coverage. The complete original
+stream and its projection hashes/removal indices remain retained. Only genuine
+successful final responses can establish paired inventory inspection.
+
+Private native stdout/stderr capture is bounded at4,000,000bytes. The unchanged
+1,915,431-byte genuine prefix plus a finite constructed continuation exceeds the
+old2MBbound; free tests verify exact4MBretention and refusal above it. Constructed
+continuations prove capacity only. The source repair's exact native-prefix replay
+does not supply a missing terminal or certify a new installed package's FULL.

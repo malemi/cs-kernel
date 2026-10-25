@@ -30,7 +30,7 @@ from .rpc import EngineClient
 from . import observability_causal as causal
 from .operator_native_lifecycle import continuation
 
-MAX_CAPTURE_BYTES = 2_000_000
+MAX_CAPTURE_BYTES = 4_000_000
 RUN_TIMEOUT_SECONDS = 3 * 3600
 MAIL_INTAKE_SECONDS = 180
 MAIL_INTAKE_CLOSE_SECONDS = 2
