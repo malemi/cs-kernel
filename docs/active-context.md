@@ -14,12 +14,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Both maintained clones run the same clean `v0.55.0` package: all158files
+- Both maintained clones run the same clean `v0.55.0` package: all 158 files
   match corrected local tag `8ce4039`. Its wheel and shipping inputs are identical
   to the tested `f446dee` snapshot; only release-test/docs provenance changed.
-  Both tag suites, installed checks, identities and local lock-only rebuilds pass.
-  Native55FULL failed: inventory publication works, but the agent read1of36pages
-  and stopped anticipating its USD4budget (actual costUSD1.3365518). Café/signup
+  Both complete tag suites, installed checks, identities and local lock-only rebuilds pass.
+  Native 55 FULL failed: inventory publication works, but the agent read 1 of 36 pages
+  and stopped anticipating its USD 4 budget (actual cost USD 1.3365518). Café/signup
   never ran. Publication requires successful FULL or an explicit operator waiver;
   no further paid attempt is underway. [The release plan](execution-plans/2026-10-25-canonical-release-alignment.md) retains the exact blocker and evidence.
 
