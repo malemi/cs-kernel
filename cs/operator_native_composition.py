@@ -263,11 +263,13 @@ def _composition(events, producer):
                         else:
                             require(set(patch) in ({'status'}, {'status', 'end_time'}))
                             require('end_time' not in patch or type(patch['end_time']) is int)
-                        require(patch.get('status') in ('completed', 'failed'))
+                        require(patch.get('status') in ('completed', 'failed'),
+                                'native_task_killed' if patch.get('status') == 'killed' else 'native_composition_invalid')
                         task['state'] = patch['status']
                 else:
                     require(event.get('tool_use_id') == task['tool_use_id'])
                     status = event.get('status')
+                    require(status != 'stopped', 'native_task_stopped')
                     if task['kind'] == 'foreground':
                         require(active and task['state'] == 'started' and status in ('completed', 'failed') and
                                 task['result_index'] is None, 'foreground_notification_invalid')

@@ -10,6 +10,27 @@
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 
+
+## 2026-10-26 — superseded pre-E9 working state
+
+- Desktop consumer ca175b9 and the exact reviewed61.2 policy are active; actual
+  installed preflight passes. Fresh strictc47fa38e is in progress under the
+  runner-owned window. Fixture authority and financial limits are unchanged.
+  Interrupted4faf6e38 retains its proven latched notice-persistence failure.
+
+- Installed E8 accounts for the complete serialized notice projection. Source,
+  at-tag, boundary/retry tests and independent review pass. Both installed
+  copied-backlog preflights pass with zero outward calls; strict FULL is pending.
+
+1. Complete current strictc47fa38e BOTH FULL and independently verify its result.
+
+2. Diagnose any new failure with Astra; preserve unknown costs and effects.
+
+3. Complete authorized public adoption and doc-end/critic/separate final review.
+
+4. Keep cs-diagnose manual and require native Gmail proof before reconciliation.
+
+
 ## 2026-10-26 — Superseded template-only patch comparison
 
 - Installed0.61.1 contains the MIME identity, remote-error and shared-time repairs.

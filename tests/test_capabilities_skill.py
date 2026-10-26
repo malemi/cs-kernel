@@ -308,6 +308,16 @@ def scheduled_surfaces(old: Path) -> None:
     assert hashlib.sha256(partial_receipt).hexdigest() == RELEASE_REVIEW["partial_review_receipt_sha256"]
     for partial, digest in RELEASE_REVIEW["partials"].items():
         assert hashlib.sha256((ROOT / partial).read_bytes()).hexdigest() == digest
+    timeout_review = RELEASE_REVIEW["bash_timeout_review"]
+    timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
+    assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
+    operator_source = (TPL / ".claude/skills/cs-operator/SKILL.md.j2").read_bytes()
+    timeout_current = b"Bash `timeout: 2730000` for discovery and review"
+    timeout_prior = b"Bash `timeout: 600000` for discovery and review"
+    assert operator_source.count(timeout_current) == 1
+    assert timeout_prior not in operator_source
+    assert hashlib.sha256(operator_source).hexdigest() == timeout_review["after_sha256"]
+    assert hashlib.sha256(operator_source.replace(timeout_current, timeout_prior, 1)).hexdigest() == timeout_review["before_sha256"]
     assert RELEASE_REVIEW["baseline_commit"] == BASE_COMMIT
     assert set(RELEASE_REVIEW["templates"]) == set(SCHEDULED)
     for shape in ("generic", "as-built"):
@@ -348,8 +358,17 @@ def scheduled_surfaces(old: Path) -> None:
                 if rel.endswith("/SKILL.md"):
                     check(f"unknown scheduled edit remains refused: {rel}",
                           not preserves_scheduled_contract(rel, before, after + b"Unreviewed instruction.\n"))
+                    timeout = b"timeout: 2730000" if rel.endswith("cs-operator/SKILL.md") else b"timeout: 600000"
                     check(f"changed reviewed guidance remains refused: {rel}",
-                          not preserves_scheduled_contract(rel, before, after.replace(b"timeout: 600000", b"timeout: 120000", 1)))
+                          timeout in after and not preserves_scheduled_contract(
+                              rel, before, after.replace(timeout, b"timeout: 120000", 1)))
+                    if rel.endswith("cs-operator/SKILL.md"):
+                        check("operator discovery/review timeout is exactly 2730000 once",
+                              after.count(b"Bash `timeout: 2730000` for discovery and review") == 1)
+                        for altered in (b"600000", b"2730001", b"7200000"):
+                            check(f"unreviewed operator timeout remains refused: {altered.decode()}",
+                                  not preserves_scheduled_contract(rel, before, after.replace(
+                                      timeout, b"timeout: " + altered, 1)))
                     check(f"changed business identity remains refused: {rel}",
                           not preserves_scheduled_contract(rel, before, after.replace(b"Identity is ALWAYS", b"Identity may change", 1)))
                 if rel == ".claude/skills/cs-operator/SKILL.md":

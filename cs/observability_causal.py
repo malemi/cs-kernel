@@ -31,6 +31,7 @@ PAIRS = {
     'native_capture_capacity': {'native_capture_overflow'}, 'process_wait': {'process_wait_timeout'},
     'native_terminal_presence': {'terminal_unavailable'}, 'native_terminal_error': {'terminal_error'},
     'native_terminal_reason': {'terminal_rejected'},
+    'native_task_completion': {'native_task_killed', 'native_task_stopped'},
     'discovery_artifact_presence': {'artifact_missing'}, 'discovery_artifact_access': {'artifact_unreadable'},
     'discovery_artifact_encoding': {'artifact_invalid'}, 'discovery_identity': {'identity_mismatch'},
     'discovery_payload_digest': {'digest_mismatch'}, 'discovery_payload_shape': {'shape_invalid'},

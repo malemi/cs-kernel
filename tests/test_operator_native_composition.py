@@ -112,6 +112,30 @@ class CompositionTests(unittest.TestCase):
                 self.assertIs(actual['clean_terminal'], both)
                 self.assertEqual(attempt.health_failure, '' if both else 'discovery_transport_invalid')
 
+    def test_structured_interruption_remains_rejected_without_summary_inference(self):
+        from cs import operator_recovery as recovery
+        for status, expected in [('killed', 'native_task_killed'), ('unknown', 'native_composition_invalid')]:
+            events = constructed('automatic')
+            events[1]['message']['content'][0]['input']['command'] = '.venv/bin/python -m cs review --json'
+            updated = next(e for e in events if e.get('patch', {}).get('status') == 'completed')
+            updated['patch']['status'] = status
+            notification = next(e for e in events if e.get('subtype') == 'task_notification')
+            notification.update(status='stopped', summary='PRIVATE timeout text')
+            self.assertIsNone(composition(events, producer()))
+            self.assertEqual(rejection(events, producer())['reason'], expected)
+            attempt = recovery.Attempt(0, events, native_producer=producer(), ordinary_native=True)
+            self.assertFalse(recovery._successful(attempt))
+            self.assertEqual(attempt.causal['cause'], expected if status == 'killed' else 'terminal_unavailable')
+            self.assertNotIn('PRIVATE', json.dumps(attempt.causal))
+            foreign = producer(); foreign['sha256'] = '0' * 64
+            self.assertNotEqual(rejection(events, foreign)['reason'], 'native_task_killed')
+        events = constructed('foreground')
+        events[3].update(status='stopped', summary='time limit')
+        self.assertEqual(rejection(events, producer())['reason'], 'native_task_stopped')
+        events = constructed('automatic')
+        next(e for e in events if e.get('subtype') == 'task_notification')['summary'] = 'killed by timeout'
+        self.assertNotIn(rejection(events, producer())['reason'], ('native_task_killed', 'native_task_stopped'))
+
     def test_rejection_reports_predicate_without_event_values(self):
         events = constructed()
         events[3]['status'] = 'failed'

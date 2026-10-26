@@ -26,13 +26,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
   source/assignment guards; original schedules remain in the maintenance preimage.
-- Desktop consumer ca175b9 and the exact reviewed61.2 policy are active; actual
-  installed preflight passes. Fresh strictc47fa38e is in progress under the
-  runner-owned window. Fixture authority and financial limits are unchanged.
-  Interrupted4faf6e38 retains its proven latched notice-persistence failure.
-- Installed E8 accounts for the complete serialized notice projection. Source,
-  at-tag, boundary/retry tests and independent review pass. Both installed
-  copied-backlog preflights pass with zero outward calls; strict FULL is pending.
+- Desktop consumer ca175b9 and the exact reviewed61.2 policy are active.
+  Strictc47fa38e failed native composition after a structured Bash task kill;
+  child exit0 did not establish completed work. Both clones remain61.2 under
+  the owned maintenance hold. Fixture authority and financial limits are unchanged.
+- Installed E8 accounts for the complete serialized notice projection; both
+  copied-backlog preflights pass with zero outward calls. E9 source adds finite
+  native interruption diagnostics and child-local Bash lifetime alignment.
+  Its blind log check detects interruption and preserves the unknown upstream
+  reason; source integration and fresh BOTH FULL remain required.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -98,8 +100,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Complete current strictc47fa38e BOTH FULL and independently verify its result.
-2. Diagnose any new failure with Astra; preserve unknown costs and effects.
+1. Complete reviewed E9 source gates, freeze a new immutable candidate and
+   adopt both clones, including the actual canonical operator timeout instruction.
+2. Run one freshly admitted strict BOTH FULL and independently verify its result.
+3. Diagnose any new failure with Astra; preserve unknown costs and effects.
    Require green free gates and finite review before any further paid attempt.
-3. Complete authorized public adoption and doc-end/critic/separate final review.
-4. Keep cs-diagnose manual and require native Gmail proof before reconciliation.
+4. Complete authorized public adoption and doc-end/critic/separate final review.
+5. Keep cs-diagnose manual and require native Gmail proof before reconciliation.

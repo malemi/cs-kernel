@@ -66,6 +66,7 @@ if args == ['auth', 'status', '--json']:
           'orgId': 'payer-organization', 'apiKeySource': 'ANTHROPIC_API_KEY',
           'untrusted': 'sk-do-not-persist-this-secret'}))
     sys.exit(0)
+assert {os.environ.get(name) for name in ('BASH_DEFAULT_TIMEOUT_MS', 'BASH_MAX_TIMEOUT_MS')} == {'2730000'}
 operator_rules = set(os.environ.get('FAKE_ALLOW_RULES', '').split('|'))
 assert args[0] == '-p' and args[2] == '--verbose'
 if os.environ.get('FAKE_SEND'):
@@ -661,13 +662,19 @@ with tempfile.TemporaryDirectory() as temporary:
     other = root / 'other' / 'versions' / binary.name
     other.parent.mkdir(parents=True)
     shutil.copyfile(binary, other); other.chmod(0o700)
-    for case, ordinary in [('direct', True), ('custom', False), ('wrapper', True), ('mismatch', True)]:
+    for case, ordinary, ambient in [(case, ordinary, ambient) for case, ordinary in [('direct', True), ('custom', False), ('wrapper', True), ('mismatch', True), ('killed', True), ('unknown', True)] for ambient in (None, '120000', 'invalid', '7200000')]:
         wrapped = case in ('wrapper', 'mismatch')
         ack = root / ('bound-' + case)
         argv_log = root / ('argv-' + case)
-        events = constructed()
+        env_log = root / ('env-' + case)
+        events = constructed('automatic' if case in ('killed', 'unknown') else 'foreground')
+        if case in ('killed', 'unknown'):
+            events[1]['message']['content'][0]['input']['command'] = '.venv/bin/python -m cs review --json'
+            next(e for e in events if e.get('patch', {}).get('status') == 'completed')['patch']['status'] = case
+            next(e for e in events if e.get('subtype') == 'task_notification').update(status='stopped', summary='PRIVATE timeout text')
         events[0]['claude_code_version'] = binary.name
-        driver = ('import json,time,pathlib,sys\n'
+        driver = ('import json,time,pathlib,sys,os\n'
+                  'pathlib.Path(' + repr(str(env_log)) + ').write_text(json.dumps({key:os.environ.get(key) for key in ("BASH_DEFAULT_TIMEOUT_MS","BASH_MAX_TIMEOUT_MS")}))\n'
                   'pathlib.Path(' + repr(str(argv_log)) + ').write_text(json.dumps(sys.argv[1:]))\n'
                   'events=json.loads(' + repr(json.dumps(events)) + ')\n'
                   'print(json.dumps(events[0]),flush=True)\n'
@@ -698,18 +705,80 @@ with tempfile.TemporaryDirectory() as temporary:
              patch.object(operator_health, 'inspection_failure', return_value=''), \
              patch.dict(os.environ, {'CS_OPERATOR_ACCEPTANCE_RECEIPT':'', 'HOME':str(root),
                         'CS_OPERATOR_NATIVE_BINARY':str(other if case == 'mismatch' else binary) if wrapped else ''}):
+            for name in ('BASH_DEFAULT_TIMEOUT_MS', 'BASH_MAX_TIMEOUT_MS'):
+                if ambient is None:
+                    os.environ.pop(name, None)
+                else:
+                    os.environ[name] = ambient
+            parent_environment = dict(os.environ)
             launch = str(launcher if wrapped else binary)
             attempt = operator_recovery._run(launch, ['Write'], prompt='/cs-operator' if ordinary else '/cs-signup')
+            assert json.loads(env_log.read_text()) == {name: '2730000' if ordinary else ambient for name in ('BASH_DEFAULT_TIMEOUT_MS', 'BASH_MAX_TIMEOUT_MS')}
+            assert dict(os.environ) == parent_environment
             assert commands[0][0] == launch
             assert attempt.ordinary_native is ordinary
             if wrapped:
                 assert json.loads(argv_log.read_text())[:2] == ['--max-budget-usd', '4.00']
             if case == 'mismatch':
                 assert pins.call_count >= 2 and attempt.native_producer is None and attempt.result is None
+            elif case in ('killed', 'unknown'):
+                assert attempt.code == 0 and attempt.result is None and not operator_recovery._successful(attempt)
+                assert attempt.causal['cause'] == ('native_task_killed' if case == 'killed' else 'terminal_unavailable')
+                if ambient is None:
+                    from cs.observability_producers import store_for
+                    source = store_for(settings)
+                    records = source.events(limit=200)['events']
+                    matching = [row for row in records if row.get('attempt_id') == attempt.diagnostic_context['attempt_id']]
+                    if case == 'killed':
+                        causes = [row['causal'] for row in matching if row.get('causal')]
+                        assert causes and causes[-1]['cause'] == 'native_task_killed'
+                        assert causes[-1]['refs']['child_event_id'] == attempt.child_event_id
+                    retained = os.environ.get('BASH_TIME_EVIDENCE_DIR')
+                    if retained:
+                        Path(retained).mkdir(parents=True, exist_ok=True)
+                        Path(retained, case + '.json').write_text(json.dumps(matching, indent=2))
+                    if case == 'killed':
+                        import subprocess, time
+                        from cs.monitor_config import Component, MonitorConfig
+                        manifest = root / 'manifest.toml'
+                        manifest.write_text('[company]\nslug="sample"\n[engine]\nowner_uid="offline-owner"\n')
+                        cli_env = {k:v for k,v in os.environ.items() if not k.startswith(('CS_', 'ENGINE_', 'EMAIL_'))}
+                        cli_env.update(CS_MANIFEST=str(manifest), HOME=str(root), CS_ENGINE_OWNER_UID='offline-owner')
+                        with patch.object(operator_recovery.subprocess, 'Popen', actual_popen):
+                            cli = subprocess.run([sys.executable, '-m', 'cs', 'logs', 'events', '--local', '--json', '--limit', '200'], env=cli_env, capture_output=True, text=True, timeout=10)
+                            assert cli.returncode == 0, cli.stderr
+                            assert causes[-1] in [row.get('causal') for row in json.loads(cli.stdout)['local']['events']]
+                            cfg = MonitorConfig(mode='filesystem', monitor_id='a'*32, owner_uid='offline-owner', state_dir=str(root/'monitor'), expected_start_utc=int(time.time()), components=[Component(id='operator', kind='kernel', local_root=str(source.root))])
+                            cfgpath = root / 'monitor.json'; cfgpath.write_text(cfg.model_dump_json()); cfgpath.chmod(0o600)
+                            collector = subprocess.run([sys.executable, '-m', 'cs', 'monitor', 'once', '--config', str(cfgpath)], env=cli_env, capture_output=True, text=True, timeout=10)
+                        assert collector.returncode == 1, collector.stdout + collector.stderr
+                        inbox = json.loads((root/'monitor'/'problems.json').read_text())
+                        assert any(row['evidence'].get('causal') == causes[-1] for row in inbox['problems'])
+                        diagnostic = operator_recovery.diagnostics.describe(attempt, {}, {})
+                        assert diagnostic['cause'] == 'native_task_killed'
+                        notice = operator_recovery.operator_notices.render(settings, {'status':'stopped', 'reason':diagnostic['cause'], 'diagnostic':diagnostic})[1]
+                        assert 'upstream reason is unknown' in notice and 'BASH_DEFAULT_TIMEOUT_MS' in notice
+                        assert 'PRIVATE' not in json.dumps(inbox) + cli.stdout + notice
+                        if retained:
+                            Path(retained, 'actual-cli.json').write_text(cli.stdout)
+                            Path(retained, 'actual-inbox.json').write_text(json.dumps(inbox, indent=2))
             elif ordinary:
                 assert pins.call_count >= 2 and attempt.native_producer
                 assert attempt.lifecycle['proof']['version'] == 2 and attempt.result == events[-1]
+                if case == 'direct' and ambient is None and os.environ.get('BASH_TIME_EVIDENCE_DIR'):
+                    from cs.observability_producers import store_for
+                    directory = Path(os.environ['BASH_TIME_EVIDENCE_DIR']); directory.mkdir(parents=True, exist_ok=True)
+                    records = [row for row in store_for(settings).events(limit=200)['events'] if row.get('attempt_id') == attempt.diagnostic_context['attempt_id']]
+                    (directory/'healthy.json').write_text(json.dumps(records, indent=2))
             else:
                 assert pins.call_count == 0 and attempt.native_producer is None
                 assert attempt.result == events[-1]
 print('PASS: ordinary metadata uses exact v2 terminal; real local ELF prelaunch/child pin, custom prompt compatibility. Constructed events, no native/provider acceptance.')
+
+from jinja2 import Environment, FileSystemLoader
+rendered_operator = Environment(loader=FileSystemLoader(['cs/templates/project/.claude/skills/cs-operator', 'cs/templates/partials'])).get_template('SKILL.md.j2').render()
+assert 'Bash `timeout: 2730000` for discovery and review' in rendered_operator
+assert '`run_in_background`' in rendered_operator and 'do not combine commands' in rendered_operator
+assert 'pipe or redirect their output' in rendered_operator and 'wrap them in another program' in rendered_operator
+assert '.venv/bin/python -m cs review --json' in rendered_operator
+print('PASS: actual rendered discovery/review Bash timeout 2730000 and literal separate unwrapped commands')

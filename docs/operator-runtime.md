@@ -116,6 +116,16 @@ seconds, for 2730 seconds total. Both worker admission ceilings follow those
 actual payload deadlines. Standalone projection remains capped at 3600 seconds;
 a caller's inherited earlier deadline still wins.
 
+The reviewed E9 launcher correction binds both `BASH_DEFAULT_TIMEOUT_MS` and
+`BASH_MAX_TIMEOUT_MS` to 2730000 in the ordinary `/cs-operator` child's copied
+environment. The canonical operator instruction requests that same Bash tool
+timeout for discovery/review. Custom prompts and the parent environment retain
+their existing behavior. This aligns host command lifetime with bounded kernel
+work; it grants no new kernel, suite, financial or authority allowance. Actual
+rendered instruction adoption and genuine native conformance remain gates in
+the current release plan. A structured killed/stopped task remains a failure,
+with its upstream cause unknown unless independently evidenced.
+
 The reviewed Desktop acceptance consumer bounds the native MrCall/Café/signup
 jobs at 6600/1800/600 seconds and its suite at 10200 seconds. Resume age and
 terminal elapsed validation use that same finite suite envelope; native terminal

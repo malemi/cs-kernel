@@ -203,6 +203,8 @@ def describe(attempt: Any, identity: dict[str, Any], ctx: dict[str, Any],
         cause = 'output_limit'
     elif attempt.malformed:
         cause = 'invalid_output'
+    elif getattr(attempt, 'causal', None) and attempt.causal.get('check') == 'native_task_completion':
+        cause = attempt.causal['cause']
     elif not result:
         cause = 'no_result'
     out['cause'] = cause

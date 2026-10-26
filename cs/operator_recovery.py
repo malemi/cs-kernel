@@ -369,6 +369,8 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
     env = os.environ.copy()
     from . import operator_discovery_receipt
     ordinary_native = prompt.split(maxsplit=1)[0:1] == ["/cs-operator"]
+    if ordinary_native:
+        env.update(BASH_DEFAULT_TIMEOUT_MS="2730000", BASH_MAX_TIMEOUT_MS="2730000")
     native_binary = env.get("CS_OPERATOR_NATIVE_BINARY", "")
     pinned = (operator_discovery_receipt.pin_native(native_binary or claude_bin)
               if ordinary_native or os.environ.get("CS_OPERATOR_ACCEPTANCE_RECEIPT") else None)
@@ -508,6 +510,13 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
                         exit_code=code, evidence_ref=run_directory)
         causal.child(child_event)
     maintain(settings, active_directory=run_directory)
+    _successful(attempt)
+    if getattr(attempt, 'causal', None) and attempt.causal['check'] == 'native_task_completion':
+        with diagnostic_context(json.loads(env['CS_DIAGNOSTIC_CONTEXT'])):
+            cause_event = diagnostic_emit(settings, 'context', 'failed', reason='incomplete-input',
+                complete=False, method='operator.native.terminal', causal=causal.selected())
+            causal.cause(cause_event)
+            attempt.causal = causal.selected()
     _write_acceptance_receipt(attempt, child_identity)
     if _successful(attempt) and prompt.split(maxsplit=1)[0:1] == ["/cs-operator"]:
         attempt.health_failure = attempt.health_failure or operator_health.assess(
@@ -608,11 +617,18 @@ def _prework_refusal(attempt: Attempt) -> bool:
 def _successful(attempt: Attempt) -> bool:
     """A zero exit without a clean terminal result is not completed work."""
     result = attempt.result
+    interrupted = None
+    if result is None and attempt.needs_composition:
+        from .operator_native_composition import rejection
+        rejected = rejection(attempt.events, attempt.native_producer)
+        if rejected and rejected['reason'] in ('native_task_killed', 'native_task_stopped'):
+            interrupted = rejected['reason']
     facts = dict(process_exit=attempt.code, malformed=attempt.malformed, overflow=attempt.overflow, timed_out=attempt.timed_out)
     checks = ((attempt.code != 0, 'process_exit', 'process_nonzero', 'process'),
               (attempt.malformed, 'native_capture_json', 'native_capture_malformed', 'native'),
               (attempt.overflow, 'native_capture_capacity', 'native_capture_overflow', 'native'),
               (attempt.timed_out, 'process_wait', 'process_wait_timeout', 'process'),
+              (interrupted is not None, 'native_task_completion', interrupted, 'native'),
               (result is None, 'native_terminal_presence', 'terminal_unavailable', 'native'),
               (result is not None and result.get('is_error') is not False, 'native_terminal_error', 'terminal_error', 'native'),
               (result is not None and result.get('terminal_reason') in ('api_error', 'budget_exhausted', 'max_turns', 'error'), 'native_terminal_reason', 'terminal_rejected', 'native'))

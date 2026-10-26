@@ -249,3 +249,20 @@ but keep that proof separate from production causation. Close the underlying
 defect only with failure evidence, a supported cause and a correction verified
 on the same path. Repeating provider attempts until one passes leaves this
 obligation open.
+
+
+## Native task interruption and financial limits
+
+A native child can exit0 after a required Bash task was killed or stopped.
+Retain the first structured lifecycle rejection as `native_task_completion`
+with `native_task_killed` or `native_task_stopped`; preserve strict failure.
+The interruption identifies a local failure, not the upstream reason. Route
+the investigation to the retained native stream and the child-local host Bash
+foreground/background lifetime settings. Do not interpret model summaries as
+validated timeout causes or label a time allowance as financial exhaustion.
+
+The E9 controlled producer-to-CLI/inbox check lets a blind analyst recognize
+interruption despite child exit0 and retain an unknown upstream cause. Healthy
+and unknown snapshots without task completion remain outcome-unknown; they do
+not certify whole-task health. Genuine native timeout behavior and BOTH-clone
+acceptance remain separate requirements in the canonical release plan.

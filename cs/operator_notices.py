@@ -9,6 +9,8 @@ from .config import Settings
 
 
 SUBJECT_CAUSES = {
+    "native_task_killed": "native Bash task killed",
+    "native_task_stopped": "native Bash task stopped",
     "execution_operation_failed": "draft or contextual action not confirmed",
     "execution_phase_incomplete": "required native execution evidence missing",
     "discovery_inspection_incomplete": "complete discovery inspection missing",
@@ -44,6 +46,8 @@ LEGACY_CAUSES = {
 }
 
 CAUSES = {
+    "native_task_killed": "A structured native Bash task was killed before completion. The upstream reason is unknown.",
+    "native_task_stopped": "A structured native Bash task stopped before completion. The upstream reason is unknown.",
     "execution_operation_failed": "An attempted native draft or contextual action failed or did not retain its result; completion is not confirmed.",
     "execution_phase_incomplete": "Required native operator phases did not retain their actual results.",
     "discovery_inspection_incomplete": "Complete discovery inspection was not verified before drafting or the end of the run.",
@@ -118,6 +122,11 @@ def _repair(diagnostic: dict[str, Any], context: dict[str, Any], *, backup: bool
                 "and exact-thread assignment authority. Preserve legitimate human holds and all sending permissions. "
                 "A model exit-zero does not establish completed work. This alert and its delivery retry use no AI model. "
                 "Review existing drafts and Sent before any manual replay.\n" + check)
+    if cause in ("native_task_killed", "native_task_stopped"):
+        return ("Inspect the private native stream and the host Bash foreground/background lifetime settings "
+                "BASH_DEFAULT_TIMEOUT_MS and BASH_MAX_TIMEOUT_MS. The structured evidence identifies interruption, "
+                "not its upstream reason. Preserve incomplete required reads and existing permissions; "
+                "a process exit-zero cannot establish completion.\n" + check)
     if cause == "mail_intake_failed":
         return ("Check this engine profile's connectivity, authentication and mailbox synchronization errors. "
                 "The engine must support sync.run with explicit scope=email and return that scope with "
@@ -233,7 +242,7 @@ def _detail(settings: Settings, diagnostic: dict[str, Any], *, backup: bool, com
                         ("account_email", "organization_id", "workspace_id", "creator_user_id", "key_fingerprint"))
     technical_health = cause in (
         "mailbox_read_incomplete", "assignment_read_incomplete", "discovery_evidence_invalid",
-        "execution_read_failed", "execution_operation_failed", "execution_phase_incomplete", "discovery_inspection_incomplete", "supervisor_failed")
+        "execution_read_failed", "execution_operation_failed", "execution_phase_incomplete", "discovery_inspection_incomplete", "supervisor_failed", "native_task_killed", "native_task_stopped")
     if not account_known and not technical_health:
         lines.append("The affected provider account could not be identified from the captured evidence.")
     for field in ("exit_code", "http_status", "error_code", "terminal_reason", "session_id", "time_utc", "reset_at", "limit_window", "key_limit_remaining", "key_limit", "run_budget_usd"):
