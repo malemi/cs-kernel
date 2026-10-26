@@ -10,6 +10,10 @@
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 
+## 2026-10-26 — Previous local candidate release marker
+
+- **Latest release tag: `v0.61.1`. Current HEAD status: untagged.**
+
 ## 2026-10-26 — Strict attempt before persistence-failure confirmation
 
 - Desktop consumer ca175b9 and its exact reviewed10200-second policy are active;

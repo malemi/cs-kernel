@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+## v0.61.2 — 2026-10-26 (PATCH)
+
+Keep accumulated operational problems writable within their existing bounds.
+
+- Use matching non-indented serialization for projection accounting and writes.
+- Fit each candidate against the complete actual envelope, including owner,
+  paths, label and remaining count; preserve the 220000-byte list allowance and
+  256 KiB final hard cap. An oversized base preserves prior files and pending work.
+- Keep evidence/incident retention and queue retry identity intact. Pending notices
+  clear only after durable recording succeeds; technical SMTP remains disabled.
+- Real backlog and fallback-owner regressions cover exact boundaries, retry,
+  idempotence, atomicity, private modes and unchanged ordinary outcomes.
+
+Migration: install the new immutable tag on BOTH maintained clones and rebuild
+locks. Preserve company-authored rules, exact modes and existing finite limits.
+New processes retry retained notices through the existing startup path. Retained
+business effects remain uncertain; this correction grants no business replay.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+inherited send/authentication composition remains unshipped, and the prior
+candidate's startup persistence failure made its strict acceptance impossible.
+
 ## v0.61.1 — 2026-10-26 (PATCH)
 
 Stamp the existing managed/legacy standing-authority contract truthfully.
