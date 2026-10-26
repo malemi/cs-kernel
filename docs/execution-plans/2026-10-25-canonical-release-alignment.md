@@ -2451,3 +2451,26 @@ doc-end/doc-critic, final review and public provenance obligations remain open.
 Coverage: complete inbox module/tests and diagnosis; producer 744–840, brief 401–514,
 plan 2201–2386 plus lead-approved scope handoff. Lead explicitly approved bounded
 partial historical-plan use; unrelated historical body was not re-investigated.
+
+#### E8 current delivery evidence — 2026-10-26 20:36 UTC
+
+Source commit3f704ba and immutable0.61.2/1189037 include the reviewed complete
+serialized-envelope correction. The first compact-only repair was REVISE after
+an independent real50000-character fallback-owner case; its superseded receipts
+remain retained. Corrected6focused/19inbox tests, health/recovery, full source and
+at-tag suites pass; each whole suite includes six genuine golden builds.
+Both normal clones match all159 files and fresh local Git lock rebuilding.
+Installed private-copy backlog checks pass with zero outward calls: MrCall two
+pending notices, max219811 bytes; Cafe one pending, max220167 bytes. Original
+queues and stores remain untouched by those probes. Synthetic accidental test
+state was proven newly created by birth times/exact inventory, hash-copied to
+private quarantine and removed only from its owned paths; other state is retained.
+
+Astra composition/one-finite-attempt admission and separate exact transaction
+reviews pass. Actual installed preflight and policy-last activation pass for
+policy149007d4; original owned hold restored exactly into runner acceptance.
+Fresh strict run c47fa38e71330b7ac26056b7b4f82fb1 started20:35:36UTC at
+`v61p2/full-installed-v61p2-20261026`. It is incomplete, unsigned and running;
+publication, public provenance, final reviews and baseline remain open. Prior
+interrupted native charge remains unknown without a terminal record; configured
+financial limits are unchanged and no zero-cost or business no-effects claim is made.

@@ -15,7 +15,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.61.2`. Current HEAD status: untagged.**
-  Both normal clones match immutable0.61.1/32d9867:159files, exact identities
+  Both normal clones match immutable0.61.2/1189037:159files, exact identities
   and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
   Operational sign-off remains51; genuine FULL and public Git provenance are open.
 - Installed0.61.1 contains the MIME identity, remote-error and shared-time repairs.
@@ -28,13 +28,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
   source/assignment guards; original schedules remain in the maintenance preimage.
-- Desktop consumer ca175b9 and its exact reviewed10200-second policy are active;
-  actual installed preflight passes. Fixture authority and financial limits are
-  unchanged. Latest strict4faf6e38 is interrupted: pending notice persistence
-  latched failure before native work, making a passing outcome impossible.
-- Source-only E8 aligns notice serialization with its existing size accounting.
-  Backlog/retry and exact-boundary regressions pass; independent review and
-  complete harness are in progress. Both installed clones remain0.61.1.
+- Desktop consumer ca175b9 and the exact reviewed61.2 policy are active; actual
+  installed preflight passes. Fresh strictc47fa38e is in progress under the
+  runner-owned window. Fixture authority and financial limits are unchanged.
+  Interrupted4faf6e38 retains its proven latched notice-persistence failure.
+- Installed E8 accounts for the complete serialized notice projection. Source,
+  at-tag, boundary/retry tests and independent review pass. Both installed
+  copied-backlog preflights pass with zero outward calls; strict FULL is pending.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -100,8 +100,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Finish E8 review/free gates and supported immutable BOTH-clone adoption.
-2. Review/preflight the exact composition and finite admission before a fresh
-   strict BOTH FULL. Preserve unknown costs/effects; no blind retries.
+1. Complete current strictc47fa38e BOTH FULL and independently verify its result.
+2. Diagnose any new failure with Astra; preserve unknown costs and effects.
+   Require green free gates and finite review before any further paid attempt.
 3. Complete authorized public adoption and doc-end/critic/separate final review.
 4. Keep cs-diagnose manual and require native Gmail proof before reconciliation.

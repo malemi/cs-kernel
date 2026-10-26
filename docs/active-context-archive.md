@@ -10,6 +10,30 @@
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 
+## 2026-10-26 — Uniform forward adoption before policy activation
+
+- Desktop consumer ca175b9 is active; the current policy still binds61.1 pending
+  exact reviewed61.2 activation/preflight. Owned maintenance guards remain held.
+  Fixture authority and financial limits are unchanged. Strict4faf6e38 is
+  interrupted after its proven latched notice-persistence failure.
+
+## 2026-10-26 — Forward persistence correction before uniform adoption
+
+  Both normal clones match immutable0.61.1/32d9867:159files, exact identities
+  and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
+
+- Desktop consumer ca175b9 and its exact reviewed10200-second policy are active;
+  actual installed preflight passes. Fixture authority and financial limits are
+  unchanged. Latest strict4faf6e38 is interrupted: pending notice persistence
+  latched failure before native work, making a passing outcome impossible.
+- Source-only E8 aligns notice serialization with its existing size accounting.
+  Backlog/retry and exact-boundary regressions pass; independent review and
+  complete harness are in progress. Both installed clones remain0.61.1.
+
+1. Finish E8 review/free gates and supported immutable BOTH-clone adoption.
+2. Review/preflight the exact composition and finite admission before a fresh
+   strict BOTH FULL. Preserve unknown costs/effects; no blind retries.
+
 ## 2026-10-26 — Previous local candidate release marker
 
 - **Latest release tag: `v0.61.1`. Current HEAD status: untagged.**
