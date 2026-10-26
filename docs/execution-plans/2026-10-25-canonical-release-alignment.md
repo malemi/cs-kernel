@@ -2476,7 +2476,7 @@ interrupted native charge remains unknown without a terminal record; configured
 financial limits are unchanged and no zero-cost or business no-effects claim is made.
 
 ### E9 — align native Bash lifetime with the approved bounded work
-Status: proposed amendment of docs/execution-plans/2026-10-25-canonical-release-alignment.md; fresh affected plan APPROVED precedes coding. Historical body, approved brief and E5–E8 remain intact.
+Status: approved amendment; M1 integration APPROVED. Source and exact-tag harnesses pass with six genuine golden builds each. BOTH adoption, native acceptance and publication remain pending. Historical body, approved brief and E5–E8 remain intact.
 Classification: substantial runtime/prompt behavior repair; no fast path. Lead owns integration/adoption; one kernel executor owns only the launcher, exact operator template, focused existing tests and finite diagnostic propagation.
 
 Evidence and exact sources
@@ -2517,3 +2517,5 @@ Restore only the current owned maintenance hold immediately before the runner ta
 Genuine current-candidate FULL success alone admits remaining already-authorized publication work; doc-end/doc-critic, public tag/lock proof, separate final review and baseline advancement retain their existing gates.
 
 Does not establish: implementation/GREEN, a real Claude timeout experiment, guaranteed2730s completion, provider no-effects, current fixture admissibility, sufficient future funds, BOTH acceptance, publication or release completion. No source/config/provider/model writes occurred in planning. Scoped source excerpts were authorized by the lead; unrelated historical plan body was not re-investigated.
+
+E9 M1 verification references: `/tmp/mrcall-ai-kit/20261025-release-alignment/v62/bash-time-integration-review.md`, `source-harness-r2-result.json`, `at-tag-harness-result.json` and `blind-bash-logs-report.md`. Immutable local candidate `v0.62.0` is `d1fa8c8218cb852093d6c551dd552cab20309afc`; all159 package files match its wheel. These component results do not certify installed adoption, native conformance or FULL.

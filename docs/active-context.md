@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.62.0`. Current HEAD status: tagged as `v0.62.0`.**
+- **Latest release tag: `v0.62.0`. Current HEAD status: untagged.**
   Both normal clones match immutable0.61.2/1189037:159files, exact identities
   and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
   Operational sign-off remains51; genuine FULL and public Git provenance are open.
