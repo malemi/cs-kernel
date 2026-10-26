@@ -32,9 +32,16 @@ rewriting one byte of stored mail.
 """
 from __future__ import annotations
 
+import base64
+import binascii
+import quopri
 import re
+from email.header import decode_header
 
 _WS = re.compile(r"\s+")
+_MIME_WORD = re.compile(r"=\?([^?\s]+)\?([bBqQ])\?([^?\s]*)\?=")
+_COMPLETE_IDS = re.compile(r"<[^<>\s@]+@[^<>\s@]+>(?:\s+<[^<>\s@]+@[^<>\s@]+>)*", re.ASCII)
+_MAX_HEADER_CHARS = 16384
 
 # Exactly what one pass of `html.escape(id, quote=True)` produces, inverted in
 # one pass. One pass, not a loop to a fixed point: a single escaping is what
@@ -67,7 +74,51 @@ def normalize_key(key: str | None) -> str:
     A caller that trusts a stored key and skips `thread_key` must still pass it
     through here, or the two disagree on exactly the rows this module exists to
     rejoin."""
-    return _flat(key)
+    try:
+        return _flat(key)
+    except (ValueError, LookupError, UnicodeError, binascii.Error):
+        return ""
+
+
+def _decode_identity_header(raw: str) -> str:
+    """Decode complete bounded MIME identities strictly before splitting References."""
+    if len(raw) > _MAX_HEADER_CHARS:
+        raise ValueError("identity header exceeds bound")
+    if "=?" not in raw and "?=" not in raw:
+        return unescape_ids(raw)
+    words = list(_MIME_WORD.finditer(raw))
+    if not words:
+        raise ValueError("malformed encoded identity")
+    end = 0
+    for word in words:
+        if end and word.start() == end:
+            raise ValueError("malformed encoded word boundary")
+        plain = raw[end:word.start()]
+        if plain.strip() and not _COMPLETE_IDS.fullmatch(unescape_ids(plain.strip())):
+            raise ValueError("partial unencoded identity")
+        charset, encoding, payload = word.groups()
+        if not payload:
+            raise ValueError("empty encoded identity")
+        if encoding.lower() == "b":
+            decoded = base64.b64decode(payload, validate=True)
+            if base64.b64encode(decoded).decode("ascii") != payload:
+                raise ValueError("noncanonical encoded identity")
+        else:
+            if re.search(r"=(?![0-9a-fA-F]{2})", payload):
+                raise ValueError("malformed quoted identity")
+            decoded = quopri.decodestring(payload.replace("_", " "))
+        decoded.decode(charset, errors="strict")
+        end = word.end()
+    plain = raw[end:]
+    if plain.strip() and not _COMPLETE_IDS.fullmatch(unescape_ids(plain.strip())):
+        raise ValueError("partial unencoded identity")
+    pieces = []
+    for value, charset in decode_header(raw):
+        pieces.append(value.decode(charset or "ascii", errors="strict") if isinstance(value, bytes) else value)
+    result = unescape_ids("".join(pieces).strip())
+    if any(ord(c) < 32 or ord(c) > 126 for c in result) or not _COMPLETE_IDS.fullmatch(result):
+        raise ValueError("incomplete decoded identity")
+    return result
 
 
 def _flat(raw: str | None) -> str:
@@ -79,8 +130,11 @@ def _flat(raw: str | None) -> str:
     """
     if not raw:
         return ""
+    if "=?" in str(raw) or "?=" in str(raw):
+        if len(str(raw)) > _MAX_HEADER_CHARS or any(ord(c) < 32 and c not in "\r\n\t" for c in str(raw)):
+            raise ValueError("identity header exceeds bound or contains controls")
     flat = _WS.sub(" ", str(raw).replace("\r", " ").replace("\n", " ")).strip()
-    return unescape_ids(flat)
+    return _decode_identity_header(flat)
 
 
 def thread_key(
@@ -96,12 +150,13 @@ def thread_key(
     two customers' conversations, and a merge is how one of them stops being
     raised.
     """
-    refs = _flat(references)
-    if refs:
-        parts = refs.split()
-        if parts:
-            return parts[0]
-    reply_to = _flat(in_reply_to)
-    if reply_to:
-        return reply_to
-    return _flat(message_id)
+    try:
+        refs = _flat(references)
+        if refs:
+            return refs.split()[0]
+        reply_to = _flat(in_reply_to)
+        if reply_to:
+            return reply_to
+        return _flat(message_id)
+    except (ValueError, LookupError, UnicodeError, binascii.Error):
+        return ""

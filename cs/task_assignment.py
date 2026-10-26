@@ -309,7 +309,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     first_timeout_event = {}
     budget_stats = {selected.engine_owner_uid: dict(dispatched=0, returned=0, timed_out=0,
                     deferred=0, serial_read_ms=0, failed=0, first=None, event=None,
-                    shared_deferred=False) for _, selected in accounts}
+                    shared_deferred=False, failure_event=None) for _, selected in accounts}
 
     def budget_summary():
         for _, selected in accounts:
@@ -319,9 +319,12 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 stats = budget_stats[selected.engine_owner_uid]
                 first = stats['first'] or {}
                 origin = first.get('bound_origin')
-                cause = ('shared_deadline_exhausted' if origin == 'shared_deadline' else
-                         'request_timeout' if origin == 'request_timeout' else
-                         'batch_deadline' if origin == 'batch_deadline' else
+                actual = first.get('cause')
+                expired = origin if actual == 'worker_timeout' else actual
+                cause = ('shared_deadline_exhausted' if expired == 'shared_deadline' else
+                         'request_timeout' if expired == 'request_timeout' else
+                         'batch_deadline' if expired == 'batch_deadline' else
+                         'read_failed' if actual in rpc_reads.CAUSES and actual not in {'connection_setup_timeout'} else
                          'timeout_origin_unknown' if stats['timed_out'] else
                          'deadline_capacity_deferred' if stats['shared_deferred'] else
                          'capacity_deferred' if stats['deferred'] else
@@ -338,7 +341,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     shared_deadline_selected=origin == 'shared_deadline',
                     batch_deadline_selected=origin == 'batch_deadline', request_timeout_selected=origin == 'request_timeout',
                     bound_ms=first.get('bound_ms', 0))
-                reference = stats['event'] or (first_timeout_event.get('event_id') if cause == 'capacity_deferred' else None)
+                reference = stats['event'] or stats['failure_event'] or (first_timeout_event.get('event_id') if cause == 'capacity_deferred' else None)
                 refs = {**value['refs'], 'cause_event_id': reference}
                 value = validate({**value, 'refs': refs, 'missing_refs': [key for key in refs if refs[key] is None]})
                 emit(selected, 'authority', 'failed' if failed else 'result',
@@ -467,9 +470,14 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 if causal:
                     refs = {**causal['refs'], 'cause_event_id': timeout_events.get(uid) if deferred else None}
                     causal = validate({**causal, 'refs': refs, 'missing_refs': [name for name, value in refs.items() if value is None]})
+                metadata = error_metadata(outcome.error)
+                if info['cause'] in {'remote_invalid_params', 'remote_error'}:
+                    metadata = {'error_class': 'EngineError', **({'error_code': info['remote_error_code']} if 'remote_error_code' in info else {})}
                 event = emit(selected_accounts[uid][1], 'authority', 'failed', reason='timeout' if isinstance(outcome.error, (TimeoutError, AssignmentUnavailable)) else 'unknown',
                     root_id=key, command='assignment', method='tasks.assignment.project', elapsed_ms=info['elapsed_ms'],
-                    **error_metadata(outcome.error), **({'causal': causal} if causal else {}))
+                    **metadata, **({'causal': causal} if causal else {}))
+                if event and not isinstance(outcome.error, AssignmentUnavailable) and budget_stats[uid]['failure_event'] is None:
+                    budget_stats[uid]['failure_event'] = event['event_id']
                 if event and isinstance(outcome.error, TimeoutError) and uid in blocked:
                     timeout_events.setdefault(uid, event['event_id'])
                     first_timeout_event.setdefault('event_id', event['event_id'])

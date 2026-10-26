@@ -30,21 +30,25 @@ class ReadOutcome:
     diagnostic: dict | None = None
 
 
-CAUSES = {'request_timeout', 'batch_deadline', 'shared_deadline', 'worker_timeout', 'connection_failure', 'transport_unavailable', 'connection_setup_timeout', 'account_timeout_deferred', 'capacity_timeout_deferred', 'read_deferred_after_failure'}
+CAUSES = {'remote_invalid_params', 'remote_error', 'request_timeout', 'batch_deadline', 'shared_deadline', 'worker_timeout', 'connection_failure', 'transport_unavailable', 'connection_setup_timeout', 'account_timeout_deferred', 'capacity_timeout_deferred', 'read_deferred_after_failure'}
 BOUND_ORIGINS = {'request_timeout', 'batch_deadline', 'shared_deadline', 'not_attempted'}
 
 
-def diagnostic(cause, started, bound, remaining=None, *, bound_origin=None):
-    return validate_diagnostic({'cause': cause, 'bound_origin': bound_origin or cause,
+def diagnostic(cause, started, bound, remaining=None, *, bound_origin=None, remote_error_code=None):
+    value = {'cause': cause, 'bound_origin': bound_origin or cause,
         'elapsed_ms': min(10**12, max(0, round((time.monotonic() - started) * 1000))),
         'bound_ms': min(10**12, max(0, round(bound * 1000))),
-        'remaining_ms': None if remaining is None else min(10**12, max(0, round(remaining * 1000)))})
+        'remaining_ms': None if remaining is None else min(10**12, max(0, round(remaining * 1000)))}
+    if remote_error_code is not None:
+        value['remote_error_code'] = remote_error_code
+    return validate_diagnostic(value)
 
 
 def validate_diagnostic(value):
     if value is None:
         return None
-    if (not isinstance(value, dict) or set(value) != {'cause', 'bound_origin', 'elapsed_ms', 'bound_ms', 'remaining_ms'}
+    if (not isinstance(value, dict) or set(value) not in ({'cause', 'bound_origin', 'elapsed_ms', 'bound_ms', 'remaining_ms'},
+                {'cause', 'bound_origin', 'elapsed_ms', 'bound_ms', 'remaining_ms', 'remote_error_code'})
             or value['cause'] not in CAUSES or value['bound_origin'] not in BOUND_ORIGINS):
         raise ValueError('Invalid read diagnostic')
     for key in ('elapsed_ms', 'bound_ms', 'remaining_ms'):
@@ -53,6 +57,10 @@ def validate_diagnostic(value):
             continue
         if type(item) is not int or not 0 <= item <= 10**12:
             raise ValueError('Invalid read timing')
+    if 'remote_error_code' in value:
+        code = value['remote_error_code']
+        if type(code) is not int or not -(2**53) < code < 2**53:
+            raise ValueError('Invalid remote error code')
     return dict(value)
 
 
@@ -115,8 +123,9 @@ async def _read(settings, method, requests, request_timeout, batch_timeout, dead
                 value = await asyncio.wait_for(client.call(method, params, timeout=bound), bound)
                 outcomes[key] = ReadOutcome(value=value)
             except Exception as exc:
-                cause = selected if isinstance(exc, TimeoutError) else 'connection_failure' if isinstance(exc, ConnectionError) else 'transport_unavailable'
-                outcomes[key] = ReadOutcome(error=exc, diagnostic=diagnostic(cause, request_started, bound, limit-time.monotonic(), bound_origin=selected))
+                cause = ('remote_invalid_params' if exc.code == -32602 else 'remote_error') if isinstance(exc, rpc.EngineError) else selected if isinstance(exc, TimeoutError) else 'connection_failure' if isinstance(exc, ConnectionError) else 'transport_unavailable'
+                code = exc.code if isinstance(exc, rpc.EngineError) and type(exc.code) is int and -(2**53) < exc.code < 2**53 else None
+                outcomes[key] = ReadOutcome(error=exc, diagnostic=diagnostic(cause, request_started, bound, limit-time.monotonic(), bound_origin=selected, remote_error_code=code))
                 if isinstance(exc, (TimeoutError, ConnectionError)):
                     fatal.set()
                     return

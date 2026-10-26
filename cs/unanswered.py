@@ -108,6 +108,10 @@ from .addr_match import AddrSet
 from .config import Settings
 
 
+DISCOVERY_OBSERVATION_SECONDS = 2710
+DISCOVERY_TOTAL_SECONDS = 2730
+DISCOVERY_SWEEP_SECONDS = 2700
+
 #: Bucket precedence when one address has several open conversations. An
 #: address is reported at the strongest thing true of it: a conversation nobody
 #: answered outranks one they came back to, which outranks a robot, which
@@ -873,9 +877,9 @@ def _discovery_incomplete(out, reason):
     return value
 
 
-def _scheduled_discovery(*, worker_command=None, observation_seconds=510,
+def _scheduled_discovery(*, worker_command=None, observation_seconds=DISCOVERY_OBSERVATION_SECONDS,
                         cleanup_seconds=10, publication_seconds=5, final_seconds=5,
-                        total_seconds=540):
+                        total_seconds=DISCOVERY_TOTAL_SECONDS):
     import os
     from pathlib import Path
     import secrets
@@ -888,7 +892,7 @@ def _scheduled_discovery(*, worker_command=None, observation_seconds=510,
     started = time.monotonic()
     if not (0 < observation_seconds and 0 < cleanup_seconds and 0 < publication_seconds
             and 0 < final_seconds and observation_seconds + cleanup_seconds
-            + publication_seconds + final_seconds <= total_seconds <= 540):
+            + publication_seconds + final_seconds <= total_seconds <= DISCOVERY_TOTAL_SECONDS):
         raise ValueError("invalid discovery lifecycle")
     observation_deadline = started + observation_seconds
     cleanup_deadline = observation_deadline + cleanup_seconds
@@ -1311,7 +1315,7 @@ def _discovery_worker(payload):
             or path.name != "checkpoint.json"):
         raise ValueError("discovery worker identity differs")
     deadline = payload["deadline"]
-    if type(deadline) not in (float, int) or not time.monotonic() < deadline <= time.monotonic() + 510:
+    if type(deadline) not in (float, int) or not time.monotonic() < deadline <= time.monotonic() + DISCOVERY_SWEEP_SECONDS:
         raise ValueError("discovery worker deadline differs")
     context_raw = os.environ.get("CS_OPERATOR_HEALTH_CONTEXT")
     if context_raw:
@@ -1325,7 +1329,7 @@ def _discovery_worker(payload):
         _save_checkpoint(path, {"binding": binding, "out": _discovery_encode(out),
                                "phase": phase, "complete": False})
     completion_deadline = payload["completion_deadline"]
-    if type(completion_deadline) not in (float, int) or not deadline < completion_deadline <= time.monotonic() + 510:
+    if type(completion_deadline) not in (float, int) or not deadline < completion_deadline <= time.monotonic() + DISCOVERY_OBSERVATION_SECONDS:
         raise ValueError("discovery completion bound differs")
     value = sweep(settings, 14, deadline=deadline, owned_process_group=os.getpid(),
                   checkpoint=checkpoint, completion_deadline=completion_deadline)

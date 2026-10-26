@@ -17,6 +17,14 @@ from cs.operator_health import identity
 
 
 class ScheduledDiscoveryTests(unittest.TestCase):
+    def test_production_discovery_envelope(self):
+        defaults = unanswered._scheduled_discovery.__kwdefaults__
+        self.assertEqual([defaults[key] for key in ("observation_seconds", "cleanup_seconds",
+            "publication_seconds", "final_seconds", "total_seconds")], [2710, 10, 5, 5, 2730])
+        self.assertEqual(unanswered.DISCOVERY_SWEEP_SECONDS, 2700)
+        with self.assertRaises(ValueError):
+            unanswered._scheduled_discovery(total_seconds=2731)
+
     def fixture(self):
         settings = SimpleNamespace(engine_owner_uid='local-owner', email_address='owner@example.test',
             self_email_set=set(), system_sender_set=set(), db_path=Path('/unused'))
@@ -247,6 +255,12 @@ raise SystemExit(unanswered._discovery_main())
             self.assertFalse(result['value']['assignment_incomplete'])
             self.assertIsNone(result['value']['read_incomplete'])
             self.assertEqual(result['configuration']['owner_uid'],'local-owner')
+            production = unanswered._scheduled_discovery(worker_command=lambda fd:
+                [sys.executable, '-B', str(bootstrap), str(fd)])
+            self.assertTrue(production['normal'])
+            self.assertTrue(production['cleanup_complete'])
+            self.assertEqual(production['code'], 0)
+
             source=bootstrap.read_text().replace('import os,sys', 'import os,sys,time\nfrom datetime import datetime,timezone')
             source=source.replace('gmail_archive.inbound_recent=lambda *a:[]',
                 "gmail_archive.inbound_recent=lambda *a:[dict(email='person@example.test',thread_key='<one@example.test>',date=datetime.now(timezone.utc),subject='retained')]")

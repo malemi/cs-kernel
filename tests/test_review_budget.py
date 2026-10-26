@@ -18,6 +18,17 @@ from cs.operator_health import identity
 
 
 class BudgetTests(unittest.TestCase):
+    def test_production_lifecycle_envelope(self):
+        self.assertEqual((review.WORK_SECONDS, review.CLEANUP_SECONDS, review.TOTAL_SECONDS), (2700, 10, 2715))
+        self.assertEqual(review._supervise.__kwdefaults__["work_seconds"], 2700)
+        self.assertEqual(review._supervise.__kwdefaults__["total_seconds"], 2715)
+        self.assertEqual(task_assignment.PROJECTION_SECONDS, 3600)
+        from cs import rpc_reads
+        self.assertEqual((rpc_reads.ASSIGNMENT_REQUEST_SECONDS, rpc_reads.ASSIGNMENT_BATCH_SECONDS,
+                          rpc_reads.CONCURRENCY, task_assignment.PER_ACCOUNT_CONCURRENCY), (150, 180, 4, 1))
+        self.assertEqual(review.WORK_SECONDS, unanswered.DISCOVERY_SWEEP_SECONDS)
+        self.assertLess(2715 + 2730 + 687, 6600)
+
     def settings(self):
         return Settings(_env_file=None, engine_owner_uid="budget-owner")
 
@@ -302,6 +313,56 @@ raise SystemExit(cli.cmd_review(argparse.Namespace(json=True)))
             with patch.dict(os.environ, {'CS_OPERATOR_HEALTH_CONTEXT': json.dumps(context)}):
                 with self.assertRaises(WorksetError):
                     observe(self.settings(), 'review', review._public(review._incomplete({}, 'draft timeout')))
+
+
+class CumulativeTransportTests(unittest.IsolatedAsyncioTestCase):
+    async def test_real_review_worker_healthy_cumulative_red_green(self):
+        import asyncio
+        import base64
+        import websockets
+        calls = []
+        token = 'fixture.' + base64.urlsafe_b64encode(json.dumps({'exp': int(time.time()) + 3600}).encode()).decode().rstrip('=') + '.fixture'
+        async def handler(ws):
+            try:
+                async for raw in ws:
+                    frame = json.loads(raw)
+                    calls.append(frame['params']['thread_key'])
+                    await asyncio.sleep(.2)
+                    await ws.send(json.dumps({'jsonrpc': '2.0', 'id': frame['id'], 'result': {'healthy': True}}))
+            except websockets.ConnectionClosed:
+                pass
+        async with websockets.serve(handler, '127.0.0.1', 0) as server:
+            selected = Settings(_env_file=None, engine_owner_uid='budget-owner',
+                engine_ws_url=f'ws://127.0.0.1:{server.sockets[0].getsockname()[1]}')
+            code = r"""import json,sys,time
+from pathlib import Path
+from cs import config,review,rpc_reads
+p=json.load(sys.stdin)
+rpc_reads.CLOSE_SECONDS=.01
+s=config.Settings.model_validate(p['settings'])
+out={'_known_roots':['<one@test>','<two@test>','<three@test>'],'tasks':[]}
+review._save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=out,phase='reads',complete=False))
+for root in out['_known_roots']:
+    result=rpc_reads.read_many(s,'tasks.assignment.project',{root:{'thread_key':root}},
+        request_timeout=1,batch_timeout=1,deadline=p['deadline'],token_cache={'budget-owner':TOKEN})[root]
+    if result.error:raise RuntimeError('healthy inventory not completed')
+    out['tasks'].append({'id':root})
+    review._save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=out,phase='reads',complete=False))
+review._save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=out,phase='complete',complete=True))
+"""
+            command = (sys.executable, '-B', '-c', 'TOKEN=' + repr(token) + '\n' + code)
+            for allowance, complete in ((.65, False), (2.5, True)):
+                calls.clear()
+                result = await asyncio.to_thread(review._supervise, selected, worker_command=command,
+                    work_seconds=allowance, cleanup_seconds=.3, total_seconds=allowance + .8)
+                if complete:
+                    self.assertNotIn('review_incomplete', result)
+                    self.assertEqual([row['id'] for row in result['tasks']], ['<one@test>', '<two@test>', '<three@test>'])
+                    self.assertEqual(calls, ['<one@test>', '<two@test>', '<three@test>'])
+                else:
+                    self.assertIn('review_incomplete', result)
+                    self.assertTrue(all(row['hold_auto_reply'] for row in result['assignments']))
+                    self.assertLess(len(result['tasks']), 3)
 
 
 if __name__ == '__main__':

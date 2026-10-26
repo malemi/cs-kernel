@@ -51,8 +51,8 @@ from . import _time, campaign, draft_state, engine_view, gmail_drafts, rpc
 # looking exactly like the 25-minute run this fix was written from.
 CAMPAIGN_CONTACTS_TIMEOUT_SECONDS = 60
 ENGINE_SETTLED_TIMEOUT_SECONDS = 120
-TOTAL_SECONDS = 540
-WORK_SECONDS = 525
+TOTAL_SECONDS = 2715
+WORK_SECONDS = 2700
 CLEANUP_SECONDS = 10
 MAX_CHECKPOINT_BYTES = 32 * 1024 * 1024
 _CONTEXT = ContextVar("review_context", default=None)

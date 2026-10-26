@@ -1353,6 +1353,7 @@ step "57. an HTML-escaped message id is the same conversation"
 # with no stored mail rewritten — and a clean id, a literal `&` included, is
 # left exactly as it is.
 if "$VENV/bin/python" "$ROOT/tests/test_thread_key_escaped.py"; then echo "OK"; else echo "FAIL: escaped message ids no longer rejoin their conversation"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_thread_key_mime.py"; then echo "OK"; else echo "FAIL: complete MIME header identities or malformed draft holds regressed"; FAIL=1; fi
 
 step "58. sending a draft retires its Gmail mirror"
 # The mirror is a review surface; the send happens on the engine's copy and
@@ -1375,6 +1376,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_operator_health.py"; then echo "OK"; els
 if "$VENV/bin/python" "$ROOT/tests/test_causal_logging.py"; then echo "OK"; else echo "FAIL: causal supervisor evidence lost across ordinary diagnostics"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_causal_contract_edges.py"; then echo "OK"; else echo "FAIL: causal predicate distinctions or private diagnostic failure safety"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_rpc_reads.py"; then echo "OK"; else echo "FAIL: bounded RPC transport or process cleanup regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_rpc_remote_diagnostics.py"; then echo "OK"; else echo "FAIL: structured remote rejection was lost or changed bounded reads"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_rpc_read_origins.py"; then echo "OK"; else echo "FAIL: assignment timeout origin lost across transport or problem inbox"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_inventory_view.py"; then echo "OK"; else echo "FAIL: semantic inventory projection, private binding or native inspection"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_notices.py"; then echo "OK"; else echo "FAIL: operator notices hide stopped work or its remedy"; FAIL=1; fi
@@ -1398,6 +1400,8 @@ if "$VENV/bin/python" "$ROOT/tests/test_live_instructions_fixture.py"; then echo
 
 step "61. engine assignment consumers preserve exact scope and hold uncertainty"
 if "$VENV/bin/python" "$ROOT/tests/test_task_assignment.py"; then echo "OK"; else echo "FAIL: assignment consumer lifecycle or authority boundary regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_review_budget.py"; then echo "OK"; else echo "FAIL: finite review work or cleanup boundaries regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_scheduled_discovery_budget.py"; then echo "OK"; else echo "FAIL: discovery work, publication or cleanup boundaries regressed"; FAIL=1; fi
 
 step "62. the legal-research skill arrives whole on every host, and its helper only counts days"
 # The first kernel skill with supporting files: four references, a provenance

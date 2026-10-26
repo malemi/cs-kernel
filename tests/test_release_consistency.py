@@ -81,11 +81,16 @@ HEAD_TAGGED_RE = re.compile(
 
 # Published release tags never move. Pin each object so a force-move cannot
 # be described away in prose.
-IMMUTABLE_TAG_TARGETS = {
+# Frozen but unpublished candidates are not required public Git refs.
+# Preserve their objects whenever these exact local refs are available.
+LOCAL_CANDIDATE_TARGETS = {
     "v0.60.0": "9c69b9936f96531e430f36c6535eb5a909592291",
     "v0.59.0": "ec7d84f8414e0df441bf9eef9a0c57c2f628626b",
     "v0.58.0": "77bef421623fbb85b2263d8dbbad676a5d7bf019",
     "v0.57.0": "e3e879974d6eab078395e51c2bf741e852821aa3",
+}
+
+IMMUTABLE_TAG_TARGETS = {
     "v0.53.0": "4f4f027fac51d676b369548021a387d136be4917",
     "v0.52.0": "3c0e78c533db91a17bd390657de58cf6931b5c73",
     "v0.51.0": "560920726ee17b56249a56c0ca992dc20b20fb55",
@@ -391,6 +396,22 @@ def check_immutable_tag_targets(actual: dict[str, str]) -> list[str]:
     return sorted(actual)
 
 
+
+def collect_tag_targets(tags: list[str], resolve=None):
+    resolve = tag_commit if resolve is None else resolve
+    published = {tag: resolve(tag) for tag in IMMUTABLE_TAG_TARGETS}
+    candidates = {tag: resolve(tag) for tag in LOCAL_CANDIDATE_TARGETS if tag in tags}
+    return published, candidates
+
+
+def check_local_candidate_targets(actual: dict[str, str]) -> list[str]:
+    for tag, value in actual.items():
+        assert tag in LOCAL_CANDIDATE_TARGETS, f"unknown local candidate {tag}"
+        expected = LOCAL_CANDIDATE_TARGETS[tag]
+        assert value == expected, f"frozen local candidate {tag} moved: expected {expected}, got {value}"
+    return sorted(actual)
+
+
 def check_release_state(
     active: str, tags: list[str], head_tags: list[str]
 ) -> tuple[str, list[str]]:
@@ -452,6 +473,39 @@ def prove_release_state_negatives(
         "immutable release tag v0.5.0 moved",
     )
     return 2
+
+
+
+def prove_candidate_ref_resolution() -> int:
+    """A real public-only Git ref set must not require unshipped candidates."""
+    objects = Path(_git("rev-parse", "--path-format=absolute", "--git-common-dir")[0]) / "objects"
+    with tempfile.TemporaryDirectory() as directory:
+        repo = Path(directory) / "refs.git"
+        subprocess.run(["git", "init", "--bare", str(repo)], check=True, capture_output=True)
+        (repo / "objects/info/alternates").write_text(str(objects) + "\n")
+        def git(*args, input=None):
+            return subprocess.run(["git", "--git-dir", str(repo), *args], input=input,
+                                  text=True, capture_output=True)
+        commands = "".join(f"create refs/tags/{tag} {value}\n" for tag, value in IMMUTABLE_TAG_TARGETS.items())
+        assert git("update-ref", "--stdin", input=commands).returncode == 0
+        def resolve(tag):
+            result = git("rev-parse", f"{tag}^{{commit}}")
+            assert result.returncode == 0, f"missing Git release tag {tag}"
+            return result.stdout.strip()
+        published, candidates = collect_tag_targets(list(IMMUTABLE_TAG_TARGETS), resolve)
+        check_immutable_tag_targets(published)
+        assert candidates == {} and check_local_candidate_targets(candidates) == []
+        tag = next(iter(LOCAL_CANDIDATE_TARGETS))
+        assert git("update-ref", f"refs/tags/{tag}", LOCAL_CANDIDATE_TARGETS[tag]).returncode == 0
+        _, candidates = collect_tag_targets([*IMMUTABLE_TAG_TARGETS, tag], resolve)
+        assert check_local_candidate_targets(candidates) == [tag]
+        assert git("update-ref", f"refs/tags/{tag}", next(iter(IMMUTABLE_TAG_TARGETS.values()))).returncode == 0
+        _, moved = collect_tag_targets([*IMMUTABLE_TAG_TARGETS, tag], resolve)
+        _expect_assertion(lambda: check_local_candidate_targets(moved), "frozen local candidate")
+        published_tag = next(iter(IMMUTABLE_TAG_TARGETS))
+        assert git("update-ref", "-d", f"refs/tags/{published_tag}").returncode == 0
+        _expect_assertion(lambda: collect_tag_targets([], resolve), "missing Git release tag")
+    return 4
 
 
 # --------------------------------------------------------------------------- #
@@ -548,8 +602,9 @@ def main() -> None:
     head_tags = version_tags_at_head()
     latest, head_tags = check_release_state(active, tags, head_tags)
     tag_versions = check_tag_versions(tags)
-    actual_targets = {tag: tag_commit(tag) for tag in IMMUTABLE_TAG_TARGETS}
+    actual_targets, candidate_targets = collect_tag_targets(tags)
     immutable = check_immutable_tag_targets(actual_targets)
+    candidates = check_local_candidate_targets(candidate_targets)
     negative_proofs = prove_release_state_negatives(
         active, tags, head_tags, actual_targets
     )
@@ -559,13 +614,15 @@ def main() -> None:
     pins = check_readme_install(readme, changelog, tags)
     negative_proofs += prove_readme_install_negative(readme, changelog, tags)
     negative_proofs += prove_charter_negatives(runner, charter)
+    negative_proofs += prove_candidate_ref_resolution()
 
     print(
         f"test_release_consistency: {release} — changelog section {body_lines} lines, "
         f"re-collaudo tier '{tier}'; executing charter grep carries "
         f"{len(COMPANY_TOKENS)} company tokens + {HB_TOKEN}; latest release "
         f"{latest}; HEAD {', '.join(head_tags) if head_tags else 'untagged'}; immutable "
-        f"{', '.join(immutable)}; {negative_proofs} negative release proofs; README install "
+        f"{', '.join(immutable)}; {len(candidates)} frozen local candidates; "
+        f"{negative_proofs} negative release proofs; README install "
         f"dynamic (no literal pin), operational pin "
         f"{', '.join('v' + p for p in pins)}; tag/pyproject match "
         f"{len(tag_versions)}/{len(tags)} ({len(TAG_VERSION_EXCEPTIONS)} recorded exceptions)"

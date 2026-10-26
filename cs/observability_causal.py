@@ -14,7 +14,7 @@ PAIRS = {
     "fixture_binding": {"source_absent", "source_duplicate", "binding_sender", "binding_message", "binding_subject", "binding_thread", "binding_folder", "binding_uid", "binding_uidvalidity"},
     "fixture_provider": {"provider_started", "provider_passed", "provider_rejected", "provider_exception"},
     "fixture_admission": {"candidates_selected", "confirmation_complete"},
-    'assignment_read': {'request_timeout', 'batch_deadline', 'shared_deadline', 'worker_timeout', 'connection_failure', 'transport_unavailable', 'connection_setup_timeout', 'account_timeout_deferred', 'capacity_timeout_deferred', 'read_deferred_after_failure'},
+    'assignment_read': {'remote_invalid_params', 'remote_error', 'request_timeout', 'batch_deadline', 'shared_deadline', 'worker_timeout', 'connection_failure', 'transport_unavailable', 'connection_setup_timeout', 'account_timeout_deferred', 'capacity_timeout_deferred', 'read_deferred_after_failure'},
     'discovery_context_capacity': {'context_slots_exhausted'},
     'discovery_publication': {'publication_prepared', 'material_unknown_field', 'material_type_invalid', 'material_complexity'},
     'draft_source_body': {'provider_authored_unquoted_tail', 'engine_authored_unquoted_tail', 'source_authored_ambiguous', 'source_body_different'},
