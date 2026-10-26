@@ -4,6 +4,7 @@ from __future__ import annotations
 import contextlib
 import functools
 import inspect
+import imaplib
 import json
 import os
 import time
@@ -46,8 +47,8 @@ def error_reason(exc: BaseException) -> str:
 
 def error_metadata(exc: BaseException) -> dict:
     """Preserve safe source provenance without messages, code lines or locals."""
-    name = type(exc).__name__
-    value = {'error_class': name if name in {'TimeoutError','PermissionError','ConnectionError','OSError','ValueError','RuntimeError','CancelledError','EngineError'} else 'UnknownError'}
+    name = {imaplib.IMAP4.error: 'IMAP4.error', imaplib.IMAP4.abort: 'IMAP4.abort', imaplib.IMAP4.readonly: 'IMAP4.readonly'}.get(type(exc), type(exc).__name__)
+    value = {'error_class': name if name in {'TypeError', 'AttributeError', 'LookupError', 'UnicodeDecodeError', 'IMAP4.error', 'IMAP4.abort', 'IMAP4.readonly', 'TimeoutError','PermissionError','ConnectionError','OSError','ValueError','RuntimeError','CancelledError','EngineError'} else 'UnknownError'}
     for attribute in ('code', 'status_code', 'smtp_code', 'sqlite_errorcode', 'errno'):
         try:
             code = getattr(exc, attribute, None)

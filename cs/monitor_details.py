@@ -49,6 +49,8 @@ def safe_detail(value: dict) -> dict:
                 raise ValueError("Invalid incident count")
         elif key == "error_class":
             if not isinstance(item, str) or item not in {
+                "TypeError", "AttributeError", "LookupError", "UnicodeDecodeError",
+                "IMAP4.error", "IMAP4.abort", "IMAP4.readonly",
                 "TimeoutError",
                 "PermissionError",
                 "ConnectionError",

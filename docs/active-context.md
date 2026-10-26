@@ -14,17 +14,17 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.59.0`. Current HEAD status: untagged.**
-  This local candidate is unpublished. Both maintained clones still run identical58
-  at `77bef42`; its158files, authenticated identities and lock-only rebuilding
-  pass. New59 adoption, strict BOTH-clone FULL and public Git provenance remain
-  pending. Operational sign-off stays51; failed artifacts remain separately retained.
-- Assignment read diagnostics distinguish request, batch, shared and worker
-  timeout boundaries, with explicit unattempted deferrals linked to their actual
-  reservation-triggering timeout. Real transport/CLI/inbox and blind controls
-  pass; two reviewed actor runtimes at543f311e retain queue/worker/projection
-  metadata. Their complete seven-family guards pass. This is diagnostic coverage,
-  not a proven historical queue cause or a claimed latency repair.
+- **Latest release tag: `v0.60.0`. Current HEAD status: tagged as `v0.60.0`.**
+  The immutable candidate adds observed protected-source admission diagnostics.
+  Both normal clones still run59/ec7d84f until supported candidate adoption;
+  strict BOTH FULL and public Git provenance remain pending. Sign-off stays51.
+- Assignment diagnostics retain request/batch/shared/worker boundaries and
+  causal unattempted deferrals. Typed provider evidence adds opaque connection,
+  state, command timing, remaining budget, progress and timer/cleanup ordering.
+  Controlled native daemon→CLI→inbox cases pass on both exact actor families;
+  blind analysis identifies failures and distinguishes legitimate holds.
+  Both immutable90bb actor runtimes are verified with fresh row/integration
+  approvals; original schedules are restored and owned pauses removed.
 - Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
   progress duplicate with its matching successful final. Retained context and
   reply evidence does not establish whole-tick acceptance. The
@@ -87,15 +87,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   publication and public Git installation/lock verification. The prior57case
   remains failed despite its correctly received reply. Current affected-root
   reads retain complete reply evidence and legitimate human-verification holds.
-- The58health attempt failed with one unknown assignment projection; FULL58
-  never started. Daemon events place one failure at readonly SELECT after120s
-  of projection time; command entry time, connection state and timer ordering
-  are absent. Cause UNKNOWN; diagnostics INSUFFICIENT. A later fresh-process
-  login and41successful selections do not explain or repair this failure.
-  The next reviewed dependency instruments the actual daemon connection and
-  verifies controlled failure evidence through ordinary logs and collection.
-  No SELECT retry or new paid acceptance is approved. Original schedules are
-  restored; uncertain effects and previously delivered replies must not be replayed.
+- The58health attempt remains failed; FULL58 never started. Daemon records
+  locate an exception at readonly SELECT after120s of projection time but lack
+  command entry and connection state. Original cause remains UNKNOWN. The59
+  diagnostics are installed, not a proven repair. A future genuine failure must
+  support a cause and a same-path correction before defect closure. No new paid
+  health/FULL or provider retry is admitted; successful probes do not erase failure.
 - Original assignment-source exception origins remain lost; restricted provider
   and database inspection establishes the current correspondence defects only.
   The [diagnosis workflow](log-diagnosis-workflow.md) records this causal logging
@@ -115,8 +112,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Deliver reviewed daemon connection diagnostics and controlled native failure
-   proof. Cause remains unknown; no new paid/provider retry is admitted.
-2. Publish the new immutable release and verify supported adoption on BOTH clones.
+1. Reconcile reported charges and unknown reserves before a separately reviewed
+   finite admission. Added passive diagnostic loops are stopped; normal jobs and
+   collectors retain their schedules. The coordinator owns the next diagnosis.
+2. Obtain strict BOTH-clone FULL before public release and public Git adoption.
 3. Finish documentation/final review with actual evidence and preserved failures.
 4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.

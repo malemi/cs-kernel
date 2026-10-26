@@ -1760,3 +1760,181 @@ Controlled GREEN closes only diagnostic delivery. Production-defect closure
 still requires real daemon failure evidence, supported cause and a subsequently
 reviewed targeted fix verified on the same path. FULL, publication, BOTH-clone
 adoption and documentation/final review remain owned by the existing lead task.
+
+### D1 verified diagnostic adoption — remaining acceptance stays open
+
+The immutable59 candidate is ec7d84f8414e0df441bf9eef9a0c57c2f628626b;
+source and at-tag67-gate harnesses pass. BOTH normal clones match all159files,
+authenticated identities and lock-only rebuilds, preserving nonkernel dependencies,
+authored instructions and SEND/DRAFT modes. Public Git provenance is pending.
+Canonical engine diagnostics are90bb447be5cabab5a81a21d5ea6e3ef1293753fe;
+P0/P1/P2 and the exact rollout packet have independent approval. Twelve native
+controlled daemon/TLS/RPC/ordinaryCLI/collector/inbox cases pass. Blind analysis
+recognizes three distinct deadline failures and a legitimate hold; it leaves
+upstream production causation unknown. The40-versus3fixture metadata discrepancy
+and malformed-method wrapper regression were corrected with retained RED/GREEN
+and exact new-source receipts, not by discarding failed evidence.
+
+Actual supportPID170010 and CaféPID178296 load the reviewed immutable families;
+complete source/mode/unit/fleet checks and fresh actual-row/integration approvals
+pass. Exactly one deployment restart per actor and zero rollback were used.
+Kernel59 and final active runtime policy78b216e88a880ff51b226333ffdd14eddfea2d2d416408c73ba7b3fd062c6c89
+pass authenticated instruction readback. Original cron93b2e2898f521e1c2ae6277522b0efad80121401d89d0ce640706e3ace66cdf4
+is restored; only owned pauses were removed. Four peers and Qonto are unchanged.
+The terminal receipt is v59/rollout-terminal-receipt.json under the existing
+release-alignment evidence root. Rollback controls are tested; live rollback was
+not exercised. No manual job compensates for a maintenance-skipped schedule.
+
+Original intermittent IMAP cause remains UNKNOWN. This closes diagnostic delivery,
+not the underlying defect, strict BOTH FULL, public release/adoption, documentation
+completion or baseline advancement. No paid health/FULL admission was renewed.
+Next evidence comes from passive existing schedules/logs, not a new provider retry.
+
+
+### Delivery reconciliation — reported costs, public provenance and diagnostic limit
+
+The retained native terminal receipts report USD1.3509014 for
+`run-ojxx7tc9`, USD1.3365518 for `run-dxbrr4n1`, and USD2.7948136 for
+`run-ewmxfc45`: USD5.4822668 total. These are native cost reports, not
+settled provider invoices. Three interrupted ticks retain USD12 of unknown
+reservations; two earlier standalone allowances retain USD1, and uncertain
+other diagnostics retain USD1. The failed58 health adds its USD0.50 allowance.
+The conditional USD12 FULL reserve never became an executed FULL. Together
+these explain the historical USD31.9822668 planning reservation; they do not
+establish that this amount was spent. The numeric ceilings16/20/22/27/32 and
+failure-stop admissions are lead decisions in this plan, not quoted operator
+spending limits. Operator instructions authorize finishing, publication and both
+clone updates; they do not authorize unlimited spending or automatic retries.
+The existing admission is consumed; this reconciliation grants no new attempt.
+
+Read-only remote verification at2026-10-26 13:49 UTC confirms public main
+`2821a6a3fcd7280f645970e35bd81eb6a79e8189` and published53 at
+`4f4f027fac51d676b369548021a387d136be4917`; public54–59 tags are absent.
+Local59 remains immutable at `ec7d84f8414e0df441bf9eef9a0c57c2f628626b`.
+Both local installations and local lock-only proofs do not establish public Git
+provenance. Strict BOTH-clone FULL remains the publication prerequisite.
+
+The additional bounded log lookup is concluded. Event
+`4bc07dcfbeff44edbdb11d5463e32785` explicitly records an unattempted deferral;
+its cause event `c93b15356453455fa4b42dadd6fa62b6` records a shared deadline
+at8191ms against8187ms. The parent owner `x59G6SnymAN2lkFny0JDGJgdFz33`
+runs unchanged peer PID2615148, outside the authorized two-actor rollout.
+All three retained engine JSONL files for that owner were scanned:15144events,
+9688251bytes, no exact parent trace match. A temporally overlapping engine RPC
+has another trace and remains unbound. No dispatch, IMAP phase, connection,
+progress or cleanup cause is inferred from that coincidence. Provider cause
+remains UNKNOWN; no peer rollout or added diagnostic loop is authorized here.
+Evidence: external `v59/charge-reconciliation.json`,
+`operator-release-resource-quotes.json`, `passive-exact-owner-retained.json`,
+`passive-temporal-candidate.json` and `passive-correlation-handoff.json`.
+
+
+### One reviewed original-root read — current availability, historical cause unknown
+
+The single model-free native read is complete. Fresh review approved the exact
+bounded launcher after its missing immediate preflight and client wall bound
+were repaired. The supported kernel59 client called only
+`tasks.assignment.project` for the original failed58 root hash
+`d4fb6a8a61fd7a3dd0bcab25dc3a827a2a4b480cd53056cb05468a328c1e9dba`
+on actual support daemon170010/90bb. Retained original daemon events establish
+that root/owner binding. Immediate source/PID/policy checks passed; no unfinished
+support assignment RPC was observed and the earlier natural job was terminal.
+This does not assert global chat idleness. No peer request, model generation,
+assignment commit, send, configuration change or restart was requested.
+
+The client finished in48.86seconds, exit0, without its155-second timeout. Actual
+server trace `83948f1e8e044e50ac49eac5558716bf` binds the same root, owner and PID.
+Its enqueue-to-worker delay is3.05ms; projection and RPC terminals are held at
+14:01:01UTC. The1069provider records show one connection,41EXAMINE,6SEARCH and
+16FETCH entry/exit pairs, successful LOGIN/TLS and normal disposal with about
+72.46seconds remaining. No provider fault record is present in this call.
+
+The result is `needs-assignment`, `NEEDS_HUMAN_VERIFICATION`,
+`hold_auto_reply=true`, `complete=false`. The ordinary health validator accepts
+this kind of human-work hold when the surrounding inventory, flags and provenance
+are consistent. A single root response does not prove those whole-health
+conditions. The probe summary did not retain the specific reply-evidence
+judgement, so its exact business justification is not independently established.
+No further call is made to fill that gap. This current successful observation
+neither explains nor repairs the historical timeout and does not admit FULL.
+The different peer deadline incident remains a separate root/owner chain.
+
+Evidence: external `v59/one-original-support-read-packet.json`,
+`one-original-support-read-review.md`, `one-original-support-read-preflight.json`,
+`one-original-support-read-execution.json`, `one-original-support-read-result.json`,
+`one-original-support-read-events-progress.json` and
+`one-original-support-read-analysis.json`. The reviewer retained the initial
+REVISE separately. AI-KIT coordination is disengaged by operator instruction;
+no additional observation loop or pending paid proposal is approved by that stop.
+
+
+### E0 — instrument the failed59 ordinary admission before selecting a repair
+
+Approved framing: `full59-repair-brief-review.md`, brief SHA
+`49c055b1473836bff8ad0d3503c1c0606589faaf06033d43b9f5212ccc13baac`.
+Operator requires corrections through actual strict BOTH-clone FULL success.
+Do not change the outcome of failed run555fb4ca9d69820a070a3890ffac312d.
+
+Kernel executor owns only canonical `cs/operational_fixture.py`, finite causal
+entries in `cs/observability_causal.py`, directly needed validator propagation
+and focused fixture/causal tests. Record real aggregate inbound/enrollment/exact
+match/provider-confirmed counts. At existing branches retain absent/invalid/
+expired enrollment and the first failed binding predicate, never operand values.
+Provider observations name actual connect/login/select/UIDVALIDITY/fetch/MIME
+phase, monotonic elapsed time and actual finite error metadata. Keep the first
+failure separate from logout failure. The configured15-second socket timeout
+is not an operation deadline. Reuse typed cause contracts and existing allowed
+facts; invalid causal output must not silently become a successful test.
+
+Desktop executor owns only the existing runner's checkpoint observation and its
+focused tests. Retain safe read_incomplete presence/type and producer event/trace
+references without logging its arbitrary text. Keep fixture identities, source
+matching, independent provider checks, native-job dependency order, signing,
+cleanup and every strict oracle unchanged. A failed checkpoint remains failed.
+Preserve MAIN's foreign changes/index; do not commit unrelated work.
+
+Fresh plan review precedes implementation. Both workers have10-minute first
+milestones and lead progress checks at most five minutes apart. Required free
+controls distinguish absent source(0candidates/0confirmed), duplicate source
+(2matches/rejected), provider failure(1candidate/0confirmed) and exact success
+(1/1). Exercise absent/invalid/expired registry, each binding predicate, timeout,
+provider rejection, cleanup failure and diagnostic-sink failure without changing
+return semantics, source guards or provider call counts. Use a real local IMAP
+protocol peer/client to stall a selected operation; retain phase and exception.
+Privacy checks reject sensitive operands and unexpected fields. Exercise actual
+EventStore, ordinary logs CLI and collector/inbox propagation of non-null causal
+evidence. Existing whole harness must remain green. Independent integration
+review checks actual evidence before adoption or another paid run.
+
+Keep installed59 immutable throughout source work. After free approval, freeze
+one new unused immutable MINOR candidate, build its artifact, run its at-tag
+checks and adopt through supported package/update/lock flows on BOTH clones.
+Refresh only exact installed package identities and reviewed runner provenance
+in the existing policy/manifest; no engine restart or peer rollout is needed.
+Capture preimages and prove actual-byte equality, fresh lock rebuilding and
+preserved company rules, dependencies, modes, pauses and technical-mail controls.
+
+### E1 — observe the exact failure boundary, repair only demonstrated behavior
+
+Use new producer evidence through the actual installed path to classify a failed
+protected-source discovery. A bounded model-free read of the existing verified
+original may supply current evidence without sending or executing it again.
+It cannot retrospectively prove a historical cause. Missing-source/binding and
+provider failures must remain separate; a successful read is not a repair claim.
+Before a behavior patch, state the demonstrated mechanism, concrete correction
+and same-path RED/GREEN acceptance in this plan and obtain fresh affected review.
+No blind timeout increase, repeated whole-run retry, forced fixture, validator
+weakening or business-policy change is admitted.
+
+### E2 — finish genuine BOTH-clone FULL after verified correction
+
+Execute the unchanged strict suite with fresh protected originals and the exact
+installed composition. Existing three-job USD4 nominal settings and5400-second
+suite bound remain; these are soft guards, not provider billing hardcaps. The
+operator's renewed instruction authorizes necessary bounded acceptance and
+correction; it does not authorize unlimited retries. Retain actual charges and
+unknown reserves per attempt. A newly classified failure returns to E1 with its
+new evidence. Success requires original independent provider/receiver outcomes,
+SEND/DRAFT, ACK/no-loop/no-extra-effects, all natural job terminals and cleanup.
+Retain publication/public Git adoption and doc-end/final-review obligations under
+the original assignment; do not claim them complete from a test result alone.

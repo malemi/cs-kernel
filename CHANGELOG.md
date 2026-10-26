@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## v0.60.0 — 2026-10-26 (MINOR)
+
+Explain protected-original discovery failures at their actual admission boundary.
+
+- Preserve the complete immutable59 business and provider-diagnostic composition.
+- Distinguish protected-registry absence, invalidity and expiry; exact source
+  cardinality and the first failed identity predicate; actual provider phase,
+  exception class and elapsed time. Keep confirmation counts separate from source
+  counts and retain logout failures separately from the initiating observation.
+- Normal absence is a DEBUG observation. Diagnostics exclude message content,
+  addresses, folder names, raw identifiers, credentials and exception messages.
+- Preserve all original owner/source/MIME/body/UIDVALIDITY/UID checks, admission
+  results, provider call counts and the15-second socket timeout. New logs do not
+  convert an incomplete read into success or establish an unknown historical cause.
+- The separately reviewed acceptance runner retains safe read-incomplete shape
+  and actual producer references; its strict guards and native-job order remain.
+
+Migration: install the immutable candidate on BOTH clones through the supported
+package/update/lock workflow; verify complete actual bytes and exact policy binds.
+No installed edits, automatic retries or source overlays supply tested behavior.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+inherited send/authentication/permission composition and protected-fixture boundary
+require genuine native/provider acceptance beyond controlled diagnostic tests.
+
 ## v0.59.0 — 2026-10-26 (MINOR)
 
 Typed provider-connection evidence for intermittent assignment-read failures.

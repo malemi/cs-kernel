@@ -1,3 +1,47 @@
+## 2026-10-26 — Kernel59 candidate before fixture diagnostics
+
+- **Latest release tag: `v0.59.0`. Current HEAD status: untagged.**
+  Both maintained clones run this unpublished immutable candidate at `ec7d84f`.
+  All159package files, authenticated identities and lock-only rebuilding pass;
+  company rules, dependencies and SEND/DRAFT modes are preserved. Strict BOTH
+  FULL and public Git provenance remain pending. Operational sign-off stays51.
+
+## 2026-10-26 — Superseded passive observation next steps
+
+1. Passively inspect existing scheduled jobs/logs with the installed diagnostics;
+   retain original cause unknown. No new paid/provider retry is admitted.
+2. Publish the new immutable release and verify supported adoption on BOTH clones.
+3. Finish documentation/final review with actual evidence and preserved failures.
+4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.
+
+## 2026-10-26 — superseded diagnostic rollout snapshot
+
+- **Latest release tag: `v0.59.0`. Current HEAD status: untagged.**
+  This local candidate is unpublished. Both maintained clones still run identical58
+  at `77bef42`; its158files, authenticated identities and lock-only rebuilding
+  pass. New59 adoption, strict BOTH-clone FULL and public Git provenance remain
+  pending. Operational sign-off stays51; failed artifacts remain separately retained.
+
+- Assignment read diagnostics distinguish request, batch, shared and worker
+  timeout boundaries, with explicit unattempted deferrals linked to their actual
+  reservation-triggering timeout. Real transport/CLI/inbox and blind controls
+  pass; two reviewed actor runtimes at543f311e retain queue/worker/projection
+  metadata. Their complete seven-family guards pass. This is diagnostic coverage,
+  not a proven historical queue cause or a claimed latency repair.
+
+- The58health attempt failed with one unknown assignment projection; FULL58
+  never started. Daemon events place one failure at readonly SELECT after120s
+  of projection time; command entry time, connection state and timer ordering
+  are absent. Cause UNKNOWN; diagnostics INSUFFICIENT. A later fresh-process
+  login and41successful selections do not explain or repair this failure.
+  The next reviewed dependency instruments the actual daemon connection and
+  verifies controlled failure evidence through ordinary logs and collection.
+  No SELECT retry or new paid acceptance is approved. Original schedules are
+  restored; uncertain effects and previously delivered replies must not be replayed.
+
+1. Deliver reviewed daemon connection diagnostics and controlled native failure
+   proof. Cause remains unknown; no new paid/provider retry is admitted.
+
 ## 2026-10-26 — superseded local58 candidate marker
 
 - **Latest release tag: `v0.58.0`. Current HEAD status: untagged.**

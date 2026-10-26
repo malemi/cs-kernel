@@ -12,7 +12,10 @@ import stat
 from pathlib import Path
 from email import policy
 from email.utils import getaddresses
-from time import time
+from time import time, monotonic
+
+from . import observability_causal as causal
+from . import observability_producers as diagnostics
 
 REGISTRY_ROOT = Path("/etc/cs-operator-fixtures")
 MAX_BYTES = 32768
@@ -20,15 +23,32 @@ MAX_LIFETIME = 5400
 MAX_MIME_BYTES = 262144
 
 
+def _diagnostic(settings, check, cause, *, phase=None, outcome="failed", started=None, error=None, **facts):
+    try:
+        if started is not None:
+            facts["elapsed_ms"] = int(max(0, monotonic() - started) * 1000)
+        method = "fixture." + (phase or "admission")
+        value = causal.decision(check, cause, layer="source", phase="discovery",
+                                command="unanswered", method=method, outcome=outcome, **facts)
+        metadata = diagnostics.error_metadata(error) if error is not None else {}
+        status = "start" if cause == "provider_started" else "failed" if outcome == "failed" else "held" if outcome == "held" else "result"
+        diagnostics.emit(settings, "discovery", status,
+                         reason=diagnostics.error_reason(error) if error is not None else "none",
+                         method=method, causal=value, **({"level": "DEBUG"} if cause == "registry_absent" else {}), **metadata)
+    except Exception:
+        pass
+
+
 def _protected(st, directory=False):
     return (st.st_uid == 0 and not st.st_mode & 0o022
             and (stat.S_ISDIR(st.st_mode) if directory else stat.S_ISREG(st.st_mode)))
 
 
-def _read(path):
+def _read(path, settings=None):
     directory = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
     try:
         if not _protected(os.fstat(directory), True):
+            _diagnostic(settings, "fixture_registry", "registry_invalid")
             return None
         for part in path.parts[1:-1]:
             nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
@@ -36,20 +56,26 @@ def _read(path):
             os.close(directory)
             directory = nxt
             if not _protected(os.fstat(directory), True):
+                _diagnostic(settings, "fixture_registry", "registry_invalid")
                 return None
         fd = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
                      dir_fd=directory)
         with os.fdopen(fd, "rb") as stream:
             before = os.fstat(stream.fileno())
             if not _protected(before) or before.st_size > MAX_BYTES:
+                _diagnostic(settings, "fixture_registry", "registry_invalid")
                 return None
             raw = stream.read(MAX_BYTES + 1)
             after = os.fstat(stream.fileno())
             if len(raw) > MAX_BYTES or (before.st_size, before.st_mtime_ns) != (
                     after.st_size, after.st_mtime_ns):
+                _diagnostic(settings, "fixture_registry", "registry_invalid")
                 return None
             return json.loads(raw, object_pairs_hook=_unique)
-    except (OSError, ValueError, TypeError, RecursionError):
+    except (OSError, ValueError, TypeError, RecursionError) as exc:
+        absent = isinstance(exc, FileNotFoundError)
+        _diagnostic(settings, "fixture_registry", "registry_absent" if absent else "registry_invalid",
+                    outcome="accepted" if absent else "failed", error=exc)
         return None
     finally:
         os.close(directory)
@@ -75,31 +101,37 @@ def _timestamp(value):
 
 
 def enrollments(settings, now=None):
+    def reject():
+        _diagnostic(settings, "fixture_registry", "registry_invalid")
+        return []
+
     uid = getattr(settings, "engine_owner_uid", "")
     receiver = (getattr(settings, "email_address", "") or "").strip().lower()
     mode = getattr(settings, "cs_triage_mode", "")
     if not isinstance(uid, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", uid):
-        return []
+        return reject()
     if mode not in {"send", "draft"} or not _text(receiver):
+        return reject()
+    payload = _read(REGISTRY_ROOT / (uid + ".json"), settings)
+    if payload is None:
         return []
-    payload = _read(REGISTRY_ROOT / (uid + ".json"))
     if not isinstance(payload, dict) or type(payload.get("schema_version")) is not int or payload.get("schema_version") != 1:
-        return []
+        return reject()
     identity = {"owner_uid": uid, "receiver": receiver, "mode": mode}
     if any(payload.get(key) != value for key, value in identity.items()):
-        return []
+        return reject()
     rows = payload.get("fixtures")
     if not isinstance(rows, list) or len(rows) > 16:
-        return []
+        return reject()
     clock = time() if now is None else now
     accepted = []
     seen = set()
     nonces = set()
     for row in rows:
         if not isinstance(row, dict) or any(row.get(k) != v for k, v in identity.items()):
-            return []
+            return reject()
         if any(not _text(row.get(k)) for k in ("sender", "message_id", "subject", "nonce")):
-            return []
+            return reject()
         sender, mid, nonce = row["sender"], row["message_id"], row["nonce"]
         if (sender != sender.lower() or sender == receiver or "@" not in sender
                 or not re.fullmatch(r"<[^<>\s]+@[^<>\s]+>", mid)
@@ -107,34 +139,44 @@ def enrollments(settings, now=None):
                 or nonce not in row["subject"]
                 or not isinstance(row.get("body_sha256"), str)
                 or not re.fullmatch(r"[a-f0-9]{64}", row["body_sha256"])):
-            return []
+            return reject()
         created, expires = row.get("created_at"), row.get("expires_at")
         if (not _timestamp(created) or not _timestamp(expires)
                 or not 0 < expires - created <= MAX_LIFETIME or created > clock):
-            return []
+            return reject()
         receipt = row.get("provider_receipt")
         if not isinstance(receipt, dict) or any(receipt.get(k) != row[k] for k in (
                 "sender", "receiver", "message_id", "subject", "body_sha256")):
-            return []
+            return reject()
         if (not _text(receipt.get("folder")) or any(
                 not isinstance(receipt.get(k), str) or not re.fullmatch(r"[1-9][0-9]{0,19}", receipt[k])
                 for k in ("uid", "uidvalidity")) or mid in seen or nonce in nonces):
-            return []
+            return reject()
         seen.add(mid)
         nonces.add(nonce)
         if clock < expires:
             accepted.append(row)
+    _diagnostic(settings, "fixture_registry", "registry_expired" if len(accepted) < len(rows) else "registry_valid",
+                outcome="held" if len(accepted) < len(rows) else "accepted",
+                enrollment_count=len(accepted), expired_count=len(rows) - len(accepted))
     return accepted
 
 
-def _matches(message, row):
+def _binding_failure(message, row):
     receipt = row["provider_receipt"]
-    return ((message.get("email") or "").strip().lower() == row["sender"]
-            and message.get("message_id") == row["message_id"]
-            and str(message.get("subject") or "") == row["subject"]
-            and message.get("thread_key") == row["message_id"]
-            and all(message.get("provider_" + key) == receipt[key]
-                    for key in ("folder", "uid", "uidvalidity")))
+    predicates = (
+        ("binding_sender", lambda: (message.get("email") or "").strip().lower() == row["sender"]),
+        ("binding_message", lambda: message.get("message_id") == row["message_id"]),
+        ("binding_subject", lambda: str(message.get("subject") or "") == row["subject"]),
+        ("binding_thread", lambda: message.get("thread_key") == row["message_id"]),
+        *(("binding_" + key, lambda key=key: message.get("provider_" + key) == receipt[key])
+          for key in ("folder", "uid", "uidvalidity")),
+    )
+    return next((name for name, predicate in predicates if not predicate()), None)
+
+
+def _matches(message, row):
+    return _binding_failure(message, row) is None
 
 
 def _original_digest(raw, row):
@@ -159,64 +201,123 @@ def _original_digest(raw, row):
     return digest if digest == row["body_sha256"] else False
 
 
-def _provider_original(client, row):
-    receipt = row["provider_receipt"]
-    folder = receipt["folder"]
-    if any(char in folder for char in '\"\\\r\n'):
+def _provider_original(client, row, settings=None):
+    phase = "select"
+    started = monotonic()
+
+    def mark(selected, cause="provider_passed", outcome="accepted", error=None):
+        _diagnostic(settings, "fixture_provider", cause, phase=selected, outcome=outcome, started=started, error=error)
+
+    def reject():
+        mark(phase, "provider_rejected", "failed")
         return False
-    typ, _ = client.select('"' + folder + '"', readonly=True)
-    if typ != "OK":
-        return False
-    typ, validity = client.response("UIDVALIDITY")
-    if not typ or not validity or not validity[0]:
-        return False
-    observed = validity[0].decode() if isinstance(validity[0], bytes) else str(validity[0])
-    if observed != receipt["uidvalidity"]:
-        return False
-    typ, parts = client.uid("FETCH", receipt["uid"],
-                            f"(UID FLAGS RFC822.SIZE BODY.PEEK[]<0.{MAX_MIME_BYTES}>)")
-    literals = [part for part in (parts or []) if isinstance(part, tuple)] if typ == "OK" else []
-    if len(literals) != 1:
-        return False
-    meta, raw = literals[0]
-    if not isinstance(meta, bytes) or not isinstance(raw, bytes) or len(raw) >= MAX_MIME_BYTES:
-        return False
-    uid = re.search(rb"\bUID\s+(\d+)\b", meta, re.I)
-    size = re.search(rb"\bRFC822.SIZE\s+(\d+)\b", meta, re.I)
-    if (not uid or uid[1].decode() != receipt["uid"] or not size
-            or int(size[1]) != len(raw) or b"\\Draft" in meta):
-        return False
-    return _original_digest(raw, row)
+    try:
+        receipt = row["provider_receipt"]
+        folder = receipt["folder"]
+        if any(char in folder for char in '\"\\\r\n'):
+            return reject()
+        mark(phase, "provider_started")
+        typ, _ = client.select('"' + folder + '"', readonly=True)
+        if typ != "OK":
+            return reject()
+        mark(phase)
+        phase = "uidvalidity"
+        started = monotonic()
+        mark(phase, "provider_started")
+        typ, validity = client.response("UIDVALIDITY")
+        if not typ or not validity or not validity[0]:
+            return reject()
+        observed = validity[0].decode() if isinstance(validity[0], bytes) else str(validity[0])
+        if observed != receipt["uidvalidity"]:
+            return reject()
+        mark(phase)
+        phase = "fetch"
+        started = monotonic()
+        mark(phase, "provider_started")
+        typ, parts = client.uid("FETCH", receipt["uid"],
+                                f"(UID FLAGS RFC822.SIZE BODY.PEEK[]<0.{MAX_MIME_BYTES}>)")
+        literals = [part for part in (parts or []) if isinstance(part, tuple)] if typ == "OK" else []
+        if len(literals) != 1:
+            return reject()
+        meta, raw = literals[0]
+        if not isinstance(meta, bytes) or not isinstance(raw, bytes) or len(raw) >= MAX_MIME_BYTES:
+            return reject()
+        uid = re.search(rb"\bUID\s+(\d+)\b", meta, re.I)
+        size = re.search(rb"\bRFC822.SIZE\s+(\d+)\b", meta, re.I)
+        if (not uid or uid[1].decode() != receipt["uid"] or not size
+                or int(size[1]) != len(raw) or b"\\Draft" in meta):
+            return reject()
+        mark(phase)
+        phase = "mime"
+        started = monotonic()
+        mark(phase, "provider_started")
+        digest = _original_digest(raw, row)
+        mark(phase, "provider_passed" if digest else "provider_rejected", "accepted" if digest else "failed")
+        return digest
+
+    except BaseException as exc:
+        mark(phase, "provider_exception", "failed", exc)
+        raise
 
 
 def _confirmed(settings, rows):
     if not rows:
         return []
     client = None
+    phase = "connect"
+    started = monotonic()
     try:
+        _diagnostic(settings, "fixture_provider", "provider_started", phase=phase, outcome="accepted", started=started)
         client = imaplib.IMAP4_SSL(settings.imap_host, settings.imap_port, timeout=15)
+        _diagnostic(settings, "fixture_provider", "provider_passed", phase=phase, outcome="accepted", started=started)
+        phase = "login"
+        started = monotonic()
+        _diagnostic(settings, "fixture_provider", "provider_started", phase=phase, outcome="accepted", started=started)
         client.login(settings.email_address, (settings.email_password or "").replace(" ", "").strip())
+        _diagnostic(settings, "fixture_provider", "provider_passed", phase=phase, outcome="accepted", started=started)
+        phase = None
         confirmed = []
         for row in rows:
-            digest = _provider_original(client, row)
+            digest = _provider_original(client, row, settings)
             if digest:
                 confirmed.append({**row, "_verified_body_sha256": digest})
         return confirmed
-    except (OSError, imaplib.IMAP4.error, ValueError, TypeError, AttributeError, LookupError):
+    except (OSError, imaplib.IMAP4.error, ValueError, TypeError, AttributeError, LookupError) as exc:
+        if phase is not None:
+            _diagnostic(settings, "fixture_provider", "provider_exception", phase=phase, started=started, error=exc)
         return []
     finally:
         if client is not None:
+            started = monotonic()
             try:
                 client.logout()
-            except (OSError, imaplib.IMAP4.error):
-                pass
+                _diagnostic(settings, "fixture_provider", "provider_passed", phase="logout", outcome="accepted", started=started)
+            except (OSError, imaplib.IMAP4.error) as exc:
+                _diagnostic(settings, "fixture_provider", "provider_exception", phase="logout", started=started, error=exc)
 
 
 def admit_originals(settings, inbound, self_addrs, now=None, discovery=None):
     effective_self = {a.strip().lower() for a in self_addrs if a}
     rows = enrollments(settings, now)
-    candidates = [row for row in rows if sum(_matches(message, row) for message in inbound) == 1]
+    candidates = []
+    matches = 0
+    for row in rows:
+        failures = [_binding_failure(message, row) for message in inbound]
+        count = sum(failure is None for failure in failures)
+        matches += count
+        if count == 1:
+            candidates.append(row)
+        else:
+            failure = "source_duplicate" if count > 1 else next(
+                (failure for message, failure in zip(inbound, failures)
+                 if message.get("message_id") == row["message_id"]), "source_absent")
+            _diagnostic(settings, "fixture_binding", failure, observed=count)
+    _diagnostic(settings, "fixture_admission", "candidates_selected", outcome="accepted",
+                inbound_count=len(inbound), enrollment_count=len(rows), match_count=matches, candidate_count=len(candidates))
     originals = _confirmed(settings, candidates)
+    _diagnostic(settings, "fixture_admission", "confirmation_complete", outcome="accepted",
+                inbound_count=len(inbound), enrollment_count=len(rows), match_count=matches,
+                candidate_count=len(candidates), confirmed_count=len(originals))
     kept, admitted = [], set()
     for message in inbound:
         sender = (message.get("email") or "").strip().lower()

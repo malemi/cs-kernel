@@ -174,13 +174,14 @@ Report probe setup failures separately from failures of the actual service.
 Readonly SQLite diagnostic engines must support the native RPC thread model;
 a diagnostic connection's thread-affinity exception is not a production cause.
 
-The observed assignment-evidence path still loses precise exceptions behind
-SOURCE_UNAVAILABLE and a metadata privacy filter. Restricted source inspection
-can identify a current ancestry mismatch but cannot reconstruct the original
-historical exception. This is an explicit causal logging gap: future producer
-work must retain an allowlisted failed predicate and relative origin through the
-ordinary log/inbox path, without raw headers, bodies or exception text. Existing
-supervisor diagnostic acceptance does not certify causal coverage of this path.
+Retained historical SOURCE_UNAVAILABLE records can lack the original exception
+or failed predicate; later source inspection cannot reconstruct missing evidence.
+Current provider diagnostics retain known safe exception origins and connection,
+operation, progress and deadline observations through ordinary logs and the inbox.
+They do not prove that every source-correspondence rejection is fully classified.
+For each incident, check its actual retained fields; improve a missing predicate
+at its producer without headers, bodies or exception text. Supervisor or provider
+component acceptance alone does not certify all assignment-source coverage.
 
 Never repair an archive by blindly re-storing a fetched message: native
 conversion can change content, thread identity, dates or read/processing marks.

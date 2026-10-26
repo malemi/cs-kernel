@@ -121,11 +121,16 @@ acceptance cases and current coverage limits.
 
 ## Candidate provider-connection evidence
 
-The local59 candidate source accepts optional `provider_diagnostic` version1 metadata.
-Kernel round-trip checks cover emission, ordinary trace CLI, collection and the
-private inbox. Full native daemon/protocol acceptance and installed adoption
-remain pending. Installed58 does not support this object; legacy records without
-it retain their semantics. Deploy a compatible reader before enabling emission.
+The local59 candidate accepts optional `provider_diagnostic` version1 metadata.
+Controlled real daemon/TLS/RPC → ordinary CLI → collector/inbox checks pass on
+canonical and both exact actor families. Both maintained clones and actors now
+load the verified diagnostic source; actual imports, modes, full source/unit
+bindings and authenticated instruction readback pass. Original intermittent
+failure causation and future genuine-failure capture remain unverified. This
+component evidence does not certify whole business-workload acceptance.
+
+58 does not support this object; legacy records without it retain their semantics.
+Compatible readers must precede engine emission during any future adoption.
 
 The closed object retains a random runtime-scoped connection token/generation,
 ordered operation identity and phase, finite IMAP/socket/TLS states, pin and
@@ -181,6 +186,35 @@ exit3 and removes owned partial artifacts. A complete verified publication emits
 `publication_prepared` as component evidence for all four artifacts. Source publication
 incidents remain retained for operator diagnosis; this signal and supervisor/model
 success do not automatically clear them. No automatic incident-closure feature is added.
+
+## Protected-original admission evidence
+
+The60 candidate records the actual protected-fixture admission decisions through
+ordinary causal events. Production without an enrolled fixture records registry
+absence as a DEBUG observation; absence alone is not an operational failure.
+An enrolled original that cannot be found or confirmed remains unadmitted.
+
+Read the counters in order: inbound rows, valid enrollment rows, exact matching
+proofs, selected candidates and provider-confirmed originals. Zero candidates
+with unrelated inbound mail is source absence; it is not proof that the first
+unrelated sender mismatched the fixture. Multiple exact matches remain rejected.
+For a same-identity candidate, the first failing owner/source binding predicate
+is retained without its operand values. Registry invalidity and expiry remain
+separate from absent source and provider failure.
+
+Provider events identify connect, login, selection, UIDVALIDITY, fetch, MIME
+validation and logout through finite `fixture.*` methods. Elapsed milliseconds
+and known finite exception classes survive ordinary CLI and filesystem inbox
+collection. Logout failure does not replace the initiating observation. The
+configured15-second socket timeout is not a whole-operation deadline; elapsed
+time alone cannot establish a timeout or an upstream provider cause.
+
+The separately reviewed operational-test observer retains only read-incomplete
+presence/type plus bounded actual event/trace references. It retains no arbitrary
+read-incomplete text. Empty discovery still fails the strict fixture checkpoint;
+new diagnostic evidence grants no admission, reply, draft or sending authority.
+Controlled protocol/propagation checks prove these distinctions, not the cause
+of a historical event whose deciding evidence was not retained.
 
 ## Interactive source-corroboration diagnostics
 

@@ -321,3 +321,41 @@ verified on that same path. Until then state cause unknown and retain the next
 inspection route. Logging completion, an isolated successful probe and process
 liveness cannot substitute for defect closure, strict FULL on BOTH clones,
 public release/adoption or existing documentation/final-review obligations.
+
+
+## Required continuation: failed59 ordinary protected-source discovery
+
+The operator explicitly requires the full test on both clones, Astra diagnosis
+on failure, and necessary corrections until the test passes. Strict run
+555fb4ca9d69820a070a3890ffac312d failed before native jobs: the exact protected
+original is independently received/admitted for both owners, but the later
+ordinary discovery contains no MrCall original while Café retains its exact
+binding. Native jobs are absent. The failure is not a native reply/draft result.
+Astra cannot distinguish a missing inbound candidate, enrollment/binding rejection
+or provider reconfirmation failure from retained logs. A15-second IMAP timeout
+is plausible from timing, not a supported historical cause.
+
+First close this demonstrated observational gap at the real admission producer:
+safe counts at inbound/enrollment/exact-match/provider-confirmed boundaries,
+finite failed binding predicate, actual provider operation and exception class,
+and ordinary read-incomplete provenance in the test checkpoint. Exclude all mail
+content, addresses, folder names, credentials, raw identifiers and exception text.
+Preserve candidate selection, independent provider confirmation, owner/nonce/time/
+MIME/body/UIDVALIDITY/UID identity, fail-closed rejection and strict signed oracle.
+Do not treat an empty result as proof of absent mail or technical health.
+
+Before behavior changes, reproduce distinct missing-source, mismatched binding
+and provider failure paths with real controlled protocol/process boundaries,
+and prove their actual producer diagnostics stay distinct. A bounded observation
+of an existing protected original may use its retained verified provider receipt
+without sending it again, changing authority or executing business actions.
+New observation success alone does not explain the earlier failure. Repair only
+a demonstrated mechanism; no blind timeout increase, retry loop, guard weakening,
+false PASS, fixture bypass, forced answer or source overlay in normal clones.
+
+Use this existing brief and execution plan for fresh framing/plan review before
+source changes. Keep installed59 immutable; kernel changes require the next
+immutable candidate, supported adoption on both clones and exact policy/provenance
+refresh. A runner-only diagnostic correction must preserve all acceptance checks
+and receives source-bound review before use. Retain failed runs and uncertain
+effects; only fresh genuine strict FULL on both actual clones proves acceptance.

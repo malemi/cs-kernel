@@ -103,7 +103,7 @@ def safe_metadata(values: dict) -> dict:
         if isinstance(value, str) and 0 < len(value) <= 4096:
             out[key] = hashlib.sha256(value.encode()).hexdigest()
     value = values.get('error_class')
-    if value in {'TimeoutError', 'PermissionError', 'ConnectionError', 'OSError', 'ValueError', 'RuntimeError', 'CancelledError', 'EngineError', 'UnknownError'}:
+    if value in {'TypeError', 'AttributeError', 'LookupError', 'UnicodeDecodeError', 'IMAP4.error', 'IMAP4.abort', 'IMAP4.readonly', 'TimeoutError', 'PermissionError', 'ConnectionError', 'OSError', 'ValueError', 'RuntimeError', 'CancelledError', 'EngineError', 'UnknownError'}:
         out['error_class'] = value
     value = values.get('error_file')
     if isinstance(value, str) and len(value) <= 180 and re.fullmatch(r'[a-zA-Z0-9_/.-]+\.py', value) and not value.startswith('/') and '..' not in value.split('/'):
