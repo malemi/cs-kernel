@@ -10,6 +10,41 @@
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 
+## 2026-10-26 — Strict attempt before persistence-failure confirmation
+
+- Desktop consumer ca175b9 and its exact reviewed10200-second policy are active;
+  actual installed preflight passes. Proposed-policy propagation preserves all
+  identity checks. Fixture authority and financial limits remain unchanged.
+  Strict run4faf6e38 is in progress; both ordinary source checkpoints pass.
+
+1. Finish the current strict BOTH FULL under its owned acceptance window.
+2. Diagnose any new failure from evidence with Astra. Preserve failed effects
+   and cost uncertainty; no blind retries or unsupported budget attribution.
+
+## 2026-10-26 — Proposed-policy composition before activation
+
+- Original Desktop R7 source/policy bytes remain active and preserved. Private
+  candidate ca175b9 propagates the validated proposed policy through preflight
+  identity checks; its component tests and review pass. Activation still requires
+  exact composition approval and independent installed preflight. Its longer
+  time window never extends fixture authority or financial limits.
+
+## 2026-10-26 — Installed forward patch and proposed-policy preflight
+
+  Both normal clones match immutable61/eff4d9b:159files, exact identities and
+  fresh local lock rebuilding. Source/at-tag/golden gates pass. Operational
+  sign-off remains51; genuine FULL and public Git provenance are open.
+
+- Installed61 contains the MIME identity, remote-error and shared-time repairs.
+  The forward0.61.1 source fixes only stale architecture authority wording;
+
+- Original Desktop R7 source/policy bytes remain preserved. Candidate R8 f7f2471 is
+  isolated and source-reviewed; activation requires exact installed composition,
+  independent review and preflight. Its longer window never extends fixture authority.
+
+1. Finish source/at-tag gates, freeze one forward candidate and adopt both clones
+   uniformly; review/preflight exact R8 composition before activation.
+
 ## 2026-10-26 — Superseded pre-freeze claims
 
 - **Latest release tag: `v0.60.0`. Current HEAD status: untagged.**

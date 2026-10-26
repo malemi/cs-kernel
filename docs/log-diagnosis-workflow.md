@@ -60,6 +60,11 @@ field dropped by one boundary is not a delivered improvement. Preserve the first
 decisive failure across child/fallback selection and final reporting. Distinguish
 success of a child, a diagnostic write and the whole supervised task. A later
 unrelated or generic wrapper success must not erase a known failure.
+For persistence size failures, compare the complete encoded wire value with its
+hard limit, including envelope and formatting. A compact list estimate does not
+prove an indented final file fits. Retained evidence and an incident row do not
+prove the readable projection succeeded. Preserve a latched startup persistence
+failure through child completion; retry through freshly loaded durable state.
 
 Use the existing reviewed brief/plan for the work when its scope applies.
 A read-only request ends with the diagnosis and the named logging gap; source

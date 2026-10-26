@@ -2351,3 +2351,103 @@ USD4soft controls and independent original/send/draft/health/provider oracles.
 Any failure returns to Astra with retained evidence; no blind extra retry.
 Doc-end/critic, separate final review, public provenance/lock verification and
 publication remain open. Publish no failed61tag to satisfy provenance checks.
+
+### Exact proposed-policy preflight repair and current acceptance
+
+Both normal clones now match immutable0.61.1/32d9867 across159 package files;
+complete source/at-tag gates and both fresh local Git lock rebuilds pass. These
+component results do not certify strict operational acceptance or publication.
+
+The first proposed-policy activation failed its independent installed preflight:
+`full_runtime_identity` reread active5400 while checking proposed10200. The
+transaction restored the complete normal R7 consumer/policy preimage. Its failed
+output remains in `v61p1/policy/activation-61p1`; no native paid job was launched.
+The bounded correction validates and propagates an explicit proposed policy through
+the existing identity, credential and subprocess-environment helpers, retaining
+active-policy defaults. It is canonical consumer successor ca175b9, separately
+reviewed with six time, one real subprocess plumbing and seven transaction tests.
+New exact composition and activation reviews bind the changed consumer/helper
+and fresh policy references; old reports and proposals remain unchanged.
+
+The reviewed second transaction passed actual installed preflight and policy-last
+activation. Original V61 scheduling ownership was restored exactly before the
+strict runner acquired its own acceptance window. Current genuine run
+`4faf6e38a887988b2b7b1f8ce0f39669` is incomplete: both original provider receipts
+and ordinary discovery checkpoints pass; the actual MrCall native job is running.
+Its output is `v61p1/full-installed-v61p1-20261026`. No diagnostic continuation,
+old-case resume, source overlay, oracle relaxation or financial increase is used.
+
+Remaining order is unchanged: finish the strict BOTH-clone FULL; diagnose any
+new failure from its actual evidence with Astra before a reviewed correction or
+new finite attempt; only genuine success admits the already authorized successful
+tag publication and public Git/lock proof on both clones. Preserve historical
+unknown causes and restore owned controls. Reconcile current docs using doc-end,
+explicit doc-critic and separate final review; advance no baseline or completed
+plan status until the actual required results and current evidence pass.
+
+### E8 — consistent serialized bounds for private notice persistence
+
+Status: proposed amendment to docs/execution-plans/2026-10-25-canonical-release-alignment.md;
+fresh affected plan approval precedes implementation. This is substantial
+behavior repair, not fast path: persistent projection bytes and queue completion
+change. Existing approved canonical-release/logging scope covers the observed
+persistence defect; this adds no business authority or delivery capability.
+
+Evidence: v61p1/notice-persistence-diagnosis.md retains event
+c96c4899e472475ab7a471888835b562. Source selects a problems list with default
+compact JSON <=220000 bytes, but _atomic writes indented JSON with a 262144-byte
+hard cap. Read-only reconstruction admits 219919 compact bytes yet needs 267339
+indented list bytes before the envelope. Evidence and incident are retained first;
+projection failure leaves the queue pending. Native work continues, so this alert
+alone does not establish the running FULL outcome or exact historical byte count.
+
+M1 — kernel owner repairs cs/operational_inbox.py and extends existing
+tests/test_operational_inbox.py; no Desktop, clone, provider or control writes.
+Prefer removing indent=2 from the existing shared _atomic serialization, keeping
+sort_keys=True, allow_nan=False, encoding, newline and the 262144-byte guard.
+This aligns list selection and final JSON format without a parallel writer or
+raising limits. Prove complete envelope headroom with actual bounded field shapes;
+if that proof fails, revise selection to account for the exact final envelope
+before approval rather than weakening the hard cap. Preserve selection order,
+skips, remaining_count, retrieval pagination, JSON values and notice identity.
+Keep fsync/replace, 0600 private files, directory/symlink checks, retention and
+65536-byte canonical notice admission unchanged. No email or automatic analyst.
+
+M1 verification: disposable real MonitorStore with safe synthetic incidents must
+reproduce the old compact-fit/pretty-overflow failure through actual publish and
+record_notice, retain original RED output, then succeed with parse-equivalent
+GREEN output <=262144 bytes. Exercise _deliver_pending against the same backlog:
+failed persistence retains queue/evidence/one incident; a freshly reloaded retry
+clears queue only after all writes succeed; repeated identical notice keeps one
+identity/incident, with no duplicate evidence. Do not clear _delivery_failed in
+the failed in-memory state to manufacture retry. Verify 220000-list boundary,
+skipped oversized item and truthful remaining_count; complete-envelope sizes;
+exact 262144-byte write versus262145 refusal leaving prior file intact;
+65536/65537 canonical notice admission; nested/non-ASCII values and NaN refusal.
+Assert private modes, symlink refusal, retained findings/evidence, no sensitive
+notice payload in projection, no SMTP/model/provider calls and unchanged ordinary
+healthy/held/failed results. Run existing inbox, operator-health and recovery
+regressions using the lead's actual tested interpreter; retain commands/results.
+Fresh affected integration review closes M1 before dependent adoption work.
+
+M2 — lead owns adoption decision after the current immutable 0.61.1 FULL terminates.
+Preserve run 4faf6e38a887988b2b7b1f8ce0f39669, all installed bytes and controls while
+it runs. Free source work grants no mutation or acceptance retry. If actual
+adoption is needed, use a fresh immutable forward version through the existing
+release procedure: complete source/at-tag gates with genuine golden inputs,
+reviewed package manifest, supported BOTH-clone install, exact installed identity,
+lock/provenance checks and independent composition/preflight review. Never overlay
+installed files, retag 0.61.1 or publish a failed candidate. Capture owned adoption
+preimages; rollback restores their matching package/pin/lock/composition, never
+business data, retained evidence or uncertain effects. Reuse no old FULL verdict
+for changed candidate bytes: exact-current strict BOTH-clone acceptance remains
+required. Any new paid attempt needs explicit fresh finite spend/time review,
+reconciled actual charges/reserves and green free gates; no automatic retry.
+
+This amendment establishes source cause, narrow proposed repair and dependencies.
+It does not establish implementation, final envelope proof, passing regression,
+current FULL outcome, adoption, publication or release completion. Existing
+doc-end/doc-critic, final review and public provenance obligations remain open.
+Coverage: complete inbox module/tests and diagnosis; producer 744–840, brief 401–514,
+plan 2201–2386 plus lead-approved scope handoff. Lead explicitly approved bounded
+partial historical-plan use; unrelated historical body was not re-investigated.

@@ -28,6 +28,10 @@ first/last observation, severity, symptom, stage/reason, evidence references,
 investigation path and next diagnostic step. `remaining_count` and an incident
 index route disclose omitted rows. Records are retained in the monitor SQLite
 store; the readable file is an atomic bounded projection, not a second ledger.
+Projection fitting and final writes use the same non-indented JSON format.
+The complete envelope remains subject to the 256 KiB hard limit; omitted records
+remain retrievable from the ledger with truthful remaining counts. A failed
+projection write preserves its prior file and the pending notice queue.
 
 `/cs-diagnose` in Claude Code, `$cs-diagnose` in Codex, or the project skill
 `cs-diagnose` in OpenCode starts the manual investigation workflow. The human may
@@ -190,7 +194,7 @@ When shared time expires, inspect caller allocation, per-account cumulative work
 and the referenced read before changing a limit. This is evidence about a time
 budget, not a financial quota. The summary alone cannot establish whether slow
 service, work volume or an unsuitable allowance caused that exhaustion. Missing
-backend evidence and older causes stay unknown. The pending changes preserve
+backend evidence and older causes stay unknown. These diagnostics preserve
 business results and authority. The separate reviewed shared-time correction
 changes workflow allowances, not individual request/provider or financial limits.
 Installation and genuine BOTH FULL remain separate acceptance obligations.

@@ -15,11 +15,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.61.1`. Current HEAD status: untagged.**
-  Both normal clones match immutable61/eff4d9b:159files, exact identities and
-  fresh local lock rebuilding. Source/at-tag/golden gates pass. Operational
-  sign-off remains51; genuine FULL and public Git provenance are open.
-- Installed61 contains the MIME identity, remote-error and shared-time repairs.
-  The forward0.61.1 source fixes only stale architecture authority wording;
+  Both normal clones match immutable0.61.1/32d9867:159files, exact identities
+  and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
+  Operational sign-off remains51; genuine FULL and public Git provenance are open.
+- Installed0.61.1 contains the MIME identity, remote-error and shared-time repairs.
+  Its forward patch fixes only stale architecture authority wording;
   runtime Python remains identical. Framing, plan and component review pass;
   its complete source and at-tag gates pass. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
@@ -28,9 +28,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
   source/assignment guards; original schedules remain in the maintenance preimage.
-- Original Desktop R7 source/policy bytes remain preserved. Candidate R8 f7f2471 is
-  isolated and source-reviewed; activation requires exact installed composition,
-  independent review and preflight. Its longer window never extends fixture authority.
+- Desktop consumer ca175b9 and its exact reviewed10200-second policy are active;
+  actual installed preflight passes. Fixture authority and financial limits are
+  unchanged. Latest strict4faf6e38 is interrupted: pending notice persistence
+  latched failure before native work, making a passing outcome impossible.
+- Source-only E8 aligns notice serialization with its existing size accounting.
+  Backlog/retry and exact-boundary regressions pass; independent review and
+  complete harness are in progress. Both installed clones remain0.61.1.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -96,9 +100,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Finish source/at-tag gates, freeze one forward candidate and adopt both clones
-   uniformly; review/preflight exact R8 composition before activation.
-2. Execute one reviewed finite genuine BOTH FULL; diagnose new failures from
-   evidence with Astra. Preserve failed effects/cost uncertainty; no blind retries.
+1. Finish E8 review/free gates and supported immutable BOTH-clone adoption.
+2. Review/preflight the exact composition and finite admission before a fresh
+   strict BOTH FULL. Preserve unknown costs/effects; no blind retries.
 3. Complete authorized public adoption and doc-end/critic/separate final review.
 4. Keep cs-diagnose manual and require native Gmail proof before reconciliation.

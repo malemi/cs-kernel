@@ -18,7 +18,7 @@ def _atomic(path: Path, value: dict) -> None:
     _check(path.parent, directory=True)
     if path.exists() or path.is_symlink():
         _check(path)
-    raw = json.dumps(value, indent=2, sort_keys=True, allow_nan=False).encode() + b"\n"
+    raw = json.dumps(value, sort_keys=True, allow_nan=False).encode() + b"\n"
     if len(raw) > 262144:
         raise ValueError("Problem file size limit")
     fd, name = tempfile.mkstemp(prefix=".problem-", dir=path.parent)
@@ -48,6 +48,20 @@ def publish(store: MonitorStore, *, clone_label: str = "", now: float | None = N
     _check(investigations, directory=True)
     rows = store.incidents(active_only=True)
     problems = []
+    total = store.counts()["active"]
+    result = {
+        "schema_version": 1, "owner_uid": store.owner_uid, "clone": label,
+        "generated_at": time.time() if now is None else now,
+        "problem_count": total, "problems": problems,
+        "remaining_count": total,
+        "retrieval": "cs monitor events --config <private-config> --offset 0; follow next_incident_offset",
+        "incident_index_offset": 0,
+        "investigations_path": str(investigations),
+    }
+    base_size = len(json.dumps(result, sort_keys=True, allow_nan=False).encode()) + 1
+    if base_size > 262144:
+        raise ValueError("Problem file size limit")
+    total_digits = len(str(total))
     for row in rows:
         detail = row["detail"]
         findings = investigations / (row["id"] + ".md")
@@ -68,20 +82,14 @@ def publish(store: MonitorStore, *, clone_label: str = "", now: float | None = N
             retained_notice = store.root / "notice-evidence" / (row["id"] + ".json")
             item["restricted_evidence_path"] = str(retained_notice)
             item["restricted_evidence_available"] = retained_notice.is_file() and not retained_notice.is_symlink()
-        if len(json.dumps(problems + [item]).encode()) > 220000:
+        candidate_size = len(json.dumps(problems + [item], allow_nan=False).encode())
+        remaining = total - len(problems) - 1
+        wire_size = base_size + candidate_size - 2 + len(str(remaining)) - total_digits
+        if candidate_size > 220000 or wire_size > 262144:
             continue
         else:
             problems.append(item)
-    total = store.counts()["active"]
-    result = {
-        "schema_version": 1, "owner_uid": store.owner_uid, "clone": label,
-        "generated_at": time.time() if now is None else now,
-        "problem_count": total, "problems": problems,
-        "remaining_count": total - len(problems),
-        "retrieval": "cs monitor events --config <private-config> --offset 0; follow next_incident_offset",
-        "incident_index_offset": 0,
-        "investigations_path": str(investigations),
-    }
+    result["remaining_count"] = total - len(problems)
     _atomic(store.root / "problems.json", result)
     return {"path": str(store.root / "problems.json"), "problem_count": total}
 
