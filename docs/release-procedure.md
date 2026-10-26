@@ -69,7 +69,8 @@ owner. Not before.
 | `CHANGELOG.md` "Current operational pin" marker | re-pin sign-off, after BOTH clones move |
 | `CHANGELOG.md` `## vX.Y.Z` sections | append-only at release; never edited after |
 | `docs/active-context.md` "Latest release tag / Current HEAD status" | release commit (tagged-as) + first post-tag commit (untagged) |
-| `tests/test_release_consistency.py` `IMMUTABLE_TAG_TARGETS` | first post-tag commit pins the new tag's object |
+| `tests/test_release_consistency.py` `IMMUTABLE_TAG_TARGETS` | published release anchors stay mandatory; promote the verified public object at publication closure |
+| `tests/test_release_consistency.py` `LOCAL_CANDIDATE_TARGETS` | first post-tag commit freezes an unpublished candidate; check its hash whenever its exact local ref exists |
 | `tests/test_release_consistency.py` `TAG_VERSION_EXCEPTIONS` | operator decision only — records immutable mistakes |
 | `README.md` install lines | NONE — literal pins are a gate failure; the snippet resolves the newest tag at run time |
 | `cs/project_init.py` wizard pin default | NONE — derived from `kernel_version_bare()`; never a literal |
@@ -94,8 +95,12 @@ owner. Not before.
    `Latest release tag` + `Current HEAD status: tagged as` the new tag.
 3. `git tag vX.Y.Z` **immediately** (the gate is red in the gap).
 4. `bash tests/run.sh` again — gates verified AT the tag.
-5. First post-tag commit: `active-context.md` back to `untagged`; pin the
-   tag's object in `IMMUTABLE_TAG_TARGETS`.
+5. First post-tag commit: `active-context.md` back to `untagged`; freeze the
+   exact unpublished tag object in `LOCAL_CANDIDATE_TARGETS`. Missing local-only
+   candidate refs are permitted in public clones; present refs must still match.
+   Published anchors in `IMMUTABLE_TAG_TARGETS` always require their real refs.
+   After authorized publication and public-ref verification, promote the new
+   object to that mandatory published registry without changing the tag.
 6. **Run the sweep** (above) on the kernel.
 7. Push (main + tag) — operator's explicit ok. A published tag never moves;
    a tag published by mistake is recorded in `TAG_VERSION_EXCEPTIONS` and

@@ -1938,3 +1938,362 @@ new evidence. Success requires original independent provider/receiver outcomes,
 SEND/DRAFT, ACK/no-loop/no-extra-effects, all natural job terminals and cleanup.
 Retain publication/public Git adoption and doc-end/final-review obligations under
 the original assignment; do not claim them complete from a test result alone.
+
+
+### E0/E1 delivered; genuine E2 FULL60 is active
+
+E0 source/component integration is APPROVED. The real local IMAP failure,
+cardinality/binding/registry controls and EventStore→CLI→collector/inbox checks
+pass. The whole kernel harness passes before freeze and at immutable60,
+including six genuine external golden-pack builds. Desktop's seven focused
+checkpoint tests and actual EventStore-reference proof pass; its pre-existing
+two failures/eight errors remain unchanged and are not claimed green.
+
+Kernel60 tag `9c69b9936f96531e430f36c6535eb5a909592291` is frozen;
+post-tag3364f58 pins it. Both actual normal clones match159files, identities and
+fresh local lock-only rebuilds. Company rules, nonkernel dependencies and modes
+are preserved. R7 consumer canonical commit is
+`0f3296dd63e0da47f722e446dd60333efba4aec5`; its three actual paths match that
+commit while Desktop's foreign worktree and ordinary index remain preserved.
+Exact runtime-policy integration is independently APPROVED and activated at
+SHA `343845e99474f513fc975ea6ab492a50cc1135f6271421ce2abbac3ef3f0c4a5`.
+The90bb actors, four peers and excluded Qonto are unchanged; no restart occurs.
+
+The approved E1 read uses the same retained original, unchanged nonce/expiry and
+provider receipt under actual job/acceptance locks. It sends nothing and invokes
+no classifier/model/business action. Trace
+`d8f263a52b4c4fca9497bec7acf88c55` records one inbound/enrollment/match/candidate/
+confirmation in2.581seconds and all provider phases in the same trace. The prior
+historical failure remains unexplained. A diagnostic launcher API mismatch failed
+before provider work; its exact failed artifacts are preserved and its one-line
+context-API correction was independently re-reviewed before the actual read.
+
+The first copied lock-proof helper accidentally wrote two old59 auxiliary files
+before uv refused the already-existing environment. It changed no normal clone
+or proof environment. The old auxiliary install log and derived lock cannot be
+claimed original retained bytes; the incident is explicit in external
+`v60/failed-lock-helper-route/incident.json`. Fresh60 proofs use new directories
+and refuse existing ones; both pass. Other old receipts and failed runs remain.
+
+The adoption scheduling transaction restored the exact original cron and removed
+only its pauses. Fresh strict E2 run `139d12dc3bc9f964fbc705f327ce6c5b` starts at
+15:55:47UTC under the existing R7 strict runner. Both new original receipts and
+ordinary checkpoints pass; the genuine MrCall native job is active. Café/signup
+and all final provider/signature/cleanup checks remain pending. The runner owns
+its temporary schedule window and must restore it. External `v60/RESUME.md` owns
+live handles; no publication, completed FULL or baseline advancement is claimed.
+
+
+### E3 — make cumulative time-budget failure explicit in ordinary logs
+
+Approved framing: external `v60/time-budget-brief-review.md` and exact approved
+brief snapshot. User requires unmistakable causes; FULL60 remains FAILED.
+
+Kernel executor owns `cs/task_assignment.py`, the finite causal registry and
+strictly needed fact validators, plus focused RPC/scheduler/propagation tests.
+Instrument the actual existing scheduler without changing deadlines, admission,
+provider calls, reservations, root ordering, result content or authority. Emit
+bounded batch/lane summaries: effective time available at entry, actual elapsed/
+remaining time, expected/dispatched/returned/timed-out/deferred counts, actual
+per-account/global concurrency and cumulative serial work. Distinguish sums of
+request durations from wall time. Reference the first actual deciding timeout;
+use its measured bound origin, never infer provider failure or financial quota.
+Do not label effective remaining allowance as original configured budget when
+the original is unknown. Keep absence/normal holds non-ERROR and diagnostics
+best-effort. Preserve existing per-request events and deferral cause references.
+
+Fresh plan review precedes code. First worker milestone is8minutes; progress
+check within5minutes. Real transport controls must distinguish cumulative shared
+expiry from an individual request timeout with ample shared time. Assert exact
+counts, unchanged calls/results/reservations, healthy/zero-work/held behavior,
+first-cause links, privacy and actual CLI/collector/inbox propagation. A fresh
+log-only analyst must identify time-budget exhaustion without code or hints.
+Independent integration review and green complete source/at-tag gates precede
+one new immutable candidate and supported BOTH-clone adoption. No actor/peer
+rollout or financial-control change is part of E3.
+
+### E4 — measure before correcting the workflow time allowance
+
+After separate execution-safety review, one assignment-only measurement may use
+actual installed `task_assignment.projections` over the exact captured84-root
+requested_order, after all guarded native work is quiescent. Hold the actual
+operator/signup and acceptance locks; prevent new guarded ticks through an owned
+reversible scheduling transaction. Preserve per-account1/global4, request150 and
+backend120 limits. Its800-second diagnostic ceiling changes no production
+setting. Do not call review.gather/sweep/classify/generate/send or mutate business
+data. Retain only safe per-root state/hash and exact producer time/expiry data;
+no addresses, bodies, arbitrary reasons or exception strings. Bound process and
+cleanup; remove only owned controls. A successful read is a measurement, not a
+historical-repair claim. Use actual complete work and native1800-second envelope
+to frame the smallest time-budget correction with fresh affected review. Do not
+ship an arbitrary larger timeout, change concurrency or repeat FULL blindly.
+
+
+### E2 terminal evidence and E3/E4 current execution
+
+FULL60 terminated FAILED at16:27:17UTC. Native MrCall exited0 after1767.265s,
+but its genuine supervisor rejected final assignment health: exit3 and24UNKNOWN
+roots. Café/signup never started. Exact cron restoration was independently
+checked; whole acceptance and publication remain open. Both checkpoint originals
+passed; this failure is distinct from historical59 unknown discovery.
+
+Astra's1376-event analysis establishes cumulative caller shared-deadline expiry,
+not a proven120s provider operation timeout or monetary quota. Review completed
+36projections totaling385.386s on support; final caller allowances shrank to
+16.483s and4.765s. A matched support trace finished after its caller timed out,
+with individual provider operations below0.879s. These facts explain that
+caller's expiry; they do not establish every older failure's cause.
+
+E3 implementation has7focused,34existingRPC and8causal tests passing, with real
+transport and CLI→collector→inbox proof. Fresh blind analysis and integration
+review are running; the complete source harness is active. No E3 code is installed
+in normal clones. E4 execution remains unapproved pending retention of validated
+per-outcome bound diagnostics; no live measurement has run. Normal MrCall cron
+started a separate job at16:50UTC and remains active, so E4 must not overlap.
+
+
+### E4 terminal measurement: partial coverage, mixed causes
+
+The single approved model-free measurement completed at17:27:56UTC after
+792.206s under the800s shared allowance. Actual admission acquired all four
+guards and found no matching jobs. The child was reaped, no live process-group
+members remained, and the lead independently reacquired all four guard locks.
+The first launch had failed before any provider call because its process scanner
+read an unrelated non-dumpable systemd cwd; its evidence is preserved. A narrow
+scanner fix passed offline/current-process checks and fresh execution review
+before the only live measurement.
+
+Observer evidence retains87matched starts/finishes,174records, no overflow/write
+failures and47unique locally observed roots. All84requested roots have outcome
+hashes, but37were never locally invoked. Outcomes:13normal,2conflict,
+23needs-assignment,46unknown. The unknown partition is6successful-RPC-only,
+2error-only,1both and37never invoked. This is usable partial measurement, not
+complete coverage or FULL. The admission receipt's initial status remains
+`failed` although terminal execution says `measurement_completed`; use terminal
+evidence and explicit lock/scan facts rather than that misleading initial label.
+
+Two deciding errors select the shared deadline. A separate469ms local read
+failed remotely with113272ms left; a matching-time daemon validation event and
+independent input validation show an invalid RFC root. The producer currently
+labels this `transport_unavailable`, which is too broad. Larger shared time
+cannot repair invalid input or explain six unknown outcomes after successful
+RPCs. Therefore no production deadline increase or paid FULL retry follows yet.
+
+The long110.198s support read spent104.798s in normal EXAMINE/FETCH/SEARCH and
+finished before120s backend/150s request limits. Its held terminal excludes
+unknown/SOURCE_UNAVAILABLE under the pinned producer mapping; exact hold subtype
+is absent. A preceding same-root failure at imap_client.py:875 is conclusively
+the header-inventory message-count guard; actual caller/limit/count were not
+retained. Subsequent measurement state for that root is needs-assignment. This
+source-count failure is not an asserted transport or time-budget failure.
+
+Astra is diagnosing the malformed root and six successful-RPC unknowns from
+existing evidence; a source explorer maps the remote-rejection diagnostic gap.
+Before any next code, amend this same plan with concrete diagnosed mechanisms,
+finite diagnostic fields/corrections, tests and fresh review. Preserve all
+strict authority/source/whole-inventory oracles and financial controls. No peer
+rollout, unbounded scan, invalid-root omission or forced PASS is authorized.
+
+
+### E5 — integrated MIME identity, remote-rejection provenance and measured shared time
+
+Status: proposed; fresh plan APPROVED is required before implementation. This
+amends the existing release plan, following E4; it does not reopen historical
+receipts as successful acceptance. Classification: substantial behavior and
+cross-repository acceptance work; the fast path does not apply.
+Approved framing is the complete combined repair brief SHA-256
+`8d3dd07d8bbe4d33acc4ad18a2b7aec57ff660c1c8719aa9c80c227906bffae8`
+and the retained time-correction, remote-rejection and header-repair brief reviews
+in `v60/assignment-profile`. Diagnosis/source maps there are scoped planning
+evidence, not independently rerun source or runtime confirmations in this amendment.
+
+Dependency order: E5a and E5b are independently reviewable; E5c may proceed only
+after fresh plan approval and its numeric/source checks. E5d integrates all three
+before dependent freeze, adoption or paid acceptance. Lead owns coordination and
+evidence; bounded executors own only their listed surfaces and preserve foreign
+WIP/index. Each execution assignment has an eight-minute first deliverable and a
+progress check within five minutes; a stall returns to the lead without blind retry.
+
+#### E5a — recover complete header identity without changing authority
+
+Kernel identity owner extends `cs/thread_key.py` and only directly necessary
+`gmail_drafts`/`draft_state` discovery seams and focused identity tests. Decode the
+bounded whole References/In-Reply-To MIME header before whitespace tokenization;
+use strict charset/byte decoding and structurally complete RFC identities rather
+than replacement characters or guessed brackets. Preserve normal identifiers,
+HTML-escaped supported representations and ordered multi-ID References. Invalid,
+partial, ambiguous, malformed encoded-word and unknown-charset material remains
+explicit uncertainty under existing fail-closed behavior; retain its draft in
+whole-inventory coverage. Do not substitute a trusted root, opportunistically
+merge identities, change owner/source/peer guards or decode unrelated content.
+
+Verification: retain RED with the actual captured two-encoded-word header shape
+(full header 121 characters, full decoded ID 80 characters, erroneous first raw
+token 66 characters); GREEN must demonstrate discovery through the real Gmail
+row/thread-key path yields the same complete identity as the retained full
+header, without a provider call or invented identifier. Focused regressions cover
+normal and HTML identities, ordered distinct multi-ID References, both header
+sources, malformed/partial/ambiguous encoding, unknown charset and nearby distinct
+identity. Assert inventory retention and unchanged foreign/missing-root refusal.
+Use private fixtures safely; do not publish raw customer headers in receipts.
+Fresh integration review of these checks closes E5a. Offline identity recovery
+alone does not establish the current engine binding or an accepted assignment.
+
+#### E5b — retain typed remote response provenance across bounded reads
+
+Kernel RPC diagnostics owner extends `cs/rpc_reads.py`, the exact-key diagnostic
+validators/causal registry and `cs/task_assignment.py` event propagation, with
+focused real WebSocket tests. The wire client already retains `EngineError.code`;
+classify that structured exception before generic IO fallback. Distinguish
+`-32602` invalid parameters, other remote errors and connection/IO failure. Carry
+only an optional bounded integer `remote_error_code` in the typed read diagnostic;
+update constructor, exact-key validation, worker JSON, parent validation, causal
+allowlists and event forwarding together. Never parse message text or invent the
+remote Python exception type. Exact diagnostic schema retains required keys `cause`, `bound_origin`,
+`elapsed_ms`, `bound_ms`, `remaining_ms`, with only optional `remote_error_code`.
+Its type is strictly int (not bool), `-(2**53) < code < 2**53`, matching the
+existing producer's safe range; absent code stays absent. Timing validation stays
+0..10**12 integer milliseconds, with only remaining_ms permitting null. Add
+causes `remote_invalid_params` for -32602 and `remote_error` for other
+EngineError responses; preserve existing bound_origin choices. Event propagation
+uses existing error_class=EngineError/error_code fields from this typed diagnostic,
+while the returned parent exception remains RuntimeError. No other schema keys
+or error payload fields are admitted.
+
+Verification: real controlled WebSocket RED/GREEN sends structured `-32602`, a
+different remote code, connection failure, request timeout and successful/held
+controls. Assert exact calls/results, ordering, unchanged parent RuntimeError
+compatibility, fatal flags, scheduling and fail-closed UNKNOWN semantics. Strict
+schema tests reject extra keys, bool/noninteger and out-of-range codes; no message,
+error.data, identifier or exception text survives. Prove metadata survives actual
+worker isolation, EventStore, ordinary paged CLI, collector and inbox. A fresh
+blind log analyst must distinguish invalid-parameter remote rejection from IO
+failure and shared expiry using only retained logs. Fresh integration review
+closes E5b; diagnostics do not themselves repair rejected identities.
+
+#### E5c — finite coordinated time allowance with explicit partial extrapolation
+
+Kernel time owner owns review/discovery/worker ceilings in `cs/review.py` and
+`cs/unanswered.py`; Desktop acceptance owner owns native-job limits, runtime-policy
+and matching validators in `scripts/operator_operational_test.py`,
+`scripts/operator_operational_common.py` and a staged runtime-policy PROPOSAL
+in a private artifact outside `operational-evidence/runtime-policy.json`.
+The Desktop time owner must leave the active runtime policy untouched. These are
+coordinated changes, not an isolated longer test timeout. Only ROOT/lead may
+activate a new policy, after the exact R8 consumer plus installed new-kernel
+composition has passed independent composition review and installed preflight in
+E5d. Preserve the current valid active composition until that gate.
+
+Sizing proposal: the slower E4 lane completed 38 successful reads in 782.103s
+(20.5817s/read); support completed 46 in 704.939s. For 84 roots, slower-lane mean
+EXTRAPOLATION is `782.103 / 38 * 84 = 1728.859s`. E4 is PARTIAL: unattempted work,
+future tails, fallback and actual current engine binding are unmeasured; neither
+this mean nor the 800s experiment guarantees complete work. Reserve about 300s
+for non-projection work plus 25% of 1728.859s (432.215s) as conservative headroom:
+2461.074s; propose a finite 2700s work ceiling, leaving about 239s additional
+margin. This explicit reserve is a proposal to evaluate, not a measured bound.
+
+Proposed aligned controls: review work 2700s, cleanup 10s, total 2715s; scheduled
+observation 2710s, sweep 2700s, cleanup 10s, publication 5s, final 5s, total 2730s.
+Update both worker sweep/completion validation ceilings coherently with their
+actual payload deadlines, including review's inherited deadline. Keep strict
+positive ordered work/cleanup/total validation and bounded reaping/disposal.
+MrCall native becomes 6600s; Café stays 1800s and signup stays 600s for the known
+case. The existing FULL60 nonphase remainder was approximately 687s; the corrected
+review-plus-discovery maximum is `2715 + 2730 = 5445s`, yielding approximately
+6132s, below 6600s. This is envelope arithmetic, not a FULL runtime prediction.
+Suite limit becomes 10200s: native maxima `6600 + 1800 + 600 = 9000s` plus 1200s
+for stages/cleanup. Policy, resume-age checks, elapsed validators and suite cleanup
+clamping must use one coherent limit; retain finite explicit cleanup reserves.
+Normal guarded-job outer limit remains three hours. Retain per-account/global
+concurrency 1/4, request 150s, batch 180s, backend/provider 120s, standalone
+projection 3600s and all close/reservation/guard semantics. Financial controls
+remain USD4 soft per job, nominal three jobs times USD4; last FULL60 actual
+USD2.789 is historical spend, not a free new admission or a guaranteed future cost.
+
+Before coding, owners check the actual source defaults and all direct ceiling
+validators against this map. Evaluate whether a smaller coherent allowance is
+justified by the same complete envelope; any material different sizing returns
+to fresh affected plan review rather than arbitrary raising. Verification is a
+deterministic real-worker/transport RED/GREEN cumulative shared-expiry case with
+healthy reads and complete expected inventory under the finite corrected budget.
+Use proportionate short test allowances without replacing the actual production
+constant/envelope assertions. Individual request/batch timeout, exhausted shared
+budget, peer-incomplete UNKNOWN, legitimate held, guard expiry and cleanup/reaping
+controls must still fail or hold exactly as appropriate. Validate native/suite
+policy consistency, resume age and terminal evidence rejection at each bound.
+No model/provider call or paid FULL is part of these free checks. Fresh integration
+review closes E5c; no backend deployment/restart is required or authorized here.
+
+#### E5d — integrated forward candidate, exact consumer and finite BOTH FULL
+
+Lead integrates E5a/b/c plus already reviewed E3; review the combined real-user
+paths before freeze. Run the complete source harness `bash tests/run.sh`, then
+all 67 current at-tag gates with all six genuine golden-pack inputs; a skipped
+or fabricated golden gate is not parity. Preserve exact commands, outputs, source
+hashes and independent integration verdicts. Only green free gates admit the new
+immutable forward candidate 61; retain prior tags/installed bytes unchanged until
+supported adoption. Never retag, overlay site-packages or alter peer merge/source
+checks to make whole-inventory health pass.
+
+Adoption owner uniformly installs the exact immutable forward tag on BOTH normal
+clones through supported Git/package/update paths, verifies all 159 inventoried
+package files and resources and absence of unexpected overlays, refreshes locks
+and version claims, and binds exact source/runtime identity. Desktop owner makes
+the R8 consumer adjustment as an isolated owned commit and stages exact policy
+hashes/composition; preserve foreign WIP and all independent strict signed oracles.
+Activation order is mandatory: green source/at-tag gates, supported immutable
+BOTH-clone adoption, exact installed manifests and R8-consumer/policy hash binding,
+independent composition review plus installed preflight, then ROOT/lead activation
+of that exact reviewed policy. The time worker cannot activate it. Until ROOT
+activates the reviewed composition, keep the current valid active policy intact.
+Retain its complete preimage; rollback restores the matching prior consumer,
+installed package/pin/lock and policy composition together before acceptance can
+resume, never an incompatible policy in isolation. Require reviewed finite
+spend/time admission before one genuine strict BOTH FULL. Preserve protected original
+binding, independent provider confirmation, exact authority/source/whole-inventory
+oracles and uncertain prior effects; no backend/peer rollout or replay.
+
+Run the exact approved runner/policy against both actual clones, including native
+MrCall/Café/signup and terminal cleanup/evidence checks. A new failure goes to
+Astra with retained complete logs for evidence-based diagnosis; no blind retry,
+second paid attempt or budget extension is implied. On failure, retain failed
+outcomes and stop dependent publication. Rollback uses captured package/pin/lock
+preimages or a separately immutable known-good release through supported install;
+restore only owned scheduling controls, never business data, effects or logs.
+
+This amendment establishes a concrete proposed dependency/verification sequence.
+It does not establish implementation, exact current engine binding, a guaranteed
+complete-work runtime, adoption, passing BOTH FULL, publication or retrospective
+causes of earlier failures. Release publication, public installation/lock proof,
+doc-end reconciliation/doc-critic and separate final review before baseline
+advancement remain open obligations of this existing plan.
+
+
+### E6 — public tag provenance without publishing failed candidates
+
+Status: proposed; fresh affected plan review precedes metadata code. This is
+necessary release closure under the existing approved canonical/publication
+intent, not a product or authority change. Read-only origin evidence establishes
+public tags through53only. The release checker incorrectly labels57–60 as
+mandatory published anchors, so a fresh public clone of61would fail resolving
+those absent local-only candidate refs. Failed candidates must not be published
+merely to satisfy that mistaken requirement.
+
+Lead owns tests/test_release_consistency.py and ordinary harness wiring only.
+Keep every actually published immutable anchor mandatory. Preserve the exact
+four57–60 candidate name/hash pairs in an explicitly local frozen-candidate
+registry: absence is permitted only for those exact unshipped refs; a present
+ref must match its retained hash. Do not move/delete tags, skip generic missing
+releases, infer publication from local presence, or add network to the hermetic
+checker. Record the next61release through the normal release/post-tag process.
+
+Controls must prove all published anchors remain required and retargeting fails;
+a public-only tag map with absent57–60 passes candidate checks; any locally
+present candidate mismatch fails. Prove actual Git ref resolution does not
+unconditionally dereference absent optional candidates. Retain original frozen
+hashes and the independent remote-ref evidence in public-tag-closure-map.md.
+Wire E5identity/RPC/review/discovery regressions into their existing full harness
+steps without removing any check. Fresh affected integration review and complete
+source/at-tag gates precede freeze/adoption. This does not authorize a failed tag
+publication, change installed kernels, or relax any FULL/provider/authority oracle.

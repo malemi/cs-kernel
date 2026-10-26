@@ -14,107 +14,90 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.60.0`. Current HEAD status: untagged.**
-  The immutable candidate adds observed protected-source admission diagnostics.
-  Both normal clones still run59/ec7d84f until supported candidate adoption;
-  strict BOTH FULL and public Git provenance remain pending. Sign-off stays51.
-- Assignment diagnostics retain request/batch/shared/worker boundaries and
-  causal unattempted deferrals. Typed provider evidence adds opaque connection,
-  state, command timing, remaining budget, progress and timer/cleanup ordering.
-  Controlled native daemon→CLI→inbox cases pass on both exact actor families;
-  blind analysis identifies failures and distinguishes legitimate holds.
-  Both immutable90bb actor runtimes are verified with fresh row/integration
-  approvals; original schedules are restored and owned pauses removed.
-- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
-  progress duplicate with its matching successful final. Retained context and
-  reply evidence does not establish whole-tick acceptance. The
+- **Latest release tag: `v0.61.0`. Current HEAD status: tagged as `v0.61.0`.**
+  Both normal clones still match immutable60/9c69b99:159files, exact identities
+  and fresh local lock rebuilding. Operational sign-off remains51; public Git
+  provenance and genuine current acceptance are open.
+- The unpublished61candidate repairs whole MIME identity, typed remote errors
+  and finite shared-time limits. Integration, blind and complete source gates
+  pass; at-tag verification is pending and changes are not installed. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
-  preserved failed attempts, strict FULL and authorized public adoption.
-- The reviewed exact-RFC argument adapter is active on support and Café through
-  immutable preserved-family artifacts. Complete source/unit inventories and
-  unchanged peer/Qonto bindings are independently verified. Reviewed source
-  maintenance changes only one support References field and acquires one genuine
-  peer Sent record; all unrelated data and original schedules remain unchanged.
+  uniform adoption, strict FULL and authorized publication.
+- Both immutable90bb actor runtimes have verified provider connection/state,
+  command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
+  are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
+  source/assignment guards; original schedules and no owned pause are current.
+- The normal Desktop R7 consumer/policy remains valid. Candidate R8 f7f2471 is
+  isolated and source-reviewed; activation requires exact installed composition,
+  independent review and preflight. Its longer window never extends fixture authority.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
-  Supervisor decisions retain safe checks, causes, counts and correlation links;
-  interactive source-corroboration diagnostics preserve the parser's held behavior.
-  [Log-driven diagnosis](log-diagnosis-workflow.md) requires independent malfunction
-  detection and a supported cause/investigation route for every incident. Historical
-  missing causes remain unknown. `cs-diagnose` is manual-only; technical SMTP,
-  scanners and off-host watchdogs remain disabled. See [operational logs](operator-observability.md).
-- [Interactive review/send completion](execution-plans/2026-10-22-interactive-send-completion.md)
-  retains scoped source and installed proof; fresh ordinary autonomous acceptance
-  is open. Exact-ID send preserves assignment, source and dedup guards.
-- [Exact draft lifecycle](draft-lifecycle.md) provides owner/full-ID provider
-  mirrors, exact retirement and Sent recording. Automatic reconciliation is off;
-  native Gmail browser/mobile/API edit/send preservation remains unverified.
-- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
-  retains historical signed R9 acceptance for its exact candidate. Current release
-  composition requires fresh FULL; prior success and retained complete bytes do
-  not establish current model inspection or customer-service reliability.
-- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine generation
-  and direct classifiers. Both clones retain configured USD4 fallback budgets;
-  MrCall has its own primary launcher. CS_PAUSE blocks new guarded ticks, not
-  running Claude or engine work. Required phases, full inventory, selected-root
-  fresh reads and effect-time guards remain independent obligations.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
 - [Assignments](task-assignment.md) use engine-owned signed authority and scoped
-  drafts. Six hosted company engines retain reviewed assignment repairs; Qonto
-  stays excluded. Support and Mario share the approved support company space;
-  private tasks/mail remain isolated. Gmail Sent/All Mail remains dedup truth.
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
 - [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
-  distinguish legacy clone-file authoring from managed Desktop authority. Managed
-  changes require human Desktop confirmation; scheduled sessions cannot publish
-  rules or substitute unavailable published procedures with local copies.
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
 - [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
-  workflows are engine-owned. The [thin client](execution-plans/2026-10-16-authenticated-legal-client.md)
-  supports protocol2, direct start, cross-owner refusal and complete artifact
-  retrieval. Maintained clones use the thin route; preserved local legal skills
-  remain outside discovery. Fresh ordinary and final closure are separate.
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
 - Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
-  hosts share canonical skills. Company files, Café pricing and authored help
-  remain clone-owned. The [bootstrap name candidate](execution-plans/2026-10-11-bootstrap-name.md)
-  uses `cs-bootstrap` and `company/other-systems.md`, preserving old authored data.
-- Stripe's canonical skill covers reads, fixed payment links and explicitly
-  requested payment-method portal sessions. Support exposes the live capability;
-  native model selection and separate [integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md)
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe's canonical skill supports reads, fixed payment links and explicit portal
+  requests. Support exposes it; native selection and [integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md)
   remain open. [Provider guides](provider-connections.md) own other integrations;
-  Faire authenticated use and its adapter remain unverified.
+  Faire authentication/adapter acceptance remains unverified.
 
 ## Unresolved
 
-- Current release requires successful genuine BOTH-clone FULL with its unchanged whole-inventory
-  health check after the independently verified source-evidence repair,
-  publication and public Git installation/lock verification. The prior57case
-  remains failed despite its correctly received reply. Current affected-root
-  reads retain complete reply evidence and legitimate human-verification holds.
-- The58health attempt remains failed; FULL58 never started. Daemon records
-  locate an exception at readonly SELECT after120s of projection time but lack
-  command entry and connection state. Original cause remains UNKNOWN. The59
-  diagnostics are installed, not a proven repair. A future genuine failure must
-  support a cause and a same-path correction before defect closure. No new paid
-  health/FULL or provider retry is admitted; successful probes do not erase failure.
-- Original assignment-source exception origins remain lost; restricted provider
-  and database inspection establishes the current correspondence defects only.
-  The [diagnosis workflow](log-diagnosis-workflow.md) records this causal logging
-  gap and the required finite producer evidence. No historical cause is invented.
+- Genuine strict BOTH-clone FULL, publication and public Git/lock installation
+  proof remain required. FULL60 failed final MrCall assignment health; Café/signup
+  were not reached. A correctly received earlier reply does not certify whole health.
+- Historical58SELECT and59empty-fixture causes remain UNKNOWN. Current provider
+  and protected-source diagnostics cannot retrospectively recreate missing facts.
+  A later read success does not close those failures or the original source gap.
+- Partial model-free work establishes cumulative time expiry, a MIME-tokenization
+  bug and misleading remote-error classification. The reviewed source repairs need
+  fresh installed/strict acceptance; sizing extrapolation guarantees no completion.
 - [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
-  retains failed V27 and separate permission/ordinary-acceptance obligations;
-  earlier V14 and later successful Café draft evidence certify only their cases.
-- OpenCode diagnosis omitted-incident selection and fresh conditional-instruction
-  reading have helper/distribution tests, with qualified native coverage.
-- Native Gmail edit/send preservation, wide dossier latency and live unanswered
-  parity retain their existing owners. Incomplete authority holds named threads.
+  retains failed V27 and separate permission/ordinary acceptance. Earlier V14,
+  scoped Café draft and R9 proofs certify only their respective cases.
+- OpenCode diagnosis selection and conditional-instruction reading have qualified
+  native coverage. Native Gmail edits, wide dossier latency and live unanswered
+  parity retain their owners; incomplete authority continues to hold named roots.
 - The [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
-  remains undeployed. Explicit newer bindings require stronger policy; released
-  compatible workflows retain their guards and separate launcher limits.
-- Engine/classifier failover, live SIP/customer trunks, PBX and secondary-account
-  onboarding remain separate. Factory update/help vocabulary retains known debt.
+  remains undeployed; newer explicit bindings require stronger policy, while
+  compatible released workflows retain current guards and separate launch limits.
+- Engine/classifier failover, SIP/customer trunks, PBX, secondary-account onboarding
+  and factory update/help debt remain separate work.
 
 ## Next
 
-1. Reconcile reported charges and unknown reserves before a separately reviewed
-   finite admission. Added passive diagnostic loops are stopped; normal jobs and
-   collectors retain their schedules. The coordinator owns the next diagnosis.
-2. Obtain strict BOTH-clone FULL before public release and public Git adoption.
-3. Finish documentation/final review with actual evidence and preserved failures.
-4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.
+1. Finish source/at-tag gates, freeze one forward candidate and adopt both clones
+   uniformly; review/preflight exact R8 composition before activation.
+2. Execute one reviewed finite genuine BOTH FULL; diagnose new failures from
+   evidence with Astra. Preserve failed effects/cost uncertainty; no blind retries.
+3. Complete authorized public adoption and doc-end/critic/separate final review.
+4. Keep cs-diagnose manual and require native Gmail proof before reconciliation.

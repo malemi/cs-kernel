@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## v0.61.0 — 2026-10-26 (MINOR)
+
+Recover complete draft thread identities and expose actual read-failure causes.
+
+- Decode complete bounded MIME identity headers before References tokenization;
+  preserve normal/HTML-supported IDs and ordered multi-ID references. Invalid,
+  partial or unknown-charset encodings remain inventoried, held and address-blocked.
+- Preserve structured remote rejection codes through isolated reads and the
+  ordinary CLI/collector/inbox. Invalid parameters, remote failures, connection
+  failure and actual deadline expiry remain distinct; no exception text is logged.
+- Add per-account cumulative time summaries with precise entry/wall/serial timing,
+  actual counts and primary failure links. A selected bound is not claimed expired.
+- Coordinate finite review/discovery work and worker ceilings at2700seconds;
+  cleanup remains separately bounded. No financial, concurrency, request/provider,
+  authority, source or whole-inventory guard is relaxed. Partial-work extrapolation
+  is not a completion guarantee.
+- Keep published immutable Git anchors mandatory while preserving exact unshipped
+  candidate hashes without requiring absent private refs in public clones.
+
+Migration: install this immutable tag uniformly on BOTH clones through supported
+package/update/lock paths. Bind the separately reviewed Desktop consumer/policy
+composition before strict acceptance; its longer suite does not extend fixture
+or business authority. Installed overlays and failed-candidate publication are forbidden.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Identity
+handling participates in discovery/send authority and requires genuine unchanged
+native/provider oracles beyond controlled regression and blind-log acceptance.
+
 ## v0.60.0 — 2026-10-26 (MINOR)
 
 Explain protected-original discovery failures at their actual admission boundary.

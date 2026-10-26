@@ -359,3 +359,136 @@ immutable candidate, supported adoption on both clones and exact policy/provenan
 refresh. A runner-only diagnostic correction must preserve all acceptance checks
 and receives source-bound review before use. Retain failed runs and uncertain
 effects; only fresh genuine strict FULL on both actual clones proves acceptance.
+
+
+## Required continuation: explicit cumulative time-budget causes
+
+The operator requires log generation to make the cause evident. FULL60 failed
+ordinary health after native process exit0:24UNKNOWN assignment rows remain.
+Actual review and unanswered timeout events select their shared phase deadline.
+A matched support daemon request enters its worker after3.359ms and completes
+normally after20.748s while its caller allowed only16.483s. Support's36 completed
+review projections total385.386s. This establishes cumulative caller time-budget
+exhaustion, not a financial quota, a120s SELECT stall or a peer implementation
+fault. The earlier empty-fixture cause remains unknown and separate.
+
+Add a bounded causal batch summary at the real assignment scheduler: effective
+time available at entry, elapsed and remaining time, requested/dispatched/
+returned/timed-out/deferred counts, actual per-account/global admission limits,
+serial lane elapsed work and a reference to the first deciding timeout event.
+Use precise time units and distinguish a shared observation deadline from request
+or batch expiry. Do not call effective remaining time a configured original
+budget when that original value is unavailable. Do not infer provider health,
+queue stall or upstream cause from a completed RPC or elapsed time alone.
+
+Keep authority, result ordering/content, provider calls, deadlines, concurrency,
+reservations and business outcomes unchanged. Normal zero-work/legitimate holds
+must not become ERROR. New diagnostic failures never alter work. Preserve the
+first actual timeout and distinguish unattempted deferrals from attempted calls.
+Verify real transport cumulative-deadline and individual-timeout controls, exact
+counts/links, privacy, CLI/collector/inbox propagation and a fresh log-only analyst.
+Use the existing brief/plan gates and a forward immutable package before adoption.
+
+A separately reviewed single model-free measurement may project the exact
+captured root set with an800-second diagnostic ceiling after guarded-job
+quiescence. It uses only assignment projections, not review.gather/sweep which
+can classify through a model. Capture complete per-owner work/time/expiry data
+without changing production settings. This ceiling is not a proposed production
+allowance or a repair claim. Any production time-budget or scheduling correction
+requires measured arithmetic against the full job envelope and fresh affected
+review; no financial budget increase or blind timeout retry is inferred.
+
+
+## Required continuation: measured shared-time correction
+
+Intent remains successful genuine strict FULL on both normal clones, with clear
+causes and unchanged authority. E3 diagnostics passed independent integration,
+blind log-only analysis and the complete kernel harness; source is committed as
+71a6fb2 but remains uninstalled. E4 is an independently approved single model-free
+assignment measurement under actual job/acceptance locks. Its results must remain
+measurement evidence, not a historical or whole-FULL success claim.
+
+If E4 establishes sustained successful read work exceeding existing shared phase
+time, permit a coordinated finite time-allowance correction based on retained
+per-owner work counts/durations and explicitly conservative headroom. A partial
+measurement cannot be presented as measured complete-work duration; state its
+lower bounds, extrapolation and uncertainty. Inspect any actual request/provider
+errors before treating larger shared allowance as its remedy. The plan must give
+concrete arithmetic and align review, discovery, worker validation, cleanup and
+strict native/suite limits. A longer test timeout alone does not fix a shorter
+production phase; a longer production phase alone must not exceed the native
+acceptance envelope. Preserve bounded cleanup and exact terminal evidence.
+
+Keep actual per-account/global concurrency, request/batch/provider limits, root
+selection/order, held/UNKNOWN semantics, source guards and every independent
+strict acceptance oracle unchanged. Financial limits remain separate and are
+not increased. Do not add caching, batching, backend/peer rollout or business
+features under this continuation. No installed overlays or retagging.
+
+Fresh framing and concrete-plan review precede code. Tests must reproduce
+cumulative shared exhaustion with healthy reads and show full expected coverage
+under the corrected finite allowance, while individual request/batch failure,
+cleanup and unchanged result/authority controls remain effective. Run required
+source and at-tag gates, adopt one forward immutable candidate uniformly on both
+clones, bind the exact runner/policy composition, then run the genuine BOTH FULL.
+A failure returns to evidence-based Astra diagnosis, not unlimited retries.
+Existing publication, public installation/lock verification, documentation and
+separate final-review obligations remain open.
+
+
+## Required continuation: remote rejection must not look like transport failure
+
+The approved model-free measurement found mixed causes. Besides shared expiry,
+a fast remote validation rejection had113272ms remaining yet the kernel logged
+`transport_unavailable`. The captured root independently fails the pinned exact
+RFC validator, and a matching-time backend event records that validation branch.
+Six final UNKNOWN roots also have successful RPC observations; their authority
+causes remain under read-only diagnosis. No numeric time change or paid FULL
+retry is justified as a sole remedy.
+
+Preserve typed remote error provenance in kernel diagnostics so standard remote
+rejection/invalid-parameter responses remain distinct from connection/IO failure.
+Use actual structured response metadata or proved finite input predicates, never
+parse raw exception text or invent server codes. Keep calls, result/error
+compatibility, scheduling, authority and fail-closed handling unchanged. Do not
+drop malformed roots from coverage, reinterpret UNKNOWN as success, normalize
+identities without a lossless proved rule, or relax the strict whole-inventory
+oracle. A fresh concrete plan must state the source mechanism and real transport
+RED/GREEN controls before code. Future backend producer changes or rollout need
+their own affected framing/plan and existing actor/peer authority checks.
+
+
+## Required continuation: recover whole MIME header identity before tokenization
+
+Read-only E4 diagnosis establishes a kernel identity bug: three retained Gmail
+drafts have a complete References/In-Reply-To header encoded as two MIME words.
+The kernel takes the first raw References token, producing an invalid66-character
+fragment. Decoding the complete121-character header losslessly yields one valid
+80-character RFC Message-ID. The backend correctly rejects the fragment. This is
+not an authorization to fabricate identity syntax or relax backend validation.
+
+Repair the canonical thread-key path by bounded whole-header MIME decoding before
+References tokenization. Accept decoding only when complete structurally valid
+identities are established. Preserve normal/HTML-escaped identifiers and ordered
+multi-ID References. Invalid, partial, ambiguous and unknown-charset material
+must remain explicit uncertainty under existing fail-closed safeguards; never
+omit its draft from inventory or merge distinct identities opportunistically.
+Retain proof that discovery of the captured MIME shape reaches the same complete
+RFC identity as the full retained header, without a provider call or made-up ID.
+Current engine binding is not established by that offline proof; genuine strict
+FULL and independent source/authority guards remain required.
+
+Combine this diagnosed identity repair, precise remote-rejection diagnostics and
+a reviewed finite shared-time correction in one forward immutable kernel
+candidate. Time sizing must explicitly label partial-work extrapolation, reserve
+non-projection work and align worker/cleanup/native/suite bounds. Financial caps,
+concurrency and request/batch/provider limits remain unchanged. All six apparent
+successful-RPC unknowns have missing required peer observations after timeout;
+no evidence permits weakening peer merge or whole-inventory coverage. The
+recovered inventory-count episode requires no backend rollout for this root.
+
+The existing plan must receive concrete ownership, arithmetic, real regression
+checks, ordered integration/release gates and rollback before code. Fresh review
+of framing and that concrete plan precedes implementation. No backend/peer
+restart, broad refactor, caching, business-feature change or extra acceptance
+attempt is implied beyond a finite, source-bound, reviewed strict BOTH FULL.

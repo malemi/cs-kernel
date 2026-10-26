@@ -169,6 +169,48 @@ have separate monotonic elapsed observations; missing stages and historical
 causes stay unknown. Safe `elapsed_ms`/`deadline_seconds` survive incident
 projection. Actual installation and FULL belong to the canonical release plan.
 
+## Cumulative assignment time summaries (reviewed source, not installed)
+
+The reviewed unreleased source emits one `assignment_time_budget` decision per account
+after the existing scheduler returns. `effective_entry_ms` is the time available
+at scheduler entry, not an asserted original configured allowance. `elapsed_ms`
+is total wall time; `serial_read_ms` sums local read invocation durations for
+that account. `remaining_ms`, actual global/account concurrency and the first
+actual timeout's bound and cause-event reference make cumulative expiry visible.
+
+`expected_roots`, `scheduler_dispatched`, `returned_values`, `read_timeouts` and
+`scheduler_deferred` distinguish scheduled work from results and unattempted work.
+Dispatch means a local `read_many` invocation; it does not prove backend or
+provider dispatch. Returned values are error-free transport outcomes, not proof
+of business correctness. Individual request, batch and shared-deadline causes
+remain distinct. Zero entry capacity can defer work without any request timing
+out; ordinary successful reads and legitimate holds remain DEBUG.
+
+When shared time expires, inspect caller allocation, per-account cumulative work
+and the referenced read before changing a limit. This is evidence about a time
+budget, not a financial quota. The summary alone cannot establish whether slow
+service, work volume or an unsuitable allowance caused that exhaustion. Missing
+backend evidence and older causes stay unknown. The pending changes preserve
+business results and authority. The separate reviewed shared-time correction
+changes workflow allowances, not individual request/provider or financial limits.
+Installation and genuine BOTH FULL remain separate acceptance obligations.
+
+A selected request/batch/shared bound identifies the smallest permitted clock;
+it does not prove that clock expired. An early connection failure retains its
+primary cause-event link and a generic `read_failed` summary rather than a false
+batch expiry. Synthetic unattempted deferrals cannot become the primary failure.
+The summary's successful read count does not establish complete peer authority.
+
+Reviewed remote-response diagnostics preserve structured `EngineError` metadata
+through isolated workers: `remote_invalid_params` records code `-32602`, while
+`remote_error` retains other bounded integer codes. The client-side exception
+class is not a claimed remote Python type. Parent exception compatibility,
+request ordering and fatal/deferred behavior remain unchanged. No error message,
+data payload or raw identifier is propagated. Ordinary CLI, collection and inbox
+retain the code and causal distinction; connection/IO and deadline failures
+remain separate. A remote rejection with ample remaining time is not evidence
+that the time or financial budget was exhausted.
+
 ## Discovery publication diagnostics
 
 Scheduled discovery validates complete retained task/review material before publishing

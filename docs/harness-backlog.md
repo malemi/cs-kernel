@@ -84,3 +84,4 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/execution-plans/2026-10-15-ordinary-assignment-recovery.md | 499 | keep whole — one active recovery dependency plan; read acceptance and retained evidence by section | 2026-10-16 |
 | docs/operator-runtime.md | 457 | keep whole — one runtime/control contract with distinct execution boundaries; read by section | 2026-10-19 |
 | docs/execution-plans/2026-10-25-canonical-release-alignment.md | 914 | keep whole — existing release recovery plan and immutable failed-case decisions; read current acceptance and bounded continuation by section | 2026-10-25 |
+| docs/briefs/2026-10-25-canonical-release-alignment.md | 494 | keep whole — the existing reviewed release brief and bounded continuations; read by acceptance section | 2026-10-26 |

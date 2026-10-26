@@ -106,6 +106,33 @@ The [delivery plan](execution-plans/2026-10-13-operator-actionable-diagnostics.m
 records its diagnostic contract; current filesystem adoption is covered by the
 [logging plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md).
 
+## Reviewed shared-time correction — installation pending
+
+Workflow time is separate from model spending. The reviewed kernel source gives
+review 2700 seconds of work, 10 seconds cleanup and a 2715-second total envelope.
+Scheduled discovery observes for 2710 seconds, reserves its last 10 seconds for
+completion, and separately bounds cleanup/publication/finalization at 10/5/5
+seconds, for 2730 seconds total. Both worker admission ceilings follow those
+actual payload deadlines. Standalone projection remains capped at 3600 seconds;
+a caller's inherited earlier deadline still wins.
+
+The isolated Desktop acceptance candidate bounds the native MrCall/Café/signup
+jobs at 6600/1800/600 seconds and its suite at 10200 seconds. Resume age and
+terminal elapsed validation use that same finite suite envelope; native terminal
+validation also rejects overrun or nonfinite timestamps. The normal active
+consumer/policy stays at its prior composition until the lead installs the exact
+candidate, reviews its bound composition and passes installed preflight.
+Protected fixture authority still expires at 5400 seconds; a longer test window
+never extends that authority or waives expiry refusal.
+
+The sizing uses partial measured per-account read work with explicit headroom,
+not a guaranteed completion time. One active read per account, four globally,
+150-second assignment requests, 180-second batches, the 120-second backend bound,
+three-hour ordinary watchdog and financial controls remain unchanged. A timeout
+or invalid input stays incomplete and held; the larger envelope grants no replay,
+assignment or send permission. The existing release plan owns adoption and
+unchanged strict BOTH-clone acceptance.
+
 ## Deterministic ordinary-run health
 
 The local [ordinary-health repair](execution-plans/2026-10-15-ordinary-operator-health.md)
@@ -241,8 +268,8 @@ Sent source now verifies as complete AUTOMATIC with NORMAL/unheld root authority
 This read-only recovery proves the repair, not complete operational acceptance.
 Both ACTOR engines advertise integer capability 1. R9 verified both ordinary
 clone interpreters on the approved 116-file workflow/provenance base `9857f1bb…`.
-Both maintained clones now run the clean local57release candidate; its fresh
-FULL and public-tag provenance remain pending. Earlier scoped hosted acceptance
+Both maintained clones run clean immutable local release packages; the living
+context records their exact version and pending FULL/public provenance. Earlier scoped hosted acceptance
 is retained below. Activation and adoption evidence live
 under `/tmp/operator-operational-evidence/full-completion-plan/postterminal-authority-observer/activation/`
 and `/tmp/mrcall-ai-kit/exact-draft-live/scheduled-reply-provenance/`.
@@ -403,7 +430,7 @@ and actual child. Direct launches resolve the executable before launch. An
 explicit CS_OPERATOR_NATIVE_BINARY separately identifies the emitter behind an
 exec launcher; the launcher, its arguments and its authentication/budget behavior
 remain intact. The MrCall clone's one-line primary-branch emitter export remains
-active with the clean158-file57candidate. Its existing budget wrapper is preserved;
+active with the clean immutable kernel package. Its existing budget wrapper is preserved;
 public-tag provenance and current whole-workflow acceptance remain pending.
 
 Version2 preserves every original init and result in order, strict indexed

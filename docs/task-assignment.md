@@ -277,7 +277,7 @@ inbound with their human. No address-wide handled cutoff overrides these identit
 ## Compatibility and remaining acceptance
 
 The [ordinary assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
-implementation in the clean local57candidate prioritizes useful inbound work using the existing engine
+implementation prioritizes useful inbound work using the existing engine
 classification, then newest receipt first. Each authenticated actor admits one
 active projection RPC; other actors advance independently. At most four reads
 run globally, including reserved timed-out work. Required canonical observations
@@ -285,8 +285,9 @@ retain their originating root's priority before later historical roots.
 
 Assignment projection has a 120-second engine deadline and 150-second caller
 limit. Bulk projection explicitly selects 150-second requests and 180-second
-isolated batches, with one shared 3600-second budget including authentication and
-cleanup. Supervised reads permit these higher finite caps only for opted-in
+isolated batches, with a standalone shared ceiling of 3600 seconds including
+authentication and cleanup. An inherited caller deadline can be shorter; these
+limits do not grant a fresh projection budget inside review or discovery. Supervised reads permit these higher finite caps only for opted-in
 `tasks.assignment.project`; defaults and other allowed methods remain 60/90
 seconds. Blocked authentication or DNS cannot outlive the supervised boundary.
 A timed-out lane retains its physical reservation for the rest of the run;
@@ -298,6 +299,20 @@ global deadline. Transport failures, invalid responses and other holds do not
 retry. Final guards and mutations retain their separate authority. No
 cross-request authority cache or arbitrary queue-coverage guarantee is added.
 The recovery plan owns exact source, installed adoption and ordinary acceptance.
+
+The reviewed unreleased shared-time correction gives review 2700 seconds of
+work and scheduled discovery a 2700-second sweep inside 2710 seconds observation.
+These finite allowances use partial workload extrapolation and headroom, not a
+coverage guarantee; actual installed state belongs to the living context.
+Required peer observations and timed-out reservations remain mandatory.
+
+The reviewed identity correction decodes complete bounded MIME-encoded identity
+headers before References tokenization. A valid multi-word encoding must produce
+complete RFC identities; ordinary/HTML-supported identities and multi-ID order
+remain intact. Malformed/partial/unknown-charset encodings cannot borrow an
+unrelated Message-ID. Missing-root drafts remain visible and explicitly held by
+the workset consumer. Lossless header recovery does not establish engine binding
+or override owner, source, assignment or exact-send guards.
 
 Optional engine component metadata binds the requested anchor to its authoritative
 thread key and authenticated local component. Stored task keys remain unchanged.

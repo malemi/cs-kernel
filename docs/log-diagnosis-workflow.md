@@ -200,6 +200,33 @@ is a diagnostic gap and a supported investigation route, not a proven queue
 starvation cause. A later successful exact-root read does not clear the failed
 whole-inventory observation.
 
+## Clock selection, remote rejection and header identity
+
+Compare the actual cause with elapsed and remaining time. A selected batch or
+shared bound is not proof of expiry: an early connection failure can occur with
+ample allowance. Follow the primary failure event before interpreting derived
+account deferrals. Error-free local RPC returns also do not prove complete peer
+coverage or unheld business authority.
+
+Use structured remote error codes to distinguish an invalid-parameter rejection
+from connection failure. For identity parameters, inspect the complete retained
+header through the pinned parser path: tokenizing MIME encoded words before
+whole-header decoding can yield a fragment. Preserve privacy with hashes and
+bounded structural comparisons. Never invent brackets, omit malformed drafts or
+reinterpret UNKNOWN as success to improve a health result.
+
+When a safe exception origin is available, inspect that exact pinned source
+branch before stopping at its broad exception class. An inventory-count guard
+can reject after normal IMAP operations; it is not a transport or deadline cause.
+If actual count, limit or selection mode was discarded, retain that limit and
+improve those finite producer facts for the next failure. A recovered later read
+does not erase the earlier guard failure or establish its missing arguments.
+
+Time sizing needs complete-work measurements or explicitly qualified partial
+extrapolation, non-projection allowance and a coherent native/suite envelope.
+Financial quota is a different boundary. A workload can expose both insufficient
+shared time and malformed input; extra time cannot repair rejected identities.
+
 ## Intermittent daemon failures
 
 A successful retry or fresh-process probe does not explain a failed daemon
