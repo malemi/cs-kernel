@@ -277,3 +277,47 @@ consumed admission is not silently extended and no paid acceptance starts on
 failing free checks. Full strict BOTH-clone acceptance, public publication and
 normal Git installation/lock verification, doc-end and separate final review
 remain required.
+
+## Required continuation: diagnose the failing daemon connection
+
+The failed58 health attempt remains failed. Its daemon records locate an
+exception at readonly SELECT after roughly120seconds of projection time; they
+retain neither SELECT entry time nor the failed connection's protocol/socket
+state. They do not establish a120second SELECT duration or an upstream cause.
+A fresh isolated-process connection subsequently authenticated and completed41
+readonly selections; that success establishes intermittency, not a repair.
+Current result: cause UNKNOWN; diagnostic evidence INSUFFICIENT.
+
+The next dependency is diagnostic-only. Retain opaque runtime-scoped connection
+identity/generation, socket/IMAP/TLS state, pinned/current/deadline identity
+comparisons, bounded pending-command counts, operation entry/exit timing and
+remaining absolute budget, and timer/abort/disposal ordering. Capture within the
+actual daemon execution and preserve the initiating failure separately from
+cleanup failure. No extra network command, retry, timeout/deadline change,
+concurrency change, business-policy change or new paid acceptance is authorized
+by this continuation. The prior proposed SELECT retry is superseded and unapproved.
+
+Use an explicitly reviewed, bounded typed optional diagnostic contract across
+engine producer/storage, kernel validation, ordinary CLI, collector and inbox.
+Do not encode connection state in unrelated command/count/error fields. Preserve
+compatibility and missing facts as unknown. Exclude credentials, mailbox/folder
+names, raw identifiers, addresses, headers, bodies, responses and exception text.
+Keep58 immutable; any kernel source change needs a new immutable candidate.
+Canonical provenance and exact two-family adaptations precede source adoption.
+
+Verify a controlled failure through a real staged native daemon RPC and local
+protocol peer, preserving authentication, connection pinning and source guards.
+Exercise stalled command, partial progress and expiry/disposal ordering, with
+success and legitimate-held controls. Demonstrate that preimage evidence loses
+the deciding facts and candidate evidence survives the actual EventStore,
+ordinary paged CLI and collector/inbox. A blind analyst must detect the failure
+and identify its supported boundary without learning the injected answer.
+Controlled failure proves the diagnostic component; it does not retrospectively
+explain the production failure. No passing provider retry closes that defect.
+
+Underlying-defect closure requires retained evidence from the actual failing
+daemon path, a cause supported by those observations, and a targeted correction
+verified on that same path. Until then state cause unknown and retain the next
+inspection route. Logging completion, an isolated successful probe and process
+liveness cannot substitute for defect closure, strict FULL on BOTH clones,
+public release/adoption or existing documentation/final-review obligations.

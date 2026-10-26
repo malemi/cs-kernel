@@ -67,6 +67,9 @@ def safe_detail(value: dict) -> dict:
         elif key in {"error_file", "method", "command"}:
             if safe_metadata({key: item}).get(key) != item or item is None:
                 raise ValueError("Invalid incident source")
+        elif key == "provider_diagnostic":
+            from .observability_provider import validate
+            item = validate(item)
         elif key == "causal":
             from .observability_causal import validate
             validate(item)

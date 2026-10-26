@@ -237,9 +237,11 @@ class NotificationTests(unittest.TestCase):
             _publish(self.config, other, self.base, time.monotonic() + 0.2)["accepted"]
         )
         self.provider.deliver = True
+        # Initialize the reader before reconnect starts writing replay receipts.
+        # This case tests replay durability, not concurrent schema initialization.
+        inbox = Inbox(self.config.state_dir, self.config.owner_uid, self.config.monitor_id)
         second = self.subscriber()
         deadline = time.monotonic() + 2
-        inbox = Inbox(self.config.state_dir, self.config.owner_uid, self.config.monitor_id)
         while len(inbox.view()["receipts"]) < 2 and time.monotonic() < deadline:
             time.sleep(0.02)
         self.assertEqual(len(inbox.view()["receipts"]), 2)

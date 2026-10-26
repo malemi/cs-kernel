@@ -1381,3 +1381,382 @@ before canonical FULL takes its own scheduling window; verify final cleanup and
 all uncertain effects without resend. Full provider/authority/ACK/no-extra-effects
 and normal-job criteria remain unchanged. This proposal authorizes no paid call
 before its actual approval and prerequisites.
+
+### D1 amendment — bounded read-only SELECT recovery after failed58 health
+
+Disposition: NOT APPROVED; superseded by the diagnostic-only amendment below.
+The operator requires connection/state/cause evidence before proposing a repair.
+The retained proposal is historical planning narrative, not executable authority.
+
+Status: planning only; fresh brief framing approval and fresh plan approval are
+mandatory before implementation. This extends D1, not the consumed58 admission.
+The failed installed58 discovery returned exit3, assignment_read_incomplete,
+unknown_states1 after730.5seconds; FULL never started. No additional paid or
+provider admission is granted. Kernel58 remains immutable and unchanged.
+
+Evidence: v58/health-unknown-engine-events.json and health-unknown-summary.json
+under /tmp/mrcall-ai-kit/20261025-release-alignment. Two observed dispatch waits
+were approximately1.3milliseconds. The first120-second source failure was the
+_early_replies deadline guard at task_assignment_projection.py:109; the next
+attempt failed at imap_client.py:807 in readonly SELECT after120seconds.
+Cleanup then failed at the already-expired remaining-time guard, line750.
+These facts identify an unbounded-within-the-whole-budget SELECT as a concrete
+reproduction target. They do not prove a stale socket, provider outage, the
+first attempt's upstream cause, or that a reconnect will repair production.
+
+Read source finding: examine_existing has no local recovery. _deadline_check
+permits a command to consume all remaining absolute time (maximum120seconds).
+Outside a projection scope, _ensure_connected can reconnect after failed NOOP;
+inside the installed families' projection_connection scope it instead pins one
+connection and rejects replacement. Canonical543f311e has the same
+examine_existing and disposal functions but not that projection scope, so a
+canonical-only test cannot establish safe family adoption. Do not remove this
+family guard to make a retry pass.
+
+Owner: one native IMAP executor owns canonical engine/zylch/email/imap_client.py,
+focused real-protocol tests, and explicitly reviewed equivalent family changes.
+MAIN's unrelated worktree/index remain untouched. First extend the existing
+brief with the exact bounded read-only recovery behavior and obtain its fresh
+review; then review this amendment. No implementation starts before both gates.
+
+Smallest deciding RED: exercise the actual native projection/IMAP adapter against
+a local socket protocol server. Authenticate normally, let the first EXAMINE
+stall, and let a fresh authenticated connection return valid EXISTS,
+UIDVALIDITY and UIDNEXT plus the required evidence. On the preimage, demonstrate
+that the stalled command exhausts the short test's unchanged absolute deadline
+and yields conservative UNKNOWN. Use actual socket waits, not a fake select()
+that merely raises an exception. Retain commands, monotonic timings, connection
+identities and process/socket cleanup. This is free and model/provider independent.
+
+Candidate repair, only if that RED confirms the mechanism: cap each readonly
+SELECT attempt at min(15seconds, remaining original evidence deadline), with
+short proportional test bounds. Permit at most ONE fresh authenticated retry
+per projection, solely for a timeout/disconnect during readonly SELECT, and only
+with time remaining. Existing connect limits, absolute deadline, concurrency and
+resource budgets stay unchanged. Fully dispose and detach the old connection
+before reconnecting. Reapply the attempt cap after connection establishment;
+restore ordinary command timeout only within the original remaining deadline.
+Do not retry authentication denial, missing folders, malformed responses,
+identity/source-guard failures, SMTP, writes, or any mutating command.
+
+The installed pinned-connection scope needs explicit reviewed handling: retry
+before any evidence acceptance, or invalidate and recompute the complete evidence
+snapshot once under the same absolute deadline. Never silently rebind a scope
+with accepted observations. Revalidate UIDVALIDITY/UIDNEXT and all existing
+source/ownership guards against the fresh connection; changed identities or
+incomplete inventories stay held/UNKNOWN. If this requires broadening beyond
+one bounded recovery and complete recomputation, stop this implementation branch
+and return the measured RED and exact scope conflict for a revised D1 decision.
+
+Required GREEN through the same actual native/local-protocol path: first stalled
+connection is closed, exactly one fresh connection succeeds, the final result
+contains independently validated complete evidence, and no command is a write.
+Nearby controls: both attempts stall; provider genuinely exceeds the unchanged
+absolute budget; already-expired deadline; cancellation during the first attempt
+and during reconnect; malformed/changed UIDVALIDITY or UIDNEXT; and non-retryable
+auth/folder failure. Each must preserve held/UNKNOWN and bounded cleanup where
+appropriate, never spin or accept mixed-connection evidence. Assert total elapsed
+bound, no third connection, unchanged guard-before-disposal/R8 ordering and no
+leaked sockets/threads. Existing offline transport suites remain prerequisites.
+
+Independent milestone review must inspect exact canonical and BOTH family
+contexts, particularly projection_connection/_ensure_connected differences.
+Only approved RED/GREEN and complete family maps permit the existing immutable
+source deployment, captured rollback and exact policy/activation gates. A new
+finite health/FULL admission requires its own actual resource disposition and
+review; neither this plan nor diagnostic success renews the failed58 allowance.
+This amendment establishes a testable source hypothesis and bounded repair
+contract. It does not establish upstream root cause, implemented recovery,
+production health, FULL success, public release or completed alignment.
+
+### D1 replacement — diagnose the actual daemon connection before any repair
+
+Status: cause UNKNOWN; current diagnostics INSUFFICIENT. This is diagnostic-only
+continuation of the existing plan. The prior SELECT retry proposal is NOT
+APPROVED and cannot authorize implementation, a retry admission or latency-fix
+claim. Root owns the existing brief amendment; fresh framing review then fresh
+plan review must approve this replacement before coding. No behavioral retry,
+deadline, budget, concurrency, authority, SMTP or business-policy changes.
+
+Actual evidence distinguishes projection elapsed time from operation elapsed
+time: the second retained failure is located in SELECT after120seconds of
+projection time, but SELECT entry time and connection state were not retained.
+Fresh per-observation mailbox clients do not establish a global reused-pool
+cause. Read the complete private select-connection-diagnosis.md under
+/tmp/mrcall-ai-kit/20261025-release-alignment/v58 for the observed source facts
+and their limits. Fresh-process success cannot explain a daemon-only failure.
+No further real-provider retries merely to obtain a passing result are admitted;
+ordinary future failures should retain diagnostic evidence automatically.
+
+#### D1a — reviewed diagnostic contract and actual daemon capture
+
+Owner: one engine executor owns canonical ACTOR native IMAP/projection diagnostic
+seams and their focused local-protocol tests, with explicit equivalent adaptations
+for BOTH actual actor families. Preserve MAIN's unrelated worktree/index and
+family-specific projection_connection pinning, deadlines, disposal and guard
+ordering. Do not overwrite a family module from canonical source: canonical
+543f311e lacks the installed families' pinned projection-connection scope.
+
+Capture INSIDE the actual daemon RPC execution, rather than only a standalone
+process: opaque per-process connection identity plus generation; socket open/
+closed and timeout state; IMAP state and TLS state; pinned/current/deadline
+connection equality; outstanding tag and command COUNTS without values; exact
+operation entry, exit, duration and remaining absolute deadline; ordered command
+VERBS without arguments; timer armed/fired/cancelled and socket abort/disposal
+cause from finite enums. Preserve first failure separately from cleanup failure.
+Events must retain actual trace/root correlation and safe actor/family provenance.
+No credential, address, mailbox name, mail header/body, raw response, prompt or
+raw exception message may enter events, private files or test receipts. A
+connection identifier cannot be a pointer revealing process address; generate an
+opaque token scoped to the runtime. No extra network operation is diagnostic.
+
+Contract decision from actual engine/kernel safe_metadata inspection:58 currently
+supports elapsed_ms, count/pending_count/deadline_seconds, complete/available,
+command/method, hashed evidence_ref and safe error origin. These can faithfully
+carry operation events, duration, actual counts and hashed correlation only.
+It does NOT support the required typed connection generation/state, pin-match,
+subsecond remaining deadline or timer/disposal cause. Do not smuggle those into
+command identifiers, unrelated count/error fields or causal facts with different
+meaning, and do not silently drop them while claiming the full contract passed.
+
+Prefer an existing field only where its documented meaning fits. The full
+ordinary CLI/collector contract therefore needs an explicitly reviewed typed
+bounded diagnostic schema shared by engine emission and kernel validation, or
+a reviewed narrower requirement. This plan chooses the schema route for full
+acceptance, contingent on fresh brief/plan approval; kernel58 installed bytes and
+tag remain unchanged. If kernel code is needed, produce a NEW immutable kernel
+candidate under the existing version/release procedure and validate BOTH clones.
+An engine-only58-compatible subset can be separately verified but cannot close
+the full connection-state diagnostic acceptance or underlying defect.
+
+#### D1b — real controlled daemon failure and propagation proof
+
+Owner: the same bounded diagnostic executor; independent reviewer owns the
+milestone verdict. Run a real native daemon RPC against a staged local IMAP/TLS
+protocol peer using the exact family contexts, native handler/auth and isolated
+read-only fixture data. No real provider, model, SMTP or writes are needed.
+Exercise a connection that authenticates then stalls a specific EXAMINE, a
+partial-protocol-progress case, and expiry/disposal while a command is pending;
+include an unexpired success and legitimate-held control. Preserve the existing
+absolute deadline semantics; test fixtures may use shorter injected existing
+bounds without changing production values. Do not patch results or bypass the
+family pin, source guards or first-failure preservation to manufacture evidence.
+
+The preimage must demonstrably lose the deciding operation/state. Candidate
+GREEN must show which connection/generation, exact operation and entry-time
+remaining budget, protocol state/progress and timer/disposal sequence actually
+precede failure. Retain real EventStore records, ordinary CLI paging, collector
+and private inbox evidence through the normal schema validation path. Current58
+must retain the honest compatible subset; the new schema candidate must retain
+all approved typed fields through that same path. Test bounded payloads,
+malformed/unexpected fields and secret-bearing sentinel rejection. A blind
+analyst receiving only those ordinary records must identify the malfunction and
+the supported causal boundary or precise next inspection, without being told
+the injected failure or inventing an upstream cause. All observed timers,
+threads, socket cleanup and unchanged conservative held/UNKNOWN decisions need
+real receipts. Passing unit doubles alone does not satisfy native daemon proof.
+
+#### D1c — separate diagnostic closure from underlying-defect closure
+
+Independent review may close the diagnostic component only after D1a/D1b evidence
+and privacy/schema/family checks pass. Exact source deployment and rollback use
+the existing reviewed family maps, policy/activation and release gates; no new
+provider acceptance trial follows automatically. Documentation must explicitly
+state the unresolved underlying cause and retained next inspection route.
+
+Underlying-defect closure requires an ACTUAL daemon failure with sufficient
+connection/state evidence, a supported cause, and a targeted repair verified
+through the SAME native daemon path, with nearby failed/held controls preserved.
+That repair requires a subsequent reviewed D1 decision, not this diagnostic-only
+amendment. Neither a fresh-process pass, absence of ERROR, recovered retry,
+healthy process nor finished logging component proves the malfunction fixed or
+the whole release/alignment assignment complete. Existing FULL/publication/BOTH
+clone adoption/doc-end/final-review obligations remain separately outstanding.
+
+### D1 execution contract — brief-approved diagnostic continuation
+
+Framing gate: APPROVED, daemon-diagnostic-brief-review.md, brief SHA256
+6cd5cee79f045b136155637f9d6f8954e4aa3b3d2c22f4bf90503430a7681627.
+This concrete refinement now requires a fresh PLAN review before coding. It
+supersedes no held/cause-UNKNOWN constraint above and admits no live-provider run.
+
+#### P0 — canonical provenance prerequisite, before typed changes
+
+Owner: engine executor, isolated canonical ACTOR branch/index descended from
+543f311e. The exact nine existing source paths are engine/zylch/observability.py,
+observability_context.py, observability_logging.py, observability_producers.py,
+observability_profile.py, observability_reader.py, observability_recent.py,
+observability_retention.py and observability_store.py. They are absent from
+543f311e Git history, although present untracked in MAIN and installed in BOTH
+actual actor families. Independent read-only provenance inspection finds all
+nine MAIN bytes equal BOTH immutable hosted copies. Preserve their exact
+preimage hashes and source origin; do not pretend543f311e already tracks them.
+The observability.py anchor SHA256 is
+fcfbc53025e6407f89798e802a3493276751f4239f80c9bf49d9717fec549684.
+
+Recover ONLY these nine existing modules into the isolated owned canonical
+index, unchanged as a separately reviewed provenance baseline. Inventory their
+imports and the already-live RPC/read binding seams; required dependencies must
+resolve from tracked ACTOR code or explicitly reviewed exact-family baseline.
+An absent dependency is a named prerequisite, never an implicit MAIN/WIP import.
+Capture complete installed family maps before any delta; preserve their
+projection pinning,120-second family deadlines and source/disposal guards.
+Do not touch MAIN's foreign worktree/index, create runtime-only patches, copy
+whole family IMAP modules to canonical, or invent a source-history attestation.
+Verification: exact nine-path hashes equal each hosted preimage; clean isolated
+import/test process resolves every dependency without MAIN PYTHONPATH; independent
+review accepts this provenance cohort before diagnostic implementation.
+
+#### P1 — exact small optional wire object
+
+Owners: kernel executor owns cs/observability.py and cs/observability_store.py
+validation, normal engine-log import/read, monitor_details/evaluate propagation
+and private-inbox failure detail; engine executor owns the matching nine-module
+source surface, IMAP producer seams, observation/terminal propagation and native
+RPC harness. Use existing modules and tests; no replacement logging framework.
+Follow the actual existing monitor_details/evaluate definitions to their direct
+modules only. Preserve legacy causal-envelope validation unchanged.
+
+Add optional top-level metadata `provider_diagnostic`, a CLOSED object with
+exact keys below. All keys are required inside an object; unavailable observations
+are JSON null where explicitly allowed, never guessed. Serialized object maximum
+4096 UTF-8 bytes. No additional keys, coercion, bool-as-number, NaN or Infinity.
+`version`: integer exactly1.
+`connection_id`: random runtime-scoped lowercase32-hex token or null; never id(),
+fd, address, mailbox, credential or hash derived from a secret.
+`generation`: integer1..2147483647 or null, incremented on connection creation.
+`sequence`: integer1..2147483647, allocated atomically per observation across threads.
+`operation_id`: integer1..2147483647 or null; entry/exit share the same number.
+`operation`: enum observation/connect/tls/login/examine/search/fetch/guard/timer/
+abort/dispose/unknown. `phase`: enum enter/exit/failed/armed/fired/cancelled/joined.
+`command`: enum CAPABILITY/LOGIN/EXAMINE/SELECT/UID_SEARCH/UID_FETCH/NOOP/OTHER or null;
+this is a native command VERB, never its arguments or a provider response.
+`socket_state`: enum absent/open/closed/unknown.
+`imap_state`: enum DISCONNECTED/NONAUTH/AUTH/SELECTED/LOGOUT/UNKNOWN.
+`tls_state`: enum absent/negotiating/established/closed/unknown.
+`pin_match`: bool or null, observing current versus projection pinned connection.
+`deadline_match`: bool or null. At ordinary operation events compare current
+connection identity/generation with the active deadline connection; at timer
+armed/fired/abort/dispose events compare the actual current target with the
+identity/generation captured when that timer was armed. Null means either
+identity is unavailable, never presumed equality. The event's connection_id and
+generation retain the originally armed target on timer events, while this flag
+records whether the actual current target still matches it.
+`inbound_progress_count`: integer0..2147483647 or null, counting successful
+nonempty returns from the native IMAP socket/read path for THIS operation.
+Reset to zero at command entry; null means that operation's native read path
+cannot be observed safely. Increment only after an existing native read returns,
+without retaining, parsing or logging payload, issuing extra reads, peeking or
+changing read boundaries. No per-read event is emitted.
+`last_inbound_progress_offset_ms`: finite number0..3600000 or null, monotonic
+offset from observation start of the latest counted nonempty native read for
+this operation; null before any progress or if unavailable. Snapshot both
+progress fields at meaningful command/state transitions and first fault only;
+entry records zero/null, terminal records the accumulated count/latest offset.
+Counter overflow clamps and sets overflow=true; it cannot become a complete
+causal proof. A return observed in a nested reader must be counted at exactly
+ONE chosen native ingress seam, not counted again by outer parsing wrappers.
+`pending_tags`: integer0..65535 or null; count only, never tag values.
+`pending_commands`: integer0..65535 or null; count only.
+`offset_ms`: finite number0..3600000, monotonic elapsed from observation start.
+`duration_ms`: finite number0..3600000 or null; null at entry, measured at terminal.
+`remaining_ms`: finite number0..3600000 or null, clamped at zero after expiry;
+this measures the ORIGINAL absolute deadline, never an extended local bound.
+`socket_timeout_ms`: finite number0..3600000 or null.
+`cause`: enum none/deadline/cancelled/socket_error/protocol_error/cleanup/normal/
+unknown. These describe the observed transition, not an inferred provider cause.
+`overflow`: bool, true if diagnostic sequence/state exceeded capture bounds.
+
+Emit only operation/state transitions, not bytes, message counts per payload,
+raw protocol responses, headers/body, exception text or repeated polling events.
+At most2048 diagnostic records per observation, reserving8 terminal/failure
+records. Overflow emits one marked incomplete terminal snapshot and prevents
+claiming diagnostic completeness. Snapshot readings must be nonblocking attribute
+observations: no NOOP, extra provider call, TLS handshake, recv or socket probe.
+Any unsupported state is unknown/null. Do not parse provider text to fill enums.
+Retain one immutable FIRST-FAULT object in the existing terminal failed event;
+cleanup events retain their separate objects and cannot replace the first fault.
+The normal private inbox carries that snapshot plus existing trace references,
+not the whole diagnostic sequence. Correctly update monitor_details/evaluate so
+the typed object survives actual producer-to-inbox transformation.
+
+Timer callbacks receive the observation's explicit safe trace context and
+connection/generation identity captured when armed. ContextVar inheritance cannot
+be assumed for threading.Timer. Atomic sequence allocation must not block native
+I/O, and telemetry failure must not change RPC outcomes or cleanup ordering.
+Record armed/fired/abort/dispose against their ACTUAL observed target identities;
+never label a later pointer as the originally armed target without comparison.
+
+Compatibility: object absent preserves old event semantics; new readers accept
+legacy records. A malformed object is rejected by validation and diagnostic
+completeness fails; never silently replace it with a sanitized successful record.
+Kernel58 has no such typed field and may reject/drop it, so cannot certify this
+wire shape. Freeze58 untouched; new immutable59 candidate carries the reviewed
+wire extension and BOTH clone installation under existing release gates. Keep
+emission/deployment ordered so58 is not left reading an incompatible engine stream.
+No opaque-state facts are hidden in unrelated existing fields or command names.
+
+Verification: run exact native schema round trips, legacy-absent controls,
+all enum/null/boundary cases, unexpected key/type/oversize/sentinel rejection,
+first-fault-versus-cleanup and timer-thread correlation/concurrency controls.
+A schema unit pass is insufficient without P2 ordinary-surface receipts.
+
+#### P2 — concrete staged daemon/native-protocol acceptance
+
+Owner: engine executor owns a new focused
+engine/tests/assignments/test_daemon_provider_diagnostics.py plus a small staged
+socket peer next to the existing email protocol fixtures. Extend the established
+engine/tests/assignments/test_transport_evidence.py WebSocket setup: real
+server_ws._process_request and _handle_connection, native method dispatch to
+rpc.task_assignments.project, asyncio.to_thread, actual project/observation and
+IMAPClient. Use the existing assignment fixture's temporary SQLite profile and
+signed/fixture identity admission; reject a foreign bearer as a negative control.
+Fixture identity verification is explicitly offline, not proof of production
+Firebase. Do not replace projection, provider_client, IMAP select, EventStore or
+RPC response with predetermined fake outcomes.
+
+Replace only the external provider endpoint with a loopback IMAP/TLS socket
+server using a test CA trusted only by the fixture client; use real TLS, LOGIN
+and imaplib command framing. Seed source/assignment/mailbox fixtures before the
+read-only request; restrict runtime DB reads and assert no business-data writes.
+A bounded fixture deadline may shorten production120seconds for test execution,
+without altering production constants or retrying commands. Local endpoint-only
+network policy and failing model/SMTP sentinels prove zero provider/model/send use.
+
+RED preimage: actual authenticated daemon RPC reaches a peer-selected EXAMINE
+that never completes; ordinary retained events cannot identify its connection,
+entry-time remaining budget, protocol state and timer-abort order. GREEN same
+peer scenario: new typed records plus frozen first-fault terminal object retain
+all these facts while the native result remains conservative held/UNKNOWN.
+Additional staged cases: successful EXAMINE then later stalled command; partial
+untagged progress without tagged completion; cancellation/expiry while pending;
+unexpired success and legitimate hold. The analyst must distinguish time spent
+before EXAMINE from time spent inside it, and initiating failure from cleanup.
+The no-response stall must retain inbound_progress_count=0 after command entry;
+the partial untagged case must retain a positive count/latest progress offset
+before the same tagged-command expiry. These snapshots establish that bytes
+arrived, not that their content was valid or that the provider caused failure.
+A native read that never returns is not counted as progress. Retain the local
+peer's controlled scenario separately from the blind analyst's ordinary evidence.
+No retry/recovery success substitutes for a failure receipt.
+
+Persist through real engine EventStore; fetch via actual logs RPC and normal
+new-candidate `cs logs trace` paging, then run the real collector and private
+inbox transformation. Retain producer/native RPC/CLI/collector/inbox receipts
+bound to exact source hashes. Reader58 compatibility means legacy records still
+work; it does not mean new fields magically survive58. Blind review sees only
+ordinary records, identifies the controlled malfunction and supported boundary,
+and leaves unsupported production cause UNKNOWN. Also verify private files,
+stdout/stderr and EventStore contain none of the fixture secret/header/body
+sentinels; normal TLS/IMAP debug remains disabled. Assert native timers, threads,
+sockets and process groups terminate, source guards and family pinning remain
+unchanged, and no third-party endpoint or business mutation occurred.
+
+Milestone review P0 precedes P1; P1 schema/native controls review precedes P2
+integration/deployment. Root supplies exact isolated source roots and evidence
+paths to each executor; workers do not restart repository-wide orientation.
+A failed local proof is repaired locally before any adoption or paid acceptance.
+Controlled GREEN closes only diagnostic delivery. Production-defect closure
+still requires real daemon failure evidence, supported cause and a subsequently
+reviewed targeted fix verified on the same path. FULL, publication, BOTH-clone
+adoption and documentation/final review remain owned by the existing lead task.

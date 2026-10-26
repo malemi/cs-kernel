@@ -1,3 +1,35 @@
+## 2026-10-26 — superseded candidate57 trial snapshot
+
+- The57candidate supports48bounded automatic inventory hooks, one exact progress
+  duplicate with its matching successful final, and4MBprivate capture. Progress
+  grants no inspection. Genuine complete native context, intact2,077,919-byte
+  capture and an independently received support reply pass. Whole-tick acceptance
+  fails on two historical unknown assignment projections. The
+  [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  diagnosis, finite resource decisions, strict FULL and public adoption.
+  Publication is authorized; acceptance waiver is not. The actual post-cleanup
+  discovery is accepted with zero technical unknowns and26legitimate human holds.
+  The latest strict FULL is interrupted after another persisted transport timeout
+  and nine capacity deferrals. Its finite admission is consumed; no retry or
+  public provenance is claimed.
+
+## 2026-10-26 — superseded immediate dependency
+
+1. Complete interruption cleanup/effect verification and diagnose the retained
+   engine timeout. No further paid attempt is admitted by the consumed decision.
+
+## 2026-10-26 — superseded timeout diagnosis snapshot
+
+- ACTOR observation cleanup uses reviewed local socket disposal after closing
+  deadline guards, preserving R8 ordering and ordinary graceful disconnect.
+  Both immutable actor families and the activated runtime policy are independently
+  verified. Standalone discovery has zero technical unknowns, but the following
+  ordinary FULL discovery has ten unknowns. Historical timeout causation and
+  executor starvation remain unproven. Original schedules are restored; prior
+  delivered test replies must not be resent. Both fixture registries and all519
+  tracked local process identities are absent; the native trace has no draft/send
+  attempt. Detached backend effects and exact timeout stage remain unverified.
+
 ## 2026-10-25 — Frozen57 preflight snapshot
 
 # Active Context — cs-kernel
@@ -8,6 +40,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 [`CHANGELOG.md`](../CHANGELOG.md), and dated operational observations in
 [`active-context-archive.md`](active-context-archive.md).
 <!-- historical-doc-scope:end -->
+
+## 2026-10-26 — Superseded pre-adoption58 state
+
+  This local candidate is unpublished. Both maintained clones still run the same
+  clean57 artifact at `e3e8799`; actual58 installation, strict BOTH-clone FULL
+  and public provenance remain pending. Shared operational sign-off stays51.
+  Prior failed local artifacts and tainted backups remain retained separately.
 
 ## 2026-10-26 — Superseded57 candidate release state
 

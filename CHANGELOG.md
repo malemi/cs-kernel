@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Candidate provider-connection diagnostics: retain an optional closed typed
+  snapshot through event validation, ordinary logs, collection and the private
+  problem inbox. Distinguish connection/state, command timing, deadline targets
+  and inbound progress without retaining protocol payloads. Native daemon
+  acceptance and adoption remain pending; no IMAP cause or repair is claimed.
+
 ## v0.58.0 — 2026-10-26 (MINOR)
 
 Canonical immutable alignment with attributable assignment-read failures.

@@ -108,6 +108,9 @@ def safe_metadata(values: dict) -> dict:
     value = values.get('error_file')
     if isinstance(value, str) and len(value) <= 180 and re.fullmatch(r'[a-zA-Z0-9_/.-]+\.py', value) and not value.startswith('/') and '..' not in value.split('/'):
         out['error_file'] = value
+    if 'provider_diagnostic' in values:
+        from .observability_provider import validate
+        out['provider_diagnostic'] = validate(values['provider_diagnostic'])
     if 'causal' in values:
         from .observability_causal import validate
         out['causal'] = validate(values['causal'])

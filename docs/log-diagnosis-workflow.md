@@ -198,3 +198,21 @@ retained failed case cannot distinguish queue wait from execution latency; this
 is a diagnostic gap and a supported investigation route, not a proven queue
 starvation cause. A later successful exact-root read does not clear the failed
 whole-inventory observation.
+
+## Intermittent daemon failures
+
+A successful retry or fresh-process probe does not explain a failed daemon
+operation. Retain the failed daemon's connection identity/state and ordered
+operations, including command entry time, remaining absolute deadline and
+expiry/disposal ordering. Projection duration is not command duration unless
+both command boundaries were observed. Record the initiating failure separately
+from cleanup failures; a timer closing a socket at expiry does not explain why
+prior work exhausted the budget.
+
+If those observations are absent, report cause unknown and diagnostics
+insufficient. Instrument the actual daemon path so its next failure retains the
+missing evidence. Prove diagnostic retention with a controlled native failure,
+but keep that proof separate from production causation. Close the underlying
+defect only with failure evidence, a supported cause and a correction verified
+on the same path. Repeating provider attempts until one passes leaves this
+obligation open.

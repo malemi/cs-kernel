@@ -119,6 +119,31 @@ The [log-driven diagnosis workflow](log-diagnosis-workflow.md) defines the
 mandatory detect → explain → improve → blind-check loop, its evidence standards,
 acceptance cases and current coverage limits.
 
+## Candidate provider-connection evidence
+
+The unreleased source accepts optional `provider_diagnostic` version1 metadata.
+Kernel round-trip checks cover emission, ordinary trace CLI, collection and the
+private inbox. Full native daemon/protocol acceptance and installed adoption
+remain pending. Installed58 does not support this object; legacy records without
+it retain their semantics. Deploy a compatible reader before enabling emission.
+
+The closed object retains a random runtime-scoped connection token/generation,
+ordered operation identity and phase, finite IMAP/socket/TLS states, pin and
+deadline-target comparisons, pending counts, operation timing and remaining
+absolute budget. Nonempty existing reads contribute only a bounded progress
+count and latest-progress time. No command arguments or protocol bytes are kept.
+Unknown observations remain null or explicit unknown enums. The strict validator
+in `cs/observability_provider.py` owns all accepted fields, enums and bounds;
+unexpected keys, unsafe values and malformed objects fail validation.
+
+The failed event's snapshot and trace route survive collection; cleanup evidence
+remains separate. Capture overflow prevents a completeness claim. Timing refers
+to observed operations: projection elapsed time alone cannot establish how long
+SELECT took. These fields support investigation, not an asserted upstream cause.
+Controlled protocol failure proves diagnostic retention; the production defect
+stays unresolved until actual daemon failure evidence supports a cause and a
+correction is verified on that path.
+
 ## Assignment read boundaries
 
 The58 candidate retains finite `assignment_read` causes for request timeout,

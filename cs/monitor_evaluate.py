@@ -273,7 +273,7 @@ def observe(state: dict, event: dict, now: float) -> None:
                 },
                 **{
                     key: event[key]
-                    for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "elapsed_ms", "deadline_seconds")
+                    for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "elapsed_ms", "deadline_seconds", "provider_diagnostic")
                     if key in event
                 },
             }

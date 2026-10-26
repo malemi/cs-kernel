@@ -15,28 +15,21 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.58.0`. Current HEAD status: untagged.**
-  This local candidate is unpublished. Both maintained clones still run the same
-  clean57 artifact at `e3e8799`; actual58 installation, strict BOTH-clone FULL
-  and public provenance remain pending. Shared operational sign-off stays51.
-  Prior failed local artifacts and tainted backups remain retained separately.
+  This local candidate is unpublished. Both maintained clones run identical58
+  at `77bef42`; all158files, authenticated identities and lock-only rebuilding
+  pass. Strict BOTH-clone FULL and public Git provenance remain pending. Shared
+  operational sign-off stays51; prior failed artifacts remain retained separately.
 - Assignment read diagnostics distinguish request, batch, shared and worker
   timeout boundaries, with explicit unattempted deferrals linked to their actual
   reservation-triggering timeout. Real transport/CLI/inbox and blind controls
   pass; two reviewed actor runtimes at543f311e retain queue/worker/projection
   metadata. Their complete seven-family guards pass. This is diagnostic coverage,
   not a proven historical queue cause or a claimed latency repair.
-- The57candidate supports48bounded automatic inventory hooks, one exact progress
-  duplicate with its matching successful final, and4MBprivate capture. Progress
-  grants no inspection. Genuine complete native context, intact2,077,919-byte
-  capture and an independently received support reply pass. Whole-tick acceptance
-  fails on two historical unknown assignment projections. The
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate with its matching successful final. Retained context and
+  reply evidence does not establish whole-tick acceptance. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
-  diagnosis, finite resource decisions, strict FULL and public adoption.
-  Publication is authorized; acceptance waiver is not. The actual post-cleanup
-  discovery is accepted with zero technical unknowns and26legitimate human holds.
-  The latest strict FULL is interrupted after another persisted transport timeout
-  and nine capacity deferrals. Its finite admission is consumed; no retry or
-  public provenance is claimed.
+  preserved failed attempts, strict FULL and authorized public adoption.
 - The reviewed exact-RFC argument adapter is active on support and Café through
   immutable preserved-family artifacts. Complete source/unit inventories and
   unchanged peer/Qonto bindings are independently verified. Reviewed source
@@ -94,15 +87,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   publication and public Git installation/lock verification. The prior57case
   remains failed despite its correctly received reply. Current affected-root
   reads retain complete reply evidence and legitimate human-verification holds.
-- ACTOR observation cleanup uses reviewed local socket disposal after closing
-  deadline guards, preserving R8 ordering and ordinary graceful disconnect.
-  Both immutable actor families and the activated runtime policy are independently
-  verified. Standalone discovery has zero technical unknowns, but the following
-  ordinary FULL discovery has ten unknowns. Historical timeout causation and
-  executor starvation remain unproven. Original schedules are restored; prior
-  delivered test replies must not be resent. Both fixture registries and all519
-  tracked local process identities are absent; the native trace has no draft/send
-  attempt. Detached backend effects and exact timeout stage remain unverified.
+- The58health attempt failed with one unknown assignment projection; FULL58
+  never started. Daemon events place one failure at readonly SELECT after120s
+  of projection time; command entry time, connection state and timer ordering
+  are absent. Cause UNKNOWN; diagnostics INSUFFICIENT. A later fresh-process
+  login and41successful selections do not explain or repair this failure.
+  The next reviewed dependency instruments the actual daemon connection and
+  verifies controlled failure evidence through ordinary logs and collection.
+  No SELECT retry or new paid acceptance is approved. Original schedules are
+  restored; uncertain effects and previously delivered replies must not be replayed.
 - Original assignment-source exception origins remain lost; restricted provider
   and database inspection establishes the current correspondence defects only.
   The [diagnosis workflow](log-diagnosis-workflow.md) records this causal logging
@@ -122,8 +115,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Complete interruption cleanup/effect verification and diagnose the retained
-   engine timeout. No further paid attempt is admitted by the consumed decision.
+1. Deliver reviewed daemon connection diagnostics and controlled native failure
+   proof. Cause remains unknown; no new paid/provider retry is admitted.
 2. Publish the new immutable release and verify supported adoption on BOTH clones.
 3. Finish documentation/final review with actual evidence and preserved failures.
 4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.
