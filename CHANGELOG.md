@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v0.62.0 — 2026-10-26 (MINOR)
+
+Align native Bash lifetime with the existing bounded ordinary workflow.
+
+- Set both Bash default and maximum timeout to 2730000 milliseconds only in
+  the ordinary operator child's copied environment; preserve custom prompts
+  and the parent environment. Request the same native discovery/review timeout
+  in the canonical operator skill without wrappers or explicit backgrounding.
+- Retain structured killed/stopped native-task rejection through ordinary logs,
+  collector and private inbox despite process exit0. Keep the upstream reason
+  unknown unless evidenced; route investigation to native lifecycle and host
+  Bash foreground/background lifetime settings, separately from financial quota.
+- Preserve strict composition, complete reads, permissions, source authority,
+  kernel/suite deadlines, concurrency and financial controls. Interrupted work
+  remains failed, and uncertain effects grant no replay authority.
+- Real child/render and producer-to-inbox regressions, independent blind diagnosis
+  and exact scheduled-template review bindings cover the correction.
+
+Migration: install the new immutable tag on BOTH maintained clones and rebuild
+locks. Update the actual canonical operator timeout instruction on all three
+host surfaces while preserving unrelated authored content. Bind the exact
+installed consumer/policy composition before one freshly admitted strict FULL.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+observable operator workflow and inherited send/authentication composition need
+current genuine native/provider acceptance; local checks alone do not certify it.
+
 ## v0.61.2 — 2026-10-26 (PATCH)
 
 Keep accumulated operational problems writable within their existing bounds.
