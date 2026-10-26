@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+## v0.58.0 — 2026-10-26 (MINOR)
+
+Canonical immutable alignment with attributable assignment-read failures.
+
+- Preserve the complete recovered57 composition and immutable-package checks.
+  Failed unpublished54/55/56/57 artifacts retain their exact bytes and evidence.
+- Distinguish selected request, batch, shared-deadline and isolated-worker timeout
+  boundaries through bounded IPC and causal events. Retain known elapsed/bound
+  and remaining times without private payloads or raw exception text.
+- Link account deferrals only to the timeout that actually reserved capacity;
+  undispatched work records no attempted request or selected timeout bound.
+- Carry safe timing metadata through filesystem incident collection. Preserve
+  all authority, UNKNOWN/held decisions, concurrency, deadlines and budgets.
+  Backend observation staging is a separately reviewed dependency; historical
+  queue starvation and latency repair are not inferred.
+
+Migration: install one frozen package on BOTH clones through the supported
+package manager; verify actual Git-object bytes, identities and lock rebuilds.
+Never patch an installed package or reuse a tag for changed code. Technical user
+emails remain disabled; diagnosis is manually invoked.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+composition includes recovered send/authentication/permission evidence; passing
+transport and diagnostic controls do not replace actual normal-path acceptance.
+
 ## v0.57.0 — 2026-10-25 (MINOR)
 
 Strict native hook progress compatibility and bounded complete stream retention.

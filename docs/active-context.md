@@ -14,12 +14,17 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.57.0`. Current HEAD status: untagged.** This local
-  tag is unpublished. Both
-  maintained clones run the identical clean local artifact at `e3e8799`; all158
-  installed files, identities and lock-only rebuilds match. Public provenance and
-  BOTH-clone FULL acceptance are pending; shared operational sign-off stays51.
-  Tainted environment backups remain outside clone repositories.
+- **Latest release tag: `v0.58.0`. Current HEAD status: tagged as `v0.58.0`.**
+  This local candidate is unpublished. Both maintained clones still run the same
+  clean57 artifact at `e3e8799`; actual58 installation, strict BOTH-clone FULL
+  and public provenance remain pending. Shared operational sign-off stays51.
+  Prior failed local artifacts and tainted backups remain retained separately.
+- Assignment read diagnostics distinguish request, batch, shared and worker
+  timeout boundaries, with explicit unattempted deferrals linked to their actual
+  reservation-triggering timeout. Real transport/CLI/inbox and blind controls
+  pass; two reviewed actor runtimes at543f311e retain queue/worker/projection
+  metadata. Their complete seven-family guards pass. This is diagnostic coverage,
+  not a proven historical queue cause or a claimed latency repair.
 - The57candidate supports48bounded automatic inventory hooks, one exact progress
   duplicate with its matching successful final, and4MBprivate capture. Progress
   grants no inspection. Genuine complete native context, intact2,077,919-byte

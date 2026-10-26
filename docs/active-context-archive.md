@@ -9,6 +9,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 [`active-context-archive.md`](active-context-archive.md).
 <!-- historical-doc-scope:end -->
 
+## 2026-10-26 — Superseded57 candidate release state
+
+- **Latest release tag: `v0.57.0`. Current HEAD status: untagged.** This local
+  tag is unpublished. Both
+  maintained clones run the identical clean local artifact at `e3e8799`; all158
+  installed files, identities and lock-only rebuilds match. Public provenance and
+  BOTH-clone FULL acceptance are pending; shared operational sign-off stays51.
+  Tainted environment backups remain outside clone repositories.
+
 ## 2026-10-26 — Superseded interruption cleanup state
 
   delivered test replies must not be resent. Exact cleanup/effect verification

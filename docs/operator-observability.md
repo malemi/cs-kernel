@@ -119,6 +119,26 @@ The [log-driven diagnosis workflow](log-diagnosis-workflow.md) defines the
 mandatory detect → explain → improve → blind-check loop, its evidence standards,
 acceptance cases and current coverage limits.
 
+## Assignment read boundaries
+
+The58 candidate retains finite `assignment_read` causes for request timeout,
+batch/shared deadline, isolated-worker expiry, connection/setup failure and
+capacity deferral. The actual selected bound, elapsed and available remaining
+milliseconds survive worker IPC and `evidence.causal.facts`. Selection flags
+identify the limiting clock; unavailable timing remains explicit.
+
+A derived account deferral references the timeout that reserved its account.
+Earlier connection failures cannot replace that cause. Undispatched work records
+`attempted=false` with no selected request/batch/shared clock; it is not another
+observed timed-out request. These diagnostics preserve existing UNKNOWN/held
+results and grant no retry or delivery authority.
+
+The separately reviewed actor dependency emits enqueue, worker-start, projection
+and terminal observations under one propagated trace. Queue wait and execution
+have separate monotonic elapsed observations; missing stages and historical
+causes stay unknown. Safe `elapsed_ms`/`deadline_seconds` survive incident
+projection. Actual installation and FULL belong to the canonical release plan.
+
 ## Discovery publication diagnostics
 
 Scheduled discovery validates complete retained task/review material before publishing
