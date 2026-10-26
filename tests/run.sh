@@ -374,6 +374,8 @@ step "12. template render gate (StrictUndefined, single- and multi-account)"
 # literal the template engine assembles).
 if "$VENV/bin/python" "$ROOT/tests/test_template_render.py"; then echo "OK"; else echo "FAIL: template render gate"; FAIL=1; fi
 
+if "$VENV/bin/python" "$ROOT/tests/test_architecture_authority.py"; then echo "OK"; else echo "FAIL: architecture standing authority regressed"; FAIL=1; fi
+
 step "13. project memory scaffold (cs project new)"
 # The per-project memory shape is only uniform across clones because a generator
 # stamps it. Guards: abstract-first + front matter on every stamped file, no
