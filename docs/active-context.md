@@ -27,8 +27,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   fails on two historical unknown assignment projections. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   diagnosis, finite resource decisions, strict FULL and public adoption.
-  Publication is authorized; acceptance waiver is not. One fresh BOTH-clone
-  FULL is active after source repair; no new success or public provenance is claimed.
+  Publication is authorized; acceptance waiver is not. The actual post-cleanup
+  discovery is accepted with zero technical unknowns and26legitimate human holds.
+  The latest strict FULL is interrupted after another persisted transport timeout
+  and nine capacity deferrals. Its finite admission is consumed; no retry or
+  public provenance is claimed.
 - The reviewed exact-RFC argument adapter is active on support and Café through
   immutable preserved-family artifacts. Complete source/unit inventories and
   unchanged peer/Qonto bindings are independently verified. Reviewed source
@@ -86,6 +89,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   publication and public Git installation/lock verification. The prior57case
   remains failed despite its correctly received reply. Current affected-root
   reads retain complete reply evidence and legitimate human-verification holds.
+- ACTOR observation cleanup uses reviewed local socket disposal after closing
+  deadline guards, preserving R8 ordering and ordinary graceful disconnect.
+  Both immutable actor families and the activated runtime policy are independently
+  verified. Standalone discovery has zero technical unknowns, but the following
+  ordinary FULL discovery has ten unknowns. Historical timeout causation and
+  executor starvation remain unproven. Original schedules are restored; prior
+  delivered test replies must not be resent. Both fixture registries and all519
+  tracked local process identities are absent; the native trace has no draft/send
+  attempt. Detached backend effects and exact timeout stage remain unverified.
 - Original assignment-source exception origins remain lost; restricted provider
   and database inspection establishes the current correspondence defects only.
   The [diagnosis workflow](log-diagnosis-workflow.md) records this causal logging
@@ -105,8 +117,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Observe the active strict FULL and verify its actual terminal, provider
-   outcomes and cleanup; retain prior failures and all legitimate human holds.
+1. Complete interruption cleanup/effect verification and diagnose the retained
+   engine timeout. No further paid attempt is admitted by the consumed decision.
 2. Publish the new immutable release and verify supported adoption on BOTH clones.
 3. Finish documentation/final review with actual evidence and preserved failures.
 4. Continue manual `cs-diagnose`; require native Gmail proof before reconciliation.

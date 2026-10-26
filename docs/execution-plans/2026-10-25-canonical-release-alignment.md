@@ -912,3 +912,275 @@ A separate observer records five-minute status under
 v57/five-minute-control-source-repaired.jsonl. No terminal/provider success,
 health acceptance, publication or baseline advancement is inferred while active.
 The old failed57and standalone-timeout cases remain separately preserved.
+
+
+## Bounded ACTOR cleanup continuation — pending fresh plan review
+
+The approved brief dependency is bound by the raw review
+v57/cleanup-brief-review.md (brief SHA-256
+651fb5d8dc458f082fca70e2bf250c587b3da749ac427bebfbd1b44dcafe8d69).
+This is substantial engine behavior work. Existing milestones and release gates
+remain; this section adds their prerequisite dependency order. No implementation,
+restart or paid retry starts from this unreviewed plan amendment. The earlier
+USD22 decision was for one attempt and supplies no further retry allowance.
+Historical R8 cleanup evidence proves its safety regression and repair, not the
+cause of either interrupted 57 timeline. Current failure/effect uncertainty stays
+explicit; no historical case is resealed.
+
+### C0 — reconcile the interrupted case before any restart
+
+Owner: lead operational executor. Capture the complete retained case
+f489c1c28eda7805028d16707db0e753, native receipts and actual process/start/service
+identities under a new private cleanup-continuation evidence directory. The
+run-2913_1_k native trace contains draft-reply and draft-send invocations; these
+are effect attempts, not proof of success or permission to resend. Establish
+actual terminal receipt status and whether associated backend work remains
+active; CLI disappearance or exit alone does not prove completion.
+
+Use existing authenticated native read paths, without models or mutation, to
+read the exact owner's matching engine draft records and actual provider Drafts
+and Sent records by the preserved fresh fixture RFC identities. Retain exact
+owner/mailbox, threading, recipient and provider UID/UIDVALIDITY bindings and
+claim/deduplication state. Independently read the protected receiver for the
+matching reply. Compare trace, engine state, provider postimages and receiver;
+record confirmed, absent or unknown effects separately. Do not infer no delivery
+from a missing terminal result or retry an uncertain send. Preserve customer
+mail, fixture effects and audit; no blanket deletion, stale database restore or
+reclassification. Quiesce/drain only the already authorized affected actor work
+through existing controls and retain the actual completion/cancellation proof.
+An unresolved active write blocks that actor's restart; source work can proceed.
+
+Verification: independent operational review of the complete effect matrix and
+backend/task quiescence evidence must agree with actual provider and receiver
+readback before C2. C0 does not establish a passing FULL or historical timeout
+cause. Any ambiguity remains held and is carried into subsequent acceptance.
+
+### C1 — canonical cleanup patch and real native RED/GREEN
+
+Owner: Desktop engine executor, limited to ACTOR evidence cleanup, the native
+IMAP terminal disposal primitive and directly relevant regression tests. Resolve
+canonical provenance first: commits 0a4261f8b5fd8f1c1bcafedd1b3784825962680a and
+d52f68f059d4638de511f2ad3de6da21e43794dc retain Observation; the latter is the
+existing prepare/m10-poststripe-20261016 worktree. MAIN b8dcfc665a4f is a distinct
+family and its foreign WIP/index must remain intact. Record exact Git blobs,
+current actor preimages and context differences before choosing the isolated
+owned branch/index. The separately owned encoding commit is
+9e82549d422c81c16c66c7dc2730b515c2f08ae3 on
+release/scoped-rfc-encoding-20261025. Preserve that reviewed adapter in both
+family compositions. Never import an entire ACTOR module into MAIN, commit
+foreign changes or replace actual family business logic with a historical tree.
+
+Implement only local terminal disposal, using the existing native shutdown/
+discard mechanism without LOGOUT or another protocol round trip. Retain R8's
+provider/projection-guard-before-socket-disposal order so final deadline checks
+never touch a deliberately closed retained descriptor. Preserve ordinary
+graceful-disconnect behavior. Cover Observation.close, partial setup failure and
+standalone snapshot cleanup; release all owned clients after earlier failure,
+reset the observation token and clear references without leaking timers/locks.
+Propagate guard/provider expiry and errors with existing UNKNOWN/held behavior;
+local disposal must not manufacture successful or complete evidence.
+
+Before patching, add a focused real-native-client test using fake external IMAP
+boundaries and real sockets. Use a short absolute evidence deadline (for example
+0.2 seconds) and a child-process watchdog (2 seconds); a stalled/trickled LOGOUT
+must make the existing code fail its completion bound. Kill/reap the owned test
+child and close fixtures on RED rather than leaving blocked work. GREEN must
+perform zero LOGOUT, finish inside the same bound and close the actual sockets.
+Run successful observation/reply/snapshot paths plus deadline expiry, provider
+failure, guard-exit failure, partial construction, multiple clients, nested
+deadlines and repeated cleanup. A real closed-socket settimeout regression must
+reject the old disconnect-before-guard ordering and pass the preserved R8 order.
+Assert context reset, released locks/timers/references, retained valid unexpired
+results, fail-closed expiry/failures and zero model, SMTP, assignment or storage
+effects. Do not substitute AST-only or mocked disconnect ordering for native
+client/socket behavior. Record exact commands, interpreter, RED/GREEN outputs,
+timing bounds and cleanup. Repeat the focused checks on BOTH exact actor-family
+postimages and the existing relevant assignment/IMAP suites. Fresh source review
+must approve the owned canonical patch, numeric bound and family adaptations
+before C2; a conflict blocks adoption rather than widening the patch.
+
+### C2 — preserved two-actor artifacts and reviewed activation
+
+Owner: existing adoption executor; depends on approved C0 effect/quiescence and
+C1 source/test proof. Reuse the already reviewed immutable-family build and
+activation/rollback mechanism. Apply only the reviewed cleanup hunks with
+baseline/context/hash guards to each current actor family, preserving its RFC
+adapter and every unrelated byte. Retain complete prior payloads/activation,
+new immutable artifacts, complete baselines/deltas and ownership/mode/link
+inventories. Review concrete artifact composition and rollback before activation.
+No installed kernel edit, site-packages overlay, peer update or wholesale module
+copy is a delivery route.
+
+The existing disclosed restart authority covers these TWO actor engines only.
+Recheck actual service/profile/start/import identities and Café activity/drain
+safety immediately before each switch; do not signal a reused PID. Switch only
+the reviewed actor family, restart through the existing service procedure, then
+capture the new PID/start and exact loaded source imports. Independently compare
+all six company-family payload/control rows and excluded Qonto against their
+captured baselines; the four peers and Qonto retain their actual sources,
+process identities and controls. Preserve models, budgets, modes, auth,
+permissions, technical-mail suppression, deduplication and business data.
+Rollback uses the retained activation/source family through the same procedure,
+with new runtime/import verification, never stale business state or resend.
+
+Produce fresh complete baseline/delta/deployment records and aggregate hosted
+manifest with exactly two changed actor rows. Refresh policy/source bindings and
+native receipt provenance through the existing reviewed enrollment path; do not
+rewrite old failed-run packets. Independently review actual artifact loading,
+peer/Qonto preservation, manifest/policy identity and free installed native reads
+before any paid admission. Run BOTH installed kernel 57 integrity/identity/lock
+checks and existing actor/cron preflight against that exact composition. No
+passing provider outcome or FULL is inferred from activation.
+
+### C3 — finite resource decision and existing release completion
+
+Owner: lead, after independent C2 integration approval. Record actual known
+charges plus explicit unknown reserves from all prior attempts, including the
+interrupted case; retain the consumed USD22 decision as historical. Decide a
+new finite nominal ceiling and ONE-attempt admission in a separately reviewed
+resource entry before any model or paid FULL call. Preserve existing provider,
+per-job and daily controls. No automatic retry, repeated discovery, production
+budget increase or unlimited unattended run is authorized by this amendment.
+If free proof or actual adoption fails, no paid trial starts.
+
+Under that reviewed admission, execute one fresh genuine strict BOTH-clone FULL
+with new protected fixtures, both actual immutable kernel 57 installations and
+the freshly reviewed actor/hosted/policy bindings. Preserve all original strict
+provider, receiver, ordinary native workflow, natural completion, authority,
+automatic ACK, no-extra-effects, deadline and cleanup checks. Uncertain previous
+effects remain deduplicated and are never resent. A failure stays failed and
+ends that admission. Only actual independent PASS permits existing publication,
+public Git installation/rebuild on both clones, version/pin sweeps, doc-end,
+doc-critic, separate final review and completion-check/finalize gates.
+
+This amendment establishes dependency order and accountable verification only.
+It does not establish implementation, historical causation, completed effect
+reconciliation, safe restart, adopted source, new spending authority, FULL,
+publication or final release readiness.
+
+
+### Interrupted source-repaired case and cleanup candidate receipt
+
+Case f489c1c28eda7805028d16707db0e753 remains interrupted/incomplete, never PASS.
+Its actual discovery contains1transport TimeoutError and14conservative capacity
+deferrals. Lead interrupted the controlled driver after that permanent health
+failure; independent scheduling/registry/process checks verify original cron
+restoration, absent fixtures and no live owned jobs. A correct-identity reply was
+already sent and independently received once; body acceptance is unmeasured.
+Never resend it. Artifacts: source-repaired-full-discovery-failure.json,
+source-repaired-full-cleanup-proof.json and source-repaired-interrupted-effects-proof.json.
+
+An isolated native read of the timed-out root is normal/complete in37.584seconds.
+This refutes a persistent source-evidence defect on that root but does not prove
+the historical transport cause. Astra's source review identifies an actual
+cleanup bound hole: R8 correctly exits guards before disconnect to prevent EBADF,
+but the subsequent logout can wait120seconds beyond the projection deadline.
+Executor queue delay and draining after client disconnect remain other hypotheses.
+
+Owned canonical ACTOR commit c461491206242038bc0006888b32a9b72638d591, based
+on existing0a4261f8, changes only the evidence cleanup module and focused tests.
+MAIN source/WIP and all installed modules remain untouched. Both exact actor
+candidates have matching cleanup code; native stalled-LOGOUT RED takes2.017s
+and fails, while five native/socket GREEN tests pass for canonical/support/Café.
+Partial-construction and actual candidate reply/projection integration are under
+verification before source approval. No new actor adoption or paid FULL is
+authorized by these component receipts alone. Existing22reserve admission is
+consumed; C3 requires a separately reviewed finite decision after actual repair.
+
+
+### C3 bounded admission after verified local-disposal repair
+
+C1 source approval is cleanup-source-review-r2.md for canonical ACTOR
+fd051dc0ada0ab89b7f314780712c4dab31d7f57. Both unchanged/candidate historical
+suites pass55 tests; all three native-client suites pass6; the real stalled
+LOGOUT preimage remains RED. Genuine authenticated candidate replies preserve
+success, UNKNOWN and expiry outcomes. Historical timeout causation stays unknown.
+
+Both reviewed immutable actor families are now active. The companion checks
+required two narrowly reviewed controller repairs: boot-time quantization was
+resolved by restarting support after stable source files; the Café guard now
+strictly excludes only systemd ExecStart execution bookkeeping while retaining
+command/runtime/file checks. Source maps remain exact437/457; all other families
+are preserved. Fresh row approval and policy integration/activation remain
+prerequisites. Original cron is temporarily held in maintenance-scheduling.json;
+the normal operator was interrupted before effects (only four read commands).
+
+The lead authorizes, subject to fresh resource review and activated exact runtime
+bindings, ONE actual standalone discovery/unchanged health assessment with a
+900-second wrapper deadline, followed ONLY on acceptance by ONE genuine strict
+BOTH-clone FULL with fresh originals. Use the existing4/job settings and5400
+overall limit; preserve all holds and all health/coverage/provider criteria.
+The new wrapper must terminate its complete owned process group on timeout.
+Any failed standalone or FULL grants no further retry from this admission.
+
+Nominal cumulative acceptance reserve: earlier54/55known2.6874532, interrupted56
+reserve4, first57known2.7948136, earlier standalone allowance0.50, interrupted
+source-repaired57reserve4 =13.9822668. Reserve0.50for the one new discovery and12
+for three unchanged4/job jobs, total26.4822668 within lead planning reserveUSD27.
+This is not a provider hardcap or a change to production daily/model controls;
+unknown actual interrupted/standalone charges remain explicit. Normal configured
+production activity and Codex coordination have separate existing billing. No
+budget escalation or paid execution follows merely from this prose: fresh
+review, actual post-adoption preflight and complete technical health are required.
+Restore exactly the owned cron lines before the canonical driver takes over its
+own scheduling window; avoid a scheduled-tick boundary and verify final cleanup.
+
+
+### Accepted actual health and admitted cleanup FULL
+
+The sole post-cleanup actual discovery completed within its900-second wrapper
+bound. Actual CLIexit3 matches authenticated capture, unchanged health.assess
+accepts it, read_incomplete is absent, technical unknowns0 and legitimate human
+holds26. No flags or holds were rewritten. Raw proof is
+v57/cleanup-health-preflight-result.json; this is component health, not FULL.
+
+The exact three maintenance-owned cron lines are restored and normal actor/cron
+preflight passes. Resource review and concrete wrapper review are APPROVED.
+Fresh root-owned case 87e3b09294474f4448acb39db30bdb31 is active under
+v57/full-installed-v57-cleanup-r1 using the unchanged R6consumer and exact57
+installed package/new approved actor composition. Its separate five-minute
+observer records v57/five-minute-control-cleanup.jsonl. No successful terminal,
+provider acceptance, signature, publication or baseline advancement is presumed.
+
+
+### Interrupted cleanup FULL: strict health failure
+
+Case87e3b09294474f4448acb39db30bdb31 is interrupted, not PASS. Its actual
+ordinary discovery publishes exit3 with ten unknown/incomplete assignments:
+one transport TimeoutError and nine subsequent capacity deferrals. Seventeen
+other human-assignment holds remain legitimate. The exact fixture status later
+succeeds; that narrow result does not clear whole-inventory discovery failure.
+Evidence: v57/full-live-progress-review-r2.md and retained exact discovery
+SHA256dea759cd69ba833eee053c8df73265ef4876c00e733eca99ce9a0abfa9fc5e0e.
+
+The lead sent SIGINT only to verified owned driver2878347; it exited130. The
+canonical case result remains incomplete and is never relabeled. Original cron
+is restored byte-for-byte (v57/cleanup-full-scheduling-proof.json). Exact fixture,
+process and effect checks are separate pending receipts. No prior or uncertain
+mail may be resent. The local-disposal defect is repaired, but this failing
+ordinary case proves that repair insufficient for strict shipping health;
+historical timeout stage/causation remains unknown until supported by evidence.
+
+The one-attempt admission is consumed. No additional paid acceptance, relaxed
+health/coverage, public release or claimed BOTH adoption follows from it. Free
+diagnosis and cleanup continue; any further candidate requires a specific actual
+cause, new free proof and separately reviewed finite admission. Required FULL,
+public provenance, final documentation approval and baseline advancement remain
+unmet. The existing plan stays active as the accountable resumption trace.
+
+Local interruption cleanup is independently verified in
+v57/cleanup-full-cleanup-proof.json and cleanup-full-cleanup-review.md: original
+cron exactly restored, both fixture registries absent, all519 tracked process
+identities plus driver/watcher absent. All1178 retained native events contain14
+tool calls and no draft/send attempt. This does not establish absence of detached
+backend work or independent provider effects; no resend is permitted.
+
+The bounded free diagnosis identifies one exact timed-out root. Kernel owner
+concurrency1 deliberately converts later reads to nine capacity deferrals. The
+backend queues projection through asyncio.to_thread before its120-second
+projection deadline begins. Queue delay is a supported hypothesis; retained
+logs lack correlated enqueue/start/stage timings and cannot distinguish queue
+wait from actual execution latency. No historical cause is asserted. See
+v57/cleanup-full-timeout-diagnosis.md. A next reviewed diagnostic change should
+retain safe correlation and bounded queue/start/stage elapsed metadata at that
+seam; another FULL without that evidence is not justified.

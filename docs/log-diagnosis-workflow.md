@@ -188,3 +188,13 @@ A reviewed one-off source correction needs exact provider identity, private
 preimages, narrow assigned fields, concurrency-safe writes and complete
 postimages retained before verification can fail. A newly acquired Sent record
 is normal source evidence; acquisition grants no assignment or sending authority.
+
+For assignment-projection transport timeouts, distinguish dispatch, executor
+enqueue, worker start, provider work and terminal cleanup. A projection timer
+started inside a queued worker does not measure its earlier queue wait. Retain
+a safe correlation ID and monotonic elapsed values at those existing boundaries,
+with explicit absent-stage metadata and finite error classes. The current
+retained failed case cannot distinguish queue wait from execution latency; this
+is a diagnostic gap and a supported investigation route, not a proven queue
+starvation cause. A later successful exact-root read does not clear the failed
+whole-inventory observation.

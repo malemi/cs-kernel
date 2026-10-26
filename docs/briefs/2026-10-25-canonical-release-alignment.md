@@ -159,3 +159,77 @@ This exception assigns only actual provider-derived fields and normal native
 model defaults; it neither fabricates an assignment nor changes an existing mail.
 Persist the complete selected postimage immediately after either mutation, before
 validation assertions, so failed verification retains actual effects.
+
+
+## Required dependency: bounded ACTOR provider cleanup with R8 safety
+
+This is substantial engine behavior work and requires fresh brief approval,
+then an amendment to the existing plan and fresh plan approval before source
+implementation. The kernel 57 candidate remains frozen. The actual ACTOR
+observation closes its guards before disconnect; provider_deadline then cancels
+its timer and restores the 120-second command timeout before logout. This is a
+concrete cleanup deadline escape. It does not establish the historical cause
+of the interrupted 57 attempt or explain its 15 unknown results. The independent
+same-root native read completed normally in 37.584 seconds; neither observation
+establishes executor occupancy or the failed request's actual cleanup stage.
+Retain the failed attempt and uncertain backend/effect state without replay.
+
+Preserve the R8 safety contract documented in Desktop's task-assignment feature:
+provider/projection guards must finish their socket checks before disconnect
+closes the retained socket. Blindly moving disconnect before guard exit can
+reintroduce EBADF and overwrite valid evidence with UNKNOWN. The minimal proposed
+repair keeps that ordering and adds an explicitly non-graceful native client
+disposal path for terminal evidence cleanup, using the existing local connection
+shutdown/discard primitive without IMAP LOGOUT or another provider round trip.
+Ordinary graceful disconnect callers retain their behavior. Cover observation
+cleanup, its partial-construction failure path and standalone snapshot cleanup;
+no new business logic, transport deadline increase or background cleanup worker.
+Guard expiry and genuine provider/guard failure must still propagate and fail
+closed. Every owned client must be released even when an earlier cleanup fails;
+locks, timers, context tokens and connection references must not leak.
+
+Canonical provenance precedes patching. Desktop MAIN b8dcfc665a4f lacks the ACTOR
+Observation surface. Git history does retain it in 0a4261f8; the existing
+prepare/m10-poststripe-20261016 worktree at d52f68f0 also retains that family.
+These are provenance anchors, not proof of byte equality with current hosted
+ACTOR or permission to absorb their unrelated changes. The encoding-owned
+release/scoped-rfc-encoding-20261025 commit 9e82549 remains a separate source
+anchor. Preserve MAIN's foreign WIP and ordinary index. The engine owner must
+produce a reviewed, owned canonical patch against the existing ACTOR lineage,
+with exact baseline/postimage hashes and a recorded mapping to BOTH current
+actor source families. If the historical lineage differs, retain an explicit
+context-checked family adaptation of only the cleanup hunks; never copy the
+ACTOR evidence module wholesale into MAIN or silently treat MAIN tests as ACTOR
+proof. Preserve the independently reviewed RFC adapter in both compositions.
+
+Before any paid retry, record free RED/GREEN evidence through the real native
+IMAP client and actual ACTOR observation/reply/snapshot paths with controlled
+external boundaries and disposable state. A fake protocol peer must stall or
+trickle LOGOUT so the old cleanup demonstrably exceeds a short absolute bound;
+the repaired terminal path must perform no LOGOUT and finish within that bound.
+Use real socket lifecycle behavior to reject settimeout on a closed descriptor,
+proving guards exit before local disposal and preventing the historical EBADF
+regression. Also cover expiry before cleanup, guard-exit failure, partial setup,
+multiple clients, nested deadlines and repeated cleanup. Verify retained complete
+results only on successful unexpired evidence and unchanged UNKNOWN/held results
+on provider failure or expiry. Assert no SMTP, draft/storage mutation, assignment
+change or model call. Repeat against both exact preserved-family candidates;
+source review owns the chosen numeric bound and actual commands/results.
+
+After source approval, reuse the existing immutable preserved-family activation
+and rollback procedure. Capture complete current preimages, package inventories,
+modes/ownership, exact source delta and runtime binding for TWO actors only;
+refresh those two aggregate manifest rows and independently verify all six
+company-family rows plus excluded Qonto. The already disclosed two-actor restart
+authority does not authorize peer updates or interruption of unrelated traffic;
+retain the existing activity/quiescence and service-identity gate. Rollback
+restores the captured owned source/activation only, never business data or effects.
+Preserve auth, permissions, modes, budgets, technical-mail suppression, deduplication,
+unknown/fail-closed behavior and each family's existing guards.
+
+This dependency establishes scope and acceptance requirements only. It does not
+establish implemented cleanup, exact historical causation, live adoption, FULL
+or release readiness. A reviewed finite retry budget and fresh free integration
+proof precede any new paid attempt. Strict genuine FULL on BOTH actual kernel 57
+installations, publication/adoption and existing documentation/final-review gates
+remain required; no installed-kernel patch or FULL waiver is permitted.

@@ -9,6 +9,35 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 [`active-context-archive.md`](active-context-archive.md).
 <!-- historical-doc-scope:end -->
 
+## 2026-10-26 — Superseded interruption cleanup state
+
+  delivered test replies must not be resent. Exact cleanup/effect verification
+  and diagnosis of the latest interruption remain required.
+
+## 2026-10-26 — Superseded active FULL state
+
+  One fresh strict BOTH-clone FULL is active; earlier interrupted cases remain
+  failed evidence and no public provenance is claimed.
+
+  verified; actual installed discovery has zero technical unknowns. Strict FULL
+  remains active. Historical timeout causation and executor starvation remain
+  unproven. Earlier interrupted jobs are quiescent and their delivered test reply
+  must not be resent; the current FULL owns its scheduling and fixture window.
+
+1. Observe the active strict FULL; require natural jobs, provider outcomes,
+   unchanged health acceptance and exact final cleanup before publication.
+
+## 2026-10-26 — Pre-binding cleanup acceptance state
+
+- ACTOR observation cleanup currently closes deadline guards before graceful
+  IMAP logout, leaving a potential120-second wait outside the projection timer.
+  R8 guard ordering must remain to avoid EBADF. Canonical ACTOR-only local
+  disposal is source-reviewed and active on both actor families; native socket,
+  historical regression and authenticated integration controls pass. Fresh runtime
+  binding and strict operational acceptance remain pending. Historical timeout causation
+  and executor starvation remain unproven. Interrupted jobs are quiescent,
+  schedules restored and fixture enrollments absent; the test reply is delivered.
+
 ## State now
 
 - **Latest release tag: `v0.57.0`. Current HEAD status: tagged as `v0.57.0`.** Both maintained
