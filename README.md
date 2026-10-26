@@ -382,11 +382,14 @@ Next sessions — interactive or cron — start from that memory instead of a bl
   sign-in)`** — you have not signed in to mrcall-desktop on this machine
   yet, or your build predates the v0.1.29 descriptor writer (Step 1).
   Sign in (or update the app), then re-run `cs login`.
-- **Nothing shows up in Gmail Drafts after a tick** — first check
-  `~/.<slug>-cs/CS_PAUSE`: if that file exists, the kill-switch is on and
-  every automated tick is a deliberate no-op (`rm` it to resume). If it
-  is absent, read the tail of `~/.<slug>-cs/cs_operator.log` for what the
-  last tick actually did.
+- **Nothing shows up in Gmail Drafts after a tick** — inspect
+  `cs logs locations --local --json` and `cs logs recent --json`, then follow
+  the matching trace and reported coverage limits. Check
+  `~/.<slug>-cs/CS_PAUSE` separately: it prevents subsequent guarded ticks,
+  while running processes and engine work have independent controls. Use the
+  [log-driven diagnosis workflow](docs/log-diagnosis-workflow.md) to distinguish
+  a legitimate hold from missing work and a supported cause from an unknown.
+  The legacy `~/.<slug>-cs/cs_operator.log` supplies additional private context.
 
 ---
 

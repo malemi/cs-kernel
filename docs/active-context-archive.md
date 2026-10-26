@@ -10,6 +10,15 @@
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 
+## 2026-10-26 — Superseded template-only patch comparison
+
+- Installed0.61.1 contains the MIME identity, remote-error and shared-time repairs.
+  Its forward patch fixes only stale architecture authority wording;
+  runtime Python remains identical. Framing, plan and component review pass;
+  its complete source and at-tag gates pass. The
+  [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  uniform adoption, strict FULL and authorized publication.
+
 ## 2026-10-26 — Uniform forward adoption before policy activation
 
 - Desktop consumer ca175b9 is active; the current policy still binds61.1 pending

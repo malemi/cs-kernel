@@ -18,12 +18,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   Both normal clones match immutable0.61.2/1189037:159files, exact identities
   and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
   Operational sign-off remains51; genuine FULL and public Git provenance are open.
-- Installed0.61.1 contains the MIME identity, remote-error and shared-time repairs.
-  Its forward patch fixes only stale architecture authority wording;
-  runtime Python remains identical. Framing, plan and component review pass;
-  its complete source and at-tag gates pass. The
-  [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
-  uniform adoption, strict FULL and authorized publication.
+- Installed0.61.2 includes complete MIME identity decoding, typed remote-error
+  provenance, finite shared-time allowances and complete notice-envelope bounds.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
+  owns exact installed acceptance, public provenance and authorized publication.
 - Both immutable90bb actor runtimes have verified provider connection/state,
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain

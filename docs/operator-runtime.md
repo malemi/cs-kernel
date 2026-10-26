@@ -116,7 +116,7 @@ seconds, for 2730 seconds total. Both worker admission ceilings follow those
 actual payload deadlines. Standalone projection remains capped at 3600 seconds;
 a caller's inherited earlier deadline still wins.
 
-The isolated Desktop acceptance candidate bounds the native MrCall/Café/signup
+The reviewed Desktop acceptance consumer bounds the native MrCall/Café/signup
 jobs at 6600/1800/600 seconds and its suite at 10200 seconds. Resume age and
 terminal elapsed validation use that same finite suite envelope; native terminal
 validation also rejects overrun or nonfinite timestamps. The original
@@ -215,9 +215,9 @@ the Café tick reached 45 minutes without completing. The source composition bel
 ordinary native acceptance remains unverified. No paid retry, larger
 budget or deadline, release, or signed PASS follows from this source change.
 
-## Scheduled email intake — local candidate
+## Scheduled email intake — installed source
 
-The untagged [mail-intake candidate](execution-plans/2026-10-13-scheduled-mail-intake.md)
+The installed [mail-intake source](execution-plans/2026-10-13-scheduled-mail-intake.md)
 performs one authenticated `sync.run` with `scope=email` and `days_back=14`
 after permission validation and before probing or launching either assistant
 model. It requires the engine to echo `scope=email`, return a boolean successful
@@ -245,7 +245,7 @@ Both normal clone interpreters use clean immutable local release packages;
 Historical hosted-override and R9 evidence certifies only its frozen candidate,
 not current ordinary queues or public Git installation provenance.
 
-## Scheduled reply origin — local candidate
+## Scheduled reply origin — installed source
 
 The source-reviewed [provenance caller](execution-plans/2026-10-13-scheduled-reply-provenance.md)
 opts in only in the engine branch when the existing launcher supplies
@@ -285,8 +285,9 @@ body, existing mode/tool authority and current effect-time guards. Discovery mus
 be inspected consecutively through EOF; retained complete bytes alone are not
 proof the model inspected them. The source checks and M4 source review pass;
 both ordinary clone packages and canonical workflows are independently
-verified adopted for R9. Its retained complete acceptance is recorded below;
-ordinary-run health has the separate current verification above.
+verified adopted for historical R9. Its retained complete acceptance is recorded
+below. Current exact-candidate ordinary-run health and FULL remain owned by the
+canonical release plan; component evidence alone does not certify them.
 
 ## Optional complete discovery evidence
 
@@ -319,7 +320,7 @@ evidence; constructed negatives and source checks establish no ordinary mailbox
 acceptance. Both maintained clones carry this source candidate, with approved
 composition review; fresh ordinary acceptance remains pending.
 
-The untagged [discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
+The installed [discovery transport](execution-plans/2026-10-13-operator-discovery-proof.md)
 captures the complete output of the canonical
 `.venv/bin/python -m cs unanswered --days 14 --json --all-buckets` during
 explicit operational acceptance. `CS_OPERATOR_ACCEPTANCE_RECEIPT` and its

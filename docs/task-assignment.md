@@ -329,11 +329,12 @@ Unavailable methods, malformed responses and unreadable source are unknown;
 no fallback turns them into successful absence. The delivery plan retains
 canonical workflow and scheduled-wrapper verification.
 Offline fixtures alone do not establish live mailbox parity or latency.
-Separately authorized release checks verify scoped current FULL on both clones,
-real provider reads, root key permissions, six hosted activations and reproducible
-clone locks. General customer workloads, real assignment mutations and installed Desktop
-GUI behavior remain unverified. Hosted development ticks have the R9 acceptance
-recorded below; that does not certify the public installer.
+Separately authorized release acceptance must verify scoped current FULL on both
+clones, real provider reads, root key permissions, exact hosted bindings and
+reproducible clone locks. The canonical release plan records its current result;
+retained R9 acceptance below certifies only that frozen hosted candidate.
+General customer workloads, real assignment mutations, installed Desktop GUI
+behavior and public installer acceptance require their separate evidence.
 
 ## Historical hosted development acceptance
 
