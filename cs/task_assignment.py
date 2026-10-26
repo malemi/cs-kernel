@@ -306,7 +306,49 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
             accounts.append((name, config.load(engine_owner_uid=uid)))
         except Exception:
             unavailable.append(name)
+    first_timeout_event = {}
+    budget_stats = {selected.engine_owner_uid: dict(dispatched=0, returned=0, timed_out=0,
+                    deferred=0, serial_read_ms=0, failed=0, first=None, event=None,
+                    shared_deferred=False) for _, selected in accounts}
+
+    def budget_summary():
+        for _, selected in accounts:
+            try:
+                from .observability_causal import decision, validate
+                from .observability_producers import emit
+                stats = budget_stats[selected.engine_owner_uid]
+                first = stats['first'] or {}
+                origin = first.get('bound_origin')
+                cause = ('shared_deadline_exhausted' if origin == 'shared_deadline' else
+                         'request_timeout' if origin == 'request_timeout' else
+                         'batch_deadline' if origin == 'batch_deadline' else
+                         'timeout_origin_unknown' if stats['timed_out'] else
+                         'deadline_capacity_deferred' if stats['shared_deferred'] else
+                         'capacity_deferred' if stats['deferred'] else
+                         'read_failed' if stats['failed'] else 'complete' if keys else 'no_work')
+                failed = stats['timed_out'] > 0 or stats['failed'] > 0 or stats['deferred'] > 0
+                value = decision('assignment_time_budget', cause, layer='source', command='assignment',
+                    method='tasks.assignment.budget', outcome='failed' if failed else 'accepted',
+                    effective_entry_ms=max(0, round((deadline-now)*1000)),
+                    elapsed_ms=max(0, round((time.monotonic()-now)*1000)),
+                    remaining_ms=max(0, round((deadline-time.monotonic())*1000)), expected_roots=len(keys),
+                    scheduler_dispatched=stats['dispatched'], returned_values=stats['returned'],
+                    read_timeouts=stats['timed_out'], scheduler_deferred=stats['deferred'], serial_read_ms=stats['serial_read_ms'],
+                    global_concurrency=rpc_reads.CONCURRENCY, account_concurrency=PER_ACCOUNT_CONCURRENCY,
+                    shared_deadline_selected=origin == 'shared_deadline',
+                    batch_deadline_selected=origin == 'batch_deadline', request_timeout_selected=origin == 'request_timeout',
+                    bound_ms=first.get('bound_ms', 0))
+                reference = stats['event'] or (first_timeout_event.get('event_id') if cause == 'capacity_deferred' else None)
+                refs = {**value['refs'], 'cause_event_id': reference}
+                value = validate({**value, 'refs': refs, 'missing_refs': [key for key in refs if refs[key] is None]})
+                emit(selected, 'authority', 'failed' if failed else 'result',
+                     reason='timeout' if stats['timed_out'] or stats['shared_deferred'] else 'unknown' if failed else 'none',
+                     level='ERROR' if failed else 'DEBUG', method='tasks.assignment.budget', command='assignment', causal=value)
+            except Exception:
+                pass
+
     if not keys:
+        budget_summary()
         return results
     selected_accounts = {selected.engine_owner_uid: (name, selected) for name, selected in accounts}
     queues = {uid: deque() for uid in selected_accounts}
@@ -329,6 +371,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
         return (uid, configurations[uid], "tasks.assignment.project", key)
 
     def read(uid, key):
+        started = time.monotonic()
         try:
             return rpc_reads.read_many(selected_accounts[uid][1], "tasks.assignment.project",
                 {key: {"thread_key": key}}, request_timeout=150, batch_timeout=180,
@@ -336,6 +379,8 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 **({"owned_process_group": owned_process_group} if owned_process_group is not None else {}))[key]
         except Exception as exc:
             return rpc_reads.ReadOutcome(error=exc)
+        finally:
+            budget_stats[uid]["serial_read_ms"] += max(0, round((time.monotonic()-started)*1000))
 
     def finish(index):
         if index in completed or len(states[index]["original"]) != len(accounts):
@@ -427,6 +472,9 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     **error_metadata(outcome.error), **({'causal': causal} if causal else {}))
                 if event and isinstance(outcome.error, TimeoutError) and uid in blocked:
                     timeout_events.setdefault(uid, event['event_id'])
+                    first_timeout_event.setdefault('event_id', event['event_id'])
+                    if budget_stats[uid]['event'] is None:
+                        budget_stats[uid]['event'] = event['event_id']
             except Exception:
                 pass
         observations[request_identity(uid, key)] = outcome
@@ -468,6 +516,8 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     else:
                         break
                     cause = 'account_timeout_deferred' if uid in blocked else 'capacity_timeout_deferred' if reserved == rpc_reads.CONCURRENCY else 'shared_deadline'
+                    budget_stats[uid]['deferred'] += 1
+                    budget_stats[uid]['shared_deferred'] |= cause == 'shared_deadline'
                     record(uid, queue.popleft(), rpc_reads.ReadOutcome(error=AssignmentUnavailable(reason),
                         diagnostic=rpc_reads.diagnostic(cause, now, 0, deadline-time.monotonic(), bound_origin='not_attempted' if cause in {'account_timeout_deferred', 'capacity_timeout_deferred'} else 'shared_deadline')))
             while len(futures) + reserved < rpc_reads.CONCURRENCY:
@@ -488,6 +538,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     record(chosen, job, observations[identity])
                     continue
                 active[chosen] += 1
+                budget_stats[chosen]['dispatched'] += 1
                 futures[pool.submit(read, chosen, job[1])] = (chosen, job)
             if futures:
                 finished, _ = wait(futures, return_when=FIRST_COMPLETED)
@@ -495,11 +546,19 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     uid, job = futures.pop(future)
                     active[uid] -= 1
                     outcome = future.result()
+                    stats = budget_stats[uid]
+                    stats['returned'] += outcome.error is None
+                    stats['failed'] += outcome.error is not None
+                    if isinstance(outcome.error, TimeoutError):
+                        stats['timed_out'] += 1
+                        if stats['first'] is None:
+                            stats['first'] = outcome.diagnostic or {}
                     if isinstance(outcome.error, TimeoutError):
                         blocked.add(uid)
                         reserved += 1
                     record(uid, job, outcome)
 
+    budget_summary()
     return results
 
 

@@ -290,7 +290,7 @@ class Transport(unittest.IsolatedAsyncioTestCase):
         self.assertLess(elapsed, 3)
         return result, stats, code, fresh, old, older, noise
 
-    async def scheduled_fixture(self, *, count=26, alias=False, stalled=False, asymmetric=False, budget=4, alias_after_first=False, admission=None, contended=False, actors=2, response=None):
+    async def scheduled_fixture(self, *, count=26, alias=False, stalled=False, asymmetric=False, budget=4, alias_after_first=False, admission=None, contended=False, actors=2, response=None, read_batch=None):
         from test_task_assignment import OTHER
         keys = [f"<batch-{index:02}@example.test>" for index in range(count)]
         stats = {"active": 0, "maximum": 0, "per_actor": {}, "actor_maximum": {}, "dispatch": [], "complete": [], "events": []}
@@ -349,7 +349,7 @@ class Transport(unittest.IsolatedAsyncioTestCase):
             selected = settings().model_copy(update={"engine_ws_url": f"ws://127.0.0.1:{port}", "accounts": ",".join(uid + ":" + uid for uid in actor_uids[1:])})
             def many(account, method, requests, **kwargs):
                 return asyncio.run_coroutine_threadsafe(rpc_reads._read(account, method, requests, 0.12 if stalled else 0.5,
-                    budget, kwargs["deadline"], kwargs.get("token_cache")), loop).result()
+                    budget if read_batch is None else read_batch, kwargs["deadline"], kwargs.get("token_cache")), loop).result()
             started = time.monotonic()
             with patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc.auth, "get_id_token", return_value=TOKEN), patch.object(rpc_reads, "read_many", side_effect=many), patch.object(rpc_reads, "CLOSE_SECONDS", 0.001), patch.object(task_assignment, "PROJECTION_SECONDS", budget), patch.object(task_assignment, "PER_ACCOUNT_CONCURRENCY", allowed):
                 result = await asyncio.to_thread(task_assignment.projections, selected, keys)
