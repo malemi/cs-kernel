@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.60.0`. Current HEAD status: tagged as `v0.60.0`.**
+- **Latest release tag: `v0.60.0`. Current HEAD status: untagged.**
   The immutable candidate adds observed protected-source admission diagnostics.
   Both normal clones still run59/ec7d84f until supported candidate adoption;
   strict BOTH FULL and public Git provenance remain pending. Sign-off stays51.
