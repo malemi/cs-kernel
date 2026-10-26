@@ -14,14 +14,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.61.1`. Current HEAD status: tagged as `v0.61.1`.**
+- **Latest release tag: `v0.61.1`. Current HEAD status: untagged.**
   Both normal clones match immutable61/eff4d9b:159files, exact identities and
   fresh local lock rebuilding. Source/at-tag/golden gates pass. Operational
   sign-off remains51; genuine FULL and public Git provenance are open.
 - Installed61 contains the MIME identity, remote-error and shared-time repairs.
   The forward0.61.1 source fixes only stale architecture authority wording;
   runtime Python remains identical. Framing, plan and component review pass;
-  its complete source gate passes and at-tag verification is pending. The
+  its complete source and at-tag gates pass. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 - Both immutable90bb actor runtimes have verified provider connection/state,
