@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.58.0`. Current HEAD status: tagged as `v0.58.0`.**
+- **Latest release tag: `v0.58.0`. Current HEAD status: untagged.**
   This local candidate is unpublished. Both maintained clones still run the same
   clean57 artifact at `e3e8799`; actual58 installation, strict BOTH-clone FULL
   and public provenance remain pending. Shared operational sign-off stays51.

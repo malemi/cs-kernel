@@ -1288,7 +1288,12 @@ these controlled tests. Independent milestone review precedes deployment.
 
 #### D2 — exact adoption, one finite admission and existing delivery gates
 
-Owner: existing deployment executor and lead, dependent on approved D1 proof.
+Owner: existing deployment executor and lead, dependent on an approved D1
+disposition. A demonstrated behavior repair requires the D1 RED/GREEN proof.
+If the historical limiting mechanism remains unobserved, admit no speculative
+behavior patch: a separately reviewed finite diagnostic trial may proceed only
+with new actual telemetry and accepted complete current installed health. This
+is not latency-repair acceptance or a waiver of any FULL/shipping criterion.
 Use the existing complete two-actor baseline/delta/deployment and rollback gates;
 preserve all other family bytes, controls, four peers and excluded Qonto. A
 kernel change requires a new immutable candidate/version and supported clean
@@ -1318,3 +1323,61 @@ Rollback restores only captured owned source/activation, never business data.
 This continuation establishes dependency order and bounded ownership only. It
 does not establish a historical queue cause, implemented repair, safe deployment,
 new resource admission, successful FULL, publication or completed alignment.
+
+
+### D0 component proof and finite58 admission proposal
+
+Canonical kernel29edc68 repairs the reproduced diagnostic conflation and false
+causal reference, not a claimed historical transport/queue defect. Fresh source
+review is APPROVED after the actual connection-failure → timeout → deferral
+regression. Real CLI/collector/inbox proof and the refreshed blind analyst identify
+a selected request timeout and an explicitly unattempted derived consequence.
+Both actor families now preserve reviewed canonical diagnostic commit543f311e;
+all437/457files and seven runtime/unit/metadata guards pass. A real normal
+installed CLI request to the current daemon completes the exact failed root in
+4.314seconds with legitimate NEEDS_HUMAN_VERIFICATION. Ordinary CLI trace paging
+retains all five new boundary commands. Historical queue causation stays unknown.
+
+The first full free source run overlapped the last reviewed causal-reference
+repair: its installed parent and source child had different package digests,
+correctly rejecting six receipt joins. Stable canonical recheck passes those
+cases and a fresh whole harness is all-green. No verifier was weakened. New
+immutable58 at77bef42 is frozen; at-tag checks, installation, policy activation
+and whole-discovery acceptance remain separate prerequisites.
+
+Reconcile reserves before a new paid admission: older54/55known2.6874532;
+interrupted56unknownreserve4; natural first57known2.7948136; firststandalone
+allowance0.50; interrupted source-repaired57unknownreserve4; postcleanup
+standalone allowance0.50; latest interrupted cleanup57MrCall jobunknownreserve4.
+Latest Café/signup jobs never started; their previous8nominal reserved dollars
+are not asserted charged. This conservative subtotal is18.4822668, not an
+invoice or proof of actual interrupted charges. Retain another1for prior
+uncertain nonnative diagnostic/classifier charges rather than calling them zero.
+
+D1 disposition for this candidate: no historical limiting mechanism or latency
+repair is established, so no deadline/scheduling/provider behavior patch is
+admitted. The separately reproduced diagnostic loss and incorrect causal link
+are repaired and reviewed. The proposed admission is ONE diagnostic trial with
+new exact telemetry and complete current health, not a claim that the old
+transport defect is fixed. D2 requires independent approval of this explicit
+disposition; its behavior-repair branch remains conditional on actual proof.
+A failed diagnostic trial still cannot ship or renew itself.
+
+Subject to a fresh independent finite-resource/plan review, the lead proposes
+ONE bounded installed58 whole-discovery/unchanged-health attempt (allowance0.50,
+900-second owned-process-group wrapper), then ONLY on actual technical health
+acceptance ONE strict fresh BOTH-clone FULL with the unchanged4/native-job and
+5400-second overall controls (reserve12). Cumulative conservative planning
+reserve31.9822668 is within32. This is a lead one-attempt planning ceiling, not
+a provider hardcap or production model/daily-budget change. Codex coordination
+and unrelated normal production billing remain distinct. Unknown charges stay
+unknown; do not silently reuse an already consumed admission.
+
+Actual58 byte/identity/lock checks, exact two-actor reviewed policy, source gates
+and real preflight must pass first. Diagnostic repair grants no assumption of
+latency recovery. Failed discovery or known decisive FULL health failure ends
+this admission; no retry follows automatically. Restore exactly owned cron lines
+before canonical FULL takes its own scheduling window; verify final cleanup and
+all uncertain effects without resend. Full provider/authority/ACK/no-extra-effects
+and normal-job criteria remain unchanged. This proposal authorizes no paid call
+before its actual approval and prerequisites.
