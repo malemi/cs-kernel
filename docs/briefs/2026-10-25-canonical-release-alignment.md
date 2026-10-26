@@ -233,3 +233,47 @@ or release readiness. A reviewed finite retry budget and fresh free integration
 proof precede any new paid attempt. Strict genuine FULL on BOTH actual kernel 57
 installations, publication/adoption and existing documentation/final-review gates
 remain required; no installed-kernel patch or FULL waiver is permitted.
+
+
+## Required continuation: observable bounded assignment reads
+
+The post-cleanup strict FULL87e3b092 remains interrupted after one transport
+TimeoutError and nine conservative capacity deferrals. Local disposal alone
+does not resolve the release blocker. The historical timeout's exact stage is
+unknown. Executor queue wait, request time, shared remaining observation time
+and actual provider execution are distinct candidate mechanisms; no source
+repair may assume one merely because it is plausible.
+
+Extend the existing assignment read decision and diagnostic path sufficiently
+to distinguish these mechanisms without message content, raw identifiers,
+credentials, exception messages or arbitrary tracebacks. Use safe correlation,
+finite stage/check/cause codes, monotonic elapsed/remaining timings and actual
+exception class where known. Propagate decisive facts through existing bounded
+worker outcomes, validators, ordinary log CLI, filesystem collector and inbox;
+log-only diagnosis must distinguish the observed failure from neighboring causes
+and legitimate holds. Preserve historical missing facts as unknown.
+
+Permit only a narrow deadline/scheduling/provider-boundary correction supported
+by an actual deterministic free RED/GREEN reproduction or fresh restricted
+read-only evidence. Preserve exact authority, provider/source checks, whole
+inventory coverage, finite existing deadlines/concurrency, models, budgets,
+permissions and no-extra-effects requirements. Do not turn timeouts into success,
+relax discovery health, add blind retries or merely increase timeouts. Any
+proposed behavior repair must name its reproduced failure and revised invariant
+in the existing plan before implementation. Diagnostics alone grant no retry.
+
+Use owned canonical source branches and exact context-checked family adaptations;
+never patch installed kernels or live service source. Keep immutable57/e3e8799
+unchanged. If kernel code changes, create a fresh immutable forward candidate
+version and rerun its source/installed gates; do not retag57 or claim changed
+bytes are the same release. Preserve foreign WIP/index and all nonowned runtime
+families. Existing two-actor deployment authority and guards remain unchanged.
+
+Review this framing, then amend/review the same plan before coding. Bound each
+worker and monitor every five minutes. Require real-path failure controls and
+privacy/propagation checks before adopting a repair. Reconcile actual known
+charges and unknown reserves before proposing a fresh finite admission; the
+consumed admission is not silently extended and no paid acceptance starts on
+failing free checks. Full strict BOTH-clone acceptance, public publication and
+normal Git installation/lock verification, doc-end and separate final review
+remain required.

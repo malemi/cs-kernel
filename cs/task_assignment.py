@@ -321,6 +321,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     recovered = set()
     recovery_holds = {}
     observations = {}
+    timeout_events = {}
     configurations = {uid: json.dumps(selected.model_dump(mode="json") if hasattr(selected, "model_dump") else vars(selected), sort_keys=True, default=str)
                       for uid, (_, selected) in selected_accounts.items()}
 
@@ -409,6 +410,25 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
         if (isinstance(outcome.error, AssignmentUnavailable) and "capacity deferred" in str(outcome.error)
                 and (uid, job) in recovery_holds):
             outcome = recovery_holds[(uid, job)]
+        if outcome.error is not None and outcome.diagnostic is not None:
+            try:
+                from .observability_causal import decision, validate
+                from .observability_producers import emit, error_metadata
+                info = rpc_reads.validate_diagnostic(outcome.diagnostic)
+                deferred = info['cause'] in {'account_timeout_deferred', 'capacity_timeout_deferred'}
+                causal = decision('assignment_read', info['cause'], layer='source', command='assignment', method='tasks.assignment.project',
+                    elapsed_ms=info['elapsed_ms'], bound_ms=info['bound_ms'], remaining_ms=info['remaining_ms'] or 0,
+                    remaining_available=info['remaining_ms'] is not None, **({'attempted': False} if deferred else {}), shared_deadline_selected=info['bound_origin']=='shared_deadline', batch_deadline_selected=info['bound_origin']=='batch_deadline', request_timeout_selected=info['bound_origin']=='request_timeout')
+                if causal:
+                    refs = {**causal['refs'], 'cause_event_id': timeout_events.get(uid) if deferred else None}
+                    causal = validate({**causal, 'refs': refs, 'missing_refs': [name for name, value in refs.items() if value is None]})
+                event = emit(selected_accounts[uid][1], 'authority', 'failed', reason='timeout' if isinstance(outcome.error, (TimeoutError, AssignmentUnavailable)) else 'unknown',
+                    root_id=key, command='assignment', method='tasks.assignment.project', elapsed_ms=info['elapsed_ms'],
+                    **error_metadata(outcome.error), **({'causal': causal} if causal else {}))
+                if event and isinstance(outcome.error, TimeoutError) and uid in blocked:
+                    timeout_events.setdefault(uid, event['event_id'])
+            except Exception:
+                pass
         observations[request_identity(uid, key)] = outcome
         if canonical:
             states[index]["canonical"][(uid, key)] = outcome
@@ -447,7 +467,9 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                         reason = "assignment capacity deferred: projection deadline"
                     else:
                         break
-                    record(uid, queue.popleft(), rpc_reads.ReadOutcome(error=AssignmentUnavailable(reason)))
+                    cause = 'account_timeout_deferred' if uid in blocked else 'capacity_timeout_deferred' if reserved == rpc_reads.CONCURRENCY else 'shared_deadline'
+                    record(uid, queue.popleft(), rpc_reads.ReadOutcome(error=AssignmentUnavailable(reason),
+                        diagnostic=rpc_reads.diagnostic(cause, now, 0, deadline-time.monotonic(), bound_origin='not_attempted' if cause in {'account_timeout_deferred', 'capacity_timeout_deferred'} else 'shared_deadline')))
             while len(futures) + reserved < rpc_reads.CONCURRENCY:
                 chosen = None
                 uids = list(queues)

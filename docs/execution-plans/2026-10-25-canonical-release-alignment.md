@@ -1184,3 +1184,137 @@ wait from actual execution latency. No historical cause is asserted. See
 v57/cleanup-full-timeout-diagnosis.md. A next reviewed diagnostic change should
 retain safe correlation and bounded queue/start/stage elapsed metadata at that
 seam; another FULL without that evidence is not justified.
+
+### D — classify and correct the remaining timeout without a speculative retry
+
+This is substantial continuation of the existing release task, not a fast path.
+The diagnostic/transport brief amendment has fresh framing approval in
+v57/timeout-brief-review.md, binding full brief SHA256
+117bd98ffa6f49eaba8bfe46c24bb1a5c95f48cea202b7a4c3621d4ceb0019f0.
+Fresh plan approval precedes implementation. The prior admission remains consumed.
+
+Source facts: frozen kernel e3e8799 passes the scheduled discovery's original
+absolute deadline into assignment projections. Its standalone projection cap is
+3600 seconds, but scheduled observation is510 seconds and reserves10 seconds
+before rendering. Each assignment request is capped at150 seconds and its batch
+at180, additionally clamped by that original deadline and cleanup reservations.
+The isolated child explicitly injects the assignment request cap into
+REQUEST_SECONDS; the apparent60-second minimum in _read is not a missing opt-in.
+Canonical ACTOR fd051dc0 starts its evidence deadline at40 seconds inside the
+executor; the exact hosted families preserve their distinct120-second budget.
+Do not change either value by treating these families as byte-identical.
+
+The verified diagnostic defect is loss of timeout origin: the isolated reader
+serializes request/batch TimeoutError as the same finite timeout, then read_many
+reconstructs a generic exception. Parent worker expiry and exhausted remaining
+projection capacity are separate possible boundaries. Queue delay before the
+backend worker starts is another hypothesis, not the historical cause. One
+transport timeout then deliberately blocks that account and produces remaining
+capacity deferrals; those deferrals are not separate observed provider failures.
+
+#### D0 — free failure classification and delivered causal evidence
+
+Owner: one kernel executor, owning cs/rpc_reads.py, its exact caller seam in
+cs/task_assignment.py, directly needed causal-event validation/propagation, and
+focused tests. A separate bounded engine executor is warranted only if the
+classified loss is beyond the RPC boundary; its ownership is the canonical
+ACTOR rpc/task_assignments.py and services/task_assignment_projection.py seams
+and their focused tests. MAIN's unrelated dirty tree/index remain untouched.
+No worker owns arbitrary stderr capture, company code or business policy.
+
+Before changing behavior, add free real-transport/process controls that fail the
+required causal distinction on the preimage. Exercise request timeout with ample
+shared budget, shared-deadline exhaustion with a longer request allowance,
+isolated-worker expiry before a result, connection failure, and a successful
+response followed by bounded cleanup. Use actual EngineClient/local protocol
+peers and the real isolated reader; retain actual process cleanup. Add the
+real projection caller to prove one observed timeout and derived later deferrals
+stay distinguishable without changing UNKNOWN or hold decisions. Existing
+transport tests are prerequisites, not proof that new diagnostic fields work.
+
+Preserve only finite metadata through child IPC, validation, ordinary structured
+events, CLI and private problem inbox: failure boundary, selected bound, elapsed
+time, remaining shared budget, existing request/trace correlation and hashed
+thread identity where supported. Explicitly retain unavailable values. Derive
+the selected bound at the actual min operation, not from exception text; do not
+export raw stderr, exception messages, mail/header/body content, tokens or prompts.
+For backend evidence, distinguish dispatch/enqueue/worker-start/provider/cleanup
+only at real observed boundaries and use monotonic durations. A missing start
+record cannot be labeled queue starvation. The diagnostic path must preserve
+the first decisive failure, original result and conservative account reservation.
+
+Verification: real producer-to-CLI-to-collector/inbox regression for each distinct
+failure, healthy and legitimate-held controls, privacy/sink-failure controls,
+and a fresh blind analyst receiving only ordinary log/inbox access. The analyst
+must detect the malfunction and identify the correct observed boundary or
+supported next inspection, while leaving unsupported upstream cause unknown.
+Retain exact source hashes, actual commands/results, RED/GREEN and independently
+reviewed evidence before D1. Run `PYTHONPATH=tests python3 -m unittest
+test_rpc_reads.Transport` and the affected assignment/causal propagation suites;
+add tests for the new distinctions rather than merely rerunning old assertions.
+
+#### D1 — repair only the demonstrated limiting mechanism
+
+Owner: the executor for the actual deciding component, after independent D0
+review. Use the retained classified failure and free real-path reproduction to
+state a concrete source patch and numeric bound in this existing plan; obtain
+fresh applicable brief/plan review before that behavior patch. Queue isolation,
+new caching, retries, parallelism changes, larger deadlines or budget increases
+are not predetermined repairs. A diagnostic improvement alone is not a claim
+that operational latency has been repaired or that FULL can now pass.
+
+If retained history cannot identify the original boundary, one separately
+reviewed bounded model-free native diagnostic read may obtain current evidence
+after exact source/preflight verification. Its finite root set, wall time,
+resource controls, ownership and cleanup are named before execution; it cannot
+stand in for complete workload acceptance or replay an uncertain effect.
+Stop that admission on a failing free check rather than repeating discovery.
+
+The lead's current isolated read-only probe targets only the exact failed root
+under the selected support service's current source/environment, verified native
+authentication and SQLite read-only access, bounded to155 seconds. Its pending
+receipt is v57/timeout-native-root-probe.json. Safe measured function timings
+describe that isolated invocation only; its fresh executor cannot establish the
+daemon's historical queue wait. This receipt does not admit a second probe or
+another FULL and must remain pending until the actual process terminates.
+
+Verification: the actual preimage fails a reproduced product requirement and the
+candidate passes through the same native path with unchanged authority and full
+inventory requirements. Exercise the nearby genuinely slower/failed case, expiry,
+cancellation, held/UNKNOWN and successful unexpired cases. Preserve the R8
+guard-before-disposal ordering and the reviewed local-disposal/RFC adaptations.
+No provider send, assignment mutation, changed schedule or model is needed for
+these controlled tests. Independent milestone review precedes deployment.
+
+#### D2 — exact adoption, one finite admission and existing delivery gates
+
+Owner: existing deployment executor and lead, dependent on approved D1 proof.
+Use the existing complete two-actor baseline/delta/deployment and rollback gates;
+preserve all other family bytes, controls, four peers and excluded Qonto. A
+kernel change requires a new immutable candidate/version and supported clean
+installation on BOTH clones; never move frozen57 or modify its installed bytes.
+An engine-only change preserves57 and binds the exact two changed actor families
+through fresh reviewed rows/policy/native provenance. Neither route waives FULL.
+
+Before any paid call, reconcile actual settled native charges where available,
+retain explicit unknown reserves for interrupted jobs and standalone diagnostics,
+and independently review a new finite one-attempt decision. USD27 was a lead
+planning reserve, not a provider hardcap or evidence that every reservation was
+charged. No new spending is authorized by this proposed plan. Preserve actual
+per-job/model/daily controls; admit no paid run on a failing free candidate.
+
+Only after actual healthy complete installed discovery, exact actor/cron
+preflight and unchanged guards pass may the reviewed admission start one fresh
+genuine strict BOTH-clone FULL. Its owned passive monitor checks progress every
+five minutes; known terminal health failure ends the attempt and triggers exact
+cleanup/effect verification. Natural jobs, provider/receiver outcomes, authority,
+automatic acknowledgement, no-extra-effects and complete health remain required.
+An interruption never becomes PASS and uncertain prior work is never resent.
+
+Actual independent FULL success then permits the existing publication, normal
+public-tag adoption and lock-only rebuild on BOTH clones, version/pin sweeps,
+doc-end/doc-critic, separate final review and completion-check/finalize gates.
+Rollback restores only captured owned source/activation, never business data.
+This continuation establishes dependency order and bounded ownership only. It
+does not establish a historical queue cause, implemented repair, safe deployment,
+new resource admission, successful FULL, publication or completed alignment.

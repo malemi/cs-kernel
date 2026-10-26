@@ -1374,6 +1374,8 @@ if "$VENV/bin/python" "$ROOT/tests/test_operator_read_outcomes.py"; then echo "O
 if "$VENV/bin/python" "$ROOT/tests/test_operator_health.py"; then echo "OK"; else echo "FAIL: ordinary discovery or deterministic operator health"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_causal_logging.py"; then echo "OK"; else echo "FAIL: causal supervisor evidence lost across ordinary diagnostics"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_causal_contract_edges.py"; then echo "OK"; else echo "FAIL: causal predicate distinctions or private diagnostic failure safety"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_rpc_reads.py"; then echo "OK"; else echo "FAIL: bounded RPC transport or process cleanup regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_rpc_read_origins.py"; then echo "OK"; else echo "FAIL: assignment timeout origin lost across transport or problem inbox"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_inventory_view.py"; then echo "OK"; else echo "FAIL: semantic inventory projection, private binding or native inspection"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_notices.py"; then echo "OK"; else echo "FAIL: operator notices hide stopped work or its remedy"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_diagnostics.py"; then echo "OK"; else echo "FAIL: operator diagnostics lose repair evidence or account boundaries"; FAIL=1; fi

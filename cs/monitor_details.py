@@ -38,6 +38,9 @@ def safe_detail(value: dict) -> dict:
                 type(item) not in {int, float} or not math.isfinite(item) or item < 0
             ):
                 raise ValueError("Invalid incident time")
+        elif key in {"elapsed_ms", "deadline_seconds"}:
+            if safe_metadata({key: item}).get(key) != item or type(item) is bool or not 0 <= item <= 10**12:
+                raise ValueError("Invalid incident timing")
         elif key in {"held", "deferred", "uncertain"}:
             if type(item) is not bool:
                 raise ValueError("Invalid incident state")
