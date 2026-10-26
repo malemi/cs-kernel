@@ -300,13 +300,13 @@ retry. Final guards and mutations retain their separate authority. No
 cross-request authority cache or arbitrary queue-coverage guarantee is added.
 The recovery plan owns exact source, installed adoption and ordinary acceptance.
 
-The reviewed unreleased shared-time correction gives review 2700 seconds of
+The installed shared-time correction gives review 2700 seconds of
 work and scheduled discovery a 2700-second sweep inside 2710 seconds observation.
 These finite allowances use partial workload extrapolation and headroom, not a
 coverage guarantee; actual installed state belongs to the living context.
 Required peer observations and timed-out reservations remain mandatory.
 
-The reviewed identity correction decodes complete bounded MIME-encoded identity
+Thread-key handling decodes complete bounded MIME-encoded identity
 headers before References tokenization. A valid multi-word encoding must produce
 complete RFC identities; ordinary/HTML-supported identities and multi-ID order
 remain intact. Malformed/partial/unknown-charset encodings cannot borrow an

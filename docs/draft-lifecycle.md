@@ -22,7 +22,7 @@ reply continuation cannot establish duplicate content. Quoted history and
 attachments do not establish newly authored text. An unreadable or ambiguous
 body remains qualified by a note.
 
-The reviewed unreleased thread-key correction decodes a complete bounded MIME
+Thread-key handling decodes a complete bounded MIME
 identity header before splitting References into ordered identities. Malformed,
 partial, ambiguous or unknown-charset MIME identity remains missing authority;
 the draft stays in the inventory with a root-missing hold and recipient block.

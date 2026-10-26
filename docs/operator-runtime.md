@@ -106,9 +106,9 @@ The [delivery plan](execution-plans/2026-10-13-operator-actionable-diagnostics.m
 records its diagnostic contract; current filesystem adoption is covered by the
 [logging plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md).
 
-## Reviewed shared-time correction — installation pending
+## Shared workflow time bounds
 
-Workflow time is separate from model spending. The reviewed kernel source gives
+Workflow time is separate from model spending. The installed kernel gives
 review 2700 seconds of work, 10 seconds cleanup and a 2715-second total envelope.
 Scheduled discovery observes for 2710 seconds, reserves its last 10 seconds for
 completion, and separately bounds cleanup/publication/finalization at 10/5/5
@@ -119,9 +119,9 @@ a caller's inherited earlier deadline still wins.
 The isolated Desktop acceptance candidate bounds the native MrCall/Café/signup
 jobs at 6600/1800/600 seconds and its suite at 10200 seconds. Resume age and
 terminal elapsed validation use that same finite suite envelope; native terminal
-validation also rejects overrun or nonfinite timestamps. The normal active
-consumer/policy stays at its prior composition until the lead installs the exact
-candidate, reviews its bound composition and passes installed preflight.
+validation also rejects overrun or nonfinite timestamps. The original
+consumer/policy preimages stay preserved during owned maintenance. Activation
+requires exact installed composition, independent review and installed preflight.
 Protected fixture authority still expires at 5400 seconds; a longer test window
 never extends that authority or waives expiry refusal.
 

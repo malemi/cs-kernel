@@ -14,20 +14,21 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.61.0`. Current HEAD status: untagged.**
-  Both normal clones still match immutable60/9c69b99:159files, exact identities
-  and fresh local lock rebuilding. Operational sign-off remains51; public Git
-  provenance and genuine current acceptance are open.
-- The unpublished61candidate repairs whole MIME identity, typed remote errors
-  and finite shared-time limits. Integration, blind and complete source gates
-  pass, including the at-tag gate; changes are not installed. The
+- **Latest release tag: `v0.61.1`. Current HEAD status: tagged as `v0.61.1`.**
+  Both normal clones match immutable61/eff4d9b:159files, exact identities and
+  fresh local lock rebuilding. Source/at-tag/golden gates pass. Operational
+  sign-off remains51; genuine FULL and public Git provenance are open.
+- Installed61 contains the MIME identity, remote-error and shared-time repairs.
+  The forward0.61.1 source fixes only stale architecture authority wording;
+  runtime Python remains identical. Framing, plan and component review pass;
+  its complete source gate passes and at-tag verification is pending. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 - Both immutable90bb actor runtimes have verified provider connection/state,
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
-  source/assignment guards; original schedules and no owned pause are current.
-- The normal Desktop R7 consumer/policy remains valid. Candidate R8 f7f2471 is
+  source/assignment guards; original schedules remain in the maintenance preimage.
+- Original Desktop R7 source/policy bytes remain preserved. Candidate R8 f7f2471 is
   isolated and source-reviewed; activation requires exact installed composition,
   independent review and preflight. Its longer window never extends fixture authority.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.

@@ -2297,3 +2297,57 @@ Wire E5identity/RPC/review/discovery regressions into their existing full harnes
 steps without removing any check. Fresh affected integration review and complete
 source/at-tag gates precede freeze/adoption. This does not authorize a failed tag
 publication, change installed kernels, or relax any FULL/provider/authority oracle.
+
+
+### E7 — paragraph-only authority template closure and forward0.61.1
+
+Status: proposed; fresh plan approval precedes template code. Approved framing
+is v61/template-framing-review.md and immutable template-brief-approved.md, SHA
+febeea2405f420bc410ec0dd3ace3f7439ea089071e7c633dd14c41f1e1fe4a4.
+
+Executor owns only cs/templates/project/docs/ARCHITECTURE.md.j2, one dedicated
+render regression and its tests/run.sh invocation. Replace only the unconditional
+derived-rules paragraph with the identical existing managed/legacy paragraph
+shared by both actual clones. Preserve every other template byte. In particular
+add no assignment section; preserve MrCall's separate local assignment prose.
+No runtime Python, company values, permissions or standing-rule writes change.
+First deliverable in four minutes, progress within three.
+
+Retain RED for the unconditional authority claim and GREEN from actual Jinja
+rendering for two neutral clone shapes. Privately compare the rendered authority
+paragraph with both protected clone paragraphs without model/provider calls.
+Prove git diff against immutable61 changes no cs Python and exactly this one
+packaged template. Fresh affected integration review precedes dependent freeze.
+
+Lead reuses all unchanged E5/E6 and R8/source reviews. Run complete source and
+at-tag harnesses with six genuine golden builds for one forward patch0.61.1;
+never alter frozen61 or its installed files. Build own-path v61p1 wheel/manifest
+and preserve all prior evidence. Keep159package files; only the reviewed template
+resource and version metadata may differ from61. The inherited unshipped runtime
+composition still requires genuine FULL on BOTH clones regardless of patch digit.
+
+Adapt supported adoption's template guard to permit exactly this reviewed
+ARCHITECTURE resource delta, rejecting every other template change. Preserve
+clone-authored/managed instructions and custom prose. Derive only the Kernel pin
+row from the real renderer, leaving unrelated as-built content intact; update
+owned active pin claims and retain their old passages verbatim. Verify both
+normal imports, Git objects, identities/modes, unchanged nonkernel dependencies
+and fresh local lock-only rebuilding. Source overlays remain forbidden.
+
+Carry the EXISTING v61 scheduling transaction rather than restore/re-hold:
+original3cron entries, two exact owned pauses/markers and four guards remain
+bound to their original live state and immutable snapshots. Private v61p1 helper
+version/manifest refs change to0.61.1; R8 canonicalf7f2471 and10200policy semantics
+remain unchanged. Keep original v61 ownership/marker/control paths explicit;
+never invent a new hold or mark the old one restored. Fresh affected helper
+review and exact installed composition review/preflight precede activation.
+No backend/peer restart, budget change or rule publication is admitted.
+
+After verified candidate adoption, activate exact reviewed R8 consumers/policy
+through the reviewed guarded rollback transaction. Restore only the original
+owned scheduling hold immediately before the finite strict BOTH FULL so its
+runner can own the acceptance window. One reviewed attempt uses unchanged
+USD4soft controls and independent original/send/draft/health/provider oracles.
+Any failure returns to Astra with retained evidence; no blind extra retry.
+Doc-end/critic, separate final review, public provenance/lock verification and
+publication remain open. Publish no failed61tag to satisfy provenance checks.

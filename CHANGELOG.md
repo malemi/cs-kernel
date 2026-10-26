@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v0.61.1 — 2026-10-26 (PATCH)
+
+Stamp the existing managed/legacy standing-authority contract truthfully.
+
+- Replace only the architecture template's unconditional file-authority claim
+  with the same managed/legacy paragraph already protected on both clones.
+- Keep runtime Python byte-identical to the unshipped61candidate, including its
+  MIME identity, precise remote-error diagnostics and finite shared-time repairs.
+- Preserve unrelated clone-authored architecture content and all company values.
+  The template grants no rule-publication, assignment or sending authority.
+- Real Jinja regressions cover neutral generic/as-built shapes and both retained
+  clone contexts; the packaged delta is exactly one reviewed template resource.
+- Keep the frozen61tag and prior evidence immutable. Retain the existing owned
+  maintenance transaction while refreshing exact package and consumer bindings.
+
+Migration: install the forward immutable0.61.1 package on BOTH clones, verify
+all actual files and rebuild locks. Preserve protected rules/custom prose; use
+the renderer-owned kernel pin row. Activate R8 only after exact composition review
+and installed preflight. No backend or peer restart is part of this correction.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+unshipped inherited send/authentication composition and authority-facing guidance
+still need genuine strict native/provider acceptance, independent of patch size.
+
 ## v0.61.0 — 2026-10-26 (MINOR)
 
 Recover complete draft thread identities and expose actual read-failure causes.

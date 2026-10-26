@@ -492,3 +492,23 @@ checks, ordered integration/release gates and rollback before code. Fresh review
 of framing and that concrete plan precedes implementation. No backend/peer
 restart, broad refactor, caching, business-feature change or extra acceptance
 attempt is implied beyond a finite, source-bound, reviewed strict BOTH FULL.
+
+
+## Required closure: truthful standing-authority architecture template
+
+The current architecture template unconditionally calls company files
+authoritative and engine standing rules derived. Existing code and the identical
+protected paragraph on both clones distinguish managed Desktop authority from
+legacy file authoring. This stale template claim is part of the already approved
+canonical standing-authority recovery, not a new business capability.
+
+Replace only that paragraph with the common existing managed/legacy contract.
+Preserve unrelated custom prose, including MrCall's existing assignment section;
+add no assignment prose, company configuration, rule publication or runtime
+behavior. Prove neutral rendering for both clone shapes and exact agreement
+with the shared protected authority paragraph. Keep actual package bytes immutable:
+61is already frozen/installed, so use a forward patch candidate0.61.1 instead of
+retagging or editing it. Its runtime Python behavior remains byte-identical to61;
+FULL on both is still required for the unshipped inherited composition. Retain
+the existing owned scheduling hold while refreshing exact candidate/provenance
+inputs. No backend/peer restart or financial/concurrency/authority change follows.

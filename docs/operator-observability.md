@@ -169,9 +169,9 @@ have separate monotonic elapsed observations; missing stages and historical
 causes stay unknown. Safe `elapsed_ms`/`deadline_seconds` survive incident
 projection. Actual installation and FULL belong to the canonical release plan.
 
-## Cumulative assignment time summaries (reviewed source, not installed)
+## Cumulative assignment time summaries
 
-The reviewed unreleased source emits one `assignment_time_budget` decision per account
+The kernel emits one `assignment_time_budget` decision per account
 after the existing scheduler returns. `effective_entry_ms` is the time available
 at scheduler entry, not an asserted original configured allowance. `elapsed_ms`
 is total wall time; `serial_read_ms` sums local read invocation durations for
@@ -201,7 +201,7 @@ primary cause-event link and a generic `read_failed` summary rather than a false
 batch expiry. Synthetic unattempted deferrals cannot become the primary failure.
 The summary's successful read count does not establish complete peer authority.
 
-Reviewed remote-response diagnostics preserve structured `EngineError` metadata
+Remote-response diagnostics preserve structured `EngineError` metadata
 through isolated workers: `remote_invalid_params` records code `-32602`, while
 `remote_error` retains other bounded integer codes. The client-side exception
 class is not a claimed remote Python type. Parent exception compatibility,
