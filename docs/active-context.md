@@ -14,13 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.61.0`. Current HEAD status: tagged as `v0.61.0`.**
+- **Latest release tag: `v0.61.0`. Current HEAD status: untagged.**
   Both normal clones still match immutable60/9c69b99:159files, exact identities
   and fresh local lock rebuilding. Operational sign-off remains51; public Git
   provenance and genuine current acceptance are open.
 - The unpublished61candidate repairs whole MIME identity, typed remote errors
   and finite shared-time limits. Integration, blind and complete source gates
-  pass; at-tag verification is pending and changes are not installed. The
+  pass, including the at-tag gate; changes are not installed. The
   [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
   uniform adoption, strict FULL and authorized publication.
 - Both immutable90bb actor runtimes have verified provider connection/state,
