@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.59.0`. Current HEAD status: tagged as `v0.59.0`.**
+- **Latest release tag: `v0.59.0`. Current HEAD status: untagged.**
   This local candidate is unpublished. Both maintained clones still run identical58
   at `77bef42`; its158files, authenticated identities and lock-only rebuilding
   pass. New59 adoption, strict BOTH-clone FULL and public Git provenance remain
