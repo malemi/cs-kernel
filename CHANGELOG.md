@@ -2,11 +2,30 @@
 
 ## Unreleased
 
-- Candidate provider-connection diagnostics: retain an optional closed typed
-  snapshot through event validation, ordinary logs, collection and the private
-  problem inbox. Distinguish connection/state, command timing, deadline targets
-  and inbound progress without retaining protocol payloads. Native daemon
-  acceptance and adoption remain pending; no IMAP cause or repair is claimed.
+## v0.59.0 — 2026-10-26 (MINOR)
+
+Typed provider-connection evidence for intermittent assignment-read failures.
+
+- Preserve the complete immutable58 composition and installed-byte verification.
+- Accept a closed optional provider_diagnostic version1 object, retaining opaque
+  connection/generation, operation/state, pin/deadline comparisons, actual timing,
+  bounded inbound progress and explicit capture overflow through ordinary logs,
+  collection and the private problem inbox. Malformed objects remain rejected.
+- Preserve legacy records, first-failure versus cleanup evidence, authority,
+  business outcomes, deadlines, concurrency and budgets. Technical user email
+  remains disabled; manual diagnosis remains manually invoked.
+- Native daemon diagnostics are a separately reviewed engine dependency. Neither
+  controlled failure evidence nor a successful retry establishes the original
+  intermittent failure's cause or repair. Installed adoption remains separate.
+
+Migration: install the compatible frozen reader on BOTH clones before enabling
+new engine metadata; verify actual Git-object bytes, identities and lock rebuilds.
+58 cannot certify this optional wire extension. Never patch installed files or
+reuse a tag for changed bytes.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+inherited composition includes send/authentication/permission surfaces; diagnostic
+component success does not waive strict normal-path acceptance or public adoption.
 
 ## v0.58.0 — 2026-10-26 (MINOR)
 

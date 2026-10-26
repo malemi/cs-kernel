@@ -121,7 +121,7 @@ acceptance cases and current coverage limits.
 
 ## Candidate provider-connection evidence
 
-The unreleased source accepts optional `provider_diagnostic` version1 metadata.
+The local59 candidate source accepts optional `provider_diagnostic` version1 metadata.
 Kernel round-trip checks cover emission, ordinary trace CLI, collection and the
 private inbox. Full native daemon/protocol acceptance and installed adoption
 remain pending. Installed58 does not support this object; legacy records without

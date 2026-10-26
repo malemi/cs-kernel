@@ -14,11 +14,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.58.0`. Current HEAD status: untagged.**
-  This local candidate is unpublished. Both maintained clones run identical58
-  at `77bef42`; all158files, authenticated identities and lock-only rebuilding
-  pass. Strict BOTH-clone FULL and public Git provenance remain pending. Shared
-  operational sign-off stays51; prior failed artifacts remain retained separately.
+- **Latest release tag: `v0.59.0`. Current HEAD status: tagged as `v0.59.0`.**
+  This local candidate is unpublished. Both maintained clones still run identical58
+  at `77bef42`; its158files, authenticated identities and lock-only rebuilding
+  pass. New59 adoption, strict BOTH-clone FULL and public Git provenance remain
+  pending. Operational sign-off stays51; failed artifacts remain separately retained.
 - Assignment read diagnostics distinguish request, batch, shared and worker
   timeout boundaries, with explicit unattempted deferrals linked to their actual
   reservation-triggering timeout. Real transport/CLI/inbox and blind controls

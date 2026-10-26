@@ -1,3 +1,11 @@
+## 2026-10-26 — superseded local58 candidate marker
+
+- **Latest release tag: `v0.58.0`. Current HEAD status: untagged.**
+  This local candidate is unpublished. Both maintained clones run identical58
+  at `77bef42`; all158files, authenticated identities and lock-only rebuilding
+  pass. Strict BOTH-clone FULL and public Git provenance remain pending. Shared
+  operational sign-off stays51; prior failed artifacts remain retained separately.
+
 ## 2026-10-26 — superseded candidate57 trial snapshot
 
 - The57candidate supports48bounded automatic inventory hooks, one exact progress
