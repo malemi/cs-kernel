@@ -67,8 +67,47 @@ def _unknown(thread_key: str, reason: str, *, owner_uid: str | None = None) -> d
             "events": [], "covered_inbound": [], "reply_evidence": [], "reason": reason}
 
 
+def _observe_peer(settings, thread_key, response=None, *, failure=None):
+    try:
+        from .observability_causal import PAIRS, decision
+        from .observability_producers import emit
+        if response is not None and not (response["state"] == "unknown" or (not response["complete"] and response["state"] != "needs-assignment")):
+            return
+        code = failure or response.get("reason")
+        allowed = PAIRS["assignment_peer_projection"] if failure else {"REPLY_SOURCE_UNAVAILABLE", "SOURCE_UNAVAILABLE", "SOURCE_OWNER_REQUIRED"}
+        code = code if code in allowed else "unknown"
+        observations = [("assignment_peer_projection", code)]
+        if response is not None:
+            for item in response["reply_evidence"]:
+                if (isinstance(item, dict) and ("version" not in item or (type(item["version"]) is int and item["version"] == VERSION))
+                        and all(field not in item or item[field] == response[field] for field in ("actor_uid", "space_id", "thread_key"))
+                        and item.get("complete") is False
+                        and item.get("judgement") == "UNKNOWN"):
+                    reply = item.get("reason")
+                    observations.append(("assignment_peer_reply", reply if isinstance(reply, str) and reply in PAIRS["assignment_peer_reply"] else "unknown"))
+        for check, cause in observations:
+            causal = decision(check, cause, layer="source", command="assignment", method="tasks.assignment.project",
+                outcome="unknown" if cause == "unknown" else "failed",
+                **({"scoped_sent_match_unique": False} if cause == "SENT_REPLY_NOT_SYNCED" else {}))
+            emit(settings, "authority", "failed", reason="incomplete-input", root_id=thread_key,
+                command="assignment", method="tasks.assignment.project", error_file="cs/task_assignment.py", causal=causal)
+    except Exception:
+        pass
+
+
 def _project_one(settings, thread_key: str, space_id: str | None = None) -> dict:
-    return _validate_projection(settings, thread_key, rpc.call_sync(settings, "tasks.assignment.project", {"thread_key": thread_key}, timeout=150), space_id)
+    try:
+        raw = rpc.call_sync(settings, "tasks.assignment.project", {"thread_key": thread_key}, timeout=150)
+    except Exception:
+        _observe_peer(settings, thread_key, failure="transport_unavailable")
+        raise
+    try:
+        result = _validate_projection(settings, thread_key, raw, space_id)
+    except Exception:
+        _observe_peer(settings, thread_key, failure="projection_invalid")
+        raise
+    _observe_peer(settings, thread_key, result)
+    return result
 
 
 def _validate_projection(settings, thread_key: str, raw, space_id: str | None = None) -> dict:
@@ -162,6 +201,7 @@ def project(settings, thread_key: str, *, peers: bool = True) -> dict:
     if not peers:
         return result
     responses = [(settings.engine_owner_uid, result)]
+    peer_settings = {settings.engine_owner_uid: settings}
     unknown = []
     seen = {settings.engine_owner_uid}
     for name, uid in settings.account_map.items():
@@ -170,15 +210,17 @@ def project(settings, thread_key: str, *, peers: bool = True) -> dict:
         seen.add(uid)
         try:
             peer = config.load(engine_owner_uid=uid)
+            peer_settings[uid] = peer
             responses.append((name, _project_one(peer, thread_key, result["space_id"])))
         except Exception:
             unknown.append(name)
     responses, unknown = _resolve_peer_aliases(thread_key, responses, unknown,
-        lambda uid, key: _project_one(settings if uid == settings.engine_owner_uid else config.load(engine_owner_uid=uid), key, result["space_id"]))
+        lambda uid, key: _project_one(settings if uid == settings.engine_owner_uid else config.load(engine_owner_uid=uid), key, result["space_id"]),
+        observe=lambda response, code: _observe_peer(peer_settings[response["actor_uid"]], thread_key, failure=code))
     return _merge_peers(result, responses, unknown)
 
 
-def _resolve_peer_aliases(requested, responses, unknown, read):
+def _resolve_peer_aliases(requested, responses, unknown, read, observe=None):
     primary = responses[0][1]
     canonical = primary.get("authoritative_thread_key", requested)
     primary_component = set(primary.get("component_thread_keys", []))
@@ -198,11 +240,17 @@ def _resolve_peer_aliases(requested, responses, unknown, read):
                and response["authoritative_thread_key"] != canonical and not partial_scope(response)
                for _, response in responses):
             unknown.append("contradictory component authority")
+            if observe:
+                for _, response in responses:
+                    observe(response, "alias_authority_conflict")
             return responses, unknown
     else:
         canonical = next(iter(authorities), requested)
     if canonical != requested and any(_ancestry_conflict(response, requested) for _, response in responses):
         unknown.append("unresolved ancestry conflict cannot establish canonical authority")
+        if observe:
+            for _, response in responses:
+                observe(response, "alias_authority_conflict")
         return responses, unknown
     if canonical == requested:
         return responses, unknown
@@ -222,7 +270,9 @@ def _resolve_peer_aliases(requested, responses, unknown, read):
                                    if original["state"] == "normal" and not original["hold_auto_reply"]
                                    else {**original, "task": fallback.get("task")})))
             resolved.append((name, fallback))
-        except Exception:
+        except Exception as exc:
+            if observe and not (isinstance(exc, AssignmentUnavailable) and str(exc) == "assignment canonical scope pending"):
+                observe(original, "alias_scope_unavailable")
             resolved.append((name, original))
             if fallback is not None:
                 resolved.append((name, fallback))
@@ -367,6 +417,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     recovery_holds = {}
     observations = {}
     timeout_events = {}
+    peer_observations = set()
     configurations = {uid: json.dumps(selected.model_dump(mode="json") if hasattr(selected, "model_dump") else vars(selected), sort_keys=True, default=str)
                       for uid, (_, selected) in selected_accounts.items()}
 
@@ -433,7 +484,8 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 raise outcome.error
             return _validate_projection(selected_accounts[uid][1], canonical, outcome.value, primary["space_id"])
 
-        scoped, unknown = _resolve_peer_aliases(key, scoped, unknown, canonical_read)
+        scoped, unknown = _resolve_peer_aliases(key, scoped, unknown, canonical_read,
+            observe=lambda response, code: _observe_peer(selected_accounts[response["actor_uid"]][1], key, failure=code))
         if any(outcome is None for outcome in states[index]["canonical"].values()):
             return
         results[key] = _merge_peers(primary, scoped, unknown)
@@ -442,6 +494,18 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     def record(uid, job, outcome):
         index, key, canonical = job
         identity = (uid, key)
+        observation = (uid, key, id(outcome))
+        if observation not in peer_observations:
+            peer_observations.add(observation)
+            if outcome.error is None:
+                try:
+                    observed = _validate_projection(selected_accounts[uid][1], key, outcome.value)
+                except Exception:
+                    _observe_peer(selected_accounts[uid][1], key, failure="projection_invalid")
+                else:
+                    _observe_peer(selected_accounts[uid][1], key, observed)
+            elif outcome.diagnostic is None:
+                _observe_peer(selected_accounts[uid][1], key, failure="transport_unavailable")
         if outcome.error is None and identity not in recovered:
             try:
                 value = _validate_projection(selected_accounts[uid][1], key, outcome.value)

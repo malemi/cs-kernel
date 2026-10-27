@@ -76,6 +76,73 @@ def inbound(key=KEY, *, mid="<in@customer.example>", date=NOW):
 
 
 class Consumer(unittest.TestCase):
+    def test_peer_failure_diagnostics_preserve_typed_causes_before_merge(self):
+        from cs import observability, observability_producers
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        rows = {"operator": projection("unknown", complete=False) | {"reason": "REPLY_SOURCE_UNAVAILABLE",
+            "reply_evidence": [{"version": 1, "actor_uid": "operator", "space_id": "company", "thread_key": KEY,
+                "complete": False, "judgement": "UNKNOWN", "reason": "SENT_REPLY_NOT_SYNCED"}]},
+            "peer": projection("unknown", complete=False) | {"actor_uid": "peer", "reason": "SECRET_SENTINEL"}}
+        emitted = []
+        def emit(*args, **kwargs):
+            emitted.append(observability.safe_metadata(kwargs))
+        with patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=lambda s, *a, **kw: rows[s.engine_owner_uid]), patch.object(observability_producers, "emit", side_effect=emit):
+            result = assignment.project(selected, KEY)
+        causes = [event["causal"]["cause"] for event in emitted if "causal" in event]
+        self.assertIn("REPLY_SOURCE_UNAVAILABLE", causes)
+        self.assertIn("SENT_REPLY_NOT_SYNCED", causes)
+        self.assertIn("unknown", causes)
+        self.assertEqual(result["state"], "unknown")
+        self.assertNotIn("SECRET_SENTINEL", json.dumps(emitted))
+        self.assertTrue(all(event["error_file"] == "cs/task_assignment.py" for event in emitted))
+
+    def test_peer_reply_diagnostics_refuse_foreign_and_malformed_metadata(self):
+        from cs import observability_producers
+        for evidence, expected in [
+            ({"complete": False, "judgement": "UNKNOWN", "reason": "SENT_REPLY_NOT_SYNCED"}, True),
+            ({"complete": False, "judgement": "UNKNOWN", "reason": "SENT_REPLY_NOT_SYNCED", "actor_uid": "foreign"}, False),
+            ({"complete": False, "judgement": "UNKNOWN", "reason": ["PRIVATE_SENTINEL"]}, False)]:
+            events = []
+            row = projection("unknown", complete=False) | {"reason": "REPLY_SOURCE_UNAVAILABLE", "reply_evidence": [evidence]}
+            with patch.object(rpc, "call_sync", return_value=row), patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append(kw)):
+                assignment.project(settings(), KEY)
+            self.assertEqual(any(e["causal"]["cause"] == "SENT_REPLY_NOT_SYNCED" for e in events), expected)
+            self.assertNotIn("PRIVATE_SENTINEL", json.dumps(events))
+            self.assertEqual(events[0]["causal"]["cause"], "REPLY_SOURCE_UNAVAILABLE")
+        for raw in (None, projection() | {"actor_uid": "foreign"}):
+            events = []
+            with patch.object(rpc, "call_sync", return_value=raw), patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append(kw)):
+                self.assertEqual(assignment.project(settings(), KEY)["state"], "unknown")
+            self.assertEqual(events[0]["causal"]["cause"], "projection_invalid")
+
+    def test_batched_peer_failure_retains_first_cause_and_additional_observations(self):
+        from cs import observability_causal as causal, observability_producers, rpc_reads
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        def read(s, method, requests, **kwargs):
+            return {key: rpc_reads.ReadOutcome(value=projection("unknown", complete=False) | {
+                "actor_uid": s.engine_owner_uid, "reason": "REPLY_SOURCE_UNAVAILABLE",
+                "reply_evidence": [{"complete": False, "judgement": "UNKNOWN", "reason": "SENT_REPLY_NOT_SYNCED"}]}) for key in requests}
+        events = []
+        with causal.scope(), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc_reads, "read_many", side_effect=read), patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append((args[0].engine_owner_uid, kw))):
+            result = assignment.projections(selected, [KEY])
+            self.assertEqual(causal.selected()["cause"], "REPLY_SOURCE_UNAVAILABLE")
+        self.assertEqual(result[KEY]["state"], "unknown")
+        for uid in ("operator", "peer"):
+            causes = [e["causal"]["cause"] for owner, e in events if owner == uid and e.get("causal")]
+            self.assertIn("REPLY_SOURCE_UNAVAILABLE", causes)
+            self.assertIn("SENT_REPLY_NOT_SYNCED", causes)
+        with patch.object(rpc, "call_sync", return_value=projection("unknown", complete=False)), patch.object(observability_producers, "emit", side_effect=OSError("PRIVATE_SENTINEL")):
+            self.assertEqual(assignment.project(settings(), KEY)["state"], "unknown")
+
+    def test_alias_failure_is_observed_before_early_return(self):
+        requested, canonical, primary, peer, fallback = captured_partial_component()
+        peer = peer | {"component_thread_keys": sorted([*peer["component_thread_keys"], "<outside@example.test>"])}
+        seen = []
+        responses, unknown = assignment._resolve_peer_aliases(requested, [("operator", primary), ("peer", peer)], [],
+            lambda *args: self.fail("contradictory authority must not read"), observe=lambda response, code: seen.append(code))
+        self.assertEqual(seen, ["alias_authority_conflict", "alias_authority_conflict"])
+        self.assertEqual(unknown, ["contradictory component authority"])
+
     def test_typed_ancestry_conflict_exact_shape(self):
         raw = projection("conflict", complete=False) | {"reason": "RFC_ANCESTRY_CONFLICT",
             "authoritative_thread_key": KEY, "component_thread_keys": [KEY],
