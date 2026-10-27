@@ -1,0 +1,14 @@
+## Done
+- Verdict: APPROVED
+- Changed: none in the repository; this private report only.
+- Checked surface: all five changed files in full, exact current delta, complete focused logs and replay receipt; approved recovery brief and M19 plan remain hash-identical.
+- Binding: brief bd2931d5aa26e2720d958cf92aa562a0dc57e18d748368591c6a4a39f7188997; plan 4110af7a8cc0491c1d244eec87aee73cbef4ce5b2043c633f5bbb5bff9ea4840. Approved scope is preserved without substantive drift.
+- Findings: preferred 8000-character partition is accepted only below the unchanged complete-value UTF-16 ceiling. Any oversized part falls back to the entire original 7000-character partition; previously deliverable Unicode inputs retain that exact partition.
+- Preservation: 48 slots, owner/session/source/process binding, reserved markers, duplicate refusal, complete reconstruction and pre-effect inspection remain intact. Both producer and auditor use the same chooser. The catalog source hash remains e549f1d2923450342f501d3a9cc0499bf4c3ad1e847d9dedbb2c68ff85c6ade4.
+- Timeout change: exactly three stale literals in the two invoked subskills now agree with the existing 2730000ms parent/launcher allowance. No permission, command, budget or runtime limit changed.
+- Verified: read-only Python hash/diff check returned PASS for five source hashes, both complete log hashes and the exact current delta. No focused test was repeated.
+- Relied-on verification: delivery and recovery executions report exit0; complete logs confirm separate supervisor/CLI/hook processes, all48 settings commands, strict negative controls and actual parent/triage/campaign render checks.
+- Relied-on replay: retained input reconstructs exactly in46parts, maximum8870UTF16 units; genuine old stream still has no completed delivery, while composition passes. This is component evidence only.
+- Advisory: optional task warning check reports stale focused/mechanical completion snapshots; refresh them at the later closure gate.
+- Unverified: full successor suite, linked/copy host adoption, installed/native model delivery, BOTH FULL, service restoration, financial actuals, documentation/final closure and publication.
+- Evidence: /tmp/mrcall-ai-kit/20261025-release-alignment/v65/inspection-recovery/integration-review.md; integration-input.json, delta.diff, delivery-test.log, recovery-test.log and retained-replay.json.

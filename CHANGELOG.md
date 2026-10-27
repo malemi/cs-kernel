@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+Restore bounded native inventory delivery without discarding queued material.
+
+- Prefer larger context parts within the existing host limit; retain the original
+  complete partition for Unicode-heavy input and all48 hooks and inspection guards.
+- Align invoked triage/campaign discovery timeouts with the existing parent and
+  host allowance. Preserve original limits, business authority and send guards.
+- Accept the observed strictly bound SDK command-catalog notification while
+  rejecting unknown events, foreign identities and incomplete task lifecycles.
+
+Migration: install a new immutable successor on BOTH clones and refresh the
+canonical triage/campaign skills through all three host paths. Never patch65.
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Native
+composition and instruction changes require genuine complete inspection and
+unchanged independent provider/engine acceptance; focused checks alone do not
+establish restored service.
+
 ## v0.65.0 — 2026-10-27 (MINOR)
 
 Deliver shared operator instructions and account for bounded read completion.
@@ -566,8 +582,8 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
-Both maintained clones install immutable local candidate `v0.63.0` at
-`cb7bd930bb4cd3363b3126e84f844a95be8fcb06`. All 159 package files, authenticated
+Both maintained clones install immutable local candidate `v0.65.0` at
+`8ec397801c8eb5b05def518c9fe6f0013d4021a7`. All 159 package files, authenticated
 identities, the reviewed three-host timeout instruction and fresh local Git
 lock rebuilds pass. Company guidance, local harness edits, permissions and
 launchers remain preserved. Current genuine BOTH-clone FULL and public Git

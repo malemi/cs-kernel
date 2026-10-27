@@ -351,16 +351,33 @@ for root in out['_known_roots']:
 review._save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=out,phase='complete',complete=True))
 """
             command = (sys.executable, '-B', '-c', 'TOKEN=' + repr(token) + '\n' + code)
-            for allowance, complete in ((.65, False), (2.5, True)):
+            # The healthy allowance includes four interpreter startups and exits,
+            # not just the .6 seconds of sequential server response delays.
+            for allowance, complete in ((.65, False), (5, True)):
                 calls.clear()
-                result = await asyncio.to_thread(review._supervise, selected, worker_command=command,
-                    work_seconds=allowance, cleanup_seconds=.3, total_seconds=allowance + .8)
+                lifecycle = {}
+                communicate = subprocess.Popen.communicate
+                def observed_communicate(process, *args, **kwargs):
+                    started = time.monotonic()
+                    lifecycle['timeout'] = kwargs.get('timeout')
+                    lifecycle['expired'] = False
+                    try:
+                        return communicate(process, *args, **kwargs)
+                    except subprocess.TimeoutExpired:
+                        lifecycle['expired'] = True
+                        raise
+                    finally:
+                        lifecycle['elapsed'] = time.monotonic() - started
+                        lifecycle['returncode'] = process.returncode
+                with patch.object(subprocess.Popen, 'communicate', observed_communicate):
+                    result = await asyncio.to_thread(review._supervise, selected, worker_command=command,
+                        work_seconds=allowance, cleanup_seconds=.3, total_seconds=allowance + .8)
                 if complete:
-                    self.assertNotIn('review_incomplete', result)
+                    self.assertNotIn('review_incomplete', result, lifecycle)
                     self.assertEqual([row['id'] for row in result['tasks']], ['<one@test>', '<two@test>', '<three@test>'])
                     self.assertEqual(calls, ['<one@test>', '<two@test>', '<three@test>'])
                 else:
-                    self.assertIn('review_incomplete', result)
+                    self.assertIn('review_incomplete', result, lifecycle)
                     self.assertTrue(all(row['hold_auto_reply'] for row in result['assignments']))
                     self.assertLess(len(result['tasks']), 3)
 

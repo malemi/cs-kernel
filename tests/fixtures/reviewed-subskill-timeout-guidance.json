@@ -1,0 +1,16 @@
+{
+  "receipt": "reviewed-subskill-timeout-guidance.md",
+  "receipt_sha256": "49401a6469ee968817045169f1737c334ac32a40580eab3b6373ed1875c7cd19",
+  "templates": {
+    ".claude/skills/cs-triage-mail/SKILL.md": {
+      "before_sha256": "f0583848dc62253af8484ebd6a37f29ffa5902f625b971da778433f1541f6b0c",
+      "after_sha256": "9661e03f1321e850f4e14eba1d960c361c0907181986698fa9c2c39346bb170d",
+      "count": 2
+    },
+    ".claude/skills/cs-campaign-tick/SKILL.md": {
+      "before_sha256": "1ea7177a02e83d1d2c25cc0ac8c8d5c1942a9390c08c957e6245c8c515479c16",
+      "after_sha256": "188378ab8f3619b417daa0783ed59e50fa563f231d3818c0019162e365348567",
+      "count": 1
+    }
+  }
+}

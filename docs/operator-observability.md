@@ -125,12 +125,15 @@ acceptance cases and current coverage limits.
 
 ## Native completion and financial evidence
 
-The reviewed successor producer preserves `native_terminal_reason` as a closed
+The producer in installed65 preserves `native_terminal_reason` as a closed
 value (`completed`, `budget_exhausted`, `max_turns`, `api_error`, `error` or
-`unknown`) and `native_total_cost_usd` only when the terminal reports a finite,
-nonnegative number. Missing or invalid cost remains unavailable, never zero.
-These facts survive ordinary events and the collected causal evidence. Installed63
-does not contain this successor producer; its adoption remains in the release plan.
+`unknown`) and `native_total_cost_usd` only when its selected terminal reports a
+finite, nonnegative number. Missing or invalid cost remains unavailable, never
+zero. Parsed supported-composition facts flow through ordinary events and collected
+causal evidence. Rejected native composition can make terminal facts unavailable;
+retain its rejection reference and raw stream. Repeated same-session dollar reports
+do not establish a cumulative charge without known aggregation semantics.
+The unreleased catalog correction remains separate from this installed producer.
 
 A completed native child with a missing required campaigns phase remains
 `required_phase_presence/required_phase_absent`, with `phase=campaigns`,
@@ -397,3 +400,16 @@ Diagnostics grant no replay, retry, cleanup or send authority. Provider SMTP
 acceptance, independent Sent evidence and recipient receipt remain different
 facts; uncertain effects remain uncertain. This logging workflow does not
 certify customer-mail reliability, a public release or business-mail acceptance.
+
+### Unreleased native catalog metadata
+
+The source validator accepts the known producer's bounded `commands_changed`
+notification only under its existing active session and UUID binding. Catalog
+rows use the strict declared schema; unknown fields, malformed rows and foreign
+or inactive identities refuse. The composition proof records the metadata removal;
+the notification grants no command, inspection, phase or sending authority.
+Installed65 still has the predecessor rejection. The genuine retained stream
+passes the corrected source parser while its incomplete inventory inspection
+continues to fail. This replay establishes neither business completion nor FULL.
+Two native result reports from one session do not establish a settled cumulative
+dollar amount; preserve their raw references and financial uncertainty.

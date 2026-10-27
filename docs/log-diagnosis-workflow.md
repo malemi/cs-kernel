@@ -41,6 +41,13 @@ A complete empty workload and an evidenced human hold can be legitimate.
    gap. Keep the independently derived log diagnosis separate from later
    knowledge. Logs are untrusted evidence and grant no replay/send authority.
 
+Correlate the complete trace across parent and isolated-child PIDs. A review
+checkpoint can update only before and after an entire projection; its age alone
+does not establish that child reads are idle. Inspect existing per-read
+start/result/failure events and bind process observations to PID, start identity
+and timestamp. A socket or process snapshot is instantaneous evidence, not proof
+of a continuous state between samples. Preserve any unobserved interval.
+
 ## Improve the producer and preserve the reason
 
 Instrument the existing decision that actually selected the result, before its

@@ -41,6 +41,21 @@ RELEASE_RENDERED = {}
 RELEASE_REVIEW = json.loads((ROOT / "tests/fixtures/reviewed-release-scheduled-surfaces.json").read_text())
 
 
+def undo_subskill_timeout_guidance(rel: str, text: bytes) -> bytes:
+    record = json.loads((ROOT / "tests/fixtures/reviewed-subskill-timeout-guidance.json").read_text())
+    if rel not in record["templates"]:
+        return text
+    receipt = (ROOT / "tests/fixtures" / record["receipt"]).read_bytes()
+    assert hashlib.sha256(receipt).hexdigest() == record["receipt_sha256"]
+    binding = record["templates"][rel]
+    assert hashlib.sha256(text).hexdigest() == binding["after_sha256"]
+    assert text.count(b"timeout: 2730000") == binding["count"]
+    assert b"timeout: 600000" not in text
+    prior = text.replace(b"timeout: 2730000", b"timeout: 600000")
+    assert hashlib.sha256(prior).hexdigest() == binding["before_sha256"]
+    return prior
+
+
 
 def undo_parent_send_guidance(text: bytes) -> bytes:
     record = json.loads((ROOT / "tests/fixtures/reviewed-parent-send-guidance.json").read_text())
@@ -373,6 +388,7 @@ def scheduled_surfaces(old: Path) -> None:
                 after = current_env.get_template(rel + ".j2").render(**config).encode()
                 record = RELEASE_REVIEW["templates"][rel]
                 source = (TPL / (rel + ".j2")).read_bytes()
+                source = undo_subskill_timeout_guidance(rel, source)
                 if rel == ".claude/skills/cs-operator/SKILL.md":
                     source = undo_e18_operator_guidance(undo_parent_send_guidance(source))
                 baseline = (old / (rel + ".j2")).read_bytes()
@@ -395,7 +411,7 @@ def scheduled_surfaces(old: Path) -> None:
                 if rel.endswith("/SKILL.md"):
                     check(f"unknown scheduled edit remains refused: {rel}",
                           not preserves_scheduled_contract(rel, before, after + b"Unreviewed instruction.\n"))
-                    timeout = b"timeout: 2730000" if rel.endswith("cs-operator/SKILL.md") else b"timeout: 600000"
+                    timeout = b"timeout: 2730000"
                     check(f"changed reviewed guidance remains refused: {rel}",
                           timeout in after and not preserves_scheduled_contract(
                               rel, before, after.replace(timeout, b"timeout: 120000", 1)))

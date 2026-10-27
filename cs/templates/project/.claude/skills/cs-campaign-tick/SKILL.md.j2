@@ -25,7 +25,7 @@ Run each `cs` command below in its own native Bash tool call. Use the literal
 `timeout`, pipe or redirect their output, wrap them in another program, or run
 these reads in the background. Identity, configuration, discovery, tasks,
 review and founder reads must each retain their own actual result and exit.
-Use the native Bash `timeout: 600000` for discovery and review and omit
+Use the native Bash `timeout: 2730000` for discovery and review and omit
 `run_in_background`; this is a tool timeout, not another shell command. A
 refusal or incomplete read is reported under the existing guards, never
 converted to success with `|| true` or hidden behind a later command.

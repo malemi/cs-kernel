@@ -29,6 +29,21 @@ envelope['view_sha256'] = hashlib.sha256(view).hexdigest()
 raw = json.dumps(envelope).encode()
 values = delivery.parts(view, raw, envelope, 'constructed-session')
 assert len(values) > 1 and all(len(v) < 10000 for v in values)
+# Same size as the failed paired inventory, without private business material.
+large_view = b'x' * (362049 - len(raw))
+large_values = delivery.parts(large_view, raw, envelope, 'constructed-session')
+assert len(large_values) == 46
+assert ''.join(v.split('\n', 1)[1] for v in large_values).encode() == raw + large_view
+assert delivery.delivered(fixture(large_values), large_view, raw, envelope)
+# Enlarged character chunks must not reject previously supported Unicode input.
+unicode_view = ('𐍈' * 2000 + 'x' * 6000).encode()
+legacy_values = delivery._parts(raw.decode() + unicode_view.decode(), unicode_view,
+                               raw, envelope, 'constructed-session', 7000)
+assert legacy_values is not None
+unicode_values = delivery.parts(unicode_view, raw, envelope, 'constructed-session')
+assert unicode_values == legacy_values
+assert all(len(v.encode('utf-16-le')) // 2 < 10000 for v in unicode_values)
+assert delivery.delivered(fixture(unicode_values), unicode_view, raw, envelope)
 for kind in ('PostToolUse', 'UserPromptSubmit'):
     events = fixture(values, kind)
     assert delivery.delivered(events, view, raw, envelope)
@@ -131,6 +146,7 @@ from cs.operator_health import identity
 worker = r'''
 import json,os,subprocess,sys
 from cs.operator_context_delivery import current_snapshot
+from cs.operator_context_delivery import SLOTS, CHARS
 ctx=json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT'])
 def hook(extra=0, slot=0):
  return subprocess.run([sys.executable,'-B','-m','cs.operator_context_delivery',str(slot)],input=json.dumps({'hook_event_name':'PostToolUse','session_id':'real-process-control','tool_response':'x'*extra}),text=True,capture_output=True,check=True).stdout
@@ -138,8 +154,9 @@ assert hook()==''
 cli="""
 import json,os,sys
 from cs.operator_health import ARGV,capture
+from cs.operator_context_delivery import SLOTS, CHARS
 sys.argv=['constructed-cli']+ARGV
-value={'triage_workset':{'complete':True,'limit':2,'selected':[],'deferred':[],'held':[]},'note':'x'*326000}
+value={'triage_workset':{'complete':True,'limit':2,'selected':[],'deferred':[],'held':[]},'note':'x'*((SLOTS-2)*CHARS+4000)}
 output=json.dumps(value,ensure_ascii=False,indent=2)+'\\n'
 capture(output.encode(),value,0,'constructed-owner')
 from cs.operator_inventory_view import capture as legacy_capture

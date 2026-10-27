@@ -776,9 +776,14 @@ with tempfile.TemporaryDirectory() as temporary:
 print('PASS: ordinary metadata uses exact v2 terminal; real local ELF prelaunch/child pin, custom prompt compatibility. Constructed events, no native/provider acceptance.')
 
 from jinja2 import Environment, FileSystemLoader
-rendered_operator = Environment(loader=FileSystemLoader(['cs/templates/project/.claude/skills/cs-operator', 'cs/templates/partials'])).get_template('SKILL.md.j2').render()
-assert 'Bash `timeout: 2730000` for discovery and review' in rendered_operator
-assert '`run_in_background`' in rendered_operator and 'do not combine commands' in rendered_operator
-assert 'pipe or redirect their output' in rendered_operator and 'wrap them in another program' in rendered_operator
-assert '.venv/bin/python -m cs review --json' in rendered_operator
-print('PASS: actual rendered discovery/review Bash timeout 2730000 and literal separate unwrapped commands')
+for skill in ('cs-operator', 'cs-triage-mail', 'cs-campaign-tick'):
+    rendered = Environment(loader=FileSystemLoader([
+        'cs/templates/project/.claude/skills/' + skill, 'cs/templates/partials'
+    ])).get_template('SKILL.md.j2').render()
+    assert 'Bash `timeout: 2730000` for discovery and review' in rendered, skill
+    assert 'timeout: 600000' not in rendered, skill
+    assert '`run_in_background`' in rendered and 'do not combine commands' in rendered
+    assert 'pipe or redirect their output' in rendered and 'wrap them in another program' in rendered
+    if skill == 'cs-operator':
+        assert '.venv/bin/python -m cs review --json' in rendered
+print('PASS: actual parent/triage/campaign discovery/review timeout 2730000; literal separate unwrapped commands')

@@ -601,3 +601,40 @@ free preflight. Genuine fixture authority, source/tag GREEN, BOTH immutable63
 adoptions, complete free preflight and the separate E15 final root admission
 remain mandatory before paid acceptance. This dependency establishes neither
 activation, successful strict BOTH FULL nor public delivery.
+
+
+## Recovery dependency — native inventory capacity (2026-10-27)
+
+The operator now prioritizes verified service restoration and total cost. Retained
+FULL65 input requires52parts at7000characters; the installed48slot transport
+returns no inventory context. The native model reads only8192bytes of raw
+background output and stops on a cost forecast, without a quota refusal. This is
+a reproduced transport capacity fault plus independent incomplete model behavior;
+parser compatibility alone cannot restore it. Private evidence is
+`/tmp/mrcall-ai-kit/20261025-release-alignment/v65/inspection-recovery/discriminator.json`.
+
+Scope: restore complete bounded automatic delivery of this actual inventory,
+without adding hook processes, omitting any byte or increasing model/time/spend
+allowances. Use existing host capacity more efficiently:8000payload characters
+fit46parts with maximum8870UTF16 units including headers on the retained input,
+below the unchanged10000unit refusal. If any enlarged part violates that unit
+limit, retain the original7000character partition for the entire payload; this
+preserves all previously deliverable Unicode inputs and exact partition parity.
+Add the reviewer counterexample (2000astral plus6000ASCII characters) to verification.
+Preserve owner/session/source/ancestry,
+exact reconstruction, EOF, selected-workset and all action guards. Oversized or
+unsafe input still refuses; future arbitrary inventory growth is not solved.
+Also reconcile the actually invoked triage/campaign discovery timeout literals
+with the parent and already configured2730000ms host/kernel allowance.
+
+Acceptance: retained input exact reconstruction and strict capacity/UTF16/foreign/
+partial/effect-before-completion negatives; actual separate-process hook delivery;
+all three rendered host surfaces agree on timeout; existing parser fix retained;
+reviewed immutable successor and matching BOTH clone adoption; one bounded genuine
+FULL with unchanged independent acceptance before claiming service restored.
+No source override, invented terminal, customer replay, increased financial cap
+or public push is authorized by this dependency. Additional paid admission needs
+an explicit bounded operator answer; the operator has now authorized a maximum
+of40USD additional spend. Keep existing4USD soft job limits, account uncertain
+charges conservatively and do not repeat a failed candidate without new evidence. Preserve
+failed65 and rollback through captured environments or immutable releases only.

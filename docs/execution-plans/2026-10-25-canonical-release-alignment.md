@@ -3620,3 +3620,109 @@ Fresh plan review precedes source/test edits. Fresh milestone integration review
 
 
 M17/M18 allocation fixture dependency: complete source harness v65/source-harness-r2-result.json fails only test_task_assignment.Consumer.test_captured_partial_component_requires_canonical_scope_and_keeps_every_hold: all19 modes still assert the former read deadline3610, while the separately approved earlier work cutoff is3606 under frozen entry10, total3600 and two existing2-second cleanup units. All other harness groups, RPC36 and six golden builds pass; source inputs remain unchanged. Extend direct test ownership only to tests/test_task_assignment.py for this assertion. Expect the shared work cutoff derived from the unchanged outer deadline minus the approved finalization reserve, retaining one identical cutoff across original/canonical requests and ALL existing authority/hold/identity assertions. Do not change production code, timer endpoints, deadline constants or thresholds to repair this fixture. The existing allocation regression already asserts outer/inherited envelope preservation; this case must continue to compare single versus bulk authority across all19 modes. Fresh dependency review precedes the fixture edit; run this exact local case once, then fresh integration review before the required complete source rerun. Preserve the failed full-harness result. Separately close the already required ordinary timing-field roundtrip using retained genuine producer events through actual local CLI and filesystem collector, without rerunning paid work or fabricating an event; qualify retained replay as component evidence. No new feature, objective, deployment or spend is added.
+
+
+### M18 dependency — exact native65 command-catalog notification
+
+Status: PROPOSED; source/test edits require a fresh plan review. This is the existing release-alignment mandate, not a new objective or business feature. Preserve failed immutable65, all prior failures and the approved plan prefix.
+
+Actual strict65 FULL4aa212b5bb95ce8cc2d0272f2828b512 fails at the first MrCall job; Cafe/signup were not started. Independent native65-failure-verification.md binds complete genuine Claude2.1.296 retention: system/commands_changed at zero-based1438, exact keys type/subtype/commands/uuid/session_id,100 observed catalog rows. operator_native_composition.py's unsupported-subtype branch rejects it and hides the bounded subtype. Earlier genuine background-continuation transitions already passed existing predicates; later full composition remains unverified. The supervisor separately retains discovery_inspection_incomplete. The model explicitly left the inventory unread and composed/sent nothing; campaigns did run. Its page-cost forecast is not native budget refusal. The current canonical parent already forbids forecasting as a reason to abandon unread material: do not add redundant prompt wording or assert that catalog support fixes model compliance.
+
+Minimum source delta: owner cs/operator_native_composition.py, its existing bounded diagnostic-subtype definition if separate, and directly necessary existing native-composition tests. Validate only the observed command-catalog telemetry shape with existing producer/session/UUID and active-state binding; reuse existing event/material/string limits. Require declared row fields and strict optional aliases/builtin types; reject malformed rows, foreign identities, inactive placement and unknown fields/subtypes. Register its removal in the existing composition proof; catalog contents grant no execution, inspection, phase or send authority. Preserve all healthy queued scopes, task lifecycle, hook48/material4MB, EOF/workset/selected-root checks, original deadlines, permissions, business/provider/signature oracles and4USD SOFT runtime controls. No general wildcard, new CLI, inspection optimization, stop-hook feature or source overlay.
+
+Free verification after approval: extend existing company-neutral fixtures from the genuine notification shape and retain the complete captured stream privately. Exercise valid bounded metadata plus malformed/foreign/inactive/unknown negatives; replay the actual full retained composition once and preserve any next finding without retry. Independently assert its incomplete inspection still fails the existing semantic health predicate even if composition becomes valid. Existing passing RPC/auth/scope/cleanup suites need no repeat for this unrelated delta. Run only the directly relevant local fixture group once, fail-fast, then a fresh integration review before dependent work. No live/provider/model/business test is admitted. Do not copy customer content or command descriptions into kernel source.
+
+Financial/diagnostic limits: one physical session reports success1.075032USD and success1.617467USD; token counters are cumulative but dollar aggregation is UNKNOWN. Preserve both raw reports and4USD uncertainty reserve; do not claim a settled sum, last-value total or exhaustion. Cleanup is independently verified: all owned processes gone, own enrollments removed, original cron915f restored, own pauses absent. Conservative cumulative exposure is43.5976718 with all old reserves retained; unused Cafe/signup8 released. No new paid admission, budget increase or publication. Genuine whole FULL, complete inspection, public provenance, documentation/final gates remain open. After source correction, use a new immutable successor only through the existing forward-release gates; never move or publish failed65.
+
+
+### M19 — restore actual native inventory delivery (2026-10-27)
+
+Status: proposed; fresh brief APPROVED at inspection-recovery/brief-review.md
+under the existing v65 evidence root. Lead owns source integration and delivery.
+The original source R4 passed; all539 recorded inputs matched on resumption,
+and relevant code/test/script hashes remain unchanged before this amendment.
+
+1. Patch only cs/operator_context_delivery.py: prefer8000character payload
+partitions, retain48slots and strict complete-value<10000UTF16 limit; if an
+enlarged part fails that limit, use the original complete7000partition. Do not
+mix partitions or transform bytes. Both producer and audit use the same chooser.
+Preserve all identity, EOF, early-effect, duplicate and capacity refusals.
+Extend tests/test_operator_context_delivery.py with the retained-size neutral
+case, exact reconstruction, the2000astral+6000ASCII counterexample and boundary
+controls. Adapt its existing48slot real-process control to the preferred size.
+
+2. Replace only the three stale600000discovery/review timeout literals in
+cs-triage-mail and cs-campaign-tick canonical templates with2730000. Extend the
+actual-render checks in tests/test_operator_recovery.py to all three invoked
+skills; verify no contradictory literal and shared host links/copy fallback.
+This aligns guidance with the already installed launcher and kernel limits;
+no new runtime allowance. Preserve the approved catalog fix unchanged.
+
+3. Run focused delivery and actual-render checks once, plus retained52part input
+reconstruction and genuine failed-stream negative replay. Require a fresh
+integration reviewer before dependent release work. Existing precise capacity
+events already support malfunction and specific cause from ordinary logs; do
+not add redundant instrumentation or claim absence of this fault. Preserve
+original failure and no-completed-inspection result.
+
+4. Reconcile affected runtime docs to selected partition behavior and actual
+instruction chain; run full source suite with existing six golden builds once.
+Create a fresh immutable successor through the original release procedure and
+exact-tag suite, never mutate65 or installed bytes. Adapt the existing reviewed
+adopter/consumer inputs minimally to that successor and the exact changed
+resource list, adding campaign-tick to canonical generated target ownership.
+Retain full preimages, actual prefix/package/lock checks, both clone host routing,
+and fresh controls. Independent review covers adoption and consumer changes
+before mutation; any new behavioral change reopens its gate.
+
+5. One strict genuine BOTH FULL after fresh fixture, source/policy and financial
+admission; keep all existing independent business/provider/signature oracles.
+The operator permits at most40USD new spend; reserve existing4USD soft per job
+conservatively, retain unknown charges, no automatic/identical retry. On failure
+stop paid progression, preserve actual effects and diagnose the first concrete
+cause. Complete independent outcome review and doc-end/final gates before
+claiming restoration. Publication remains subject to established authorization.
+
+Rollback: no normal source overlays or site-packages edits. Preserve failed65
+artifacts; restore captured complete environments and scoped generated metadata
+on adoption failure. Never roll back mailbox/provider effects or replay uncertain
+work. Remaining obligations stay in this existing plan.
+
+
+### M19 verification dependency — reviewed scheduled-source fingerprints
+
+The first complete candidate harness reports24 failures, all in the existing
+scheduled-source binding assertions for the two intentionally changed subskills.
+Actual timeout/source integration is independently APPROVED. Preserve this failed
+run and let it finish so every other result remains attributable to its bytes.
+
+Extend test ownership only to tests/test_capabilities_skill.py plus a new
+reviewed-subskill-timeout-guidance.json and the retained actual integration review
+as its .md receipt under tests/fixtures. Keep original scheduled-review hashes,
+baseline source and all old comparisons unchanged. Add an exact inverse for ONLY
+the approved three literal replacements, bound to both before/after whole-template
+hashes, occurrence counts and actual review receipt hash. Apply it solely to these
+two source templates before their historical source comparison. Unknown changes
+still refuse. Update timeout mutation controls to the now-required2730000 across
+all three skills and preserve every unrelated negative and rendering variant.
+
+Fresh dependency review precedes this test-only edit. Run the failed capabilities
+group once, then fresh integration review before the complete source rerun and
+immutable artifact preparation. No production behavior, allowance, permission,
+consumer or installed byte changes. Actual provider/native acceptance remains open.
+
+### M19 verification dependency — healthy cumulative fixture allowance
+
+The second source suite failed the unchanged review-budget healthy fixture at
+its complete checkpoint. The historical nonzero exit cause is not established.
+A parent-only lifecycle probe exits0 in2.2214seconds against2.4985remaining;
+its .65negative still fails closed. The global-tracing probe is not performance
+evidence. Retain both failures and probes; do not claim a production review fix.
+
+Fresh dependency review approves tests/test_review_budget.py only: healthy
+allowance2.5to5seconds for four interpreter lifecycles, .65negative unchanged,
+three sequential real RPCs, one-second per-read bounds, .3cleanup and all
+assertions preserved. Capture parent communicate elapsed/timeout/returncode on
+failure without tracing. Run the entire group once and one complete source
+suite; another failure requires diagnosis, not further allowance increases.
+No production bounds, business oracle or genuine BOTH FULL acceptance change.

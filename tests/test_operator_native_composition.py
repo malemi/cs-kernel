@@ -82,6 +82,52 @@ def constructed(kind='foreground', callback=False, held=False):
 
 
 class CompositionTests(unittest.TestCase):
+    def test_command_catalog_is_removed_without_authority_or_mutation(self):
+        events = constructed('automatic', True)
+        catalog = dict(type='system', subtype='commands_changed', commands=[
+            dict(name='fixture', description='Neutral fixture', argumentHint=''),
+            dict(name='other', description='', argumentHint='[value]', aliases=['alternate'], builtin=False)])
+        events.insert(-1, catalog)
+        seal(events)
+        before = copy.deepcopy(events)
+        actual = composition(events, producer())
+        self.assertIs(actual['terminal'], events[-1])
+        self.assertIn({'index': len(events) - 2, 'kind': 'commands_changed'}, actual['proof']['removed'])
+        self.assertEqual(actual['proof']['tasks'], composition(constructed('automatic', True), producer())['proof']['tasks'])
+        indices = {row['index'] for row in actual['proof']['removed']}
+        projected = [event for i, event in enumerate(events) if i not in indices]
+        encoded = json.dumps(projected, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()
+        self.assertEqual(actual['proof']['projected_event_sha256'], hashlib.sha256(encoded).hexdigest())
+        self.assertEqual(events, before)
+        for commands in [None, {}, [None], [{}], [dict(catalog['commands'][0], extra=True)],
+                         [dict(catalog['commands'][0], name='')],
+                         [dict(catalog['commands'][0], description=1)],
+                         [dict(catalog['commands'][0], argumentHint=False)],
+                         [dict(catalog['commands'][0], description='x' * 65537)],
+                         [dict(catalog['commands'][0], aliases='alternate')],
+                         [dict(catalog['commands'][0], aliases=[False])],
+                         [dict(catalog['commands'][0], aliases=[''])],
+                         [dict(catalog['commands'][0], aliases=['x' * 65537])],
+                         [dict(catalog['commands'][0], builtin=1)]]:
+            changed = copy.deepcopy(events)
+            changed[-2]['commands'] = commands
+            with self.subTest(commands_type=type(commands).__name__):
+                self.assertIsNone(composition(changed, producer()))
+                self.assertEqual(rejection(changed, producer())['event_subtype'], 'commands_changed')
+        for key, value in [('session_id', 'foreign'), ('uuid', events[0]['uuid']),
+                           ('uuid', ''), ('extra', True), ('subtype', 'unknown_catalog')]:
+            changed = copy.deepcopy(events)
+            changed[-2][key] = value
+            self.assertIsNone(composition(changed, producer()))
+        for position in [0, len(events) - 1]:
+            changed = copy.deepcopy(events)
+            sample = changed.pop(-2)
+            changed.insert(position, sample)
+            self.assertIsNone(composition(changed, producer()))
+        foreign = producer()
+        foreign['sha256'] = '0' * 64
+        self.assertIsNone(composition(events, foreign))
+
     def test_each_foreground_hold_requires_its_own_joined_phase(self):
         from cs import operator_recovery as recovery
         from cs import operator_discovery_receipt as receipt

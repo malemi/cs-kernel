@@ -11,7 +11,8 @@ import shlex
 import sys
 
 SLOTS = 48
-CHARS = 7000
+CHARS = 8000
+LEGACY_CHARS = 7000
 SCHEMA = 'cs.inventory.context.v1'
 
 
@@ -45,7 +46,18 @@ def parts(view, envelope_raw, envelope, session):
     combined = envelope_raw.decode('utf-8') + view.decode('utf-8')
     if '<system-reminder>' in combined or '</system-reminder>' in combined:
         raise ValueError('reserved native context marker')
-    chunks = [combined[i:i + CHARS] for i in range(0, len(combined), CHARS)]
+    result = _parts(combined, view, envelope_raw, envelope, session, CHARS)
+    if result is None:
+        # Keep the complete old partition for Unicode-heavy input. Mixing
+        # partitions would change the exact reconstruction expected by auditors.
+        result = _parts(combined, view, envelope_raw, envelope, session, LEGACY_CHARS)
+    if result is None:
+        raise ValueError('context part exceeds native limit')
+    return result
+
+
+def _parts(combined, view, envelope_raw, envelope, session, chars):
+    chunks = [combined[i:i + chars] for i in range(0, len(combined), chars)]
     if not chunks or len(chunks) > SLOTS:
         raise CapacityError(len(chunks))
     binding = {k: envelope[k] for k in ('owner_uid', 'nonce', 'source_identity',
@@ -60,7 +72,7 @@ def parts(view, envelope_raw, envelope, session):
                   'part_sha256': hashlib.sha256(chunk.encode()).hexdigest()}
         value = json.dumps(header, ensure_ascii=True, sort_keys=True, separators=(',', ':')) + '\n' + chunk
         if len(value.encode('utf-16-le')) // 2 >= 10000:
-            raise ValueError('context part exceeds native limit')
+            return None
         result.append(value)
     return result
 

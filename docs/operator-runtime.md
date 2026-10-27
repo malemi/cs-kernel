@@ -118,8 +118,9 @@ a caller's inherited earlier deadline still wins.
 
 The reviewed E9 launcher correction binds both `BASH_DEFAULT_TIMEOUT_MS` and
 `BASH_MAX_TIMEOUT_MS` to 2730000 in the ordinary `/cs-operator` child's copied
-environment. The canonical operator instruction requests that same Bash tool
-timeout for discovery/review. Custom prompts and the parent environment retain
+environment. The canonical parent operator instruction requests that same Bash tool
+timeout for discovery/review. The unreleased recovery also aligns the invoked
+triage and campaign instructions; installed65 subskills still request600000ms. Custom prompts and the parent environment retain
 their existing behavior. This aligns host command lifetime with bounded kernel
 work; it grants no new kernel, suite, financial or authority allowance. Actual
 rendered instruction adoption and genuine native conformance remain gates in
@@ -578,7 +579,10 @@ UserPromptSubmit. Both normal clone interpreters must pass `cs verify-install`
 against the declared immutable release before adoption is considered verified.
 Hook settings alone do not prove native delivery or ordinary acceptance.
 
-Each slot carries at most7000 characters of the exact paired envelope and view.
+The source recovery prefers8000-character parts of the exact paired envelope
+and view. If any complete part exceeds the existing UTF-16 bound, the whole
+payload uses the original7000-character partition. Installed65 uses7000only;
+complete successor adoption and native acceptance remain pending.
 Every complete visible value must remain below10000 UTF-16 units. Input is
 bounded at4MiB. Reserved markers, stale or foreign files, wrong owner/nonce/
 session/source/process, duplicate parts and missing parts grant no compact proof.

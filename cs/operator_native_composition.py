@@ -35,7 +35,7 @@ def rejection(events, producer):
                         kind = event['type']
                     if event.get('subtype') in ('init', 'thinking_tokens', 'permission_check_status',
                             'task_started', 'task_updated', 'task_notification',
-                            'background_tasks_changed', 'success'):
+                            'background_tasks_changed', 'commands_changed', 'success'):
                         subtype = event['subtype']
             trace = trace.tb_next
         return {'reason': exc.reason if isinstance(exc, _Refusal) else 'native_shape_invalid',
@@ -207,7 +207,23 @@ def _composition(events, producer):
                     done_index=checked[tool]['done'], denial_index=index, result_index=None,
                     non_execution_kind='automode-blocked', execution_credit=False)
                 continue
-            if subtype == 'background_tasks_changed':
+            if subtype == 'commands_changed':
+                require(active and set(event) == {'type', 'subtype', 'commands', 'uuid', 'session_id'})
+                listing = event['commands']
+                require(isinstance(listing, list))
+                for row in listing:
+                    require(isinstance(row, dict) and
+                            {'name', 'description', 'argumentHint'} <= set(row) <=
+                            {'name', 'description', 'argumentHint', 'aliases', 'builtin'})
+                    require(all(isinstance(row[k], str) and len(row[k]) <= 65536
+                                for k in ('name', 'description', 'argumentHint')) and bool(row['name']))
+                    if 'aliases' in row:
+                        require(isinstance(row['aliases'], list) and all(
+                            isinstance(alias, str) and bool(alias) and len(alias) <= 65536
+                            for alias in row['aliases']))
+                    require('builtin' not in row or type(row['builtin']) is bool)
+                old_schema = False
+            elif subtype == 'background_tasks_changed':
                 listing = event['tasks']
                 require(isinstance(listing, list))
                 next_listing = {}

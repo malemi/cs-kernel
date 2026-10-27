@@ -15,11 +15,15 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
-  This unpublished candidate passes complete source and exact-tag suites, with
-  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
-  canonical adoption/FULL remain open; both normal clones execute63 and shared
-  sign-off remains51. Historical diagnostic causes stay unknown.
-- Installed `v0.63.0` includes complete MIME identity decoding, typed remote
+  Both clones execute immutable65; strict FULL65 failed and service restoration
+  remains unverified. Source catalog compatibility and inventory transport fixes
+  pass focused integration review. Actual paired inventory needs52old parts;
+  the candidate reconstructs every byte in46parts without adding hooks. Unicode
+  uses the original partition when enlarged parts exceed the host limit. Parent,
+  triage and campaign timeout guidance agrees. Complete successor source/tag
+  checks, BOTH adoption and genuine FULL remain required. The operator authorizes
+  at most40USD additional verification spend; existing per-job limits stay fixed.
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption
   evidence; its actual rendered timeout instruction matches across three hosts.
@@ -28,16 +32,18 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 - Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
   source families, verified by all439/459/355 package files and authenticated
   owner/PID/source bindings. Canonical source is655b167; the other three peers
-  and Qonto retain their previous identities. A historical Git family label
+  and Qonto retain their previous source families with refreshed process identities.
+  A historical Git family label
   alone does not establish the deployed baseline.
-- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
-  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
-  despite native completion atUSD3.158979 and one independently received correct
-  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
-  Forecast-based phase skipping is not proved budget exhaustion.
-- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact65
+  policy passes guarded/native activation and both actual actor/instruction
+  preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
+  skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
+- Installed65 correlation, first-cause retention and phase/cost diagnostics
   pass source review, real controlled daemon/CLI/inbox and blind checks.
-  Installed63 is unchanged; successor FULL and public provenance remain required.
+  Shared-deadline finalization reserves time within the existing total allowance;
+  original auth/scope cases pass, without explaining historical overruns.
+  Genuine successor FULL and public provenance remain required.
 - Mario's exact missing Sent source is acquired and inserted through reviewed
   native maintenance. Independent checks preserve all33pre-existing tables and
   1804emails; the scoped projection now returns complete reply evidence in
@@ -46,7 +52,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   are unchanged. The release plan retains exact source/data evidence.
 - E10 retains finite peer causes; E14 distinguishes direct structured remote
   rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
-  and both installed byte checks pass. Both patches are installed63 and remain
+  and both installed byte checks pass. Both patches are installed65 and remain
   unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
@@ -115,9 +121,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Preserve immutable63, prior failed candidates and actual source/data evidence.
-2. Finish native consumer/policy composition and verify authored surfaces and locks.
-3. Reconcile actual charges/reserves and admit only bounded genuine BOTH FULL
-   after every free prerequisite passes.
-4. Complete authorized public provenance and doc-end/final review.
-5. Restore only owned maintenance controls; keep cs-diagnose manual.
+1. Preserve immutable65, prior failed candidates and actual source/data evidence.
+2. Admit only one bounded genuine BOTH FULL after the final control/financial gate.
+3. Complete authorized public provenance and public Git/lock installation proof.
+4. Finish doc-end/final review and restore only owned maintenance controls.
+5. Keep cs-diagnose manual.

@@ -1,3 +1,15 @@
+## 2026-10-27 — Before inventory capacity recovery
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  Immutable65 passes complete source/exact-tag suites and six golden builds each;
+  both normal clones match its159-file wheel and rebuilt locks. Strict65 FULL
+  fails on MrCall's unsupported native command-catalog event and incomplete
+  inventory inspection; Cafe/signup are unexercised. Shared sign-off remains51.
+  Unreleased catalog validation passes16 local tests and the genuine stream replay;
+  incomplete inspection still fails. Integration is approved; adoption, genuine
+  FULL and public provenance remain open. Native dollar aggregation and historical
+  timing causes remain unknown; no budget exhaustion is established.
+
 ## 2026-10-27 — Superseded at-tag64 checkpoint
 
 - **Latest release tag: `v0.64.0`. Current HEAD status: tagged as `v0.64.0`.**
@@ -5,6 +17,494 @@
   golden builds and controlled/blind diagnostic delivery. Exact-tag checks,
   successor adoption and genuine BOTH FULL remain open. Both normal clones
   execute immutable63 (`cb7bd930`); shared sign-off remains51.
+
+## 2026-10-27 — Before the strict65 failure
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+
+## 2026-10-27 — Before verified local65 adoption
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  canonical adoption/FULL remain open; both normal clones execute63 and shared
+  sign-off remains51. Historical diagnostic causes stay unknown.
+- Installed `v0.63.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous identities. A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
+  despite native completion atUSD3.158979 and one independently received correct
+  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
+  Forecast-based phase skipping is not proved budget exhaustion.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+- Installed `v0.63.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous identities. A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
+  despite native completion atUSD3.158979 and one independently received correct
+  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
+  Forecast-based phase skipping is not proved budget exhaustion.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous identities. A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
+  despite native completion atUSD3.158979 and one independently received correct
+  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
+  Forecast-based phase skipping is not proved budget exhaustion.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous source families with refreshed process identities.
+  A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
+  despite native completion atUSD3.158979 and one independently received correct
+  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
+  Forecast-based phase skipping is not proved budget exhaustion.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous source families with refreshed process identities.
+  A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact65
+  policy passes guarded/native activation and both actual actor/instruction
+  preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
+  skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  normal clones execute65 with complete canonical workflows and lock-only rebuilds.
+  The exact65 policy and actor/instruction preflight pass; genuine BOTH FULL and
+  public provenance remain open. Shared sign-off remains51. Historical causes
+  stay unknown.
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous source families with refreshed process identities.
+  A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact65
+  policy passes guarded/native activation and both actual actor/instruction
+  preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
+  skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
+- Installed65 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Shared-deadline finalization reserves time within the existing total allowance;
+  original auth/scope cases pass, without explaining historical overruns.
+  Genuine successor FULL and public provenance remain required.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
+  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+1. Preserve immutable63, prior failed candidates and actual source/data evidence.
+2. Finish native consumer/policy composition and verify authored surfaces and locks.
+3. Reconcile actual charges/reserves and admit only bounded genuine BOTH FULL
+   after every free prerequisite passes.
+4. Complete authorized public provenance and doc-end/final review.
+5. Restore only owned maintenance controls; keep cs-diagnose manual.
 
 ## 2026-10-27 — exact65 tag verification
 
