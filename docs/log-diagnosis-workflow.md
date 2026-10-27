@@ -177,9 +177,27 @@ References/In-Reply-To before proposing synchronization or data repair. Preserve
 all business holds and verify ordinary technical health independently.
 
 Hosted probes must use the actual service mount namespace, selected profile,
-working directory, environment and OS identity. A probe outside that namespace
-can use a different resolver and produce misleading DNS or login failures.
-Report probe setup failures separately from failures of the actual service.
+working directory, environment and OS identity. Bind the complete deployed source
+inventory: a Git branch or family label is not byte identity. Reuse the runtime's
+real profile loader; its selected settings can be absent from the initial process
+environment. A probe outside that context can produce misleading DNS, login or
+configuration failures. Report probe setup and helper/API contract failures
+separately from failures of the actual service.
+
+For an exact UID read, verify the actual native parser contract as well as the
+adapter's requested limit. A whole-folder precondition can refuse a single-UID
+request before its FETCH. Native counterfactual controls must preserve exact UID
+selection and independent aggregate limits. Retain observed count, configured
+ceiling, finite substage, exception type and relative origin before the primary
+error is discarded; record cleanup separately. A later corrected read proves
+only its own result, not the original missing exception.
+
+Archive absence requires exact owner/mailbox/source cardinality before recovery.
+Compare an authenticated source tuple with the existing same-UIDVALIDITY cursor
+and real sync predicate before proposing a reset or wider scan. Stale cursor
+progress and disabled reconstructed scheduling do not prove no other insertion
+path ran or establish the historical skip cause. Keep private identifiers out of
+ordinary output and retain an explicit unknown when causal facts are missing.
 Readonly SQLite diagnostic engines must support the native RPC thread model;
 a diagnostic connection's thread-affinity exception is not a production cause.
 

@@ -512,3 +512,54 @@ retagging or editing it. Its runtime Python behavior remains byte-identical to61
 FULL on both is still required for the unshipped inherited composition. Retain
 the existing owned scheduling hold while refreshing exact candidate/provenance
 inputs. No backend/peer restart or financial/concurrency/authority change follows.
+
+
+## Required continuation: repair the actual FULL62 source-read failures
+
+The operator explicitly requires genuine strict FULL on BOTH maintained clones
+and necessary corrections after Astra diagnosis. Diagnostic retention alone is
+not the requested result. FULL62 remains interrupted/unsuccessful with independent
+cleanup PASS; immutable62 and failed evidence remain unchanged.
+
+Investigate and correct the demonstrated ownership-source read failures through
+canonical engine source. Cumulative internal120s expiry after many completed
+IMAP operations is established; initiating latency and necessity of each remote
+roundtrip require evidence. The Sent source-correspondence rejection requires
+its exact origin and preceding guards to distinguish absent from ambiguous
+archive evidence. Do not infer financial exhaustion or solve either failure by
+weakening UNKNOWN, assignment completeness, source freshness or strict health.
+
+Permit narrowly proved read-work consolidation when equivalent source identity,
+header/flag and before/after mailbox-state checks remain enforced. A private
+controlled regression must reproduce actual operation amplification and show
+correct results under the unchanged provider deadline, including mailbox mutation,
+foreign scope, missing/changed/deleted sources and genuine provider failure.
+No cross-observation stale authority cache or replacement business judgement.
+Any changed deadline needs independent causal justification and concrete bounded
+composition review; no blanket increase or repeated paid experiment is admitted.
+
+Source/archive acquisition is not an assignment decision. If the missing Sent
+match is caused by a canonical ingestion/correspondence defect, repair that
+source path with private preimages and exact scoped identity verification. Do
+not insert fabricated archive rows, alter customer content, restore stale data,
+change synchronization marks arbitrarily or replay uncertain customer effects.
+An actual data mutation needs an exact separately reviewed transaction first.
+
+Amend this existing execution plan with concrete source ownership, negative
+cases and source/actor deployment review before coding or runtime mutation.
+Use an isolated canonical Desktop worktree, preserving unrelated normal-tree
+WIP and distinct installed business families. Supported immutable actor deployment
+and affected-service restart are authorized only for the exact reviewed repair
+and rollback; identify each affected owner explicitly. Preserve unrelated peers,
+Qonto, credentials, schedules, billing, permissions and technical-mail suppression.
+Normal clone kernels advance together through one forward immutable release;
+never patch installed files or move tags.
+
+After free source/integration checks and exact installed composition approval,
+allow at most one fresh strict BOTH FULL under the existing finite financial
+ceiling, reconciled charges/reserves and fixture authority. A failure returns
+to bounded Astra causal diagnosis; success requires the original independent
+reply, provider draft, acknowledgement/no-loop, signup, terminal and cleanup
+oracles. Public provenance, authorized publication, doc-end, separate final
+review and baseline closure remain required. No smaller component proof closes
+the whole objective.

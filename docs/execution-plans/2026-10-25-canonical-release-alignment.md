@@ -7,6 +7,29 @@ Owner: lead engineer; canonical changes belong to cs-kernel; clone adoption belo
 Classification: substantial development/release. New CLI/configuration and send/permission surfaces exclude the fast path.
 Dependency order: M1 -> M2 -> M3 -> M4 -> M5 -> M6. Fresh plan review precedes implementation; fresh integration review closes each milestone before dependent work.
 
+## Current checkpoint — 2026-10-27
+
+This plan is active. Both normal kernels retain immutable local62; E10 source
+remains uninstalled. Reviewed E11 source families are actually deployed on the two
+actors and Mario peer with independent activation verification. E12R1 exact header
+acquisition and Astra's read-only cursor/archive comparison are complete; the
+target was beyond its cursor and absent from the exact archive. E13 executable
+proof, exact body acquisition and native INSERT are complete; independent checks
+preserve all33pre-existing tables/1804emails. One exact application projection
+now returns complete reply evidence with a legitimate human-verification hold.
+BOTH strict FULL, successful public provenance/adoption and final closure remain
+unmet. No economic quota cause is established.
+
+Earlier candidate numbers, pending status labels and proposals below describe
+their approved intermediate checkpoints, not the current execution state. In
+particular, E11's pre-rollout component/deployment labels and E12R1's pending
+Astra comparison are superseded by their later actual outcomes and E13 evidence.
+Available approved versions and raw reports remain retained privately. The first
+E13 cb7 full version was not captured before status edits; its report cannot
+replace that missing artifact. Fresh review must bind the retained current
+status-reconciled version; never reconstruct the missing historical version.
+Progress updates never extend execution or financial admissions.
+
 ## M1 — freeze and reconcile the actual recovery candidate
 Lead owns inventory decisions; installed-inventory executor owns both clone package/origin/pin inventories; canonical executor owns source reconciliation.
 Capture complete original dirty/untracked bytes,modes,hashes and Git identities outside the repository. Never reset,stash or overwrite the original checkout.
@@ -2677,3 +2700,616 @@ E10 verified component results (2026-10-27)
   source faults, genuine BOTH FULL, publication/provenance and final closure
   remain unmet. No financial-budget exhaustion is established, no increase or
   paid retry occurred, and the documentation baseline remains unchanged.
+
+
+### E11 — repair FULL62 source-read work and acquire exact Sent correspondence
+
+Status: proposed affected plan; fresh plan APPROVED precedes implementation.
+Classification: substantial source-read and diagnostic-contract repair; no fast
+path. Approved framing is the existing brief's required FULL62 source-read
+continuation, SHA256 f680229b1e572d5699cbd1478627e00d16de44c4d2abd4cb2e85fc5f630b24a5;
+fresh verdict is v62/underlying-repair-brief-review.md. Earlier brief/plan text
+and immutable failed candidates remain historical evidence, not waived gates.
+
+Evidence and decisions
+- FULL948f1d592059c3a50fa110a9e7303ecd is interrupted/not accepted; independently
+  verified cleanup passes. E10 source-only kernel causes are committed4ea8ff3;
+  BOTH normal clone installations remain immutable62/d1fa8c8/all159. Reader-only
+  compatibility is separately verified; neither result closes strict FULL.
+- Actual row4 source/provider observation exhausts its internal120s deadline
+  after completed work. The last EXAMINE enters with3317ms remaining; command
+  totals37EXAMINE/16FETCH/4SEARCH do not prove a particular candidate execution.
+  There is no financial-exhaustion evidence and no deadline increase here.
+- v62/underlying-repair-astra.md proves three duplicate selections on a
+  conditional positive-candidate path. Compound selected-folder work can reduce
+  nine EXAMINEs to six while retaining four FETCHes, one SEARCH and every
+  initial/final state, identity, body and fresh FLAGS check. Historical branch
+  attribution and sufficient wall-clock benefit remain unproved.
+- Astra's exact-function isolated execution proves scopedcounts0 ->
+  SENT_REPLY_NOT_SYNCED,1 -> source_id,2 -> prior Ambiguous scoped RFC identity.
+  Thus row27 has zero matches in its captured known snapshot, not duplicates.
+  This does not prove missing current database data or its ingestion origin.
+- Current root-owned public trust maps the retained unreadable Mario alias to
+  x59G6SnymAN2lkFny0JDGJgdFz33; v62/row27-current-peer-mapping.json retains
+  its exact hash and historical-binding limit. The four old peers' bounded
+  retained-log scan finds no matching root; they lack the newer projection
+  diagnostics. Empty coverage is not proof of no fault.
+
+M0 — reconstruct and independently preserve the actual ACTOR baseline
+Owner: lead owns the bounded authoritative inventory and provenance decisions;
+one isolated-source executor owns exact reconstruction; a fresh preservation
+reviewer owns approval before any dependent behaviour repair. First result
+within5minutes; no repeated history crawl, provider/model call or business DB IO.
+The isolated Desktop worktree at
+/tmp/mrcall-ai-kit/20261025-release-alignment/v63/engine-candidate starts at
+Git90bb447b but is NOT the deployed ACTOR composition. Its five target modules
+have no exact byte-identical version in the examined canonical path history;
+v63/actor-canonical-target-map.json retains this fact. The previous68-test
+receipt is Git90bb-only evidence and cannot prove the ACTOR early-source path.
+
+Use the independently frozen v62/policy/actual62/reviewed-hosted-manifest.json
+bindings.mrcall.files as the complete439-file preservation authority, not an
+inventory generated from the files being copied. Before reconstruction, verify
+every declared current source/resource hash and the exact package file set;
+missing, modified, unexpected, unsafe or unresolved entries stop the operation.
+Lead's v63/actor-full-composition-map.json records439verified, zero errors or
+unexpected files,168differences from Git90bb, and per-path actual/Git/baseline
+hashes and declared changes. Revalidate its independent authority hash and
+source preimage immediately before the planned copy; do not self-bless drift.
+
+Classify EVERY Git90bb/package delta, including additions/deletions/resources,
+against the retained ACTOR baseline and approved family provenance. Read and
+verify manifest baseline_review,delta_review,deployment_review references; the
+current actor row points to v59/policy/actual-new-actor-row-review.md
+SHA256 ebf70d8087e25947c783edd6be172833e9b978f0a2fbe90f87f194bdd56b27fb.
+Follow only its required retained family maps/P2 semantic and deployment
+evidence to explain the preserved composition. A review hash is not a substitute
+for a per-file mapping; any required unexplained delta blocks reconstruction.
+
+After fresh E11 plan approval, copy ONLY exact hash-bound preserved ACTOR
+files into the isolated engine/zylch tree, retaining before/after bytes, modes,
+Git identities and all mapping decisions privately. Explicitly remove only
+isolated candidate package extras named by that complete mapping so the import
+package file set equals the independent439-file manifest; do not leave another
+family's modules available to shadow the reconstructed source. Refuse symlink
+escape, unexpected path or changed preimage. Preserve the normal Desktop tree,
+deployed source, package installations, unrelated peers and Qonto unchanged.
+This is canonical family reconstruction, not source repair, deployment, or
+a broad168-delta merge into normal Desktop/main.
+
+Recover applicable existing ACTOR regressions from retained approved family
+and canonical origins, preserving exact hashes and compatibility limits. Do not
+call Git90bb or ce864 tests source-matching when their evidence.reply seam differs
+from the deployed _member_activity path. The bounded recovery found no existing
+_member_activity/member-judgement regression in those named sources; record that
+coverage gap and every actual baseline failure before source repair.
+Under this explicitly reviewed test scope, add narrow pre-repair characterization
+cases to the existing early-positive/projection test surface using the exact
+reconstructed producer and inert external boundaries: positive member evidence,
+late UNKNOWN, actual initial/final source identity/FLAGS refusal and unchanged
+held result. Validate real member_activity/early_source_sent wiring rather than
+asserting helper names or authoring desired records. These tests establish the
+current ACTOR contract; M1 then extends the same path with the causal timing RED.
+Do not rewrite valid failing expectations or business source to manufacture a
+baseline. Run applicable existing IMAP/projection/Sent suites with actual imports
+pinned to the reconstructed package; preserve incompatible tests as explicit
+coverage limits, not passes. Verify import/wrapper/guard closure and all439
+pre-repair package entries against the authority. Unexplained required imports,
+source provenance or failed safety controls block M0 integration.
+
+Fresh independent M0 preservation review must approve the complete source/file
+set and per-delta provenance, actual ACTOR path and baseline evidence before
+M1 behaviour edits. Only after that approval may the exact isolated canonical
+ACTOR baseline be committed by explicit reviewed paths. No live mutation or
+normal/main merge is implied. M1 starts from this separately identifiable
+canonical ACTOR baseline; later repair deltas remain separately reviewable.
+
+M1 — free causal correction and deciding correspondence evidence
+Ownership: one engine executor owns only email/imap_client.py, existing
+services/task_assignment_mail.py, task_assignment_evidence.py and
+task_assignment_projection.py plus their existing focused tests. A separate
+bounded executor may own task_assignment_sent_index.py and required existing
+observability metadata/producer validators plus focused diagnostic tests. Lead
+coordinates shared validators/tests before either edits them; no overlapping
+file ownership. First useful deliverable within5minutes; stop repeated or broad
+investigation after one complete scoped traversal. Lead checks progress by5min.
+
+Use only M0's independently reviewed and committed reconstructed ACTOR
+baseline in the isolated worktree. Actual source imports and the recovered
+ACTOR-matching test pack must be verified before the causal RED. Preserve the
+Git90bb-only68-test receipt with its qualified scope; it is not this baseline.
+Existing family/instruction preimages remain explicit; no installed edit.
+
+M1a: extend existing private IMAP implementation, not a parallel reader. Factor
+selected SEARCH/Message-ID FETCH and selected body FETCH from their existing
+public wrappers. Add one private compound operation for member_activity that
+holds the existing connection, deadline and RLock through initial EXAMINE,
+selected search/header/body work and final EXAMINE. Return the original initial
+FolderState so the existing member_activity full initial-versus-fresh equality
+check survives. Public independently callable wrappers still select as before.
+Preserve exact RFC/UID comparisons, complete body/PEC parsing, body/message
+bounds, final UIDVALIDITY/UIDNEXT verification and later fresh headers/FLAGS.
+For early_source_sent, retain its first EXAMINE and UIDVALIDITY check, then use
+the private already-selected folder_headers body under the same locked pinned
+connection. Keep its final full FolderState comparison and UID/Message-ID and
+Draft/Deleted predicates. Validate the pinned connection before IO. No public
+caller-provided stale FolderState bypass, state reuse between observations,
+cross-thread access, removal of late source checks, or broad batch/caching change.
+
+Required RED/GREEN: extend the source-matching ACTOR test_projection_observation.py
+and existing IMAP UID/socket fixtures recovered and verified in M0. Use several positive candidates, real
+projection/member/mail/IMAP code and a deterministic monotonic command-cost
+model: preimage must exhaust unchanged120s; candidate must preserve the
+unconstrained preimage's complete held evidence and require fewer selections.
+Prove9->6 selections on that conditional path, not actual historical attribution.
+A helper-call counter alone is insufficient; retain a real localhost scripted
+IMAP/socket check for selected-state/connection ownership and original public
+wrapper behavior. No external provider/model calls in these tests.
+Negative cases must retain failure/hold for changed UIDVALIDITY,UIDNEXT,EXISTS,
+missing/duplicate search or Message-ID responses, missing body, changed
+identity/ancestry/sender/recipient, Draft/Deleted before either fresh flags read,
+later UNKNOWN/unsynced candidate, actor/mailbox/route/source/component/assignment
+races, deadline expiry, changed connection, folder switch and cross-thread use.
+Reuse existing tests where they exercise the actual changed path; add missing
+cases rather than duplicating implementation assertions.
+
+M1b: instrument the existing Sent-index correspondence decision before its reason
+is discarded. Record finite scoped-match cardinality zero/one/multiple, known
+component/scope commitment, safe provider identity commitment and actual guard
+origin. For a zero match, distinguish exact actor+mailbox+Message-ID archive
+absence from present archive rows excluded by the captured known component.
+The existing engine connection has SQLite busy_timeout30000 and cannot safely
+bound this added diagnostic query. Use only its already-selected, verified SQLite
+database binding with a separate read-only local connection: query_only, at most
+50ms or the smaller remaining deadline, progress deadline and LIMIT2 static
+parameterized owner/mailbox/Message-ID query. No environment/HOME path guessing,
+shared-connection timeout changes, writes, network DBs or alternate archive.
+Unsupported in-memory/non-file binding, unavailable path, expiry, busy timeout or
+any read failure yields explicit archive-unknown and preserves the original
+business result. Pathname pre/post stats or descriptor URI alone do not prove
+SQLite's opened-file identity: the reproduced swap/open/restore race must refuse.
+Use a narrow ephemeral Linux inotify acquisition watch through documented libc
+ABI, with held-directory descriptor anchoring, relevant full path ancestry and
+main-file mutation coverage before open through query completion. Reject symlink
+components, relevant move/delete/replacement events, watch failure, overflow or
+unprovable acquisition as archive-unknown. Close all watch/descriptors per call;
+no watcher service, persistent cache or CPython/sqlite internal-pointer adapter.
+Retain the total50ms/smaller-remaining bound including setup and native WAL
+visibility. Unsupported platforms retain unknown. Test the exact file and ancestor
+swap/restore, overflow/watch failure, WAL, lock contention, unsupported binding,
+deadline and source owner/mailbox separation, as well as no archive mutation. Retain the
+snapshot-versus-current distinction explicitly.
+No raw address, message/root/header/body, credential, query or exception text in
+ordinary records. Do not fabricate origin bindings or change the business
+UNKNOWN return, known list, predicates, retry policy or archive contents.
+Test exact branch0/1/2 and a stale-known/current-archive control through real
+source, metadata validation, persisted-event validation, ordinary authenticated
+access and existing collector/inbox. Prove sink failure is best effort, foreign
+owner/scope is rejected, finite predicates survive and sensitive sentinels do not.
+A blind analyst gets only ordinary logs/inbox and must detect the failure and
+distinguish missing archive from filtered/stale component or explicit unknown.
+No desired hand-authored events substitute for the real producer.
+
+M1 acceptance: retain actual source hashes, RED/GREEN commands/output, focused
+projection-observation/IMAP-UID/Sent-index/causal tests and relevant existing
+engine suites. Required kernel genuine-golden harness remains independent.
+Fresh source integration review must approve M1a and M1b separately before
+dependent deployment. A9->6 command reduction alone does not establish that
+row4 now completes under a real provider, nor repair row27 ingestion.
+
+M2 — preserved-family deployment and one bounded deciding source read
+Owner: lead coordinates deployment; independent verifier checks exact current
+actor/peer baselines, reviewed deltas, actual imports and controls. Use immutable
+canonical artifacts derived from each affected runtime's own preserved family.
+Reconstructed ACTOR changes cannot replace Mario's distinct older family wholesale. Name
+the support actor, any required same-repair Cafe actor and Mario peer explicitly
+in the reviewed deployment transaction; preserve the other peers and Qonto.
+Capture complete package/configuration/process/control preimages, conditional
+rollback and safe in-flight stop/restart ordering. Restart only the reviewed
+affected services after source and deployment review. No direct installed-file
+patch, credentials/permission/billing/schedule change or business-data rollback.
+
+Verify imported modules/resources and source origins against independent exact
+artifact manifests. New peer diagnostic fields require actual reader-schema
+compatibility and authenticated ordinary access proof; do not assume the two
+repaired actor readers cover a peer. Preserve existing auth/owner rejection.
+
+If retained evidence remains insufficient, admit at most one explicitly scoped
+read-only tasks.assignment.project observation of each of the two retained
+failed roots under its actual authenticated owner, original120s provider bound
+and guarded existing observation path. Capture current service/source/owner
+bindings, safe cause/correspondence predicates and complete terminal/cleanup.
+This is a current bounded source read, not model execution, historical proof,
+customer replay, paid FULL or permission to make archive/assignment mutations.
+Do not repeat after a failed or unknown terminal without new evidence.
+
+Row27 behaviour repair remains gated on this deciding evidence. If it proves a
+canonical ingestion/filter/snapshot defect, append the exact minimal correction,
+causal regression and source/adoption/rollback deltas to THIS plan and obtain
+fresh affected review before coding. If a data repair is necessary, review the
+exact provider identity, private preimages, narrow fields, concurrency checks and
+postimage verification before any write. No guessed insertion, one-row refresh
+that bypasses whole-component consistency, altered sync marks or uncertain replay.
+The same rule governs any newly demonstrated source fault. Continue independent
+free work while that evidence is missing; do not call the whole goal complete.
+
+M3 — forward uniform candidate, finite strict BOTH FULL and delivery
+Owner: lead for release/admission, clone owners for supported clean adoption,
+fresh verifier for the unchanged final-user oracles. Preserve failed62/d1fa8c8
+and its evidence/tags. Once supported source faults are corrected and green
+free checks/integration pass, follow release-procedure.md for one next-unused
+immutable forward kernel candidate incorporating approved E10. Run source and
+exact-tag gates with six genuine golden builds, supported clean installs on
+BOTH clones, all package/resource/import identities, fresh Git locks and rendered
+three-host parity. No normal clone patch or public provenance fabrication.
+
+Fresh exact composition review binds both installed packages, affected immutable
+backend families, current R9 consumer/policy, fixture authority and all deadlines.
+Reconcile actual known charges, reservations and unknown effects; preserve the
+existing financial ceiling/per-job limits, concurrency and source/permission
+guards. One fresh strict BOTH FULL is admitted only after deciding source checks
+and free gates support an actual repair. Restore only current owned maintenance
+controls immediately before the existing runner acquires its own acceptance
+window. Retain raw native stream, true job terminals, original signed result,
+independent received correct reply, owner/full-ID usable provider draft/no send,
+automatic ACK/no-loop/no extra effects, signup policy and exact cleanup proof.
+A failure stops publication and returns to bounded Astra diagnosis; no looping
+paid retries or relaxed whole-inventory/health oracle.
+
+After genuine BOTH success, reconcile current docs and durable diagnostic lessons
+with doc-end, doc-critic, separate final APPROVED review and checker baseline
+advancement BEFORE public push. Then complete already-authorized publication and
+Git/lock provenance through the existing release steps, keeping failed local
+tags unpublished. Verify actual public installation and lock provenance afterward;
+reconcile any resulting documentation change with proportionate fresh closure.
+
+Establishes: independent ACTOR reconstruction/preservation gates, concrete
+source-consolidation targets and causal tests; the proved
+zero-match branch; bounded acquisition and ordered source/actor/admission gates.
+Does not establish: implementation, historical candidate attribution or latency,
+current/historical ingestion cause, live repair, available funds, schema access
+for every peer, successful FULL, publication or completion. No source/runtime/
+provider/model mutation occurs in this planning amendment.
+
+Historical E11 pre-rollout component evidence (2026-10-27; superseded)
+- M0 exact ACTOR preservation is independently APPROVED; canonical isolated
+  baseline0cf4790c retains439source/resource files. Applicable diagnostics11PASS,
+  actual-path characterization6PASS; one other-family Sent-index expectation
+  remains explicitly incompatible. No normal/main merge or live mutation.
+- M1a source integration is APPROVED after the reproduced selection-invalidation
+  defect was corrected at all10call sites. Commit4770cf59b55bbd6f36b6e6ba6bb40d87c2f918bc
+  passes32focused,21public-wrapper and11native-provider tests. Causal preimage
+  RED becomes GREEN with four equivalent held proofs under unchanged120s. This
+  is controlled source evidence, not actual provider latency or FULL acceptance.
+- M1b initial19PASS/blind-log evidence remains qualified by a reproduced SQLite
+  opened-file identity race. Correction and fresh integration approval are open.
+- Deployment preparation is private/disabled; all7existing runtime/file/unit
+  bindings pass fresh guards. No source-family deployment, deciding provider
+  observation, new kernel adoption, paid FULL or publication has occurred.
+
+
+### E12 — identify the proved missing Sent source before any import
+
+Status: proposed acquisition-only amendment; fresh affected plan/probe review
+precedes the provider invocation. This continues the existing approved FULL62
+source-read framing and E11; no new brief, plan or business authority is created.
+Lead owns admission/control leases and the exact source decision; one bounded
+executor owns a private acquisition helper and local safety checks; a fresh
+reviewer checks the exact helper, binding, bounds and proposal before execution.
+First deliverable within2minutes, complete planning within3minutes; lead checks
+execution progress by5minutes and stops repeat or scope expansion.
+
+Verified current boundary
+- E11 M2 source/deployment and authenticated postchecks pass for the three named
+  affected services; unrelated fleet identities remain guarded. The bounded
+  support projection finishes in22s with six complete human-proof observations
+  and legitimate needs-assignment; the earlier provider timeout is not reproduced.
+  Mario's one deciding projection finishes in21.64s but remains technical UNKNOWN.
+- Authenticated ordinary event91e453ecb7f448f582bceec73210b781, PID1973784,
+  process_start92822613, command assignment.sent_correspondence.archive_absent,
+  establishes count0/pending_count0/availabletrue for root commitment
+  6d22d373d0fef37aaaadf9f634b2d454483fc6795d8e98dc6bfe7492f35706eb and
+  provider commitment552a901b7f56e477d30de3aff50baab37e7a50304ef0839eed38e27c4d1b4451.
+  Actual retained bytes are v63/deciding-reads/mario-ordinary-events.json.
+- v63/missing-sent-astra.md binds the resident peer's private profile database
+  through actual process FDs. Mailbox/cursor progress dates are9October, but
+  later inserted rows disprove an inference that no later ingestion occurred.
+- v63/sent-ingestion-source.md finds that this exact older peer's sync.run also
+  runs WhatsApp and has no verified email-only/targeted scope. Existing batch
+  importer is an UPSERT that can rewrite existing rows; cold local embedding
+  setup can download weights. No broad sync, update, cursor reset or importer
+  invocation is admitted by these facts.
+
+M1 — prepare and review the exact header-only acquisition
+Use the actual preserved PEER source loaded by Mario, not the ACTOR family or
+a wholesale newer package. Freeze current service PID/start, imported package
+path/digests, service UID/mount/environment identity and authenticated owner
+postcheck. Validate the resident/authenticated owner and actual private database
+primary mailbox agree with trusted member aliases; do not create capability
+state or replace verified engine authentication globals. A helper configuration
+label is not authentication. Establish real TLS provider LOGIN with the existing
+mailbox credential/client factory in that service context, without displaying
+or persisting credential values. Stop if source, process, primary-mailbox,
+owner/alias or service-context binding changes before or during acquisition.
+
+Any private database access uses an explicitly read-only SQLite connection to
+the actual resident profile database, mode=ro plus query_only=ON, under its real
+OS identity/mount namespace and with existing WAL visibility. Do not use
+immutable mode, engine get_engine, init_db, migrations or writers. Existing row/
+component algorithms may be reused only through a supplied read-only connection;
+no runtime import may initialize storage or acquire a company writer lock.
+Read only identity/ancestry/cursor fields needed for this exact correspondence,
+not customer bodies or unrelated company/task stores.
+
+Build a private helper around the existing IMAP folder_headers/component-search
+algorithm and exact producer commitment function. Target only the authenticated
+owner's actual Sent folder and retained root. A private bounded adapter may
+supply stricter shared read limits to the existing component/header algorithm;
+it must preserve RFC ancestry, membership, duplicate, UIDVALIDITY and folder
+state checks. Never reimplement an assumed provider-hash recipe: compare the
+exact source-produced commitment to the retained provider_id above. No message
+body fetch, archive/store call, model/embedding, cursor movement, send, draft,
+flag/label mutation or production code/configuration edit is allowed.
+
+Hard acquisition bounds: one profile, one connection/observation,120seconds
+total including connection/cleanup; at most64provider commands,64message
+headers and512KiB total header bytes across the whole attempt. Count commands
+before dispatch, including connection/folder discovery and selected operations;
+count all received header material, not merely the final retained subset. These
+are ceilings, not permission to scan unrelated folders or retry the whole read.
+Preserve existing per-account/global concurrency and held guards; introduce no
+additional parallel acquisition. Stop before exceeding a limit, on incomplete
+coverage, ambiguous/multiple matching tuple, unexpected missing response,
+expired deadline, TLS/auth failure or any owner/source/identity/state mismatch.
+Retain the same complete before/after FolderState equality and required fresh
+headers/FLAGS; no client-selected stale-state exemption. Use the existing
+bounded observation disposal, not an unbounded graceful logout after expiry.
+
+Retain exact folder/UIDVALIDITY/UID/Message-ID/date/References/In-Reply-To and
+the matching commitment only in the private0600 case artifact. Ordinary output
+contains only finite counts/predicates and source/identity commitments. Keep
+credentials, bodies, raw identifiers and private header values out of stdout,
+ordinary logs and repository artifacts. Record actual commands/bytes/time,
+coverage and failure/cleanup even when acquisition stops before a match.
+
+Before provider invocation, run local/dry safety checks through actual existing
+helpers with external boundaries disabled: valid single match, foreign binding,
+no/duplicate matches, changed UIDVALIDITY/UIDNEXT/EXISTS/header identity/flags,
+command/message/byte/time bounds, missing responses and sink/cleanup failure.
+Assert no network/body/store/cursor/model call in dry mode and no sensitive
+sentinel in ordinary output. Verify actual read-only DB access refuses a write
+on disposable data and no engine initializer is imported. Dry/local controls
+prove containment only, not live provider authentication or successful recovery.
+A fresh reviewer must approve the exact executable/helper and source/probe
+binding after these checks; missing authority or a failed check blocks invocation.
+
+M2 — one targeted read and the evidence-based repair decision
+After the exact review, admit ONE bounded header-only acquisition for this
+owner/mailbox/root/commitment. New archive_absent evidence justifies this new
+targeted source read; it is not a second whole projection or a paid FULL retry.
+No repeat is admitted after failure/unknown without new evidence and applicable
+review. Verify current lead-owned guard/control lease before launch and finish
+inside it; expiration stops acquisition and preserves evidence. The held four
+job guards, two owned CS_PAUSE markers and original cron are control preimages,
+not permission to steal or restore another session's controls.
+
+Compare the one exact matched tuple privately with the mailbox's existing Sent
+cursor, date/overlap selection predicate and owner/mailbox/gmail-id archive
+correspondence. Distinguish beyond-cursor, below-cursor/outside-overlap, and
+identity/filter/alternate-insertion outcomes using actual values; keep the
+historical skip cause unknown if the data cannot establish it. Header acquisition
+does not itself repair missing archive correspondence or prove assignment health.
+
+Any body acquisition, ingestion implementation, import/data transaction or
+scheduling correction requires a concrete affected amendment to THIS plan,
+causal regression and fresh applicable review after those facts. Preserve the
+normal parser, exact owner/mailbox/RFC/provider identity, date/ancestry/flags,
+concurrency safety, existing processing marks and every sync cursor. No blind
+SQL row, batch UPSERT, fabricated source, cursor rewind or whole update is a
+repair route. Continue directly to that scoped repair when supported; do not
+substitute this diagnostic artifact for successful genuine BOTH FULL. E11's
+source/adoption/finite-admission, unchanged oracles and release closure remain.
+
+Establishes: one bounded deciding header-acquisition route justified by an
+actual archive_absent event, exact bindings, hard refusal limits and ordered
+review before provider access or any later repair. Does not establish missing
+UID/date/header identity, successful authentication/acquisition, historical skip
+cause, import safety, an implemented repair, new projection/FULL admission,
+BOTH acceptance, public delivery or completion. Planning invokes no provider,
+model, database writer, importer or runtime mutation.
+
+
+### E12 actual acquisition outcome — 2026-10-27 02:45 UTC
+
+The fresh helper review APPROVED exact helper27930d076d803b4f2c9e09f527d8f174b363e868c6382722a219422d015cbd96 and tests421b58b2120498312c1480137cc6bee361b8b33dae6088ca16e72932583c01f0 after39local checks. Previous REVISE, repair and immutable approved plan snapshot are preserved in v63/sent-acquisition. The lead separately admitted ONE observation; original input remains disabled.
+
+The actual sudo/daemon-interpreter/actual-owner execution exited3 after27674ms: statusunknown, reasonprovider-failure, phaseprovider,24commands,2headeroccurrences,1distinctheader,6750wirebytes, incompletecoverage, cleanupdiscarded. Exact receipt is v63/sent-acquisition/live-receipt.json; this is not successful tuple acquisition, an economic-budget failure, a provider timeout or evidence of historical ingestion cause. No body, import, cursor repair, projection retry or paid acceptance was admitted. The sole attempt is consumed; no automatic retry.
+
+Astra is diagnosing the actual deployed helper/source contract locally without provider calls. The generic failure reason remains a diagnostic defect: retain bounded origin/type/counters without private exception text before proposing any subsequent evidence-justified attempt. BOTH strict FULL, immutable successful release/public provenance and documentation closure remain open.
+
+
+### E12R1 — repair the reproduced private helper contract, not production
+
+New independent evidence: Astra's native offline counterfactual loads the preserved actually executed helper and deployed IMAP parser/component. The original explicit-single-UID final corroboration fails the API's whole-folder max_messages precondition for a large folder; satisfying that precondition passes while state/FLAGS/header/command/byte refusals survive (7checks). This is a reproduced helper defect and a compatible possible cause of the failed observation, NOT proof of its discarded exception or historical ingestion cause. Evidence: v63/sent-acquisition/astra-failure-diagnosis.md, test_astra_contract.py, astra-counterfactual.log.
+
+After fresh review of this affected amendment, change ONLY the private helper/tests. For explicitly enumerated UID requests, first require a nonempty bounded distinct positive UID list with requested cardinality within the remaining aggregate occurrence allowance. Satisfy the deployed folder_headers whole-folder precondition using the freshly observed initial EXISTS count; preserve exact uids selection and unchanged returned/full final FolderState. Do not add broad ALL search, change criteria/ancestry rules or modify production parser/source. Search paths retain their remaining-message ceiling. Independent predispatch UID cardinality, total received occurrences, command/wire counters, literal bounds and120second deadline remain hard ceilings even when the source API parameter exceeds64. No extra header dispatch is justified by that parameter.
+
+Integrate the actual large-folder/single-UID native counterfactual into the helper checks, including preserved failure of original and corrected success, state/FLAGS mutation and all aggregate limits. Retain diagnostic-only improvement (allowlisted exception type and bounded relative origin, never raw text/locals/headers). Add finite substages for connection, component search, exact corroboration and recheck. Preserve the primary failure location alongside any cleanup failure. No production code/configuration, credentials, mailbox/DB contents or cursors change.
+
+After the repaired exact helper and fault controls are freshly APPROVED, the lead may separately admit ONE corrected E12 observation with the same120seconds/64commands/64received-header-occurrences/512KiB ceilings, actual owner/source/trust/profile/DB bindings and existing guard controls. Retain original failed attempt, review and admission; this is a new evidence-justified admission, not silent reuse or an unattended retry. Bind the new review and source/test/input hashes in a new private receipt; no provider execution while any prerequisite is incomplete. Capture finite actual folder count/substage/type/origin/counters so another failure is diagnosable; do not claim it recovers the original exception. Any further failed/unknown outcome stops with evidence; no automatic additional retry.
+
+Body acquisition, ingestion/data/scheduling repair, broader sync, model/FULL execution, release and final acceptance remain outside this narrow amendment and retain their existing affected-review/admission requirements. Root owns this amendment/admission, private-helper worker owns implementation, a fresh plan reviewer reviews framing before code, and the existing helper reviewer checks the exact repaired executable before the corrected observation. Establishes no successful read, missing-source cause, business repair, BOTH FULL or publication.
+
+Before the corrected observation, also run one bounded blind ordinary-receipt check: a reader given only representative emitted sanitized failure receipts, without source, reproduction scripts or answer key, must distinguish a local source/API contract refusal, transport/provider failure, deadline, acquisition command/header/byte ceiling and cleanup failure, and state when cause remains unknown. Generate these receipts through local fault controls, not fabricated production incidents. The acquisition ceilings are not an economic/LLM budget: the blind reader must not infer exhausted credit from them. Retain the private answer key separately and compare classifications after the reader returns. Repair material ambiguity before admission; no live/provider/model acceptance call is introduced by these local fault controls.
+
+
+### E12R1 actual result — 2026-10-27 02:58 UTC
+
+Fresh plan review APPROVED2c2cbccf27ab99d1434cd61d5cdc2d08d5b9449c57af6cfe3a58ac9564adb82d; fresh helper review APPROVED ecf25ae8ce94657992eb7f13babbb137cbf5a66bb7957554343cb6cf96606426 after53local checks. The isolated blind reader detected all8faults, supplied supported investigation routes and inferred no financial credit failure; full root causes were not established. Receipt corpus and answer key were kept separate; nullable actual folder count and configured bounds were added afterward and tested, not claimed independently blind-tested.
+
+The separately admitted single corrected observation SUCCEEDED:47.060seconds,29commands,3headeroccurrences/1distinctidentity,8064wirebytes,initialEXISTS11022,complete-target,cleanupdiscarded,exit0. Source owner/profile/DB/trust/full inventory and final folder/header/FLAGS bindings rechecked. Private exact tuple SHA25625df18b2baa09a8e62825bff92a76a76ec350589a6fb8ec51c647da8004d2413; file private-result-r1.json root-owned0600. Actual receipt live-receipt-r1.json and coordinator-admission-r1.json preserve the new admission independently of the failed first attempt. No additional observation is admitted.
+
+This establishes an exact provider tuple and corrected helper contract on the actual path, not the discarded original exception or historical absence cause. Astra is comparing exact tuple/cursors/current archive and effective scheduling read-only without new provider access. No body/import/data/config/source repair is admitted by this result. BOTH FULL, successful immutable release/public delivery and final documentation closure remain unmet.
+
+
+### E13 — exact native acquisition of the absent Sent archive record
+
+Classification: substantial persistent-data maintenance under the already approved
+absent-peer Sent insertion exception. This is not a fast path, a new synchronization
+API, recurring scheduling change or blanket sync. The lead owns admissions and
+controls; one bounded execution worker owns private helper/tests; a fresh plan
+reviewer and fresh executable/transaction reviewer own their respective gates.
+Normal kernel installations remain immutable and unchanged during this dependency.
+
+Deciding evidence: corrected E12R1 acquired one provider tuple with complete-target
+coverage and verified final source/owner/profile/database/trust/header/FLAGS/folder
+bindings. Its private payload SHA256 is
+25df18b2baa09a8e62825bff92a76a76ec350589a6fb8ec51c647da8004d2413.
+Astra's private tuple/cursor comparison SHA256 is
+ad2bcd6c98d8f0192183c6cf9941c70c6548c78c9e074db6b0a43b30dfd878e9.
+The exact target UID is beyond the matching Sent cursor and current exact
+owner/mailbox Message-ID-or-gmail_id correspondence count is zero. The existing
+UID sync predicate already includes it. Reconstructed auto-update is disabled;
+mutable in-process settings and historical skip cause remain unknown. Do not
+rewind a cursor, widen lookback, enable auto-update or invoke broad sync.run,
+which in this preserved peer family also dispatches WhatsApp.
+
+M1 — current-family executable and preservation proof, before provider or writer
+
+Bind the actual Mario resident PID/start,355-file deployed family, imported source
+roots, normal authenticated owner receipt, primary mailbox/trust, profile/environment
+loader, mount namespace, actual OS UID and database FD/device/inode exactly as E12.
+Use the current source, not the historical v57 source hashes/PIDs/UID literals.
+The earlier complete v57 two-record-apply.py is a maintenance-path reference,
+not an executable approved for reuse: its source/profile/bootstrap, graceful
+cleanup, broad snapshots and writer behavior require current scoped verification.
+Do not copy its support-record update branch or schedule-control wrapper.
+
+Implement only a private, source-bound helper around the existing native
+IMAPClient parser, EmailArchiveManager._convert_message, the exact current
+Storage.store_emails_batch record-construction expression and native Email ORM.
+Do not invoke the native batch UPSERT. Extract and hash the exact native record
+expression; preserve all conversion semantics and native model defaults. Reject
+missing/malformed Date rather than accepting the converter's current-time fallback.
+Verify real provider Date normalization, Message-ID, References, In-Reply-To,
+body/HTML, sender/recipients, labels, attachment/PEC metadata, owner and mailbox.
+Use native duplicate-copy marking only on the new record in the same transaction;
+never mutate an existing copy's processing marks. Prove active cross-mailbox
+copy behavior independently. Native model identity/birth and processing defaults
+must not be fabricated to force a healthy assignment.
+
+Readonly preparation uses explicit mode=ro plus query_only and WAL visibility;
+no get_engine, init_db, migrations, writer session or filesystem initialization.
+Read only scoped predicates and preservation digests; do not emit unrelated
+customer contents. Verify current schema has the real owner/mailbox/gmail_id
+unique constraint and native model matches it. Preflight existing cached local
+embedding assets using disposable synthetic input with offline flags and all
+network/model-provider boundaries refused. Missing cache, download, remote
+embedding/model dispatch or unsupported current-family record construction stops
+this operation. Cached CPU embedding is not a financial LLM budget allowance.
+
+Check the current native Session/get_session commit and rollback behavior before
+using it. A reviewed mutation may create the ordinary native writer session for
+this already-existing, verified WAL database; no initialization/migration command
+is admitted. Establish a SQLite write reservation on that same session/connection
+before absence checks and hold it through insert/commit, with a finite deadline.
+This is the native database writer serialization, not a claim to own the daemon's
+CLI profile flock. Preserve and verify the existing daemon-owned profile lock;
+never call an acquisition path that truncates, unlinks, replaces or steals it.
+The already approved one-off native-ORM maintenance exception permits this scoped
+transaction without a daemon restart. Preserve the four actual held job guards,
+two exact owned CS_PAUSE markers and untouched crontab; no stop/restart or new
+schedule edit follows from E13. If current native serialization or profile
+ownership cannot be proved, execution stops before a provider or writer call.
+
+Disposable causal tests must use current native conversion/model/schema/session:
+original missing counterpart is absent, corrected INSERT produces exactly one
+native equivalent record; concurrent exact duplicate raises IntegrityError and
+rolls back with the competitor unchanged; wrong owner/mailbox/MID/UIDVALIDITY,
+Date fallback, changed body/header/ancestry/FLAGS/state, missing/extra UID,
+unsafe expression/source drift, cache miss/download, write-lock busy/expiry and
+sink failures all refuse. Prove all existing rows, processing marks and sync
+cursors remain unchanged. Test commit-boundary behavior and preservation of the
+primary exception separately from cleanup failure. Reuse sanitized type/origin,
+finite stage/cause/counters/limits and ordinary receipt privacy; newly added
+failure evidence requires the bounded blind receipt check from the log workflow.
+Fresh executable/transaction review must approve exact helper/test/source/input
+hashes and actual disposable receipts. No provider/body or data mutation is
+admitted by tests or this plan alone.
+
+M2 — one separately admitted exact source body observation
+
+After M1 approval, the lead may admit ONE fresh observation of the private E12R1
+bound owner/mailbox/Sent UID, retaining a new independent admission and all prior
+attempts. Hard bounds:120seconds total including setup and local disposal,
+64provider commands,16received header occurrences,one exact body FETCH,
+2MiB maximum body literal/decoded body and2560KiB total received wire material.
+Guard commands before dispatch and literals before allocation/read; no alternate
+UID, whole folder/body scan, retry, SMTP, flags/labels or provider move. Verify
+TLS/auth through the unchanged native mailbox factory. Establish fresh initial
+FolderState and retained UIDVALIDITY, fresh exact target headers/FLAGS matching
+private acquired identity/ancestry/Date, then fetch only that UID with native
+BODY.PEEK parsing. Require complete UID coverage, exact parsed identity/header
+corroboration, nondraft/nondeleted source and identical fresh full before/after
+FolderState. Stop on state/identity/source/owner changes or incomplete evidence.
+Dispose locally without graceful LOGOUT extending the absolute bound. Preserve
+bounded phase/type/relative-origin/timing/counters/limits/cleanup on every exit;
+private0600 evidence contains actual parsed source and conversion only.
+
+M2 completion means an independently retained, source-derived candidate and
+unchanged provider/source bindings; it is not a database mutation or recovered
+assignment. Recheck database scoped absence and owner/mailbox binding read-only.
+No repeat observation follows unknown/failure without new evidence and review.
+
+M3 — separately admitted INSERT-only transaction and independent postcheck
+
+A separate coordinator receipt binds the successful M2 private body/candidate,
+reviewed executable, current source/profile/DB/owner/trust and exact preconditions.
+Preopen private0600 preimage, selected postimage and failure-evidence sinks and
+verify writability before mutation. Finish provider cleanup, then deny all network
+connect/DNS/provider/model dispatch. Cached local embedding uses the already
+proved offline assets. Revalidate exact source/process/DB identity and candidate
+provenance; prove selected owner/mailbox MID-or-gmail_id cardinality remains zero.
+A pre-existing counterpart is a refusal, not permission to update or accept it.
+
+Under the native transaction-held SQLite writer reservation, repeat primary
+mailbox/trust/schema/absence checks; preserve current selected absence plus
+hash/count preimages for all existing emails and every sync cursor/processing
+state. Construct the native Email(**record), apply normal new-copy marking,
+Session.add and flush. Require exactly one new scoped row and exact converted
+field/default correspondence before commit. No raw INSERT SQL, ON CONFLICT,
+UPDATE, arbitrary field repair, source/config edit, cursor advancement or unrelated
+row mutation is permitted. Use native uniqueness as a second independent race
+barrier; a concurrent insert causes rollback, never replacement. Bound writer
+lock/transaction work to30seconds; if it expires before commit, roll back.
+
+Capture and durably flush the selected actual postimage immediately after flush
+and again immediately after commit before validation assertions. Retain explicit
+commit state so a later sink/check failure cannot be described as rolled back.
+An independent read-only connection verifies cardinality1, exact owner/mailbox/
+RFC/body/ancestry/date/metadata/native defaults, unchanged existing row digests and
+all cursors. Unexpected concurrent unrelated changes are retained and investigated,
+never overwritten or restored from stale snapshots. Before-commit failure rolls
+back only this transaction; after-commit failure retains actual effects and stops.
+Do not delete an acquired actual mail or restore an old database as rollback.
+
+Only after independent repair verification may the lead propose a fresh bounded
+model-free exact assignment projection under an affected admission. That result
+must distinguish technical source availability from legitimate human holds and
+preserve every source/authority/completeness guard. E13 itself admits no model,
+customer action, paid FULL, new projection, release or publication. Strict genuine
+FULL on BOTH maintained clones, exact immutable successful candidate/provenance,
+authorized public delivery, doc-end, doc-critic and separate final review remain
+required and unmet. The source acquisition does not establish historical skip
+cause or solve recurring scheduling; preserve that uncertainty in the handoff.
+
+
+### E13 verified actual outcome — 2026-10-27
+
+Fresh Astra executable review APPROVED helper0274db0e57b1d0e34d4c205aa95ae2affb60c0949baac30252c25eec29c21b65/acquisitione391e415dadba3ff4ca21f25ce08838b145e62de063e210288d8e1ec72565c51 after48local checks, actual offline cache/schema preflights and actual UID992 main controls. Earlier REVISE caught post-drop private-code access and commit-state erasure; both were reproduced and corrected without loosening private permissions. Blind ordinary transaction receipts distinguish refusal/rollback, busy reservation and committed insertion followed by sink failure.
+
+The separately admitted body observation succeeded13955ms/22commands/2headers/10081wirebytes with complete-target coverage/local cleanup and exit0. CandidateSHAeb219c32fc8e1ca6608e5b1679e03c2ac63a39c42a51cfd48f8487617e67bd4d remains root-owned0600. The separate INSERT admission committed one native row in2219ms, exit0, no provider/model call. Independent readonly actual database verification reports cardinality1, every selectedpostimage column/embedding equal, all33pre-existing tablecounts/digests and1804emails unchanged; source/daemon/locks/pauses/cron pass. Actual private evidence: v63/sent-native-repair/{acquire-live-verification.json,insert-live-receipt.json,independent-postcheck.json}. No rollback or deletion followed commit.
+
+After that independent check, a separately admitted ONE model-free normal installed-clone tasks.assignment.project completed in7.709seconds: validatedneeds-assignment/NEEDS_HUMAN_VERIFICATION, reply_evidence complete=true/MEMBER_ACTIVITY_REQUIRES_HUMAN_VERIFICATION. Prior SENT_REPLY_NOT_SYNCED/UNKNOWN is gone on the exact formerly failing root. This proves current source availability and preserves human authority; it does not establish historical skip cause, recurring ingestion or whole acceptance. Actual trace1a424d304dda4024ba0681421829a4b7 and privatepostrepair-projection-summary.json retain the result.
+
+E13's single body/INSERT/projection admissions are consumed; no automatic retry or additional customer action follows. Source/kernel/financial limits are unchanged. Proceed to the existing forward immutable candidate/adoption and strict genuine BOTH FULL gates; public delivery and final documentation closure remain unmet.

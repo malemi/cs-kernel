@@ -25,26 +25,26 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   evidence; its actual rendered timeout instruction matches across three hosts.
   The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
   owns exact installed acceptance, public provenance and authorized publication.
-- Both immutable90bb actor runtimes have verified provider connection/state,
-  command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
-  are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
-  source/assignment guards; original schedules remain in the maintenance preimage.
-- Desktop consumer `ca175b9` and reviewed62 policy are active. FULL948f1d59
-  is interrupted after ordinary assignment health rejected two technical reads;
-  independent cleanup passes. Internal cumulative120s expiry is evidenced for
-  one read; initiating latency remains unknown. The other read has a scoped
-  Sent-index count other than one; zero versus duplicate remains unknown.
-- Reviewed E10 source retains finite peer causes before merge. Retained-input,
-  blind ordinary-log and full genuine-golden source checks pass; this patch is
-  unreleased and absent from both immutable62 clone packages. Both independent
-  readers now use their existing producer schema: exact retained-event reads and
-  invalid-token/foreign-owner rejection pass. Business engines are unchanged.
-- Installed E8 accounts for the complete serialized notice projection; both
-  copied-backlog preflights pass with zero outward calls. E9 source adds finite
-  native interruption diagnostics and child-local Bash lifetime alignment.
-  Its blind log check detects interruption and preserves the unknown upstream
-  reason. Source integration and installed private-backlog checks pass; fresh
-  genuine BOTH FULL remains required.
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous identities. A historical Git family label
+  alone does not establish the deployed baseline.
+- Desktop consumer `ca175b9` and reviewed62 policy remain active. FULL948f1d59
+  is interrupted/unsuccessful with independent cleanup PASS. Reviewed provider
+  read consolidation is deployed; one actual support projection completes its
+  source proofs with a legitimate human-verification hold in21.975seconds.
+  This does not retrospectively explain the historical timeout.
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+- E10 finite peer-cause source, blind ordinary-log and genuine-golden checks
+  pass. That kernel change remains unreleased and absent from both immutable62
+  packages. Both independent readers accept the existing producer schema with
+  owner/auth rejection controls; whole business acceptance remains open.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -88,14 +88,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## Unresolved
 
 - Genuine strict BOTH-clone FULL, publication and public Git/lock installation
-  proof remain required. FULL60 failed final MrCall assignment health; Café/signup
-  were not reached. A correctly received earlier reply does not certify whole health.
-- Historical58SELECT and59empty-fixture causes remain UNKNOWN. Current provider
-  and protected-source diagnostics cannot retrospectively recreate missing facts.
-  A later read success does not close those failures or the original source gap.
-- Partial model-free work establishes cumulative time expiry, a MIME-tokenization
-  bug and misleading remote-error classification. The reviewed source repairs need
-  fresh installed/strict acceptance; sizing extrapolation guarantees no completion.
+  proof remain required. Failed candidates and uncertain charges/effects are
+  retained; a component read or earlier protected reply certifies no whole FULL.
+- Recurring peer ingestion history and mutable scheduling remain unknown.
+  E13 repairs one exact source counterpart; it grants no automatic business
+  authority or recurring scheduling change.
+- Historical SELECT, empty-fixture and discarded helper exceptions remain
+  UNKNOWN. Later success and controlled reproductions cannot recover missing
+  production observations. Time ceilings and economic quotas are separate.
 - [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
   retains failed V27 and separate permission/ordinary acceptance. Earlier V14,
   scoped Café draft and R9 proofs certify only their respective cases.
@@ -110,10 +110,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Preserve FULL62 failure evidence; do not publish it as successful acceptance.
-2. Resolve the evidenced source faults within reviewed authority before a new
-   finite admission. Diagnostic improvements alone do not repair business reads.
-3. Require green free gates and fresh composition review before any paid retry;
-   preserve unknown charges/effects and current financial/source limits.
-4. Complete genuine BOTH FULL, authorized public provenance and final closure.
-5. Keep cs-diagnose manual and require native Gmail proof before reconciliation.
+1. Freeze the forward immutable kernel candidate after source/version gates;
+   keep prior failed candidates and actual source/data evidence unchanged.
+2. Adopt the same tag normally on BOTH clones; verify complete installed bytes,
+   authored surfaces, locks and exact consumer/policy composition.
+3. Reconcile actual charges/reserves and admit only bounded genuine BOTH FULL
+   after every free prerequisite passes.
+4. Complete authorized public provenance and doc-end/final review.
+5. Restore only owned maintenance controls; keep cs-diagnose manual.

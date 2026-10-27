@@ -1,3 +1,65 @@
+## 2026-10-27 — Superseded pending exact Sent acquisition
+
+- Mario's ordinary archive_absent event establishes zero exact scoped archive
+  matches. A bounded authenticated header acquisition identifies one actual
+  source beyond its unchanged Sent cursor. Historical skip cause is unknown;
+  reconstructed automatic updating is disabled. Exact native acquisition and
+  INSERT-only maintenance are reviewed in E13 and remain unexecuted.
+
+- The exact missing Mario Sent source needs reviewed native acquisition,
+  INSERT-only preservation proof and independent postcheck before fresh
+  assignment/FULL admission. No broad sync, cursor reset or schedule change.
+
+1. Complete E13 current-family executable/local proofs and fresh review; admit
+   exact body acquisition and INSERT-only maintenance separately.
+2. Verify actual postimages and unchanged existing rows/cursors; distinguish
+   source availability from legitimate authority holds in a bounded projection.
+3. Freeze one forward immutable kernel uniformly on both clones; require green
+   free gates, exact composition and reconciled finite financial admission.
+4. Complete genuine BOTH FULL, authorized public provenance and final closure.
+5. Restore only owned maintenance controls; keep cs-diagnose manual.
+
+## 2026-10-27 — Superseded source-read state before exact native acquisition
+
+- Both immutable90bb actor runtimes have verified provider connection/state,
+  command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
+  are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
+  source/assignment guards; original schedules remain in the maintenance preimage.
+- Desktop consumer `ca175b9` and reviewed62 policy are active. FULL948f1d59
+  is interrupted after ordinary assignment health rejected two technical reads;
+  independent cleanup passes. Internal cumulative120s expiry is evidenced for
+  one read; initiating latency remains unknown. The other read has a scoped
+  Sent-index count other than one; zero versus duplicate remains unknown.
+- Reviewed E10 source retains finite peer causes before merge. Retained-input,
+  blind ordinary-log and full genuine-golden source checks pass; this patch is
+  unreleased and absent from both immutable62 clone packages. Both independent
+  readers now use their existing producer schema: exact retained-event reads and
+  invalid-token/foreign-owner rejection pass. Business engines are unchanged.
+- Installed E8 accounts for the complete serialized notice projection; both
+  copied-backlog preflights pass with zero outward calls. E9 source adds finite
+  native interruption diagnostics and child-local Bash lifetime alignment.
+  Its blind log check detects interruption and preserves the unknown upstream
+  reason. Source integration and installed private-backlog checks pass; fresh
+  genuine BOTH FULL remains required.
+
+- Genuine strict BOTH-clone FULL, publication and public Git/lock installation
+  proof remain required. FULL60 failed final MrCall assignment health; Café/signup
+  were not reached. A correctly received earlier reply does not certify whole health.
+- Historical58SELECT and59empty-fixture causes remain UNKNOWN. Current provider
+  and protected-source diagnostics cannot retrospectively recreate missing facts.
+  A later read success does not close those failures or the original source gap.
+- Partial model-free work establishes cumulative time expiry, a MIME-tokenization
+  bug and misleading remote-error classification. The reviewed source repairs need
+  fresh installed/strict acceptance; sizing extrapolation guarantees no completion.
+
+1. Preserve FULL62 failure evidence; do not publish it as successful acceptance.
+2. Resolve the evidenced source faults within reviewed authority before a new
+   finite admission. Diagnostic improvements alone do not repair business reads.
+3. Require green free gates and fresh composition review before any paid retry;
+   preserve unknown charges/effects and current financial/source limits.
+4. Complete genuine BOTH FULL, authorized public provenance and final closure.
+5. Keep cs-diagnose manual and require native Gmail proof before reconciliation.
+
 ## 2026-10-27 — Superseded running FULL62 state
 
 - Desktop consumer `ca175b9` and the exact reviewed62 policy are active;
