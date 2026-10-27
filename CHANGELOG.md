@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v0.63.0 — 2026-10-27 (MINOR)
+
+Retain the deciding peer-read cause before generic assignment reconciliation.
+
+- Preserve finite peer projection, source/reply and alias-scope failure causes
+  in ordinary diagnostics before higher-level holds merge them. Legitimate
+  human holds and healthy reads retain their normal results.
+- Distinguish structured JSON-RPC invalid-parameter and other remote errors
+  from connection failure in direct reads, as existing batch diagnostics do.
+  Preserve original exceptions, calls, deadlines and authority checks.
+- Validate bounded causes through native decoder/producer controls, local event
+  persistence, ordinary CLI, collector and private inbox; blind readers identify
+  the supported boundary without message text, credentials or raw errors.
+
+Migration: install this immutable tag normally on BOTH maintained clones and
+rebuild locks. Preserve all authored configuration and existing financial,
+provider, concurrency, permissions and technical-mail controls. Engine source
+maintenance and exact archive acquisition retain their separate reviewed evidence
+in the canonical release plan; no installed kernel overlay supplies these fixes.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+inherited unshipped composition includes send/authentication surfaces; these
+diagnostic improvements do not replace fresh native/provider acceptance.
+
 ## v0.62.0 — 2026-10-26 (MINOR)
 
 Align native Bash lifetime with the existing bounded ordinary workflow.

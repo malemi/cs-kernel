@@ -14,11 +14,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.62.0`. Current HEAD status: untagged.**
-  Both normal clones match immutable `v0.62.0` (`d1fa8c8`): all 159 package
-  files, actual identities and fresh local Git lock rebuilds pass. Source and
-  exact-tag harnesses each pass six genuine golden builds.
-  Operational sign-off remains51; genuine FULL and public Git provenance are open.
+- **Latest release tag: `v0.63.0`. Current HEAD status: tagged as `v0.63.0`.**
+  This is a local unpublished candidate with green complete source gates; exact
+  tag verification is pending. Both normal clones still execute immutable62
+  (`d1fa8c8`); shared sign-off remains51 and public/BOTH FULL proof is open.
 - Installed `v0.62.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption
@@ -42,8 +41,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
   are unchanged. The release plan retains exact source/data evidence.
 - E10 retains finite peer causes; E14 distinguishes direct structured remote
-  rejections. Focused, producer-to-inbox and blind checks pass; renewed whole
-  source and exact-tag checks are pending. Both patches remain unreleased and
+  rejections. Focused, producer-to-inbox and blind checks pass; fresh whole source checks
+  pass and exact-tag checks are pending. Both patches remain unreleased and
   absent from normal62 packages; reader schema/auth controls pass.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection

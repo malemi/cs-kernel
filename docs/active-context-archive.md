@@ -1,3 +1,11 @@
+## 2026-10-27 — Local62 checkpoint before forward candidate freeze
+
+- **Latest release tag: `v0.62.0`. Current HEAD status: untagged.**
+  Both normal clones match immutable `v0.62.0` (`d1fa8c8`): all 159 package
+  files, actual identities and fresh local Git lock rebuilds pass. Source and
+  exact-tag harnesses each pass six genuine golden builds.
+  Operational sign-off remains51; genuine FULL and public Git provenance are open.
+
 ## 2026-10-27 — Superseded pending exact Sent acquisition
 
 - Mario's ordinary archive_absent event establishes zero exact scoped archive
