@@ -6,6 +6,16 @@
   successor adoption and genuine BOTH FULL remain open. Both normal clones
   execute immutable63 (`cb7bd930`); shared sign-off remains51.
 
+## 2026-10-27 — source65 release candidate
+
+- **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**
+  Immutable64 passes its source/tag suites and six golden builds each. Successor
+  source reconciles canonical operator instructions and precise worker timing;
+  cleanup and same-envelope allocation pass focused original-path controls.
+  Final source/tag/artifact gates and BOTH adoption/FULL remain open. Both normal
+  clones execute63; shared sign-off remains51.
+
+
 ## 2026-10-27 — successor timing and canonical workflow state
 
 - **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**

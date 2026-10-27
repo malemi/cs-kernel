@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+## v0.65.0 — 2026-10-27 (MINOR)
+
+Deliver shared operator instructions and account for bounded read completion.
+
+- Keep triage draft-only. The parent can use the existing exact-ID send route
+  only under already admitted send mode, launcher grant and marker, for ready
+  same-run drafts with fresh engine guards. Complete every required recurring phase.
+- Refresh the reviewed generated skills from canonical templates on both clones,
+  with truthful checksums and complete environment/instruction rollback. Restore
+  conditional fixed-link instructions without adding an engine feature: absent
+  capability stops before creation; the existing portal flow remains intact.
+- Preserve worker PID/start and signal/reap evidence with one cumulative cleanup
+  allowance. Reserve finalization inside the unchanged projection envelope;
+  retain precise timing and explicitly excluded observer costs. Historical causes
+  stay unknown, and uncertain work grants no replay authority.
+- Include the unshipped correlation, initiating-cause retention and native
+  cost/phase diagnostics described in64 below.
+
+Migration: install this immutable tag normally on BOTH maintained clones; verify
+all package bytes, canonical shared skills and lock-only rebuilds. Preserve
+company-authored data, credentials, grants, models, budgets and schedules.
+Diagnosis remains manual-only and technical SMTP remains disabled.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+composition touches guarded send/authentication surfaces; local controls and
+prior failed candidates do not replace exact-candidate operational acceptance.
+
 ## v0.64.0 — 2026-10-27 (MINOR)
 
 Keep operational failures linked to their actual source and complete every required phase.

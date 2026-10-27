@@ -14,12 +14,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**
-  Immutable64 passes its source/tag suites and six golden builds each. Successor
-  source reconciles canonical operator instructions and precise worker timing;
-  cleanup and same-envelope allocation pass focused original-path controls.
-  Final source/tag/artifact gates and BOTH adoption/FULL remain open. Both normal
-  clones execute63; shared sign-off remains51.
+- **Latest release tag: `v0.65.0`. Current HEAD status: tagged as `v0.65.0`.**
+  This unpublished candidate passes the complete source suite and six golden
+  builds. Exact-tag verification and BOTH canonical adoption/FULL remain open.
+  Both normal clones execute63; shared sign-off remains51. Historical diagnostic
+  causes stay unknown despite passing focused completion controls.
 - Installed `v0.63.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption
