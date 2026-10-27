@@ -1,3 +1,11 @@
+## 2026-10-27 — Superseded at-tag64 checkpoint
+
+- **Latest release tag: `v0.64.0`. Current HEAD status: tagged as `v0.64.0`.**
+  This local unpublished candidate passes complete source checks, six genuine
+  golden builds and controlled/blind diagnostic delivery. Exact-tag checks,
+  successor adoption and genuine BOTH FULL remain open. Both normal clones
+  execute immutable63 (`cb7bd930`); shared sign-off remains51.
+
 ## 2026-10-27 — Superseded development64 checkpoint
 
 - **Latest release tag: `v0.63.0`. Current HEAD status: untagged.**
