@@ -208,6 +208,23 @@ sys.exit(p.returncode)
                 for index, event in enumerate(events):
                     event['uuid'] = 'constructed-' + str(index)
                 self.assertEqual(len(outcomes.join(events,identity,'owner',producer)),1)
+                if case == 'assignment':
+                    self.assertTrue(output.endswith('\n'))
+                    native_output = output[:-1]
+                    for content, metadata in (
+                            (native_output, output), (output, native_output),
+                            (output + '\n', output + '\n'),
+                            (''.join(output.rsplit('\n', 2)), ''.join(output.rsplit('\n', 2))),
+                            (native_output + ' ', native_output + ' '),
+                            (native_output.replace('owner', 'foreign'), native_output.replace('owner', 'foreign'))):
+                        with self.subTest(content=content, metadata=metadata):
+                            changed = copy.deepcopy(events)
+                            changed[2]['message']['content'][0]['content'] = content
+                            changed[2]['tool_use_result'] = 'Error: ' + metadata
+                            self.assertEqual(outcomes.join(changed,identity,'owner',producer),[])
+                    events[2]['message']['content'][0]['content'] = native_output
+                    events[2]['tool_use_result'] = 'Error: ' + native_output
+                    self.assertEqual(len(outcomes.join(events,identity,'owner',producer)),1)
                 from cs.operator_native_composition import composition
                 events[0]['claude_code_version'] = binary.name
                 events.insert(2, dict(type='system',subtype='task_started',session_id='session',

@@ -109,3 +109,4 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Stripe payment-method links](briefs/2026-10-24-stripe-payment-method-link.md) — explicit interactive portal-session instructions; [integration plan](execution-plans/2026-10-24-stripe-payment-method-link.md).
 
 - [Canonical release alignment](execution-plans/2026-10-25-canonical-release-alignment.md) — recovered installed deltas, immutable release-only adoption and actual-byte verification in the [release procedure](release-procedure.md).
+- [Native66 follow-on recovery](execution-plans/2026-10-27-native66-authority-recovery.md) — held-read rendering and engine instruction-authority repair.

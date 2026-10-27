@@ -466,6 +466,9 @@ def join(events, child, owner, producer=None, lifecycle=None, context_value=None
             if scope['kind'] == 'outside_selected_workset':
                 # Pinned native rendering omits exactly the source's final LF.
                 expected = 'Exit code 3\n' + workset_deferral_output(scope).decode().removesuffix('\n')
+            if (scope['kind'] == 'assignment_hold' and expected.endswith('\n')
+                    and result.get('content') == expected[:-1]):
+                expected = expected[:-1]
             if (result.get('is_error') is not True or result.get('content') != expected
                     or event.get('tool_use_result') != 'Error: ' + expected):
                 return []
