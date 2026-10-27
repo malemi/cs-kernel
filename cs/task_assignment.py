@@ -98,6 +98,9 @@ def _observe_peer(settings, thread_key, response=None, *, failure=None):
 def _project_one(settings, thread_key: str, space_id: str | None = None) -> dict:
     try:
         raw = rpc.call_sync(settings, "tasks.assignment.project", {"thread_key": thread_key}, timeout=150)
+    except rpc.EngineError as error:
+        _observe_peer(settings, thread_key, failure="remote_invalid_params" if error.code == -32602 else "remote_error")
+        raise
     except Exception:
         _observe_peer(settings, thread_key, failure="transport_unavailable")
         raise

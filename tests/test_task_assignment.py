@@ -76,6 +76,21 @@ def inbound(key=KEY, *, mid="<in@customer.example>", date=NOW):
 
 
 class Consumer(unittest.TestCase):
+    def test_direct_rpc_errors_retain_typed_cause_identity_and_privacy(self):
+        from cs import observability, observability_producers
+        for error, expected in ((rpc.EngineError(-32602, "PRIVATE_MESSAGE", {"secret": "PRIVATE_DATA"}), "remote_invalid_params"),
+                                (rpc.EngineError(-32001, "PRIVATE_MESSAGE", {"secret": "PRIVATE_DATA"}), "remote_error"),
+                                (ConnectionError("PRIVATE_MESSAGE"), "transport_unavailable")):
+            events = []
+            with self.subTest(expected=expected), patch.object(rpc, "call_sync", side_effect=error) as called, patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append(observability.safe_metadata(kw))):
+                with self.assertRaises(type(error)) as raised:
+                    assignment._project_one(settings(), KEY)
+                self.assertIs(raised.exception, error)
+                called.assert_called_once_with(settings(), "tasks.assignment.project", {"thread_key": KEY}, timeout=150)
+            self.assertEqual(events[0]["causal"]["cause"], expected)
+            self.assertNotIn("PRIVATE_MESSAGE", json.dumps(events))
+            self.assertNotIn("PRIVATE_DATA", json.dumps(events))
+
     def test_peer_failure_diagnostics_preserve_typed_causes_before_merge(self):
         from cs import observability, observability_producers
         selected = settings().model_copy(update={"accounts": "peer:peer"})
@@ -791,6 +806,30 @@ class Consumer(unittest.TestCase):
 
 
 class ObservationTransport(unittest.IsolatedAsyncioTestCase):
+    async def test_direct_observer_uses_actual_rpc_error_response(self):
+        import asyncio
+        from cs import observability_producers
+        class Response:
+            async def __aiter__(self):
+                yield json.dumps({"id": 1, "error": {"code": -32602, "message": "PRIVATE_MESSAGE", "data": {"secret": "PRIVATE_DATA"}}})
+        client = rpc.EngineClient(settings())
+        client._ws = Response()
+        future = asyncio.get_running_loop().create_future()
+        client._pending[1] = future
+        await client._recv_loop()
+        with self.assertRaises(rpc.EngineError) as received:
+            await future
+        error = received.exception
+        self.assertEqual(error.code, -32602)
+        events = []
+        with patch.object(rpc, "call_sync", side_effect=error), patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append(kw)):
+            with self.assertRaises(rpc.EngineError) as raised:
+                assignment._project_one(settings(), KEY)
+        self.assertIs(raised.exception, error)
+        self.assertEqual(events[0]["causal"]["cause"], "remote_invalid_params")
+        self.assertNotIn("PRIVATE_MESSAGE", json.dumps(events))
+        self.assertNotIn("PRIVATE_DATA", json.dumps(events))
+
     async def test_real_cli_and_health_preserve_observed_hold_and_other_peer_failures(self):
         import asyncio
         import base64

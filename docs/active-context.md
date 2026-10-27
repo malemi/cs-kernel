@@ -41,10 +41,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   7.709seconds with a legitimate human-verification hold. Historical skip cause
   remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
   are unchanged. The release plan retains exact source/data evidence.
-- E10 finite peer-cause source, blind ordinary-log and genuine-golden checks
-  pass. That kernel change remains unreleased and absent from both immutable62
-  packages. Both independent readers accept the existing producer schema with
-  owner/auth rejection controls; whole business acceptance remains open.
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox and blind checks pass; renewed whole
+  source and exact-tag checks are pending. Both patches remain unreleased and
+  absent from normal62 packages; reader schema/auth controls pass.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is

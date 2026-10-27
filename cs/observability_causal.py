@@ -9,7 +9,7 @@ import re
 import uuid
 
 PAIRS = {
-    "assignment_peer_projection": {"REPLY_SOURCE_UNAVAILABLE", "SOURCE_UNAVAILABLE", "SOURCE_OWNER_REQUIRED", "projection_invalid", "transport_unavailable", "alias_authority_conflict", "alias_scope_unavailable", "unknown"},
+    "assignment_peer_projection": {"remote_invalid_params", "remote_error", "REPLY_SOURCE_UNAVAILABLE", "SOURCE_UNAVAILABLE", "SOURCE_OWNER_REQUIRED", "projection_invalid", "transport_unavailable", "alias_authority_conflict", "alias_scope_unavailable", "unknown"},
     "assignment_peer_reply": {"SENT_REPLY_NOT_SYNCED", "unknown"},
     "assignment_time_budget": {"shared_deadline_exhausted", "request_timeout", "batch_deadline", "timeout_origin_unknown", "deadline_capacity_deferred", "capacity_deferred", "read_failed", "complete", "no_work"},
     "fixture_registry": {"registry_absent", "registry_invalid", "registry_expired", "registry_valid"},
