@@ -14,11 +14,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.65.0`. Current HEAD status: tagged as `v0.65.0`.**
-  This unpublished candidate passes the complete source suite and six golden
-  builds. Exact-tag verification and BOTH canonical adoption/FULL remain open.
-  Both normal clones execute63; shared sign-off remains51. Historical diagnostic
-  causes stay unknown despite passing focused completion controls.
+- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+  This unpublished candidate passes complete source and exact-tag suites, with
+  six golden builds each. Its159-file wheel matches immutable8ec3978. BOTH
+  canonical adoption/FULL remain open; both normal clones execute63 and shared
+  sign-off remains51. Historical diagnostic causes stay unknown.
 - Installed `v0.63.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption

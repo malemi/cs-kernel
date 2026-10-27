@@ -6,6 +6,15 @@
   successor adoption and genuine BOTH FULL remain open. Both normal clones
   execute immutable63 (`cb7bd930`); shared sign-off remains51.
 
+## 2026-10-27 — exact65 tag verification
+
+- **Latest release tag: `v0.65.0`. Current HEAD status: tagged as `v0.65.0`.**
+  This unpublished candidate passes the complete source suite and six golden
+  builds. Exact-tag verification and BOTH canonical adoption/FULL remain open.
+  Both normal clones execute63; shared sign-off remains51. Historical diagnostic
+  causes stay unknown despite passing focused completion controls.
+
+
 ## 2026-10-27 — source65 release candidate
 
 - **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**
