@@ -1,3 +1,10 @@
+## 2026-10-27 — Frozen63 checkpoint before exact-tag result
+
+- **Latest release tag: `v0.63.0`. Current HEAD status: tagged as `v0.63.0`.**
+  This is a local unpublished candidate with green complete source gates; exact
+  tag verification is pending. Both normal clones still execute immutable62
+  (`d1fa8c8`); shared sign-off remains51 and public/BOTH FULL proof is open.
+
 ## 2026-10-27 — Local62 checkpoint before forward candidate freeze
 
 - **Latest release tag: `v0.62.0`. Current HEAD status: untagged.**
