@@ -56,7 +56,11 @@ content, prompts, model responses, arbitrary exception text and raw tracebacks.
 
 Trace the entire path: producer → metadata validator → persisted-event validator
 → ordinary CLI → collector state → incident validation → readable inbox. A new
-field dropped by one boundary is not a delivered improvement. Preserve the first
+field dropped by one boundary is not a delivered improvement. Check the actual
+reader's imported schema against the producer before rollout: a healthy reader
+process can reject every new diagnostic field. Prove an exact retained event
+roundtrip through each installed client's authenticated ordinary access, retaining
+malformed-record counts, continuation gaps and owner/auth rejection controls. Preserve the first
 decisive failure across child/fallback selection and final reporting. Distinguish
 success of a child, a diagnostic write and the whole supervised task. A later
 unrelated or generic wrapper success must not erase a known failure.
@@ -238,7 +242,12 @@ A successful retry or fresh-process probe does not explain a failed daemon
 operation. Retain the failed daemon's connection identity/state and ordered
 operations, including command entry time, remaining absolute deadline and
 expiry/disposal ordering. Projection duration is not command duration unless
-both command boundaries were observed. Record the initiating failure separately
+both command boundaries were observed. Distinguish economic quota, shared work
+allowance, cumulative provider deadline and the last command's own duration.
+A final command entered with only a few seconds remaining does not establish
+that this command occupied the whole preceding two-minute projection. Retain
+entry elapsed/remaining time, ordered operation totals and queue wait; earlier
+protocol work can consume the deadline without proving its initiating cause. Record the initiating failure separately
 from cleanup failures; a timer closing a socket at expiry does not explain why
 prior work exhausted the budget.
 

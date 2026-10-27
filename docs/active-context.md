@@ -15,26 +15,36 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.62.0`. Current HEAD status: untagged.**
-  Both normal clones match immutable0.61.2/1189037:159files, exact identities
-  and fresh local Git lock rebuilding. Source/at-tag/golden gates pass.
+  Both normal clones match immutable `v0.62.0` (`d1fa8c8`): all 159 package
+  files, actual identities and fresh local Git lock rebuilds pass. Source and
+  exact-tag harnesses each pass six genuine golden builds.
   Operational sign-off remains51; genuine FULL and public Git provenance are open.
-- Installed0.61.2 includes complete MIME identity decoding, typed remote-error
-  provenance, finite shared-time allowances and complete notice-envelope bounds.
+- Installed `v0.62.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
   The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
   owns exact installed acceptance, public provenance and authorized publication.
 - Both immutable90bb actor runtimes have verified provider connection/state,
   command timing, progress and expiry/disposal diagnostics. Four peers and Qonto
   are unchanged. Exact-RFC adapters and reviewed narrow source maintenance retain
   source/assignment guards; original schedules remain in the maintenance preimage.
-- Desktop consumer ca175b9 and the exact reviewed61.2 policy are active.
-  Strictc47fa38e failed native composition after a structured Bash task kill;
-  child exit0 did not establish completed work. Both clones remain61.2 under
-  the owned maintenance hold. Fixture authority and financial limits are unchanged.
+- Desktop consumer `ca175b9` and reviewed62 policy are active. FULL948f1d59
+  is interrupted after ordinary assignment health rejected two technical reads;
+  independent cleanup passes. Internal cumulative120s expiry is evidenced for
+  one read; initiating latency remains unknown. The other read has a scoped
+  Sent-index count other than one; zero versus duplicate remains unknown.
+- Reviewed E10 source retains finite peer causes before merge. Retained-input,
+  blind ordinary-log and full genuine-golden source checks pass; this patch is
+  unreleased and absent from both immutable62 clone packages. Both independent
+  readers now use their existing producer schema: exact retained-event reads and
+  invalid-token/foreign-owner rejection pass. Business engines are unchanged.
 - Installed E8 accounts for the complete serialized notice projection; both
   copied-backlog preflights pass with zero outward calls. E9 source adds finite
   native interruption diagnostics and child-local Bash lifetime alignment.
   Its blind log check detects interruption and preserves the unknown upstream
-  reason; source integration and fresh BOTH FULL remain required.
+  reason. Source integration and installed private-backlog checks pass; fresh
+  genuine BOTH FULL remains required.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -100,10 +110,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Complete reviewed E9 source gates, freeze a new immutable candidate and
-   adopt both clones, including the actual canonical operator timeout instruction.
-2. Run one freshly admitted strict BOTH FULL and independently verify its result.
-3. Diagnose any new failure with Astra; preserve unknown costs and effects.
-   Require green free gates and finite review before any further paid attempt.
-4. Complete authorized public adoption and doc-end/critic/separate final review.
+1. Preserve FULL62 failure evidence; do not publish it as successful acceptance.
+2. Resolve the evidenced source faults within reviewed authority before a new
+   finite admission. Diagnostic improvements alone do not repair business reads.
+3. Require green free gates and fresh composition review before any paid retry;
+   preserve unknown charges/effects and current financial/source limits.
+4. Complete genuine BOTH FULL, authorized public provenance and final closure.
 5. Keep cs-diagnose manual and require native Gmail proof before reconciliation.

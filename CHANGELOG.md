@@ -491,13 +491,14 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
-Current adoption is asymmetric: MrCall installs `v0.52.0` at `3c0e78c`; Café 124
-retains `v0.51.0` at `5609207`. MrCall's authenticated identity, scoped read-tier
-acceptance, canonical three-host files and exact lock-only rebuild pass.
-Company guidance, local harness edits, permissions, launchers and schedules are
-preserved. The previous shared FULL record is retained verbatim in
-`docs/active-context-archive.md`; this upgrade certifies no customer sends,
-paid ticks, assignment writes or fresh native model behavior.
+Both maintained clones install immutable local candidate `v0.62.0` at
+`d1fa8c8218cb852093d6c551dd552cab20309afc`. All 159 package files, authenticated
+identities, the reviewed three-host timeout instruction and fresh local Git
+lock rebuilds pass. Company guidance, local harness edits, permissions and
+launchers remain preserved. Current genuine BOTH-clone FULL and public Git
+provenance remain pending; component adoption does not advance shared sign-off.
+Historical acceptance and superseded adoption claims remain in
+`docs/active-context-archive.md`.
 
 ## v0.48.0 — 2026-09-28
 

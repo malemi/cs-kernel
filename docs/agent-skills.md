@@ -256,7 +256,8 @@ and native acceptance are tracked separately in the
 `cs-stripe` uses explicit interactive reads through the engine-owned
 Stripe connection. The canonical workflow uses existing `cs rpc stripe.*`
 commands for status, bounded customer/payment/invoice/subscription lists and detail
-reads; the untagged convenience `cs stripe` CLI is separate. Desktop Settings owns test, save,
+reads; the separate `cs stripe` convenience CLI is exposed by kernel dispatch.
+Desktop Settings owns test, save,
 replacement and disconnect; no clone configuration stores a Stripe key.
 
 The skill discloses that CLI evidence reaches the invoking agent and may enter

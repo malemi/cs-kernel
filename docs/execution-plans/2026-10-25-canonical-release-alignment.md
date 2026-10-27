@@ -2476,7 +2476,7 @@ interrupted native charge remains unknown without a terminal record; configured
 financial limits are unchanged and no zero-cost or business no-effects claim is made.
 
 ### E9 — align native Bash lifetime with the approved bounded work
-Status: approved amendment; M1 integration APPROVED. Source and exact-tag harnesses pass with six genuine golden builds each. BOTH adoption, native acceptance and publication remain pending. Historical body, approved brief and E5–E8 remain intact.
+Status: approved amendment; M1 integration APPROVED. Source and exact-tag harnesses pass with six genuine golden builds each. BOTH adoption and exact policy activation pass. Genuine strict FULL948f1d592059c3a50fa110a9e7303ecd is running; native acceptance and publication remain pending. Historical body, approved brief and E5–E8 remain intact.
 Classification: substantial runtime/prompt behavior repair; no fast path. Lead owns integration/adoption; one kernel executor owns only the launcher, exact operator template, focused existing tests and finite diagnostic propagation.
 
 Evidence and exact sources
@@ -2519,3 +2519,161 @@ Genuine current-candidate FULL success alone admits remaining already-authorized
 Does not establish: implementation/GREEN, a real Claude timeout experiment, guaranteed2730s completion, provider no-effects, current fixture admissibility, sufficient future funds, BOTH acceptance, publication or release completion. No source/config/provider/model writes occurred in planning. Scoped source excerpts were authorized by the lead; unrelated historical plan body was not re-investigated.
 
 E9 M1 verification references: `/tmp/mrcall-ai-kit/20261025-release-alignment/v62/bash-time-integration-review.md`, `source-harness-r2-result.json`, `at-tag-harness-result.json` and `blind-bash-logs-report.md`. Immutable local candidate `v0.62.0` is `d1fa8c8218cb852093d6c551dd552cab20309afc`; all159 package files match its wheel. These component results do not certify installed adoption, native conformance or FULL.
+
+
+### E10 — retain the actual per-peer assignment failure before merge
+
+Status: affected plan APPROVED; kernel M1 integration APPROVED and source harness
+GREEN. Normal clones retain immutable62; no forward adoption or FULL is admitted.
+Classification: substantial diagnostic-contract repair, not fast path. This
+amends the existing release/logging work only. E9 and all historical evidence
+remain intact; its former running status is superseded by the following facts.
+
+Current evidence and scope
+- Actual FULL948f1d592059c3a50fa110a9e7303ecd was interrupted at23:21:44UTC,
+  not accepted. v62/full-stop-cleanup-verification.json records cleanup PASS.
+  v62/full62-failure-cause.md establishes ordinary assignment_read_incomplete:
+  human-work rows4 and27 are technical UNKNOWN reads, not legitimate policy holds.
+- Selected-owner event616a3505571e4c8ab7e2edea3661d203 reports47/47 returned,
+  zero timeouts/deferred,1247132ms elapsed and1426775ms remaining. Successful RPC
+  transport does not establish complete projections. Neither financial nor
+  shared-time exhaustion is the demonstrated cause. Context52>48 is separate
+  literal-paging evidence; native review completed with requested2730000ms.
+- Row27 retains SENT_REPLY_NOT_SYNCED. The manifest-matched engine Sent-index
+  branch selects it when a fresh related own-Sent header has scoped match count
+  other than one. Zero versus duplicate and the sync origin remain UNKNOWN.
+  Projection maps incomplete evidence to REPLY_SOURCE_UNAVAILABLE; kernel
+  cs/task_assignment.py::_merge_peers replaces peer reasons with generic scope
+  unreadability. Row4 has empty reply_evidence; its first predicate is UNKNOWN.
+- The approved brief covers actual logging-producer/propagation repair and
+  fail-closed assignment diagnostics. It does not authorize an engine judgment
+  replacement, archive/data repair, new provider acquisition, changed assignment
+  policy, backend deployment/restart or business replay. No such action is
+  admitted here. Missing backend-only facts require an explicitly reviewed
+  affected producer amendment and deployment authority before implementation.
+
+M1 — bounded evidence recovery and kernel producer retention
+Owner: kernel executor; lead owns read-only engine evidence access and scope
+adjudication. First deliverable within5minutes; stop discovery after one complete
+available evidence traversal or5minutes, whichever comes first. Retain coverage
+and unavailable/cursor gaps rather than inferring that an event never existed.
+Use the installed logs_cli.collect events/trace path or ordinary cs logs events
+--json, following every returned cursor, for each actually configured owner.
+Join existing assignment.source.failed, assignment.projection.terminal and
+provider_diagnostic events to the two retained hashed roots, actual discovery
+process/timing and actor; do not assume supervisor/discovery trace equality.
+Astra's already completed authenticated reader attempt returned only three
+recent23:21:44 events,145 malformed-event, recent-window-limit and
+continuation_required=true with next_cursor=null, with no matching roots.
+Treat this as unavailable historical coverage, not absence of the failure.
+Before repeating recovery, inspect actual producer→reader schema compatibility
+using retained bytes and existing validators; a compatibility defect is only a
+hypothesis until a real rejected event demonstrates it. Do not loop the reader
+or bypass validation. Reader-only recovery needs an affected source review;
+backend mutation remains outside this amendment's authority.
+Read existing diagnostics only: no tasks.assignment.project, review.gather,
+provider probe, model call or uncertain-case replay. Save a private evidence map
+with exact event references, owner/time/process binding and missing facts.
+If no bound engine event explains row4, retain UNKNOWN and name the missing
+producer predicate. A later successful projection is not historical evidence.
+
+Extend existing cs/task_assignment.py decision seams before _merge_peers and
+its early-return/alias branches discard evidence. Emit each actual failed peer
+observation, including successful RPCs carrying validated incomplete/UNKNOWN
+projections. Preserve finite allowlisted projection/reply cause, failed predicate,
+source component/relative origin and available cause-event reference; distinguish
+transport/validation/alias absence from a returned technical projection failure.
+Record existing safe owner/root commitments and actual run/process references;
+missing links remain explicit. Preserve the first decisive failure and retain
+additional peer failures independently. Never copy arbitrary reason/exception
+text, raw owner/root identifiers, mail headers/bodies, credentials or payloads
+into ordinary events. Unrecognized/missing codes map to explicit UNKNOWN with
+an investigation route, not a fabricated upstream cause. Extend only required
+existing causal/metadata/store/collector/inbox validators; no parallel monitor.
+Keep business result shape/selection/order, holds, completeness, calls, retry
+behavior, deadlines, concurrency, financial controls and every oracle unchanged.
+
+Kernel-only boundary: retained row27 permits the finite not-unique-scoped-Sent
+predicate and upstream branch route now; it cannot reveal zero versus duplicate.
+Row4 cannot be recovered from the merged receipt alone. Existing bound engine
+events may explain it; until actually recovered, both its precise code and
+historical failed predicate stay UNKNOWN. If those events lack deciding facts,
+a backend producer addition is necessary for future precision. Such a proposed
+addition must instrument the actual Sent-index/store/source decision with finite
+zero/one/multiple cardinality and first failed predicate, retaining diagnostics
+through projection/storage. It must preserve business judgment and requires
+separate affected source/actor review and explicit deployment/restart authority.
+Do not silently fold this dependency into a kernel release or claim that a
+kernel diagnostic change repairs the underlying source-correspondence defect.
+
+M1 verification before integration review: retain actual failed62 typed input
+bytes/hashes privately. Replay those inputs through existing projection validation,
+merge, health and actual ordinary CLI→collector→inbox in disposable stores with
+external boundaries disabled. Retain preimage RED showing precise peer evidence
+lost, then GREEN showing row27's supported predicate and row4's actual recovered
+predicate or explicit UNKNOWN plus concrete producer route. Do not author desired
+log records or label a merged-row replay as a captured pre-merge response.
+Where actual pre-merge bytes are absent, state that limit; exercise the existing
+producer with separately labelled controlled typed responses, never substitute
+that control for historical evidence. Check multiple failed peers, alias/early
+returns, malformed/foreign-owner metadata, first-failure precedence and missing
+sink/reference; healthy/empty, legitimate policy hold and unknown controls must
+retain their prior business/health outcomes. Assert zero external calls and no
+sensitive sentinel in CLI/event/inbox output. A fresh blinded analyst receives
+only ordinary logs/inbox, without symptom labels/source/answer key; acceptance
+requires detection of both technical reads and supported cause or specific next
+producer route, while refusing unsupported timeout/quota/cardinality conclusions.
+Run focused assignment, causal/store, health and monitor regressions plus the
+required genuine-golden source harness; retain actual commands/results. Fresh
+M1 integration review closes this milestone before adoption.
+
+M2 — preserve candidate integrity and close the actual release obligation
+Owner: lead for candidate/admission/publication; each clone owner for supported
+adoption; fresh independent reviewer for final-user evidence. Keep failed local
+v0.62.0/d1fa8c8 immutable/unpublished and all159 normal installed files unchanged
+during source work. No new version/tag/adoption/FULL starts under this amendment.
+After any supported underlying correction and green free gates, separately
+review its exact source scope, immutable forward candidate, BOTH supported clean
+installs/locks/provenance and current R9 ca175b9/policy composition. Preserve the
+six runtime families, backend90bb actor composition and Bash lifetime fix; no
+backend rollout, financial increase or new paid retry is implied. The consumed62
+admission is exhausted; a fresh finite admission needs actual supported repair,
+green free checks, reconciled charges/reserves and independent composition review.
+Rollback restores captured owned package/pin/lock/consumer/policy preimages only;
+never rewrite business data, uncertain effects, failed evidence or published tags.
+Strict genuine BOTH FULL remains required. Diagnostic acceptance alone cannot
+permit publication or turn UNKNOWN/hold into health. Successful publication,
+public Git/lock provenance, doc-end/doc-critic, separate final review and baseline
+advancement remain unmet until their original concrete gates pass.
+
+Establishes: scoped evidence recovery, the demonstrated reason-loss seam and
+ordered diagnostic verification. Does not establish row4's historical cause,
+row27's zero/duplicate distinction or sync repair, implemented diagnostics,
+underlying business repair, available funds, native2730s conformance, BOTH FULL,
+publication or completion. Planning made no source/runtime/provider/model writes.
+Coverage: full v62 failure report; approved brief401–514; complete E9 suffix and
+relevant existing source seams; unrelated historical plan body was not relied on.
+
+E10 verified component results (2026-10-27)
+- Fresh plan review: v62/peer-cause-plan-review.md; immutable reviewed plan:
+  v62/peer-cause-approved-plan.md. Fresh kernel M1 integration:
+  v62/peer-cause-integration-review.md. The final genuine-golden source harness
+  passes (peer-cause-fix/peer-source-harness-r2-result.json); actual retained-input replay and
+  blinded ordinary-log analysis pass without external calls. Source diagnostics
+  retain per-peer finite causes before merge. They are not installed in either clone.
+- Read-only retained producer evidence establishes cumulative internal120s expiry:
+  final EXAMINE entered with3317ms remaining and failed after3319ms. Earlier
+  protocol operations consumed the interval; initiating latency remains unproved.
+  Row27's scoped Sent-index count is not one; zero versus duplicate remains unknown.
+- The independent reader rejected valid provider_diagnostic records because its
+  imported schema was older than its producer. Separately reviewed, guarded
+  reader-only systemd drop-ins align both readers to existing producer packages.
+  Execution, exact retained-event authenticated roundtrips on BOTH installed
+  clients, invalid-token401 and foreign-owner rejection pass; business producer
+  identities remain unchanged. See v62/reader-compat/config-review.md,
+  execution-receipt.json, negative-auth-owner-checks.json and both retained
+  roundtrip proofs. Historical coverage gaps remain unresolved.
+- FULL62 is interrupted, not accepted; cleanup independently passes. Underlying
+  source faults, genuine BOTH FULL, publication/provenance and final closure
+  remain unmet. No financial-budget exhaustion is established, no increase or
+  paid retry occurred, and the documentation baseline remains unchanged.
