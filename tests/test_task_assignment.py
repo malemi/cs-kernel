@@ -494,7 +494,7 @@ class Consumer(unittest.TestCase):
                     bulk = assignment.projections(selected, [requested])[requested]
                 self.assertEqual(single, bulk)
                 self.assertEqual(single["thread_key"], requested)
-                self.assertEqual(set(deadlines), {3610})
+                self.assertEqual(set(deadlines), {3610 - 2 * assignment.rpc_reads.CLOSE_SECONDS})
                 if mode == "normal":
                     self.assertEqual(single["state"], "normal")
                     self.assertTrue(single["complete"])

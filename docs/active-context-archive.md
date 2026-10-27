@@ -6,6 +6,23 @@
   successor adoption and genuine BOTH FULL remain open. Both normal clones
   execute immutable63 (`cb7bd930`); shared sign-off remains51.
 
+## 2026-10-27 — successor timing and canonical workflow state
+
+- **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**
+  This unpublished local candidate passes complete source/exact-tag suites and
+  six genuine golden builds each, plus controlled/blind diagnostic delivery.
+  Canonical operator-permission prose still needs reconciliation before successor
+  adoption/FULL. Both normal clones execute63; shared sign-off remains51.
+
+
+## 2026-10-27 — verified fixed-link runtime boundary
+
+- Stripe's canonical skill supports reads, fixed payment links and explicit portal
+  requests. Support exposes it; native selection and [integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md)
+  remain open. [Provider guides](provider-connections.md) own other integrations;
+  Faire authentication/adapter acceptance remains unverified.
+
+
 ## 2026-10-27 — Superseded development64 checkpoint
 
 - **Latest release tag: `v0.63.0`. Current HEAD status: untagged.**

@@ -59,7 +59,7 @@ _STATE = contextvars.ContextVar('causal_decision', default=None)
 
 
 def _validate(value):
-    if not isinstance(value, dict) or set(value) != {'version', 'layer', 'check', 'cause', 'outcome', 'phase', 'command', 'method', 'facts', 'refs', 'missing_refs', 'evidence_complete'}:
+    if not isinstance(value, dict) or set(value) - {'timing'} != {'version', 'layer', 'check', 'cause', 'outcome', 'phase', 'command', 'method', 'facts', 'refs', 'missing_refs', 'evidence_complete'}:
         raise ValueError('Invalid causal shape')
     if type(value['version']) is not int or value['version'] != 1:
         raise ValueError('Invalid causal version')
@@ -82,6 +82,23 @@ def _validate(value):
                 raise ValueError('Invalid native terminal')
         elif type(item) not in (bool, int) or (type(item) is int and (not -(2**53) < item < 2**53 or (key != 'process_exit' and item < 0))):
             raise ValueError('Invalid causal fact')
+    if 'timing' in value:
+        timing = value['timing']
+        allowed = {'worker_pid', 'worker_start_ticks', 'worker_start_available', 'worker_exit', 'signal_attempted', 'signal_sent',
+            'reap_confirmed', 'exit_status_available', 'cleanup_allowance_us', 'cleanup_elapsed_us',
+            'entry_allowance_us', 'launch_elapsed_us', 'work_elapsed_us', 'return_elapsed_us',
+            'projection_elapsed_us', 'projection_work_us', 'diagnostic_elapsed_us', 'final_write_excluded',
+            'finalization_reserve_us', 'work_allowance_us'}
+        if not isinstance(timing, dict) or set(timing) - allowed:
+            raise ValueError('Invalid completion timing')
+        boolean = {'worker_start_available', 'signal_attempted', 'signal_sent', 'reap_confirmed', 'exit_status_available', 'final_write_excluded'}
+        for key, item in timing.items():
+            if key in boolean:
+                valid = type(item) is bool
+            else:
+                valid = type(item) is int and (-(2**31) <= item <= 10**12 if key == 'worker_exit' else 0 <= item <= 10**12)
+            if not valid:
+                raise ValueError('Invalid completion timing value')
     refs = value['refs']
     if not isinstance(refs, dict) or set(refs) != set(REFS):
         raise ValueError('Invalid causal references')
@@ -113,7 +130,7 @@ def scope():
         _STATE.reset(token)
 
 
-def decision(check, cause, *, layer='ordinary_health', phase=None, command=None, method=None, outcome='failed', tool=None, session=None, replace=False, **facts):
+def decision(check, cause, *, layer='ordinary_health', phase=None, command=None, method=None, outcome='failed', tool=None, session=None, replace=False, timing=None, **facts):
     try:
         from .observability import current_context, diagnostic_id
         state = _STATE.get()
@@ -131,7 +148,7 @@ def decision(check, cause, *, layer='ordinary_health', phase=None, command=None,
             facts = {**state.get('native_facts', {}), **facts}
         if state is not None and state.get('process_exit') is not None:
             facts.setdefault('process_exit', state['process_exit'])
-        value = validate(dict(version=1, layer=layer, check=check, cause=cause, outcome=outcome, phase=phase, command=command, method=method, facts=facts, refs=refs, missing_refs=[key for key in REFS if refs[key] is None], evidence_complete=cause != 'unknown'))
+        value = validate(dict(version=1, layer=layer, check=check, cause=cause, outcome=outcome, phase=phase, command=command, method=method, facts=facts, **({'timing': timing} if timing is not None else {}), refs=refs, missing_refs=[key for key in REFS if refs[key] is None], evidence_complete=cause != 'unknown'))
         if state is not None and (replace or state['causal'] is None or (state['causal']['outcome'] in {'accepted', 'held'} and outcome == 'failed')):
             state['causal'] = value
         return value

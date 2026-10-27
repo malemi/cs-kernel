@@ -5,7 +5,7 @@ from . import observability
 from contextlib import nullcontext
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import math
 import json
 import os
@@ -31,6 +31,7 @@ class ReadOutcome:
     value: Any = None
     error: Exception | None = None
     diagnostic: dict | None = None
+    completion: dict | None = None
 
 
 CAUSES = {'remote_invalid_params', 'remote_error', 'request_timeout', 'batch_deadline', 'shared_deadline', 'worker_timeout', 'connection_failure', 'transport_unavailable', 'connection_setup_timeout', 'account_timeout_deferred', 'capacity_timeout_deferred', 'read_deferred_after_failure'}
@@ -173,6 +174,56 @@ async def _read(settings, method, requests, request_timeout, batch_timeout, dead
     return outcomes
 
 
+def _elapsed_us(start, end=None):
+    return min(10**12, max(0, round(((time.monotonic() if end is None else end) - start) * 1000000)))
+
+
+def _process_start(process):
+    try:
+        from pathlib import Path
+        return int((Path('/proc') / str(process.pid) / 'stat').read_text().rsplit(')', 1)[1].split()[19])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def _cleanup_process(process, limit, owned_process_group, worker_start_ticks=None):
+    started = time.monotonic()
+    cleanup_limit = min(limit, started + CLOSE_SECONDS)
+    value = {'worker_pid': process.pid, 'signal_attempted': False, 'signal_sent': False,
+             'reap_confirmed': False, 'exit_status_available': False,
+             'cleanup_allowance_us': _elapsed_us(started, max(started, cleanup_limit)),
+             'worker_start_available': worker_start_ticks is not None}
+    if worker_start_ticks is not None:
+        value['worker_start_ticks'] = worker_start_ticks
+    if process.poll() is None:
+        value['signal_attempted'] = True
+        try:
+            if owned_process_group is None:
+                os.killpg(process.pid, signal.SIGKILL)
+            else:
+                process.kill()
+            value['signal_sent'] = True
+        except ProcessLookupError:
+            pass
+        try:
+            process.communicate(timeout=max(0, cleanup_limit - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            for stream in (process.stdin, process.stdout):
+                if stream is not None:
+                    stream.close()
+    if process.poll() is None:
+        try:
+            process.wait(timeout=max(0, cleanup_limit - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            pass
+    value['reap_confirmed'] = process.returncode is not None
+    value['exit_status_available'] = process.returncode is not None
+    value['cleanup_elapsed_us'] = _elapsed_us(started)
+    if process.returncode is not None:
+        value['worker_exit'] = process.returncode
+    return value
+
+
 def read_many(settings, method: str, requests: dict, *, request_timeout: float = REQUEST_SECONDS,
               batch_timeout: float = BATCH_SECONDS, deadline: float | None = None,
               token_cache: dict | None = None, owned_process_group: int | None = None) -> dict:
@@ -198,6 +249,8 @@ def read_many(settings, method: str, requests: dict, *, request_timeout: float =
     if not requests or time.monotonic() >= limit - 2 * CLOSE_SECONDS:
         return outcomes
     process = None
+    returned = outcomes
+    completion = {'entry_allowance_us': _elapsed_us(started, limit)}
     try:
         token = (token_cache or {}).get(settings.engine_owner_uid)
         payload = json.dumps({"settings": settings.model_dump(mode="json"), "method": method,
@@ -207,6 +260,10 @@ def read_many(settings, method: str, requests: dict, *, request_timeout: float =
         process = subprocess.Popen(READ_COMMAND, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL, start_new_session=owned_process_group is None,
             env=dict(os.environ, CS_DIAGNOSTIC_CONTEXT=json.dumps(observability.current_context())))
+        completion['launch_elapsed_us'] = _elapsed_us(started)
+        worker_start = _process_start(process)
+        if worker_start is not None:
+            completion['worker_start_ticks'] = worker_start
         output, _ = process.communicate(payload, timeout=max(0.001, limit - 2 * CLOSE_SECONDS - time.monotonic()))
         if process.returncode != 0:
             raise RuntimeError("read worker unavailable")
@@ -224,30 +281,22 @@ def read_many(settings, method: str, requests: dict, *, request_timeout: float =
             decoded[key] = ReadOutcome(value=row["value"], error=error("bounded read unavailable") if error else None, diagnostic=validate_diagnostic(row.get("diagnostic")))
         if token_cache is not None and _cacheable(result["token"], limit - time.monotonic()):
             token_cache[settings.engine_owner_uid] = result["token"]
-        return {key: decoded[key] for key in requests}
+        returned = {key: decoded[key] for key in requests}
+        return returned
     except subprocess.TimeoutExpired:
-        return {key: ReadOutcome(error=row.error, diagnostic=diagnostic('worker_timeout', started, limit-started-2*CLOSE_SECONDS, limit-time.monotonic(), bound_origin=origin)) for key, row in outcomes.items()}
+        returned = {key: ReadOutcome(error=row.error, diagnostic=diagnostic('worker_timeout', started, limit-started-2*CLOSE_SECONDS, limit-time.monotonic(), bound_origin=origin)) for key, row in outcomes.items()}
+        return returned
     except Exception as exc:
-        return {key: ReadOutcome(error=exc) for key in requests}
+        returned = {key: ReadOutcome(error=exc) for key in requests}
+        return returned
     finally:
+        completion['work_elapsed_us'] = _elapsed_us(started)
         if process is not None:
-            if process.poll() is None:
-                try:
-                    if owned_process_group is None:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    else:
-                        process.kill()
-                except ProcessLookupError:
-                    pass
-                try:
-                    process.communicate(timeout=CLOSE_SECONDS)
-                except subprocess.TimeoutExpired:
-                    if process.stdin is not None:
-                        process.stdin.close()
-                    if process.stdout is not None:
-                        process.stdout.close()
-            else:
-                process.wait()
+            completion.update(_cleanup_process(process, limit, owned_process_group, completion.get('worker_start_ticks')))
+            completion['return_elapsed_us'] = _elapsed_us(started)
+            for key, row in list(returned.items()):
+                returned[key] = replace(row, completion=dict(completion))
+
 
 
 def _isolated_main():

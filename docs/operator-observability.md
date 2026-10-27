@@ -123,6 +123,39 @@ The [log-driven diagnosis workflow](log-diagnosis-workflow.md) defines the
 mandatory detect → explain → improve → blind-check loop, its evidence standards,
 acceptance cases and current coverage limits.
 
+## Native completion and financial evidence
+
+The reviewed successor producer preserves `native_terminal_reason` as a closed
+value (`completed`, `budget_exhausted`, `max_turns`, `api_error`, `error` or
+`unknown`) and `native_total_cost_usd` only when the terminal reports a finite,
+nonnegative number. Missing or invalid cost remains unavailable, never zero.
+These facts survive ordinary events and the collected causal evidence. Installed63
+does not contain this successor producer; its adoption remains in the release plan.
+
+A completed native child with a missing required campaigns phase remains
+`required_phase_presence/required_phase_absent`, with `phase=campaigns`,
+`required=true` and `present=false`. Completion and reported cost do not erase
+that failure. A structured financial refusal remains a separate rejected native
+terminal; assistant prose about future cost cannot establish that refusal.
+
+Identify which financial boundary rejected work: native run, provider account/key
+or engine daily ledger. Report its configured limit only when directly evidenced.
+The generic primary launcher may be opaque; its limit stays unknown rather than
+borrowing the fallback or engine budget. Reported usage is neither an invoice nor
+proof that remaining work would fit. Follow the retained first cause and exact
+run/attempt/child references; do not raise limits or replay uncertain work merely
+to obtain a passing outcome. Controlled budget-terminal tests prove propagation
+and interpretation, not actual vendor-side enforcement.
+
+The successor's optional closed `causal.timing` object retains parent-side
+worker PID/start availability, signal and reap observations, bounded microsecond
+durations, and reserved finalization versus work allowance. Unknown identity or
+status is not fabricated. Projection finalization samples disclose
+`final_write_excluded=true`; they do not measure their own final emission or all
+caller/observer overhead. Separate controlled caller measurements preserve the
+original end-to-end intervals. A missing-stage or partial timing observation
+supports a bounded investigation, not a claimed complete historical cause.
+
 ## Candidate provider-connection evidence
 
 The local59 candidate accepts optional `provider_diagnostic` version1 metadata.

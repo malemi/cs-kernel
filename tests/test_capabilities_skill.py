@@ -42,6 +42,19 @@ RELEASE_REVIEW = json.loads((ROOT / "tests/fixtures/reviewed-release-scheduled-s
 
 
 
+def undo_parent_send_guidance(text: bytes) -> bytes:
+    record = json.loads((ROOT / "tests/fixtures/reviewed-parent-send-guidance.json").read_text())
+    receipt = (ROOT / "tests/fixtures" / record["plan_review_receipt"]).read_bytes()
+    assert hashlib.sha256(receipt).hexdigest() == record["plan_review_sha256"]
+    assert hashlib.sha256(text).hexdigest() == record["after_sha256"]
+    for edit in reversed(record["edits"]):
+        before, after = edit["before"].encode(), edit["after"].encode()
+        assert text.count(after) == 1
+        text = text.replace(after, before, 1)
+    assert hashlib.sha256(text).hexdigest() == record["before_sha256"]
+    return text
+
+
 def undo_e18_operator_guidance(text: bytes) -> bytes:
     record = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
     receipt = (ROOT / "tests/fixtures" / record["plan_review_receipt"]).read_bytes()
@@ -64,7 +77,7 @@ def prior_workset_template(rel: str) -> str | None:
     record = records[rel]
     text = (TPL / (rel + '.j2')).read_text()
     if rel == '.claude/skills/cs-operator/SKILL.md':
-        text = undo_e18_operator_guidance(text.encode()).decode()
+        text = undo_e18_operator_guidance(undo_parent_send_guidance(text.encode())).decode()
     framing = json.loads((ROOT / 'tests/fixtures/reviewed-inventory-eof-guidance.json').read_text())
     if rel in framing:
         addition = framing[rel]
@@ -329,7 +342,7 @@ def scheduled_surfaces(old: Path) -> None:
     timeout_review = RELEASE_REVIEW["bash_timeout_review"]
     timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
     assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
-    operator_source = (TPL / ".claude/skills/cs-operator/SKILL.md.j2").read_bytes()
+    operator_source = undo_parent_send_guidance((TPL / ".claude/skills/cs-operator/SKILL.md.j2").read_bytes())
     phase_review = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
     assert hashlib.sha256(operator_source).hexdigest() == phase_review["after_sha256"]
     operator_source = undo_e18_operator_guidance(operator_source)
@@ -361,7 +374,7 @@ def scheduled_surfaces(old: Path) -> None:
                 record = RELEASE_REVIEW["templates"][rel]
                 source = (TPL / (rel + ".j2")).read_bytes()
                 if rel == ".claude/skills/cs-operator/SKILL.md":
-                    source = undo_e18_operator_guidance(source)
+                    source = undo_e18_operator_guidance(undo_parent_send_guidance(source))
                 baseline = (old / (rel + ".j2")).read_bytes()
                 reviewed = (hashlib.sha256(source).hexdigest() == record["current_sha256"]
                             and hashlib.sha256(baseline).hexdigest() == record["baseline_sha256"]
@@ -401,6 +414,22 @@ def scheduled_surfaces(old: Path) -> None:
                         check("unreviewed mandatory phase edit remains refused",
                               old_phase in after and not preserves_scheduled_contract(
                                   rel, before, after.replace(old_phase, new_phase, 1)))
+                    check("parent sends only same-run prepared full IDs after draft-only triage",
+                          contains(after.decode(), "triage sub-skill remains draft-only in every mode",
+                                   "After triage returns", "THIS triage invocation", "selected exact RFC roots",
+                                   "successfully prepared ready draft", "Triage itself never sends",
+                                   "explicit exact `draft-send` grant", "CS_HEADLESS_SEND=1",
+                                   "A missing, unknown or contradictory", "is a STOP",
+                                   "pre-existing queue entry", "wildcard", "prefix", "inferred ID",
+                                   "freshly validate", "Do not bypass a refusal", "retry an uncertain",
+                                   "continue the existing campaigns step unless a genuine STOP"))
+                    for original, changed in ((b"THIS triage invocation", b"any previous triage invocation"),
+                                              (b"CS_HEADLESS_SEND=1", b"CS_HEADLESS_SEND=0"),
+                                              (b"successfully prepared ready draft", b"any queued draft"),
+                                              (b"parent-owned step 3 exception", b"any parent action")):
+                        check("unreviewed parent send widening remains refused",
+                              original in after and not preserves_scheduled_contract(
+                                  rel, before, after.replace(original, changed, 1)))
                     check("changed primary tasks instruction remains refused",
                           not preserves_scheduled_contract(rel, before, after.replace(
                               b".venv/bin/python -m cs tasks --json", b".venv/bin/python -m cs tasks close task", 1)))

@@ -4,6 +4,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import copy
+import contextlib
+import subprocess
 import json
 from pathlib import Path
 import sys
@@ -23,6 +25,32 @@ TOKEN = "fixture." + base64.urlsafe_b64encode(json.dumps({"exp": int(time.time()
 
 
 class Transport(unittest.IsolatedAsyncioTestCase):
+    @contextlib.contextmanager
+    def completion_measurements(self, label):
+        from cs import observability_producers
+        values = {'case': label, 'reads': [], 'projections': [], 'diagnostics': []}
+        original_read, original_projection, original_emit = rpc_reads.read_many, task_assignment.projections, observability_producers.emit
+        def read(*args, **kwargs):
+            result = original_read(*args, **kwargs)
+            values['reads'].extend(row.completion for row in result.values() if row.completion is not None)
+            return result
+        def projection_call(*args, **kwargs):
+            entered = time.monotonic()
+            try:
+                return original_projection(*args, **kwargs)
+            finally:
+                values['projections'].append({'entry_monotonic': entered, 'elapsed_us': rpc_reads._elapsed_us(entered)})
+        def emit(*args, **kwargs):
+            entered = time.monotonic()
+            try:
+                return original_emit(*args, **kwargs)
+            finally:
+                values['diagnostics'].append({'elapsed_us': rpc_reads._elapsed_us(entered), 'timing': (kwargs.get('causal') or {}).get('timing')})
+        with patch.object(rpc_reads, 'read_many', side_effect=read), patch.object(task_assignment, 'projections', side_effect=projection_call), patch.object(observability_producers, 'emit', side_effect=emit):
+            try:
+                yield values
+            finally:
+                print('RPC_COMPLETION ' + json.dumps(values, sort_keys=True), file=sys.stderr)
     async def run_batch(self, keys, delays, *, request_timeout=1, batch_timeout=2, disconnected=False, stall_close=False):
         clients, ids = [], []
         stats = {"connections": 0, "active": 0, "maximum": 0, "replies": []}
@@ -162,7 +190,7 @@ class Transport(unittest.IsolatedAsyncioTestCase):
                          "auth.get_id_token=lambda selected:" + repr(TOKEN) + "; socket.getaddrinfo=" + blocked) +
                         "; rpc_reads._isolated_main()")
                     selected = settings().model_copy(update={"engine_ws_url": f"ws://localhost:{port}"})
-                    with patch.object(rpc_reads, "READ_COMMAND", command), patch.object(rpc_reads, "CLOSE_SECONDS", 0.01), patch.object(task_assignment, "PROJECTION_SECONDS", 0.5):
+                    with patch.object(rpc_reads, "READ_COMMAND", command), patch.object(rpc_reads, "CLOSE_SECONDS", 0.01), patch.object(task_assignment, "PROJECTION_SECONDS", 0.5), self.completion_measurements("auth_dns_" + phase):
                         started = time.monotonic()
                         result = await asyncio.to_thread(task_assignment.projections, selected, [KEY])
                         elapsed = time.monotonic() - started
@@ -284,7 +312,7 @@ class Transport(unittest.IsolatedAsyncioTestCase):
                     "token_cache_path": str(Path(directory) / (uid + ".json"))})
             views = {noise: engine_view.ThreadView(noise, {int(NOW.timestamp())}, 1)}
             started = time.monotonic()
-            with patch.object(config, "load", side_effect=load), patch.object(rpc_reads, "READ_COMMAND", command), patch.object(gmail_archive, "inbound_recent", return_value=rows[:1] if alias else rows), patch.object(gmail_archive, "sent_recent", return_value=[]), patch.object(engine_view, "classify", return_value=(views, None)), patch.object(engine_view, "settled", return_value=({}, None)), patch.object(rpc_reads, "REQUEST_SECONDS", 0.7), patch.object(rpc_reads, "ASSIGNMENT_REQUEST_SECONDS", 0.7), patch.object(rpc_reads, "CLOSE_SECONDS", 0.01), patch.object(task_assignment, "PROJECTION_SECONDS", 3), contextlib.redirect_stdout(output):
+            with patch.object(config, "load", side_effect=load), patch.object(rpc_reads, "READ_COMMAND", command), patch.object(gmail_archive, "inbound_recent", return_value=rows[:1] if alias else rows), patch.object(gmail_archive, "sent_recent", return_value=[]), patch.object(engine_view, "classify", return_value=(views, None)), patch.object(engine_view, "settled", return_value=({}, None)), patch.object(rpc_reads, "REQUEST_SECONDS", 0.7), patch.object(rpc_reads, "ASSIGNMENT_REQUEST_SECONDS", 0.7), patch.object(rpc_reads, "CLOSE_SECONDS", 0.01), patch.object(task_assignment, "PROJECTION_SECONDS", 3), contextlib.redirect_stdout(output), self.completion_measurements("projection_" + str(slow_account)):
                 code = await asyncio.to_thread(cli.main, ["unanswered", "--json", "--all-buckets"])
             elapsed = time.monotonic() - started
             self.assertEqual(sorted(authentication.read_text().splitlines()), ["operator", "p1", "p2", "p3"])
@@ -527,6 +555,96 @@ class Transport(unittest.IsolatedAsyncioTestCase):
 
 
 class Semantics(unittest.TestCase):
+    def test_projection_finalization_reserve_preserves_outer_deadline_and_admission(self):
+        from cs import observability_producers
+        from cs.observability_causal import validate
+        cases = [(None, .5, True), (10.25, .25, True), (10.05, .05, True),
+                 (10.04, .04, False), (10.03, .03, False), (10.015, .015, False)]
+        for inherited, allowance, admitted in cases:
+            with self.subTest(inherited=inherited):
+                clock = [10.0]
+                reads, summaries = [], []
+                outer = 10 + allowance
+                reserve = min(allowance, .02)
+                cutoff = outer - reserve
+                def read(account, method, requests, **kwargs):
+                    reads.append(kwargs['deadline'])
+                    clock[0] = cutoff - .02
+                    return {key: rpc_reads.ReadOutcome(value=projection() | {'thread_key':key}) for key in requests}
+                def emit(*args, **kwargs):
+                    if kwargs.get('method') == 'tasks.assignment.budget':
+                        summaries.append(kwargs['causal'])
+                with patch.object(task_assignment.time, 'monotonic', side_effect=lambda:clock[0]), patch.object(task_assignment, 'PROJECTION_SECONDS', .5), patch.object(rpc_reads, 'CLOSE_SECONDS', .01), patch.object(rpc_reads, 'read_many', side_effect=read), patch.object(observability_producers, 'emit', side_effect=emit):
+                    result = task_assignment.projections(settings(), [KEY, '<later@example.test>'], deadline=inherited)
+                self.assertEqual(len(reads), int(admitted))
+                if admitted:
+                    self.assertAlmostEqual(reads[0], cutoff)
+                    self.assertEqual(result[KEY]['state'], 'normal')
+                self.assertEqual(result['<later@example.test>']['state'], 'unknown')
+                self.assertTrue(result['<later@example.test>']['hold_auto_reply'])
+                self.assertEqual(len(summaries), 1)
+                summary = summaries[0]
+                self.assertEqual(summary['facts']['effective_entry_ms'], round(allowance * 1000))
+                self.assertEqual(summary['timing']['finalization_reserve_us'], round(reserve * 1000000))
+                self.assertEqual(summary['timing']['work_allowance_us'], round((allowance-reserve) * 1000000))
+                validate(summary)
+                for field in ('finalization_reserve_us', 'work_allowance_us'):
+                    with self.assertRaises(ValueError):
+                        validate({**summary, 'timing':{**summary['timing'], field:True}})
+                    with self.assertRaises(ValueError):
+                        validate({**summary, 'timing':{**summary['timing'], field:-1}})
+        print('ALLOCATION: unchanged outer/inherited deadlines, earlier read/admission cutoff and combined insufficient capacity checked', file=sys.stderr)
+    def test_cleanup_pipe_timeout_confirms_reap_and_keeps_one_allowance(self):
+        import os
+        process = subprocess.Popen([sys.executable, '-c', 'import sys; sys.stdin.read()'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, start_new_session=True)
+        identity = rpc_reads._process_start(process)
+        self.assertIsInstance(identity, int)
+        with patch.object(process, 'communicate', side_effect=subprocess.TimeoutExpired('controlled', .01)) as communication, patch.object(rpc_reads, 'CLOSE_SECONDS', .2):
+            value = rpc_reads._cleanup_process(process, time.monotonic() + .2, None, identity)
+        self.assertEqual(value['worker_pid'], process.pid)
+        self.assertEqual(value['worker_start_ticks'], identity)
+        self.assertTrue(value['signal_attempted'])
+        self.assertTrue(value['signal_sent'])
+        self.assertTrue(value['reap_confirmed'])
+        self.assertTrue(value['exit_status_available'])
+        self.assertEqual(value['worker_exit'], -9)
+        self.assertEqual(communication.call_count, 1)
+        with self.assertRaises(ProcessLookupError):
+            os.kill(process.pid, 0)
+        clock = [10.0]
+        class Unconfirmed:
+            pid = 123
+            returncode = None
+            stdin = None
+            stdout = None
+            def poll(self): return None
+            def kill(self): pass
+            def communicate(self, *, timeout):
+                self.communicate_timeout = timeout
+                clock[0] += .018
+                raise subprocess.TimeoutExpired('controlled', timeout)
+            def wait(self, *, timeout):
+                self.wait_timeout = timeout
+                clock[0] += timeout
+                raise subprocess.TimeoutExpired('controlled', timeout)
+        unconfirmed = Unconfirmed()
+        with patch.object(rpc_reads.time, 'monotonic', side_effect=lambda: clock[0]), patch.object(rpc_reads, 'CLOSE_SECONDS', .03):
+            missing = rpc_reads._cleanup_process(unconfirmed, 10.03, os.getpid())
+        self.assertFalse(missing['reap_confirmed'])
+        self.assertFalse(missing['exit_status_available'])
+        self.assertFalse(missing['worker_start_available'])
+        self.assertNotIn('worker_start_ticks', missing)
+        self.assertLessEqual(unconfirmed.communicate_timeout, .03)
+        self.assertLessEqual(unconfirmed.wait_timeout, .012000001)
+        self.assertEqual(missing['cleanup_elapsed_us'], 30000)
+        from cs.observability_causal import decision, validate
+        observation = decision('assignment_time_budget', 'complete', timing=value)
+        self.assertIsNotNone(observation)
+        validate(observation)
+        for invalid in ({'worker_pid': 'private'}, {'worker_pid': -1}, {'worker_pid': True}, {'reap_confirmed': 1}, {'arbitrary': 1}, {'cleanup_elapsed_us': float('nan')}):
+            with self.assertRaises(ValueError):
+                validate({**observation, 'timing': invalid})
+        print('CLEANUP_MEASUREMENTS ' + json.dumps({'confirmed': value, 'unconfirmed': missing}, sort_keys=True), file=sys.stderr)
     def test_mutations_rejected_before_client_or_authentication(self):
         with patch.object(rpc, "EngineClient") as client:
             for method in ("chat.send", "tasks.assignment.commit", "drafts.send", "emails.needs_reply"):

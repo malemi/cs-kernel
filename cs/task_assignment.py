@@ -350,6 +350,8 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
             or owned_process_group != os.getpid() or os.getpgrp() != owned_process_group):
         raise ValueError('assignment worker group is not owned')
     deadline = min(now + PROJECTION_SECONDS, deadline) if deadline is not None else now + PROJECTION_SECONDS
+    finalization_reserve = min(max(0, deadline - now), 2 * rpc_reads.CLOSE_SECONDS)
+    work_deadline = deadline - finalization_reserve
     results = {key: _unknown(key or "", "assignment capacity deferred: projection deadline", owner_uid=settings.engine_owner_uid) for key in keys}
     accounts = [(settings.engine_owner_uid, settings)]
     unavailable = []
@@ -368,6 +370,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     shared_deferred=False, failure_event=None) for _, selected in accounts}
 
     def budget_summary():
+        diagnostic_started = time.monotonic()
         for _, selected in accounts:
             try:
                 from .observability_causal import decision, validate
@@ -388,6 +391,11 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 failed = stats['timed_out'] > 0 or stats['failed'] > 0 or stats['deferred'] > 0
                 value = decision('assignment_time_budget', cause, layer='source', command='assignment',
                     method='tasks.assignment.budget', outcome='failed' if failed else 'accepted',
+                    timing={**stats.get('completion', {}), 'projection_elapsed_us': rpc_reads._elapsed_us(now),
+                        'projection_work_us': rpc_reads._elapsed_us(now, diagnostic_started),
+                        'diagnostic_elapsed_us': rpc_reads._elapsed_us(diagnostic_started), 'final_write_excluded': True,
+                        'finalization_reserve_us': rpc_reads._elapsed_us(0, finalization_reserve),
+                        'work_allowance_us': rpc_reads._elapsed_us(now, work_deadline)},
                     effective_entry_ms=max(0, round((deadline-now)*1000)),
                     elapsed_ms=max(0, round((time.monotonic()-now)*1000)),
                     remaining_ms=max(0, round((deadline-time.monotonic())*1000)), expected_roots=len(keys),
@@ -440,10 +448,13 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     def read_scoped(uid, key):
         started = time.monotonic()
         try:
-            return rpc_reads.read_many(selected_accounts[uid][1], "tasks.assignment.project",
+            outcome = rpc_reads.read_many(selected_accounts[uid][1], "tasks.assignment.project",
                 {key: {"thread_key": key}}, request_timeout=150, batch_timeout=180,
-                deadline=deadline, token_cache=tokens,
+                deadline=work_deadline, token_cache=tokens,
                 **({"owned_process_group": owned_process_group} if owned_process_group is not None else {}))[key]
+            if getattr(outcome, 'completion', None) is not None:
+                budget_stats[uid]['completion'] = outcome.completion
+            return outcome
         except Exception as exc:
             return rpc_reads.ReadOutcome(error=exc)
         finally:
@@ -596,7 +607,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                         reason = "assignment capacity deferred after transport timeout"
                     elif reserved == rpc_reads.CONCURRENCY:
                         reason = "assignment capacity deferred after unresolved transport timeout"
-                    elif time.monotonic() >= deadline - 2 * rpc_reads.CLOSE_SECONDS:
+                    elif time.monotonic() >= work_deadline - 2 * rpc_reads.CLOSE_SECONDS:
                         reason = "assignment capacity deferred: projection deadline"
                     else:
                         break
@@ -615,7 +626,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                         chosen = uid
                         cursor = (position + 1) % len(uids)
                         break
-                if chosen is None or time.monotonic() >= deadline - 2 * rpc_reads.CLOSE_SECONDS:
+                if chosen is None or time.monotonic() >= work_deadline - 2 * rpc_reads.CLOSE_SECONDS:
                     break
                 job = queues[chosen].popleft()
                 identity = request_identity(chosen, job[1])

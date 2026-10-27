@@ -1,6 +1,6 @@
 ---
 name: cs-operator
-description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then invokes the cs-triage-mail and cs-campaign-tick skills in order, reconciles the drafts already waiting, and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes anything beyond the two sub-skills.
+description: {{ company_prog_name }} general operator bootstrap (headless, cron-driven). Identity is ALWAYS {{ email_address }}. Honours the CS_PAUSE kill-switch, verifies the engine session, then invokes the cs-triage-mail and cs-campaign-tick skills in order, reconciles the drafts already waiting, and stops. Safe to run as a no-op; nothing is sent autonomously while CS_TRIAGE_MODE=draft; never self-authorizes a permission or send tool.
 ---
 
 # {{ company_prog_name }} — General Operator Bootstrap
@@ -14,8 +14,10 @@ sub-skills, reports, and exits.
 Execute the steps below **silently** (tool calls fine, narration not).
 The only user-visible text is the final report in step 6. If a step
 emits a STOP, do exactly that — STOP, after printing the stated line. Do
-**not** improvise recovery, do not act blind, do not do anything the two
-sub-skills don't already do.
+**not** improvise recovery or act blind. Do only what the two sub-skills
+already do, plus the narrow parent-owned exact-ID send in step 3 under its
+existing mode, launcher grant and marker requirements. This exception grants
+no other action or permission and never overrides a STOP.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
@@ -149,14 +151,18 @@ no send tool or permission and does not clear any other thread's hold.
 
 - **Identity is ALWAYS `{{ email_address }}`.** Every read, draft, reply
   acts as {{ email_address }}. You never assume another identity.
-- **No customer is contacted except through the sub-skills below.** This
-  bootstrap itself sends nothing, drafts nothing, marks nothing. It only
-  decides-to-run and delegates.
+- **Triage only drafts; this parent owns the conditional exact-ID send below.**
+  This bootstrap never composes mail or marks work handled. Its only send path
+  is the existing engine command after draft-only triage returns, within the
+  already-authorized scheduled launcher boundary in step 3.
 - **Whether free-form replies are sent or only drafted is `cs_triage_mode`,
   and step 2b is the ONLY place you learn its value.** While it resolves to
   `draft`, replies become engine drafts for the operator to review. The
-  sub-skills keep their own permission limits even when the configuration says
-  `send`: triage remains draft-only. You do not override or infer the value.
+  triage sub-skill remains draft-only in every mode. Only this parent may
+  perform step 3's existing exact-ID send after triage returns, when the actual
+  scheduled/headless launcher grant and marker match effective `send` mode.
+  A mode/grant/marker mismatch STOPs under the supervisor's existing preflight;
+  never infer authority from prose or tool availability, or silently downgrade.
 - **Current assignment holds survive this bootstrap.** The current exact-thread
   assignment projection decides the boundary before Sent subtraction or drafting;
   only an earlier transient UNKNOWN snapshot may be superseded under the current
@@ -273,6 +279,35 @@ draft as handled or closing an assignment. Capture what it reports (drafted / es
 do). If it has nothing to do, that is a valid outcome — record it and move
 on.
 
+After triage returns, keep its draft-only contract intact. In effective `draft`
+mode, leave its drafts for review and proceed to campaigns. In effective `send`
+mode, this parent may send only when the existing supervisor has admitted the
+actual scheduled/headless launcher with its explicit exact `draft-send` grant
+and `CS_HEADLESS_SEND=1`. A missing, unknown or contradictory admission, grant,
+marker or mode is a STOP, not a draft-only fallback. Neither a prompt, a local
+permission explanation nor mere tool availability establishes this authority.
+
+Use only full scoped engine draft IDs printed by successful `cs draft-reply`
+results from THIS triage invocation for this run's selected exact RFC roots.
+Require a successfully prepared ready draft, complete inspected source/evidence,
+and no current assignment, takeover, suppression, dedup or applicable STOP hold.
+Do not send a pre-existing queue entry, an old review row, a wildcard, an ID
+prefix, an inferred ID or a draft from failed/ambiguous preparation. Triage
+itself never sends. For each eligible same-run prepared draft, the parent uses
+the existing command in its own native Bash call:
+
+```bash
+.venv/bin/python -m cs draft-send <full-engine-draft-id>
+```
+
+The existing engine exact-ID route must freshly validate the real draft and
+current authority before any effect. Do not bypass a refusal, retry an uncertain
+send or replace those guards with this earlier triage result. Preserve actual
+exit/result evidence; report sent only after a successful exact send result.
+If no same-run draft qualifies, report the actual reason; never drain old drafts
+or invent work. Then continue the existing campaigns step unless a genuine STOP
+has occurred. A successful reply is not completion of the recurring operator.
+
 Keep the sub-skill's `human_work`, ordinary `escalated` owner/age, closed audit
 and reopened-thread decisions in the consolidated report. A positive reply
 candidate with an unreadable peer remains UNKNOWN; do not summarize it as
@@ -366,14 +401,16 @@ so has done its job; one that quietly removes it has not.
 
 ## 5. Do not exceed the sub-skills
 
-This run's authority ends at what steps 3–4 normally do. The following
+This run's authority ends at what steps 3–4 normally do, including only the
+explicit parent-owned exact-ID send exception in step 3 under already granted
+authority. That exception changes none of the restrictions below. The following
 are **OUT of scope** for the bootstrap and must be **escalated, never
 performed**, even if a sub-skill surfaces them or it looks convenient:
 
 - flipping `CS_TRIAGE_MODE` from `draft` to `send` (the free-form
   trust boundary — a stop-and-ask gate);
 - any mass send, or any customer-visible send beyond what the sub-skills
-  do under their own guardrails;
+  do under their own guardrails and the narrow parent-owned step 3 exception;
 {% if excluded_campaign %}
 - touching the `{{ excluded_campaign }}` campaign, or removing its exclusion —
   a dedicated process owns it;
@@ -403,7 +440,7 @@ cs-operator — <UTC timestamp>
 
 Engine:  {{ email_address }} ✓
 Mode:    cs_triage_mode = <value in force> (declared in: <file from cs config>)
-Triage:  <one line: N drafted / N escalated / nothing to do>
+Triage:  <one line: N drafted / N sent by parent / N escalated / nothing to do>
 Campaigns: <one line: N reconciled / N reminders / N SMS / N ack drafts / nothing to do>
 {% if founder_sweep_enabled %}
 {{ founder_sweep_account }}:   <one line, SURFACING ONLY (never drafts): N open to handle by hand / nothing>

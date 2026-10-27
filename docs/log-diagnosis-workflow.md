@@ -308,3 +308,24 @@ interruption despite child exit0 and retain an unknown upstream cause. Healthy
 and unknown snapshots without task completion remain outcome-unknown; they do
 not certify whole-task health. Genuine native timeout behavior and BOTH-clone
 acceptance remain separate requirements in the canonical release plan.
+
+
+## Caller deadlines, finalization and child reaping
+
+Keep the original end-to-end timer when investigating a bound failure. A timer
+around thread dispatch or a complete CLI includes work before and after the
+inner projection's deadline. Record parent entry, worker launch/wait, cleanup,
+final diagnostics and return separately. Retain microsecond durations for a
+sub-millisecond violation; missing stages and observer cost remain unattributed.
+A completion reserve must come from the existing total allowance, apply to both
+admission and reads, and preserve earlier inherited deadlines. Never relax an
+assertion, move a timer or remove logging to manufacture a pass. A later passing
+candidate does not identify a historical failure's missing cause.
+
+For owned children, retain PID and available process-start identity, signal
+attempt/result, exit-status availability and confirmed or unconfirmed reap.
+Killing and reaping are separate observations. Pipe closure and a ResourceWarning
+do not independently prove either a live child or completed cleanup. Use one
+absolute cleanup allowance across communication, poll and wait; an unconfirmed
+OS outcome stays visible. Once a PID disappears, its former identity and parent
+cannot be reconstructed from a warning alone.

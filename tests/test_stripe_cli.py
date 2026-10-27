@@ -4,6 +4,9 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import io
+import hashlib
+import os
+import subprocess
 import json
 from pathlib import Path
 import sys
@@ -129,6 +132,47 @@ class StripeCLI(unittest.IsolatedAsyncioTestCase):
             code, out, _ = await self.command(*args)
             self.assertEqual(code, 2)
             self.assertEqual(out, '')
+        self.assertEqual(self.calls, [])
+
+    async def test_recovered_payment_link_capability_guard_and_portal_retention(self):
+        record = json.loads((ROOT / 'tests/fixtures/reviewed-stripe-recovery-guidance.json').read_text())
+        receipt = (ROOT / 'tests/fixtures' / record['review_receipt']).read_bytes()
+        self.assertEqual(hashlib.sha256(receipt).hexdigest(), record['review_sha256'])
+        relative = 'cs/templates/project/.claude/skills/cs-stripe/SKILL.md.j2'
+        candidate = (ROOT / relative).read_bytes()
+        baseline = subprocess.check_output(['git', 'show', 'v0.64.0:' + relative], cwd=ROOT)
+        self.assertEqual(hashlib.sha256(candidate).hexdigest(), record['candidate_sha256'])
+        self.assertEqual(hashlib.sha256(baseline).hexdigest(), record['baseline_sha256'])
+        text = candidate.decode()
+        start = text.index('## Create an explicitly requested payment link')
+        portal = text.index('## Create a payment-method update link')
+        section = text[start:portal]
+        normalized = ' '.join(section.split())
+        for marker in ('integer `1`, not a boolean, string or missing value',
+                       'unsupported by this engine and **STOP**',
+                       'do not call `stripe.payment_link_create` or the provider',
+                       'currently retained runtime source lacks this capability and handler',
+                       'Only after validated capability support, read `stripe.status`'):
+            self.assertIn(marker, normalized)
+        self.assertLess(section.index('system.capabilities'), section.index('unsupported by this engine'))
+        self.assertLess(section.index('**STOP**'), section.index('3. Generate'))
+        self.assertNotIn('payment-link-create --amount-minor', section)
+        old_portal = baseline.decode().split('## Create a payment-method update link', 1)[1]
+        self.assertEqual(text.split('## Create a payment-method update link', 1)[1], old_portal)
+        expected_hash = record['candidate_sha256']
+        for before, after in (('integer `1`', 'boolean `true`'),
+                              ('and **STOP**', 'and continue'),
+                              ('do not call `stripe.payment_link_create`', 'call `stripe.payment_link_create`')):
+            self.assertIn(before, text)
+            self.assertNotEqual(hashlib.sha256(text.replace(before, after, 1).encode()).hexdigest(), expected_hash)
+
+    async def test_scheduled_payment_link_creation_refuses_before_rpc(self):
+        runner = RUNNER.replace("main(['stripe',", "main(['rpc',")
+        runner = "import os; os.environ['CS_OPERATOR_HEADLESS']='1'\n" + runner
+        code, out, err = await self.command('stripe.payment_link_create',
+            '{"amount_minor":3500,"label":"Fixture","request_id":"fixture-request-123"}', runner=runner)
+        self.assertEqual((code, err), (1, ''))
+        self.assertIn('interactive human request', out)
         self.assertEqual(self.calls, [])
 
     async def test_canonical_skill_distribution_link_and_copy_three_hosts(self):

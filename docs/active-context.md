@@ -15,10 +15,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.64.0`. Current HEAD status: untagged.**
-  This unpublished local candidate passes complete source/exact-tag suites and
-  six genuine golden builds each, plus controlled/blind diagnostic delivery.
-  Canonical operator-permission prose still needs reconciliation before successor
-  adoption/FULL. Both normal clones execute63; shared sign-off remains51.
+  Immutable64 passes its source/tag suites and six golden builds each. Successor
+  source reconciles canonical operator instructions and precise worker timing;
+  cleanup and same-envelope allocation pass focused original-path controls.
+  Final source/tag/artifact gates and BOTH adoption/FULL remain open. Both normal
+  clones execute63; shared sign-off remains51.
 - Installed `v0.63.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption
@@ -83,10 +84,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   hosts share canonical skills. Company files, Café prices and authored help are
   clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
   preserves old authored data while using cs-bootstrap/company other-systems.
-- Stripe's canonical skill supports reads, fixed payment links and explicit portal
-  requests. Support exposes it; native selection and [integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md)
-  remain open. [Provider guides](provider-connections.md) own other integrations;
-  Faire authentication/adapter acceptance remains unverified.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
 
 ## Unresolved
 

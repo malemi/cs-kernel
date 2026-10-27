@@ -1,0 +1,14 @@
+## Done
+- Verdict: APPROVED
+- Changed: private review report only; no repository or runtime changes.
+- Checked surface: r3 appended amendment, operator changes against the previously read complete parent/triage flow, complete Stripe candidate, generated-workflow inventory and newly affected drift diffs.
+- Binding: canonical65-full-existing-plan-proposed-r3.md SHA-256 dd0ba87869760b53e2f56530019072e88f6410d73926c52635065fd01d907a2a.
+- Prefix: first 300819 bytes hash to approved 79e4a74afdc3b4420f8a40ce43b445f8f9455d8b50141235807d8b272c17668b exactly; unchanged prior scope is preserved without prose normalization or historical re-review.
+- Decision: both contradictory parent restrictions now explicitly admit only step3's existing-authority exact-ID send. Canonical triage has no terminal STOP after its report; draft-only triage returns to that parent; genuine STOPs, supervisor mismatch refusal and mandatory campaigns remain intact.
+- Decision: bounded canonical restoration fits the existing alignment brief. No new tool permission, backend, provider route or generic scheduled send grant is authorized.
+- Adoption: explicit target ownership, complete canonical bytes/checksums, all three aliases, unknown-drift refusal and full preimage/mode/environment rollback are required. Pin-only staging avoids the identified bare-update global cleanup.
+- Verified: Python hash checks returned True for all eight receipt-bound artifacts. Exact historical Stripe section comparison returned True against Git b360b47f4921cf217bf4cf50062a9478ef484dc8; the existing portal flow remains present.
+- Relied-on verification: previously inspected actual launcher grants/denials and supervisor mode_mismatch return1 before intake; no live calls were repeated.
+- Additional check: rg, including --no-ignore, found no stripe_payment_links or stripe.payment_link_create matches in the supplied v63/engine-candidate source; this does not establish deployed support.
+- Unverified: current engine Stripe capability/handler support remains explicitly UNVERIFIABLE here and a mandatory pre-shipment dependency. Implementation, render/rollback regressions, final FULL, financial admission and release gates remain pending; this is plan approval only.
+- Evidence: /tmp/mrcall-ai-kit/20261025-release-alignment/v64/adoption/canonical65-plan-review-r3.md; canonical65-r3-proposal-receipt.json binds reviewed inputs. Truncated inventory output was replaced by a complete lossless JSON read.

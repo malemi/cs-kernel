@@ -1,0 +1,9 @@
+{
+  "plan_sha256": "22dd31897f4bb0f474147d149516b343b5c31601ae43e57b92c5e60829a7a644",
+  "review_receipt": "reviewed-stripe-recovery-plan.md",
+  "review_sha256": "81082a613d3eeeb8066269c5b71d19848b6b5f2f83b4fd233a068d1cbda48f18",
+  "baseline_sha256": "25622bd8181f1352b0f2153fd334cfd8771492853a5d2932c6427e704758a06a",
+  "candidate_sha256": "c1673e30c60e659f2c0b13037667488f9682685cfa6e4998d95b8582ecac1c0b",
+  "historical_section_source": "b360b47f4921cf217bf4cf50062a9478ef484dc8:cs/templates/project/.claude/skills/cs-stripe/SKILL.md.j2",
+  "runtime_capability_supported": false
+}
