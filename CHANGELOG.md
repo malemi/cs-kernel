@@ -1,6 +1,6 @@
 # Changelog — cs-kernel
 
-## Unreleased
+## v0.66.0 — 2026-10-27 (MINOR)
 
 Restore bounded native inventory delivery without discarding queued material.
 

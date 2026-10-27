@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.66.0`. Current HEAD status: tagged as `v0.66.0`.**
   Both clones execute immutable65; strict FULL65 failed and service restoration
   remains unverified. Source catalog compatibility and inventory transport fixes
   pass focused integration review. Actual paired inventory needs52old parts;
