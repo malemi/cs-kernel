@@ -254,30 +254,40 @@ def observe(state: dict, event: dict, now: float) -> None:
         )
     )
     if failed:
-        prior = state["failures"].get(failure_key, {"first": when})
-        prior.update(
-            {
-                "at": when,
-                "stage": stage,
-                "reason": event["reason"],
-                "level": level,
-                "event_id": event["event_id"],
-                "root_id": root,
-                "request_revision": revision,
-                "effect_certainty": event["effect_certainty"],
-                "trace_id": event["trace_id"],
-                "span_id": event["span_id"],
-                "uncertain": uncertain,
-                **{
-                    key: event[key] for key in ("provider_id", "draft_id", "job_id") if key in event
-                },
-                **{
-                    key: event[key]
-                    for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "elapsed_ms", "deadline_seconds", "provider_diagnostic")
-                    if key in event
-                },
-            }
-        )
+        prior = state["failures"].get(failure_key)
+        if prior is not None:
+            if when >= prior.get("last", prior["at"]):
+                prior.update(last=when, last_event_id=event["event_id"],
+                             last_trace_id=event["trace_id"], last_span_id=event["span_id"])
+            if level == "CRITICAL":
+                prior["level"] = level
+            elif level == "ERROR" and prior.get("level") != "CRITICAL":
+                prior["level"] = level
+        else:
+            prior = {"first": when, "last": when}
+            prior.update(
+                {
+                    "at": when,
+                    "stage": stage,
+                    "reason": event["reason"],
+                    "level": level,
+                    "event_id": event["event_id"],
+                    "root_id": root,
+                    "request_revision": revision,
+                    "effect_certainty": event["effect_certainty"],
+                    "trace_id": event["trace_id"],
+                    "span_id": event["span_id"],
+                    "uncertain": uncertain,
+                    **{
+                        key: event[key] for key in ("provider_id", "draft_id", "job_id") if key in event
+                    },
+                    **{
+                        key: event[key]
+                        for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "elapsed_ms", "deadline_seconds", "provider_diagnostic")
+                        if key in event
+                    },
+                }
+            )
         state["failures"][failure_key] = prior
     elif status in {"result", "completed", "verified", "accepted"} and event["reason"] == "none":
         for key, prior in list(state["failures"].items()):
@@ -288,7 +298,7 @@ def observe(state: dict, event: dict, now: float) -> None:
                 prior.get(identity) for identity in ("provider_id", "draft_id", "job_id", "root_id")
             )
             if (
-                when > prior["at"]
+                when > prior.get("last", prior["at"])
                 and (same_stage or (verified and bound_effect) or (prior.get('causal') and event.get('causal', {}).get('check') == 'supervisor_completion'))
                 and matching_evidence(prior, event, verified=verified)
             ):

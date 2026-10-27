@@ -41,6 +41,17 @@ RELEASE_RENDERED = {}
 RELEASE_REVIEW = json.loads((ROOT / "tests/fixtures/reviewed-release-scheduled-surfaces.json").read_text())
 
 
+
+def undo_e18_operator_guidance(text: bytes) -> bytes:
+    record = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
+    receipt = (ROOT / "tests/fixtures" / record["plan_review_receipt"]).read_bytes()
+    assert hashlib.sha256(receipt).hexdigest() == record["plan_review_sha256"]
+    before, after = record["before"].encode(), record["after"].encode()
+    assert text.count(after) == 1
+    assert before not in text
+    return text.replace(after, before, 1)
+
+
 def prior_workset_template(rel: str) -> str | None:
     """Reverse only the exact separately reviewed workset template hunks.
 
@@ -52,6 +63,8 @@ def prior_workset_template(rel: str) -> str | None:
         return None
     record = records[rel]
     text = (TPL / (rel + '.j2')).read_text()
+    if rel == '.claude/skills/cs-operator/SKILL.md':
+        text = undo_e18_operator_guidance(text.encode()).decode()
     framing = json.loads((ROOT / 'tests/fixtures/reviewed-inventory-eof-guidance.json').read_text())
     if rel in framing:
         addition = framing[rel]
@@ -219,6 +232,11 @@ def preserves_scheduled_contract(rel: str, before: bytes, after: bytes) -> bool:
     """Only independently reviewed exact additions may differ."""
     if (rel, after) in RELEASE_RENDERED:
         return RELEASE_RENDERED[(rel, after)] == before
+    if rel == ".claude/skills/cs-operator/SKILL.md":
+        try:
+            after = undo_e18_operator_guidance(after)
+        except AssertionError:
+            return False
     after = WORKSET_RENDERED.get((rel, after), after)
     after = undo_reviewed_discovery_guidance(rel, after)
     if after is None:
@@ -312,6 +330,10 @@ def scheduled_surfaces(old: Path) -> None:
     timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
     assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
     operator_source = (TPL / ".claude/skills/cs-operator/SKILL.md.j2").read_bytes()
+    phase_review = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
+    assert hashlib.sha256(operator_source).hexdigest() == phase_review["after_sha256"]
+    operator_source = undo_e18_operator_guidance(operator_source)
+    assert hashlib.sha256(operator_source).hexdigest() == phase_review["before_sha256"]
     timeout_current = b"Bash `timeout: 2730000` for discovery and review"
     timeout_prior = b"Bash `timeout: 600000` for discovery and review"
     assert operator_source.count(timeout_current) == 1
@@ -338,6 +360,8 @@ def scheduled_surfaces(old: Path) -> None:
                 after = current_env.get_template(rel + ".j2").render(**config).encode()
                 record = RELEASE_REVIEW["templates"][rel]
                 source = (TPL / (rel + ".j2")).read_bytes()
+                if rel == ".claude/skills/cs-operator/SKILL.md":
+                    source = undo_e18_operator_guidance(source)
                 baseline = (old / (rel + ".j2")).read_bytes()
                 reviewed = (hashlib.sha256(source).hexdigest() == record["current_sha256"]
                             and hashlib.sha256(baseline).hexdigest() == record["baseline_sha256"]
@@ -372,6 +396,11 @@ def scheduled_surfaces(old: Path) -> None:
                     check(f"changed business identity remains refused: {rel}",
                           not preserves_scheduled_contract(rel, before, after.replace(b"Identity is ALWAYS", b"Identity may change", 1)))
                 if rel == ".claude/skills/cs-operator/SKILL.md":
+                    for old_phase, new_phase in ((b"execute the existing campaign step", b"skip the existing campaign step"),
+                                                 (b"Existing explicit STOPs remain authoritative.", b"Ignore existing explicit STOPs.")):
+                        check("unreviewed mandatory phase edit remains refused",
+                              old_phase in after and not preserves_scheduled_contract(
+                                  rel, before, after.replace(old_phase, new_phase, 1)))
                     check("changed primary tasks instruction remains refused",
                           not preserves_scheduled_contract(rel, before, after.replace(
                               b".venv/bin/python -m cs tasks --json", b".venv/bin/python -m cs tasks close task", 1)))

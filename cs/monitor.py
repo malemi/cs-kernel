@@ -80,6 +80,9 @@ def _impact(detail: dict) -> str:
             "expected_at",
             "trace_id",
             "span_id",
+            "last_event_id",
+            "last_trace_id",
+            "last_span_id",
         }
     }
     return hashlib.sha256(json.dumps(keys, sort_keys=True).encode()).hexdigest()

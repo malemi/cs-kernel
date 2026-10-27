@@ -843,6 +843,10 @@ class ObservationTransport(unittest.IsolatedAsyncioTestCase):
             uid = ws.request.path.rsplit("/", 1)[-1]
             async for raw in ws:
                 frame = json.loads(raw)
+                if frame["method"] == "system.capabilities":
+                    self.assertEqual(frame["params"], {})
+                    await ws.send(json.dumps({"jsonrpc": "2.0", "id": frame["id"], "result": {}}))
+                    continue
                 self.assertEqual(frame["method"], "tasks.assignment.project")
                 self.assertEqual(frame["params"], {"thread_key": KEY})
                 dispatch.append((current["mode"], uid))

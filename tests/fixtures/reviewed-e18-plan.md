@@ -1,0 +1,12 @@
+## Done
+- Verdict: APPROVED
+- Changed: independent review report only.
+- Checked surface: complete appended E18 amendment, exact prior-plan prefix, existing brief approvals, operator template and diagnostic/causal/health source contracts.
+- Verified: full proposed plan SHA256277e945c1f403326dc771575d03dab45857813bbecc5766b4443ba5eae70ea09; canonical286646-byte prefix preserved exactly.
+- Verified: existing approved brief prefix remains byte-identical; E17 review confirms safe correlation remains within that approved framing.
+- Verified: actual current-code check printed PASS: completed terminal retained; current projection drops cost; existing phase decision valid; proposed named cost currently rejected.
+- Decision: the mandatory-phase clarification preserves STOPs, command order and authority. Native success/cost cannot erase missing campaigns; genuine financial refusal remains primary over later phase absence.
+- Decision: only named finite-cost and closed terminal-reason facts may extend the validator. Unknown cost or opaque primary limit must remain unknown; model prose and cost comparisons cannot manufacture exhaustion.
+- Decision: source integration, real producer-to-inbox retention, blind interpretation, successor-specific BOTH FULL and separate financial/root admission remain required.
+- Unverified: implementation, delivery/blind checks, autonomous campaign compliance, final candidate, publication and closure. No implementation or paid/live operation performed.
+- Evidence: e18-existing-plan-proposed.md; e18-diagnostic-baseline.json; full-composition/failed-v63-causal-review.md; actual source and read-only assertions executed during this review.

@@ -23,6 +23,9 @@ where you review and authorise. Mutates nothing.
 """
 from __future__ import annotations
 
+from . import observability
+from contextlib import nullcontext
+
 import sys
 import hashlib
 import json
@@ -710,7 +713,8 @@ def _supervise(settings, *, worker_command=None, total_seconds=TOTAL_SECONDS,
         path = Path(directory) / "checkpoint.json"
         try:
             command = worker_command or (sys.executable, "-B", "-m", "cs.review", "--worker")
-            env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+            env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                       CS_DIAGNOSTIC_CONTEXT=json.dumps(observability.current_context()))
             with tempfile.TemporaryFile() as stdout:
                 proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stdout,
                                         stderr=None, start_new_session=True, env=env)
@@ -753,7 +757,13 @@ def _worker(payload):
         raise ValueError("review worker identity changed")
     def checkpoint(out, phase):
         _save_checkpoint(path, {"binding": binding, "out": out, "phase": phase, "complete": False})
-    out = _aggregate(settings, deadline=payload["deadline"], owned_process_group=os.getpid(), checkpoint=checkpoint)
+    from .observability_producers import inherited_context
+    metadata = inherited_context()
+    diagnostic = {key: value for key in ("trace_id", "span_id", "parent_span_id", "run_id", "attempt_id")
+                  if (value := observability.diagnostic_id(metadata.get(key))) is not None}
+    with (observability.context({**diagnostic, "parent_span_id": diagnostic.get("span_id"), "span_id": None})
+          if diagnostic else nullcontext()):
+        out = _aggregate(settings, deadline=payload["deadline"], owned_process_group=os.getpid(), checkpoint=checkpoint)
     _save_checkpoint(path, {"binding": binding, "out": out, "phase": "complete", "complete": True})
     return 0
 

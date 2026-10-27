@@ -6,8 +6,9 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, PropertyMock
 
 from cs import operator_health as health
 from cs import operator_recovery as recovery
@@ -161,7 +162,7 @@ class CausalContractEdges(unittest.TestCase):
                 self.assertIs(recovery._successful(attempt), False)
                 value = self.emitted(check, cause)
                 self.assertEqual(attempt.causal, value)
-                self.assertEqual(value['facts'], {'process_exit': attempt.code, 'malformed': attempt.malformed, 'overflow': attempt.overflow, 'timed_out': attempt.timed_out})
+                self.assertEqual(value['facts'], {'process_exit': attempt.code, 'malformed': attempt.malformed, 'overflow': attempt.overflow, 'timed_out': attempt.timed_out, **recovery.diagnostics.native_facts(attempt.result)})
                 self.assertEqual(value['method'], 'operator.native.terminal')
                 self.assertIs(recovery._successful(attempt), False)
                 self.assertEqual(attempt.causal, value)
@@ -188,6 +189,61 @@ class CausalContractEdges(unittest.TestCase):
         self.assertNotEqual(values[0]['refs']['attempt_id'], values[1]['refs']['attempt_id'])
         self.assertIsNone(causal.selected())
         self.assertEqual(current_context(), before)
+
+    def test_native_cost_phase_precedence_and_closed_facts(self):
+        self.record()
+        with causal.scope(), context({'run_id': 'a' * 32, 'attempt_id': 'b' * 32}):
+            attempt = recovery.Attempt(0, [{'type': 'result', 'terminal_reason': 'completed',
+                'is_error': False, 'total_cost_usd': 3.158979, 'result': 'PRIVATE_CANARY'}])
+            self.assertTrue(recovery._successful(attempt))
+            causal.child(None, **recovery.diagnostics.native_facts(attempt.result))
+            phases = [{'phase': x} for x in ['identity', 'configuration', 'tasks', 'discovery', 'review']]
+            self.assertEqual(health.inspection_failure([], self.context, phases), 'execution_phase_incomplete')
+            value = self.emitted('required_phase_presence', 'required_phase_absent')
+            self.assertEqual(value['phase'], 'campaigns')
+            self.assertEqual(value['facts']['native_total_cost_usd'], 3.158979)
+            self.assertEqual(value['facts']['native_terminal_reason'], 'completed')
+            self.assertFalse(value['facts']['native_is_error'])
+            for key, invalid in [('native_total_cost_usd', True), ('native_total_cost_usd', -1),
+                                 ('native_total_cost_usd', float('nan')), ('native_total_cost_usd', float('inf')),
+                                 ('native_terminal_reason', 'PRIVATE_CANARY'), ('reads', 1.5)]:
+                with self.assertRaises(ValueError):
+                    causal.validate({**value, 'facts': {**value['facts'], key: invalid}})
+        for reason in ['budget_exhausted', 'max_turns', 'api_error']:
+            with causal.scope(), context({'run_id': 'a' * 32, 'attempt_id': 'b' * 32}):
+                attempt = recovery.Attempt(0, [{'type': 'result', 'terminal_reason': reason,
+                    'is_error': False, 'total_cost_usd': 4.1}])
+                self.assertFalse(recovery._successful(attempt))
+                health.inspection_failure([], self.context, [])
+                self.assertEqual(causal.selected()['check'], 'native_terminal_reason')
+                self.assertEqual(causal.selected()['facts']['native_terminal_reason'], reason)
+
+    def test_real_run_refusal_observation_matches_native_predicate(self):
+        from cs.config import Settings
+        from cs.observability import store_for
+        settings = Settings(slug='sample', engine_owner_uid='owner')
+        binary = self.root / 'controlled-child'
+        for reason in ['budget_exhausted', 'max_turns', 'api_error', 'error', 'completed']:
+            result = {'type': 'result', 'terminal_reason': reason, 'is_error': False,
+                      'total_cost_usd': 3.158979}
+            binary.write_text('#!' + sys.executable + '\nimport json\nprint(' + repr(json.dumps(result)) + ')\n')
+            binary.chmod(0o700)
+            with self.subTest(reason=reason), patch.object(Settings, 'state_dir', new_callable=PropertyMock,
+                    return_value=self.root), patch.object(recovery.config, 'load', return_value=settings), \
+                    patch.dict(os.environ, {'CS_OPERATOR_ACCEPTANCE_RECEIPT': '', 'CS_OPERATOR_NATIVE_BINARY': ''}):
+                attempt = recovery._run(str(binary), ['Write'], prompt='/controlled-observation')
+                events = store_for(settings).events(limit=200)['events']
+                event = next(row for row in events if row['event_id'] == attempt.child_event_id)
+                observed = event['causal']
+                expected = 'accepted' if reason == 'completed' else 'failed'
+                self.assertEqual(observed['outcome'], expected)
+                self.assertEqual(observed['facts']['native_terminal_reason'], reason)
+                self.assertEqual(recovery._successful(attempt), reason == 'completed')
+                if reason != 'completed':
+                    with causal.scope():
+                        causal.select(attempt)
+                        health.inspection_failure([], self.context, [])
+                        self.assertEqual(causal.selected()['check'], 'native_terminal_reason')
 
     def test_strict_payload_rejection_and_sink_failure(self):
         with causal.scope(), context({'run_id': 'a' * 32, 'attempt_id': 'b' * 32}):

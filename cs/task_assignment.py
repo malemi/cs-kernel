@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from . import observability
+from contextlib import nullcontext
+
 import json
 import math
 import os
@@ -427,7 +430,14 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     def request_identity(uid, key):
         return (uid, configurations[uid], "tasks.assignment.project", key)
 
+    diagnostic = observability.current_context()
+
     def read(uid, key):
+        with (observability.context({**diagnostic, "parent_span_id": diagnostic.get("span_id"), "span_id": None})
+              if diagnostic else nullcontext()):
+            return read_scoped(uid, key)
+
+    def read_scoped(uid, key):
         started = time.monotonic()
         try:
             return rpc_reads.read_many(selected_accounts[uid][1], "tasks.assignment.project",

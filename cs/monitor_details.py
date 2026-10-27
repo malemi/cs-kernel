@@ -11,6 +11,9 @@ from .observability import CERTAINTY, REASONS, STAGES, diagnostic_id, safe_metad
 def safe_detail(value: dict) -> dict:
     if not isinstance(value, dict) or len(value) > 32:
         raise ValueError("Invalid incident evidence")
+    latest = {"last_event_id", "last_trace_id", "last_span_id"}
+    if latest.intersection(value) and not latest.issubset(value):
+        raise ValueError("Incomplete latest incident references")
     result = {}
     for key, item in value.items():
         if key in {"stage", "reason", "effect_certainty", "expected_action"}:
@@ -25,8 +28,8 @@ def safe_detail(value: dict) -> dict:
         elif key == "level":
             if item not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
                 raise ValueError("Invalid incident level")
-        elif key in {"event_id", "trace_id", "span_id"}:
-            if diagnostic_id(item) != item:
+        elif key in {"event_id", "trace_id", "span_id", "last_event_id", "last_trace_id", "last_span_id"}:
+            if diagnostic_id(item) != item or (key in latest and item is None):
                 raise ValueError("Invalid incident reference")
         elif key in {"root_id", "request_revision", "draft_id", "provider_id", "job_id"}:
             if item is not None and (

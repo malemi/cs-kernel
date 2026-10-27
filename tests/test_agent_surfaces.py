@@ -136,6 +136,19 @@ def main() -> int:
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
+        operator = rendered / ".claude/skills/cs-operator/SKILL.md"
+        operator_text = operator.read_text()
+        policy = operator_text.split("## 0.", 1)[0]
+        check("forecast policy covers mandatory campaigns after successful replies",
+              "any required recurring phase" in policy and "including campaigns" in policy
+              and "reply does not complete the operator" in policy)
+        check("operator preserves triage then campaigns then final STOP",
+              operator_text.index("## 3.") < operator_text.index("## 4.") < operator_text.index("## 6.")
+              and "cs-campaign-tick" in operator_text and "emits a STOP" in operator_text)
+        for host in (".claude", ".agents", ".opencode"):
+            check(f"{host} shares mandatory operator completion policy",
+                  (rendered / host / "skills/cs-operator/SKILL.md").read_bytes() == operator.read_bytes())
+
         capabilities = rendered / ".claude/skills/cs-bootstrap/SKILL.md"
         check("capability bootstrap is rendered", capabilities.is_file())
         for host in (".claude", ".agents", ".opencode"):

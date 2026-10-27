@@ -99,6 +99,9 @@ exact-match path.
 """
 from __future__ import annotations
 
+from . import observability
+from contextlib import nullcontext
+
 import hashlib
 import json
 import time
@@ -914,7 +917,8 @@ def _scheduled_discovery(*, worker_command=None, observation_seconds=DISCOVERY_O
             with tempfile.TemporaryFile() as stdout:
                 proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout,
                     stderr=None, pass_fds=(request_read,), start_new_session=True,
-                    env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
+                    env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1",
+                             CS_DIAGNOSTIC_CONTEXT=json.dumps(observability.current_context())))
                 stamp = identity(proc.pid)[0]
                 binding["worker"] = stamp
                 request = {"binding": binding, "path": str(path),
@@ -1331,8 +1335,14 @@ def _discovery_worker(payload):
     completion_deadline = payload["completion_deadline"]
     if type(completion_deadline) not in (float, int) or not deadline < completion_deadline <= time.monotonic() + DISCOVERY_OBSERVATION_SECONDS:
         raise ValueError("discovery completion bound differs")
-    value = sweep(settings, 14, deadline=deadline, owned_process_group=os.getpid(),
-                  checkpoint=checkpoint, completion_deadline=completion_deadline)
+    from .observability_producers import inherited_context
+    metadata = inherited_context()
+    diagnostic = {key: value for key in ("trace_id", "span_id", "parent_span_id", "run_id", "attempt_id")
+                  if (value := observability.diagnostic_id(metadata.get(key))) is not None}
+    with (observability.context({**diagnostic, "parent_span_id": diagnostic.get("span_id"), "span_id": None})
+          if diagnostic else nullcontext()):
+        value = sweep(settings, 14, deadline=deadline, owned_process_group=os.getpid(),
+                      checkpoint=checkpoint, completion_deadline=completion_deadline)
     if time.monotonic() >= completion_deadline:
         raise TimeoutError("discovery rendering deadline")
     value["crm_note"] = None

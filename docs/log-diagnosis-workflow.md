@@ -63,7 +63,11 @@ roundtrip through each installed client's authenticated ordinary access, retaini
 malformed-record counts, continuation gaps and owner/auth rejection controls. Preserve the first
 decisive failure across child/fallback selection and final reporting. Distinguish
 success of a child, a diagnostic write and the whole supervised task. A later
-unrelated or generic wrapper success must not erase a known failure.
+unrelated or generic wrapper success must not erase a known failure. In an
+unresolved incident, keep the initiating payload and event reference together;
+a later error must not replace them under the earlier first timestamp. Retain
+latest observation time and references separately, and require recovery after
+the latest failure with unchanged authority predicates.
 For persistence size failures, compare the complete encoded wire value with its
 hard limit, including envelope and formatting. A compact list estimate does not
 prove an indented final file fits. Retained evidence and an incident row do not
@@ -137,8 +141,14 @@ read proofs and terminal accounting. These protected artifacts retain page count
 and native cost; do not claim every number is already an ordinary event field.
 A projected cost refusal is not an observed quota failure. Process exit0 or actual
 cost below the limit proves neither coverage nor affordability of the remaining
-work. If a needed fact is unavailable, improve its bounded producer/propagation
-path; retain an explicit unknown instead of inferring an authentication, engine or
+work. A financial diagnosis must identify the actual boundary (native run,
+provider key/account or engine ledger), the evidenced limit and consumption,
+the rejected operation and original safe terminal/error code. Missing limits or
+costs stay unknown. Current native notice diagnostics do not copy terminal
+`total_cost_usd`, and a primary opaque launcher may not disclose its configured
+run limit; ordinary terminal rejection alone cannot establish exhaustion.
+If a needed fact is unavailable, improve its bounded producer/propagation path;
+retain an explicit unknown instead of inferring an authentication, engine or
 budget failure. Do not raise budgets, shrink required coverage or replay work merely
 to obtain a passing result without the appropriate scope and evidence.
 
@@ -221,8 +231,13 @@ For assignment-projection transport timeouts, distinguish dispatch, executor
 enqueue, worker start, provider work and terminal cleanup. A projection timer
 started inside a queued worker does not measure its earlier queue wait. Retain
 a safe correlation ID and monotonic elapsed values at those existing boundaries,
-with explicit absent-stage metadata and finite error classes. The current
-retained failed case cannot distinguish queue wait from execution latency; this
+with explicit absent-stage metadata and finite error classes. Carry validated
+correlation explicitly across thread pools and subprocesses; ContextVars and an
+environment value alone do not restore worker context. Give concurrent requests
+separate child spans and join actual client/server observations. A shared
+capability probe must finish before dependent diagnostic envelopes are selected,
+without turning optional diagnostics into business admission.
+The current retained failed case cannot distinguish queue wait from execution latency; this
 is a diagnostic gap and a supported investigation route, not a proven queue
 starvation cause. A later successful exact-root read does not clear the failed
 whole-inventory observation.

@@ -58,6 +58,9 @@ class Transport(unittest.IsolatedAsyncioTestCase):
             try:
                 async for raw in ws:
                     frame = json.loads(raw)
+                    if frame["method"] == "system.capabilities":
+                        await ws.send(json.dumps({"jsonrpc": "2.0", "id": frame["id"], "result": {"observability": 1}}))
+                        continue
                     ids.append(frame["id"])
                     replies.append(asyncio.create_task(respond(frame)))
             except websockets.ConnectionClosed:
@@ -255,7 +258,11 @@ class Transport(unittest.IsolatedAsyncioTestCase):
                 finally:
                     stats["active"] -= 1
             async for raw in ws:
-                pending = asyncio.create_task(respond(json.loads(raw)))
+                frame = json.loads(raw)
+                if frame["method"] == "system.capabilities":
+                    await ws.send(json.dumps({"jsonrpc": "2.0", "id": frame["id"], "result": {"observability": 1}}))
+                    continue
+                pending = asyncio.create_task(respond(frame))
                 tasks.add(pending)
                 pending.add_done_callback(tasks.discard)
 
@@ -341,7 +348,11 @@ class Transport(unittest.IsolatedAsyncioTestCase):
                     stats["active"] -= 1
                     stats["per_actor"][uid] -= 1
             async for raw in ws:
-                pending = asyncio.create_task(respond(json.loads(raw)))
+                frame = json.loads(raw)
+                if frame["method"] == "system.capabilities":
+                    await ws.send(json.dumps({"jsonrpc": "2.0", "id": frame["id"], "result": {"observability": 1}}))
+                    continue
+                pending = asyncio.create_task(respond(frame))
                 responders.add(pending)
                 pending.add_done_callback(responders.discard)
         async with websockets.serve(handler, "127.0.0.1", 0) as server:

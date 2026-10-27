@@ -14,26 +14,30 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.63.0`. Current HEAD status: untagged.**
-  This local unpublished candidate passes complete source and exact-tag suites
-  with six genuine golden builds each. Normal clones still execute immutable62
-  (`d1fa8c8`); shared sign-off remains51 and public/BOTH FULL proof is open.
-- Installed `v0.62.0` includes complete MIME identity decoding, typed remote
+- **Latest release tag: `v0.64.0`. Current HEAD status: tagged as `v0.64.0`.**
+  This local unpublished candidate passes complete source checks, six genuine
+  golden builds and controlled/blind diagnostic delivery. Exact-tag checks,
+  successor adoption and genuine BOTH FULL remain open. Both normal clones
+  execute immutable63 (`cb7bd930`); shared sign-off remains51.
+- Installed `v0.63.0` includes complete MIME identity decoding, typed remote
   errors, finite shared-time allowances and complete notice-envelope bounds.
   E9 adds child-local Bash lifetime alignment and precise native interruption
   evidence; its actual rendered timeout instruction matches across three hosts.
-  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
-  owns exact installed acceptance, public provenance and authorized publication.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
 - Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
   source families, verified by all439/459/355 package files and authenticated
   owner/PID/source bindings. Canonical source is655b167; the other three peers
   and Qonto retain their previous identities. A historical Git family label
   alone does not establish the deployed baseline.
-- Desktop consumer `ca175b9` and reviewed62 policy remain active. FULL948f1d59
-  is interrupted/unsuccessful with independent cleanup PASS. Reviewed provider
-  read consolidation is deployed; one actual support projection completes its
-  source proofs with a legitimate human-verification hold in21.975seconds.
-  This does not retrospectively explain the historical timeout.
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy passes guarded/native checks. Strict FULL9c3eeace fails missing campaigns,
+  despite native completion atUSD3.158979 and one independently received correct
+  test reply. Owned processes/enrollments are gone; original cron/pauses restored.
+  Forecast-based phase skipping is not proved budget exhaustion.
+- Unpublished64 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Installed63 is unchanged; successor FULL and public provenance remain required.
 - Mario's exact missing Sent source is acquired and inserted through reviewed
   native maintenance. Independent checks preserve all33pre-existing tables and
   1804emails; the scoped projection now returns complete reply evidence in
@@ -41,9 +45,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
   are unchanged. The release plan retains exact source/data evidence.
 - E10 retains finite peer causes; E14 distinguishes direct structured remote
-  rejections. Focused, producer-to-inbox and blind checks pass; source and exact-tag checks
-  pass; installed and genuine BOTH FULL acceptance remain pending. Both patches remain unreleased and
-  absent from normal62 packages; reader schema/auth controls pass.
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed63 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
@@ -109,10 +113,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Freeze the forward immutable kernel candidate after source/version gates;
-   keep prior failed candidates and actual source/data evidence unchanged.
-2. Adopt the same tag normally on BOTH clones; verify complete installed bytes,
-   authored surfaces, locks and exact consumer/policy composition.
+1. Preserve immutable63, prior failed candidates and actual source/data evidence.
+2. Finish native consumer/policy composition and verify authored surfaces and locks.
 3. Reconcile actual charges/reserves and admit only bounded genuine BOTH FULL
    after every free prerequisite passes.
 4. Complete authorized public provenance and doc-end/final review.

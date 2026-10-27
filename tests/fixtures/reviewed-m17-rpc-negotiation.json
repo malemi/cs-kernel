@@ -1,0 +1,26 @@
+{
+  "baseline_commit": "cb7bd930bb4cd3363b3126e84f844a95be8fcb06",
+  "baseline_sha256": "7759202f4fbe2a10d71c1bc294d853f1c135a23c2730d434176ea132d30bef56",
+  "review_receipt": "reviewed-m17-rpc-integration.md",
+  "review_sha256": "e93713a8149cade110d701eb3236ea91890b75aae27b49708745830e722719de",
+  "source_manifest": "reviewed-m17-source-manifest.json",
+  "source_manifest_sha256": "9add8a229e57952abf29064914bc6cfb327272ca0e96d54ccb75dfdeb06bb4ac",
+  "methods": {
+    "__aexit__": {
+      "before": "af36cb206eebbad20ff247feea7dbdbab2c43b1ba2e58323dd4d77d46ea77b60",
+      "after": "86fa5857ee3fc3f97f17b0eae190f587e4a40ac09810e257202c8750fe7b1bfc"
+    },
+    "__init__": {
+      "before": "5e927da389f7ae5d74b889498bc9630f7d907f0efabaed04681c91a80bde5681",
+      "after": "e7e66fb6423c0858b4623047195d51a48a77bbe561356bbcfd5ace4dddf805a0"
+    },
+    "_negotiate_observability": {
+      "before": null,
+      "after": "14bddd944250ef5431e24319c2df4864f691164b75b04cb67cbde9753f327d80"
+    },
+    "call": {
+      "before": "5aedfcd10e8f4804d65035abc5bf4906b395a42c9ea1e51e13629c16ca7464c3",
+      "after": "63a5fb900cc2ad5cd3ee2899f5837488e23abc6bf9b268acde85d63dd41cc938"
+    }
+  }
+}

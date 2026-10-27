@@ -1378,6 +1378,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_operator_health.py"; then echo "OK"; els
 if "$VENV/bin/python" "$ROOT/tests/test_causal_logging.py"; then echo "OK"; else echo "FAIL: causal supervisor evidence lost across ordinary diagnostics"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_causal_contract_edges.py"; then echo "OK"; else echo "FAIL: causal predicate distinctions or private diagnostic failure safety"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_rpc_reads.py"; then echo "OK"; else echo "FAIL: bounded RPC transport or process cleanup regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_worker_diagnostic_context.py"; then echo "OK"; else echo "FAIL: diagnostic context lost across workers, concurrent reads or RPC negotiation"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_rpc_remote_diagnostics.py"; then echo "OK"; else echo "FAIL: structured remote rejection was lost or changed bounded reads"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_rpc_read_origins.py"; then echo "OK"; else echo "FAIL: assignment timeout origin lost across transport or problem inbox"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_inventory_view.py"; then echo "OK"; else echo "FAIL: semantic inventory projection, private binding or native inspection"; FAIL=1; fi

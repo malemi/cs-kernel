@@ -40,6 +40,21 @@ def number(value: Any) -> float | None:
     return None
 
 
+def native_facts(result: Any) -> dict[str, Any]:
+    result = result if isinstance(result, dict) else {}
+    reason = result.get('terminal_reason') or result.get('subtype')
+    reason = {'success': 'completed', 'error_max_budget_usd': 'budget_exhausted',
+              'error_max_turns': 'max_turns'}.get(reason, reason) if isinstance(reason, str) else None
+    facts = {'native_terminal_reason': reason if reason in {
+        'completed', 'budget_exhausted', 'max_turns', 'api_error', 'error'} else 'unknown'}
+    cost = result.get('total_cost_usd')
+    if type(cost) in (int, float) and 0 <= cost < 2**53 and math.isfinite(cost):
+        facts['native_total_cost_usd'] = float(cost)
+    if type(result.get('is_error')) is bool:
+        facts['native_is_error'] = result['is_error']
+    return facts
+
+
 def primary_identity(executable: str) -> dict[str, Any]:
     """Ask the same CLI entry point for auth metadata, never start an AI run."""
     result: dict[str, Any] = {'provider': 'Unknown', 'identity_status': 'unavailable'}
@@ -144,9 +159,10 @@ def describe(attempt: Any, identity: dict[str, Any], ctx: dict[str, Any],
     out = {**identity, 'context': ctx, 'exit_code': attempt.code,
            'no_work_proven': no_work_proven,
            'time_utc': datetime.now(timezone.utc).isoformat(timespec='seconds')}
-    if budget is not None:
-        out['run_budget_usd'] = budget
+    if type(budget) in (int, float) and 0 <= budget < 2**53 and math.isfinite(budget):
+        out['run_budget_usd'] = float(budget)
     result = attempt.result or {}
+    out.update(native_facts(result))
     terminal = result.get('terminal_reason') or result.get('subtype')
     if value := identifier(terminal):
         out['terminal_reason'] = value

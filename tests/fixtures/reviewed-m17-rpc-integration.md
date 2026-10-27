@@ -1,0 +1,13 @@
+## Done
+- Verdict: APPROVED
+- Changed: independent report only; no source or installed-package edits.
+- Checked surface: frozen M17.1 five-source-file integration, both direct regression files, validated context helpers, complete scoped diff, E17 and its negotiation correction.
+- Frozen identity: manifest SHA-256 9add8a229e57952abf29064914bc6cfb327272ca0e96d54ccb75dfdeb06bb4ac; all seven manifest entries independently hash-verified against frozen and current working files.
+- Plan identity: current SHA-256 2308c5b8275ab98d9bd7bf8c795acbe595c4598086f28b4079c8aabc816c2d0f; first 284425 bytes retain approved E17 SHA-256 f365b87598c8dec5edbf18e13a67bf619e71ec0c9f151205945bd76fbe2ba70c exactly. The substantive appended negotiation dependency has its authentic APPROVED review; original scope remains preserved.
+- Verified: python3 -B -m unittest discover -s tests -p test_worker_diagnostic_context.py — Ran 8 tests in 13.036s; OK, exit 0, against matching frozen bytes.
+- Relied-on verification: complete rpc-regression-final.log records 34 tests OK in 29.418s; baseline63-regression.log records 34 tests OK in 29.213s. Complete RED logs expose missing inherited trace IDs and the concurrent missing-envelope assertion.
+- Finding: only validated opaque diagnostic IDs cross the new context boundaries; settings, authority binding, selected owner, authentication and business params remain separate. Child spans reset through scoped contexts, including concurrent owners/runs.
+- Finding: the shared probe is bounded and shielded from waiter cancellation; unsupported, error and stalled capability responses retain business calls without diagnostic admission or probe-driven socket closure. Existing absolute request budgets and outer worker cleanup remain in force.
+- Decision: historical plan sections were excluded with explicit lead approval after the initial oversized read; scoped content and missing source output were reread without truncation. No historical audit or paid/live action was performed.
+- Unverified: actual native daemon → ordinary CLI → collector/inbox → blind interpretation remains M17.2; immutable successor BOTH FULL, production causation, final documentation/completion and release remain separate gates. This approval closes only the reviewed M17.1 source integration.
+- Evidence: /tmp/mrcall-ai-kit/20261025-release-alignment/v63/e17-source/integration-review.md; frozen-candidate-r2/manifest.json; red.log; concurrent-and-malformed.log; green-full-context.log; rpc-regression-final.log; baseline63-regression.log.

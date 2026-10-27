@@ -563,3 +563,41 @@ reply, provider draft, acknowledgement/no-loop, signup, terminal and cleanup
 oracles. Public provenance, authorized publication, doc-end, separate final
 review and baseline closure remain required. No smaller component proof closes
 the whole objective.
+
+
+## Required E16 dependency: exact independently reviewed peer families
+
+The existing native acceptance consumer requires every trusted peer to have one
+shared full-package digest. Actual reviewed E11 source deliberately changes only
+Mario's Sent diagnostic module while the other three peer families remain at
+their independently approved source. Requiring those distinct reviewed packages
+to be identical is a false composition constraint. Correct only the consumer's
+expected-identity representation through canonical isolated source, with an
+optional exact per-peer expected-payload mapping covering the entire trusted UID
+cohort. Each actual peer must match its own independently reviewed FULL inventory;
+a current snapshot is never approval. Missing, extra, malformed, partial or wrong
+UID/digest mappings must fail closed, including signed-result validation. Keep
+legacy scalar behavior when the mapping is absent; malformed presence cannot
+fall back. This expresses individually exact approved families and grants no
+new source, permission, action or functional-oracle authority.
+
+Preserve the native installed-package real-root/no-symlink guard. Use supported
+normal real-.venv installation with complete-environment rollback, independently
+verified actual package origin and all159 Git-bound kernel entries. Change no
+engine/customer source, keys, actors, excluded stripe/Qonto identity, routes,
+permissions, signatures, models, budgets, absolute deadlines or strict reply,
+draft, acknowledgement/no-loop, signup, native-terminal and cleanup requirements.
+The minimum native schema selector must also reach its existing runner and
+result checks; no scalar fallback may bypass per-UID enforcement.
+
+Fresh brief approval precedes plan approval and code. Baseline tests, genuine
+positive/negative native validation controls and fresh source review precede a
+canonical consumer commit. Deploy only its exact reviewed four-file bundle with
+preimage/mode guards and owned rollback under already-held controls, preserving
+foreign Desktop WIP. Then prepare and separately review a policy-only atomic
+activation using actual adopted identities and approved E11 source manifests.
+No review.gather, sweep, discovery/native job or potential model call belongs to
+free preflight. Genuine fixture authority, source/tag GREEN, BOTH immutable63
+adoptions, complete free preflight and the separate E15 final root admission
+remain mandatory before paid acceptance. This dependency establishes neither
+activation, successful strict BOTH FULL nor public delivery.

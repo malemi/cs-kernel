@@ -72,6 +72,7 @@ class EngineClient:
         self._ids = itertools.count(1)
         self._observability = False
         self._observability_negotiated = False
+        self._observability_probe: asyncio.Task | None = None
 
     @property
     def url(self) -> str:
@@ -105,6 +106,9 @@ class EngineClient:
             raise
 
     async def __aexit__(self, *exc) -> None:
+        if self._observability_probe is not None:
+            self._observability_probe.cancel()
+            await asyncio.gather(self._observability_probe, return_exceptions=True)
         if self._recv_task:
             self._recv_task.cancel()
         for t in list(self._handlers):
@@ -183,6 +187,21 @@ class EngineClient:
             if not fut.done():
                 fut.set_exception(exc)
 
+    async def _negotiate_observability(self, timeout: float) -> None:
+        probe_id = next(self._ids)
+        probe = asyncio.get_running_loop().create_future()
+        self._pending[probe_id] = probe
+        try:
+            async with asyncio.timeout(min(1.0, max(.001, timeout/10))):
+                await self._ws.send(json.dumps({"jsonrpc":"2.0","id":probe_id,"method":"system.capabilities","params":{}}))
+                caps = await probe
+                self._observability = isinstance(caps, dict) and type(caps.get('observability')) is int and caps['observability'] == 1
+        except Exception:
+            self._observability = False
+        finally:
+            self._pending.pop(probe_id, None)
+            self._observability_negotiated = True
+
     async def call(self, method: str, params: dict | None = None, timeout: float = 60) -> Any:
         """Issue one JSON-RPC call and wait for its response.
 
@@ -197,18 +216,13 @@ class EngineClient:
         from .observability import current_context, store_for
         deadline = time.monotonic() + timeout
         if current_context() and not self._observability_negotiated and method != "system.capabilities" and not method.startswith("diagnostics."):
-            self._observability_negotiated = True
-            probe_id = next(self._ids)
-            probe = asyncio.get_running_loop().create_future()
-            self._pending[probe_id] = probe
+            if self._observability_probe is None:
+                self._observability_probe = asyncio.create_task(self._negotiate_observability(timeout))
             try:
-                await self._ws.send(json.dumps({"jsonrpc":"2.0","id":probe_id,"method":"system.capabilities","params":{}}))
-                caps = await asyncio.wait_for(probe, timeout=min(1.0, max(.001, timeout/10)))
-                self._observability = isinstance(caps, dict) and type(caps.get('observability')) is int and caps['observability'] == 1
-            except Exception:
-                self._observability = False
-            finally:
-                self._pending.pop(probe_id, None)
+                await asyncio.wait_for(asyncio.shield(self._observability_probe),
+                    timeout=min(1.0, max(.001, timeout/10), max(.001, deadline-time.monotonic())))
+            except asyncio.TimeoutError:
+                pass
         store = None
         diagnostic = bool(current_context()) and not method.startswith('diagnostics.')
         if diagnostic:

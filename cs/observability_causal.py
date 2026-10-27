@@ -5,6 +5,7 @@ import contextlib
 import contextvars
 import functools
 import hashlib
+import math
 import re
 import uuid
 
@@ -32,7 +33,7 @@ PAIRS = {
     'process_exit': {'process_nonzero'}, 'native_capture_json': {'native_capture_malformed'},
     'native_capture_capacity': {'native_capture_overflow'}, 'process_wait': {'process_wait_timeout'},
     'native_terminal_presence': {'terminal_unavailable'}, 'native_terminal_error': {'terminal_error'},
-    'native_terminal_reason': {'terminal_rejected'},
+    'native_terminal_reason': {'terminal_rejected', 'terminal_observed'},
     'native_task_completion': {'native_task_killed', 'native_task_stopped'},
     'discovery_artifact_presence': {'artifact_missing'}, 'discovery_artifact_access': {'artifact_unreadable'},
     'discovery_artifact_encoding': {'artifact_invalid'}, 'discovery_identity': {'identity_mismatch'},
@@ -51,7 +52,8 @@ PAIRS = {
 PHASES = {'identity', 'configuration', 'tasks', 'discovery', 'review', 'campaigns', 'founder_tasks', 'founder_ask'}
 COMMANDS = {'whoami', 'config', 'tasks', 'unanswered', 'review', 'campaign', 'ask', 'dossier', 'contacted', 'history', 'assignment', 'draft-reply', 'draft-send', 'chat'}
 METHODS = {'tasks.assignment.budget', 'fixture.admission', 'fixture.connect', 'fixture.login', 'fixture.select', 'fixture.uidvalidity', 'fixture.fetch', 'fixture.mime', 'fixture.logout', 'tasks.assignment.project', 'operator.discovery.context', 'operator.discovery.publication', 'operator.discovery.prepare', 'operator.discovery.parse', 'operator.discovery.view', 'operator.discovery.material', 'operator.discovery.capture', 'operator.discovery.verify', 'draft.prepare', 'sync.run', 'operator.notice', 'operator.health.assess', 'operator.health.inspection', 'operator.health.native_read', 'operator.native.terminal', 'operator.tick'}
-FACTS = {'scoped_sent_match_unique', 'expected_roots', 'effective_entry_ms', 'scheduler_dispatched', 'returned_values', 'read_timeouts', 'scheduler_deferred', 'serial_read_ms', 'global_concurrency', 'account_concurrency', 'inbound_count', 'enrollment_count', 'match_count', 'candidate_count', 'confirmed_count', 'expired_count', 'attempted', 'shared_deadline_selected', 'batch_deadline_selected', 'request_timeout_selected', 'elapsed_ms', 'bound_ms', 'remaining_ms', 'remaining_available', 'available', 'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
+NATIVE_TERMINALS = {'completed', 'budget_exhausted', 'max_turns', 'api_error', 'error', 'unknown'}
+FACTS = {'native_total_cost_usd', 'native_terminal_reason', 'scoped_sent_match_unique', 'expected_roots', 'effective_entry_ms', 'scheduler_dispatched', 'returned_values', 'read_timeouts', 'scheduler_deferred', 'serial_read_ms', 'global_concurrency', 'account_concurrency', 'inbound_count', 'enrollment_count', 'match_count', 'candidate_count', 'confirmed_count', 'expired_count', 'attempted', 'shared_deadline_selected', 'batch_deadline_selected', 'request_timeout_selected', 'elapsed_ms', 'bound_ms', 'remaining_ms', 'remaining_available', 'available', 'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
 REFS = ('run_id', 'attempt_id', 'child_event_id', 'cause_event_id', 'tool_id_hash', 'session_id_hash')
 _STATE = contextvars.ContextVar('causal_decision', default=None)
 
@@ -72,7 +74,13 @@ def _validate(value):
     if not isinstance(facts, dict) or len(facts) > 16 or set(facts) - FACTS:
         raise ValueError('Invalid causal facts')
     for key, item in facts.items():
-        if type(item) not in (bool, int) or (type(item) is int and (not -(2**53) < item < 2**53 or (key != 'process_exit' and item < 0))):
+        if key == 'native_total_cost_usd':
+            if type(item) not in (int, float) or not 0 <= item < 2**53 or not math.isfinite(item):
+                raise ValueError('Invalid native cost')
+        elif key == 'native_terminal_reason':
+            if not isinstance(item, str) or item not in NATIVE_TERMINALS:
+                raise ValueError('Invalid native terminal')
+        elif type(item) not in (bool, int) or (type(item) is int and (not -(2**53) < item < 2**53 or (key != 'process_exit' and item < 0))):
             raise ValueError('Invalid causal fact')
     refs = value['refs']
     if not isinstance(refs, dict) or set(refs) != set(REFS):
@@ -119,6 +127,8 @@ def decision(check, cause, *, layer='ordinary_health', phase=None, command=None,
         for key, item in (('tool_id_hash', tool), ('session_id_hash', session)):
             if isinstance(item, str) and item:
                 refs[key] = hashlib.sha256(item.encode()).hexdigest()
+        if state is not None:
+            facts = {**state.get('native_facts', {}), **facts}
         if state is not None and state.get('process_exit') is not None:
             facts.setdefault('process_exit', state['process_exit'])
         value = validate(dict(version=1, layer=layer, check=check, cause=cause, outcome=outcome, phase=phase, command=command, method=method, facts=facts, refs=refs, missing_refs=[key for key in REFS if refs[key] is None], evidence_complete=cause != 'unknown'))
@@ -152,8 +162,11 @@ def retain_notice():
         state['fatal_notice'] = state['causal']
 
 
-def child(event):
+def child(event, **facts):
     state = _STATE.get()
+    if state is not None:
+        state['native_facts'] = {key: value for key, value in facts.items()
+                                 if key in {'native_total_cost_usd', 'native_terminal_reason', 'native_is_error'}}
     if state is not None and event:
         state['child_event_id'] = event['event_id']
         state['process_exit'] = event.get('exit_code')

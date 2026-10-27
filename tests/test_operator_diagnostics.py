@@ -137,3 +137,17 @@ assert identity["workspace"] == "workspace-safe" and identity["organization"] ==
 assert identity["creator"] == "unavailable"
 assert "sk-private" not in json.dumps(identity) and "sk-do-not-copy" not in json.dumps(identity)
 print("operator diagnostics: cause evidence, unchanged prework gate, safe fields, bounded read-only probes and account isolation OK")
+
+for reason, expected in [('success', 'completed'), ('completed', 'completed'),
+                         ('error_max_budget_usd', 'budget_exhausted'),
+                         ('budget_exhausted', 'budget_exhausted'), ('max_turns', 'max_turns'),
+                         ('api_error', 'api_error'), ('error', 'error'), ('private-model-prose', 'unknown')]:
+    value = describe({'terminal_reason': reason, 'total_cost_usd': 3.158979, 'is_error': False})
+    assert value['native_terminal_reason'] == expected
+    assert value['native_total_cost_usd'] == 3.158979
+    assert 'run_budget_usd' not in value
+for invalid in [None, True, False, -1, float('nan'), float('inf'), '3.15', {}, 2**53, 10**999]:
+    value = describe({'terminal_reason': 'completed', 'total_cost_usd': invalid})
+    assert 'native_total_cost_usd' not in value
+assert describe({'total_cost_usd': 0})['native_total_cost_usd'] == 0
+print('PASS: native cost and closed terminal evidence; invalid cost unavailable; opaque limit unknown')

@@ -504,11 +504,22 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
         producer, attempt.lifecycle, health_context)
     native_capture.finish(attempt, child_identity, total, bool(key))
     from .observability_producers import emit as diagnostic_emit
+    native_result, native_checks = _native_checks(attempt)
+    native_facts = diagnostics.native_facts(native_result)
     with diagnostic_context(json.loads(env['CS_DIAGNOSTIC_CONTEXT'])):
+        observation = None
+        if native_result is not None:
+            with causal.scope():
+                observation = causal.decision('native_terminal_reason', 'terminal_observed',
+                    layer='native', method='operator.native.terminal',
+                    outcome='failed' if any(row[0] for row in native_checks) else
+                            'unknown' if native_facts['native_terminal_reason'] == 'unknown' else 'accepted',
+                    **native_facts)
         child_event = diagnostic_emit(settings, 'job', 'failed' if code or timed_out else 'result',
                         reason='timeout' if timed_out else 'unknown' if code else 'none',
-                        exit_code=code, evidence_ref=run_directory)
-        causal.child(child_event)
+                        exit_code=code, evidence_ref=run_directory,
+                        **({'causal': observation} if observation else {}))
+        causal.child(child_event, **native_facts)
     maintain(settings, active_directory=run_directory)
     _successful(attempt)
     if getattr(attempt, 'causal', None) and attempt.causal['check'] == 'native_task_completion':
@@ -614,8 +625,7 @@ def _prework_refusal(attempt: Attempt) -> bool:
     return True
 
 
-def _successful(attempt: Attempt) -> bool:
-    """A zero exit without a clean terminal result is not completed work."""
+def _native_checks(attempt: Attempt):
     result = attempt.result
     interrupted = None
     if result is None and attempt.needs_composition:
@@ -623,7 +633,6 @@ def _successful(attempt: Attempt) -> bool:
         rejected = rejection(attempt.events, attempt.native_producer)
         if rejected and rejected['reason'] in ('native_task_killed', 'native_task_stopped'):
             interrupted = rejected['reason']
-    facts = dict(process_exit=attempt.code, malformed=attempt.malformed, overflow=attempt.overflow, timed_out=attempt.timed_out)
     checks = ((attempt.code != 0, 'process_exit', 'process_nonzero', 'process'),
               (attempt.malformed, 'native_capture_json', 'native_capture_malformed', 'native'),
               (attempt.overflow, 'native_capture_capacity', 'native_capture_overflow', 'native'),
@@ -632,6 +641,13 @@ def _successful(attempt: Attempt) -> bool:
               (result is None, 'native_terminal_presence', 'terminal_unavailable', 'native'),
               (result is not None and result.get('is_error') is not False, 'native_terminal_error', 'terminal_error', 'native'),
               (result is not None and result.get('terminal_reason') in ('api_error', 'budget_exhausted', 'max_turns', 'error'), 'native_terminal_reason', 'terminal_rejected', 'native'))
+    return result, checks
+
+
+def _successful(attempt: Attempt) -> bool:
+    """A zero exit without a clean terminal result is not completed work."""
+    result, checks = _native_checks(attempt)
+    facts = dict(process_exit=attempt.code, malformed=attempt.malformed, overflow=attempt.overflow, timed_out=attempt.timed_out, **diagnostics.native_facts(result))
     for failed, check, cause, layer in checks:
         if failed:
             if not getattr(attempt, 'causal', None):

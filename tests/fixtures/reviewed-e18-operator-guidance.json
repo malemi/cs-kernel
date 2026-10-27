@@ -1,0 +1,10 @@
+{
+  "scope": "E18 plan-approved mandatory-phase clarification; final source integration remains a separate gate",
+  "before_sha256": "f65581de8fded60e49b303caaa7cfe32820937217d2b78939050a440b3070b05",
+  "after_sha256": "9208b19da9429b98a97f0308ce126c6f1ed4f0227535fe5d854a083e33a66c59",
+  "before": "material. Actual budget, quota or deadline refusal remains terminal and leaves\ninspection incomplete; never raise limits or claim unread coverage.\n",
+  "after": "material or skipping any required recurring phase, including campaigns. A successful\nreply does not complete the operator: execute the existing campaign step to observe\nits actual workload and result rather than predict its cost or assume nothing is due.\nExisting explicit STOPs remain authoritative. Actual budget, quota or deadline refusal\nremains terminal and leaves work incomplete; never raise limits or claim unread coverage.\n",
+  "plan_review_receipt": "reviewed-e18-plan.md",
+  "plan_review_sha256": "2cc865fd19fbdfd62698c5ddc6c27b1677ce84258254d6468b1e5f0dd8a6296c",
+  "source_snapshot_manifest_sha256": "547a9e8bac6a21fa31aec35bba9eac8a7816eae79d936588d3904a3443fcc473"
+}

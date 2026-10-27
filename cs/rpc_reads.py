@@ -1,6 +1,9 @@
 """Bounded multiplexed reads with explicit per-key unavailable outcomes."""
 from __future__ import annotations
 
+from . import observability
+from contextlib import nullcontext
+
 import asyncio
 from dataclasses import dataclass
 import math
@@ -120,7 +123,10 @@ async def _read(settings, method, requests, request_timeout, batch_timeout, dead
             if bound <= 0:
                 return
             try:
-                value = await asyncio.wait_for(client.call(method, params, timeout=bound), bound)
+                diagnostic_context = observability.current_context()
+                with (observability.context({**diagnostic_context, "parent_span_id": diagnostic_context.get("span_id"), "span_id": None})
+                      if diagnostic_context else nullcontext()):
+                    value = await asyncio.wait_for(client.call(method, params, timeout=bound), bound)
                 outcomes[key] = ReadOutcome(value=value)
             except Exception as exc:
                 cause = ('remote_invalid_params' if exc.code == -32602 else 'remote_error') if isinstance(exc, rpc.EngineError) else selected if isinstance(exc, TimeoutError) else 'connection_failure' if isinstance(exc, ConnectionError) else 'transport_unavailable'
@@ -199,7 +205,8 @@ def read_many(settings, method: str, requests: dict, *, request_timeout: float =
             "deadline": limit - 2 * CLOSE_SECONDS, "token": token if _cacheable(token, limit - time.monotonic()) else None,
             "close_seconds": CLOSE_SECONDS, "request_seconds": request_timeout, "deadline_origin": origin}).encode()
         process = subprocess.Popen(READ_COMMAND, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL, start_new_session=owned_process_group is None)
+            stderr=subprocess.DEVNULL, start_new_session=owned_process_group is None,
+            env=dict(os.environ, CS_DIAGNOSTIC_CONTEXT=json.dumps(observability.current_context())))
         output, _ = process.communicate(payload, timeout=max(0.001, limit - 2 * CLOSE_SECONDS - time.monotonic()))
         if process.returncode != 0:
             raise RuntimeError("read worker unavailable")
@@ -253,8 +260,14 @@ def _isolated_main():
     REQUEST_SECONDS = payload["request_seconds"]
     selected = Settings(_env_file=(), **payload["settings"])
     cache = {selected.engine_owner_uid: payload["token"]} if payload["token"] else {}
-    outcomes = asyncio.run(_read(selected, payload["method"], payload["requests"], payload["request_timeout"],
-        payload["batch_timeout"], payload["deadline"], cache, payload.get("deadline_origin", "shared_deadline")))
+    from .observability_producers import inherited_context
+    metadata = inherited_context()
+    diagnostic_context = {key: value for key in ("trace_id", "span_id", "parent_span_id", "run_id", "attempt_id")
+                          if (value := observability.diagnostic_id(metadata.get(key))) is not None}
+    with (observability.context({**diagnostic_context, "parent_span_id": diagnostic_context.get("span_id"), "span_id": None})
+          if diagnostic_context else nullcontext()):
+        outcomes = asyncio.run(_read(selected, payload["method"], payload["requests"], payload["request_timeout"],
+            payload["batch_timeout"], payload["deadline"], cache, payload.get("deadline_origin", "shared_deadline")))
     rows = {key: {"value": outcome.value, "error": "timeout" if isinstance(outcome.error, TimeoutError)
         else "connection" if isinstance(outcome.error, ConnectionError) else "unavailable" if outcome.error is not None else None, "diagnostic": outcome.diagnostic}
         for key, outcome in outcomes.items()}

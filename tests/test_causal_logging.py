@@ -27,6 +27,7 @@ class CausalTests(unittest.TestCase):
         source = ast.parse(Path('tests/test_operator_health.py').read_text())
         fixture = next(ast.literal_eval(node.value) for node in source.body if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'FAKE' for target in node.targets))
         fixture = fixture.replace("    if case=='send_success':", "    if case=='counts': use('.venv/bin/python -m cs unanswered --days 14 --json --all-buckets',output,'discovery2',child.returncode!=0)\n    if case=='send_success':")
+        fixture = fixture.replace("'type':'result','is_error':False,", "'type':'result','is_error':False,'terminal_reason':'completed','total_cost_usd':3.158979,")
         async def intake(settings):
             return None
         retained = os.environ.get('CAUSAL_EVIDENCE_DIR')
@@ -51,6 +52,9 @@ class CausalTests(unittest.TestCase):
                     terminal = [e for e in events if e['stage'] == 'launch' and e['status'] == 'failed'][-1]
                     value = terminal['causal']
                     self.assertEqual(value['check'], check)
+                    self.assertEqual(value['facts']['native_total_cost_usd'], 3.158979)
+                    self.assertEqual(value['facts']['native_terminal_reason'], 'completed')
+                    self.assertFalse(value['facts']['native_is_error'])
                     self.assertEqual(value['refs']['attempt_id'], terminal['attempt_id'])
                     self.assertTrue(any(e['event_id'] == value['refs']['cause_event_id'] and e['stage'] == 'context' for e in events))
                     self.assertTrue(any(e['event_id'] == value['refs']['child_event_id'] and e['exit_code'] == 0 for e in events))
@@ -79,6 +83,10 @@ class CausalTests(unittest.TestCase):
                     repeat = subprocess.run(command,capture_output=True,text=True,env=env)
                     self.assertEqual(repeat.returncode,1,repeat.stderr)
                     self.assertTrue(any(p['evidence'].get('causal') == value for p in json.loads((root/'monitor'/'problems.json').read_text())['problems']))
+                    os.environ['HEALTH_CASE'] = 'late_chat'
+                    self.assertEqual(recovery.run(str(binary), ['Write']), 0)
+                    restored = subprocess.run(command, capture_output=True, text=True, env=env)
+                    self.assertEqual(restored.returncode, 0, restored.stdout + restored.stderr)
 
                 os.environ['HEALTH_CASE'] = 'late_chat'
                 self.assertEqual(recovery.run(str(binary), ['Write']), 0)
@@ -119,7 +127,11 @@ class CausalTests(unittest.TestCase):
                 self.assertNotIn('PENDING_PRIVATE_CANARY', trace.stdout)
                 collected = subprocess.run(command, capture_output=True, text=True, env=env)
                 self.assertEqual(collected.returncode, 1, collected.stderr)
-                self.assertTrue(any(p['evidence'].get('causal') == value for p in json.loads((root/'monitor'/'problems.json').read_text())['problems']))
+                first_notice = next(row for row in events if row.get('method') == 'operator.notice'
+                                    and row.get('status') == 'failed' and row.get('causal', {}).get('check') == 'notice_persistence')
+                self.assertTrue(any(row['evidence'].get('event_id') == first_notice['event_id']
+                                    and row['evidence'].get('causal') == first_notice['causal']
+                                    for row in json.loads((root/'monitor'/'problems.json').read_text())['problems']))
 
 
     def test_read_collisions_validation_and_context(self):

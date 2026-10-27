@@ -469,7 +469,37 @@ The remaining file-authoring steps apply only when authority is `legacy`.
 
         def require_preserved_rpc(candidate):
             import hashlib
-            modules = [ast.parse(previous), ast.parse(candidate)]
+            fixture_root = ROOT / 'tests/fixtures'
+            record = json.loads((fixture_root / 'reviewed-m17-rpc-negotiation.json').read_text())
+            baseline = (fixture_root / 'reviewed-m17-rpc-baseline.py.txt').read_bytes()
+            self.assertEqual(hashlib.sha256(baseline).hexdigest(), record['baseline_sha256'])
+            self.assertEqual(baseline, subprocess.check_output(['git', 'show', record['baseline_commit'] + ':cs/rpc.py'], cwd=ROOT))
+            review = (fixture_root / record['review_receipt']).read_bytes()
+            self.assertEqual(hashlib.sha256(review).hexdigest(), record['review_sha256'])
+            manifest_bytes = (fixture_root / record['source_manifest']).read_bytes()
+            self.assertEqual(hashlib.sha256(manifest_bytes).hexdigest(), record['source_manifest_sha256'])
+            self.assertEqual(hashlib.sha256(candidate).hexdigest(), json.loads(manifest_bytes)['cs/rpc.py'])
+            parsed = ast.parse(candidate)
+            baseline_client = next(n for n in ast.parse(baseline).body if isinstance(n, ast.ClassDef) and n.name == 'EngineClient')
+            old_methods = {n.name: n for n in baseline_client.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+            client = next(n for n in parsed.body if isinstance(n, ast.ClassDef) and n.name == 'EngineClient')
+            rewritten = []
+            observed = set()
+            for node in client.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in record['methods']:
+                    delta = record['methods'][node.name]
+                    self.assertEqual(hashlib.sha256(ast.unparse(node).encode()).hexdigest(), delta['after'])
+                    observed.add(node.name)
+                    if delta['before'] is not None:
+                        old = old_methods[node.name]
+                        self.assertEqual(hashlib.sha256(ast.unparse(old).encode()).hexdigest(), delta['before'])
+                        rewritten.append(old)
+                else:
+                    rewritten.append(node)
+            self.assertEqual(observed, set(record['methods']))
+            client.body = rewritten
+            self.assertEqual(ast.dump(parsed, include_attributes=False), ast.dump(ast.parse(baseline), include_attributes=False))
+            modules = [ast.parse(previous), parsed]
             for index, module in enumerate(modules):
                 def added_import(node):
                     return (isinstance(node, ast.Import) and len(node.names) == 1

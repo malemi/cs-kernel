@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## v0.64.0 — 2026-10-27 (MINOR)
+
+Keep operational failures linked to their actual source and complete every required phase.
+
+- Carry validated diagnostic identities through review/discovery workers, assignment
+  threads and isolated RPC reads. Concurrent requests share bounded capability
+  readiness and retain separate spans; optional diagnostics grant no authority.
+- Preserve the initiating incident's causal/provider snapshot with its event
+  reference. Keep latest failure references separately, require recovery after
+  the latest failure and preserve severity and acknowledgement semantics.
+- Retain validated native reported cost and normalized terminal reason through
+  ordinary logs and the filesystem inbox. Unknown costs/limits stay unknown;
+  native completion cannot imply complete operator execution.
+- Clarify that predicted cost does not justify skipping required phases, including
+  campaigns, after a successful reply. Existing STOPs, order, budgets and guards remain.
+
+Migration: install the same immutable tag normally on BOTH maintained clones;
+verify all package bytes and rebuild locks. Preserve company-authored data,
+credentials, permissions, budgets, schedules and manual-only diagnosis.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+inherited unshipped composition includes send/authentication surfaces; controlled
+transport, CLI/inbox and blind evidence do not replace final-candidate acceptance.
+
 ## v0.63.0 — 2026-10-27 (MINOR)
 
 Retain the deciding peer-read cause before generic assignment reconciliation.
@@ -515,8 +539,8 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
-Both maintained clones install immutable local candidate `v0.62.0` at
-`d1fa8c8218cb852093d6c551dd552cab20309afc`. All 159 package files, authenticated
+Both maintained clones install immutable local candidate `v0.63.0` at
+`cb7bd930bb4cd3363b3126e84f844a95be8fcb06`. All 159 package files, authenticated
 identities, the reviewed three-host timeout instruction and fresh local Git
 lock rebuilds pass. Company guidance, local harness edits, permissions and
 launchers remain preserved. Current genuine BOTH-clone FULL and public Git

@@ -1,3 +1,48 @@
+## 2026-10-27 — Superseded development64 checkpoint
+
+- **Latest release tag: `v0.63.0`. Current HEAD status: untagged.**
+  This local unpublished candidate passes complete source and exact-tag suites
+  with six genuine golden builds each. Both normal clones execute immutable63
+  (`cb7bd930`); all159 installed files and fresh local lock rebuilds match.
+  Shared sign-off remains51; public provenance and genuine BOTH FULL are open.
+
+- Development E17 correlation passes controlled wire/source review and native
+  engine/CLI checks. Collector first-cause retention and E18 phase/cost work remain
+  in progress; installed63 is unchanged and successor FULL/publication are open.
+
+## 2026-10-27 — Superseded pre-FULL63 checkpoint
+
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact63
+  policy is active after independent guarded/native postchecks.
+  FULL948f1d59 was interrupted/unsuccessful with cleanup PASS. Reviewed provider
+  read consolidation is deployed; one actual support projection completes its
+  source proofs with a legitimate human-verification hold in21.975seconds.
+  This does not retrospectively explain the historical timeout.
+
+## 2026-10-27 — Superseded pre-activation checkpoint
+
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the old62
+  policy is inactive/incompatible and fresh63 policy activation is pending.
+
+## 2026-10-27 — Superseded pre-adoption checkpoint
+
+  with six genuine golden builds each. Normal clones still execute immutable62
+  (`d1fa8c8`); shared sign-off remains51 and public/BOTH FULL proof is open.
+
+- Installed `v0.62.0` includes complete MIME identity decoding, typed remote
+
+- Desktop consumer `ca175b9` and reviewed62 policy remain active. FULL948f1d59
+  is interrupted/unsuccessful with independent cleanup PASS. Reviewed provider
+
+  rejections. Focused, producer-to-inbox and blind checks pass; source and exact-tag checks
+  pass; installed and genuine BOTH FULL acceptance remain pending. Both patches remain unreleased and
+  absent from normal62 packages; reader schema/auth controls pass.
+
+1. Freeze the forward immutable kernel candidate after source/version gates;
+   keep prior failed candidates and actual source/data evidence unchanged.
+2. Adopt the same tag normally on BOTH clones; verify complete installed bytes,
+   authored surfaces, locks and exact consumer/policy composition.
+
 ## 2026-10-27 — Frozen63 checkpoint before exact-tag result
 
 - **Latest release tag: `v0.63.0`. Current HEAD status: tagged as `v0.63.0`.**

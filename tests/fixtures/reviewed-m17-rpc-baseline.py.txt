@@ -1,0 +1,457 @@
+"""JSON-RPC 2.0 client for the mrcall-desktop engine daemon.
+
+Transport: one JSON object per WebSocket TEXT message, against
+``wss://<host>/ws/<uid>`` (Caddy routes to the per-uid unix socket).
+The handshake carries ``Authorization: Bearer <firebase-id-token>``;
+the daemon verifies RS256 and gates ``token.sub == OWNER_ID``.
+
+A background receive task routes responses to per-id futures and
+collects server notifications (frames without ``id``), so a second
+call (e.g. ``chat.approve``) can be issued while a long-running one
+(``chat.send``) is still in flight — that is how the engine's
+approval gate works.
+"""
+from __future__ import annotations
+
+import asyncio
+import itertools
+import json
+import os
+import sys
+import time
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
+
+import websockets
+
+from . import auth
+from .config import Settings
+
+if TYPE_CHECKING:  # import cycle: model_config imports config, config imports nothing
+    from .model_config import Role
+
+NotifyHandler = Callable[[str, Any], Optional[Awaitable[None]]]
+
+# Keepalive, matched to the engine's own `server_ws` settings. Long
+# enough that a briefly busy engine loop is not mistaken for a dead peer;
+# short enough that a peer which really is gone is detected quickly,
+# because the close is what stops the turn on the other side.
+WS_PING_INTERVAL_SECONDS = 20
+WS_PING_TIMEOUT_SECONDS = 40
+
+
+class EngineError(RuntimeError):
+    """JSON-RPC error response from the engine."""
+
+    def __init__(self, code: int, message: str, data: Any = None):
+        super().__init__(f"engine error {code}: {message}")
+        self.code = code
+        self.message = message
+        self.data = data
+
+
+class EngineClient:
+    def __init__(
+        self,
+        settings: Settings,
+        on_notification: NotifyHandler | None = None,
+        id_token: str | None = None,
+    ):
+        self.settings = settings
+        self.on_notification = on_notification
+        # A caller that already holds a valid ID token passes it here instead
+        # of letting `auth.get_id_token` read the clone's stored session —
+        # `cs init` is the case: it has a descriptor's refresh token in hand
+        # and no state dir written yet, and a wizard the operator may still
+        # cancel must not leave a session file behind.
+        self._id_token = id_token
+        self.notifications: list[dict] = []
+        self._ws = None
+        self._recv_task: asyncio.Task | None = None
+        self._pending: dict[Any, asyncio.Future] = {}
+        self._handlers: set[asyncio.Task] = set()
+        self._ids = itertools.count(1)
+        self._observability = False
+        self._observability_negotiated = False
+
+    @property
+    def url(self) -> str:
+        base = self.settings.engine_ws_url.rstrip("/")
+        if not base:
+            raise RuntimeError(
+                "engine_ws_url not configured — set [engine].ws_url in manifest.toml"
+            )
+        return f"{base}/ws/{self.settings.engine_owner_uid}"
+
+    async def __aenter__(self) -> "EngineClient":
+        try:
+            token = self._id_token or auth.get_id_token(self.settings)
+            self._ws = await websockets.connect(
+                self.url,
+                additional_headers={"Authorization": f"Bearer {token}"},
+                max_size=32 * 1024 * 1024,  # email bodies / search results can be large
+                open_timeout=30,
+                # A turn the engine is still working on must not be killed by
+                # our own keepalive: the library default gives the pong 20 s,
+                # which a briefly busy engine loop can exceed. The engine
+                # sets the same deadline on its side.
+                ping_interval=WS_PING_INTERVAL_SECONDS,
+                ping_timeout=WS_PING_TIMEOUT_SECONDS,
+            )
+            self._recv_task = asyncio.create_task(self._recv_loop())
+            return self
+        except BaseException as exc:
+            from .observability_producers import emit, error_reason, error_metadata
+            emit(self.settings, 'rpc', 'failed', reason=error_reason(exc), method='engine.connect', **error_metadata(exc))
+            raise
+
+    async def __aexit__(self, *exc) -> None:
+        if self._recv_task:
+            self._recv_task.cancel()
+        for t in list(self._handlers):
+            t.cancel()
+        if self._ws:
+            await self._ws.close()
+        for fut in self._pending.values():
+            if not fut.done():
+                fut.cancel()
+
+    async def _recv_loop(self) -> None:
+        try:
+            async for raw in self._ws:
+                try:
+                    frame = json.loads(raw)
+                except ValueError:
+                    continue
+                if frame.get("id") is not None and (
+                    "result" in frame or "error" in frame
+                ):
+                    fut = self._pending.pop(frame["id"], None)
+                    if fut and not fut.done():
+                        if "error" in frame:
+                            e = frame["error"] or {}
+                            fut.set_exception(
+                                EngineError(
+                                    e.get("code", -1), e.get("message", ""), e.get("data")
+                                )
+                            )
+                        else:
+                            fut.set_result(frame.get("result"))
+                else:  # notification
+                    method = frame.get("method", "")
+                    params = frame.get("params")
+                    self.notifications.append({"method": method, "params": params})
+                    if self.on_notification:
+                        out = self.on_notification(method, params)
+                        if asyncio.iscoroutine(out):
+                            # NEVER await a handler inline. This task is the only
+                            # consumer of the socket, and the approval handler
+                            # answers a notification by issuing `chat.approve` —
+                            # whose response only THIS loop can deliver. Awaiting
+                            # here deadlocks: the approve request goes out, the
+                            # engine really does run the tool, and every frame
+                            # after it is buffered and never dispatched, so the
+                            # caller hangs until something kills it.
+                            t = asyncio.create_task(out)
+                            self._handlers.add(t)
+                            t.add_done_callback(self._handler_done)
+        except (websockets.ConnectionClosed, asyncio.CancelledError):
+            self._fail_pending(ConnectionError("engine connection closed"))
+        except Exception as exc:  # noqa: BLE001
+            # The receive task must never die quietly: whatever killed it, every
+            # caller waiting on a future is now waiting on a loop that will never
+            # answer. Surfacing the real exception turns a silent hang into a
+            # failure the caller can log and retry.
+            self._fail_pending(exc)
+
+    def _handler_done(self, task: asyncio.Task) -> None:
+        """Retire a finished notification handler, loudly if it failed.
+
+        A fire-and-forget task whose exception nobody retrieves is reported by
+        asyncio only at garbage-collection time, long after the run it belongs
+        to. An approval that failed to reach the engine is exactly the kind of
+        thing that must not be discovered that way.
+        """
+        self._handlers.discard(task)
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc is not None:
+            sys.stderr.write(f"[rpc] notification handler failed: {exc!r}\n")
+
+    def _fail_pending(self, exc: BaseException) -> None:
+        for fut in self._pending.values():
+            if not fut.done():
+                fut.set_exception(exc)
+
+    async def call(self, method: str, params: dict | None = None, timeout: float = 60) -> Any:
+        """Issue one JSON-RPC call and wait for its response.
+
+        On timeout the socket is CLOSED, not merely abandoned. Giving up
+        on the future alone leaves the engine working on a request whose
+        answer nobody will read — a `chat.send` that keeps composing and
+        commits a draft into an empty room. Closing is the only signal
+        this protocol has for "stop": the engine cancels the turns bound
+        to that connection when it goes away. The client is finished with
+        the socket either way, since a timeout is fatal to the run.
+        """
+        from .observability import current_context, store_for
+        deadline = time.monotonic() + timeout
+        if current_context() and not self._observability_negotiated and method != "system.capabilities" and not method.startswith("diagnostics."):
+            self._observability_negotiated = True
+            probe_id = next(self._ids)
+            probe = asyncio.get_running_loop().create_future()
+            self._pending[probe_id] = probe
+            try:
+                await self._ws.send(json.dumps({"jsonrpc":"2.0","id":probe_id,"method":"system.capabilities","params":{}}))
+                caps = await asyncio.wait_for(probe, timeout=min(1.0, max(.001, timeout/10)))
+                self._observability = isinstance(caps, dict) and type(caps.get('observability')) is int and caps['observability'] == 1
+            except Exception:
+                self._observability = False
+            finally:
+                self._pending.pop(probe_id, None)
+        store = None
+        diagnostic = bool(current_context()) and not method.startswith('diagnostics.')
+        if diagnostic:
+            try:
+                store = store_for(self.settings)
+            except Exception:
+                diagnostic = False
+        if diagnostic:
+            store.emit('rpc', 'start', method=method, reason='none' if self._observability else 'unsupported')
+        rid = next(self._ids)
+        fut: asyncio.Future = asyncio.get_event_loop().create_future()
+        self._pending[rid] = fut
+        try:
+            frame = {"jsonrpc": "2.0", "id": rid, "method": method, "params": params or {}}
+            if self._observability and not method.startswith("diagnostics."):
+                from .observability import current_context, diagnostic_envelope
+                if current_context():
+                    frame["diagnostics"] = diagnostic_envelope()
+            await self._ws.send(json.dumps(frame))
+            result = await asyncio.wait_for(fut, timeout=max(.001, deadline-time.monotonic()))
+            if method == "system.capabilities":
+                version = result.get("observability") if isinstance(result, dict) else None
+                self._observability = type(version) is int and version == 1
+                self._observability_negotiated = True
+            if diagnostic:
+                store.emit('rpc', 'result', method=method, rpc_id=rid, reason='none' if self._observability else 'unsupported')
+            return result
+        except asyncio.TimeoutError:
+            if diagnostic:
+                store.emit('rpc', 'unknown-effect', method=method, rpc_id=rid, reason='timeout')
+            await self._abandon(rid, method, timeout)
+            raise
+        except BaseException as exc:
+            if diagnostic:
+                from .observability_producers import error_metadata, error_reason
+                store.emit('rpc', 'unknown-effect', method=method, rpc_id=rid, reason=error_reason(exc), **error_metadata(exc))
+            raise
+        finally:
+            self._pending.pop(rid, None)
+
+    async def _abandon(self, rid: int, method: str, timeout: float) -> None:
+        """Tell the engine to stop working on a call we gave up on."""
+        sys.stderr.write(
+            f"[rpc] {method} (id={rid}) got no answer in {timeout:.0f}s — "
+            f"closing the socket so the engine stops working on it\n"
+        )
+        try:
+            if self._ws is not None:
+                await self._ws.close()
+        except Exception as exc:  # noqa: BLE001
+            sys.stderr.write(f"[rpc] closing after timeout failed: {exc!r}\n")
+
+
+def call_sync(
+    settings: Settings,
+    method: str,
+    params: dict | None = None,
+    timeout: float = 60,
+    id_token: str | None = None,
+) -> Any:
+    """One-shot convenience for CLI verbs: connect, call, disconnect."""
+
+    async def _run():
+        async with EngineClient(settings, id_token=id_token) as c:
+            return await c.call(method, params, timeout=timeout)
+
+    return asyncio.run(_run())
+
+
+async def chat(
+    settings: Settings,
+    message: str,
+    *,
+    allow_tools: set[str] | None = None,
+    timeout: float = 600,
+    echo: Callable[[str], None] = print,
+    conversation_id: str | None = None,
+    role: "Role | None" = None,
+    approval_predicate: Callable[[str, dict], bool] | None = None,
+    read_only: bool = False,
+    assignment_thread_key: str | None = None,
+    email_context: dict | None = None,
+    require_contextual_email_policy: bool = False,
+    supervised_review: bool = False,
+) -> Any:
+    """Run one engine-chat turn with an explicit tool-approval policy.
+
+    **Routing.** Passing ``role=`` declares this call to be mechanical kernel
+    work — a classification, an extraction — rather than generation a customer
+    will read. Such a call MAY be served directly by the configured provider
+    instead of the engine, which is what makes a cheap model reachable without
+    routing customer-facing prose through it. It only happens when the clone
+    has opted in with ``CS_LLM_ROUTE=direct``; without a role, or without the
+    opt-in, the call goes to the engine exactly as before.
+
+    The role has to be declared by the CALLER, and an empty ``allow_tools`` is
+    deliberately NOT used as the signal, because it does not carry the meaning
+    one would hope: ``cs draft-reply`` and a campaign's reply-composer also run
+    with an empty allow-list, and they write the words a customer reads.
+    Inferring "safe to route" from tool-freedom would send exactly the traffic
+    the charter keeps on the engine (policy, voice and signature are compiled
+    from this clone's ``company/`` files and injected by the engine) to
+    whatever model is cheapest.
+
+    Two semantics differ from the engine path, on purpose:
+
+    * ``timeout`` is per ATTEMPT, not overall — the worker client retries
+      transient failures (SDK default, 2 retries), so the worst case is ~3×
+      the given timeout. The engine path treats it as one overall budget.
+    * Errors are LOUD: a truncated answer, a configuration mismatch or an
+      exhausted retry raises out of this call rather than silently falling
+      back to the engine. A fallback would hide a broken provider config
+      behind the very spend this path exists to avoid; the caller (or the
+      operator, via ``CS_LLM_ROUTE=engine``) decides what degradation means.
+
+    The engine pauses on destructive tools (send_email, update_memory, …)
+    and emits ``chat.pending_approval``; we approve a tool only if it is in
+    ``allow_tools``, otherwise we deny and the engine LLM continues without
+    it. Non-destructive tools (search, compose, create_draft) auto-execute
+    engine-side and never reach this gate.
+
+    Each call gets a UNIQUE ``conversation_id`` by default. The engine's
+    busy-guard is per conversation_id, defaulting to "general"; if every cs
+    one-shot used "general" they would share one lane, and an interrupted
+    call (or a parallel session) leaving "general" occupied would make every
+    later call fail ``ChatBusyError``. A fresh id per one-shot isolates us.
+    """
+    import uuid
+
+    from . import model_config
+
+    if supervised_review and (assignment_thread_key is None or read_only or role is not None or allow_tools
+                              or any(os.environ.get(k) for k in ("CS_OPERATOR_HEADLESS", "CS_HEADLESS_SEND", "CS_OPERATOR_HEALTH_CONTEXT"))):
+        raise ValueError("supervised review requires an interactive draft-only exact thread")
+    if (email_context is not None or require_contextual_email_policy) and (read_only or role is not None):
+        raise ValueError("contextual email cannot use read-only/direct classifier routing")
+    if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
+        raise ValueError("assignment draft scope cannot be combined with other mutation or routing policy")
+    if read_only:
+        return await _read_only_chat(
+            settings,
+            message,
+            timeout=timeout,
+            echo=echo,
+            conversation_id=conversation_id,
+        )
+
+    if role is not None and model_config.route_direct():
+        from . import worker_llm
+
+        # to_thread, not a bare call: worker_llm uses the SYNCHRONOUS anthropic
+        # client, and blocking this loop would stall any concurrent engine work
+        # a caller has in flight.
+        done = await asyncio.to_thread(worker_llm.call, message, role=role,
+                                       timeout=timeout)
+        echo(f"[direct] {done.model} {done.output_tokens}t "
+             f"{done.latency_ms:.0f}ms"
+             + (f" ${done.cost_usd:.6f}" if done.cost_usd is not None else ""))
+        # The engine's response shape, kept verbatim: callers read
+        # result["response"], and a router that changes the contract is a
+        # router every call site has to be taught about.
+        return {"result": {"response": done.text}, "approvals": [],
+                "notifications": []}
+
+    allow = allow_tools or set()
+    operator_reply = os.environ.get("CS_HEADLESS_SEND") == "1" and "send_draft" in allow
+    conv = conversation_id or f"cs-{uuid.uuid4().hex[:16]}"
+    client: EngineClient | None = None
+    approvals: list[dict] = []
+
+    async def on_notify(method: str, params: Any) -> None:
+        if method != "chat.pending_approval":
+            return
+        p = params or {}
+        tool = p.get("tool_name") or p.get("name") or ""
+        tool_use_id = p.get("tool_use_id")
+        tool_input = p.get("input") or {}
+
+        input_allowed = (
+            approval_predicate(tool, tool_input)
+            if approval_predicate is not None
+            else True
+        )
+        mode = "once" if tool in allow and input_allowed else "deny"
+        approvals.append({"tool": tool, "mode": mode, "input": p.get("input")})
+        echo(f"[approval] {tool} -> {mode}")
+        await client.call("chat.approve", {"tool_use_id": tool_use_id, "mode": mode})
+
+    async with EngineClient(settings, on_notification=on_notify) as c:
+        client = c
+        params = {"message": message, "conversation_id": conv}
+        if email_context is not None or assignment_thread_key is not None or require_contextual_email_policy or operator_reply:
+            capabilities = await c.call("system.capabilities", {}, timeout=60)
+            if email_context is not None or require_contextual_email_policy:
+                if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
+                    raise RuntimeError("engine does not support required contextual email policy version 1")
+        if supervised_review:
+            version = capabilities.get("supervised_review_draft_policy") if isinstance(capabilities, dict) else None
+            if type(version) is not int or version != 1:
+                raise RuntimeError("engine upgrade required for supervised review drafts; nothing was generated")
+            params["supervised_review_draft_policy_version"] = 1
+        if operator_reply:
+            version = capabilities.get("operator_reply_provenance") if isinstance(capabilities, dict) else None
+            if type(version) is not int or version != 1:
+                raise RuntimeError("engine does not support required operator reply provenance version 1")
+            params.update(operator_origin="scheduled_operator", operator_origin_version=1)
+        if email_context is not None:
+            params.update(email_context=email_context, contextual_email_policy_version=1)
+        if assignment_thread_key is not None:
+            if not isinstance(capabilities, dict) or capabilities.get("assignment_draft_policy") != 1:
+                raise RuntimeError("engine does not support required assignment draft policy version 1")
+            params.update(assignment_thread_key=assignment_thread_key, assignment_policy_version=1)
+        result = await c.call("chat.send", params, timeout=timeout)
+        return {"result": result, "approvals": approvals, "notifications": c.notifications}
+
+
+async def _read_only_chat(
+    settings: Settings,
+    message: str,
+    *,
+    timeout: float,
+    echo: Callable[[str], None],
+    conversation_id: str | None,
+) -> Any:
+    """Negotiate and send a server-enforced read-only engine turn."""
+    import uuid
+
+    conv = conversation_id or f"cs-{uuid.uuid4().hex[:16]}"
+    async with EngineClient(settings) as client:
+        capabilities = await client.call("system.capabilities", {}, timeout=60)
+        version = (capabilities or {}).get("chat_read_only_policy")
+        if version != 1:
+            raise RuntimeError(
+                "engine does not support the required read-only chat policy version 1"
+            )
+        result = await client.call(
+            "chat.send",
+            {
+                "message": message,
+                "conversation_id": conv,
+                "mutation_policy": "read_only",
+                "policy_version": 1,
+            },
+            timeout=timeout,
+        )
+        return {"result": result, "approvals": [], "notifications": client.notifications}

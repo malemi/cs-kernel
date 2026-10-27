@@ -1,0 +1,9 @@
+{
+  "cs/review.py": "02270067e8f3b9d10bc42c32ceebbb72c781025d37b8912d45c1a78bf3901065",
+  "cs/unanswered.py": "21618b6018cf10c256d7f1dec9d85549ab802ce731d6292ab0c979f34ffcf388",
+  "cs/task_assignment.py": "3906791dcce12e8de25d9542e932f1d9af57bc36dd83a1fd29c2b066e9a5a523",
+  "cs/rpc_reads.py": "5b62f8ab7a557f85627bbeed1ae39f66985d3dd9787b45863d6203d6b50bc041",
+  "cs/rpc.py": "07b8743b3f88cc878bfe5c98065a54867280677c9cbd22683585ea84e8a61073",
+  "tests/test_worker_diagnostic_context.py": "526867fec540e130521870abb13950b21f5af29da3a8d7ac9ac7c1a831106f5c",
+  "tests/test_rpc_reads.py": "f29723dc0cba4651eae8ece76e4daaaa35c6f34d5c5472dbdd999f5e25123bdc"
+}
