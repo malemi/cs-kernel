@@ -3637,8 +3637,10 @@ Financial/diagnostic limits: one physical session reports success1.075032USD and
 
 ### M19 — restore actual native inventory delivery (2026-10-27)
 
-Status: proposed; fresh brief APPROVED at inspection-recovery/brief-review.md
-under the existing v65 evidence root. Lead owns source integration and delivery.
+Status: implementation and immutable66 adoption verified; genuine FULL66 in progress.
+The approved proposal below and its fresh brief APPROVAL at
+inspection-recovery/brief-review.md under the v65 evidence root remain retained.
+Lead owns source integration and delivery; the current checkpoint below owns execution state.
 The original source R4 passed; all539 recorded inputs matched on resumption,
 and relevant code/test/script hashes remain unchanged before this amendment.
 
@@ -3726,3 +3728,22 @@ assertions preserved. Capture parent communicate elapsed/timeout/returncode on
 failure without tracing. Run the entire group once and one complete source
 suite; another failure requires diagnosis, not further allowance increases.
 No production bounds, business oracle or genuine BOTH FULL acceptance change.
+
+
+### M19 current verification checkpoint
+
+Immutable66 is b29767e40ac5b0f9f744a7b3cd70d6edc9796b16. Complete source R3
+and exact-tag harnesses exit0 with unchanged inputs and all six golden builds.
+All159Git/wheel files match BOTH actual ordinary/isolated installations and
+fresh local lock-only rebuilds. The exact four-file package delta, generated
+preimages, live controls, policy and paid admission each have actual reviews.
+
+One genuine strict FULL66 is active through the unchanged Desktop runner;
+its result and cleanup belong to v66/full-composition/full-installed-v66-fresh.
+No success, service restoration or public provenance is claimed before terminal
+acceptance. New verification reserves12USD within the operator’s40USD additional
+ceiling; old failed runs and unknown charges remain retained. Clones/Desktop
+stay frozen during the run. Remaining stale clone version prose is identified
+by the retained sweep and will be reconciled after the terminal boundary.
+The existing completion record retains its obligations and workflow-hash refusal;
+no reset or baseline advancement substitutes for missing closure evidence.

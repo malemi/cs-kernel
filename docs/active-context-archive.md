@@ -1,3 +1,80 @@
+## 2026-10-27 — Superseded installation detail and prelaunch actions
+
+- **Latest release tag: `v0.66.0`. Current HEAD status: untagged.**
+  Both clones execute immutable66 with all159files verified and matching local
+  lock-only rebuilds. Source and exact-tag suites pass. Strict FULL65 is failed;
+  genuine FULL66 and service restoration remain unverified. Actual paired
+  inventory needs52old parts; installed66 reconstructs every byte in46parts
+  without adding hooks. Unicode retains the original partition when enlarged
+  parts exceed the host limit. Invoked timeout guidance agrees. Both immutable
+  environments and canonical generated skills are installed; public provenance
+  and genuine FULL remain required. The operator authorizes
+  at most40USD additional verification spend; existing per-job limits stay fixed.
+
+- Installed `v0.66.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+
+- Installed66 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Shared-deadline finalization reserves time within the existing total allowance;
+  original auth/scope cases pass, without explaining historical overruns.
+  Genuine successor FULL and public provenance remain required.
+
+- Mario's exact missing Sent source is acquired and inserted through reviewed
+  native maintenance. Independent checks preserve all33pre-existing tables and
+  1804emails; the scoped projection now returns complete reply evidence in
+  7.709seconds with a legitimate human-verification hold. Historical skip cause
+  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
+  are unchanged. The release plan retains exact source/data evidence.
+
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed66 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+
+1. Preserve immutable65, prior failed candidates and actual source/data evidence.
+2. Admit only one bounded genuine BOTH FULL after the final control/financial gate.
+3. Complete authorized public provenance and public Git/lock installation proof.
+
+## 2026-10-27 — Superseded pre-adoption65 state
+
+- **Latest release tag: `v0.66.0`. Current HEAD status: untagged.**
+  Both clones execute immutable65; strict FULL65 failed and service restoration
+  remains unverified. Source catalog compatibility and inventory transport fixes
+  pass focused integration review. Actual paired inventory needs52old parts;
+  the candidate reconstructs every byte in46parts without adding hooks. Unicode
+  uses the original partition when enlarged parts exceed the host limit. Parent,
+  triage and campaign timeout guidance agrees. Complete successor source/tag
+  checks, BOTH adoption and genuine FULL remain required. The operator authorizes
+  at most40USD additional verification spend; existing per-job limits stay fixed.
+
+- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
+  errors, finite shared-time allowances and complete notice-envelope bounds.
+  E9 adds child-local Bash lifetime alignment and precise native interruption
+  evidence; its actual rendered timeout instruction matches across three hosts.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
+  exact acceptance, public provenance and authorized publication.
+
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact65
+  policy passes guarded/native activation and both actual actor/instruction
+  preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
+  skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
+
+- Installed65 correlation, first-cause retention and phase/cost diagnostics
+  pass source review, real controlled daemon/CLI/inbox and blind checks.
+  Shared-deadline finalization reserves time within the existing total allowance;
+  original auth/scope cases pass, without explaining historical overruns.
+  Genuine successor FULL and public provenance remain required.
+
+- E10 retains finite peer causes; E14 distinguishes direct structured remote
+  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
+  and both installed byte checks pass. Both patches are installed65 and remain
+  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+
 ## 2026-10-27 — Before inventory capacity recovery
 
 - **Latest release tag: `v0.65.0`. Current HEAD status: untagged.**
@@ -4884,3 +4961,14 @@ The115-file producer/configuration was jointly adopted and independently read
 back. V19 then failed on technical review observation: the native process emitted
 a genuine success result, but review3 lacks complete inventory evidence. No signed
 ordinary PASS exists; V18's zero-result Café failure remains immutable.
+
+
+## 2026-10-27 — Retained pre-successor66.1 checkpoint
+
+- **Latest release tag: `v0.66.0`. Current HEAD status: untagged.**
+  Both clones execute immutable66; all159files, ordinary/isolated imports and
+  local lock-only rebuilds match. Source and exact-tag suites pass. Strict FULL66
+  is running; service restoration and public provenance remain unverified.
+  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md)
+  owns acceptance. Additional verification is limited to40USD with unchanged
+  per-job limits; failed65 and uncertain charges remain retained.

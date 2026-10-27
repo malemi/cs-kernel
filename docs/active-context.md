@@ -14,53 +14,40 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.66.0`. Current HEAD status: untagged.**
-  Both clones execute immutable65; strict FULL65 failed and service restoration
-  remains unverified. Source catalog compatibility and inventory transport fixes
-  pass focused integration review. Actual paired inventory needs52old parts;
-  the candidate reconstructs every byte in46parts without adding hooks. Unicode
-  uses the original partition when enlarged parts exceed the host limit. Parent,
-  triage and campaign timeout guidance agrees. Complete successor source/tag
-  checks, BOTH adoption and genuine FULL remain required. The operator authorizes
-  at most40USD additional verification spend; existing per-job limits stay fixed.
-- Installed `v0.65.0` includes complete MIME identity decoding, typed remote
-  errors, finite shared-time allowances and complete notice-envelope bounds.
-  E9 adds child-local Bash lifetime alignment and precise native interruption
-  evidence; its actual rendered timeout instruction matches across three hosts.
-  The [release plan](execution-plans/2026-10-25-canonical-release-alignment.md) owns
-  exact acceptance, public provenance and authorized publication.
+- **Latest release tag: `v0.66.1`. Current HEAD status: tagged as `v0.66.1`.**
+  Both clones still execute verified immutable66. FULL66 failed after exact native
+  inventory delivery passed; no draft/send ran. The successor repairs the exact
+  held-read rendering mismatch. Support-engine instruction authority is repaired
+  in canonical source; adoption and fresh genuine BOTH FULL remain pending in the
+  [follow-on plan](execution-plans/2026-10-27-native66-authority-recovery.md).
+  Native66 recorded2.9881246USD; engine/classifier costs remain separately unknown.
+  Additional verification is limited to40USD with unchanged per-job controls.
+  Failed candidates, uncertain charges and public-provenance obligations remain.
 - Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
   source families, verified by all439/459/355 package files and authenticated
   owner/PID/source bindings. Canonical source is655b167; the other three peers
   and Qonto retain their previous source families with refreshed process identities.
   A historical Git family label
   alone does not establish the deployed baseline.
-- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact65
+- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact66
   policy passes guarded/native activation and both actual actor/instruction
   preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
   skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
-- Installed65 correlation, first-cause retention and phase/cost diagnostics
-  pass source review, real controlled daemon/CLI/inbox and blind checks.
-  Shared-deadline finalization reserves time within the existing total allowance;
-  original auth/scope cases pass, without explaining historical overruns.
-  Genuine successor FULL and public provenance remain required.
-- Mario's exact missing Sent source is acquired and inserted through reviewed
-  native maintenance. Independent checks preserve all33pre-existing tables and
-  1804emails; the scoped projection now returns complete reply evidence in
-  7.709seconds with a legitimate human-verification hold. Historical skip cause
-  remains unknown; reconstructed auto-updating is disabled. Schedules and cursors
-  are unchanged. The release plan retains exact source/data evidence.
-- E10 retains finite peer causes; E14 distinguishes direct structured remote
-  rejections. Focused, producer-to-inbox, blind, complete source/exact-tag checks
-  and both installed byte checks pass. Both patches are installed65 and remain
-  unpublished; genuine BOTH FULL is pending. Reader schema/auth controls pass.
+- Shared-deadline finalization reserves time inside the existing allowance.
+  First-cause and native phase/cost diagnostics retain scope and causal links;
+  historical overruns remain unexplained. Current ordinary acceptance is separate.
+- Mario’s exact missing Sent source is repaired through scoped native maintenance.
+  Prior data is preserved; reconstructed auto-updating remains disabled. Recurring
+  ingestion history stays unknown; the release plan owns source/data evidence.
 - Both clones use DEBUG-first logs and ten-minute private filesystem collection.
   [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
   and a supported cause/investigation route for each incident. `cs-diagnose` is
   manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
   [Operational logs](operator-observability.md) retain safe counts, failed checks,
   primary causal links and known exception origins without granting replay authority.
-- Automatic inventory uses48bounded hooks,4MBprivate capture and one exact
+- Automatic inventory uses48bounded hooks with8000-character preferred parts
+  and the original whole7000partition for Unicode-heavy input,4MBprivate
+  capture and one exact
   progress duplicate paired with its successful final. Complete native inspection,
   whole inventory and effect-time source/authority checks remain independent.
 - [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
@@ -98,6 +85,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
+- The existing completion record refuses closure after installed workflow hash
+  changes. Prior approvals and pending obligations remain retained; the installed
+  protocol supplies no documented same-task migration. Baseline advancement is
+  not claimed and runtime acceptance remains an independent requirement.
 - Genuine strict BOTH-clone FULL, publication and public Git/lock installation
   proof remain required. Failed candidates and uncertain charges/effects are
   retained; a component read or earlier protected reply certifies no whole FULL.
@@ -121,8 +112,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Preserve immutable65, prior failed candidates and actual source/data evidence.
-2. Admit only one bounded genuine BOTH FULL after the final control/financial gate.
-3. Complete authorized public provenance and public Git/lock installation proof.
+1. Preserve immutable66, prior failed candidates and actual source/data evidence.
+2. Adopt the reviewed successor repairs, pass free instruction/identity checks, then admit a changed-candidate FULL within the remaining budget.
+3. Complete public provenance and public Git/lock proof after authorized publication.
 4. Finish doc-end/final review and restore only owned maintenance controls.
 5. Keep cs-diagnose manual.

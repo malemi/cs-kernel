@@ -1,5 +1,18 @@
 # Changelog — cs-kernel
 
+## v0.66.1 — 2026-10-27 (PATCH)
+
+Recognize the pinned native SDK's exact single-final-newline rendering of a
+held-assignment read. Preserve canonical rendering, paired result metadata and
+all payload, identity, lifecycle and business guards. No CLI or permission change.
+
+Migration: install the immutable successor normally on BOTH clones; retain66
+and its failed operational evidence. The separate support-engine instruction
+authority repair must pass full authenticated instruction reads before acceptance.
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** This
+repair touches native acceptance around guarded business reads; exact transport,
+focused replay and local checks do not establish provider outcomes or restoration.
+
 ## v0.66.0 — 2026-10-27 (MINOR)
 
 Restore bounded native inventory delivery without discarding queued material.

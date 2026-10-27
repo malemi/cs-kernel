@@ -151,9 +151,11 @@ cost below the limit proves neither coverage nor affordability of the remaining
 work. A financial diagnosis must identify the actual boundary (native run,
 provider key/account or engine ledger), the evidenced limit and consumption,
 the rejected operation and original safe terminal/error code. Missing limits or
-costs stay unknown. Current native notice diagnostics do not copy terminal
-`total_cost_usd`, and a primary opaque launcher may not disclose its configured
-run limit; ordinary terminal rejection alone cannot establish exhaustion.
+costs stay unknown. Native diagnostics retain a finite nonnegative terminal
+`total_cost_usd` as `native_total_cost_usd` when supported composition exposes it;
+missing or invalid values remain unavailable, not zero. A primary opaque launcher
+may not disclose its configured run limit; ordinary terminal rejection alone
+cannot establish exhaustion.
 If a needed fact is unavailable, improve its bounded producer/propagation path;
 retain an explicit unknown instead of inferring an authentication, engine or
 budget failure. Do not raise budgets, shrink required coverage or replay work merely
