@@ -14,11 +14,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.66.1`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.66.2`. Current HEAD status: tagged as `v0.66.2`.**
   Both clones still execute verified immutable66. FULL66 failed after exact native
   inventory delivery passed; no draft/send ran. The successor repairs the exact
-  held-read rendering mismatch. Support-engine instruction authority is repaired
-  in canonical source; adoption and fresh genuine BOTH FULL remain pending in the
+  held-read rendering mismatch and makes future inventory overflow explicit.
+  Support-engine authority has retained installed CLI proof; successor kernel
+  adoption and fresh genuine BOTH FULL remain pending in the
   [follow-on plan](execution-plans/2026-10-27-native66-authority-recovery.md).
   Native66 recorded2.9881246USD; engine/classifier costs remain separately unknown.
   Additional verification is limited to40USD with unchanged per-job controls.
@@ -50,6 +51,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   capture and one exact
   progress duplicate paired with its successful final. Complete native inspection,
   whole inventory and effect-time source/authority checks remain independent.
+  The source successor emits a single explicit overflow notice with complete
+  paging instructions, and preserves capacity counts/run references in failed
+  supervisor notices. Focused real-process/ordinary-surface checks and integration
+  pass; installed verification and whole-service acceptance remain separate.
 - [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
   direct classifier spending. Both clones retain USD4 fallback soft budgets;
   MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,

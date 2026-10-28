@@ -1,5 +1,20 @@
 # Changelog — cs-kernel
 
+## v0.66.2 — 2026-10-28 (PATCH)
+
+Make inventory delivery overflow actionable at the first valid complete snapshot.
+Emit one bounded capacity notice per session/snapshot with counts, run references
+and the existing complete paging route. Preserve Unicode fallback and all
+inspection/effect guards. When inspection remains incomplete, retain the capacity
+cause in the supervisor's current-run result and readable plain/HTML notice.
+No scheduling, model, budget, permission or public CLI changes.
+
+Migration: install this immutable successor normally on BOTH clones. It includes
+the held-read rendering fix from66.1. Preserve failed66 and its costs/cleanup.
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Free
+overflow/diagnostic checks and source acceptance do not establish model compliance
+or provider outcomes. Support instruction authority must pass installed CLI checks.
+
 ## v0.66.1 — 2026-10-27 (PATCH)
 
 Recognize the pinned native SDK's exact single-final-newline rendering of a
