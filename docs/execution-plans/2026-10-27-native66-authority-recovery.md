@@ -63,7 +63,104 @@ and contains no management table. Neither control proves service restoration.
 
 ## Rollback and open obligations
 
+### Additional admission gate: future inventory overflow
+
+Deadline checkpoint: reuse `v65/inspection-recovery/deadline-diagnostic-checkpoint.json`.
+The retained narrow real-communicate probe observes TimeoutExpired for the0.65s
+negative case and returncode0 after2.2214s for the2.5s healthy case. Its wrapper
+delegates unchanged and rethrows timeout. No new test, timer or assertion change
+was made for this checkpoint. Historical R2 remains FAIL with its abnormal exit
+cause unresolved; checkpoint completion and successful cleanup alone prove no
+exit0. The broader traced probe is retained separately and is not historical
+causation evidence. Overflow remains the separate open admission gate below.
+
+Operator priority: do not freeze/adopt the successor or run paid FULL until
+overflow is actionable without another open-ended diagnosis. Evidence is in
+`v66/authority-recovery/overflow-assessment/` under the parent evidence root.
+The additional free retained ordinary-run check is
+`ordinary-run-ouhtc2lb-structured-check.json`: complete stream retention,
+process_exit0 and no supervisor timeout; discovery exit3 with assignment_incomplete,
+complete workset2selected/16deferred/101held, and no assignment-status or listed
+effect command observed. Exact inventory bytes require52 old7000-character parts
+for48 configured hooks; zero inventory parts appear in884 hook responses.
+This corroborates transport failure without using the model's time/budget claims.
+Native result costs1.132 and1.8333972 are retained separately, not summed:
+cumulative versus incremental semantics remain unproved. This ordinary run is
+separate from the additional40USD acceptance budget; provider effect absence and
+engine/classifier costs are not established by the stream-only check.
+The final existing source suite passed (exit0, unchanged b0d8f6c, receipt
+`../source-harness-result.json` relative to that directory); original failures
+and approved fixture adaptations remain retained. No broad suite was repeated.
+
+The retained pre-fix real-process overflow control produces50 required parts for48 slots.
+Actual supervisor/CLI/hook ancestry refuses delivery with zero delivery markers,
+but tested hooks0/47 exit0 with empty stdout. Thus lossless refusal passes;
+explicit overflow visibility/early containment acceptance FAILS. This is a
+constructed local process test, not native-host/model acceptance.
+
+All five retained52/48 events pass the actual observer/evaluator/store/inbox
+replay in disposable state, preserving first/latest event IDs and causal facts.
+The installed ordinary exact-incident CLI also exposes the capacity diagnosis.
+The current live inbox includes161 of389 problems, with228 explicitly remaining,
+and omits the capacity incident. Its stored initiating run is older than FULL65
+because repeated failures retain the primary evidence. These facts explain a
+visibility limitation, not what the historical analyst actually read. Historical
+inbox visibility remains unproved; missing logging is not the demonstrated cause.
+
+Required bounded adaptation: propagate the existing capacity decision and exact
+run/event reference into the current run's readable result and explicit paging
+outcome, without duplicate logs or replacing historical primary evidence. Check
+the exact current envelope/view at its first available boundary, before further
+avoidable reasoning; do not promise zero discovery cost. Preserve Unicode
+partition checks, full EOF coverage and effect guards. Paging must either complete
+within existing bounds or terminate with the typed cause; no identical paid retry.
+Before adoption, require a free real-process/ordinary-surface check of that behavior
+and independent diagnostic readability. The pre-fix candidate did not pass this
+new requirement; source integration approval does not waive it. Implementation
+needs a bounded adaptation review of this existing plan, not repeated prior reviews.
+No new paid calls or pause/cron changes were made for these checks; additional40USD
+authority and ordinary-run costs remain separately accounted.
+
+Bounded implementation (new amendment only; prior gates remain valid):
+1. In `operator_context_delivery`, carry the already-validated snapshot path on
+   CapacityError. Slot0 returns a distinct bounded additionalContext notice with
+   required/available, current run/attempt references and exact envelope/progress
+   paths. It directs complete literal paging or a capacity stop, never selection
+   from a prefix. Other slots remain empty. Use a separate exclusive notice marker
+   per session/snapshot to avoid repeated notices/events; never use delivery markers
+   or the inventory schema. Logging unavailability must not suppress the notice.
+2. Reuse `capacity_failure` for the existing event, retaining its event ID when
+   available. Do not add a second event stream. In `operator_health`, only after
+   the ordinary complete-inspection audit fails, load and validate the current
+   snapshot and recompute exact capacity with the actual session ID. A proven
+   CapacityError selects existing causal counts in the current run's failure;
+   absent/invalid data stays generic. Successful literal paging bypasses this
+   diagnostic branch. Do not change supervisor success/fallback predicates.
+   The real supervisor check also proves its persisted cause is omitted by
+   `operator_notices.render`. Include that existing renderer in this same
+   propagation fix: validate the causal object, expose only this capacity cause,
+   counts and run/event references in equivalent plain/escaped HTML output, and
+   preserve existing behavior for malformed or other causal objects. Retain the
+   failed check before repairing this last readable boundary.
+3. Extend only focused delivery/health controls: real supervisor/native/CLI/hook
+   ancestry with oversized input, bounded notice once, no delivery credit,
+   unavailable diagnostic sink, current-run cause, complete paging success,
+   foreign/stale rejection, supported capacity and Unicode fallback. Exercise
+   the existing ordinary event/inbox path and verify causal facts remain visible
+   without model/provider calls. Reuse all unrelated suites and approvals.
+4. Fresh amendment integration review precedes any dependent packaging. Reconcile
+   candidate identity and run required final checks only after this delta passes;
+   no frozen66.1 artifact is claimed to contain later changes. No paid admission
+   while the overflow gate is open. Rollback is removal of this source delta;
+   installed runtimes and current external jobs remain untouched during free work.
+
 Keep66 package/venv and exact support-prefix preimages. Restore only owned new
 controls after matching current bytes; never roll back company data, rules, logs,
 another session's changes or uncertain effects. Failed66 stays failed. Complete
 inspection/model compliance, restoration and public provenance remain open.
+
+Overflow source amendment outcome: focused free checks PASS and fresh integration
+APPROVED (`overflow-assessment/final-focused-result.json` and
+`integration-amendment-review.md`). Actual supervisor rendering now includes
+capacity counts and current run/event references. Installed runtime, final
+release checks and genuine BOTH FULL remain pending; no paid call was made.

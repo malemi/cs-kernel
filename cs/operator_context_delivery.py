@@ -20,6 +20,9 @@ class CapacityError(ValueError):
     def __init__(self, required):
         super().__init__('context capacity exceeded; literal paging required')
         self.required = required
+        self.path = None
+        self.snapshot_digest = None
+        self.event_id = None
 
 
 def capacity_failure(exc, *, emit=False):
@@ -33,9 +36,12 @@ def capacity_failure(exc, *, emit=False):
             from .observability_producers import emit as record, inherited_context
             from .observability import context
             with context(inherited_context()):
-                record(load(), 'discovery', 'failed', reason='incomplete-input',
+                event = record(load(), 'discovery', 'failed', reason='incomplete-input',
                     command='unanswered', method='operator.discovery.context', causal=value,
                     error_file='cs/operator_context_delivery.py')
+                if isinstance(event, dict):
+                    from .observability import diagnostic_id
+                    exc.event_id = diagnostic_id(event.get('event_id'))
         except Exception:
             pass
     return value
@@ -94,7 +100,13 @@ def current_snapshot(context, session):
         raise ValueError('hook supervisor ancestry differs')
     if native not in chain[:-1] or health.identity(native['pid'])[0] != native:
         raise ValueError('hook native process differs')
-    return path, parts(view, inventory.read_private(path / 'inventory-view-envelope.json'), envelope, session)
+    envelope_raw = inventory.read_private(path / 'inventory-view-envelope.json')
+    try:
+        return path, parts(view, envelope_raw, envelope, session)
+    except CapacityError as exc:
+        exc.path = path
+        exc.snapshot_digest = hashlib.sha256(envelope_raw + view).hexdigest()
+        raise
 
 
 def overlay(directory, python):
@@ -132,11 +144,37 @@ def main():
         print(json.dumps({'hookSpecificOutput': {'hookEventName': event['hook_event_name'],
             'additionalContext': values[index]}}, ensure_ascii=False))
     except CapacityError as exc:
-        if index == 0:
-            from .observability import context
+        if index != 0 or exc.path is None or exc.snapshot_digest is None:
+            return
+        try:
+            from .operator_inventory_view import exclusive
+            token = hashlib.sha256((session + '\0' + exc.snapshot_digest).encode()).hexdigest()
+            exclusive(exc.path / ('context-capacity-notice-' + token), b'')
+            from .observability import context as diagnostic_context
             from .observability_producers import inherited_context
-            with context(inherited_context()):
-                capacity_failure(exc, emit=True)
+            with diagnostic_context(inherited_context()):
+                cause = capacity_failure(exc, emit=True)
+            refs = cause['refs'] if cause else {}
+            notice = {'notice': 'context_slots_exhausted', 'required': exc.required,
+                'available': SLOTS, 'snapshot_sha256': exc.snapshot_digest,
+                'run_id': refs.get('run_id'), 'attempt_id': refs.get('attempt_id'),
+                'event_id': exc.event_id, 'directory': str(exc.path),
+                'envelope_path': 'inventory-view-envelope.json',
+                'progress_path': 'inventory-view-progress.json',
+                'instruction': 'Paths are relative to directory. Read the entire envelope, paging its bytes '
+                    'if needed, then execute its complete literal view page_plan through EOF. '
+                    'Progress is advisory. '
+                    'This notice grants no inspection credit. Never select from a prefix or perform '
+                    'effects before complete inspection. If full paging cannot finish within existing '
+                    'bounds, stop with context_slots_exhausted and these counts/references. '
+                    'Do not retry an identical run.'}
+            value = json.dumps(notice, ensure_ascii=False, separators=(',', ':'))
+            if len(value.encode('utf-16-le')) // 2 >= 10000:
+                raise ValueError('capacity notice exceeds native limit')
+            print(json.dumps({'hookSpecificOutput': {'hookEventName': event['hook_event_name'],
+                'additionalContext': value}}, ensure_ascii=False))
+        except (OSError, ValueError, KeyError, TypeError, RecursionError):
+            pass
         return
     except (OSError, ValueError, KeyError, TypeError, IndexError, RecursionError):
         # No artifact yet (including initial background Bash) is not delivery.

@@ -9,6 +9,7 @@ from .config import Settings
 
 
 SUBJECT_CAUSES = {
+    "context_slots_exhausted": "inventory exceeds automatic delivery capacity",
     "native_task_killed": "native Bash task killed",
     "native_task_stopped": "native Bash task stopped",
     "execution_operation_failed": "draft or contextual action not confirmed",
@@ -46,6 +47,7 @@ LEGACY_CAUSES = {
 }
 
 CAUSES = {
+    "context_slots_exhausted": "The complete inventory exceeds automatic context delivery capacity, and complete inspection was not verified.",
     "native_task_killed": "A structured native Bash task was killed before completion. The upstream reason is unknown.",
     "native_task_stopped": "A structured native Bash task stopped before completion. The upstream reason is unknown.",
     "execution_operation_failed": "An attempted native draft or contextual action failed or did not retain its result; completion is not confirmed.",
@@ -117,6 +119,10 @@ def _repair(diagnostic: dict[str, Any], context: dict[str, Any], *, backup: bool
     provider = diagnostic.get("provider", "Unknown")
     manifest = context.get("manifest_path") or "the operator's manifest.toml (its exact path was not captured)"
     check = _diagnostic_action(context)
+    if cause == "context_slots_exhausted":
+        return ("Use the current run's complete inventory envelope and literal page plan through EOF. "
+                "If full inspection cannot finish within existing bounds, keep the run stopped. "
+                "Do not repeat an unchanged paid attempt or infer coverage from a prefix.\n" + check)
     if cause in ("mailbox_read_incomplete", "assignment_read_incomplete", "discovery_evidence_invalid", "supervisor_failed", "execution_read_failed", "execution_operation_failed", "execution_phase_incomplete", "discovery_inspection_incomplete"):
         return ("Inspect the scheduled-run log and its private ordinary discovery artifact. Check mailbox connectivity "
                 "and exact-thread assignment authority. Preserve legitimate human holds and all sending permissions. "
@@ -265,6 +271,18 @@ def render(settings: Settings, item: dict[str, Any]) -> tuple[str, str, str]:
     """Return equivalent plain and escaped HTML messages, including legacy entries."""
     kind = item.get("status")
     diagnostic = item.get("diagnostic") or _legacy(item)
+    capacity = None
+    if kind not in ("primary", "fallback") and item.get("causal"):
+        from .observability_causal import validate
+        try:
+            value = validate(item["causal"])
+            if (value["check"] == "discovery_context_capacity"
+                    and value["cause"] == "context_slots_exhausted"
+                    and {"required", "available"} <= value["facts"].keys()):
+                capacity = value
+                diagnostic = {**diagnostic, "cause": "context_slots_exhausted"}
+        except (ValueError, TypeError, KeyError):
+            pass
     primary = diagnostic.get("primary") or item.get("primary")
     context = _context(settings, diagnostic)
     if kind == "primary":
@@ -290,6 +308,12 @@ def render(settings: Settings, item: dict[str, Any]) -> tuple[str, str, str]:
             body += "\n\nThe supervisor confirmed that this attempt did no work."
         else:
             body += "\n\nSome actions may already have happened. Review recent sent messages and drafts before manually repeating work; the failed run was not automatically replayed."
+    if capacity:
+        facts, refs = capacity["facts"], capacity["refs"]
+        body += (f"\n\nCapacity cause: context_slots_exhausted; required={facts['required']}; available={facts['available']}."
+                 f"\nRun reference: {refs['run_id'] or 'unavailable'}."
+                 f"\nAttempt reference: {refs['attempt_id'] or 'unavailable'}."
+                 f"\nEvent reference: {refs['cause_event_id'] or 'unavailable'}.")
     body += ("\n\nAfter repair\nOrdinary account or payment repairs require no daemon restart or manual replay. "
              "The next scheduled tick will try the main service again if scheduling is enabled and the assistant is not paused. "
              "A new attempt does not guarantee recovery until the cause is fixed.")

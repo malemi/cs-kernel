@@ -52,6 +52,23 @@ terminal and transport verification are in sibling `full-composition/`.
 
 ## Assumptions and limits
 
+### Operator amendment: actionable future overflow
+
+Before successor freeze/adoption or paid FULL, repair the silent overflow outcome.
+The existing free real-process control proves50required/48available, empty hook
+stdout and exit0. Existing causal events already carry counts and run references;
+reuse them instead of adding a logging stream. At the first valid complete
+snapshot, give the native model a bounded explicit capacity notice and the
+existing exact envelope/progress paging route. A notice grants no inspection
+credit. If paging remains incomplete, preserve the capacity cause and counts in
+the supervisor's current-run result rather than only a generic inspection error.
+Complete valid paging must remain eligible for success; Unicode fallback,
+identity/EOF/effect checks, scheduling, budgets and existing business holds stay
+unchanged. No architectural rewrite or automatic identical paid retry is approved.
+Require free real-process overflow and normal/Unicode controls plus ordinary
+diagnostic readability before adoption; preserve all historical failures. No
+claim of zero total reasoning cost is made before the current inventory exists.
+
 The legacy discriminator is a timestamped observation, not a permanent mode
 assumption; recheck at deployment. The single-LF comparison is proven, while
 remaining replay predicates still require verification. No restoration, complete

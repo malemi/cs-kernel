@@ -341,6 +341,23 @@ def inspection_failure(events, context, phases, founder=False):
                     return ''
             except (ValueError, KeyError, TypeError, OSError, RecursionError):
                 pass
+            from . import operator_inventory_view as inventory
+            from .operator_context_delivery import CapacityError, capacity_failure, parts
+            try:
+                sessions = {event['session_id'] for event in events
+                    if event.get('type') == 'system' and event.get('subtype') == 'init'}
+                if len(sessions) != 1:
+                    raise ValueError('ambiguous native session')
+                session = sessions.pop()
+                if not isinstance(session, str) or not session or len(session) > 128:
+                    raise ValueError('invalid native session')
+                snapshot, view, envelope = inventory.load(context)
+                parts(view, inventory.read_private(snapshot / 'inventory-view-envelope.json'), envelope, session)
+            except CapacityError as exc:
+                capacity_failure(exc)
+                return 'discovery_inspection_incomplete'
+            except (ValueError, KeyError, TypeError, OSError, RecursionError):
+                pass
             decision('ordinary_health_result', 'discovery_inspection_incomplete', phase='discovery', command='unanswered', method='operator.health.inspection')
             return 'discovery_inspection_incomplete'
         return ''
