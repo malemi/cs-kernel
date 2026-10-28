@@ -1,5 +1,30 @@
 # Changelog — cs-kernel
 
+## v0.67.0 — 2026-10-28 (MINOR)
+
+Add an explicitly selected Pydantic AI executor for scheduled operator jobs,
+replacing the Claude headless process while retaining the existing CLI, engine,
+workflow authority, permissions, source coverage, identity and send guards.
+Interactive hosts and the legacy native evidence codec remain supported.
+
+The executor provides finite typed tools, complete paged request evidence,
+owned-process cleanup, strict terminal diagnostics, explicit API routes and
+conservative request admission. One proved prework refusal may use the existing
+fallback inside the original allowance, retaining unknown primary cost. Explicit
+5-minute cache pricing is accounted separately. The independent consumer verifies
+both original attempt receipts and their parent admission chain.
+
+Migration: install this immutable candidate normally, bind the authorized API
+credential/model/pricing policies and select the executor explicitly. Preserve the
+configured fallback alias; bind its documented current canonical model per admitted
+job. Missing authority, prices, source identity or budget holds adoption. Default
+launchers retain Claude until that explicit selection. No prior failed FULL or
+already-sent response is replayed by this release.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Execution,
+authentication and permission boundaries are touched. Free component, transport and
+installed checks do not establish business acceptance or restored service.
+
 ## v0.66.2 — 2026-10-28 (PATCH)
 
 Make inventory delivery overflow actionable at the first valid complete snapshot.

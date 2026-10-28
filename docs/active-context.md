@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.66.2`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.67.0`. Current HEAD status: tagged as `v0.67.0`.**
   Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
@@ -24,7 +24,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   Dedicated kernel and Desktop worktrees preserve the original repositories.
   M1–M3 have scoped independent approvals for the executor, real CLI integration
   and independent consumer. M4 adds explicit routes, bounded fallback, launcher
-  selection and installed checks; cache/usage accounting remains in progress.
+  selection and cache/usage accounting. The integrated source suite passes;
+  tagged-suite, immutable installed checks and M4 approval remain pending.
   This is source work, not clone adoption or restored service. The generated
   launcher retains Claude until an explicit reviewed executor selection.
 - The operator authorizes Cafe to reuse the Anthropic API key already used by
