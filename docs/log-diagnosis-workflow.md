@@ -341,6 +341,12 @@ cannot be reconstructed from a warning alone.
 
 ## Pydantic scheduled executor
 
+The operational acceptance runner retains `runner-failure.json` privately for
+preflight/infrastructure errors. It records exception type, source frames and
+whitelisted actor/check causes, excluding exception text, locals and provider
+attributes. A hosted-family mismatch before fixtures/jobs is an identity gate
+failure; it establishes neither model failure nor budget exhaustion.
+
 Use the declared executor codec first. The new Python executor has no Claude
 hook stream; do not interpret its journal as native events or count cancelled
 native hooks as success. Retain the parent launch/configuration and source
