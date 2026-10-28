@@ -1,3 +1,42 @@
+## 2026-10-28 — Superseded consumer review status
+
+  consumer's route/fallback additions still require M4 review and adoption.
+
+## 2026-10-28 — Superseded candidate and accounting checkpoint
+
+- The active work is the [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md),
+  replacing only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
+  Dedicated kernel and Desktop worktrees preserve the original repositories.
+  M1–M3 have scoped independent approvals for the executor, real CLI integration
+  and independent consumer. The retained 0.67.0 candidate is not adopted; its
+  integrated and installed proofs cover that exact earlier source only.
+  The corrective component now has independent approval: recurring bounded
+  metadata renewal, actual canonical dispatch, complete primary/fallback evidence,
+  bounded prices and one absolute parent/child job deadline pass focused checks.
+  The successor passes its integrated and tagged suites, normal immutable
+  installation and independently reviewed installed fixture paths. Overall M4
+  review remains pending; live adoption and acceptance are blocked on current
+  financial reconciliation. This is source work, not restored service. The generated launcher
+  retains Claude until explicit reviewed executor selection.
+- The operator authorizes Cafe to reuse the Anthropic API key already used by
+  MrCall. Model/endpoint/pricing and private adoption bindings still require
+  verification. Original additional authority remains40USD: retained conservative
+  accounted6.9911572USD, prior uncertain reserves8USD, and a separate0.012607USD
+  uncertainty from a malformed free-test fixture that submitted with a dummy key.
+  Remaining headroom is24.9962358USD before fresh reconciliation. Fixture admission
+  amounts are not live spend. Subscription/session quota is separate.
+
+
+Both maintained clones install immutable local candidate `v0.65.0` at
+`8ec397801c8eb5b05def518c9fe6f0013d4021a7`. All 159 package files, authenticated
+identities, the reviewed three-host timeout instruction and fresh local Git
+lock rebuilds pass. Company guidance, local harness edits, permissions and
+launchers remain preserved. Current genuine BOTH-clone FULL and public Git
+provenance remain pending; component adoption does not advance shared sign-off.
+Historical acceptance and superseded adoption claims remain in
+`docs/active-context-archive.md`.
+
+
 ## 2026-10-27 — Superseded installation detail and prelaunch actions
 
 - **Latest release tag: `v0.66.0`. Current HEAD status: untagged.**

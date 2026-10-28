@@ -19,27 +19,24 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
   confirmed received, and must not be resent. No new live acceptance is claimed.
-- The active work is the [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md),
-  replacing only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
-  Dedicated kernel and Desktop worktrees preserve the original repositories.
-  M1–M3 have scoped independent approvals for the executor, real CLI integration
-  and independent consumer. The retained 0.67.0 candidate is not adopted; its
-  integrated and installed proofs cover that exact earlier source only.
-  The corrective component now has independent approval: recurring bounded
-  metadata renewal, actual canonical dispatch, complete primary/fallback evidence,
-  bounded prices and one absolute parent/child job deadline pass focused checks.
-  The successor passes its integrated and tagged suites, normal immutable
-  installation and independently reviewed installed fixture paths. Overall M4
-  review remains pending; live adoption and acceptance are blocked on current
-  financial reconciliation. This is source work, not restored service. The generated launcher
-  retains Claude until explicit reviewed executor selection.
-- The operator authorizes Cafe to reuse the Anthropic API key already used by
-  MrCall. Model/endpoint/pricing and private adoption bindings still require
-  verification. Original additional authority remains40USD: retained conservative
-  accounted6.9911572USD, prior uncertain reserves8USD, and a separate0.012607USD
-  uncertainty from a malformed free-test fixture that submitted with a dummy key.
-  Remaining headroom is24.9962358USD before fresh reconciliation. Fixture admission
-  amounts are not live spend. Subscription/session quota is separate.
+- The [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md)
+  replaces only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
+  Local immutable `v0.68.0` passes source and tagged suites, normal Python3.11
+  installation, all166package bytes and independently reviewed primary/fallback
+  fixture paths. M1–M4 integration approvals and corrective reviews are retained.
+  Neither maintained clone has adopted this candidate;
+  generated launchers retain Claude until reviewed explicit selection.
+- Cafe may reuse MrCall's existing Anthropic API key by explicit operator authority.
+  Credential delivery, live route checks and adoption remain pending. The original
+  additional limit is40USD: accounted6.9911572, retained reserves8.012607,
+  conditional headroom24.9962358. These are not verified account funds;
+  subscription/session quota is separate. No new paid admission is authorized by
+  source or fixture success.
+- M5 is blocked on current financial reconciliation. The existing read-only engine
+  ledger query fails with PermissionError13 on `/proc/327867/fd` before any database
+  query. Resume with an owner-executed result of that exact query or an existing
+  authorized readable reference to the same ledger; keep every reservation until
+  evidence resolves it. No permission expansion, identical retry or paid probe.
 
 The following platform observations are retained from the source baseline;
 this host migration has not re-audited their deployment:
@@ -53,7 +50,7 @@ this host migration has not re-audited their deployment:
 - The retained live Desktop consumer baseline matches canonical `d9e0361`.
   The new independent codec is developed only in its isolated worktree; native,
   provider-mail and signup business oracles remain unchanged. The current
-  consumer's route/fallback additions still require M4 review and adoption.
+  consumer's route/fallback additions have M4 approval; adoption remains pending.
 - Shared-deadline finalization reserves time inside the existing allowance.
   First-cause and native phase/cost diagnostics retain scope and causal links;
   historical overruns remain unexplained. Current ordinary acceptance is separate.
@@ -137,11 +134,11 @@ this host migration has not re-audited their deployment:
 
 ## Next
 
-1. Finish the bounded M4 cost/route and consumer checks, review the integration,
-   run the source suite and verify a normal immutable installed candidate.
-2. Bind both authorized API routes privately, reconcile original budget and
-   owned maintenance, then adopt and run genuine sequential BOTH FULL/signup.
-   Stop on the first failure; reconcile effects and costs before any new attempt.
-3. Complete public provenance and Git/lock proof only after authorized publication.
-4. Finish doc-end/final review without bypassing the original task's closure
-   blocker; restore only owned maintenance controls. Keep cs-diagnose manual.
+1. Finish documentation reconciliation without advancing the baseline.
+2. Obtain the bounded current ledger evidence, reconcile original40USD authority,
+   verify authorized routes and owned maintenance, then adopt the immutable tag.
+3. Run genuine sequential BOTH FULL/signup only after those gates. Stop at the
+   first failure; reconcile effects and costs before any new attempt. Never resend
+   the earlier FULL66.2 response proved in Sent.
+4. Complete documentation/final review and public provenance only after actual
+   acceptance and explicit publication authority. Restore only owned controls.

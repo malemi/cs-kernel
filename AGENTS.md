@@ -88,10 +88,11 @@ clones are permanent equivalence fixtures (`kernel + manifest(X) â‰¡ X`, brief Â
 
 ## AI execution boundaries
 
-Clone cron launches Claude Code (`claude -p`); engine RPC generation and kernel
-send-guard classifiers use separate API clients/models/auth. The engine daily
-budget covers neither Claude reasoning nor direct classifiers. Clone `CS_PAUSE`
-blocks new guarded ticks, not engine work or a running Claude. See
+Clone cron launches the selected scheduled host: Claude Code (`claude -p`) by
+default, or the explicitly configured Pydantic executor. Engine RPC generation
+and kernel send-guard classifiers use separate API clients/models/auth. The engine
+daily budget covers neither host reasoning nor direct classifiers. Clone `CS_PAUSE`
+blocks new guarded ticks, not engine work or a running host. See
 [operator runtime and controls](docs/operator-runtime.md) before model/cost/pause advice.
 
 ## Diagnose operational problems from logs

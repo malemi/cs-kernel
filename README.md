@@ -446,7 +446,7 @@ and kernel code. See [contextual policy](docs/task-assignment.md#contextual-emai
 ### The kernel's own model calls
 
 Start with [operator runtime and controls](docs/operator-runtime.md) for exact
-model, authentication, budget and pause boundaries, including unattended Claude.
+model, authentication, budget and pause boundaries, including the selected unattended host.
 
 
 Three different things spend model tokens, and only the middle one is the
@@ -454,7 +454,7 @@ engine:
 
 | Who | On what | Paid by |
 |---|---|---|
-| Agent host (interactive or Claude Code headless cron) | reasoning and tool selection | its actual agent login/API authentication, independent of Desktop |
+| Agent host (interactive or selected scheduled executor) | reasoning and tool selection | its actual agent login/API authentication, independent of Desktop |
 | The **engine** (mrcall-desktop) | replies and campaign copy — memory + trained voice | the engine's account |
 | The **`cs` kernel itself** | the send guard's register judgment; classification a skill routes directly | a provider key in `~/.<slug>-cs/.env` |
 
@@ -484,8 +484,12 @@ After `cs init`, you have:
 
 The wrapper re-denies send surfaces so a cron run cannot “accidentally” send.
 
-You need the **Claude Code CLI** available to cron (default path
-`~/.local/bin/claude`, overridable with `CLAUDE_BIN`).
+The default host requires the **Claude Code CLI** available to cron (default
+`~/.local/bin/claude`, overridable with `CLAUDE_BIN`). An explicitly reviewed
+`CS_OPERATOR_EXECUTOR=pydantic` launch uses the installed Python executor instead.
+That route requires dedicated API, pricing and admission configuration; a Claude
+subscription login is not an API credential. Follow the [runtime contract](docs/operator-runtime.md#pydantic-executor-authority-and-evidence)
+and the recorded adoption gates before changing a schedule.
 
 #### Try one tick by hand
 

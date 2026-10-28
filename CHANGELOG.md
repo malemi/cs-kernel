@@ -661,12 +661,11 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
-Both maintained clones install immutable local candidate `v0.65.0` at
-`8ec397801c8eb5b05def518c9fe6f0013d4021a7`. All 159 package files, authenticated
-identities, the reviewed three-host timeout instruction and fresh local Git
-lock rebuilds pass. Company guidance, local harness edits, permissions and
-launchers remain preserved. Current genuine BOTH-clone FULL and public Git
-provenance remain pending; component adoption does not advance shared sign-off.
+Both maintained clones currently report `0.66.2` and pin `v0.66.2`; their
+retained integrity proof is separate from current version-only observation.
+FULL66.2 remains failed. Local `v0.68.0` is a verified source/installed-fixture
+candidate, not adopted or published. Genuine BOTH-clone FULL and public Git
+provenance remain pending; component checks do not advance shared sign-off.
 Historical acceptance and superseded adoption claims remain in
 `docs/active-context-archive.md`.
 
