@@ -567,7 +567,7 @@ def render_tokens(local_scripts):
     if end is None:
         return None, "DENIED array closing parenthesis missing"
     if text.count('"${DENIED[@]}"') != 1 or \
-            '.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" "${DENIED[@]}"' not in text:
+            '.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" --executor "$EXECUTOR" "${DENIED[@]}"' not in text:
         return None, "supervisor does not consume the one DENIED array"
     tokens = []
     for line in lines[start + 1:end]:
@@ -1369,6 +1369,11 @@ if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else e
 
 step "59. scheduled Claude retry requires a proven pre-work refusal"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor.py"; then echo "OK"; else echo "FAIL: typed executor permissions, context or request admission regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_integration.py"; then echo "OK"; else echo "FAIL: executor source, lifecycle or actual CLI evidence join regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_routes.py"; then echo "OK"; else echo "FAIL: executor provider authority or bounded fallback changed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_cache.py"; then echo "OK"; else echo "FAIL: explicit prompt caching or usage-price reservation accounting changed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_launcher.py"; then echo "OK"; else echo "FAIL: executor selection lost cron guards or send permission inputs"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_native_stream.py"; then echo "OK"; else echo "FAIL: private native stream diagnostics changed acceptance or lost evidence"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_native_lifecycle.py"; then echo "OK"; else echo "FAIL: native background continuation lost strict lifecycle binding"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_native_composition.py"; then echo "OK"; else echo "FAIL: native Bash composition lost actual task/result binding"; FAIL=1; fi

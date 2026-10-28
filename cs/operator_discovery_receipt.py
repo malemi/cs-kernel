@@ -269,6 +269,11 @@ def _cancel(pid, deadline):
 
 
 def capture(output, value, code, owner, *, business=None):
+    if os.environ.get('CS_OPERATOR_EXECUTOR_CODEC') == 'pydantic-executor-v1':
+        if business is not None:
+            from .operator_executor_evidence import capture_business
+            capture_business(output, value, code, owner, business)
+        return
     if business is None and not os.environ.get('CS_OPERATOR_ACCEPTANCE_RECEIPT'):
         return
     if business is not None and not os.environ.get('CS_OPERATOR_HEALTH_CONTEXT'):

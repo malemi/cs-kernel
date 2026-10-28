@@ -15,7 +15,9 @@ user-visible text is the report in step 6.
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
-Run each `cs` command below in its own native Bash tool call. Use the literal
+{% include "operator-executor-tools.md.j2" %}
+
+For the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal
 `.venv/bin/python -m cs` spelling shown; do not combine commands, add a shell
 `timeout`, pipe or redirect their output, wrap them in another program, or run
 these reads in the background. Identity, configuration, discovery, tasks,

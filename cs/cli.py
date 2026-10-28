@@ -2476,6 +2476,9 @@ def main(argv=None) -> int:
 
     if argv == ["unanswered", "--days", "14", "--json", "--all-buckets"] and _scheduled_workset_enabled():
         from .unanswered import scheduled_command
+        if os.environ.get('CS_OPERATOR_EXECUTOR_CODEC') == 'pydantic-executor-v1':
+            from .operator_executor_evidence import capture_cli
+            return capture_cli(lambda _: scheduled_command(), None, config.load().engine_owner_uid)
         return scheduled_command()
 
     try:
@@ -3088,6 +3091,9 @@ def main(argv=None) -> int:
         # `--account <the-default-account>` stays strict.
         args.account_switched = uid != (settings.engine_owner_uid or "").strip()
     try:
+        if os.environ.get('CS_OPERATOR_EXECUTOR_CODEC') == 'pydantic-executor-v1':
+            from .operator_executor_evidence import capture_cli
+            return capture_cli(args.func, args, settings.engine_owner_uid)
         return args.func(args)
     except config.ConfigError as e:
         print(f"{settings.prog_name or 'cs'}: {e}", file=sys.stderr)

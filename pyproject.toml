@@ -23,6 +23,7 @@ dependencies = [
     # check in degraded mode and said so only in a log line. A dependency
     # a safety path reaches for is a dependency, not an extra.
     "anthropic>=0.107",
+    "pydantic-ai-slim[anthropic]==2.63.0",
 ]
 
 # Kernel-owned LLM calls (cs/worker_llm.py) need the anthropic SDK — which is

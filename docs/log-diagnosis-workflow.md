@@ -338,3 +338,26 @@ do not independently prove either a live child or completed cleanup. Use one
 absolute cleanup allowance across communication, poll and wait; an unconfirmed
 OS outcome stays visible. Once a PID disappears, its former identity and parent
 cannot be reconstructed from a warning alone.
+
+## Pydantic scheduled executor
+
+Use the declared executor codec first. The new Python executor has no Claude
+hook stream; do not interpret its journal as native events or count cancelled
+native hooks as success. Retain the parent launch/configuration and source
+bindings, request/submission/response chain, actual CLI captures and terminal.
+Compare complete ID/name/argument maps across SDK history and provider requests
+before interpreting tool results; a self-consistent hash chain is not provenance.
+
+An HTTP status and finite error kind identify the observed provider refusal.
+They do not imply zero charge or completed work. Preserve request identity,
+known usage-price estimate and full uncertain reservation. For the one supported
+prework fallback, inspect both original receipts and the parent admission
+arithmetic against the original ceiling. A missing primary or reset allowance
+is a failure even when the fallback tool or process exits successfully.
+
+Distinguish transport, workflow disposition, health, provider effects and final
+acceptance. In particular, a successful bare campaign mark is not proof that a
+reply was handled; an already-classified reply may legitimately need no mutation
+when its current contact preview and full-body evidence support that outcome.
+Reuse the original private artifacts and precise rejected predicate. Do not
+dump inventories, rerun paid work or invent an upstream cause to fill a gap.

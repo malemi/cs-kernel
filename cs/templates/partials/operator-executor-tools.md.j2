@@ -1,0 +1,34 @@
+### Execution host and tool spelling
+
+Keep every workflow step, authority check, hold and reporting requirement below.
+The execution host determines how to invoke those operations:
+
+- With Claude Code, use the native Bash, Read and skill invocations shown below.
+- With the Pydantic executor, use its finite typed tools. Every native tool,
+  shell paging or slash-skill example below denotes the corresponding operation
+  in this mapping; it does not grant a shell or a second way around a refusal.
+  Invoke one canonical command per `run_cs(argv=[...])`, omitting the
+  `.venv/bin/python -m cs` launcher prefix. Use `--json` for identity,
+  configuration, tasks and other reads that support it. For example,
+  `run_cs(argv=["whoami", "--json"])`. Keep command arguments separate;
+  never include shell operators, wrappers, redirects or background execution.
+- Invoke `load_workflow(name="cs-triage-mail")` or the other named rendered
+  skill in place of a slash-skill call. Read its complete current content.
+  Use `read_context(path=..., offset=..., length=...)` for referenced permitted
+  clone context, and `pause_status()` for the pause check. A paused result
+  means stop under the same workflow rule.
+- Use `read_artifact(artifact_id=..., offset=..., length=...)` for artifacts
+  returned by this run, instead of native Read or `dd`. Follow the actual
+  returned byte intervals through EOF, respecting their encoding, hashes and
+  total length. Keep every byte; never invent an artifact ID or use an older
+  run. Complete the semantic inventory and paired envelope, including tasks
+  and review, before effects. Retained raw output is not a second mandatory
+  inventory read when the complete current projection is already delivered.
+- The executor owns command deadlines and serial execution. Do not reproduce
+  native timeout/background parameters as command arguments. Preserve actual
+  exit, stderr, source-bound holds and unresolved effects. A refusal is not
+  permission to retry, substitute a shell or skip required evidence.
+
+Tool delivery proves transport only. Complete the same inspection, selection
+and business work, and distinguish a held or failed run from completion.
+

@@ -20,7 +20,9 @@ classify the human message, and route. **You are Opus here on purpose
 
 All commands run from the repo root with `.venv/bin/python -m cs …`.
 
-Run each `cs` command below in its own native Bash tool call. Use the literal
+{% include "operator-executor-tools.md.j2" %}
+
+For the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal
 `.venv/bin/python -m cs` spelling shown; do not combine commands, add a shell
 `timeout`, pipe or redirect their output, wrap them in another program, or run
 these reads in the background. Identity, configuration, discovery, tasks,
@@ -172,6 +174,18 @@ A customer thread has a reply after our send. **If the item carries
 is his to answer. Say so in the report — with the address and who has it — and
 work the next item.
 
+When the pending item omits the contact dossier, read the existing contact
+preview before deciding whether a reply is already classified:
+
+```bash
+.venv/bin/python -m cs campaign mark <contact_id>
+```
+
+This invocation has no `--commit` and changes nothing. Match its `email` and
+`would_set.contact_id` to the pending contact and read
+`would_set.dossier.classified_upto`. Do not add a mutation merely to obtain
+these facts or to report an already-classified reply.
+
 **Read the FULL thread, bodies
 not snippets** — snippets routinely show {{ company_display_name }}'s OWN autoresponder, not the
 human:
@@ -182,7 +196,7 @@ human:
 
 The result is `{"emails":[…]}` (a dict, not a list). Read the message
 **bodies**; find the newest HUMAN message. If it is not newer than
-`dossier.classified_upto` (visible on the contact via `cs campaign pending`),
+`dossier.classified_upto` from that contact's current preview or pending data,
 it is already classified — leave it, do nothing. Otherwise classify with
 judgment and route:
 

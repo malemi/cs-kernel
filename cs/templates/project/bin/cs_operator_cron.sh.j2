@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # {{ company_name }} general operator — one headless tick.
 #
-# Fired by cron every 2h in business hours. Supervises `claude -p "/cs-operator"`:
+# Fired by cron every 2h in business hours. Supervises the selected executor:
 # triage inbound {{ email_address }} mail into review DRAFTS + advance active campaigns
 # (reconcile already-sent drafts, handle replies). With CS_TRIAGE_MODE=draft
 # (the default) NOTHING is sent to a customer autonomously.
@@ -15,6 +15,9 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLAUDE_BIN="${CLAUDE_BIN:-$HOME/.local/bin/claude}"   # cron has a minimal PATH
+# Select explicitly at reviewed adoption; existing launchers retain their host.
+# The Python executor never launches CLAUDE_BIN. Interactive Claude is separate.
+EXECUTOR="${CS_OPERATOR_EXECUTOR:-claude}"
 STATE="$HOME/.{{ company_slug }}-cs"
 LOG="$STATE/cs_operator.log"
 LOCK="$STATE/cs_operator.lock"
@@ -254,7 +257,7 @@ DENIED=(
 {% endfor %}
     "Write" "Edit" "Bash(rm:*)" "Bash(git push:*)"
 )
-.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" "${DENIED[@]}" \
+.venv/bin/python -m cs.operator_recovery "$CLAUDE_BIN" --executor "$EXECUTOR" "${DENIED[@]}" \
   </dev/null >>"$LOG" 2>&1
 rc=$?
 echo "$(ts) {{ company_prog_name }}: tick end (exit $rc)" >>"$LOG"

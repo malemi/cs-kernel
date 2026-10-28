@@ -15,25 +15,39 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.66.2`. Current HEAD status: untagged.**
-  Both clones still execute verified immutable66. FULL66 failed after exact native
-  inventory delivery passed; no draft/send ran. The successor repairs the exact
-  held-read rendering mismatch and makes future inventory overflow explicit.
-  Support-engine authority has retained installed CLI proof; successor kernel
-  adoption and fresh genuine BOTH FULL remain pending in the
-  [follow-on plan](execution-plans/2026-10-27-native66-authority-recovery.md).
-  Native66 recorded2.9881246USD; engine/classifier costs remain separately unknown.
-  Additional verification is limited to40USD with unchanged per-job controls.
-  Failed candidates, uncertain charges and public-provenance obligations remain.
+  Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
+  native inventory delivery; the later69cancelled hooks remain a failure with an
+  unrecorded upstream cause. The exact prior response is proved in Sent, not
+  confirmed received, and must not be resent. No new live acceptance is claimed.
+- The active work is the [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md),
+  replacing only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
+  Dedicated kernel and Desktop worktrees preserve the original repositories.
+  M1–M3 have scoped independent approvals for the executor, real CLI integration
+  and independent consumer. M4 adds explicit routes, bounded fallback, launcher
+  selection and installed checks; cache/usage accounting remains in progress.
+  This is source work, not clone adoption or restored service. The generated
+  launcher retains Claude until an explicit reviewed executor selection.
+- The operator authorizes Cafe to reuse the Anthropic API key already used by
+  MrCall. Model/endpoint/pricing and private adoption bindings still require
+  verification. Original additional authority remains40USD: retained conservative
+  accounted6.9911572USD, prior uncertain reserves8USD, and a separate0.012607USD
+  uncertainty from a malformed free-test fixture that submitted with a dummy key.
+  Remaining headroom is24.9962358USD before fresh reconciliation. Fixture admission
+  amounts are not live spend. Subscription/session quota is separate.
+
+The following platform observations are retained from the source baseline;
+this host migration has not re-audited their deployment:
+
 - Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
   source families, verified by all439/459/355 package files and authenticated
   owner/PID/source bindings. Canonical source is655b167; the other three peers
   and Qonto retain their previous source families with refreshed process identities.
   A historical Git family label
   alone does not establish the deployed baseline.
-- Desktop's four reviewed consumer files match canonical `d9e0361`; the exact66
-  policy passes guarded/native activation and both actual actor/instruction
-  preflights. Genuine strict BOTH FULL remains required. Forecast-based phase
-  skipping is not proved budget exhaustion; uncertain costs/effects stay retained.
+- The retained live Desktop consumer baseline matches canonical `d9e0361`.
+  The new independent codec is developed only in its isolated worktree; native,
+  provider-mail and signup business oracles remain unchanged. The current
+  consumer's route/fallback additions still require M4 review and adoption.
 - Shared-deadline finalization reserves time inside the existing allowance.
   First-cause and native phase/cost diagnostics retain scope and causal links;
   historical overruns remain unexplained. Current ordinary acceptance is separate.
@@ -55,8 +69,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   paging instructions, and preserves capacity counts/run references in failed
   supervisor notices. Focused real-process/ordinary-surface checks and integration
   pass; installed verification and whole-service acceptance remain separate.
-- [Runtime controls](operator-runtime.md) separate scheduled Claude, engine and
-  direct classifier spending. Both clones retain USD4 fallback soft budgets;
+- [Runtime controls](operator-runtime.md) separate the selected scheduled host,
+  engine and direct classifier spending. Both clones retain USD4 fallback soft budgets;
   MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
   not running Claude or independent engine work.
 - [Assignments](task-assignment.md) use engine-owned signed authority and scoped
@@ -117,8 +131,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Next
 
-1. Preserve immutable66, prior failed candidates and actual source/data evidence.
-2. Adopt the reviewed successor repairs, pass free instruction/identity checks, then admit a changed-candidate FULL within the remaining budget.
-3. Complete public provenance and public Git/lock proof after authorized publication.
-4. Finish doc-end/final review and restore only owned maintenance controls.
-5. Keep cs-diagnose manual.
+1. Finish the bounded M4 cost/route and consumer checks, review the integration,
+   run the source suite and verify a normal immutable installed candidate.
+2. Bind both authorized API routes privately, reconcile original budget and
+   owned maintenance, then adopt and run genuine sequential BOTH FULL/signup.
+   Stop on the first failure; reconcile effects and costs before any new attempt.
+3. Complete public provenance and Git/lock proof only after authorized publication.
+4. Finish doc-end/final review without bypassing the original task's closure
+   blocker; restore only owned maintenance controls. Keep cs-diagnose manual.

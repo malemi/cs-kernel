@@ -22,6 +22,7 @@ import shlex
 import secrets
 import stat
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,9 @@ class Attempt:
     ordinary_native: bool = False
     health_context: dict[str, Any] | None = None
     business_read_proofs: list[dict[str, Any]] | None = None
+    executor_proof: dict[str, Any] | None = None
+    executor_facts: dict[str, Any] | None = None
+    executor_fallback_chain: dict[str, Any] | None = None
 
     @property
     def needs_composition(self):
@@ -288,6 +292,8 @@ def _write_acceptance_receipt(attempt, child_identity):
     if not isinstance(attempt.events, list) or any(not isinstance(event, dict) for event in attempt.events):
         raise ValueError("invalid acceptance event sequence")
     settings = config.load()
+    if attempt.executor_proof is not None:
+        return _write_executor_receipt(path, nonce, settings, attempt, child_identity)
     native_uses, phases = _phase_receipts(attempt.events)
     from .operator_discovery_receipt import join
     join(native_uses, phases, attempt.events, child_identity, settings.engine_owner_uid,
@@ -359,11 +365,244 @@ def _write_acceptance_receipt(attempt, child_identity):
             os.unlink(temp)
 
 
+def _write_executor_receipt(path, nonce, settings, attempt, child_identity):
+    from .operator_inventory_view import source_identity
+    phases=[]
+    try:
+        from .operator_executor_evidence import read_private
+        discovery=json.loads(read_private(Path(attempt.health_context['directory'])/'discovery.json'))['discovery']
+        rows=[{k:row.get(k) for k in ('message_id','provider_folder','provider_uid','provider_uidvalidity','owner_uid','body_sha256')}
+              for row in discovery['operational_fixture_discovery']]
+        phases=[dict(phase='discovery',discovery=rows,discovery_complete=not attempt.health_failure)]
+    except (ValueError,KeyError,TypeError,OSError):
+        pass
+    receipt = dict(executor_codec='pydantic-executor-v1', executor_proof=attempt.executor_proof, phases=phases,
+        nonce=nonce, owner_uid=settings.engine_owner_uid, kernel_package_root=str(Path(__file__).parent),
+        pythonpath=os.environ.get('PYTHONPATH', ''), kernel_source_digest=source_identity(),
+        supervisor_pid=os.getpid(), supervisor_started_ticks=attempt.health_context['supervisor']['started_ticks'],
+        child_identity=child_identity, exit_code=attempt.code, clean_terminal=_successful(attempt),
+        business_read_context=attempt.health_context, executor_facts=attempt.executor_facts,
+        ordinary_inspection_status='' if _successful(attempt) else attempt.health_failure)
+    if attempt.executor_fallback_chain is not None:
+        receipt['executor_fallback_chain'] = attempt.executor_fallback_chain
+    prior = json.loads(path.read_text()) if path.exists() else []
+    if not isinstance(prior, list) or any(not isinstance(row, dict) or row.get('nonce') != nonce for row in prior):
+        raise ValueError('acceptance receipt binding differs')
+    fd, temporary = tempfile.mkstemp(prefix='.acceptance-', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w') as stream:
+            json.dump(prior + [receipt], stream, sort_keys=True)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def _executor_denies(denies):
+    from .operator_executor_tools import DENIED, DENIED_RPC, normalize
+    unknown = []
+    for rule in denies:
+        if rule in ('Write', 'Edit', 'Agent', 'Task', 'Bash(rm:*)', 'Bash(git push:*)'):
+            continue
+        try:
+            if not rule.startswith('Bash(') or not rule.endswith(':*)'):
+                raise ValueError('unsupported deny')
+            argv = normalize(shlex.split(rule[5:-3]))
+            known = (argv[0] in DENIED or argv == ['draft-send']
+                     or argv[:2] in (['campaign','send-draft'], ['connection','vonage'])
+                     or argv[:2] in (['assignment','preview'], ['assignment','export'], ['assignment','commit'])
+                     or len(argv) == 2 and argv[0] == 'rpc' and argv[1] in DENIED_RPC)
+            if not known:
+                unknown.append(rule)
+        except (ValueError, IndexError):
+            unknown.append(rule)
+    return unknown
+
+
+def _executor_configuration(settings, directory, context, denies, allows, *, model="", budget=0, key=""):
+    from uuid import uuid4
+    from .operator_executor_config import ExecutorConfig
+    from .operator_inventory_view import source_identity
+    root = Path.cwd().resolve()
+    account = settings.founder_sweep_account if settings.founder_sweep_enabled else None
+    question = None
+    if account:
+        text = (root / '.claude/skills/cs-operator/SKILL.md').read_text()
+        matches = re.findall(r'--account\s+' + re.escape(account) + r'\s+ask\s+"([^"\n]+)"', text)
+        if len(set(matches)) != 1:
+            raise ValueError('founder rendered question binding unavailable')
+        question = matches[0]
+    fallback = bool(key)
+    if fallback and (not MODEL_RE.fullmatch(model) or not math.isfinite(budget) or budget < 0.01):
+        raise ValueError('executor fallback binding unavailable')
+    return ExecutorConfig(run_id=str(uuid4()), attempt_id=str(uuid4()), owner=settings.engine_owner_uid,
+        nonce=context['nonce'], clone_root=str(root), journal_path=str(directory / 'executor.jsonl'),
+        supervisor=context['supervisor'], kernel_source_digest=source_identity(),
+        provider='openrouter' if fallback else os.environ.get('CS_EXECUTOR_PROVIDER', ''),
+        model=model if fallback else os.environ.get('CS_EXECUTOR_MODEL', ''),
+        api_key_env='CS_EXECUTOR_FALLBACK_API_KEY' if fallback else os.environ.get('CS_EXECUTOR_API_KEY_ENV', ''),
+        base_url=GATEWAY_BASE_URL if fallback else os.environ.get('CS_EXECUTOR_BASE_URL') or None,
+        pricing=json.loads(os.environ.get('CS_EXECUTOR_FALLBACK_PRICING_JSON' if fallback else 'CS_EXECUTOR_PRICING_JSON', '{}')),
+        cache_mode=os.environ.get('CS_EXECUTOR_FALLBACK_CACHE_MODE' if fallback else 'CS_EXECUTOR_CACHE_MODE','disabled'),
+        soft_budget_usd=str(budget) if fallback else os.environ.get('CS_EXECUTOR_BUDGET_USD', '4.00'),
+        admitted_ceiling_usd=os.environ.get('CS_EXECUTOR_ADMITTED_CEILING_USD', '0'),
+        max_requests=int(os.environ.get('CS_EXECUTOR_MAX_REQUESTS', '100')),
+        max_output_tokens=int(os.environ.get('CS_EXECUTOR_MAX_OUTPUT_TOKENS', '8192')),
+        send_mode=settings.cs_triage_mode.lower(),
+        exact_send_ids=json.loads(os.environ.get('CS_EXECUTOR_EXACT_SEND_IDS', '[]')) if allows else [],
+        additional_denied=_executor_denies(denies), founder_enabled=settings.founder_sweep_enabled,
+        founder_account=account, founder_question=question)
+
+
+def _stop_executor(proc, expected, *, grace_seconds=5):
+    """Cancel the real host, then stop only captured descendants if necessary.
+
+    Canonical CLI and dossier workers own separate sessions. The host normally
+    cancels/reaps them itself; the outer deadline also retains OS ancestry so a
+    wedged host cannot leave those groups running. Start ticks prevent PID reuse.
+    """
+    from .operator_health import identity
+    def current(row):
+        try:
+            return identity(row['pid'])[0] == row
+        except (OSError, ValueError):
+            return False
+    if not current(expected):
+        raise ValueError('executor_timeout_identity_changed')
+    descendants=[]
+    pending=[expected]
+    for parent in pending:
+        if not current(parent):
+            continue
+        try:
+            children=Path(f"/proc/{parent['pid']}/task/{parent['pid']}/children").read_text().split()
+        except OSError:
+            continue
+        for value in children:
+            try:
+                row,ppid=identity(int(value))
+                if ppid != parent['pid']:
+                    continue
+                descendants.append(row)
+                pending.append(row)
+            except (OSError,ValueError):
+                continue
+        if len(pending)>256:
+            raise ValueError('executor_timeout_descendant_capacity')
+    os.killpg(proc.pid,signal.SIGTERM)
+    try:
+        proc.wait(timeout=grace_seconds)
+    except subprocess.TimeoutExpired:
+        pass
+    for row in reversed(descendants):
+        if current(row):
+            try:
+                if os.getpgid(row['pid']) == row['pid']:
+                    os.killpg(row['pid'],signal.SIGKILL)
+                else:
+                    os.kill(row['pid'],signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+    # Let a host blocked in wait reap the descendants just terminated. A
+    # noncooperative host gets its own final kill only after that opportunity.
+    try:
+        return proc.wait(timeout=grace_seconds)
+    except subprocess.TimeoutExpired:
+        if current(expected):
+            os.killpg(proc.pid,signal.SIGKILL)
+        return proc.wait()
+
+
+def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallback_admission=None):
+    from .operator_executor_protocol import canonical
+    from . import operator_executor_evidence as evidence, operator_health as health
+    settings = config.load()
+    root = settings.state_dir / 'operator-runs'
+    root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    health.private(root, True)
+    directory = Path(tempfile.mkdtemp(prefix='run-', dir=root))
+    from .observability_retention import active
+    active(directory)
+    supervisor, _ = health.identity(os.getpid())
+    launch_nonce = os.environ.get('CS_OPERATOR_ACCEPTANCE_NONCE', '')
+    if not re.fullmatch(r'[a-f0-9]{32}', launch_nonce):
+        launch_nonce = secrets.token_hex(16)
+    context = dict(directory=str(directory), nonce=launch_nonce, supervisor=supervisor,
+        owner_uid=settings.engine_owner_uid, workset_enabled=prompt.split(maxsplit=1)[0:1] == ['/cs-operator'])
+    launch = _executor_configuration(settings, directory, context, denies, allows, model=model, budget=budget, key=key)
+    if key:
+        if not fallback_admission:
+            raise ValueError('executor fallback admission missing')
+        launch = launch.model_copy(update={'admitted_ceiling_usd':fallback_admission['fallback_admitted_ceiling_usd']})
+    config_path = directory / 'executor-config.json'
+    fd = os.open(config_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'wb') as stream:
+        stream.write(canonical(launch.model_dump(mode='json')))
+    executable = Path.cwd() / '.venv/bin/python'
+    if not executable.is_file():
+        raise ValueError('clone interpreter missing')
+    env = os.environ.copy()
+    if key:
+        env['CS_EXECUTOR_FALLBACK_API_KEY'] = key
+    env.update(CS_OPERATOR_HEALTH_CONTEXT=json.dumps(context), CS_OPERATOR_EXECUTOR_CODEC=evidence.CODEC)
+    # Tool identity is private per-launch infrastructure input; never inherited
+    # from the operator environment or exposed as a model tool argument.
+    # Native protected-capture enrollment is intentionally absent in this
+    # child; the supervisor writes the separately versioned executor receipt.
+    env.pop('CS_OPERATOR_ACCEPTANCE_RECEIPT', None)
+    env.pop('CS_OPERATOR_ACCEPTANCE_NONCE', None)
+    env.pop('CS_OPERATOR_EXECUTOR_TOOL_ID', None)
+    env.pop('CS_OPERATOR_EXECUTOR_IDENTITY', None)
+    child, timed_out = None, False
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+        with subprocess.Popen([str(executable), '-m', 'cs.operator_executor', '--config', str(config_path),
+                '--prompt', prompt], cwd=Path.cwd(), env=env, stdin=subprocess.DEVNULL,
+                stdout=out, stderr=err, start_new_session=True) as proc:
+            child, _ = health.identity(proc.pid)
+            expected = evidence.expected_binding(launch, child, executable.resolve())
+            try:
+                code = proc.wait(timeout=RUN_TIMEOUT_SECONDS)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                code = _stop_executor(proc,child)
+        out.seek(0); output = out.read(MAX_CAPTURE_BYTES + 1)
+        err.seek(0); error = err.read(MAX_CAPTURE_BYTES + 1)
+    attempt = Attempt(code, [], overflow=len(output) > MAX_CAPTURE_BYTES or len(error) > MAX_CAPTURE_BYTES,
+        stderr_present=bool(error), timed_out=timed_out, health_context=context,
+        executor_proof=dict(schema_version=evidence.CODEC, launch_config=evidence.reference(config_path),
+            journal={'path':launch.journal_path,'bytes':0,'sha256':'0'*64}, expected=expected,
+            process_exit=code, timed_out=timed_out))
+    try:
+        attempt.executor_proof['journal'] = evidence.reference(Path(launch.journal_path))
+        attempt.executor_facts = evidence.validate(attempt.executor_proof, context)
+    except (ValueError, KeyError, TypeError, OSError) as exc:
+        attempt.health_failure = 'executor_evidence_invalid'
+        try:
+            attempt.executor_facts = evidence.validate(attempt.executor_proof, context, diagnostic_only=True)
+        except (ValueError, KeyError, TypeError, OSError):
+            attempt.executor_facts = {'diagnostic': {'stage':'supervisor_validation',
+                'cause':str(exc) if isinstance(exc, ValueError) else type(exc).__name__,
+                'run_id':launch.run_id}}
+    if fallback_admission is not None:
+        attempt.executor_fallback_chain = dict(fallback_admission, fallback_attempt_id=launch.attempt_id,
+            fallback_proof=attempt.executor_proof)
+    _write_acceptance_receipt(attempt, child)
+    print('operator: pydantic executor ' + ('verified' if _successful(attempt) else 'held; ' +
+        str((attempt.executor_facts or {}).get('diagnostic', {}).get('cause', 'incomplete'))), flush=True)
+    return attempt
+
+
 @causal.attempt_scope
 def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
          allows: list[str] | None = None, model: str = "",
-         budget: float = 0, key: str = "") -> Attempt:
+         budget: float = 0, key: str = "", executor: str = "claude", fallback_admission=None) -> Attempt:
     """Run one bounded-output process; never echo a credential from its output."""
+    if executor == "pydantic":
+        if any((model, budget, key)) and not all((model, budget, key)):
+            raise ValueError("pydantic fallback binding incomplete")
+        return _run_executor(denies, prompt=prompt, allows=allows, model=model, budget=budget, key=key, fallback_admission=fallback_admission)
+    if executor != "claude":
+        raise ValueError("unsupported executor")
     cmd = [claude_bin, "-p", prompt, "--verbose", "--output-format",
            "stream-json"]
     env = os.environ.copy()
@@ -550,6 +789,8 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
 
 
 def _prework_refusal(attempt: Attempt) -> bool:
+    if attempt.executor_proof is not None:
+        return False
     """Accept a structured 402/429 with zero usage and no tool event."""
     if (attempt.code == 0 or attempt.malformed or attempt.overflow or
             attempt.stderr_present or attempt.timed_out):
@@ -646,6 +887,9 @@ def _native_checks(attempt: Attempt):
 
 def _successful(attempt: Attempt) -> bool:
     """A zero exit without a clean terminal result is not completed work."""
+    if attempt.executor_proof is not None:
+        return (attempt.code == 0 and not attempt.timed_out and not attempt.overflow
+                and bool(attempt.executor_facts) and not attempt.health_failure)
     result, checks = _native_checks(attempt)
     facts = dict(process_exit=attempt.code, malformed=attempt.malformed, overflow=attempt.overflow, timed_out=attempt.timed_out, **diagnostics.native_facts(result))
     for failed, check, cause, layer in checks:
@@ -657,7 +901,9 @@ def _successful(attempt: Attempt) -> bool:
 
 
 def _effective_models(attempt: Attempt) -> str:
-    """Names actually used by Claude, not the requested alias."""
+    """Names actually used by the executor, not the requested alias."""
+    if attempt.executor_proof is not None:
+        return ", ".join((attempt.executor_facts or {}).get("model_names", []))
     models = set()
     for event in attempt.events:
         if event.get("type") == "assistant":
@@ -864,8 +1110,71 @@ def _deliver_pending(settings: config.Settings, state: dict[str, Any]) -> bool:
     return True
 
 
+def _executor_fallback_admission(primary):
+    from .operator_executor_evidence import validate
+    if (primary.executor_proof is None or primary.malformed or primary.overflow
+            or primary.stderr_present or primary.timed_out or primary.executor_fallback_chain is not None):
+        raise ValueError('executor_prework_capture_ambiguous')
+    facts = validate(primary.executor_proof,primary.health_context,prework_only=True)
+    original = Decimal(facts['original_admitted_ceiling_usd'])
+    known, uncertain = Decimal(facts['accounted_cost_usd']), Decimal(facts['uncertain_cost_usd'])
+    remainder = original-known-uncertain
+    narrower = os.environ.get('CS_EXECUTOR_FALLBACK_ADMITTED_CEILING_USD')
+    if narrower:
+        from .operator_executor_protocol import USD
+        from pydantic import TypeAdapter
+        remainder = min(remainder,Decimal(TypeAdapter(USD).validate_python(narrower)))
+    if remainder <= 0:
+        raise ValueError('executor_fallback_admission_exhausted')
+    return dict(schema_version='pydantic-fallback-v1',primary_attempt_id=facts['attempt_id'],
+        primary_proof=primary.executor_proof,original_admitted_ceiling_usd=format(original,'f'),
+        primary_accounted_cost_usd=format(known,'f'),primary_uncertain_cost_usd=format(uncertain,'f'),
+        fallback_admitted_ceiling_usd=format(remainder,'f'))
+
+
+def _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows):
+    def stopped(reason):
+        causal.select(primary)
+        _notice(settings,state,'stopped',reason=reason,
+            diagnostic=diagnostics.stopped(reason,primary_identity,ctx,
+                executor_diagnostic=(primary.executor_facts or {}).get('diagnostic'),
+                fallback_status=reason,provider_failures=(primary.executor_facts or {}).get('provider_failures',[]),
+                uncertain_cost_usd=(primary.executor_facts or {}).get('uncertain_cost_usd')))
+        return primary.code or 1
+    try:
+        admission = _executor_fallback_admission(primary)
+    except (ValueError,KeyError,TypeError,OSError):
+        return stopped((primary.executor_facts or {}).get('fallback_hold','prework_refusal_unproven'))
+    if settings.pause_path.exists():
+        return stopped('paused_before_fallback')
+    model,budget = settings.cron_fallback_model.strip(),settings.cron_fallback_budget_usd
+    if not MODEL_RE.fullmatch(model) or not math.isfinite(budget) or budget < 0.01:
+        return stopped('fallback_unconfigured')
+    try:
+        key = asyncio.run(_saved_openrouter_key(settings))
+    except Exception:
+        return stopped('credential_unavailable')
+    if not key:
+        return stopped('credential_missing')
+    if settings.pause_path.exists():
+        return stopped('paused_before_fallback')
+    fallback = _run(claude_bin,denies,prompt=prompt,allows=allows,model=model,budget=budget,key=key,
+        executor='pydantic',fallback_admission=admission)
+    causal.select(fallback)
+    if not _successful(fallback):
+        _notice(settings,state,'stopped',reason='fallback_failed',
+            diagnostic=diagnostics.stopped('fallback_failed',{'provider':'OpenRouter'},ctx,
+                executor_diagnostic=(fallback.executor_facts or {}).get('diagnostic'),
+                retained_primary_uncertain_cost_usd=admission['primary_uncertain_cost_usd']))
+        return fallback.code or 1
+    delivered = _notice(settings,state,'fallback',_effective_models(fallback),'payment_required',
+        identity={'key':_key_fingerprint(key)},diagnostic=dict(provider='OpenRouter',context=ctx,
+            retained_primary_uncertain_cost_usd=admission['primary_uncertain_cost_usd']))
+    return 0 if delivered else 1
+
+
 def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
-        allows: list[str] | None = None) -> int:
+        allows: list[str] | None = None, executor: str = "claude") -> int:
     settings = config.load()
     state = _read_state(settings)
     _deliver_pending(settings, state)
@@ -905,8 +1214,14 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
         causal.decision('pause_state', 'paused', layer='configuration', outcome='held', method='operator.tick')
         print("operator: paused after mail intake", flush=True)
         return 1 if state.get("_delivery_failed") else 0
-    primary_identity = diagnostics.primary_identity(claude_bin)
-    primary = _run(claude_bin, denies, prompt=prompt, allows=allows)
+    primary_identity = (diagnostics.primary_identity(claude_bin) if executor == "claude" else
+                        {"provider": os.environ.get("CS_EXECUTOR_PROVIDER", "Unknown"),
+                         "credential_source": os.environ.get("CS_EXECUTOR_API_KEY_ENV", ""),
+                         "executor": "pydantic"})
+    primary = (_run(claude_bin, denies, prompt=prompt, allows=allows) if executor == "claude" else
+               _run(claude_bin, denies, prompt=prompt, allows=allows, executor=executor))
+    if executor == "pydantic" and not _successful(primary):
+        return _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows)
     if _successful(primary):
         causal.select(primary)
         if primary.health_failure:
@@ -1014,9 +1329,11 @@ from .observability_producers import observe as _diagnostic_observe
 
 @_diagnostic_observe("launch")
 def run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
-        allows: list[str] | None = None) -> int:
+        allows: list[str] | None = None, executor: str = "claude") -> int:
     try:
-        return _run_tick(claude_bin, denies, prompt=prompt, allows=allows)
+        if executor == "claude":
+            return _run_tick(claude_bin, denies, prompt=prompt, allows=allows)
+        return _run_tick(claude_bin, denies, prompt=prompt, allows=allows, executor=executor)
     except Exception as exc:
         causal.decision('supervisor_exception', 'supervisor_exception', layer='supervisor', method='operator.tick')
         print(f"operator: supervisor failed ({type(exc).__name__})", flush=True)
@@ -1037,6 +1354,11 @@ def main() -> int:
         return 2
     try:
         args = sys.argv[2:]
+        executor = "claude"
+        if args[:1] == ["--executor"]:
+            if len(args) < 2 or args[1] not in ("claude", "pydantic"):
+                raise ValueError("unsupported executor")
+            executor, args = args[1], args[2:]
         prompt = "/cs-operator"
         allows: list[str] = []
         if args[:1] == ["--prompt-env"]:
@@ -1056,7 +1378,9 @@ def main() -> int:
                 raise ValueError("empty allowed-tools list")
         if not args:
             raise ValueError("empty disallowed-tools list")
-        return run(sys.argv[1], args, prompt=prompt, allows=allows)
+        if executor == "claude":
+            return run(sys.argv[1], args, prompt=prompt, allows=allows)
+        return run(sys.argv[1], args, prompt=prompt, allows=allows, executor=executor)
     except Exception as exc:
         causal.decision('supervisor_exception', 'supervisor_exception', layer='supervisor', method='operator.tick')
         print(f"operator: supervisor failed ({type(exc).__name__}: {exc})", file=sys.stderr)

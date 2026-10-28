@@ -5,7 +5,7 @@ description: {{ company_prog_name }} general operator bootstrap (headless, cron-
 
 # {{ company_prog_name }} — General Operator Bootstrap
 
-The recurring entrypoint a headless cron runs as `claude -p "/cs-operator"`.
+The recurring workflow loaded by the scheduled executor as `/cs-operator`.
 Your only job is to run the day's recurring jobs **in order** and **stop**.
 You are the brain; the {{ email_address }} mrcall-desktop engine is the body. This
 skill is thin orchestration: it decides whether to run, runs the
@@ -29,7 +29,9 @@ A denied navigation request remains nonexecuted and supplies no progress,
 inspection, authority or effect credit. Preserve it in the report; never retry
 or bypass it. Required work needs independent permitted success.
 
-Run each `cs` command below in its own native Bash tool call. Use the literal
+{% include "operator-executor-tools.md.j2" %}
+
+For the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal
 `.venv/bin/python -m cs` spelling shown; do not combine commands, add a shell
 `timeout`, pipe or redirect their output, wrap them in another program, or run
 these reads in the background. Identity, configuration, discovery, tasks,

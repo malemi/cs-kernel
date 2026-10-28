@@ -2,9 +2,12 @@
 
 The agent host executes the skills; the `cs` CLI executes their commands. In an
 interactive workspace the host is the user's chosen coding agent. Unattended
-operator ticks use Claude Code, launched by the generated
+operator ticks select their host through the generated
 [`bin/cs_operator_cron.sh` template](../cs/templates/project/bin/cs_operator_cron.sh.j2)
-as `claude -p "/cs-operator"` under the kernel's deterministic supervisor.
+and the kernel's deterministic supervisor. The wrapper retains its legacy Claude
+default until reviewed adoption explicitly exports `CS_OPERATOR_EXECUTOR=pydantic`.
+That selection launches a Python executor child instead of `claude -p`; it does
+not launch the configured legacy Claude executable. Interactive hosts are unchanged.
 This is distinct from a headless engine daemon:
 that daemon is an RPC service whose LLM work uses provider APIs.
 
@@ -18,17 +21,18 @@ available. Logging does not establish current customer-mail reliability.
 | Execution path | Model/auth owner | Budget boundary | Pause boundary |
 |---|---|---|---|
 | Claude Code operator reasoning/tool selection | Primary: Claude login. Optional fallback: explicit manifest model and saved OpenRouter key supplied to that process | Primary account limits or fallback key limit; the engine ledger does not cover either | Wrapper checks `~/.<slug>-cs/CS_PAUSE`; the local supervisor checks before/after intake and before fallback; does not terminate a running process |
+| Pydantic scheduled reasoning/tool selection | Explicit executor API provider/model/key binding; Anthropic or the existing OpenRouter Anthropic Messages route; no reuse of a Claude subscription login | Separate soft target and supervisor-admitted ceiling, conservative request reservations and retained uncertainty; neither the engine ledger nor session quota covers it | Same wrapper and supervisor pause boundaries; timeout/cancellation cleanup revalidates owned process identities |
 | Engine analysis, memory, task judgement and contextual generation | Active engine profile `LLM_PROVIDER`, model preset/role overrides and personal key or MrCall credits | Engine profile's daily reservation ledger | Preparation pause/automatic-update settings govern processing; budget zero refuses new paid engine requests |
 | Kernel direct classification | Clone/provider env and `model_config.py`, independent of engine profile | Direct provider billing; no engine reservation or daily cap | Not disabled globally by `CS_LLM_ROUTE=engine`; caller-specific guards apply |
 
-An operator tick can spend on all three paths: Claude reasons, commands request
+An operator tick can spend on three separate billing paths: its selected host reasons, commands request
 engine generation, and a send guard requests its own classification. A read-labelled
 RPC is not a zero-cost guarantee: ordinary `emails.needs_reply` can invoke engine
 model classification. Deterministic health assessment and problem collection consume
 recorded execution evidence and issue no extra model requests. A draft-only
 policy does not make reasoning or generation free. Charging Claude to a subscription rather than
 API billing must be checked in its actual runtime authentication, not inferred
-from `claude -p` or the engine's credentials. The generic supervisor's primary run supplies no
+from `claude -p` or the engine's credentials. The legacy supervisor's primary run supplies no
 `--model` or `--max-budget-usd` flag. The fallback, when configured, supplies
 both; the budget flag is a soft guard that may be exceeded by one model call.
 The alternate key's provider-side limit is the final spending boundary. Never
@@ -39,7 +43,7 @@ budget flag before invoking Claude. Inspect that executable as well as the
 supervisor: the generic primary flags do not establish the clone's actual
 billing route or cap.
 
-The supervisor in [`operator_recovery.py`](../cs/operator_recovery.py) starts a
+For the legacy backend, the supervisor in [`operator_recovery.py`](../cs/operator_recovery.py) starts a
 second Claude process only after a structured, immediate quota or payment
 refusal proves no tool ran and no tokens were billed. It reuses the same prompt,
 command allow list, command deny list and headless send marker for both attempts.
@@ -73,7 +77,7 @@ remain explicit, with captured safe codes and concrete read-only diagnostic
 commands using the scheduled executable and workspace. There is no assumed
 administrator or invented contact address.
 
-Primary identity comes from the configured Claude-compatible executable's
+Legacy primary identity comes from the configured Claude-compatible executable's
 read-only `auth status --json`, with a five-second deadline and 16 KiB retained
 response limit. Custom launchers must honor that command contract. Failed probes
 never prevent the scheduled run. API authentication never borrows a saved OAuth
@@ -105,6 +109,64 @@ records concern the scheduled run, including its email-intake prerequisite.
 The [delivery plan](execution-plans/2026-10-13-operator-actionable-diagnostics.md)
 records its diagnostic contract; current filesystem adoption is covered by the
 [logging plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md).
+
+## Pydantic executor authority and evidence
+
+The migration replaces the scheduled host, not the CLI, engine, workflow or
+business oracle. The supervisor's `--executor pydantic` option retains the existing
+mode/send-marker check, pause, intake and bounded child boundary. Select the host
+in the scheduled launch environment or explicit supervisor arguments; merely
+putting the selector in a dotenv file read later by Python does not select it
+in the shell wrapper. Adoption state and outstanding acceptance are recorded in
+[active context](active-context.md), not inferred from source tests.
+
+Executor configuration is separate from classifier and engine settings. It binds
+`CS_EXECUTOR_PROVIDER`, `CS_EXECUTOR_MODEL`, `CS_EXECUTOR_API_KEY_ENV`, the exact
+endpoint and reviewed `CS_EXECUTOR_PRICING_JSON`, together with the separate soft
+target and `CS_EXECUTOR_ADMITTED_CEILING_USD`. The model cannot edit those inputs.
+An alias requires a finite reviewed set of actual response models. OpenRouter
+uses the existing `https://openrouter.ai/api/v1/messages` route and an explicit
+isolated token; it is not silently promoted to primary. Claude subscription
+login is not API authority. Never print or put credentials in process arguments.
+
+The real child invokes canonical CLI commands through finite `run_cs` arguments,
+loads the rendered workflow source and reads bounded current-run artifacts.
+There is no shell, arbitrary Python, raw unrestricted RPC or model-callable file
+mutation tool. The shared rendered host mapping preserves native interactive
+spelling while mapping scheduled typed tools to the same operations. Bare
+`campaign mark CONTACT` previews the current contact without committing a
+classification update.
+
+The `pydantic-executor-v1` journal is distinct from native Claude events. Parent
+process/config/source binding, actual CLI start/end/output joins and complete
+SDK-to-provider call maps establish provenance. Pages must reach the real
+provider request and a matching response before effects. Both the kernel and
+the independent Desktop consumer reject missing identities, foreign results,
+partial delivery and unresolved lifecycle events. Transport proof still does
+not establish model compliance, a mailbox effect or full operational acceptance.
+
+Request admission reserves a conservative maximum before transport. Usage-price
+estimates distinguish new input, cache reads, cache writes and output using
+explicit reviewed rates; normalized input totals already include cached tokens.
+Set `CS_EXECUTOR_CACHE_MODE=5m` explicitly with all four billing rates; the
+fallback uses its separately reviewed `CS_EXECUTOR_FALLBACK_CACHE_MODE`.
+Invalid or unsupported usage retains the reservation. An uncached configuration
+without billing-rate detail is labelled a conservative usage upper estimate,
+not a provider invoice. Do not count retained reservations as actual spend or
+reset them on fallback.
+
+One distinct existing fallback may follow a strictly evidenced immediate
+prework billing refusal, with no model-executed tools or business work. The
+current new backend supports the structured HTTP402 billing case; HTTP429 does
+not establish the old native weekly/five-hour refusal category and remains held.
+Retain the primary's full unknown reservation and known cost, subtract them from
+the original admitted job ceiling, and admit the fallback only within that
+remainder and any narrower approved fallback cap. Its manifest soft target does
+not enlarge that ceiling. The parent preserves both proofs and the independent
+consumer checks the admission chain. Unknown effects, timeout, missing evidence,
+same-route retry and a second fallback remain forbidden. A successful fallback
+does not erase the primary's uncertainty. The reviewed rationale is in the
+[execution plan](execution-plans/2026-10-28-pydantic-headless-executor.md).
 
 ## Shared workflow time bounds
 
