@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import queue
 import socket
+import sqlite3
 import tempfile
 import threading
 import time
@@ -255,16 +256,49 @@ class NotificationTests(unittest.TestCase):
 
         def reserve(i):
             try:
-                return Inbox(
+                nonce, fresh = Inbox(
                     self.config.state_dir, self.config.owner_uid, self.config.monitor_id
-                ).reserve(f"{i:064x}", 3, now)[0]
-            except Exception as error:
-                return type(error).__name__
+                ).reserve(f"{i:064x}", 3, now)
+                self.assertTrue(fresh)
+                return ("admitted", nonce)
+            except ValueError as error:
+                if str(error) != "Notification admission exhausted":
+                    raise
+                return ("exhausted", str(error))
+            except sqlite3.OperationalError as error:
+                if error.sqlite_errorcode != sqlite3.SQLITE_BUSY:
+                    raise
+                return ("busy", str(error))
 
         # Independent objects/connections reserve the same finite shared budget.
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
             results = list(pool.map(reserve, range(12)))
-        self.assertEqual(sum(len(v) == 32 for v in results), 3)
+        nonces = [value for kind, value in results if kind == "admitted"]
+        self.assertGreater(len(nonces), 0, results)
+        self.assertLessEqual(len(nonces), 3, results)
+        self.assertEqual(len(set(nonces)), len(nonces), results)
+        for nonce in nonces:
+            self.assertRegex(nonce, r"^[0-9a-f]{32}$")
+        with inbox.connect() as db:
+            stored = {row[0] for row in db.execute("SELECT nonce FROM jobs")}
+            count = db.execute("SELECT count FROM attempts WHERE day=?", (int(now // 86400),)).fetchone()[0]
+        self.assertEqual(stored, set(nonces), results)
+        self.assertEqual(count, len(nonces), results)
+        if any(kind == "exhausted" for kind, _ in results):
+            self.assertEqual(count, 3, results)
+        # Only confirmed BUSY-unused capacity may be filled, after concurrent
+        # admissions and their exact durable ledger have independently passed.
+        for i in range(3 - count):
+            self.assertTrue(any(kind == "busy" for kind, _ in results), results)
+            nonce, fresh = inbox.reserve(f"{12 + i:064x}", 3, now)
+            self.assertTrue(fresh)
+            self.assertNotIn(nonce, nonces)
+            nonces.append(nonce)
+        with inbox.connect() as db:
+            self.assertEqual({row[0] for row in db.execute("SELECT nonce FROM jobs")}, set(nonces))
+            self.assertEqual(db.execute("SELECT count FROM attempts WHERE day=?", (int(now // 86400),)).fetchone()[0], 3)
+        with self.assertRaisesRegex(ValueError, "^Notification admission exhausted$"):
+            inbox.reserve(f"{99:064x}", 3, now)
         with self.assertRaises(ValueError):
             inbox.reserve("z" * 64, 3, now)
         with inbox.connect() as db:
@@ -274,6 +308,25 @@ class NotificationTests(unittest.TestCase):
         self.assertEqual(len(nonce), 32)
         with self.assertRaises(ValueError):
             inbox.reserve(existing, 3, now + 61)
+
+    def test_busy_admission_preserves_unused_durable_budget(self):
+        inbox = Inbox(self.config.state_dir, self.config.owner_uid, self.config.monitor_id)
+        now = time.time()
+        with inbox.connect() as lock:
+            lock.execute("BEGIN EXCLUSIVE")
+            with self.assertRaises(sqlite3.OperationalError) as caught:
+                inbox.reserve("a" * 64, 3, now)
+            self.assertEqual(caught.exception.sqlite_errorcode, sqlite3.SQLITE_BUSY)
+        with inbox.connect() as db:
+            self.assertEqual(db.execute("SELECT count(*) FROM jobs").fetchone()[0], 0)
+            self.assertEqual(db.execute("SELECT count(*) FROM attempts").fetchone()[0], 0)
+        nonce, fresh = inbox.reserve("a" * 64, 3, now)
+        self.assertTrue(fresh)
+        self.assertRegex(nonce, r"^[0-9a-f]{32}$")
+        restarted = Inbox(self.config.state_dir, self.config.owner_uid, self.config.monitor_id)
+        with restarted.connect() as db:
+            self.assertEqual(db.execute("SELECT nonce FROM jobs").fetchall(), [(nonce,)])
+            self.assertEqual(db.execute("SELECT count FROM attempts").fetchall(), [(1,)])
 
     def test_confirmed_delivery_does_not_disable_hourly_escalation(self):
         inbox = Inbox(self.config.state_dir, self.config.owner_uid, self.config.monitor_id)
