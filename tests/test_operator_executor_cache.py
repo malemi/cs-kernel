@@ -89,9 +89,9 @@ class CacheTests(ExecutorTests):
         self.assertEqual([r['normal_input_tokens'] for r in responses],[10,20])
         self.assertEqual([r['accounted_cost_usd'] for r in responses],['0.00034','0.00009'])
         self.assertTrue(all(r['cost_basis']=='usage_price_estimate' for r in responses))
-        artifact=Path('/tmp/mrcall-ai-kit/pydantic-headless-20261028/m4-cache')
-        artifact.mkdir(exist_ok=True)
-        (artifact/(provider+'-two-turn.json')).write_text(json.dumps(dict(provider=provider,
+        from operator_executor_test_support import evidence_path
+        artifact=evidence_path('m4-cache', provider+'-two-turn.json')
+        artifact.write_text(json.dumps(dict(provider=provider,
             config=config.model_dump(mode='json'),wire_usages=wire_usage,responses=responses,
             requests=bodies,model_settings=executor.executor_model_settings(config),
             reservation='conservative upper rates unchanged; response cost is usage-price estimate'),indent=2)+'\n')

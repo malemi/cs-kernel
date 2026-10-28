@@ -30,11 +30,10 @@ from cs.operator_executor_tools import (identity, validate_argv, Refusal, DENIED
     DENIED, PREFIXES, safe_context_path)
 from cs.operator_inventory_view import source_identity
 
-SOURCE = Path(__file__).resolve().parents[1]
-CLI_PYTHON = SOURCE.parent.parent / 'hb/cs-kernel/.venv/bin/python'
-# Use the already installed kernel environment solely for fixture CLI imports.
-if not CLI_PYTHON.exists():
-    CLI_PYTHON = Path('/home/mal/hb/cs-kernel/.venv/bin/python')
+SOURCE = Path(os.environ.get('CS_EXECUTOR_TEST_SOURCE_ROOT')
+              or Path(__file__).resolve().parents[1]).resolve()
+# Use the environment running the checks, including a clean installed candidate.
+CLI_PYTHON = Path(sys.executable)
 
 
 def launch_config(root, journal, **overrides):

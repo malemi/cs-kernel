@@ -4982,12 +4982,12 @@ doc_baseline_date: 2026-10-11
 
 # Active Context — cs-kernel
 
-<!-- doc-scope:start -->
+<!-- historical-doc-scope:start -->
 Scope: current source capabilities, untagged development and unresolved work.
 Durable rules live in the [kernel charter](kernel-charter.md), release history in
 [`CHANGELOG.md`](../CHANGELOG.md), and dated operational observations in
 [`active-context-archive.md`](active-context-archive.md).
-<!-- doc-scope:end -->
+<!-- historical-doc-scope:end -->
 
 ## State now
 

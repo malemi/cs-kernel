@@ -10,11 +10,12 @@ import unittest
 from unittest.mock import patch
 
 from test_operator_executor import ExecutorTests, SOURCE
+from operator_executor_test_support import evidence_path
 from cs import operator_recovery as recovery
 from cs.operator_executor_evidence import validate
 from cs.operator_executor_protocol import canonical, decode, sha256
 
-SDK = Path('/tmp/mrcall-ai-kit/pydantic-headless-20261028/venv/bin/python')
+SDK = Path(sys.executable)
 
 FIXTURE_MODEL = '''
 import cs.operator_executor as executor
@@ -299,7 +300,7 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
         self.assertTrue(receipt['clean_terminal'],receipt.get('executor_facts'))
         packet=dict(receipt=receipt,nonce='e'*32,owner='fixture-owner',owned=observed,
             required_phases=['identity','configuration','tasks','review','discovery','campaigns'],source=preflight)
-        packet_path=Path('/tmp/mrcall-ai-kit/pydantic-headless-20261028/m2/real-packet'+('-'+self.integration_case if self.integration_case else '')+'.json')
+        packet_path=evidence_path('m2', 'real-packet'+('-'+self.integration_case if self.integration_case else '')+'.json')
         packet_path.write_text(json.dumps(packet,sort_keys=True));packet_path.chmod(0o600)
         return receipt
 
@@ -342,8 +343,7 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
         # Retain one real complete free transport fixture for the independent
         # consumer worker; tests never place a provider key in this receipt.
         import shutil
-        destination=Path('/tmp/mrcall-ai-kit/pydantic-headless-20261028/m2/free-fixture')
-        if destination.exists():shutil.rmtree(destination)
+        destination=evidence_path('m2', 'free-fixture')
         shutil.copytree(self.base,destination)
         # Original paths are valid until tearDown. Rebase exact local references
         # in a separate copy without claiming it is the genuine parent fixture.
@@ -607,5 +607,6 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
 # Do not inherit and rerun M1 acceptance tests.
 for name in list(vars(ExecutorTests)):
     if name.startswith('test_') and name not in vars(IntegrationTests):setattr(IntegrationTests,name,None)
+del ExecutorTests
 
 if __name__=='__main__':unittest.main()

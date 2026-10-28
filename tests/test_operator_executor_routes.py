@@ -305,7 +305,8 @@ recovery._saved_openrouter_key=fixture_saved_key
         self.assertEqual(chain['fallback_proof'],receipts[-1]['executor_proof'])
         self.assertTrue(receipts[-1]['clean_terminal'])
         self.assertFalse((self.base/'socket-attempts.txt').exists())
-        target=Path('/tmp/mrcall-ai-kit/pydantic-headless-20261028/m4-routes/fallback-receipts.json')
+        from operator_executor_test_support import evidence_path
+        target=evidence_path('m4-routes', 'fallback-receipts.json')
         target.write_text(json.dumps(receipts,sort_keys=True));target.chmod(0o600)
         source['executor_attempt_receipts']=receipts
         packet=dict(receipt=receipts[-1],receipts=receipts,nonce='e'*32,owner='fixture-owner',owned=observed,
