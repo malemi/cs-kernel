@@ -8,6 +8,7 @@ The comparison base is the reviewed legal-skill tip preceding this bootstrap.
 from __future__ import annotations
 
 import contextlib
+import copy
 import hashlib
 import io
 import json
@@ -39,6 +40,37 @@ FAILED = 0
 WORKSET_RENDERED = {}
 RELEASE_RENDERED = {}
 RELEASE_REVIEW = json.loads((ROOT / "tests/fixtures/reviewed-release-scheduled-surfaces.json").read_text())
+
+
+def executor_guidance_binding():
+    record = json.loads((ROOT / "tests/fixtures/executor-guidance-binding.json").read_text())
+    assert record["baseline_commit"] == "d1dbe36348543cd736167fe32796f5bb55d38271"
+    assert record["review_state"] == "REVISE_PENDING_REQUIRED_EVIDENCE"
+    receipt = (ROOT / "tests/fixtures" / record["checkpoint_receipt"]).read_bytes()
+    assert hashlib.sha256(receipt).hexdigest() == record["checkpoint_receipt_sha256"]
+    assert b"- Verdict: REVISE\n" in receipt
+    assert set(record["templates"]) == {
+        ".claude/skills/cs-operator/SKILL.md", ".claude/skills/cs-triage-mail/SKILL.md",
+        ".claude/skills/cs-campaign-tick/SKILL.md", "bin/cs_operator_cron.sh"}
+    assert set(record["partials"]) == {"cs/templates/partials/operator-executor-tools.md.j2"}
+    for path, digest in record["partials"].items():
+        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest
+    return record
+
+
+def undo_executor_guidance(rel: str, text: bytes) -> bytes:
+    record = executor_guidance_binding()
+    if rel not in record["templates"]:
+        return text
+    binding = record["templates"][rel]
+    assert hashlib.sha256(text).hexdigest() == binding["after_sha256"]
+    for edit in reversed(binding["edits"]):
+        start, end = edit["after_start"], edit["after_end"]
+        assert 0 <= start <= end <= len(text)
+        assert text[start:end] == edit["after"].encode()
+        text = text[:start] + edit["before"].encode() + text[end:]
+    assert hashlib.sha256(text).hexdigest() == binding["before_sha256"]
+    return text
 
 
 def undo_subskill_timeout_guidance(rel: str, text: bytes) -> bytes:
@@ -90,7 +122,7 @@ def prior_workset_template(rel: str) -> str | None:
     if rel not in records:
         return None
     record = records[rel]
-    text = (TPL / (rel + '.j2')).read_text()
+    text = undo_executor_guidance(rel, (TPL / (rel + '.j2')).read_bytes()).decode()
     if rel == '.claude/skills/cs-operator/SKILL.md':
         text = undo_e18_operator_guidance(undo_parent_send_guidance(text.encode())).decode()
     framing = json.loads((ROOT / 'tests/fixtures/reviewed-inventory-eof-guidance.json').read_text())
@@ -357,7 +389,8 @@ def scheduled_surfaces(old: Path) -> None:
     timeout_review = RELEASE_REVIEW["bash_timeout_review"]
     timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
     assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
-    operator_source = undo_parent_send_guidance((TPL / ".claude/skills/cs-operator/SKILL.md.j2").read_bytes())
+    operator_rel = ".claude/skills/cs-operator/SKILL.md"
+    operator_source = undo_parent_send_guidance(undo_executor_guidance(operator_rel, (TPL / (operator_rel + ".j2")).read_bytes()))
     phase_review = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
     assert hashlib.sha256(operator_source).hexdigest() == phase_review["after_sha256"]
     operator_source = undo_e18_operator_guidance(operator_source)
@@ -388,6 +421,7 @@ def scheduled_surfaces(old: Path) -> None:
                 after = current_env.get_template(rel + ".j2").render(**config).encode()
                 record = RELEASE_REVIEW["templates"][rel]
                 source = (TPL / (rel + ".j2")).read_bytes()
+                source = undo_executor_guidance(rel, source)
                 source = undo_subskill_timeout_guidance(rel, source)
                 if rel == ".claude/skills/cs-operator/SKILL.md":
                     source = undo_e18_operator_guidance(undo_parent_send_guidance(source))
@@ -395,7 +429,7 @@ def scheduled_surfaces(old: Path) -> None:
                 reviewed = (hashlib.sha256(source).hexdigest() == record["current_sha256"]
                             and hashlib.sha256(baseline).hexdigest() == record["baseline_sha256"]
                             and record["baseline_source"] == f"{BASE_COMMIT}:cs/templates/project/{rel}.j2")
-                check(f"fresh scheduled source review binding: {rel}", reviewed)
+                check(f"historical scheduled source binding after exact executor reversal: {rel}", reviewed)
                 if reviewed:
                     RELEASE_RENDERED[(rel, after)] = before
                 if rel.endswith(("cs-operator/SKILL.md", "cs-triage-mail/SKILL.md")):
@@ -708,10 +742,50 @@ def contract(clone: Path) -> None:
               for paragraph in help_text.split("\n\n")))
 
 
+def executor_guidance_controls(tmp: Path) -> None:
+    record = executor_guidance_binding()
+    baseline = base_templates(tmp / "executor-guidance", record["baseline_commit"])
+    check("executor binding preserves pending REVISE gate", record["review_state"] == "REVISE_PENDING_REQUIRED_EVIDENCE")
+    for rel in record["templates"]:
+        current = (TPL / (rel + ".j2")).read_bytes()
+        previous = undo_executor_guidance(rel, current)
+        check(f"executor delta reverses byte-exactly: {rel}", previous == (baseline / (rel + ".j2")).read_bytes())
+        for label, changed in (("unknown addition", current + b"Unbound executor instruction.\n"),
+                               ("byte mutation", current.replace(b"executor", b"Executor", 1))):
+            try:
+                undo_executor_guidance(rel, changed)
+            except AssertionError:
+                rejected = True
+            else:
+                rejected = False
+            check(f"executor delta rejects {label}: {rel}", changed != current and rejected)
+        binding = copy.deepcopy(record)
+        binding["templates"][rel]["edits"][0]["after"] += "unbound"
+        with patch(__name__ + ".executor_guidance_binding", return_value=binding):
+            try:
+                undo_executor_guidance(rel, current)
+            except AssertionError:
+                rejected = True
+            else:
+                rejected = False
+        check(f"executor delta rejects changed reversal hunk: {rel}", rejected)
+    partial = ROOT / next(iter(record["partials"]))
+    read_bytes = Path.read_bytes
+    with patch.object(Path, "read_bytes", lambda path: read_bytes(path) + b"unbound" if path == partial else read_bytes(path)):
+        try:
+            executor_guidance_binding()
+        except AssertionError:
+            rejected = True
+        else:
+            rejected = False
+    check("executor delta rejects changed partial bytes", rejected)
+
+
 def main() -> int:
     config = {**pi.TEMPLATE_DEFAULTS, **_FULL_INIT_DATA}
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
+        executor_guidance_controls(tmp)
         old = base_templates(tmp)
         candidate = tmp / "candidate"
         render(config, TPL, candidate)

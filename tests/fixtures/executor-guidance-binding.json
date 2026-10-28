@@ -1,0 +1,91 @@
+{
+  "baseline_commit": "d1dbe36348543cd736167fe32796f5bb55d38271",
+  "checkpoint_receipt": "executor-guidance-checkpoint-receipt.md",
+  "checkpoint_receipt_sha256": "5920ea37bab690cfb44b38ce4370375382be0ebd8b0e1e167d9ba46802133a90",
+  "partials": {
+    "cs/templates/partials/operator-executor-tools.md.j2": "793944ee2b616cc5b11fa1a5a623924dd0c253dc3ada0651d52fe4037765b5a7"
+  },
+  "review_state": "REVISE_PENDING_REQUIRED_EVIDENCE",
+  "schema_version": 1,
+  "scope": "Mechanical exact source reversal only; this binding does not claim M4 approval.",
+  "templates": {
+    ".claude/skills/cs-campaign-tick/SKILL.md": {
+      "after_sha256": "4e3d14f174e754efce2197ddaee6d79fccd2d0151d52f6eb16a9ac46501d52ea",
+      "before_sha256": "188378ab8f3619b417daa0783ed59e50fa563f231d3818c0019162e365348567",
+      "edits": [
+        {
+          "after": "{% include \"operator-executor-tools.md.j2\" %}\n\nFor the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal\n",
+          "after_end": 1550,
+          "after_start": 1387,
+          "before": "Run each `cs` command below in its own native Bash tool call. Use the literal\n"
+        },
+        {
+          "after": "When the pending item omits the contact dossier, read the existing contact\npreview before deciding whether a reply is already classified:\n\n```bash\n.venv/bin/python -m cs campaign mark <contact_id>\n```\n\nThis invocation has no `--commit` and changes nothing. Match its `email` and\n`would_set.contact_id` to the pending contact and read\n`would_set.dossier.classified_upto`. Do not add a mutation merely to obtain\nthese facts or to report an already-classified reply.\n\n",
+          "after_end": 9358,
+          "after_start": 8893,
+          "before": ""
+        },
+        {
+          "after": "`dossier.classified_upto` from that contact's current preview or pending data,\n",
+          "after_end": 9806,
+          "after_start": 9727,
+          "before": "`dossier.classified_upto` (visible on the contact via `cs campaign pending`),\n"
+        }
+      ]
+    },
+    ".claude/skills/cs-operator/SKILL.md": {
+      "after_sha256": "bf97f62dfa6f5fae1126313a43320b6f98c4c00a7b1983d155e8e6445e7f1ebb",
+      "before_sha256": "1b76c51c35b7648f2418abe95de91cbb36f06a0a3cc1105c81071b1ff9d3612f",
+      "edits": [
+        {
+          "after": "The recurring workflow loaded by the scheduled executor as `/cs-operator`.\n",
+          "after_end": 602,
+          "after_start": 527,
+          "before": "The recurring entrypoint a headless cron runs as `claude -p \"/cs-operator\"`.\n"
+        },
+        {
+          "after": "{% include \"operator-executor-tools.md.j2\" %}\n\nFor the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal\n",
+          "after_end": 2123,
+          "after_start": 1960,
+          "before": "Run each `cs` command below in its own native Bash tool call. Use the literal\n"
+        }
+      ]
+    },
+    ".claude/skills/cs-triage-mail/SKILL.md": {
+      "after_sha256": "cde220ef251da08173866a8289db49c1d9a9802a26873abd96b49de07f6d1e69",
+      "before_sha256": "9661e03f1321e850f4e14eba1d960c361c0907181986698fa9c2c39346bb170d",
+      "edits": [
+        {
+          "after": "{% include \"operator-executor-tools.md.j2\" %}\n\nFor the native Claude Code transport, run each `cs` command below in its own native Bash tool call. Use the literal\n",
+          "after_end": 911,
+          "after_start": 748,
+          "before": "Run each `cs` command below in its own native Bash tool call. Use the literal\n"
+        }
+      ]
+    },
+    "bin/cs_operator_cron.sh": {
+      "after_sha256": "bb0811db71254a7be9033eea47668758cc53b5980338fe510b6ffc3e78d4208c",
+      "before_sha256": "ea12e2a1b37669040cc2d0d83877c75ba20645d488a9768f344824b7f030469b",
+      "edits": [
+        {
+          "after": "# Fired by cron every 2h in business hours. Supervises the selected executor:\n",
+          "after_end": 161,
+          "after_start": 83,
+          "before": "# Fired by cron every 2h in business hours. Supervises `claude -p \"/cs-operator\"`:\n"
+        },
+        {
+          "after": "# Select explicitly at reviewed adoption; existing launchers retain their host.\n# The Python executor never launches CLAUDE_BIN. Interactive Claude is separate.\nEXECUTOR=\"${CS_OPERATOR_EXECUTOR:-claude}\"\n",
+          "after_end": 1019,
+          "after_start": 815,
+          "before": ""
+        },
+        {
+          "after": ".venv/bin/python -m cs.operator_recovery \"$CLAUDE_BIN\" --executor \"$EXECUTOR\" \"${DENIED[@]}\" \\\n",
+          "after_end": 13336,
+          "after_start": 13241,
+          "before": ".venv/bin/python -m cs.operator_recovery \"$CLAUDE_BIN\" \"${DENIED[@]}\" \\\n"
+        }
+      ]
+    }
+  }
+}
