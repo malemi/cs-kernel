@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.66.2`. Current HEAD status: tagged as `v0.66.2`.**
+- **Latest release tag: `v0.66.2`. Current HEAD status: untagged.**
   Both clones still execute verified immutable66. FULL66 failed after exact native
   inventory delivery passed; no draft/send ran. The successor repairs the exact
   held-read rendering mismatch and makes future inventory overflow explicit.
