@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.67.0`. Current HEAD status: tagged as `v0.67.0`.**
+- **Latest release tag: `v0.67.0`. Current HEAD status: untagged.**
   Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
@@ -25,7 +25,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   M1–M3 have scoped independent approvals for the executor, real CLI integration
   and independent consumer. M4 adds explicit routes, bounded fallback, launcher
   selection and cache/usage accounting. The integrated source suite passes;
-  tagged-suite, immutable installed checks and M4 approval remain pending.
+  the immutable installed Python 3.11 candidate and independent dual replay pass.
+  M4 review found that normal fallback construction still sends the configured
+  alias instead of consuming the admitted canonical binding. The local 0.67.0
+  candidate is retained unchanged and not adopted; its tagged suite was stopped
+  after this finding with owned test-process cleanup. Correct wiring and focused
+  free controls are required before another candidate or paid admission.
   This is source work, not clone adoption or restored service. The generated
   launcher retains Claude until an explicit reviewed executor selection.
 - The operator authorizes Cafe to reuse the Anthropic API key already used by
