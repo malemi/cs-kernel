@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.68.0`. Current HEAD status: tagged as `v0.68.0`.**
+- **Latest release tag: `v0.68.0`. Current HEAD status: untagged.**
   Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
@@ -28,8 +28,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   The corrective component now has independent approval: recurring bounded
   metadata renewal, actual canonical dispatch, complete primary/fallback evidence,
   bounded prices and one absolute parent/child job deadline pass focused checks.
-  The successor's integrated source suite passes. Verification at its immutable
-  tag, normal installation and the overall M4 gate remain pending. This is source work, not restored service. The generated launcher
+  The successor passes its integrated and tagged suites, normal immutable
+  installation and independently reviewed installed fixture paths. Overall M4
+  review remains pending; live adoption and acceptance are blocked on current
+  financial reconciliation. This is source work, not restored service. The generated launcher
   retains Claude until explicit reviewed executor selection.
 - The operator authorizes Cafe to reuse the Anthropic API key already used by
   MrCall. Model/endpoint/pricing and private adoption bindings still require
