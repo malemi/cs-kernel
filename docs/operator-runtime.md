@@ -129,6 +129,23 @@ uses the existing `https://openrouter.ai/api/v1/messages` route and an explicit
 isolated token; it is not silently promoted to primary. Claude subscription
 login is not API authority. Never print or put credentials in process arguments.
 
+For an enabled Python fallback, the supervisor resolves the configured model
+through OpenRouter's anonymous model-metadata endpoint before intake on every
+tick. One bounded GET supplies the canonical model and current token/cache rates;
+there is no inference, credential forwarding or automatic retry in this step.
+The original configured alias remains unchanged. Its reviewed fallback pricing
+policy supplies the provider/model constraint, upper rates and context limit;
+metadata cannot raise those limits. An alias policy follows its current supported
+target, while an explicitly canonical policy requires that exact target.
+
+The fetch has a ten-second total allowance, including owned-worker cleanup, and
+a 64 KiB response limit. Invalid identity, missing/unsupported prices, prices over
+the configured caps or failed renewal hold the tick before intake and model work.
+Complete bounded metadata and its digest remain private evidence. Compact decimal
+values are bounded before expansion. Each new tick renews its policy automatically;
+a running tick keeps its canonical model, prices, cache mode and job identity
+frozen even if environment values change.
+
 The real child invokes canonical CLI commands through finite `run_cs` arguments,
 loads the rendered workflow source and reads bounded current-run artifacts.
 There is no shell, arbitrary Python, raw unrestricted RPC or model-callable file
@@ -144,6 +161,13 @@ provider request and a matching response before effects. Both the kernel and
 the independent Desktop consumer reject missing identities, foreign results,
 partial delivery and unresolved lifecycle events. Transport proof still does
 not establish model compliance, a mailbox effect or full operational acceptance.
+
+Both primary and fallback receipts retain the frozen resolution and current job
+binding. The independent reader checks the actual observed launch/configuration,
+external nonce, owner, clone, supervisor identity and metadata-derived prices.
+Parent and child enforce one absolute job deadline inside the original allowance;
+fallback cannot restart it. A shorter expiry remains shorter. The standing
+relative deadline is a maximum, not evidence of fresh time after each launch.
 
 Request admission reserves a conservative maximum before transport. Usage-price
 estimates distinguish new input, cache reads, cache writes and output using

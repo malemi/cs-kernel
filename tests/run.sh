@@ -1372,6 +1372,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; e
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor.py"; then echo "OK"; else echo "FAIL: typed executor permissions, context or request admission regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_integration.py"; then echo "OK"; else echo "FAIL: executor source, lifecycle or actual CLI evidence join regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_routes.py"; then echo "OK"; else echo "FAIL: executor provider authority or bounded fallback changed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_alias_runtime.py"; then echo "OK"; else echo "FAIL: recurring metadata renewal, original deadlines or canonical binding regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_cache.py"; then echo "OK"; else echo "FAIL: explicit prompt caching or usage-price reservation accounting changed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_launcher.py"; then echo "OK"; else echo "FAIL: executor selection lost cron guards or send permission inputs"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_native_stream.py"; then echo "OK"; else echo "FAIL: private native stream diagnostics changed acceptance or lost evidence"; FAIL=1; fi

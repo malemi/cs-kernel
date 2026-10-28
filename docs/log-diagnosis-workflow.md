@@ -361,3 +361,12 @@ reply was handled; an already-classified reply may legitimately need no mutation
 when its current contact preview and full-body evidence support that outcome.
 Reuse the original private artifacts and precise rejected predicate. Do not
 dump inventories, rerun paid work or invent an upstream cause to fill a gap.
+
+For Python fallback renewal, distinguish the anonymous metadata read from a model
+request. A renewal hold can precede intake and every executor launch. Inspect its
+finite cause, current job reference, metadata byte/hash evidence and configured
+price/capacity limits before attributing model cost or reasoning. A socket's idle
+timeout does not bound a trickling response: use the total owned-worker deadline
+and verified reap. Preserve failed and oversized reads as failures; never treat
+truncated data or a stale policy as successful renewal. Compare the absolute job
+deadline and independently observed launch window when checking attempt limits.

@@ -23,16 +23,14 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   replacing only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
   Dedicated kernel and Desktop worktrees preserve the original repositories.
   M1–M3 have scoped independent approvals for the executor, real CLI integration
-  and independent consumer. M4 adds explicit routes, bounded fallback, launcher
-  selection and cache/usage accounting. The integrated source suite passes;
-  the immutable installed Python 3.11 candidate and independent dual replay pass.
-  M4 review found that normal fallback construction still sends the configured
-  alias instead of consuming the admitted canonical binding. The local 0.67.0
-  candidate is retained unchanged and not adopted; its tagged suite was stopped
-  after this finding with owned test-process cleanup. Correct wiring and focused
-  free controls are required before another candidate or paid admission.
-  This is source work, not clone adoption or restored service. The generated
-  launcher retains Claude until an explicit reviewed executor selection.
+  and independent consumer. The retained 0.67.0 candidate is not adopted; its
+  integrated and installed proofs cover that exact earlier source only.
+  The corrective component now has independent approval: recurring bounded
+  metadata renewal, actual canonical dispatch, complete primary/fallback evidence,
+  bounded prices and one absolute parent/child job deadline pass focused checks.
+  The successor's full suite, immutable installation and overall M4 gate remain
+  pending. This is source work, not restored service. The generated launcher
+  retains Claude until explicit reviewed executor selection.
 - The operator authorizes Cafe to reuse the Anthropic API key already used by
   MrCall. Model/endpoint/pricing and private adoption bindings still require
   verification. Original additional authority remains40USD: retained conservative

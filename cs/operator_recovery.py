@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import urllib.request
 import hashlib
 import shlex
@@ -64,6 +65,8 @@ class Attempt:
     executor_proof: dict[str, Any] | None = None
     executor_facts: dict[str, Any] | None = None
     executor_fallback_chain: dict[str, Any] | None = None
+    executor_job: dict[str, Any] | None = None
+    executor_alias_binding: dict[str, Any] | None = None
 
     @property
     def needs_composition(self):
@@ -383,6 +386,10 @@ def _write_executor_receipt(path, nonce, settings, attempt, child_identity):
         child_identity=child_identity, exit_code=attempt.code, clean_terminal=_successful(attempt),
         business_read_context=attempt.health_context, executor_facts=attempt.executor_facts,
         ordinary_inspection_status='' if _successful(attempt) else attempt.health_failure)
+    if attempt.executor_job is not None:
+        receipt['executor_job'] = attempt.executor_job
+    if attempt.executor_alias_binding is not None:
+        receipt['executor_alias_binding'] = attempt.executor_alias_binding
     if attempt.executor_fallback_chain is not None:
         receipt['executor_fallback_chain'] = attempt.executor_fallback_chain
     prior = json.loads(path.read_text()) if path.exists() else []
@@ -419,7 +426,7 @@ def _executor_denies(denies):
     return unknown
 
 
-def _executor_configuration(settings, directory, context, denies, allows, *, model="", budget=0, key=""):
+def _executor_configuration(settings, directory, context, denies, allows, *, model="", budget=0, key="", job=None, resolution=None):
     from uuid import uuid4
     from .operator_executor_config import ExecutorConfig
     from .operator_inventory_view import source_identity
@@ -433,21 +440,33 @@ def _executor_configuration(settings, directory, context, denies, allows, *, mod
             raise ValueError('founder rendered question binding unavailable')
         question = matches[0]
     fallback = bool(key)
+    if job is not None:
+        from .operator_executor_config import check_executor_job
+        _check_executor_resolution(job,resolution)
+        if (settings.engine_owner_uid!=job.owner or str(root)!=job.clone_root
+                or context['supervisor']!=job.supervisor.model_dump(mode='json') or context['nonce']!=job.nonce):
+            raise ValueError('executor_job_identity_differs')
+    if fallback and resolution is not None:
+        if settings.cron_fallback_model.strip()!=resolution.configured_alias or model!=resolution.canonical_model:
+            raise ValueError('fallback_resolution_model_differs')
     if fallback and (not MODEL_RE.fullmatch(model) or not math.isfinite(budget) or budget < 0.01):
         raise ValueError('executor fallback binding unavailable')
-    return ExecutorConfig(run_id=str(uuid4()), attempt_id=str(uuid4()), owner=settings.engine_owner_uid,
+    return ExecutorConfig(run_id=job.primary_run_id if job is not None and not fallback else str(uuid4()), attempt_id=str(uuid4()), owner=settings.engine_owner_uid,
         nonce=context['nonce'], clone_root=str(root), journal_path=str(directory / 'executor.jsonl'),
         supervisor=context['supervisor'], kernel_source_digest=source_identity(),
         provider='openrouter' if fallback else os.environ.get('CS_EXECUTOR_PROVIDER', ''),
         model=model if fallback else os.environ.get('CS_EXECUTOR_MODEL', ''),
         api_key_env='CS_EXECUTOR_FALLBACK_API_KEY' if fallback else os.environ.get('CS_EXECUTOR_API_KEY_ENV', ''),
         base_url=GATEWAY_BASE_URL if fallback else os.environ.get('CS_EXECUTOR_BASE_URL') or None,
-        pricing=json.loads(os.environ.get('CS_EXECUTOR_FALLBACK_PRICING_JSON' if fallback else 'CS_EXECUTOR_PRICING_JSON', '{}')),
-        cache_mode=os.environ.get('CS_EXECUTOR_FALLBACK_CACHE_MODE' if fallback else 'CS_EXECUTOR_CACHE_MODE','disabled'),
+        pricing=resolution.pricing.model_dump(mode='json') if fallback and resolution is not None else
+            json.loads(os.environ.get('CS_EXECUTOR_FALLBACK_PRICING_JSON' if fallback else 'CS_EXECUTOR_PRICING_JSON', '{}')),
+        cache_mode=resolution.cache_mode if fallback and resolution is not None else os.environ.get('CS_EXECUTOR_FALLBACK_CACHE_MODE' if fallback else 'CS_EXECUTOR_CACHE_MODE','disabled'),
         soft_budget_usd=str(budget) if fallback else os.environ.get('CS_EXECUTOR_BUDGET_USD', '4.00'),
         admitted_ceiling_usd=os.environ.get('CS_EXECUTOR_ADMITTED_CEILING_USD', '0'),
         max_requests=int(os.environ.get('CS_EXECUTOR_MAX_REQUESTS', '100')),
         max_output_tokens=int(os.environ.get('CS_EXECUTOR_MAX_OUTPUT_TOKENS', '8192')),
+        deadline_seconds=max(1,(job.deadline_monotonic_ns-time.monotonic_ns())//1000000000) if job is not None else 10800,
+        job_deadline_monotonic_ns=job.deadline_monotonic_ns if job is not None else None,
         send_mode=settings.cs_triage_mode.lower(),
         exact_send_ids=json.loads(os.environ.get('CS_EXECUTOR_EXACT_SEND_IDS', '[]')) if allows else [],
         additional_denied=_executor_denies(denies), founder_enabled=settings.founder_sweep_enabled,
@@ -513,7 +532,7 @@ def _stop_executor(proc, expected, *, grace_seconds=5):
         return proc.wait()
 
 
-def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallback_admission=None):
+def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallback_admission=None, job=None, resolution=None):
     from .operator_executor_protocol import canonical
     from . import operator_executor_evidence as evidence, operator_health as health
     settings = config.load()
@@ -524,12 +543,12 @@ def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallbac
     from .observability_retention import active
     active(directory)
     supervisor, _ = health.identity(os.getpid())
-    launch_nonce = os.environ.get('CS_OPERATOR_ACCEPTANCE_NONCE', '')
+    launch_nonce = job.nonce if job is not None else os.environ.get('CS_OPERATOR_ACCEPTANCE_NONCE', '')
     if not re.fullmatch(r'[a-f0-9]{32}', launch_nonce):
         launch_nonce = secrets.token_hex(16)
     context = dict(directory=str(directory), nonce=launch_nonce, supervisor=supervisor,
         owner_uid=settings.engine_owner_uid, workset_enabled=prompt.split(maxsplit=1)[0:1] == ['/cs-operator'])
-    launch = _executor_configuration(settings, directory, context, denies, allows, model=model, budget=budget, key=key)
+    launch = _executor_configuration(settings, directory, context, denies, allows, model=model, budget=budget, key=key, job=job, resolution=resolution)
     if key:
         if not fallback_admission:
             raise ValueError('executor fallback admission missing')
@@ -561,7 +580,9 @@ def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallbac
             child, _ = health.identity(proc.pid)
             expected = evidence.expected_binding(launch, child, executable.resolve())
             try:
-                code = proc.wait(timeout=RUN_TIMEOUT_SECONDS)
+                code = proc.wait(timeout=min(RUN_TIMEOUT_SECONDS,launch.deadline_seconds,
+                    max(0,(launch.job_deadline_monotonic_ns-time.monotonic_ns())/1000000000))
+                    if launch.job_deadline_monotonic_ns is not None else min(RUN_TIMEOUT_SECONDS,launch.deadline_seconds))
             except subprocess.TimeoutExpired:
                 timed_out = True
                 code = _stop_executor(proc,child)
@@ -583,6 +604,12 @@ def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallbac
             attempt.executor_facts = {'diagnostic': {'stage':'supervisor_validation',
                 'cause':str(exc) if isinstance(exc, ValueError) else type(exc).__name__,
                 'run_id':launch.run_id}}
+    if job is not None:
+        try:_check_executor_resolution(job,resolution)
+        except (ValueError,OSError):
+            attempt.health_failure='executor_alias_binding_invalid'
+        attempt.executor_job = job.model_dump(mode='json')
+        attempt.executor_alias_binding = resolution.binding(job) if resolution is not None else None
     if fallback_admission is not None:
         attempt.executor_fallback_chain = dict(fallback_admission, fallback_attempt_id=launch.attempt_id,
             fallback_proof=attempt.executor_proof)
@@ -595,12 +622,12 @@ def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallbac
 @causal.attempt_scope
 def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
          allows: list[str] | None = None, model: str = "",
-         budget: float = 0, key: str = "", executor: str = "claude", fallback_admission=None) -> Attempt:
+         budget: float = 0, key: str = "", executor: str = "claude", fallback_admission=None, job=None, resolution=None) -> Attempt:
     """Run one bounded-output process; never echo a credential from its output."""
     if executor == "pydantic":
         if any((model, budget, key)) and not all((model, budget, key)):
             raise ValueError("pydantic fallback binding incomplete")
-        return _run_executor(denies, prompt=prompt, allows=allows, model=model, budget=budget, key=key, fallback_admission=fallback_admission)
+        return _run_executor(denies, prompt=prompt, allows=allows, model=model, budget=budget, key=key, fallback_admission=fallback_admission, job=job, resolution=resolution)
     if executor != "claude":
         raise ValueError("unsupported executor")
     cmd = [claude_bin, "-p", prompt, "--verbose", "--output-format",
@@ -1110,6 +1137,99 @@ def _deliver_pending(settings: config.Settings, state: dict[str, Any]) -> bool:
     return True
 
 
+def _read_fallback_metadata(url):
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self,*args,**kwargs):
+            raise ValueError('metadata_redirect_rejected')
+    opener=urllib.request.build_opener(urllib.request.ProxyHandler({}),NoRedirect())
+    request=urllib.request.Request(url,headers={'Accept':'application/json'},method='GET')
+    try:
+        with opener.open(request,timeout=10) as response:
+            if response.status!=200 or response.geturl()!=url:
+                raise ValueError('metadata_http_status_or_url')
+            raw=response.read(65537)
+    except ValueError:
+        raise
+    except Exception:
+        raise ValueError('metadata_request_failed') from None
+    if not raw or len(raw)>65536:
+        raise ValueError('metadata_body_size')
+    return raw
+
+
+def _fetch_fallback_metadata(url):
+    from .operator_health import identity
+    deadline=time.monotonic()+10
+    command=[sys.executable,'-c',
+        'import sys; from cs.operator_recovery import _read_fallback_metadata; '
+        'sys.stdout.buffer.write(_read_fallback_metadata(sys.argv[1]))',url]
+    with tempfile.TemporaryFile() as out,tempfile.TemporaryFile() as err:
+        with subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=out,stderr=err,start_new_session=True) as proc:
+            expected=identity(proc.pid)[0]
+            try:
+                code=proc.wait(timeout=max(0,deadline-time.monotonic()-1))
+            except subprocess.TimeoutExpired:
+                _stop_executor(proc,expected,grace_seconds=0)
+                raise ValueError('metadata_deadline') from None
+            if time.monotonic()>=deadline:
+                raise ValueError('metadata_deadline')
+        if code:
+            raise ValueError('metadata_request_failed')
+        out.seek(0)
+        raw=out.read(65537)
+    if not raw or len(raw)>65536:
+        raise ValueError('metadata_body_size')
+    return raw
+
+
+def _prepare_executor_job(settings,primary_run_id=None):
+    from datetime import datetime,timezone,timedelta
+    from uuid import uuid4
+    from .operator_executor_config import (ExecutorJob,Pricing,MetadataObservation,
+        fallback_metadata_url,resolve_fallback_metadata,check_executor_job)
+    from .operator_executor_protocol import sha256,decode
+    from .operator_health import identity,private
+    configured=settings.cron_fallback_model.strip()
+    budget=settings.cron_fallback_budget_usd
+    if not configured or budget==0:
+        return None,None
+    if not math.isfinite(budget) or budget<0.01:
+        raise ValueError('fallback_budget_unsupported')
+    url=fallback_metadata_url(configured)
+    cap=Pricing.model_validate(decode(os.environ.get('CS_EXECUTOR_FALLBACK_PRICING_JSON','{}')))
+    cache=os.environ.get('CS_EXECUTOR_FALLBACK_CACHE_MODE','disabled')
+    admitted=datetime.now(timezone.utc)
+    mono=time.monotonic_ns()
+    nonce=os.environ.get('CS_OPERATOR_ACCEPTANCE_NONCE','')
+    if not re.fullmatch(r'[a-f0-9]{32}',nonce):nonce=secrets.token_hex(16)
+    job=ExecutorJob(primary_run_id=primary_run_id or str(uuid4()),nonce=nonce,owner=settings.engine_owner_uid,
+        clone_root=str(Path.cwd().resolve()),supervisor=identity(os.getpid())[0],
+        admitted_at_utc=admitted.isoformat(),expires_at_utc=(admitted+timedelta(hours=3)).isoformat(),monotonic_start_ns=mono)
+    run_root=settings.state_dir/'operator-runs'
+    run_root.mkdir(parents=True,exist_ok=True,mode=0o700)
+    private(run_root,True)
+    directory=Path(tempfile.mkdtemp(prefix='job-',dir=run_root))
+    raw=_fetch_fallback_metadata(url)
+    observed=datetime.now(timezone.utc)
+    path=directory/'alias-metadata.json'
+    fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'wb') as stream:stream.write(raw)
+    observation=MetadataObservation(path=str(path),bytes=len(raw),sha256=sha256(raw),url=url,observed_at_utc=observed.isoformat())
+    policy=resolve_fallback_metadata(raw,configured,cap,cache,observation,str(uuid4()))
+    check_executor_job(job,policy)
+    return job,policy
+
+
+def _check_executor_resolution(job,resolution):
+    from .operator_executor_config import check_executor_job
+    from .operator_executor_evidence import read_private,digest
+    check_executor_job(job,resolution)
+    if resolution is not None:
+        raw=read_private(resolution.metadata.path,maximum=65536)
+        if len(raw)!=resolution.metadata.bytes or digest(raw)!=resolution.metadata.sha256:
+            raise ValueError('fallback_metadata_retention_differs')
+
+
 def _executor_fallback_admission(primary):
     from .operator_executor_evidence import validate
     if (primary.executor_proof is None or primary.malformed or primary.overflow
@@ -1132,7 +1252,7 @@ def _executor_fallback_admission(primary):
         fallback_admitted_ceiling_usd=format(remainder,'f'))
 
 
-def _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows):
+def _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows,job=None,resolution=None):
     def stopped(reason):
         causal.select(primary)
         _notice(settings,state,'stopped',reason=reason,
@@ -1148,6 +1268,18 @@ def _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,de
     if settings.pause_path.exists():
         return stopped('paused_before_fallback')
     model,budget = settings.cron_fallback_model.strip(),settings.cron_fallback_budget_usd
+    if resolution is not None:
+        try:
+            from .operator_executor_config import check_executor_job
+            _check_executor_resolution(job,resolution)
+            if config.load().cron_fallback_model.strip()!=resolution.configured_alias:
+                raise ValueError('fallback_configured_alias_changed')
+            if primary.executor_proof['expected']['run_id']!=job.primary_run_id:
+                raise ValueError('fallback_primary_job_differs')
+            admission['alias_binding']=resolution.binding(job)
+            model=resolution.canonical_model
+        except (ValueError,KeyError,TypeError,OSError):
+            return stopped('fallback_resolution_invalid')
     if not MODEL_RE.fullmatch(model) or not math.isfinite(budget) or budget < 0.01:
         return stopped('fallback_unconfigured')
     try:
@@ -1159,7 +1291,7 @@ def _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,de
     if settings.pause_path.exists():
         return stopped('paused_before_fallback')
     fallback = _run(claude_bin,denies,prompt=prompt,allows=allows,model=model,budget=budget,key=key,
-        executor='pydantic',fallback_admission=admission)
+        executor='pydantic',fallback_admission=admission,job=job,resolution=resolution)
     causal.select(fallback)
     if not _successful(fallback):
         _notice(settings,state,'stopped',reason='fallback_failed',
@@ -1202,6 +1334,22 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
         causal.decision('pause_state', 'paused', layer='configuration', outcome='held', method='operator.tick')
         print("operator: paused before mail intake", flush=True)
         return 1 if state.get("_delivery_failed") else 0
+    job,resolution=None,None
+    preflight_run_id=None
+    if executor=='pydantic':
+        from uuid import uuid4
+        preflight_run_id=str(uuid4())
+        try:
+            job,resolution=_prepare_executor_job(settings,preflight_run_id)
+        except (ValueError,KeyError,TypeError,OSError) as exc:
+            cause=str(exc) if type(exc) is ValueError and re.fullmatch(r'[a-z_]+',str(exc)) else 'metadata_configuration_invalid'
+            _notice(settings,state,'stopped',reason='executor_metadata_held',
+                diagnostic=diagnostics.stopped('executor_metadata_held',{'provider':'OpenRouter'},ctx,
+                    configured_route=dict(provider='openrouter',model=settings.cron_fallback_model.strip() if MODEL_RE.fullmatch(settings.cron_fallback_model.strip()) else 'unsupported',metadata_base='https://openrouter.ai/api/v1/model/'),
+                    executor_diagnostic=dict(stage='metadata_renewal',cause=cause,
+                        expected='one anonymous200 metadata body<=65536bytes within10seconds and standing caps',
+                        observed='renewal or projection refused',run_id=preflight_run_id)))
+            return 1
     try:
         asyncio.run(_mail_intake(settings))
     except Exception as exc:
@@ -1214,14 +1362,20 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
         causal.decision('pause_state', 'paused', layer='configuration', outcome='held', method='operator.tick')
         print("operator: paused after mail intake", flush=True)
         return 1 if state.get("_delivery_failed") else 0
+    if job is not None:
+        from .operator_executor_config import check_executor_job
+        try:_check_executor_resolution(job,resolution)
+        except ValueError:
+            _notice(settings,state,'stopped',reason='executor_job_expired',diagnostic=diagnostics.stopped('executor_job_expired',{},ctx))
+            return 1
     primary_identity = (diagnostics.primary_identity(claude_bin) if executor == "claude" else
                         {"provider": os.environ.get("CS_EXECUTOR_PROVIDER", "Unknown"),
                          "credential_source": os.environ.get("CS_EXECUTOR_API_KEY_ENV", ""),
                          "executor": "pydantic"})
     primary = (_run(claude_bin, denies, prompt=prompt, allows=allows) if executor == "claude" else
-               _run(claude_bin, denies, prompt=prompt, allows=allows, executor=executor))
+               _run(claude_bin, denies, prompt=prompt, allows=allows, executor=executor,job=job,resolution=resolution))
     if executor == "pydantic" and not _successful(primary):
-        return _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows)
+        return _executor_fallback(settings,state,primary,primary_identity,ctx,claude_bin,denies,prompt,allows,job=job,resolution=resolution)
     if _successful(primary):
         causal.select(primary)
         if primary.health_failure:

@@ -178,7 +178,8 @@ class RouteTests(ExecutorTests):
 
     def test_refusal_or_unknown_cost_never_routes_into_saved_fallback(self):
         from types import SimpleNamespace
-        settings = SimpleNamespace(cs_triage_mode='draft',pause_path=self.base/'PAUSE')
+        settings = SimpleNamespace(cs_triage_mode='draft',pause_path=self.base/'PAUSE',
+            cron_fallback_model='',cron_fallback_budget_usd=0)
         attempt = recovery.Attempt(3,[],health_failure='executor_evidence_invalid',executor_proof={},
             executor_facts=dict(fallback_hold='zero_charge_unproven',uncertain_cost_usd='0.25',
                 diagnostic={'cause':'ModelHTTPError'},provider_failures=[dict(http_status=402,error_kind='billing')]))
@@ -233,7 +234,7 @@ class ControllerRouteTests(IntegrationTests):
     def test_actual_prework_fallback_retains_primary_reservation(self):
         self.setup_integration()
         pricing = json.loads(os.environ['CS_EXECUTOR_PRICING_JSON'])
-        pricing.update(provider='openrouter',model='~anthropic/claude-sonnet-latest',response_models=['anthropic/fixture-version'])
+        pricing.update(provider='openrouter',model='~anthropic/claude-sonnet-latest',response_models=['anthropic/claude-sonnet-fixture'])
         os.environ.update(CS_EXECUTOR_FALLBACK_PRICING_JSON=json.dumps(pricing),
             CRON_FALLBACK_MODEL='~anthropic/claude-sonnet-latest',CRON_FALLBACK_BUDGET_USD='4.0')
         backend = self.base/'fixture-services/fixture_backend.py'
@@ -243,9 +244,23 @@ async def transport(request):
  if request.url.host=='api.anthropic.com':
   return httpx2.Response(402,headers={'request-id':'fixture-primary-refusal'},json={'type':'error','error':{'type':'billing_error','message':'fixture refused'}})
  response=await original_transport(request)
- value=json.loads(response.content);value['model']='anthropic/fixture-version'
+ value=json.loads(response.content);value['model']='anthropic/claude-sonnet-fixture'
  return httpx2.Response(200,json=value)
 import cs.operator_recovery as recovery
+class MetadataResponse:
+ status=200
+ def __enter__(self):return self
+ def __exit__(self,*a):pass
+ def geturl(self):return 'https://openrouter.ai/api/v1/model/~anthropic/claude-sonnet-latest'
+ def read(self,count):return json.dumps({'data':{'id':'~anthropic/claude-sonnet-latest',
+  'alias_target':{'slug':'anthropic/claude-sonnet-fixture'},'context_length':1000000,
+  'pricing':{'prompt':'0.000001','completion':'0.000001','input_cache_read':'0.0000001','input_cache_write':'0.000001'}}}).encode()[:count]
+class MetadataOpener:
+ def open(self,request,timeout):
+  assert request.method=='GET' and timeout==10
+  assert not any(key.lower()=='authorization' for key in request.headers)
+  return MetadataResponse()
+recovery.urllib.request.build_opener=lambda *a:MetadataOpener()
 recovery._read_state=lambda settings:{}
 recovery._deliver_pending=lambda *a:True
 recovery._notice=lambda *a,**kw:True
@@ -267,7 +282,7 @@ recovery._saved_openrouter_key=fixture_saved_key
         from test_operator_executor import SOURCE
         policy=dict(provider='anthropic',model='fixture-model',api_key_env='CS_FIXTURE_EXECUTOR_KEY',
             base_url=None,pricing=json.loads(os.environ['CS_EXECUTOR_PRICING_JSON']),
-            send_mode='draft',founder_enabled=False,campaign_enabled=True,admitted_ceiling_usd='20',max_output_tokens=100)
+            send_mode='draft',founder_enabled=False,campaign_enabled=True,admitted_ceiling_usd='20',max_output_tokens=100,deadline_seconds=10800)
         binding=dict(clone_root=str(self.root),interpreter=dict(path=str(SDK.resolve()),
             bytes=SDK.resolve().stat().st_size,sha256=digest(SDK.resolve().read_bytes())),
             executor_module_digest=digest((SOURCE/'cs/operator_executor.py').read_bytes()),

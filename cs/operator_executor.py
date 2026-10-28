@@ -335,6 +335,7 @@ class ExecutorRuntime:
             if self.tools.pause():
                 raise Refusal('paused')
             bootstrap = self.tools.bootstrap()
+            c.remaining_seconds()
             actual_model = build_model(c, self) if model is None else model
             wrapped = instrument_model(actual_model, self)
             tools = [Tool(getattr(self.tools, name), sequential=True, max_retries=0) for name in (
@@ -347,7 +348,7 @@ class ExecutorRuntime:
                 'Model completion is separate from workflow, health and acceptance outcomes.',
                 model_settings=executor_model_settings(c))
             initial = canonical({'executor_bootstrap': bootstrap, 'operator_prompt': prompt}).decode()
-            async with asyncio.timeout(c.deadline_seconds):
+            async with asyncio.timeout(c.remaining_seconds()):
                 await agent.run(initial, usage_limits=UsageLimits(request_limit=c.max_requests), retries=0)
             completed = True
             self.tools.effects_allowed(final=True)
