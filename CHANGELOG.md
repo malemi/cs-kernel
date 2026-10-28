@@ -1,5 +1,31 @@
 # Changelog — cs-kernel
 
+## v0.68.0 — 2026-10-28 (MINOR)
+
+Complete the scheduled Python executor's fallback path with supervisor-owned
+model-metadata renewal. Each enabled tick makes one bounded anonymous metadata
+read, keeps the configured alias, and freezes the supported canonical model and
+current prices inside the reviewed upper limits before intake. Failed renewal
+holds without starting model work. This adds an observable admission boundary;
+no extra scheduler, model tool or credential authority is introduced.
+
+Enforce a total metadata deadline with owned-worker cleanup, bound numeric values
+before expansion, and keep one absolute job deadline across parent, primary and
+fallback. Both successful-primary and fallback receipts carry the resolution and
+current-job evidence; the independent consumer checks complete launch policies,
+actual process/config observations and retained primary uncertainty.
+
+Migration: install the new immutable candidate normally and bind reviewed API,
+pricing and launch policies before selecting the Python executor. The earlier
+local 0.67.0 candidate remains unchanged and non-adopted. Existing CLI, engine,
+interactive hosts, workflow authority, permissions and mail guards are preserved.
+Do not resend the prior FULL66.2 response or retry uncertain effects.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** This
+changes execution, authentication and permission-adjacent admission behavior.
+Free source, transport and installed proofs do not establish live business
+acceptance or restored service.
+
 ## v0.67.0 — 2026-10-28 (MINOR)
 
 Add an explicitly selected Pydantic AI executor for scheduled operator jobs,
