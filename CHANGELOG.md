@@ -661,13 +661,12 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
-Both maintained clones currently report `0.66.2` and pin `v0.66.2`; their
-retained integrity proof is separate from current version-only observation.
-FULL66.2 remains failed. Local `v0.68.0` is a verified source/installed-fixture
-candidate, not adopted or published. Genuine BOTH-clone FULL and public Git
-provenance remain pending; component checks do not advance shared sign-off.
-Historical acceptance and superseded adoption claims remain in
-`docs/active-context-archive.md`.
+Both maintained clones install immutable local candidate `v0.68.0`; all166package
+files and lock-only rebuilds pass. The first real68FULL fails before fixtures/jobs
+because Cafe's externally changed engine family lacks a matching approved binding.
+Genuine BOTH-clone FULL and public Git provenance remain pending. Component adoption
+and source/fixture success do not advance shared sign-off. Historical acceptance
+and superseded adoption claims remain in `docs/active-context-archive.md`.
 
 ## v0.48.0 — 2026-09-28
 

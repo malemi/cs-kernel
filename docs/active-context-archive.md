@@ -1,3 +1,47 @@
+## 2026-10-28 — Superseded pre-adoption and accounting-access checkpoint
+
+- The [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md)
+  replaces only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
+  Local immutable `v0.68.0` passes source and tagged suites, normal Python3.11
+  installation, all166package bytes and independently reviewed primary/fallback
+  fixture paths. M1–M4 integration approvals and corrective reviews are retained.
+  Neither maintained clone has adopted this candidate;
+  generated launchers retain Claude until reviewed explicit selection.
+- Cafe may reuse MrCall's existing Anthropic API key by explicit operator authority.
+  Credential delivery, live route checks and adoption remain pending. The original
+  additional limit is40USD: accounted6.9911572, retained reserves8.012607,
+  conditional headroom24.9962358. These are not verified account funds;
+  subscription/session quota is separate. No new paid admission is authorized by
+  source or fixture success.
+- M5 is blocked on current financial reconciliation. The existing read-only engine
+  ledger query fails with PermissionError13 on `/proc/327867/fd` before any database
+  query. Resume with an owner-executed result of that exact query or an existing
+  authorized readable reference to the same ledger; keep every reservation until
+  evidence resolves it. No permission expansion, identical retry or paid probe.
+
+
+## Current verified checkpoint and resumption
+
+The approved runtime scope is unchanged. Source R4 exits0 at `e01dbf90c80ad632cc66e3a8451a57a4329bee0e`; the required tagged suite exits0 at immutable local `v0.68.0` (`91111d6ef181567958185e4936eb6ab908eaa811`). Normal Python3.11 installation matches all166Git payload files. Both actual installed fixture routes and the independent consumer pass, with fixture-service injection explicitly qualified. Prior failed suites and helper rejections remain retained; the original monitor assertion's historical cause remains unknown. Whole M4 integration review is APPROVED in `m4-final-integration-review.md`; M5 is not admitted.
+
+Evidence is retained under `/tmp/mrcall-ai-kit/pydantic-headless-20261028/`: `m4-final-integration-input.json`, `m4-installed68/integration-review.md`, `m4-recurring-route-matrix-review.md` and `finance-readiness-current.json`. The original approved plan snapshot is `plan-alias-runtime-approved.md`; this checkpoint changes status/evidence, not authority or implementation scope.
+
+The operator explicitly authorizes Cafe to reuse MrCall's existing Anthropic API key. No clone adoption or credential copy has occurred. The original40USD limit remains: known/allocated6.9911572, retained uncertainty8.012607, conditional historical headroom24.9962358. No reserve is released and no paid migration acceptance is admitted.
+
+The exact existing read-only ledger query failed with PermissionError13 on `/proc/327867/fd`, before database enumeration. Resume financial reconciliation only with an owner-executed result of that recorded query or an existing authorized readable reference to the same ledger. Historical totals do not prove current account funds. Do not repeat the denied query unchanged, expand privileges, infer subscription quota from engine counters or make paid probes.
+
+Remaining delivery: current accounting and route/credential bindings; owned maintenance capture; immutable BOTH adoption; installed normal CLI checks; genuine sequential BOTH FULL/signup with effects/cost/owned cleanup; documentation critic, separate final review and legitimate completion. Preserve the original restoration task's workflow-hash blocker. Neither this blocked checkpoint nor source/install success advances the baseline, publishes the tag or establishes restored service. Never resend the prior FULL66.2 response proved in Sent.
+
+
+Both maintained clones currently report `0.66.2` and pin `v0.66.2`; their
+retained integrity proof is separate from current version-only observation.
+FULL66.2 remains failed. Local `v0.68.0` is a verified source/installed-fixture
+candidate, not adopted or published. Genuine BOTH-clone FULL and public Git
+provenance remain pending; component checks do not advance shared sign-off.
+Historical acceptance and superseded adoption claims remain in
+`docs/active-context-archive.md`.
+
+
 ## 2026-10-28 — Superseded consumer review status
 
   consumer's route/fallback additions still require M4 review and adoption.

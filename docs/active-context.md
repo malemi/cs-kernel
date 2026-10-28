@@ -19,24 +19,29 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
   confirmed received, and must not be resent. No new live acceptance is claimed.
-- The [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md)
-  replaces only `claude -p` under the [approved brief](briefs/2026-10-28-pydantic-headless-executor.md).
-  Local immutable `v0.68.0` passes source and tagged suites, normal Python3.11
-  installation, all166package bytes and independently reviewed primary/fallback
-  fixture paths. M1–M4 integration approvals and corrective reviews are retained.
-  Neither maintained clone has adopted this candidate;
-  generated launchers retain Claude until reviewed explicit selection.
-- Cafe may reuse MrCall's existing Anthropic API key by explicit operator authority.
-  Credential delivery, live route checks and adoption remain pending. The original
-  additional limit is40USD: accounted6.9911572, retained reserves8.012607,
-  conditional headroom24.9962358. These are not verified account funds;
-  subscription/session quota is separate. No new paid admission is authorized by
-  source or fixture success.
-- M5 is blocked on current financial reconciliation. The existing read-only engine
-  ledger query fails with PermissionError13 on `/proc/327867/fd` before any database
-  query. Resume with an owner-executed result of that exact query or an existing
-  authorized readable reference to the same ledger; keep every reservation until
-  evidence resolves it. No permission expansion, identical retry or paid probe.
+- Both maintained clones install immutable local `v0.68.0`, with all166package
+  files, lock-only rebuilds, actual owner/standing-instruction reads and both
+  primary/fallback policy bindings verified. The scheduled host is Pydantic;
+  native interactive use and the original permission ceilings are preserved.
+  Source, tag, installed-fixture and M4/delivery reviews pass. Public provenance
+  and genuine business acceptance remain pending.
+- The first real68FULL fails before any fixture or job: Cafe's external engine
+  now loads `operator-memory-profile-eae4ba1c3118794c`, which differs from its
+  approved hosted family. MrCall matches. The actual rejection guard is unchanged;
+  sanitized private runner diagnostics retain finite actor/check causes. No model
+  job, send, enrollment or signup occurred in this failed attempt.
+- M5 is blocked on the existing approval/provenance for that Cafe engine release.
+  The supervisor has no such reference; exact release-root metadata contains none.
+  Do not bless observed identity, change the engine or retry the same preflight.
+  The task owns the current exact three-schedule hold; its window and guarded
+  release command are in the private manager handoff. No unrelated cron changed.
+- Cafe may reuse MrCall's existing Anthropic API key by explicit authority. Keys
+  are delivered only through dedicated executor environments. The original40USD
+  limit remains: accounted7.1249272, retained reserves8.012607, remaining24.8624658.
+  The exact read-only ledger query succeeds under existing administrative access;
+  cumulative totals replace earlier totals. This FULL started zero model jobs.
+  Subscription quota is separate; all work stops at15percent weekly remaining,
+  with no automatic resumption. The last native measurement is29percent remaining.
 
 The following platform observations are retained from the source baseline;
 this host migration has not re-audited their deployment:
@@ -134,11 +139,9 @@ this host migration has not re-audited their deployment:
 
 ## Next
 
-1. Finish documentation reconciliation without advancing the baseline.
-2. Obtain the bounded current ledger evidence, reconcile original40USD authority,
-   verify authorized routes and owned maintenance, then adopt the immutable tag.
-3. Run genuine sequential BOTH FULL/signup only after those gates. Stop at the
-   first failure; reconcile effects and costs before any new attempt. Never resend
-   the earlier FULL66.2 response proved in Sent.
-4. Complete documentation/final review and public provenance only after actual
-   acceptance and explicit publication authority. Restore only owned controls.
+1. Obtain the existing approved Cafe engine-family reference from its owner.
+2. Review only that precise binding and affected consumer hashes; retain all guards.
+3. Reconcile original40USD and quota above15percent, then admit a new genuine
+   sequential BOTH FULL/signup. Stop at the first failure. Never resend FULL66.2.
+4. Finish version/provenance documentation, final review and legitimate baseline
+   closure after actual acceptance. Public publication requires explicit authority.
