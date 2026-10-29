@@ -105,15 +105,71 @@ _save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=_discovery_encode
         self.assertLessEqual(result['publication_deadline'] - result['started'], 1.300001)
         self.assertLessEqual(result['final_deadline'] - result['publication_deadline'], .100001)
 
+    @contextlib.contextmanager
+    def worker_lifecycle_diagnostics(self):
+        from cs import review, operator_dossier
+        diagnostics={'wait':[], 'checkpoint':[], 'cleanup':[]}
+        original_wait=subprocess.Popen.wait
+        original_read=review._read_checkpoint
+        original_stop=operator_dossier._stop
+        def wait(proc,timeout=None):
+            started=time.monotonic()
+            try:
+                code=original_wait(proc,timeout=timeout)
+            except subprocess.TimeoutExpired:
+                diagnostics['wait'].append({'timeout':timeout,'started':started,'elapsed':time.monotonic()-started,
+                                            'timed_out':True,'returncode':proc.returncode})
+                raise
+            diagnostics['wait'].append({'timeout':timeout,'started':started,'elapsed':time.monotonic()-started,
+                                        'timed_out':False,'returncode':code})
+            return code
+        def read(path,binding):
+            started=time.monotonic()
+            try:
+                record=original_read(path,binding)
+            except Exception as exc:
+                diagnostics['checkpoint'].append({'started':started,'elapsed':time.monotonic()-started,
+                                                  'exception_type':type(exc).__name__})
+                raise
+            diagnostics['checkpoint'].append({'started':started,'elapsed':time.monotonic()-started,
+                'complete':record.get('complete') is True,'binding_matches':record.get('binding')==binding,
+                'code':record.get('out',{}).get('code') if type(record.get('out',{}).get('code')) is int else None})
+            return record
+        def stop(proc,stamp,deadline):
+            started=time.monotonic()
+            try:
+                clean=original_stop(proc,stamp,deadline)
+            except Exception as exc:
+                diagnostics['cleanup'].append({'deadline':deadline,'started':started,'elapsed':time.monotonic()-started,
+                                               'exception_type':type(exc).__name__})
+                raise
+            diagnostics['cleanup'].append({'deadline':deadline,'started':started,'elapsed':time.monotonic()-started,
+                                           'complete':clean is True,'returncode':proc.returncode})
+            return clean
+        with patch.object(subprocess.Popen,'wait',wait), \
+             patch.object(review,'_read_checkpoint',read), \
+             patch.object(operator_dossier,'_stop',stop):
+            yield diagnostics
+
     def test_normal_logical_three_propagates_exactly(self):
-        result = self.run_worker('''value['assignment_incomplete']=True
+        with self.worker_lifecycle_diagnostics() as diagnostics:
+            result = self.run_worker('''value['assignment_incomplete']=True
 out.update(result=value,code=3)
 _save_checkpoint(Path(p['path']),dict(binding=p['binding'],out=_discovery_encode(out),phase='complete',complete=True))
 raise SystemExit(3)
 ''')
-        self.assertTrue(result['normal'])
-        self.assertEqual(result['code'], 3)
-        self.assertIsNone(result['value']['read_incomplete'])
+        try:
+            self.assertTrue(result['normal'])
+            self.assertEqual(result['code'], 3)
+            self.assertIsNone(result['value']['read_incomplete'])
+        except AssertionError as exc:
+            diagnostics['result']={key:value for key,value in result.items()
+                if key in ('normal','code','cleanup_complete','started','cleanup_finished',
+                           'observation_deadline','cleanup_deadline','publication_deadline','final_deadline')
+                and type(value) in (bool,int,float,type(None))}
+            diagnostics['observed_at']=time.monotonic()
+            exc.add_note('Safe worker lifecycle: '+json.dumps(diagnostics,sort_keys=True))
+            raise
 
     def test_missing_malformed_foreign_and_crashed_workers_refuse_credit(self):
         for body in ["raise SystemExit(7)", "Path(p['path']).write_text('{partial')",
