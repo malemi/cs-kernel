@@ -119,6 +119,58 @@ class ExecutorTests(unittest.TestCase):
         with self.assertRaises(Refusal):
             safe_context_path(self.root, 'company/escape.md')
 
+    def test_document_relative_context_links_keep_read_boundaries(self):
+        docs=self.root/'docs'
+        docs.mkdir()
+        (self.root/'AGENTS.md').write_text('[Index](docs/index.md)\n')
+        index=docs/'index.md'
+        index.write_text('[Charter](../AGENTS.md)\n')
+        runtime=self.runtime()
+        hashes=runtime.tools.context_closure()
+        self.assertIn('AGENTS.md',hashes)
+        self.assertIn('docs/index.md',hashes)
+        self.assertFalse(any('..' in Path(name).parts for name in hashes))
+        with self.assertRaisesRegex(Refusal,'context_path_outside_scope'):
+            safe_context_path(self.root,'docs/../AGENTS.md')
+        outside=self.base/'outside.md'
+        outside.write_text('Outside clone authority.\n')
+        (self.root/'company/secret.md').write_text('Excluded fixture.\n')
+        (self.root/'company/escape.md').symlink_to(outside)
+        index.write_text('[External](../../outside.md)\n[Charter](../AGENTS.md)\n')
+        with patch('cs.operator_executor_tools.read_context_bytes',wraps=__import__('cs.operator_executor_tools',fromlist=['read_context_bytes']).read_context_bytes) as read:
+            hashes=runtime.tools.context_closure()
+        self.assertNotIn('../outside.md',hashes)
+        self.assertFalse(any('outside.md' in call.args[1] for call in read.call_args_list))
+        for link,cause in [('../company/secret.md','context_path_secret_or_unsupported'),
+                           ('../company/escape.md','context_path_symlink_or_missing')]:
+            with self.subTest(link=link):
+                index.write_text('[Target]('+link+')\n')
+                with self.assertRaisesRegex(Refusal,cause):
+                    runtime.tools.context_closure()
+        runtime.journal.close()
+
+    def test_campaign_context_documents_keep_read_boundaries(self):
+        campaigns=self.root/'campaigns'
+        campaigns.mkdir()
+        public=campaigns/'public.md'
+        public.write_text('Public campaign workflow authority.\n')
+        (self.root/'AGENTS.md').write_text('[Campaign](campaigns/public.md)\n')
+        runtime=self.runtime()
+        self.assertIn('campaigns/public.md',runtime.tools.context_closure())
+        outside=self.base/'outside.md'
+        outside.write_text('Outside clone authority.\n')
+        (campaigns/'secret.md').write_text('Excluded fixture.\n')
+        (self.root/'AGENTS.md').write_text('[External](campaigns/../../outside.md)\n')
+        self.assertNotIn('../outside.md',runtime.tools.context_closure())
+        with self.assertRaisesRegex(Refusal,'context_path_outside_scope'):
+            safe_context_path(self.root,'campaigns/../../outside.md')
+        for link,cause in [('campaigns/secret.md','context_path_secret_or_unsupported')]:
+            with self.subTest(link=link):
+                (self.root/'AGENTS.md').write_text('[Target]('+link+')\n')
+                with self.assertRaisesRegex(Refusal,cause):
+                    runtime.tools.context_closure()
+        runtime.journal.close()
+
     def test_actual_function_model_loop_and_cli_subprocess(self):
         async def function(messages, info):
             if not any(part.part_kind == 'tool-return' for m in messages for part in m.parts):

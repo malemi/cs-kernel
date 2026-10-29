@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import os
+import posixpath
 import re
 import signal
 import stat
@@ -160,7 +161,7 @@ def safe_context_path(root: Path, relative: str) -> Path:
     if path.is_absolute() or not path.parts or any(p in ('.', '..') for p in path.parts):
         raise Refusal('context_path_outside_scope')
     allowed = (path in (Path('AGENTS.md'), Path('README.md')) or
-        (len(path.parts) >= 2 and path.parts[0] in ('company', 'projects', 'docs') and path.suffix == '.md') or
+        (len(path.parts) >= 2 and path.parts[0] in ('company', 'projects', 'docs', 'campaigns') and path.suffix == '.md') or
         (len(path.parts) == 4 and path.parts[:2] == ('.claude', 'skills')
          and path.parts[2] in WORKFLOWS and path.name == 'SKILL.md'))
     if not allowed or any(re.search(r'(secret|credential|token|password|\.env)', p, re.I) for p in path.parts):
@@ -286,15 +287,18 @@ class ToolRuntime:
             # Explicit current clone paths and Markdown links, including
             # references from referenced company notes. Placeholder examples
             # and external URLs confer no filesystem scope.
-            refs = re.findall(r'(?<![A-Za-z0-9_/])(?:company|docs)/[A-Za-z0-9_./@+-]+\.md', text)
+            refs = re.findall(r'(?<![A-Za-z0-9_/])(?:company|docs|campaigns)/[A-Za-z0-9_./@+-]+\.md', text)
             refs += re.findall(r'\]\(([^)#]+\.md)(?:#[^)]*)?\)', text)
             for ref in refs:
                 if '://' in ref or '<' in ref or '>' in ref:
                     continue
                 candidate = Path(ref)
-                if not candidate.parts or candidate.parts[0] not in ('company', 'docs', '.claude') and ref not in ('README.md', 'AGENTS.md'):
+                if not candidate.parts or candidate.parts[0] not in ('company', 'docs', 'campaigns', '.claude') and ref not in ('README.md', 'AGENTS.md'):
                     candidate = Path(relative).parent / candidate
-                normalized = str(candidate)
+                normalized = posixpath.normpath(str(candidate))
+                linked = Path(posixpath.normpath(str(self.root / normalized)))
+                if not linked.is_relative_to(self.root):
+                    continue
                 if not (self.root / normalized).exists() and relative != 'company/operator-out-of-scope.md':
                     # Conditional domain/team/architecture context is included
                     # when present; it is not invented as a new mandatory slot.
