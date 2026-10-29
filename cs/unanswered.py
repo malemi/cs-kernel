@@ -1260,7 +1260,9 @@ def _publish_discovery_locked(result, settings, context, directory):
             outcome="accepted", expected=4, observed=len(snapshots))
         emit(settings, "discovery", "verified", reason="none", effect_certainty="verified",
             command="unanswered", method="operator.discovery.publication", causal=diagnostic)
-        return (output.decode() if legacy_directory is not None else output.decode() + "Ordinary discovery artifact: " + str(directory / "discovery.json") + "\n"), code
+        if legacy_directory is not None or os.environ.get("CS_OPERATOR_EXECUTOR_CODEC") == "pydantic-executor-v1":
+            return output.decode(), code
+        return output.decode() + "Ordinary discovery artifact: " + str(directory / "discovery.json") + "\n", code
     except Exception as exc:
         _publication_failure(settings, stage, exc)
         try:

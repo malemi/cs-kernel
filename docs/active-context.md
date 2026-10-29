@@ -14,24 +14,20 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.69.0`. Current HEAD status: tagged as `v0.69.0`.**
-  Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
-  native inventory delivery; the later69cancelled hooks remain a failure with an
-  unrecorded upstream cause. The exact prior response is proved in Sent, not
-  confirmed received, and must not be resent. No new live acceptance is claimed.
-- Both maintained clones currently install local68 with verified package bytes,
-  lock rebuilds, authority and effective host permissions. Local69 repairs context
-  compatibility; its source suite and complete offline closures pass (MrCall49,
-  Cafe39). Exact-tag verification, installed69 delivery and genuine sequential
-  BOTH FULL/signup remain pending. No operational restoration is claimed.
-- The existing approved memory activation for Cafe is recovered and coherently
-  bound through reviewed provenance. No engine code or identity guard is changed.
-  The later68attempt stops before SDK/model work on context loading. Two fixture
-  originals remain; enrollments are cleared and owned processes are quiescent.
-- The task owns an exact three-schedule hold recorded in the private handoff.
-  Preserve it through69delivery and use only the reviewed controlled handoff.
-  Original40USD authority, retained uncertainty and global15percent weekly stop
-  remain binding. API and subscription budgets are separate.
+- **Latest release tag: `v0.69.0`; Current HEAD status: untagged.** Both
+  clones install immutable69 with verified package bytes and context closure.
+  Source/tag suites pass, but genuine BOTH FULL/signup has not passed.
+- Funded69 failed on a92-byte informational line appended to otherwise exact
+  discovery JSON. The producer correction passes actual CLI/publication/validator
+  controls and independent review. It is not installed in the live clones.
+- Discovery contains32 valid authority holds and no mailbox-read incompleteness.
+  Four mixed-evidence holds exposed a separate independent-consumer defect;
+  its isolated correction passes32-row replay and focused negatives, with
+  independent integration review approved. All authority holds remain enforced.
+- Original40USD authority and the global15percent weekly stop remain binding;
+  API and subscription accounting are separate. The failed attempt reports
+  executor cost3.9178638USD; terminal engine/aggregate cost and complete owned
+  cleanup reconciliation are pending before any further paid admission.
 
 The following platform observations are retained from the source baseline;
 this host migration has not re-audited their deployment:
@@ -129,9 +125,8 @@ this host migration has not re-audited their deployment:
 
 ## Next
 
-1. Finish immutable69 checks and normal installed delivery, preserving wrappers.
-2. Verify both actual context closures and current approved actor/source bindings.
-3. Admit a new sequential BOTH FULL/signup within original40USD and quota above15.
-   Stop at the first failure; reconcile effects, costs and owned cleanup.
-4. Complete documentation, final review and legitimate baseline closure only after
-   real acceptance. Public publication still requires explicit authority.
+1. Complete affected documentation review of the approved corrections.
+2. Reconcile terminal costs/effects and owned cleanup before another admission.
+3. Deliver reviewed corrections through immutable release and installed checks.
+4. Require genuine sequential BOTH FULL/signup, final review and legitimate
+   baseline closure. Public publication requires explicit authority.

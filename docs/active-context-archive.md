@@ -1,3 +1,52 @@
+## 2026-10-29 — Superseded Pydantic delivery checkpoint
+
+
+The approved executor-only scope is unchanged. M1–M4 and controlled delivery reviews are retained. Both clones now install immutable local `v0.68.0` (`91111d6ef181567958185e4936eb6ab908eaa811`): all166package files, lock-only rebuilds, actual owner/standing-instruction reads, native/Pydantic permission equivalence and complete22-field route bindings pass. The dedicated executor credential environment preserves classifier and interactive configuration. Source/tag suites and installed fixtures remain valid; no repeated suite is required without a concrete delta.
+
+The first real attempt, `m5-full-installed-v68-fresh`, fails before fixtures/jobs at Cafe's exact hosted actor-family guard. Its externally deployed engine is now `operator-memory-profile-eae4ba1c3118794c`; the prior approved family is different. MrCall matches. Retained pure replay proves `actor_hosted_family_mismatch`; neither the engine nor the identity guard was altered. The runner now writes reviewed sanitized private `runner-failure.json` causes and frames instead of discarding all causal information. No model job, fixture, enrollment, send or signup occurred. The failed attempt remains failed and must not be resumed.
+
+Original40USD authority remains. Current accounted7.1249272 plus retained uncertainty8.012607 leaves24.8624658; the exact ledger query succeeded through existing administrative authority, and cumulative actor-day totals replace earlier totals. No reserve is released. API use within reviewed allocations is authorized; subscription tokens are the priority resource. Native quota monitoring enforces a global stop at15percent remaining, with no automatic restart; the last observation is29percent remaining.
+
+Resume requires the existing review/provenance for the changed Cafe engine family, supplied by its owner. The supervisor has no verified reference; the exact deployed release root contains no approval metadata. Do not copy observed identity into policy, broaden guards, audit/repair the unrelated engine or repeat the unchanged failed attempt. The current task-owned exact three-job scheduling hold is `m5-post-preflight-hold/scheduling-window.json`; `release-post-preflight-hold.py` restores only that marker and preserves unrelated cron. The earlier FULL window was restored and its original owned process is gone.
+
+Evidence and exact commands are under `/tmp/mrcall-ai-kit/pydantic-headless-20261028/manager-handoff.json`; key receipts are `m5-delivery-stage/adoption-ready.json`, `m5-full-host-integration-review.md`, `m5-first-full-cleanup-effects.json`, `m5-failed-preflight-finance.json`, and `m5-preflight-diagnostic-review.md`. Approved scope snapshot remains `plan-alias-runtime-approved.md`; these are status/evidence updates, not new authority. Any next admission requires reviewed legitimate actor bindings, current source hashes, original-budget reconciliation and quota above15percent.
+
+Remaining delivery: external Cafe approval; any affected precise binding review; genuine sequential BOTH FULL/signup and cost/effect/owned cleanup; clone version/provenance reconciliation; documentation critic and separate final review; legitimate baseline closure. Public publication is not authorized. The original restoration task's workflow-hash blocker remains separate. Never resend the earlier FULL66.2 response proved in Sent.
+
+
+## 2026-10-29 — Superseded installed executor state
+
+- **Latest release tag: `v0.69.0`. Current HEAD status: tagged as `v0.69.0`.**
+  Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
+  native inventory delivery; the later69cancelled hooks remain a failure with an
+  unrecorded upstream cause. The exact prior response is proved in Sent, not
+  confirmed received, and must not be resent. No new live acceptance is claimed.
+- Both maintained clones currently install local68 with verified package bytes,
+  lock rebuilds, authority and effective host permissions. Local69 repairs context
+  compatibility; its source suite and complete offline closures pass (MrCall49,
+  Cafe39). Exact-tag verification, installed69 delivery and genuine sequential
+  BOTH FULL/signup remain pending. No operational restoration is claimed.
+- The existing approved memory activation for Cafe is recovered and coherently
+  bound through reviewed provenance. No engine code or identity guard is changed.
+  The later68attempt stops before SDK/model work on context loading. Two fixture
+  originals remain; enrollments are cleared and owned processes are quiescent.
+- The task owns an exact three-schedule hold recorded in the private handoff.
+  Preserve it through69delivery and use only the reviewed controlled handoff.
+  Original40USD authority, retained uncertainty and global15percent weekly stop
+  remain binding. API and subscription budgets are separate.
+
+
+## 2026-10-29 — Superseded executor next steps
+
+## Next
+
+1. Finish immutable69 checks and normal installed delivery, preserving wrappers.
+2. Verify both actual context closures and current approved actor/source bindings.
+3. Admit a new sequential BOTH FULL/signup within original40USD and quota above15.
+   Stop at the first failure; reconcile effects, costs and owned cleanup.
+4. Complete documentation, final review and legitimate baseline closure only after
+   real acceptance. Public publication still requires explicit authority.
+
 ## 2026-10-29 — Superseded68preflight checkpoint
 
 - Both maintained clones install immutable local `v0.68.0`, with all166package

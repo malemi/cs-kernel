@@ -425,6 +425,79 @@ except BlockingIOError:raise SystemExit(0)
                             self.assertIsInstance(failure.exception.__cause__,TimeoutError)
                         self.assertTrue(all(not (directory/name).exists() for name in unanswered._PUBLICATION_PATHS))
 
+    def test_pydantic_actual_publication_stdout_joins_executor_inventory(self):
+        from uuid import uuid4
+        from cs.operator_executor_tools import ToolRuntime, Refusal, identity as executor_identity
+        child_code = '''import json, os, socket, sys, time
+from pathlib import Path
+from unittest.mock import patch
+from cs import cli, config, unanswered, operator_workset
+class Settings(config.Settings):
+ @property
+ def state_dir(self): return Path(os.environ['CS_TEST_STATE_DIR'])
+settings=Settings(_env_file=None,engine_owner_uid='local-owner')
+review={'gmail_drafts':[], 'engine_drafts':[], 'drafts':[],
+ 'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,
+ 'expected_uids':[],'observed_uids':[],'uidvalidity':'1'}}
+from cs.draft_state import inventory_proof
+review['drafts_inventory']=inventory_proof(review['gmail_drafts'],review['engine_drafts'],
+ review['drafts'],review['gmail_drafts_observation'])
+value={name:[] for name in ('open','handled','escalated','human_work','assignment_audit',
+ 'operational_fixture_discovery','resumed','automatic','courtesy')}
+code=int(os.environ['CS_TEST_DISCOVERY_EXIT'])
+value.update(assignment_incomplete=code==3,read_incomplete=None,note=None,crm_note=None)
+result={'normal':True,'cleanup_complete':True,'configuration':unanswered._discovery_configuration(settings),
+ 'value':value,'code':code,'publication_deadline':time.monotonic()+4,'final_deadline':time.monotonic()+5}
+sys.argv=['cs','unanswered','--days','14','--json','--all-buckets']
+with patch.object(config,'load',return_value=settings), \\
+ patch.object(unanswered,'_scheduled_discovery',return_value=result), \\
+ patch.object(socket.socket,'connect',side_effect=AssertionError('network forbidden')), \\
+ patch.object(socket.socket,'connect_ex',side_effect=AssertionError('network forbidden')), \\
+ patch.object(socket,'getaddrinfo',side_effect=AssertionError('network forbidden')):
+ operator_workset.observe(settings,'tasks',[])
+ operator_workset.observe(settings,'review',review)
+ raise SystemExit(cli.main())
+'''
+        for code in (0, 3):
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as temporary:
+                directory=Path(temporary)
+                directory.chmod(0o700)
+                supervisor=executor_identity(os.getppid())
+                context={'nonce':'e'*32,'owner_uid':'local-owner','supervisor':supervisor.model_dump(),
+                    'directory':str(directory),'workset_enabled':True}
+                env={'PATH':os.environ.get('PATH',''), 'PYTHONPATH':str(Path(__file__).resolve().parents[1]),
+                    'CS_OPERATOR_HEALTH_CONTEXT':json.dumps(context),
+                    'CS_OPERATOR_EXECUTOR_CODEC':'pydantic-executor-v1',
+                    'CS_OPERATOR_EXECUTOR_TOOL_ID':str(uuid4()),
+                    'CS_OPERATOR_EXECUTOR_IDENTITY':json.dumps(executor_identity().model_dump()),
+                    'CS_TEST_STATE_DIR':str(directory/'state'),'CS_TEST_DISCOVERY_EXIT':str(code)}
+                proc=subprocess.Popen([sys.executable,'-B','-c',child_code],env=env,
+                    stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                child=executor_identity(proc.pid)
+                stdout,stderr=proc.communicate(timeout=10)
+                self.assertEqual(proc.returncode,code,stderr.decode())
+                record=json.loads((directory/'discovery.json').read_bytes())
+                self.assertEqual(json.loads(stdout),record['discovery'])
+                self.assertEqual(__import__('hashlib').sha256(stdout).hexdigest(),record['output_sha256'])
+                self.assertEqual(record['exit_code'],code)
+                self.assertEqual(record['discovery']['assignment_incomplete'],code==3)
+                self.assertIsNone(record['discovery']['read_incomplete'])
+                tools=ToolRuntime(SimpleNamespace(clone_root=str(directory),journal_path=str(directory/'executor.jsonl'),
+                    owner='local-owner',nonce=context['nonce'],supervisor=supervisor),None)
+                for name in ('tasks','review'):
+                    source=json.loads((directory/f'workset-{name}.json').read_bytes())
+                    artifact=tools.persist(json.dumps(source['payload']).encode())
+                    tools.material_stdout[name]=artifact.artifact_id
+                actual=tools.persist(stdout)
+                with patch.dict(os.environ,{'CS_OPERATOR_HEALTH_CONTEXT':json.dumps(context)}):
+                    artifacts=tools.dynamic_inventory(actual,child)
+                    self.assertEqual(len(artifacts),2)
+                    with self.assertRaisesRegex(Refusal,'discovery_cli_result_binding_differs'):
+                        tools.dynamic_inventory(tools.persist(stdout+b'Ordinary discovery artifact: changed\n'),child)
+                    foreign=child.model_copy(update={'started_ticks':child.started_ticks+1})
+                    with self.assertRaisesRegex(Refusal,'discovery_cli_result_binding_differs'):
+                        tools.dynamic_inventory(actual,foreign)
+
     def test_legacy_enabled_parent_uses_actual_fork_helper_with_simulated_native_record(self):
         from cs import operator_health,operator_inventory_view as view,operator_inventory_material as material,operator_workset
         from cs import operator_discovery_receipt as legacy
