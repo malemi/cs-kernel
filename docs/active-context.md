@@ -24,7 +24,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   Four mixed-evidence holds exposed a separate independent-consumer defect;
   its isolated correction passes32-row replay and focused negatives, with
   independent integration review approved. All authority holds remain enforced.
-- Original40USD authority and the global15percent weekly stop remain binding;
+- Current60USD authority remains binding; the operator revoked the prior
+  15percent weekly stop. Subscription tokens remain a conserved resource;
   API and subscription accounting are separate. The failed attempt reports
   executor cost3.9178638USD; terminal engine/aggregate cost and complete owned
   cleanup reconciliation are pending before any further paid admission.

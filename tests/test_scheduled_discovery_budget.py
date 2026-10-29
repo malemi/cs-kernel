@@ -321,7 +321,7 @@ raise SystemExit(unanswered._discovery_main())
             source=source.replace('gmail_archive.inbound_recent=lambda *a:[]',
                 "gmail_archive.inbound_recent=lambda *a:[dict(email='person@example.test',thread_key='<one@example.test>',date=datetime.now(timezone.utc),subject='retained')]")
             source=source.replace('task_assignment.projections=lambda *a,**kw:{}',
-                "def projections(settings,roots,**kwargs):\n while time.monotonic()<kwargs['deadline']:time.sleep(.005)\n return {root:task_assignment._unknown(root,'cooperative local cutoff') for root in roots}\ntask_assignment.projections=projections")
+                "def projections(settings,roots,**kwargs):\n while time.monotonic()<kwargs['deadline']-.15:time.sleep(.005)\n return {root:task_assignment._unknown(root,'cooperative local cutoff') for root in roots}\ntask_assignment.projections=projections")
             bootstrap.write_text(source)
             result=unanswered._scheduled_discovery(worker_command=lambda fd:
                 [sys.executable,'-B',str(bootstrap),str(fd)],observation_seconds=2,
