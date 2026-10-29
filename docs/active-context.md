@@ -14,9 +14,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.69.0`; Current HEAD status: untagged.** Both
-  clones install immutable69 with verified package bytes and context closure.
-  Source/tag suites pass, but genuine BOTH FULL/signup has not passed.
+- **Latest release tag: `v0.69.1`; Current HEAD status: tagged as `v0.69.1`.**
+  Both clones still install immutable69 with verified package bytes and context
+  closure. The correction's source suite passes; its tagged-suite and genuine
+  BOTH FULL/signup results remain required.
 - Funded69 failed on a92-byte informational line appended to otherwise exact
   discovery JSON. The producer correction passes actual CLI/publication/validator
   controls and independent review. It is not installed in the live clones.

@@ -1,5 +1,23 @@
 # Changelog — cs-kernel
 
+## v0.69.1 — 2026-10-29 (PATCH)
+
+Keep scheduled discovery stdout byte-identical to its published JSON when the
+supervisor selects the explicit Pydantic executor codec. Ordinary and legacy
+stdout behavior remains unchanged. Discovery identity, lifecycle, source hashes,
+coverage, assignment authority and send guards retain their existing contracts.
+
+Migration: install this immutable candidate normally and preserve clone-owned
+launcher/environment settings and authored context. Use the separately reviewed
+independent consumer for valid mixed HUMAN/AUTOMATIC assignment evidence;
+authority holds remain holds and grant no effect permission. Never resume a
+failed attempt or resend its reply.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** The
+internal discovery-output repair feeds the scheduled operator's complete
+workflow. Component controls do not establish business acceptance, and public
+publication still requires explicit operator authority.
+
 ## v0.69.0 — 2026-10-29 (MINOR)
 
 Complete scheduled executor context compatibility with real clone documentation.
