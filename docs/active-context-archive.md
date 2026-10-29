@@ -1,3 +1,30 @@
+## 2026-10-29 — Superseded68preflight checkpoint
+
+- Both maintained clones install immutable local `v0.68.0`, with all166package
+  files, lock-only rebuilds, actual owner/standing-instruction reads and both
+  primary/fallback policy bindings verified. The scheduled host is Pydantic;
+  native interactive use and the original permission ceilings are preserved.
+  Source, tag, installed-fixture and M4/delivery reviews pass. Public provenance
+  and genuine business acceptance remain pending.
+- The first real68FULL fails before any fixture or job: Cafe's external engine
+  now loads `operator-memory-profile-eae4ba1c3118794c`, which differs from its
+  approved hosted family. MrCall matches. The actual rejection guard is unchanged;
+  sanitized private runner diagnostics retain finite actor/check causes. No model
+  job, send, enrollment or signup occurred in this failed attempt.
+- M5 is blocked on the existing approval/provenance for that Cafe engine release.
+  The supervisor has no such reference; exact release-root metadata contains none.
+  Do not bless observed identity, change the engine or retry the same preflight.
+  The task owns the current exact three-schedule hold; its window and guarded
+  release command are in the private manager handoff. No unrelated cron changed.
+- Cafe may reuse MrCall's existing Anthropic API key by explicit authority. Keys
+  are delivered only through dedicated executor environments. The original40USD
+  limit remains: accounted7.1249272, retained reserves8.012607, remaining24.8624658.
+  The exact read-only ledger query succeeds under existing administrative access;
+  cumulative totals replace earlier totals. This FULL started zero model jobs.
+  Subscription quota is separate; all work stops at15percent weekly remaining,
+  with no automatic resumption. The last native measurement is29percent remaining.
+
+
 ## 2026-10-28 — Superseded pre-adoption and accounting-access checkpoint
 
 - The [scheduled Pydantic executor migration](execution-plans/2026-10-28-pydantic-headless-executor.md)

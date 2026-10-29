@@ -1,5 +1,22 @@
 # Changelog — cs-kernel
 
+## v0.69.0 — 2026-10-29 (MINOR)
+
+Complete scheduled executor context compatibility with real clone documentation.
+Normalize trusted document-relative links before existing scope checks, include
+clone-owned campaign Markdown, and leave outside-clone reference links unread.
+Explicit reads still reject traversal, secrets and symlink escape. No shell,
+engine, send, workflow-authority or credential permission is added.
+
+Migration: install this immutable candidate normally. Preserve existing owned
+launcher/environment delivery and authored company context. Actual full context
+closures pass for both maintained clones before model admission; component proof
+does not establish business acceptance. No failed attempt is resumed or resent.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Context
+and permission-adjacent admission behavior changes. Public publication remains
+subject to explicit operator authority.
+
 ## v0.68.0 — 2026-10-28 (MINOR)
 
 Complete the scheduled Python executor's fallback path with supervisor-owned

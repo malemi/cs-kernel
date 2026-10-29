@@ -14,34 +14,24 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.68.0`. Current HEAD status: untagged.**
+- **Latest release tag: `v0.69.0`. Current HEAD status: tagged as `v0.69.0`.**
   Retained installed verification covers BOTH66.2. FULL66.2 failed after complete
   native inventory delivery; the later69cancelled hooks remain a failure with an
   unrecorded upstream cause. The exact prior response is proved in Sent, not
   confirmed received, and must not be resent. No new live acceptance is claimed.
-- Both maintained clones install immutable local `v0.68.0`, with all166package
-  files, lock-only rebuilds, actual owner/standing-instruction reads and both
-  primary/fallback policy bindings verified. The scheduled host is Pydantic;
-  native interactive use and the original permission ceilings are preserved.
-  Source, tag, installed-fixture and M4/delivery reviews pass. Public provenance
-  and genuine business acceptance remain pending.
-- The first real68FULL fails before any fixture or job: Cafe's external engine
-  now loads `operator-memory-profile-eae4ba1c3118794c`, which differs from its
-  approved hosted family. MrCall matches. The actual rejection guard is unchanged;
-  sanitized private runner diagnostics retain finite actor/check causes. No model
-  job, send, enrollment or signup occurred in this failed attempt.
-- M5 is blocked on the existing approval/provenance for that Cafe engine release.
-  The supervisor has no such reference; exact release-root metadata contains none.
-  Do not bless observed identity, change the engine or retry the same preflight.
-  The task owns the current exact three-schedule hold; its window and guarded
-  release command are in the private manager handoff. No unrelated cron changed.
-- Cafe may reuse MrCall's existing Anthropic API key by explicit authority. Keys
-  are delivered only through dedicated executor environments. The original40USD
-  limit remains: accounted7.1249272, retained reserves8.012607, remaining24.8624658.
-  The exact read-only ledger query succeeds under existing administrative access;
-  cumulative totals replace earlier totals. This FULL started zero model jobs.
-  Subscription quota is separate; all work stops at15percent weekly remaining,
-  with no automatic resumption. The last native measurement is29percent remaining.
+- Both maintained clones currently install local68 with verified package bytes,
+  lock rebuilds, authority and effective host permissions. Local69 repairs context
+  compatibility; its source suite and complete offline closures pass (MrCall49,
+  Cafe39). Exact-tag verification, installed69 delivery and genuine sequential
+  BOTH FULL/signup remain pending. No operational restoration is claimed.
+- The existing approved memory activation for Cafe is recovered and coherently
+  bound through reviewed provenance. No engine code or identity guard is changed.
+  The later68attempt stops before SDK/model work on context loading. Two fixture
+  originals remain; enrollments are cleared and owned processes are quiescent.
+- The task owns an exact three-schedule hold recorded in the private handoff.
+  Preserve it through69delivery and use only the reviewed controlled handoff.
+  Original40USD authority, retained uncertainty and global15percent weekly stop
+  remain binding. API and subscription budgets are separate.
 
 The following platform observations are retained from the source baseline;
 this host migration has not re-audited their deployment:
@@ -139,9 +129,9 @@ this host migration has not re-audited their deployment:
 
 ## Next
 
-1. Obtain the existing approved Cafe engine-family reference from its owner.
-2. Review only that precise binding and affected consumer hashes; retain all guards.
-3. Reconcile original40USD and quota above15percent, then admit a new genuine
-   sequential BOTH FULL/signup. Stop at the first failure. Never resend FULL66.2.
-4. Finish version/provenance documentation, final review and legitimate baseline
-   closure after actual acceptance. Public publication requires explicit authority.
+1. Finish immutable69 checks and normal installed delivery, preserving wrappers.
+2. Verify both actual context closures and current approved actor/source bindings.
+3. Admit a new sequential BOTH FULL/signup within original40USD and quota above15.
+   Stop at the first failure; reconcile effects, costs and owned cleanup.
+4. Complete documentation, final review and legitimate baseline closure only after
+   real acceptance. Public publication still requires explicit authority.
