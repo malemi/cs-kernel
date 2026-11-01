@@ -1,5 +1,7 @@
 # Transversal Documentation Index
 
+- [Executor cache across long reads](execution-plans/2026-11-01-executor-long-cache.md) — explicit1h cache support, exact pricing and bounded new installed acceptance; [brief](briefs/2026-11-01-executor-long-cache.md).
+
 - [Executor bootstrap cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md) — conditional stable cache point, offline transport proof and pending installed/provider acceptance; [brief](briefs/2026-11-01-executor-bootstrap-cache.md).
 
 - [Private F/P release and installed acceptance](execution-plans/2026-11-01-private-fp-adoption.md) — immutable private release, normal clone adoption and genuine acceptance gates; [brief](briefs/2026-11-01-private-fp-adoption.md).

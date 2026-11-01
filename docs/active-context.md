@@ -15,31 +15,32 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**
-  This immutable private cache candidate is unpublished. Both maintained clones
-  still install `v0.70.0`; new cache bytes await normal adoption and verification.
-  Genuine BOTH FULL/signup acceptance remains unmet.
-- Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
-  private release. All166 cs files and LICENSE match Git, retained D3 and the
-  clean0.70.0 wheel. Kernel dependency declarations are unchanged; only distribution version,
-  dist-info paths and RECORD differ from the D3 verification wheel.
-  The corrected pre-release and mandatory exact-tag integrated suites both pass.
-  Original failures and the interrupted HEAD-wording failure remain retained
-  separately. MrCall adds only its two pre-existing missing declared dependencies at3.3.6;
-  all previous nonkernel versions and origins are preserved. Its first lock
-  mismatch, verified rollback and guarded repair remain retained. Package
-  evidence does not establish business acceptance.
-- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) passes
-  M1/M2 and actual normal producer validation. The single authorized corrected
-  cohort is FAILED: MrCall reaches soft8 after15 responses with8.4739172USD
-  usage-price estimate; Cafe/signup jobs did not start. Hard13.25 is respected,
-  transport uncertainty and outstanding requests are0. All60 recorded processes
-  are gone, both exact enrollments are absent and three owned ticks stay held.
-- Independent finance verification gives cumulative estimates37.9204054 plus
-  retained uncertainty8.012607. The operator authorizes private cache-candidate
-  adoption and a genuinely new corrected cohort, with greater spending to finish.
-  Lead operating limits are aggregate85USD, native target8/hard13.25 and signup2.
-  A new full28.50USD cohort plans74.4330124, leaving10.5669876USD. Provider
-  invoices and uncaptured classifier charges remain unverified; no reserve release.
+  Both maintained clones install the exact immutable private tag at
+  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`. All166 installed/wheel/Git files
+  match, as do both complete lock-only rebuilds and95/58 distribution sets.
+  Public provenance and genuine BOTH FULL/signup acceptance remain unmet.
+- Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
+  explicit5m point after the full immutable bootstrap. Compared with0.70.0,
+  only the approved executor module changes. No dependency, model, price,
+  permission or business guard changes. Both mandatory release suites pass.
+  R1/R2 integration reviews and actual normal producer validation pass.
+  Previous failures, helper REVISE findings and corrected rollback remain retained.
+- The private0.70.1 cohort is FAILED at admission/soft_target_reached after23
+  reconciled responses costing8.0846050USD in usage-price estimates. Identity,
+  config, tasks, review and discovery completed; the whole workflow did not.
+  Cafe/signup never started. All336 recorded PID/start identities are absent,
+  both exact fixture enrollments are absent and three owned schedules are held.
+- The earlier0.70.0 soft8 failure remains consumed and retained. No attempt is
+  resumed or reset. Current inspected5m wire prefixes are identical; two cold
+  requests follow approximately20/9-minute tool intervals. Provider-internal
+  cache eviction remains unknown. [Longer cache work](briefs/2026-11-01-executor-long-cache.md)
+  adds explicit1h support with correct accounting before any further paid run.
+- Qualified committed estimates, captured engine delta and retained uncertainty
+  total54.0427724USD. The lead selects finite aggregate95, native target12/hard16,
+  signup2 and at most one new34USD cohort under the operator's broader spending
+  authorization. Worst-case planning is88.0427724, leaving6.9572276USD. These
+  bounds require fresh candidate/admission review before execution. Provider
+  invoices and uncaptured/external charges remain unknown; no reserve is released.
 - Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
   source case returns three complete human-hold observations and
   `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
@@ -57,6 +58,11 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
+- The pinned external R7 checker accepts only disabled/5m and hardcodes60USD.
+  It cannot accept the reviewed1h/95USD correction through a new artifact index.
+  Free private release/adoption may proceed; the new paid cohort is held until
+  a supported reviewed acceptance path resolves this contract and interface.
+  No checker/service/index mutation or legacy goal completion is performed.
 - Protected goal-client inspect exceeds its4MiB response bound; the service has
   no compact inspect request. A stale generation prevents reporting with the old
   token. Final protected acceptance remains unverified; client/service guards
@@ -89,13 +95,11 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. The [bootstrap-cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md)
-   has approved source and53 passing local controls. Private0.70.1 packaging,
-   normal adoption and one corrected cohort are authorized; unchanged guards,
-   stop-first behavior and exact cleanup remain required.
-2. Complete release/installed/admission gates using retained valid evidence and
-   new exact artifacts, then genuine MrCall FULL → Cafe FULL → signup. Never
-   resume or reset either consumed FULL attempt or message the supervisor.
-3. Reconcile actual new cache usage, costs, effects and owned cleanup, then M5,
-   documentation critic and separate final review. Baseline/protected acceptance
-   remain open until actual prerequisites pass.
+1. Kernel and independent Desktop1h controls are approved. Finish the normal
+   immutable private release/adoption, preserving authored context and held ticks.
+   Keep exact duration pricing, legacy fallback and source/business guards.
+2. Require immutable normal release/adoption and reviewed free admission checks
+   before the single new bounded MrCall FULL -> Cafe FULL -> signup cohort.
+   Exact-hash clone-harness consent remains pending; final closure is unverified.
+3. Require actual M5, documentation critic and separate final review. Baseline
+   and protected goal acceptance remain open until their prerequisites pass.

@@ -105,6 +105,17 @@ class AliasRuntimeTests(base.ExecutorTests):
                 self.assertEqual(notice.call_args.kwargs['reason'],'executor_metadata_held')
                 self.assertIsNotNone(notice.call_args.kwargs['diagnostic']['executor_diagnostic']['run_id'])
 
+    def test_explicit_fallback_one_hour_refuses_before_intake_or_inference(self):
+        os.environ.update(CS_EXECUTOR_FALLBACK_PRICING_JSON=json.dumps(caps()),CS_EXECUTOR_FALLBACK_CACHE_MODE='1h')
+        with patch.object(recovery.config,'load',return_value=self.settings()), \
+                patch.object(recovery,'_read_state',return_value={}),patch.object(recovery,'_deliver_pending'), \
+                patch.object(recovery.diagnostics,'context',return_value={}),patch.object(recovery,'_notice') as notice, \
+                patch.object(recovery,'_fetch_fallback_metadata',return_value=RAW), \
+                patch.object(recovery,'_mail_intake') as intake,patch.object(recovery,'_run') as launch:
+            self.assertEqual(recovery._run_tick('unused',[],executor='pydantic'),1)
+            self.assertEqual(intake.call_count,0);self.assertEqual(launch.call_count,0)
+            self.assertEqual(notice.call_args.kwargs['reason'],'executor_metadata_held')
+
     def test_time_expiry_clock_rollback_fresh_renewal_and_separate_tick_nonce(self):
         job,policy=self.prepare()
         admitted=utc_datetime(job.admitted_at_utc)
@@ -246,6 +257,10 @@ class AliasControllerTests(integration.IntegrationTests):
     def exercise_tick(self,primary_success=False):
         self.setup_integration()
         self.integration_case='alias-runtime'
+        primary_prices=json.loads(os.environ['CS_EXECUTOR_PRICING_JSON'])
+        primary_prices.update(input_upper_usd_per_million='8',input_usd_per_million='4',output_usd_per_million='1',
+            cache_read_usd_per_million='0.2',cache_write_5m_usd_per_million='5',cache_write_1h_usd_per_million='8')
+        os.environ.update(CS_EXECUTOR_CACHE_MODE='1h',CS_EXECUTOR_PRICING_JSON=json.dumps(primary_prices))
         os.environ.update(CRON_FALLBACK_MODEL=ALIAS,CRON_FALLBACK_BUDGET_USD='4.0',
             CS_EXECUTOR_FALLBACK_PRICING_JSON=json.dumps(caps()),CS_EXECUTOR_FALLBACK_CACHE_MODE='5m')
         metadata=self.base/'metadata.json';metadata.write_bytes(RAW)
@@ -298,7 +313,7 @@ recovery._saved_openrouter_key=saved_key
         from cs.operator_inventory_view import source_identity
         from cs.operator_executor_evidence import digest,reference
         primary_policy=dict(provider='anthropic',model='fixture-model',api_key_env='CS_FIXTURE_EXECUTOR_KEY',base_url=None,
-            pricing=json.loads(os.environ['CS_EXECUTOR_PRICING_JSON']),cache_mode='disabled',send_mode='draft',founder_enabled=False,
+            pricing=json.loads(os.environ['CS_EXECUTOR_PRICING_JSON']),cache_mode='1h',send_mode='draft',founder_enabled=False,
             campaign_enabled=True,admitted_ceiling_usd='20',max_output_tokens=100,deadline_seconds=10800,
             additional_denied=[],context_paths=[],exact_send_ids=[],founder_account=None,founder_question=None,
             max_artifact_bytes=16777216,max_requests=100,page_bytes=16384,soft_budget_usd='4.00',tool_timeout_seconds=2730)
@@ -339,6 +354,11 @@ recovery._saved_openrouter_key=saved_key
         binding=receipts[0]['executor_alias_binding']
         if not primary_success:
             chain=receipts[-1]['executor_fallback_chain']
+            from decimal import Decimal
+            self.assertGreater(Decimal(chain['primary_uncertain_cost_usd']),0)
+            self.assertEqual(Decimal(chain['fallback_admitted_ceiling_usd'])+Decimal(chain['primary_uncertain_cost_usd'])+
+                Decimal(chain['primary_accounted_cost_usd']),Decimal(chain['original_admitted_ceiling_usd']))
+            self.assertEqual(receipts[0]['executor_job']['expires_at_utc'],receipts[1]['executor_job']['expires_at_utc'])
             self.assertEqual(binding,chain['alias_binding']);self.assertEqual(binding,receipts[1]['executor_alias_binding'])
         self.assertEqual(binding['policy']['canonical_model'],CANONICAL)
         if not primary_success:self.assertEqual(receipts[0]['executor_job']['nonce'],receipts[1]['executor_job']['nonce'])
@@ -351,6 +371,41 @@ recovery._saved_openrouter_key=saved_key
         from operator_executor_test_support import evidence_path
         target=evidence_path('m4-alias-runtime','actual-primary-success-packet.json' if primary_success else 'actual-recurring-packet.json')
         target.write_text(json.dumps(packet,sort_keys=True));target.chmod(0o600)
+        if not primary_success:
+            from cs import operator_executor_evidence as evidence,operator_executor_protocol as protocol
+            proof=receipts[0]['executor_proof']
+            launch=json.loads(Path(proof['launch_config']['path']).read_bytes())
+            context=dict(directory=str(Path(launch['journal_path']).parent),nonce=launch['nonce'],
+                owner_uid=launch['owner'],supervisor=launch['supervisor'])
+            rows=protocol.parse_journal(Path(launch['journal_path']))
+            request=next(row.payload for row in rows if row.payload.kind=='model_request')
+            original=evidence.artifact(request.messages)
+            self.assertEqual(evidence.validate(proof,context,prework_only=True)['prework_refusal'],'payment_required')
+            actual=evidence.artifact
+            results=[]
+            for setting in ('anthropic_cache','anthropic_cache_instructions','anthropic_cache_tool_definitions'):
+                for replacement in ('5m',None):
+                    value=protocol.decode(original)
+                    self.assertEqual(value['settings'][setting],'1h')
+                    if replacement is None:value['settings'].pop(setting)
+                    else:value['settings'][setting]=replacement
+                    changed=protocol.canonical(value)
+                    if replacement=='5m':self.assertEqual(len(changed),len(original))
+                    mutated=copy.deepcopy(rows)
+                    next(row.payload for row in mutated if row.payload.kind=='model_request').payload_sha256=evidence.digest(changed)
+                    def read(reference,directory=None):
+                        path=reference.path if hasattr(reference,'path') else reference['path']
+                        return changed if path==request.messages.path else actual(reference,directory)
+                    with self.subTest(setting=setting,replacement=replacement), \
+                            patch.object(evidence,'artifact',side_effect=read), \
+                            patch.object(protocol,'parse_journal',return_value=mutated):
+                        with self.assertRaisesRegex(ValueError,'executor_sdk_settings_binding'):
+                            evidence.validate(proof,context,prework_only=True)
+                        attempt=recovery.Attempt(3,[],executor_proof=proof,health_context=context)
+                        with self.assertRaisesRegex(ValueError,'executor_sdk_settings_binding'):
+                            recovery._executor_fallback_admission(attempt)
+                        results.append(dict(setting=setting,replacement=replacement,rejected=True))
+            evidence_path('m4-alias-runtime','prework-sdk-settings-rejections.json').write_text(json.dumps(results))
 
 
     def test_actual_tick_renews_and_freezes_canonical_fallback(self):

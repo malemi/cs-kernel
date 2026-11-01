@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator, model_serializer
 from .operator_executor_protocol import Strict, Identity, Digest, USD, UInt, UUIDString, canonical, decode, sha256
 
 
@@ -41,6 +41,15 @@ class Pricing(Strict):
     cache_read_usd_per_million: USD | None = None
     cache_write_5m_usd_per_million: USD | None = None
 
+    cache_write_1h_usd_per_million: USD | None = None
+
+    @model_serializer(mode='wrap')
+    def serialize_prices(self, handler):
+        value = handler(self)
+        if self.cache_write_1h_usd_per_million is None:
+            value.pop('cache_write_1h_usd_per_million', None)
+        return value
+
     @model_validator(mode='after')
     def actual_rates(self):
         rates = [self.input_usd_per_million,self.output_usd_per_million,
@@ -51,6 +60,10 @@ class Pricing(Strict):
             if (any(Decimal(value) > Decimal(self.input_upper_usd_per_million) for value in (rates[0],rates[2],rates[3]))
                     or Decimal(rates[1]) > Decimal(self.output_upper_usd_per_million)):
                 raise ValueError('usage prices exceed conservative reserve rates')
+        if self.cache_write_1h_usd_per_million is not None:
+            if (self.input_usd_per_million is None or Decimal(self.cache_write_1h_usd_per_million) <= 0
+                    or Decimal(self.cache_write_1h_usd_per_million) > Decimal(self.input_upper_usd_per_million)):
+                raise ValueError('invalid explicit one-hour usage pricing')
         return self
 
     @property
@@ -61,8 +74,10 @@ class Pricing(Strict):
         values = (input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,cache_write_1h_tokens)
         if any(type(value) is not int or value < 0 for value in values):
             raise AdmissionError('usage_unavailable')
-        if cache_write_1h_tokens or cache_read_tokens+cache_write_tokens > input_tokens:
+        if cache_write_1h_tokens > cache_write_tokens or cache_read_tokens+cache_write_tokens > input_tokens:
             raise AdmissionError('unsupported_cache_usage')
+        if cache_write_1h_tokens and self.cache_write_1h_usd_per_million is None:
+            raise AdmissionError('cache_usage_pricing_unavailable')
         normal = input_tokens-cache_read_tokens-cache_write_tokens
         if self.input_usd_per_million is None:
             if cache_read_tokens or cache_write_tokens:
@@ -70,7 +85,9 @@ class Pricing(Strict):
             amounts = ((normal,self.input_upper_usd_per_million),(output_tokens,self.output_upper_usd_per_million))
         else:
             amounts = ((normal,self.input_usd_per_million),(output_tokens,self.output_usd_per_million),
-                (cache_read_tokens,self.cache_read_usd_per_million),(cache_write_tokens,self.cache_write_5m_usd_per_million))
+                (cache_read_tokens,self.cache_read_usd_per_million),(cache_write_tokens-cache_write_1h_tokens,self.cache_write_5m_usd_per_million))
+            if cache_write_1h_tokens:
+                amounts += ((cache_write_1h_tokens,self.cache_write_1h_usd_per_million),)
         return sum(Decimal(tokens)*Decimal(rate) for tokens,rate in amounts)/Decimal(1000000)
 
 
@@ -264,7 +281,7 @@ class ExecutorConfig(Strict):
     api_key_env: str
     base_url: str | None = None
     pricing: Pricing
-    cache_mode: Literal['disabled','5m'] = 'disabled'
+    cache_mode: Literal['disabled','5m','1h'] = 'disabled'
     soft_budget_usd: USD = '4.00'
     admitted_ceiling_usd: USD
     max_requests: Annotated[int, Field(strict=True, gt=0, le=1000)] = 100
@@ -306,8 +323,10 @@ class ExecutorConfig(Strict):
         if any(Decimal(v) <= 0 for v in (self.soft_budget_usd, self.admitted_ceiling_usd,
                 self.pricing.input_upper_usd_per_million, self.pricing.output_upper_usd_per_million)):
             raise ValueError('budget/pricing must be positive')
-        if self.cache_mode == '5m' and self.pricing.input_usd_per_million is None:
+        if self.cache_mode != 'disabled' and self.pricing.input_usd_per_million is None:
             raise ValueError('cache requires explicit usage pricing')
+        if self.cache_mode == '1h' and self.pricing.cache_write_1h_usd_per_million is None:
+            raise ValueError('one-hour cache requires explicit usage pricing')
         if self.base_url not in (None, self.endpoint):
             raise ValueError('provider endpoint binding differs')
         if self.provider == 'openrouter' and self.base_url != self.endpoint:
@@ -353,7 +372,7 @@ def cache_request_matches(config, body):
     if config.cache_mode == 'disabled':
         return not markers
     return bool(markers) and all(isinstance(marker,dict) and set(marker) <= {'type','ttl'}
-        and marker.get('type') == 'ephemeral' and marker.get('ttl','5m') == '5m' for marker in markers)
+        and marker.get('type') == 'ephemeral' and marker.get('ttl','5m') == config.cache_mode for marker in markers)
 
 
 class AdmissionError(RuntimeError):
@@ -388,6 +407,8 @@ class Admission:
 
     def reconcile(self, input_tokens: int, output_tokens: int, *, cache_read_tokens=0,cache_write_tokens=0,cache_write_1h_tokens=0) -> Decimal:
         c = self.config
+        if c.cache_mode != '1h' and cache_write_1h_tokens:
+            raise AdmissionError('unsupported_cache_usage')
         cost = c.pricing.estimate(input_tokens,output_tokens,cache_read_tokens,cache_write_tokens,cache_write_1h_tokens)
         if cost > self.uncertain:
             raise AdmissionError('usage_exceeds_reserved_bound')

@@ -87,23 +87,24 @@ def build_model(config, runtime):
                             base_url=config.endpoint)
     from pydantic_ai.profiles.anthropic import AnthropicModelProfile
     return AnthropicModel(config.model, provider=AnthropicProvider(anthropic_client=client),
-        **({'profile':AnthropicModelProfile(supports_auto_cache=True)} if config.cache_mode == '5m' else {}))
+        **({'profile':AnthropicModelProfile(supports_auto_cache=True)} if config.cache_mode != 'disabled' else {}))
 
 
 def executor_model_settings(config):
     settings = {'max_tokens':config.max_output_tokens,'parallel_tool_calls':False}
-    if config.cache_mode == '5m':
-        settings.update(anthropic_cache='5m',anthropic_cache_instructions='5m',anthropic_cache_tool_definitions='5m')
+    if config.cache_mode != 'disabled':
+        settings.update(anthropic_cache=config.cache_mode,anthropic_cache_instructions=config.cache_mode,anthropic_cache_tool_definitions=config.cache_mode)
     return settings
 
 
-def validate_usage(usage, raw, *, fixture=False):
+def validate_usage(usage, raw, *, fixture=False, cache_mode='5m'):
     names = ('input_tokens','output_tokens','cache_read_tokens','cache_write_tokens','cache_write_1h_tokens')
     values = {name:getattr(usage,name,None) for name in names}
     if any(type(value) is not int or value < 0 for value in values.values()):
         raise AdmissionError('usage_unavailable')
     if (values['cache_read_tokens']+values['cache_write_tokens'] > values['input_tokens']
-            or values['cache_write_1h_tokens'] or getattr(usage,'unmeasured_requests',0)
+            or values['cache_write_1h_tokens'] > values['cache_write_tokens']
+            or (cache_mode != '1h' and values['cache_write_1h_tokens']) or getattr(usage,'unmeasured_requests',0)
             or any(getattr(usage,name,0) for name in ('input_audio_tokens','cache_audio_read_tokens','output_audio_tokens','audio_seconds'))
             or getattr(usage,'output_reasoning_tokens',0) > values['output_tokens']):
         raise AdmissionError('unsupported_usage_buckets')
@@ -119,18 +120,22 @@ def validate_usage(usage, raw, *, fixture=False):
                 or values['cache_read_tokens'] != raw_values['cache_read_input_tokens']
                 or values['cache_write_tokens'] != raw_values['cache_creation_input_tokens']):
             raise AdmissionError('wire_usage_bucket_binding_differs')
+        splits = []
         creation = raw.get('cache_creation')
         if creation is not None:
-            if (not isinstance(creation,dict) or set(creation)-{'ephemeral_5m_input_tokens','ephemeral_1h_input_tokens'}
-                    or any(type(value) is not int or value < 0 for value in creation.values())
-                    or creation.get('ephemeral_1h_input_tokens',0)
-                    or sum(creation.values()) != values['cache_write_tokens']):
+            if not isinstance(creation,dict) or set(creation)-{'ephemeral_5m_input_tokens','ephemeral_1h_input_tokens'}:
                 raise AdmissionError('unsupported_cache_write_split')
+            splits.append([creation.get(name,0) for name in ('ephemeral_5m_input_tokens','ephemeral_1h_input_tokens')])
         if 'ephemeral_5m_input_tokens' in raw or 'ephemeral_1h_input_tokens' in raw:
-            split = [raw.get(name,0) for name in ('ephemeral_5m_input_tokens','ephemeral_1h_input_tokens')]
-            if any(type(value) is not int or value < 0 for value in split) or split[1] or sum(split) != values['cache_write_tokens']:
+            splits.append([raw.get(name,0) for name in ('ephemeral_5m_input_tokens','ephemeral_1h_input_tokens')])
+        if cache_mode == '1h' and values['cache_write_tokens'] and not splits:
+            raise AdmissionError('unsupported_cache_write_split')
+        for split in splits:
+            if (any(type(value) is not int or value < 0 for value in split)
+                    or sum(split) != values['cache_write_tokens']
+                    or split[1] != values['cache_write_1h_tokens']):
                 raise AdmissionError('unsupported_cache_write_split')
-        if any(raw.get(name,0) for name in ('ephemeral_1h_input_tokens','web_search_requests','compaction_input_tokens','compaction_output_tokens','compaction_cache_creation_input_tokens','compaction_cache_read_input_tokens')):
+        if any(raw.get(name,0) for name in ('web_search_requests','compaction_input_tokens','compaction_output_tokens','compaction_cache_creation_input_tokens','compaction_cache_read_input_tokens')):
             raise AdmissionError('unsupported_usage_charge')
     return {name:values[name] for name in names[2:]}
 
@@ -206,7 +211,7 @@ def instrument_model(model, runtime):
                     raise AdmissionError('response_incomplete_or_retried')
                 if not fixture and not runtime.config.pricing.accepts(response.model_name):
                     raise AdmissionError('response_model_pricing_binding_differs')
-                buckets = validate_usage(usage,runtime.response_usage,fixture=fixture)
+                buckets = validate_usage(usage,runtime.response_usage,fixture=fixture,cache_mode=runtime.config.cache_mode)
                 if usage.input_tokens > conservative_input_bound or usage.output_tokens > runtime.config.max_output_tokens:
                     raise AdmissionError('usage_exceeds_admitted_token_bounds')
                 cost = runtime.admission.reconcile(usage.input_tokens, usage.output_tokens, **buckets)
@@ -396,7 +401,7 @@ class ExecutorRuntime:
                 'Model completion is separate from workflow, health and acceptance outcomes.',
                 model_settings=executor_model_settings(c))
             initial = canonical({'executor_bootstrap': bootstrap, 'operator_prompt': prompt}).decode()
-            initial_prompt = [initial, CachePoint(ttl='5m')] if c.cache_mode == '5m' else initial
+            initial_prompt = [initial, CachePoint(ttl=c.cache_mode)] if c.cache_mode != 'disabled' else initial
             async with asyncio.timeout(c.remaining_seconds()):
                 await agent.run(initial_prompt, usage_limits=UsageLimits(request_limit=c.max_requests), retries=0)
             completed = True

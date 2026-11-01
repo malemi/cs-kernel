@@ -120,10 +120,10 @@ putting the selector in a dotenv file read later by Python does not select it
 in the shell wrapper. Adoption state and outstanding acceptance are recorded in
 [active context](active-context.md), not inferred from source tests.
 
-Private release0.70.0 includes the first-cause diagnostics and F/P controls
-below. Both maintained clones install these exact released bytes; genuine
-BOTH FULL/signup acceptance remains unmet. The diagnostics keep the existing
-journal schema. Its `Diagnostic.observed` string can contain the bounded
+The private executor includes the first-cause diagnostics and F/P controls
+below. Current immutable installed identities and genuine BOTH FULL/signup
+acceptance are recorded in the living context and private-adoption plan, rather
+than inferred from source tests. The diagnostics keep the existing journal schema. Its `Diagnostic.observed` string can contain the bounded
 `cs.executor.diagnostic.v1` envelope, with a corroborated first phase failure
 separate from the terminal failure. Capacity details distinguish SDK payload
 bytes, the conservative token upper bound, framing/output allowances and the
@@ -132,7 +132,7 @@ request's existing private history reference identifies the input without
 printing its contents. Legacy or malformed details remain unavailable.
 Controlled job rejection and unexpected runner infrastructure failure have
 separate readable messages and retained run references. Current installation
-proof belongs to the private0.70.0 adoption plan, not the older691delivery proof.
+proof belongs to the private-adoption plan, not the older691delivery proof.
 
 The installed fail-fast control terminates after a validated discovery
 `assignment_read_incomplete` phase through the existing failed-job cleanup path.
@@ -150,7 +150,7 @@ no coverage. Fresh reads return full bytes, and accumulated coverage and origina
 effect-time guards remain required. Fixture-only captures grant no production
 witness. The transformed request copy is both retained and dispatched.
 
-Capacity, output reserves and money admission remain unchanged. Archive metadata
+F/P history paging does not alter capacity, output reserves or money admission. Archive metadata
 and nonpage history still grow; irreducible oversize fails with the existing
 visible capacity diagnostic and no new submission/reservation. Installed source
 integrity does not establish workflow completion or FULL acceptance.
@@ -207,19 +207,42 @@ relative deadline is a maximum, not evidence of fresh time after each launch.
 Request admission reserves a conservative maximum before transport. Usage-price
 estimates distinguish new input, cache reads, cache writes and output using
 explicit reviewed rates; normalized input totals already include cached tokens.
-Set `CS_EXECUTOR_CACHE_MODE=5m` explicitly with all four billing rates; the
-fallback uses its separately reviewed `CS_EXECUTOR_FALLBACK_CACHE_MODE`.
-Invalid or unsupported usage retains the reservation. An uncached configuration
-without billing-rate detail is labelled a conservative usage upper estimate,
-not a provider invoice. Do not count retained reservations as actual spend or
-reset them on fallback.
+`CS_EXECUTOR_CACHE_MODE` selects disabled,5m or the opt-in1h source capability.
+Caching requires complete positive explicit prices bounded by the configured
+conservative upper rates. One-hour mode additionally requires
+`cache_write_1h_usd_per_million`; a dated reviewed active-model price binds
+adoption, while generic code does not hardcode a model's list prices. Preserve a
+larger existing upper bound and never assume a cache hit during admission.
+An uncached configuration without billing-rate detail is labelled a conservative
+usage upper estimate, not a provider invoice. Invalid or unsupported usage
+retains the reservation; fallback cannot reset it.
 
-The local unreleased executor candidate adds a public SDK5m cache point after
-the complete immutable bootstrap when5m mode is enabled. Automatic tail caching
-remains enabled; disabled mode retains its original request. The transport hint
-preserves all context and stays subject to actual serialized-payload admission.
-It is not installed and establishes no provider cache hit, savings or FULL
-acceptance; those require separately authorized installed verification.
+Cache creation is an inclusive total W, with the one-hour amount H as a subset.
+For normalized input I and reads R, normal input is I-R-W, five-minute creation
+is W-H and one-hour creation is H. Require0 <= H <= W and R+W <= I. A positive
+creation total in1h mode requires an unambiguous supported raw duration split,
+matching SDK counters; absent, conflicting, malformed or unknown charge buckets
+refuse reconciliation and preserve uncertainty. Never add H to W or input.
+Legacy disabled/5m configurations retain their four-rate serialization and
+refuse unsupported one-hour usage.
+
+The fallback uses its independently reviewed
+`CS_EXECUTOR_FALLBACK_CACHE_MODE`. Its existing metadata-resolution v1 contract
+supports disabled/5m; a requested fallback1h is refused before intake or primary
+submission. A primary1h attempt and a separate fallback5m attempt can therefore
+coexist without silently downgrading a requested mode or adding a new allowance.
+Each keeps its own frozen configuration, original job remainder and deadline.
+
+The explicit public SDK cache point follows the complete immutable bootstrap.
+Automatic, instruction, tool and bootstrap markers use the selected uniform TTL;
+disabled mode remains marker-free. Serialized SDK settings and actual provider
+markers must agree, including before admitting a prework fallback. The request
+content, chronology, complete paging and original business guards stay intact.
+The [longer-cache candidate](execution-plans/2026-11-01-executor-long-cache.md)
+adds1h and exact duration accounting. Kernel and independent Desktop controls,
+including a normally installed Python3.11 development candidate, pass. Normal
+immutable operational adoption and new installed FULL acceptance remain pending. Provider retention/savings are established only by
+actual usage, and source controls grant no business or installation acceptance.
 
 One distinct existing fallback may follow a strictly evidenced immediate
 prework billing refusal, with no model-executed tools or business work. The

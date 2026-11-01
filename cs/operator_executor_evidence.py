@@ -347,6 +347,9 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
             raise ValueError('executor_prework_refusal_unsupported')
         body = decode(artifact(submission.body, directory))
         message_bytes = artifact(request.messages, directory)
+        from .operator_executor import executor_model_settings
+        if decode(message_bytes).get('settings') != executor_model_settings(config):
+            raise ValueError('executor_sdk_settings_binding')
         bound = (Decimal(request.input_token_estimate)*Decimal(config.pricing.input_upper_usd_per_million)
             +Decimal(config.max_output_tokens)*Decimal(config.pricing.output_upper_usd_per_million))/Decimal(1000000)
         if (body.get('model') != config.model or not cache_request_matches(config,body)
@@ -552,6 +555,9 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                 raise ValueError('executor_duplicate_request')
             raw = artifact(p.messages, directory)
             value = decode(raw)
+            from .operator_executor import executor_model_settings
+            if value.get('settings') != executor_model_settings(config):
+                raise ValueError('executor_sdk_settings_binding')
             request_page_maps[p.request_id] = page_archive_maps(value['messages'])
             for pid, entry in request_page_maps[p.request_id][1].items():
                 if pid not in archive_witnesses or entry['call_id'] != archive_witnesses[pid]['call_id']:
@@ -605,6 +611,8 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                 if (p.normal_input_tokens != normal or p.cost_basis != config.pricing.cost_basis
                         or any(value is None for value in
                             (p.cache_read_tokens,p.cache_write_tokens,p.cache_write_1h_tokens,p.normal_input_tokens,p.cost_basis))):
+                    raise ValueError('executor_usage_bucket_binding')
+                if config.cache_mode != '1h' and cache_1h:
                     raise ValueError('executor_usage_bucket_binding')
                 computed=config.pricing.estimate(p.input_tokens,p.output_tokens,cache_read,cache_write,cache_1h)
                 if computed != Decimal(p.accounted_cost_usd) or computed > Decimal(req.reserved_maximum_usd):

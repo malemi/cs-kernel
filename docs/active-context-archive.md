@@ -1,3 +1,78 @@
+## 2026-11-01 — Before source-control integration approval
+
+1. Complete fresh reviewed1h cache planning, implementation and exact usage/
+   reservation controls. Preserve5m/disabled behavior, required context and all
+   source/business guards; no paid keepalive or unchanged retry.
+
+
+## 2026-11-01 — Running cache cohort before its terminal
+
+- The new0.70.1 MrCall FULL attempt is running under the approved85USD
+  aggregate ceiling. Its normal review command completed with exit0 and the
+  executor accepted the review phase. The next ordinary read is in progress;
+  Cafe/signup and whole-cohort acceptance remain unverified. Clone context is
+  frozen until terminal cleanup. No consumed attempt is resumed.
+- The earlier0.70.0 cohort remains FAILED at soft8 after15 responses and
+  8.4739172USD estimated usage; its Cafe/signup jobs never started. Its verified
+  process/fixture cleanup and retained historical evidence remain valid.
+- Independent finance verification gives cumulative estimates37.9204054 plus
+  retained uncertainty8.012607. The operator authorizes private cache-candidate
+  adoption and a genuinely new corrected cohort, with greater spending to finish.
+  Lead operating limits are aggregate85USD, native target8/hard13.25 and signup2.
+  A new full28.50USD cohort plans74.4330124, leaving10.5669876USD. Provider
+  invoices and uncaptured classifier charges remain unverified; no reserve release.
+
+1. Await the single approved running cohort's terminal result without changing
+   either clone's context. Normal recovery is permitted; ordinary ERROR events
+   alone are not its acceptance predicate. All prior attempts remain consumed.
+2. Reconcile actual MrCall FULL → Cafe FULL → signup results, costs/effects and
+   owned cleanup at terminal. Preserve target8/hard13.25, maximum28.50 and
+   aggregate85; stop first failure. Exact-hash clone-harness consent is pending.
+
+## 2026-11-01 — Before the cache candidate live cohort
+
+- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) passes
+  M1/M2 and actual normal producer validation. The single authorized corrected
+  cohort is FAILED: MrCall reaches soft8 after15 responses with8.4739172USD
+  usage-price estimate; Cafe/signup jobs did not start. Hard13.25 is respected,
+  transport uncertainty and outstanding requests are0. All60 recorded processes
+  are gone, both exact enrollments are absent and three owned ticks stay held.
+
+1. Complete current version prose and resolve exact-hash clone-harness consent,
+   then normal admission/precheck for the new corrected cohort. All prior
+   attempts remain consumed; never reset or resume them.
+2. Run genuine MrCall FULL → Cafe FULL → signup with unchanged guards, native
+   target8/hard13.25, maximum28.50 and aggregate85 operating ceiling. Stop first
+   failure, reconcile actual costs/effects and rehold owned future ticks.
+
+## 2026-11-01 — Superseded pre-adoption cache release state
+
+- **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**
+  This immutable private cache candidate is unpublished. Both maintained clones
+  still install `v0.70.0`; new cache bytes await normal adoption and verification.
+  Genuine BOTH FULL/signup acceptance remains unmet.
+- Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
+  private release. All166 cs files and LICENSE match Git, retained D3 and the
+  clean0.70.0 wheel. Kernel dependency declarations are unchanged; only distribution version,
+  dist-info paths and RECORD differ from the D3 verification wheel.
+  The corrected pre-release and mandatory exact-tag integrated suites both pass.
+  Original failures and the interrupted HEAD-wording failure remain retained
+  separately. MrCall adds only its two pre-existing missing declared dependencies at3.3.6;
+  all previous nonkernel versions and origins are preserved. Its first lock
+  mismatch, verified rollback and guarded repair remain retained. Package
+  evidence does not establish business acceptance.
+
+1. The [bootstrap-cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md)
+   has approved source and53 passing local controls. Private0.70.1 packaging,
+   normal adoption and one corrected cohort are authorized; unchanged guards,
+   stop-first behavior and exact cleanup remain required.
+2. Complete release/installed/admission gates using retained valid evidence and
+   new exact artifacts, then genuine MrCall FULL → Cafe FULL → signup. Never
+   resume or reset either consumed FULL attempt or message the supervisor.
+3. Reconcile actual new cache usage, costs, effects and owned cleanup, then M5,
+   documentation critic and separate final review. Baseline/protected acceptance
+   remain open until actual prerequisites pass.
+
 ## 2026-11-01 — Superseded pre-cache private release state
 
 - **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**

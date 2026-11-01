@@ -159,3 +159,63 @@ spending, unchanged paid retry, guard weakening or kit/checker mutation.
   advancement remain pending. No completed-runtime claim is made.
 - New authorization-delta brief APPROVED. R1–R4 plan review pending; no new
   installation or paid admission has started.
+
+### Installed continuation checkpoint before R3 launch
+
+R1 is APPROVED: immutable private0.70.1 at
+`bb29c7928be66279b67cf6b451c6b0992dd85ac6`, both mandatory full suites and
+post-tag consistency pass. All166 wheel/Git files agree; only the approved
+executor module differs from0.70.0. Kernel version sweep passes.
+
+R2 is APPROVED: normal installed identity, full lock-only rebuilds and complete
+nonkernel preservation pass on both clones (95/58 distributions). The actual
+normal producer validator passes and producer-only policy update is applied at
+SHA256 `03e6e2395bcb309d83910e0feab05ef300e428e8d180fd20e9c8288c2be11377`.
+No new cohort has started. Exact artifact/review/command receipts live in the
+new evidence root; no fixture or future outcome is inferred.
+
+Clone current-version prose is being reconciled. Both pre-existing v9 mechanical
+checks identify the same pure kernel CLAUDE bootstrap as foreign. The normal
+helper requests exact-hash adoption consent; its concrete preservation proposal
+is pending, with no retirement or consent flag applied. Independent authorized
+admission preparation continues. Whole M5/final/protected acceptance remain open.
+
+### R3 live execution checkpoint
+
+Fresh R3 admission review and actual free precheck PASS. The guarded wrapper
+started2026-11-01T20:19:43.527398Z; the one new attempt is consumed and running.
+Native run45be84f9-0c7c-4fd2-834d-2570f45b5f62 accepted the review phase after
+its real CLI returned exit0. At the21-response checkpoint, recorded usage-price
+estimates total5.9969222USD; this is provisional, excludes subsequent work,
+and is not final invoiced cost. The next ordinary unanswered read is running.
+
+Read-only daemon verification establishes recovery of one SOURCE_UNAVAILABLE
+root; two other initial errors correlate to preserved policy holds. The exact
+compound identity condition remains unknown. Initial ordinary ERROR count is
+not the FULL predicate. Whole MrCall/Cafe/signup results, terminal accounting
+and owned cleanup remain unverified. Both clone contexts remain frozen until
+the cohort terminal. No duplicate paid run or source/control mutation occurs.
+
+Exact actual-source predicates and privately correlated log receipts are retained
+in the evidence root as live-review-predicate-verification.md,
+live-source-engine-root-verification.md and live-other-authority-verification.md.
+R4 closure and the existing parent M5 remain open.
+
+### R3 actual failed terminal and next correction
+
+The attempt is FAILED at admission/soft_target_reached after23 responses,
+8.0846050USD estimated usage. Required identity/config/tasks/review/discovery
+phases completed, but memory and whole workflow did not. Cafe/signup did not
+start. Independent strict journal/accounting verification passes. All336 known
+PID/start identities are absent; both exact enrollments are absent; three owned
+schedules are held. No outstanding tools/requests or transport uncertainty remain.
+Provider invoices and uncaptured effects/charges remain separately qualified.
+
+The normal accounting refresh adds0.025155USD endpoint spend. Qualified current
+committed54.0427724 is retained with the full8.012607 historical uncertainty.
+The next materially corrected work is the separately reviewed explicit1h cache
+brief, not another0.70.1 attempt. Current source/wire proof shows unchanged full
+bootstrap hashes and5m TTL, with cold requests after1199s and552s. Expiration is
+supported by that correlation; internal provider eviction is unknown. Original
+R1/R2 source/adoption evidence stays valid and this R3 failure stays retained.
+The parent M5 and R4 closure remain unmet.

@@ -19,28 +19,34 @@ from cs import operator_executor as executor
 from cs.operator_executor_config import Admission,AdmissionError,ExecutorConfig
 from cs.operator_executor_protocol import canonical,decode,parse_journal
 from test_operator_executor import ExecutorTests
+from operator_executor_test_support import evidence_path
 
 models.ALLOW_MODEL_REQUESTS=False
 
 
 class CacheTests(ExecutorTests):
-    def config_with_cache(self,provider='anthropic'):
+    def config_with_cache(self,provider='anthropic',mode='5m'):
         value=self.config.model_dump(mode='json')
         value.update(cache_mode='5m',provider=provider,base_url='https://openrouter.ai/api' if provider=='openrouter' else None)
         value['pricing'].update(provider=provider,input_upper_usd_per_million='4',output_upper_usd_per_million='12',
             input_usd_per_million='2',output_usd_per_million='10',cache_read_usd_per_million='0.2',cache_write_5m_usd_per_million='3')
+        value['cache_mode']=mode
+        if mode=='1h':value['pricing'].update(input_upper_usd_per_million='8',cache_write_1h_usd_per_million='8')
         return ExecutorConfig.model_validate(value)
 
-    def two_turns(self,provider,invalid=False):
-        config=self.config_with_cache(provider)
+    def two_turns(self,provider,invalid=False,mode='5m'):
+        config=self.config_with_cache(provider,mode)
         runtime=executor.ExecutorRuntime(config)
         bodies=[]
         wire_usage=[dict(input_tokens=10,output_tokens=2,cache_creation_input_tokens=100,cache_read_input_tokens=0,
             cache_creation=dict(ephemeral_5m_input_tokens=100,ephemeral_1h_input_tokens=0)),
             dict(input_tokens=20,output_tokens=3,cache_creation_input_tokens=0,cache_read_input_tokens=100,
                 cache_creation=dict(ephemeral_5m_input_tokens=0,ephemeral_1h_input_tokens=0))]
+        if mode=='1h':
+            wire_usage[0]['cache_creation']=dict(ephemeral_5m_input_tokens=25,ephemeral_1h_input_tokens=75)
         if invalid:
-            wire_usage[0]['cache_creation']=dict(ephemeral_5m_input_tokens=0,ephemeral_1h_input_tokens=100)
+            if mode=='1h':wire_usage[0].pop('cache_creation')
+            else:wire_usage[0]['cache_creation']=dict(ephemeral_5m_input_tokens=0,ephemeral_1h_input_tokens=100)
         original=httpx2.AsyncClient
         async def transport(request):
             bodies.append(decode(request.content))
@@ -79,22 +85,69 @@ class CacheTests(ExecutorTests):
             return
         self.assertEqual([first.usage.input_tokens,second.usage.input_tokens],[110,120])
         self.assertEqual([first.usage.cache_write_tokens,second.usage.cache_read_tokens],[100,100])
-        self.assertEqual(runtime.admission.accounted,Decimal('0.00043'))
+        self.assertEqual(runtime.admission.accounted,Decimal('0.000805') if mode=='1h' else Decimal('0.00043'))
         self.assertEqual(runtime.admission.uncertain,0)
         self.assertEqual(len(bodies),2)
         for body in bodies:
-            self.assertEqual(body['cache_control'],dict(type='ephemeral',ttl='5m'))
+            self.assertEqual(body['cache_control'],dict(type='ephemeral',ttl=mode))
         rows=[decode(raw)['payload'] for raw in Path(config.journal_path).read_bytes().splitlines()]
         responses=[r for r in rows if r['kind']=='model_response']
         self.assertEqual([r['normal_input_tokens'] for r in responses],[10,20])
-        self.assertEqual([r['accounted_cost_usd'] for r in responses],['0.00034','0.00009'])
+        self.assertEqual([r['accounted_cost_usd'] for r in responses],['0.000715','0.00009'] if mode=='1h' else ['0.00034','0.00009'])
         self.assertTrue(all(r['cost_basis']=='usage_price_estimate' for r in responses))
         from operator_executor_test_support import evidence_path
-        artifact=evidence_path('m4-cache', provider+'-two-turn.json')
+        artifact=evidence_path('m4-cache', provider+('-1h' if mode=='1h' else '')+'-two-turn.json')
         artifact.write_text(json.dumps(dict(provider=provider,
             config=config.model_dump(mode='json'),wire_usages=wire_usage,responses=responses,
             requests=bodies,model_settings=executor.executor_model_settings(config),
             reservation='conservative upper rates unchanged; response cost is usage-price estimate'),indent=2)+'\n')
+
+    def test_one_hour_actual_sdk_write_read_both_routes(self):
+        for provider in ('anthropic','openrouter'):
+            with self.subTest(provider=provider):
+                value=self.config_with_cache(provider,'1h').model_dump(mode='json')
+                value['journal_path']=str(self.private/(provider+'-1h.jsonl'))
+                with patch.object(self,'config_with_cache',return_value=ExecutorConfig.model_validate(value)):
+                    self.two_turns(provider,mode='1h')
+
+    def test_one_hour_usage_split_and_prices_reject_ambiguity(self):
+        config=self.config_with_cache(mode='1h')
+        usage=RequestUsage(input_tokens=140,output_tokens=2,cache_read_tokens=30,cache_write_tokens=100,cache_write_1h_tokens=75)
+        raw=dict(input_tokens=10,output_tokens=2,cache_read_input_tokens=30,cache_creation_input_tokens=100,
+            cache_creation=dict(ephemeral_5m_input_tokens=25,ephemeral_1h_input_tokens=75))
+        admission=Admission(config);bound=admission.reserve(140)
+        self.assertGreaterEqual(bound,Decimal('0.000721'))
+        buckets=executor.validate_usage(usage,raw,cache_mode='1h')
+        self.assertEqual(config.pricing.estimate(140,2,**buckets),Decimal('0.000721'))
+        self.assertEqual(admission.reconcile(140,2,**buckets),Decimal('0.000721'))
+        admission.config=admission.config.model_copy(update={'soft_budget_usd':'0.000721'})
+        with self.assertRaisesRegex(AdmissionError,'soft_target_reached'):admission.reserve(1)
+        admission=Admission(config.model_copy(update={'admitted_ceiling_usd':'0.000721'}))
+        with self.assertRaisesRegex(AdmissionError,'admitted_ceiling'):admission.reserve(140)
+        for mode in ('missing','unknown','negative','boolean','over-total','sdk-disagrees','top-disagrees','raw-total'):
+            u=copy.deepcopy(usage);wire=copy.deepcopy(raw)
+            if mode=='missing':wire.pop('cache_creation')
+            elif mode=='unknown':wire['cache_creation']['unknown']=0
+            elif mode=='negative':wire['cache_creation']['ephemeral_1h_input_tokens']=-1
+            elif mode=='boolean':wire['cache_creation']['ephemeral_1h_input_tokens']=True
+            elif mode=='over-total':u.cache_write_1h_tokens=101
+            elif mode=='sdk-disagrees':u.cache_write_1h_tokens=74
+            elif mode=='top-disagrees':wire.update(ephemeral_5m_input_tokens=100,ephemeral_1h_input_tokens=0)
+            else:wire['cache_creation_input_tokens']=99
+            admission=Admission(config);bound=admission.reserve(1000)
+            with self.subTest(mode=mode),self.assertRaises(AdmissionError):
+                b=executor.validate_usage(u,wire,cache_mode='1h');admission.reconcile(u.input_tokens,u.output_tokens,**b)
+            self.assertEqual(admission.uncertain,bound)
+            with self.assertRaisesRegex(AdmissionError,'unknown_previous_cost'):admission.reserve(1)
+        for rate in (None,'0','-1','9'):
+            value=config.model_dump(mode='json');value['pricing']['cache_write_1h_usd_per_million']=rate
+            with self.subTest(rate=rate),self.assertRaises(ValueError):ExecutorConfig.model_validate(value)
+        from cs.operator_executor_config import cache_request_matches
+        self.assertTrue(cache_request_matches(config,dict(cache_control=dict(type='ephemeral',ttl='1h'))))
+        for marker in ({'type':'ephemeral'},{'type':'ephemeral','ttl':'5m'},{'type':'ephemeral','ttl':'2h'}):
+            self.assertFalse(cache_request_matches(config,dict(cache_control=marker)))
+        self.assertFalse(cache_request_matches(config,dict(cache_control=dict(type='ephemeral',ttl='1h'),
+            messages=[dict(cache_control=dict(type='ephemeral',ttl='5m'))])))
 
     def test_anthropic_actual_sdk_two_turn_cache_write_read(self):
         self.two_turns('anthropic')
@@ -104,11 +157,12 @@ class CacheTests(ExecutorTests):
 
     def test_runtime_bootstrap_cache_point_survives_long_tool_history(self):
         for provider in ('anthropic','openrouter'):
-            for enabled in (True,False):
+            for mode in ('5m','disabled','1h'):
+                enabled=mode!='disabled'
                 with self.subTest(provider=provider,cache=enabled):
-                    value=self.config_with_cache(provider).model_dump(mode='json')
+                    value=self.config_with_cache(provider,mode).model_dump(mode='json')
                     if not enabled:value['cache_mode']='disabled'
-                    value['journal_path']=str(self.private/(provider+str(enabled)+'.jsonl'))
+                    value['journal_path']=str(self.private/(provider+mode+'.jsonl'))
                     config=ExecutorConfig.model_validate(value)
                     runtime=executor.ExecutorRuntime(config)
                     bodies=[];bootstrap=[]
@@ -160,17 +214,24 @@ class CacheTests(ExecutorTests):
                     for index,body in enumerate(bodies):
                         blocks=body['messages'][0]['content']
                         self.assertEqual([b['text'] for b in blocks],[expected])
-                        self.assertEqual(blocks[0].get('cache_control'),dict(type='ephemeral',ttl='5m') if enabled else None)
+                        self.assertEqual(blocks[0].get('cache_control'),dict(type='ephemeral',ttl=mode) if enabled else None)
                         markers=points(body)
                         self.assertEqual(bool(markers),enabled)
                         self.assertLessEqual(len(markers),4)
-                        self.assertTrue(all(p==dict(type='ephemeral',ttl='5m') for p in markers))
+                        self.assertTrue(all(p==dict(type='ephemeral',ttl=mode) for p in markers))
                         self.assertEqual(body['messages'][1::2],[
                             dict(role='assistant',content=[dict(type='tool_use',id='pause-'+str(n),name='pause_status',input={})])
                             for n in range(1,index+1)])
                         sdk=decode(Path(requests[index].messages.path).read_bytes())
                         self.assertEqual(page_archive_maps(sdk),page_archive_maps(body))
                         self.assertEqual(len(Path(submissions[index].body.path).read_bytes())+1024<=requests[index].input_token_estimate,True)
+                    from operator_executor_test_support import evidence_path
+                    from cs.operator_executor_protocol import sha256
+                    evidence_path('m4-cache',provider+'-'+mode+'-long-history.json').write_text(json.dumps(dict(
+                        config=config.model_dump(mode='json'),requests=bodies,
+                        body_sha256=[sha256(Path(row.body.path).read_bytes()) for row in submissions],
+                        model_settings=executor.executor_model_settings(config),bootstrap_sha256=sha256(expected.encode()),
+                        page_maps_equal=True,history_blocks=len(bodies[-1]['messages']))))
                     end=rows[-1]
                     self.assertEqual(end.outstanding_request_ids,[])
                     self.assertEqual(end.outstanding_tool_ids,[])
@@ -179,6 +240,9 @@ class CacheTests(ExecutorTests):
 
     def test_actual_sdk_unsupported_one_hour_write_retains_reservation(self):
         self.two_turns('anthropic',invalid=True)
+
+    def test_actual_sdk_missing_one_hour_split_retains_reservation(self):
+        self.two_turns('anthropic',invalid=True,mode='1h')
 
     def test_cache_miss_and_uncached_keep_categories_separate(self):
         config=self.config_with_cache()
