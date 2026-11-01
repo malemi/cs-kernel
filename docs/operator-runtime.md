@@ -120,8 +120,10 @@ putting the selector in a dotenv file read later by Python does not select it
 in the shell wrapper. Adoption state and outstanding acceptance are recorded in
 [active context](active-context.md), not inferred from source tests.
 
-The unreleased first-cause diagnostic candidate keeps the existing journal
-schema. Its `Diagnostic.observed` string can contain the bounded
+Private release0.70.0 includes the first-cause diagnostics and F/P controls
+below. Both maintained clones install these exact released bytes; genuine
+BOTH FULL/signup acceptance remains unmet. The diagnostics keep the existing
+journal schema. Its `Diagnostic.observed` string can contain the bounded
 `cs.executor.diagnostic.v1` envelope, with a corroborated first phase failure
 separate from the terminal failure. Capacity details distinguish SDK payload
 bytes, the conservative token upper bound, framing/output allowances and the
@@ -129,10 +131,10 @@ configured capacity; they are not a measured provider token count. The refused
 request's existing private history reference identifies the input without
 printing its contents. Legacy or malformed details remain unavailable.
 Controlled job rejection and unexpected runner infrastructure failure have
-separate readable messages and retained run references. This source candidate
-is not installed by the existing691delivery proof.
+separate readable messages and retained run references. Current installation
+proof belongs to the private0.70.0 adoption plan, not the older691delivery proof.
 
-The unreleased functional successor terminates after a validated discovery
+The installed fail-fast control terminates after a validated discovery
 `assignment_read_incomplete` phase through the existing failed-job cleanup path.
 It preserves the one-time discovery recovery and legitimate complete business
 holds. The held phase and first-cause references remain in the journal; no later
@@ -150,8 +152,8 @@ witness. The transformed request copy is both retained and dispatched.
 
 Capacity, output reserves and money admission remain unchanged. Archive metadata
 and nonpage history still grow; irreducible oversize fails with the existing
-visible capacity diagnostic and no new submission/reservation. These source
-controls do not establish live-provider acceptance or installation.
+visible capacity diagnostic and no new submission/reservation. Installed source
+integrity does not establish workflow completion or FULL acceptance.
 
 Executor configuration is separate from classifier and engine settings. It binds
 `CS_EXECUTOR_PROVIDER`, `CS_EXECUTOR_MODEL`, `CS_EXECUTOR_API_KEY_ENV`, the exact
@@ -211,6 +213,13 @@ Invalid or unsupported usage retains the reservation. An uncached configuration
 without billing-rate detail is labelled a conservative usage upper estimate,
 not a provider invoice. Do not count retained reservations as actual spend or
 reset them on fallback.
+
+The local unreleased executor candidate adds a public SDK5m cache point after
+the complete immutable bootstrap when5m mode is enabled. Automatic tail caching
+remains enabled; disabled mode retains its original request. The transport hint
+preserves all context and stays subject to actual serialized-payload admission.
+It is not installed and establishes no provider cache hit, savings or FULL
+acceptance; those require separately authorized installed verification.
 
 One distinct existing fallback may follow a strictly evidenced immediate
 prework billing refusal, with no model-executed tools or business work. The

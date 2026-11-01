@@ -75,6 +75,42 @@ Rollback before possible effects: keep owned holds, reinstall captured immutable
 metadata and verify old provenance. Rebuild if stale package extras survive.
 Never restore an entire historical crontab or roll back business effects.
 
+### M2 dependency-closure repair after the retained first failure
+
+The first MrCall adoption reached correct0.70.0 live and rebuilt package maps,
+then failed whole-environment freeze equality. The normal lock rebuild added
+`psycopg==3.3.6` and `psycopg-binary==3.3.6`. The unchanged, already-installed
+editable `mrcall-agent==1.0.0` declares `psycopg[binary]>=3.1,<4`; its live and
+rebuilt METADATA hashes are identical. The kernel declares no psycopg requirement.
+Actual `uv pip check` confirms this missing pre-existing requirement on MrCall;
+Cafe's current environment passes. Evidence: `dependency-gap-observations.json`,
+`dependency-gap-cause.json` and `helper-evidence/mrcall/freeze-mismatch.json`.
+
+The approved before-effects rollback completed: original immutable0.69.1 and
+the captured three owned pin files are restored, with holds retained. Preserve
+the failed upgrade, first rebuild, attempt marker and rollback evidence. Cafe's
+independent original adoption remains authorized; do not repeat its checks just
+because MrCall's pre-existing environment was incomplete.
+
+Before a new MrCall attempt, obtain fresh review of this repair and its bounded
+helper. Fulfil only the two missing dependencies at the exact normal-resolver
+versions above. Preserve every pre-existing nonkernel version, editable origin,
+source file, setting and permission. No mrcall-agent source change, database
+connection, migration, broad dependency upgrade or model call is allowed. Verify
+the full distribution delta is exactly those two additions, then run normal
+package compatibility checking. This repairs the existing declared environment;
+it changes no kernel release dependency declaration or frozen cs payload.
+
+Use fresh CAS snapshots and a distinct single-use repair attempt; never erase
+the failed helper's markers or modify its receipts. Complete normal immutable
+0.70.0 adoption with the repaired dependency closure, regenerate the exact lock,
+and install that changed lock ALONE into a fresh disposable venv. Require full
+live/rebuilt distribution equality, all166 cs files and exact Git provenance,
+plus protected-file CAS. Do not weaken equality to a subset or suppress deps.
+Before possible effects, a failed repair restores only captured task-owned state
+through normal package management and preserves every failure. A new paid cohort
+still requires actual M2 and admission reviews; none has started.
+
 ## M3 — bind actual installed producer/consumer and admission
 
 Owner: lead in existing Desktop executor worktree; existing reviewed reader
@@ -109,35 +145,88 @@ not inferred from process exit0, local wheel proofs or a synthetic checker input
 
 Lead runs doc-end on both affected worktrees, preserving historical narrative,
 mechanical/doc-critic gates and separate final-user-path review. Keep existing
-workflow-hash closure limitation explicit; no kit repair or false baseline advance.
+completion limitations and historical workflow-hash refusals explicit; no kit
+repair or false baseline advance.
 Update the pinned checker's mutable index only to genuine reviewed current
 artifacts, request protected acceptance and retain its real receipt. Public Git
 publication/provenance remains outside this private approval.
 
 ## Current execution evidence
 
-- M1 is in progress. The first suite was interrupted after release gate15
-  rejected the living-context HEAD marker. The exact marker was repaired,
-  the prior paragraph was archived verbatim, and the focused release check
-  passed. Both the corrected pre-release and mandatory exact-tag integrated
-  suites completed exit0 with all gates green. The private immutable release is
-  `v0.70.0`, commit `85d429d76e9e4d24da8803dba085f94643caaa08`;
-  all166 cs files match D3 and its wheel. The post-tag registry commit and fresh
-  M1 review are being finalized; private0.70.0 installation remains pending.
-  Receipts are in
-  `private-adoption-20261101/m1/` under the evidence root.
-- The adoption helper and policy binder have a fresh APPROVED artifact-fitness
-  review in `helper-evidence/integration-review.md`. Actual M1 release and M2
-  installed integration reviews remain prerequisites.
-- The launch helper's initial review was REVISE: interrupted writes of runner
-  scheduling metadata could prevent terminal reholding. The repaired helper
-  recovers markers from exact trusted cron lines, retains the metadata error,
-  and passes16 controlled cases. `launch-review-repair.md` is APPROVED for
-  artifact fitness only. Future owned ticks remain held after any terminal,
-  including success, until final cost and review closure; no recurring spending
-  follows from the single corrected cohort allowance.
-- Clone startup independently reports the pre-existing violation
-  `CLAUDE.md: legacy or foreign instruction file remains; single-entry compatibility unresolved`
-  on both maintained clones. No legacy file was loaded or migrated. Preserve
-  this mechanical closure limitation; package adoption grants no harness repair
-  authority and does not establish documentation completion.
+- M1 is complete and independently APPROVED. Both corrected pre-release and
+  exact-tag suites pass all82 gates. Private `v0.70.0` remains immutable at
+  `85d429d76e9e4d24da8803dba085f94643caaa08`; the first post-tag registry commit is
+  `bac612ed09226d65e6476bc3b07f25d639c445e1`. The interrupted HEAD-marker failure,
+  missed LIVE68 classification and repaired historical framing remain retained.
+  Canonical release-manifest digest is
+  `e5161d45cfe5db09e5f9886a244aaa9da3e85231cca1dc71c292a53d71b8b091`.
+- M2 actual installed integration is independently APPROVED. Both live clones
+  and their fresh lock-only rebuilds match all166 Git/wheel files and exact Git
+  provenance. MrCall has95 distributions after only its two authorized additions;
+  Cafe's existing distribution set is preserved. The first MrCall freeze failure,
+  normal69.1 rollback, both helper REVISE judgments and corrected guarded repair
+  remain retained. Binary psycopg import and package compatibility pass. Evidence:
+  `mrcall-lock-repair/verified.json`, `helper-evidence/cafe/verified.json` and
+  `m2-integration-review.md` under the private evidence root.
+- Actual normal identity and standing-instruction reads pass on both clones.
+  MrCall retains legacy authority with identity1/procedures15; Cafe retains
+  managed authority with identity4/procedures8. No publication or model call
+  accompanied these reads. Owned context is preserved through installation;
+  lead-owned current version prose is subsequently reconciled and superseded
+  paragraphs archived verbatim, with no baseline metadata change.
+- M3 actual normal runtime-policy validation passes. Producer/executor identity
+  references alone are published at policy SHA256
+  `4e33ee6d391a624955cd30a601785d896662559a216589ff1af578238b6a077a`.
+  Business and launch policy remain preserved. `admission-inputs.json` binds the
+  actual M1/M2 verdicts, source, held control identities and finance planning.
+  The qualified Nov1 12:36 accounting read and existing verification are reused;
+  known29.4464882 + retained8.012607 + cohort28.50 =65.9590952USD, leaving
+  4.0409048USD under the70USD interpretation. This is no complete invoice balance.
+  Fresh admission review and machine precheck passed; the one corrected cohort
+  has now FAILED on MrCall at soft_target_reached. Cafe/signup jobs never started.
+  The allowance is consumed; no retry, resume or further paid admission follows.
+- The launch helper's initial review was REVISE because interrupted runner
+  metadata writes could prevent reholding. The repaired helper has APPROVED
+  artifact fitness and16 controlled cases; it recovers exact trusted lines from
+  cron while retaining malformed metadata as a failure. Future owned ticks stay
+  held after every terminal, including success, until final cost/review closure.
+- Whole-task closure remains open. Both clone startup checks retain
+  `CLAUDE.md: legacy or foreign instruction file remains; single-entry compatibility unresolved`.
+  Normal startup reattestation now passes. Current completion recovery still
+  requires refreshed focused/documentation evidence, M5 and final review; prior
+  workflow-hash refusals remain historical evidence. Protected goal-client
+  4MiB/stale-generation coverage remains unresolved. No kit repair, baseline advancement, synthetic goal
+  acceptance or public push has occurred. The operator forbids further messages
+  to the supervisor; that instruction remains in force.
+
+### Retained M4 outcome and free continuation
+
+The new real run `0894f910-64ec-4c00-9dab-6ac135dfae64` is failed, with15
+responses and8.4739172USD usage-price estimate. Identity/config complete; no
+memory command starts. All15 calls are Anthropic; fallback is held. Independent
+finance verification reproduces every charge and peak11.3562254USD commitment
+below hard13.25. The soft8 stop is enforced before further submission. Known
+cumulative estimates37.9204054 plus retained8.012607 leave24.0669876 under70;
+a further maximum28.50 cohort would plan74.4330124. Staged or lower-ceiling
+alternatives exist, but require a concrete new admission decision. No invoice
+completeness, reserve release or new paid authority is claimed.
+
+The read-only cleanup union finds all60 recorded PID/start identities gone,
+both exact fixture enrollments absent, and allthree owned ticks held at current
+cron SHA256 `872442c5f0ba78c73df77df7f95bf0236413b66ea0ce5d1830f976ddc1fdab6e`.
+Current hold: private-adoption-20261101/cohort-launch/scheduling-window.json.
+Never replay the previous hold marker. Failure/result and all cost records stay
+in their original directories.
+
+Free diagnosis confirms fresh config data reaches the model and archive joins
+remain correct; repeated config rereads are unexplained. Cache reads fall from
+356334 to944 when the stable automatic-cache tail is22 messages behind. The last
+three cache rewrites account for5.5213954USD, without proving server causation.
+The offline public-SDK CachePoint probe passes8 baseline/candidate pairs on both
+provider paths with16 local mock requests and0 external calls. It proves only
+serialization/content/placement feasibility. Product changes still require fresh
+framing/plan review and normal release checks; actual benefit/FULL remain unverified.
+
+Evidence root: private-adoption-20261101/failed-cohort/, including finance-verify,
+cleanup-observation, cache-diagnosis and cachepoint-probe. Current installations
+remain the genuine immutable0.70.0 candidate; no untagged source overlay is used.

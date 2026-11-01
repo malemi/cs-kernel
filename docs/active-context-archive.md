@@ -1,3 +1,38 @@
+## 2026-11-01 — Superseded cache-candidate authority and next steps
+
+- Independent finance verification gives cumulative estimates37.9204054 plus
+  retained uncertainty8.012607, leaving24.0669876USD under70. A new full28.50USD
+  cohort would plan74.4330124; no new paid authority or reserve release is inferred.
+  Current provider invoices and uncaptured classifier charges remain unverified.
+
+1. The [bootstrap-cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md)
+   has approved source and53 passing local controls. It preserves complete
+   context, model/permission/cost guards and disabled-cache behavior. It remains
+   unreleased and uninstalled; provider benefit and repeated-read cause are unknown.
+2. Complete scoped documentation/final review, then obtain explicit authority
+   for any new immutable private adoption and paid trial. No consumed FULL retry.
+3. Keep cap70 alternatives and maximum-cohort arithmetic clear; a new full
+   cohort plans74.4330124USD, while MrCall-only13.25 plans59.1830124USD.
+4. Require genuine BOTH FULL/signup, actual costs and cleanup, documentation
+   critic and final review. Baseline and protected goal acceptance remain open.
+
+## 2026-11-01 — Superseded completion refusal and cache investigation next steps
+
+- The existing completion record refuses closure after installed workflow hash
+  changes. Prior approvals and pending obligations remain retained; the installed
+  protocol supplies no documented same-task migration. Baseline advancement is
+  not claimed and runtime acceptance remains an independent requirement.
+
+1. Finish the bounded offline bootstrap-cache investigation. Actual cache reads
+   collapse after the stable automatic tail passes20 messages; provider causation
+   and the model's repeated config rereads remain qualified, not proven fixes.
+2. Prepare any in-scope correction through fresh brief/plan and code reviews;
+   preserve complete context, model/permission/cost guards and immutable releases.
+3. Obtain explicit new paid admission for a concrete corrected candidate. Keep
+   cap70 alternatives and maximum-cohort arithmetic clear; never retry consumed FULL.
+4. Require genuine BOTH FULL/signup, actual costs and cleanup, documentation
+   critic and final review. Baseline and protected goal acceptance remain open.
+
 ## 2026-11-01 — frozen private release before post-tag closure
 
 - **Latest release tag: `v0.70.0`; Current HEAD status: tagged as `v0.70.0`.**
@@ -8,6 +43,75 @@
   wheel. The corrected pre-release integrated suite passes. The original failed
   suite and the interrupted HEAD-wording failure remain retained separately.
   The mandatory at-tag suite and clean wheel equality proof are release gates.
+
+## 2026-11-01 — Superseded pre-cohort state
+
+- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) has explicit
+  operator authority for normal private release/adoption and one corrected cohort,
+  subject to reviewed installation and admission gates. Total API allowance70USD,
+  target8 and hard13.25USD per native job retain8.012607USD uncertainty; qualified
+  known estimates29.4464882 plus planned cohort28.50 leave4.0409048USD provisional.
+  Normal private adoption and lock-only rebuilding are verified on both clones.
+  Fresh M2/admission review remains required; no paid cohort or public push has run.
+
+
+## Next
+
+1. Complete fresh actual M2 installation/consumer review; M1 release review and
+   both installed lock-only rebuilds are complete. Preserve the public-push ban.
+2. Bind the actual installed producer/consumer and obtain admission review before
+   the single corrected cohort.
+3. Require genuine BOTH FULL/signup, actual known/uncertain costs and owned
+   cleanup. Keep historical failed runs rejected and avoid identical paid retries.
+4. Reconcile final docs and reviews before baseline advancement. Preserve the
+   existing workflow-hash closure blocker without repairing kit state here.
+
+## 2026-11-01 — Superseded installed identity before private F/P adoption
+
+## State now
+
+- **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**
+  This immutable private candidate is unpublished. Both live clones retain
+  installed `v0.69.1`; genuine BOTH FULL/signup acceptance remains unmet.
+- Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
+  private release. All166 cs files and LICENSE match Git, retained D3 and the
+  clean0.70.0 wheel. Dependencies are unchanged; only distribution version,
+  dist-info paths and RECORD differ from the D3 verification wheel.
+  The corrected pre-release and mandatory exact-tag integrated suites both pass.
+  Original failures and the interrupted HEAD-wording failure remain retained
+  separately. Package evidence does not establish clone or business acceptance.
+- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) has explicit
+  operator authority for normal private release/adoption and one corrected cohort,
+  subject to reviewed installation and admission gates. Total API allowance70USD,
+  target8 and hard13.25USD per native job retain8.012607USD uncertainty; qualified
+  known estimates29.4464882 plus planned cohort28.50 leave4.0409048USD provisional.
+  No paid admission, clone mutation or public push is established by this release.
+- Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
+  source case returns three complete human-hold observations and
+  `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
+  the historical failed FULL or prove whole-inventory/model acceptance.
+- Three original owned future-tick cron holds remain intact. The read-only goal
+  checker retains real rejection and isolated runtime evidence; whole-checker
+  positive feasibility remains unapproved and grants no operational acceptance.
+
+Durable platform contracts remain in the [kernel charter](kernel-charter.md),
+[operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
+[assignments](task-assignment.md) and [draft lifecycle](draft-lifecycle.md).
+Historical deployment observations are retained in the archive; this diagnostic
+candidate does not re-audit those deployments or grant new send authority.
+
+
+
+## Next
+
+1. Complete private release verification and fresh M1 integration review before
+   clone adoption; preserve the public-push ban.
+2. Verify normal installation and lock-only rebuilds on both clones, then bind
+   the actual producer/consumer and obtain admission review before one cohort.
+3. Require genuine BOTH FULL/signup, actual known/uncertain costs and owned
+   cleanup. Keep historical failed runs rejected and avoid identical paid retries.
+4. Reconcile final docs and reviews before baseline advancement. Preserve the
+   existing workflow-hash closure blocker without repairing kit state here.
 
 ## 2026-11-01 — state before private v0.70.0 release
 

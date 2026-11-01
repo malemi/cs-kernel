@@ -347,6 +347,7 @@ class ExecutorRuntime:
 
     async def run(self, prompt: str, *, model=None):
         from pydantic_ai import Agent, Tool
+        from pydantic_ai.messages import CachePoint
         from pydantic_ai.usage import UsageLimits
         from .operator_inventory_view import source_identity
         terminal, diagnostic, completed = 'failed', None, False
@@ -395,8 +396,9 @@ class ExecutorRuntime:
                 'Model completion is separate from workflow, health and acceptance outcomes.',
                 model_settings=executor_model_settings(c))
             initial = canonical({'executor_bootstrap': bootstrap, 'operator_prompt': prompt}).decode()
+            initial_prompt = [initial, CachePoint(ttl='5m')] if c.cache_mode == '5m' else initial
             async with asyncio.timeout(c.remaining_seconds()):
-                await agent.run(initial, usage_limits=UsageLimits(request_limit=c.max_requests), retries=0)
+                await agent.run(initial_prompt, usage_limits=UsageLimits(request_limit=c.max_requests), retries=0)
             completed = True
             self.tools.effects_allowed(final=True)
             terminal = 'completed'

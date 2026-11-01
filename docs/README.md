@@ -1,5 +1,7 @@
 # Transversal Documentation Index
 
+- [Executor bootstrap cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md) — conditional stable cache point, offline transport proof and pending installed/provider acceptance; [brief](briefs/2026-11-01-executor-bootstrap-cache.md).
+
 - [Private F/P release and installed acceptance](execution-plans/2026-11-01-private-fp-adoption.md) — immutable private release, normal clone adoption and genuine acceptance gates; [brief](briefs/2026-11-01-private-fp-adoption.md).
 
 - [Operational logs and manual diagnosis](operator-observability.md) — DEBUG-first logs, ten-minute filesystem problems and the manually invoked `cs-diagnose` skill; [delivery plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md).

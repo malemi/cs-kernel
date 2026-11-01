@@ -15,28 +15,39 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**
-  This immutable private candidate is unpublished. Both live clones retain
-  installed `v0.69.1`; genuine BOTH FULL/signup acceptance remains unmet.
+  This immutable private candidate is unpublished. Both live clones install
+  `v0.70.0` from the exact immutable Git commit; all166 cs files and complete
+  lock-only rebuilds pass. Genuine BOTH FULL/signup acceptance remains unmet.
 - Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
   private release. All166 cs files and LICENSE match Git, retained D3 and the
-  clean0.70.0 wheel. Dependencies are unchanged; only distribution version,
+  clean0.70.0 wheel. Kernel dependency declarations are unchanged; only distribution version,
   dist-info paths and RECORD differ from the D3 verification wheel.
   The corrected pre-release and mandatory exact-tag integrated suites both pass.
   Original failures and the interrupted HEAD-wording failure remain retained
-  separately. Package evidence does not establish clone or business acceptance.
-- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) has explicit
-  operator authority for normal private release/adoption and one corrected cohort,
-  subject to reviewed installation and admission gates. Total API allowance70USD,
-  target8 and hard13.25USD per native job retain8.012607USD uncertainty; qualified
-  known estimates29.4464882 plus planned cohort28.50 leave4.0409048USD provisional.
-  No paid admission, clone mutation or public push is established by this release.
+  separately. MrCall adds only its two pre-existing missing declared dependencies at3.3.6;
+  all previous nonkernel versions and origins are preserved. Its first lock
+  mismatch, verified rollback and guarded repair remain retained. Package
+  evidence does not establish business acceptance.
+- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) passes
+  M1/M2 and actual normal producer validation. The single authorized corrected
+  cohort is FAILED: MrCall reaches soft8 after15 responses with8.4739172USD
+  usage-price estimate; Cafe/signup jobs did not start. Hard13.25 is respected,
+  transport uncertainty and outstanding requests are0. All60 recorded processes
+  are gone, both exact enrollments are absent and three owned ticks stay held.
+- Independent finance verification gives cumulative estimates37.9204054 plus
+  retained uncertainty8.012607. The operator authorizes private cache-candidate
+  adoption and a genuinely new corrected cohort, with greater spending to finish.
+  Lead operating limits are aggregate85USD, native target8/hard13.25 and signup2.
+  A new full28.50USD cohort plans74.4330124, leaving10.5669876USD. Provider
+  invoices and uncaptured classifier charges remain unverified; no reserve release.
 - Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
   source case returns three complete human-hold observations and
   `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
   the historical failed FULL or prove whole-inventory/model acceptance.
-- Three original owned future-tick cron holds remain intact. The read-only goal
-  checker retains real rejection and isolated runtime evidence; whole-checker
-  positive feasibility remains unapproved and grants no operational acceptance.
+- Three owned future-tick cron holds are active after failed-cohort cleanup. The read-only goal
+  checker has reviewed isolated positive feasibility and real-failure rejection.
+  Missing PID, cost or closure controls also reject. This structural proof grants
+  no operational acceptance.
 
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
 [operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
@@ -46,10 +57,15 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
-- The existing completion record refuses closure after installed workflow hash
-  changes. Prior approvals and pending obligations remain retained; the installed
-  protocol supplies no documented same-task migration. Baseline advancement is
-  not claimed and runtime acceptance remains an independent requirement.
+- Protected goal-client inspect exceeds its4MiB response bound; the service has
+  no compact inspect request. A stale generation prevents reporting with the old
+  token. Final protected acceptance remains unverified; client/service guards
+  are unchanged. Both clone harness checks separately retain the pre-existing
+  legacy-or-foreign CLAUDE entry violation. No baseline advancement is claimed.
+- The existing completion record accepts current lead startup attestation. Its
+  remaining obligations include refreshed documentation/focused evidence, M5 and
+  final review. Historical workflow-hash refusals remain retained; no reset or
+  migration is performed. Baseline advancement and runtime acceptance stay open.
 - Genuine strict BOTH-clone FULL and signup remain required. Publication and
   public Git installation proof await separate explicit authority. Failed runs
   and uncertain charges/effects remain retained; a component read certifies no FULL.
@@ -73,11 +89,13 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Complete private release verification and fresh M1 integration review before
-   clone adoption; preserve the public-push ban.
-2. Verify normal installation and lock-only rebuilds on both clones, then bind
-   the actual producer/consumer and obtain admission review before one cohort.
-3. Require genuine BOTH FULL/signup, actual known/uncertain costs and owned
-   cleanup. Keep historical failed runs rejected and avoid identical paid retries.
-4. Reconcile final docs and reviews before baseline advancement. Preserve the
-   existing workflow-hash closure blocker without repairing kit state here.
+1. The [bootstrap-cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md)
+   has approved source and53 passing local controls. Private0.70.1 packaging,
+   normal adoption and one corrected cohort are authorized; unchanged guards,
+   stop-first behavior and exact cleanup remain required.
+2. Complete release/installed/admission gates using retained valid evidence and
+   new exact artifacts, then genuine MrCall FULL → Cafe FULL → signup. Never
+   resume or reset either consumed FULL attempt or message the supervisor.
+3. Reconcile actual new cache usage, costs, effects and owned cleanup, then M5,
+   documentation critic and separate final review. Baseline/protected acceptance
+   remain open until actual prerequisites pass.

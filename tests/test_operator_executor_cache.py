@@ -17,7 +17,7 @@ from pydantic_ai.models import ModelRequestParameters
 from pydantic_ai.usage import RequestUsage
 from cs import operator_executor as executor
 from cs.operator_executor_config import Admission,AdmissionError,ExecutorConfig
-from cs.operator_executor_protocol import decode
+from cs.operator_executor_protocol import canonical,decode,parse_journal
 from test_operator_executor import ExecutorTests
 
 models.ALLOW_MODEL_REQUESTS=False
@@ -101,6 +101,81 @@ class CacheTests(ExecutorTests):
 
     def test_openrouter_actual_sdk_two_turn_cache_write_read(self):
         self.two_turns('openrouter')
+
+    def test_runtime_bootstrap_cache_point_survives_long_tool_history(self):
+        for provider in ('anthropic','openrouter'):
+            for enabled in (True,False):
+                with self.subTest(provider=provider,cache=enabled):
+                    value=self.config_with_cache(provider).model_dump(mode='json')
+                    if not enabled:value['cache_mode']='disabled'
+                    value['journal_path']=str(self.private/(provider+str(enabled)+'.jsonl'))
+                    config=ExecutorConfig.model_validate(value)
+                    runtime=executor.ExecutorRuntime(config)
+                    bodies=[];bootstrap=[]
+                    original_bootstrap=runtime.tools.bootstrap
+                    def capture_bootstrap():
+                        result=original_bootstrap();bootstrap.append(copy.deepcopy(result))
+                        return result
+                    async def transport(request):
+                        bodies.append(decode(request.content))
+                        turn=len(bodies)
+                        content=([dict(type='tool_use',id='pause-'+str(turn),name='pause_status',input={})]
+                            if turn<=12 else [dict(type='text',text='Local transport fixture only')])
+                        return httpx2.Response(200,json=dict(id='runtime-'+str(turn),type='message',role='assistant',
+                            model='fixture-model',content=content,stop_reason='tool_use' if turn<=12 else 'end_turn',
+                            usage=dict(input_tokens=20,output_tokens=1)))
+                    original=httpx2.AsyncClient
+                    class Client(original):
+                        def __init__(self,*args,**kwargs):
+                            kwargs['transport']=httpx2.MockTransport(transport)
+                            super().__init__(*args,**kwargs)
+                    with patch.dict(os.environ,{config.api_key_env:'fixture-cache-key'}), \
+                            patch('socket.socket.connect',side_effect=AssertionError('network disabled')), \
+                            patch('socket.socket.connect_ex',side_effect=AssertionError('network disabled')), \
+                            patch('socket.getaddrinfo',side_effect=AssertionError('network disabled')), \
+                            patch('httpx2.AsyncClient',Client), \
+                            patch.object(runtime.tools,'bootstrap',side_effect=capture_bootstrap), \
+                            patch('pydantic_ai.models.anthropic.check_allow_model_requests',lambda:None):
+                        terminal=asyncio.run(runtime.run('Transport-only fixture Ω'))
+                    self.assertEqual(terminal,'held')
+                    self.assertEqual(len(bodies),13)
+                    self.assertGreater(len(bodies[-1]['messages']),20)
+                    expected=canonical(dict(executor_bootstrap=bootstrap[0],operator_prompt='Transport-only fixture Ω')).decode()
+                    def points(value):
+                        found=[]
+                        if isinstance(value,dict):
+                            if 'cache_control' in value:found.append(value['cache_control'])
+                            for item in value.values():found.extend(points(item))
+                        elif isinstance(value,list):
+                            for item in value:found.extend(points(item))
+                        return found
+                    from cs.operator_executor_evidence import page_archive_maps
+                    rows=[r.payload for r in parse_journal(Path(config.journal_path))]
+                    requests=[r for r in rows if r.kind=='model_request']
+                    submissions=[r for r in rows if r.kind=='provider_submission']
+                    responses=[r for r in rows if r.kind=='model_response']
+                    self.assertEqual([r.request_id for r in requests],[r.request_id for r in submissions])
+                    self.assertEqual([r.request_id for r in requests],[r.request_id for r in responses])
+                    self.assertTrue(all(r.status=='ok' for r in responses))
+                    for index,body in enumerate(bodies):
+                        blocks=body['messages'][0]['content']
+                        self.assertEqual([b['text'] for b in blocks],[expected])
+                        self.assertEqual(blocks[0].get('cache_control'),dict(type='ephemeral',ttl='5m') if enabled else None)
+                        markers=points(body)
+                        self.assertEqual(bool(markers),enabled)
+                        self.assertLessEqual(len(markers),4)
+                        self.assertTrue(all(p==dict(type='ephemeral',ttl='5m') for p in markers))
+                        self.assertEqual(body['messages'][1::2],[
+                            dict(role='assistant',content=[dict(type='tool_use',id='pause-'+str(n),name='pause_status',input={})])
+                            for n in range(1,index+1)])
+                        sdk=decode(Path(requests[index].messages.path).read_bytes())
+                        self.assertEqual(page_archive_maps(sdk),page_archive_maps(body))
+                        self.assertEqual(len(Path(submissions[index].body.path).read_bytes())+1024<=requests[index].input_token_estimate,True)
+                    end=rows[-1]
+                    self.assertEqual(end.outstanding_request_ids,[])
+                    self.assertEqual(end.outstanding_tool_ids,[])
+                    self.assertEqual(Decimal(end.uncertain_cost_usd),0)
+                    self.assertIn('incomplete_workflow_phases',end.diagnostic.observed)
 
     def test_actual_sdk_unsupported_one_hour_write_retains_reservation(self):
         self.two_turns('anthropic',invalid=True)

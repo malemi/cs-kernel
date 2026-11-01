@@ -86,3 +86,4 @@ work and gets its own `OPEN` entry above; `keep whole` carries its reason.
 | docs/operator-observability.md | 415 | keep whole — one producer, propagation and manual diagnosis contract; read by section | 2026-10-27 |
 | docs/execution-plans/2026-10-25-canonical-release-alignment.md | 914 | keep whole — existing release recovery plan and immutable failed-case decisions; read current acceptance and bounded continuation by section | 2026-10-25 |
 | docs/briefs/2026-10-25-canonical-release-alignment.md | 494 | keep whole — the existing reviewed release brief and bounded continuations; read by acceptance section | 2026-10-26 |
+| docs/execution-plans/2026-10-29-executor-first-cause-diagnostics.md | 483 | keep whole — one retained diagnostic and bounded-history workstream; read by milestone | 2026-11-01 |
