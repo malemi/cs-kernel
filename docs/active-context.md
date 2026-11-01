@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.70.1`; Current HEAD status: tagged as `v0.70.1`.**
+- **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**
   This immutable private cache candidate is unpublished. Both maintained clones
   still install `v0.70.0`; new cache bytes await normal adoption and verification.
   Genuine BOTH FULL/signup acceptance remains unmet.

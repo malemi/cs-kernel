@@ -84,6 +84,7 @@ HEAD_TAGGED_RE = re.compile(
 # Frozen but unpublished candidates are not required public Git refs.
 # Preserve their objects whenever these exact local refs are available.
 LOCAL_CANDIDATE_TARGETS = {
+    "v0.70.1": "bb29c7928be66279b67cf6b451c6b0992dd85ac6",
     "v0.70.0": "85d429d76e9e4d24da8803dba085f94643caaa08",
     "v0.69.1": "782f0e775cb9e2ecb45ddcae85b457b838ff1fdf",
     "v0.69.0": "cb7d11de866ed74afb6f31715aa48bd6980317c9",
