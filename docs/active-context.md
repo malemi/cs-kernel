@@ -14,10 +14,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**
-  This immutable private candidate is unpublished. Both live clones install
-  `v0.70.0` from the exact immutable Git commit; all166 cs files and complete
-  lock-only rebuilds pass. Genuine BOTH FULL/signup acceptance remains unmet.
+- **Latest release tag: `v0.70.1`; Current HEAD status: tagged as `v0.70.1`.**
+  This immutable private cache candidate is unpublished. Both maintained clones
+  still install `v0.70.0`; new cache bytes await normal adoption and verification.
+  Genuine BOTH FULL/signup acceptance remains unmet.
 - Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
   private release. All166 cs files and LICENSE match Git, retained D3 and the
   clean0.70.0 wheel. Kernel dependency declarations are unchanged; only distribution version,

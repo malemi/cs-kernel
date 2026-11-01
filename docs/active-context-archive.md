@@ -1,3 +1,10 @@
+## 2026-11-01 — Superseded pre-cache private release state
+
+- **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**
+  This immutable private candidate is unpublished. Both live clones install
+  `v0.70.0` from the exact immutable Git commit; all166 cs files and complete
+  lock-only rebuilds pass. Genuine BOTH FULL/signup acceptance remains unmet.
+
 ## 2026-11-01 — Superseded cache-candidate authority and next steps
 
 - Independent finance verification gives cumulative estimates37.9204054 plus

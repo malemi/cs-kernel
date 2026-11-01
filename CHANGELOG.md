@@ -1,5 +1,24 @@
 # Changelog — cs-kernel
 
+## v0.70.1 — 2026-11-01 (PATCH, private unpublished candidate)
+
+Keep an explicit5m SDK cache point after the complete immutable scheduled
+executor bootstrap. Later tool-page archival preserves this stable prefix
+instead of relying only on a moving automatic cache tail. The complete prompt,
+message chronology, tool schemas, archive witnesses and actual serialized-input
+admission remain unchanged. Disabled caching keeps its original request.
+
+No CLI, manifest, dependency, model, pricing, permission or business-guard change.
+Normal immutable-tag installation and exact lock-only rebuilds are required;
+never patch an installed package or resume a consumed failed attempt. Local
+transport controls establish placement, not provider hits, savings or completion.
+
+**Re-collaudo tier: +live read-only on BOTH maintained clones.** This transport
+hint changes no guarded send/auth surface. The separate restoration mandate
+still requires genuine BOTH FULL and signup acceptance on the corrected installed
+bytes before operational sign-off. This private candidate is unpublished; no
+public push or public Git provenance is claimed.
+
 ## v0.70.0 — 2026-11-01 (MINOR, private unpublished candidate)
 
 Stop scheduled executor model and tool work after a validated technical discovery
