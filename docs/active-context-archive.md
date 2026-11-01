@@ -1,3 +1,19 @@
+## 2026-11-01 — Tagged candidate before registry and funding revision
+
+- **Latest release tag: `v0.71.0`; Current HEAD status: tagged as `v0.71.0`.**
+  Both maintained clones still install immutable private `v0.70.1` at
+  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`, with all166 package files and
+  complete95/58 distribution rebuilds verified. The reviewed1h candidate awaits
+  normal0.71.0 adoption and genuine BOTH FULL/signup acceptance. Public provenance
+  remains unmet; no public push or protected-checker change is performed.
+
+- Qualified committed estimates, captured engine delta and retained uncertainty
+  total54.0427724USD. The lead selects finite aggregate95, native target12/hard16,
+  signup2 and at most one new34USD cohort under the operator's broader spending
+  authorization. Worst-case planning is88.0427724, leaving6.9572276USD. These
+  bounds require fresh candidate/admission review before execution. Provider
+  invoices and uncaptured/external charges remain unknown; no reserve is released.
+
 ## 2026-11-01 — Before the one-hour private release
 
 - **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**

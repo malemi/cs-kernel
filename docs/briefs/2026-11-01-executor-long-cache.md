@@ -50,7 +50,7 @@ content, prompts, SDK versions or models change. No site-packages/source overrid
 
 The operator explicitly authorizes finishing, dependencies and greater spending,
 while forbidding token waste and supervisor communication. Adopt lead operating
-ceilings of aggregate95USD, target12/hard16 per native job, signup2, and at most
+ceilings of aggregate95USD, target10/hard18.25 per native job, signup2, and at most
 one genuinely new sequential MrCall FULL -> Cafe FULL -> signup cohort after
 reviewed free checks and admission. This is a budget adjustment, not permission
 to weaken business, source, ownership, coverage or acceptance guards. No public
@@ -59,8 +59,8 @@ No paid admission occurs merely because this brief exists.
 
 Independently verified committed basis is37.9204054 historical estimates plus
 8.0846050 new native estimates plus8.012607 retained uncertainty =54.0176174USD.
-A full worst-case new cohort16+16+2=34USD plans88.0176174USD: above85 by3.0176174,
-below95 by6.9823826. Neither these estimates nor the prior reserve establish
+A full worst-case new cohort18.25+18.25+2=38.50USD plans92.5176174USD: above85 by7.5176174,
+below95 by2.4823826. Neither these estimates nor the prior reserve establish
 invoice completeness. Refresh only newly consequential authorized accounting
 coverage once before admission; preserve missing/external/classifier coverage.
 Higher limits alone are not the correction:1h wire/pricing/accounting support
@@ -108,13 +108,33 @@ paid admission. Existing private tags and consumed attempts remain untouched.
 
 The one-per-clone normal engine accounting refresh at2026-11-01T20:58:34Z
 adds0.025155USD endpoint spend (support3calls, Cafe0) to the pre-refresh basis
-above. Current qualified committed54.0427724 plus34 plans88.0427724, leaving
-6.9572276 below the lead-selected95 ceiling. Exact per-task attribution of the
+above. Current qualified committed54.0427724 plus38.50 plans92.5427724, leaving
+2.4572276 below the lead-selected95 ceiling. Exact per-task attribution of the
 endpoint delta remains unknown; it is included conservatively. Active reserves
 are0 at both captured endpoints; stale holds remain unchanged and are not
 released or counted twice. No invoice completeness or zero external charges is
 inferred. Q/accounting-refresh/snapshot.md retains the finance-only verifier's
-proposal wording; Q/authorization.json separately records the operator's actual
+proposal wording; Q/authorization-admission-r1.json separately records the operator's actual
 broad authorization and the lead's finite selected bounds. This checkpoint
 changes no approved scope or business guard and grants no paid admission.
 Here Q is the executor-long-cache-20261101 evidence root named by the plan.
+
+## Admission-reserve sizing correction
+
+The free verification admission-sizing-verification.md establishes that hard16
+can refuse a1h request below the proposed soft12. For both retained primary
+configurations, context1,000,000 and output8,192 give maximum reserve8.098304USD
+at conservative input8/output20 per million. No output or coverage is reduced.
+The revised target10/hard18.25 funds that maximum while spend is below10, with
+0.151696USD additional headroom; the normal soft stop still applies at10 and
+unknown primary reservations remain fully retained on fallback. Actual Admission
+probes and exact arithmetic are in admission-sizing-alternative.md/json.
+
+These limits supersede the earlier unadmitted12/16/34 proposal. The aggregate95
+ceiling and one-new-cohort allowance remain unchanged. Maximum38.50 plus current
+qualified54.0427724 gives92.5427724 and margin2.4572276. This is not a promise of
+full-job cost/completion or invoice completeness. Preserve the earlier approvals,
+authority record, source reviews and failed runs. No financial configuration or
+paid admission is changed before fresh brief/plan review and the explicit R7
+acceptance-scope prerequisite. This amendment is prepared outside K while the
+exact tagged-state suite runs; apply approved canonical docs only afterward.

@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.71.0`; Current HEAD status: tagged as `v0.71.0`.**
+- **Latest release tag: `v0.71.0`; Current HEAD status: untagged.**
   Both maintained clones still install immutable private `v0.70.1` at
   `bb29c7928be66279b67cf6b451c6b0992dd85ac6`, with all166 package files and
   complete95/58 distribution rebuilds verified. The reviewed1h candidate awaits
@@ -37,9 +37,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   cache eviction remains unknown. [Longer cache work](briefs/2026-11-01-executor-long-cache.md)
   adds explicit1h support with correct accounting before any further paid run.
 - Qualified committed estimates, captured engine delta and retained uncertainty
-  total54.0427724USD. The lead selects finite aggregate95, native target12/hard16,
-  signup2 and at most one new34USD cohort under the operator's broader spending
-  authorization. Worst-case planning is88.0427724, leaving6.9572276USD. These
+  total54.0427724USD. The lead selects finite aggregate95, native target10/hard18.25,
+  signup2 and at most one new38.50USD cohort under the operator's broader spending
+  authorization. Worst-case planning is92.5427724, leaving2.4572276USD. These
   bounds require fresh candidate/admission review before execution. Provider
   invoices and uncaptured/external charges remain unknown; no reserve is released.
 - Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
@@ -68,7 +68,9 @@ candidate does not re-audit those deployments or grant new send authority.
   no compact inspect request. A stale generation prevents reporting with the old
   token. Final protected acceptance remains unverified; client/service guards
   are unchanged. Both clone harness checks separately retain the pre-existing
-  legacy-or-foreign CLAUDE entry violation. No baseline advancement is claimed.
+  legacy-or-foreign CLAUDE entry violation. The retirement proposal is withdrawn
+  pending native-entry compatibility: Cafe has an ancestor CLAUDE file. Both
+  bootstrap imports remain intact. No baseline advancement is claimed.
 - The existing completion record accepts current lead startup attestation. Its
   remaining obligations include refreshed documentation/focused evidence, M5 and
   final review. Historical workflow-hash refusals remain retained; no reset or
