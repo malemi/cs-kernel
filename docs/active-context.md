@@ -14,11 +14,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**
-  Both maintained clones install the exact immutable private tag at
-  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`. All166 installed/wheel/Git files
-  match, as do both complete lock-only rebuilds and95/58 distribution sets.
-  Public provenance and genuine BOTH FULL/signup acceptance remain unmet.
+- **Latest release tag: `v0.71.0`; Current HEAD status: tagged as `v0.71.0`.**
+  Both maintained clones still install immutable private `v0.70.1` at
+  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`, with all166 package files and
+  complete95/58 distribution rebuilds verified. The reviewed1h candidate awaits
+  normal0.71.0 adoption and genuine BOTH FULL/signup acceptance. Public provenance
+  remains unmet; no public push or protected-checker change is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
   explicit5m point after the full immutable bootstrap. Compared with0.70.0,
   only the approved executor module changes. No dependency, model, price,

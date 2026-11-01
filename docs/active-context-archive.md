@@ -1,3 +1,11 @@
+## 2026-11-01 — Before the one-hour private release
+
+- **Latest release tag: `v0.70.1`; Current HEAD status: untagged.**
+  Both maintained clones install the exact immutable private tag at
+  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`. All166 installed/wheel/Git files
+  match, as do both complete lock-only rebuilds and95/58 distribution sets.
+  Public provenance and genuine BOTH FULL/signup acceptance remain unmet.
+
 ## 2026-11-01 — Before source-control integration approval
 
 1. Complete fresh reviewed1h cache planning, implementation and exact usage/

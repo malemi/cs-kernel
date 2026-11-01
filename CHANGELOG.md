@@ -1,5 +1,26 @@
 # Changelog — cs-kernel
 
+## v0.71.0 — 2026-11-01 (MINOR, private unpublished candidate)
+
+Add explicit one-hour executor caching with reviewed one-hour write pricing,
+conservative request reservations and exact inclusive-creation/subset accounting.
+Uniform SDK instruction, tool, automatic and immutable-bootstrap cache markers
+bind to the selected duration. Missing or conflicting raw usage splits retain
+uncertainty. Disabled and five-minute requests keep their existing behavior.
+
+Validate recorded SDK settings before both normal and prework fallback admission.
+The existing separately configured fallback remains disabled/five-minute;
+requested one-hour fallback refuses before intake. Legacy four-rate canonical
+pricing remains compatible. No dependency, SDK/model, prompt, source authority,
+workflow coverage, IMAP, send permission or business-guard change is included.
+
+**Re-collaudo tier: FULL on BOTH maintained clones.** Execution accounting and
+independent acceptance evidence change. Normal immutable installation, complete
+package/lock provenance and genuine BOTH FULL/signup remain required. This is a
+private prepublication candidate; source/SDK/Python3.11 controls do not establish
+provider savings, operational acceptance or public Git provenance. No public
+push or protected-checker change is part of this release.
+
 ## v0.70.1 — 2026-11-01 (PATCH, private unpublished candidate)
 
 Keep an explicit5m SDK cache point after the complete immutable scheduled
