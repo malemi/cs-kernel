@@ -14,14 +14,16 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.70.0`; Current HEAD status: tagged as `v0.70.0`.**
+- **Latest release tag: `v0.70.0`; Current HEAD status: untagged.**
   This immutable private candidate is unpublished. Both live clones retain
   installed `v0.69.1`; genuine BOTH FULL/signup acceptance remains unmet.
 - Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
-  private release, with all166 cs files identical to the retained D3 verification
-  wheel. The corrected pre-release integrated suite passes. The original failed
-  suite and the interrupted HEAD-wording failure remain retained separately.
-  The mandatory at-tag suite and clean wheel equality proof are release gates.
+  private release. All166 cs files and LICENSE match Git, retained D3 and the
+  clean0.70.0 wheel. Dependencies are unchanged; only distribution version,
+  dist-info paths and RECORD differ from the D3 verification wheel.
+  The corrected pre-release and mandatory exact-tag integrated suites both pass.
+  Original failures and the interrupted HEAD-wording failure remain retained
+  separately. Package evidence does not establish clone or business acceptance.
 - [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) has explicit
   operator authority for normal private release/adoption and one corrected cohort,
   subject to reviewed installation and admission gates. Total API allowance70USD,

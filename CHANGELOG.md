@@ -721,6 +721,9 @@ Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
 **Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-01): **`v0.69.1`**.
+
+**Historical v0.68.0 adoption record:**
+
 Both maintained clones install immutable local candidate `v0.68.0`; all166package
 files and lock-only rebuilds pass. The first real68FULL fails before fixtures/jobs
 because Cafe's externally changed engine family lacks a matching approved binding.

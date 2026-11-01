@@ -119,9 +119,12 @@ publication/provenance remains outside this private approval.
 - M1 is in progress. The first suite was interrupted after release gate15
   rejected the living-context HEAD marker. The exact marker was repaired,
   the prior paragraph was archived verbatim, and the focused release check
-  passed. The corrected pre-release integrated suite completed exit0 with all
-  gates green. The mandatory at-tag suite, M1 review and private0.70.0
-  installation remain pending. Receipts are in
+  passed. Both the corrected pre-release and mandatory exact-tag integrated
+  suites completed exit0 with all gates green. The private immutable release is
+  `v0.70.0`, commit `85d429d76e9e4d24da8803dba085f94643caaa08`;
+  all166 cs files match D3 and its wheel. The post-tag registry commit and fresh
+  M1 review are being finalized; private0.70.0 installation remains pending.
+  Receipts are in
   `private-adoption-20261101/m1/` under the evidence root.
 - The adoption helper and policy binder have a fresh APPROVED artifact-fitness
   review in `helper-evidence/integration-review.md`. Actual M1 release and M2

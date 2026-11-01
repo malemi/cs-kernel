@@ -1,3 +1,14 @@
+## 2026-11-01 — frozen private release before post-tag closure
+
+- **Latest release tag: `v0.70.0`; Current HEAD status: tagged as `v0.70.0`.**
+  This immutable private candidate is unpublished. Both live clones retain
+  installed `v0.69.1`; genuine BOTH FULL/signup acceptance remains unmet.
+- Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
+  private release, with all166 cs files identical to the retained D3 verification
+  wheel. The corrected pre-release integrated suite passes. The original failed
+  suite and the interrupted HEAD-wording failure remain retained separately.
+  The mandatory at-tag suite and clean wheel equality proof are release gates.
+
 ## 2026-11-01 — state before private v0.70.0 release
 
 ## State now
