@@ -76,6 +76,82 @@ def inbound(key=KEY, *, mid="<in@customer.example>", date=NOW):
 
 
 class Consumer(unittest.TestCase):
+    def test_account_failure_diagnostics_preserve_business_projection_and_read_counts(self):
+        from cs import observability_producers, rpc_reads
+        selected = settings().model_copy(update={"accounts": "peer:peer"})
+        for failed_uid in ("operator", "peer"):
+            for mode in ("SOURCE_UNAVAILABLE", "REPLY_SOURCE_UNAVAILABLE", "SOURCE_OWNER_REQUIRED",
+                         "unknown", "transport", "invalid", "remote"):
+                calls, events = [], []
+                def call(account, method, params, timeout=60):
+                    uid = account.engine_owner_uid
+                    calls.append(uid)
+                    if uid != failed_uid:
+                        return projection() | {"actor_uid": uid}
+                    if mode == "transport":
+                        raise ConnectionError("PRIVATE_EXCEPTION")
+                    if mode == "remote":
+                        raise rpc.EngineError(-32602, "PRIVATE_EXCEPTION")
+                    if mode == "invalid":
+                        return {"private": "PRIVATE_RESPONSE"}
+                    return projection("unknown", complete=False) | {"actor_uid": uid,
+                        "reason": "PRIVATE_REASON" if mode == "unknown" else mode}
+                def many(account, method, requests, **kwargs):
+                    outcomes = {}
+                    for key, params in requests.items():
+                        try:
+                            outcomes[key] = rpc_reads.ReadOutcome(value=call(account, method, params))
+                        except Exception as exc:
+                            outcomes[key] = rpc_reads.ReadOutcome(error=exc)
+                    return outcomes
+                with self.subTest(account=failed_uid, mode=mode), patch.object(config, "load", side_effect=lambda **kw: selected.model_copy(update=kw)), patch.object(rpc, "call_sync", side_effect=call), patch.object(rpc_reads, "read_many", side_effect=many), patch.object(observability_producers, "emit", side_effect=lambda *args, **kw: events.append(kw)):
+                    for batched in (False, True):
+                        calls.clear()
+                        events.clear()
+                        actual = assignment.projections(selected, [KEY])[KEY] if batched else assignment.project(selected, KEY)
+                        invalid_primary = failed_uid == "operator" and mode in {"transport", "invalid", "remote"}
+                        expected = assignment._unknown(KEY, "ignored", owner_uid="operator") if invalid_primary else projection("unknown", complete=False)
+                        if failed_uid == "peer" and not invalid_primary:
+                            expected["actor_uid"] = "operator"
+                        expected.pop("reason")
+                        self.assertEqual({k: v for k, v in actual.items() if k != "reason"}, expected)
+                        account = "primary account" if failed_uid == "operator" else "peer account 'peer'"
+                        cause = {"transport": "transport_unavailable", "invalid": "projection_invalid",
+                                 "remote": "remote_invalid_params", "unknown": "unknown (upstream detail unavailable)"}.get(mode, mode)
+                        self.assertIn(account, actual["reason"])
+                        self.assertIn(cause, actual["reason"])
+                        self.assertNotIn("PRIVATE_", actual["reason"])
+                        self.assertIn(cause, assignment.render(actual))
+                        expected_reads = 2 if batched and mode == "SOURCE_UNAVAILABLE" else 1
+                        self.assertEqual(calls.count(failed_uid), expected_reads)
+                        observations = [event for event in events if event.get("causal", {}).get("check") == "assignment_peer_projection"]
+                        self.assertEqual(len(observations), expected_reads)
+
+    def test_render_reuses_safe_root_fingerprint_and_only_existing_valid_references(self):
+        from cs import observability, observability_producers
+        row = projection("unknown", complete=False) | {"reason": "SOURCE_UNAVAILABLE"}
+        original = copy.deepcopy(row)
+        trace, run = "a" * 32, "b" * 32
+        with patch.object(observability, "current_context", return_value={"trace_id": trace, "run_id": run}), patch.object(observability_producers, "emit") as emit:
+            rendered = assignment.render(row)
+            self.assertIn(f"root_sha256={observability.safe_metadata({'root_id': KEY})['root_id']}", rendered)
+            self.assertIn(f"trace_id={trace} run_id={run}", rendered)
+            self.assertNotIn(KEY, rendered.split("; diagnostic refs: ", 1)[1])
+            self.assertNotEqual(rendered, assignment.render(row | {"thread_key": OTHER}))
+            emit.assert_not_called()
+        with patch.object(observability, "current_context", return_value={"trace_id": "PRIVATE_REFERENCE"}):
+            rendered = assignment.render(row)
+            self.assertIn("trace_id=unavailable run_id=unavailable", rendered)
+            self.assertNotIn("PRIVATE_REFERENCE", rendered)
+            self.assertIn("root_sha256=unavailable", assignment.render(row | {"thread_key": None}))
+        self.assertEqual(row, original)
+        self.assertEqual(assignment._account_context("operator", "peer", "peer"), "peer account 'peer'")
+
+    def test_named_business_hold_reason_survives_account_aggregation(self):
+        row = projection("needs-assignment", complete=False) | {"reason": "NEEDS_HUMAN_VERIFICATION"}
+        with patch.object(rpc, "call_sync", return_value=row):
+            self.assertEqual(assignment.project(settings(), KEY), row)
+
     def test_direct_rpc_errors_retain_typed_cause_identity_and_privacy(self):
         from cs import observability, observability_producers
         for error, expected in ((rpc.EngineError(-32602, "PRIVATE_MESSAGE", {"secret": "PRIVATE_DATA"}), "remote_invalid_params"),
@@ -153,7 +229,7 @@ class Consumer(unittest.TestCase):
         requested, canonical, primary, peer, fallback = captured_partial_component()
         peer = peer | {"component_thread_keys": sorted([*peer["component_thread_keys"], "<outside@example.test>"])}
         seen = []
-        responses, unknown = assignment._resolve_peer_aliases(requested, [("operator", primary), ("peer", peer)], [],
+        responses, unknown = assignment._resolve_account_aliases(requested, [("operator", primary), ("peer", peer)], [],
             lambda *args: self.fail("contradictory authority must not read"), observe=lambda response, code: seen.append(code))
         self.assertEqual(seen, ["alias_authority_conflict", "alias_authority_conflict"])
         self.assertEqual(unknown, ["contradictory component authority"])

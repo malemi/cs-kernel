@@ -14,89 +14,33 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.69.1`; Current HEAD status: untagged.**
-  Both clones still install immutable69 with verified package bytes and context
-  closure. The correction's source suite passes; its tagged-suite and genuine
-  BOTH FULL/signup results remain required.
-- Funded69 failed on a92-byte informational line appended to otherwise exact
-  discovery JSON. The producer correction passes actual CLI/publication/validator
-  controls and independent review. It is not installed in the live clones.
-- Discovery contains32 valid authority holds and no mailbox-read incompleteness.
-  Four mixed-evidence holds exposed a separate independent-consumer defect;
-  its isolated correction passes32-row replay and focused negatives, with
-  independent integration review approved. All authority holds remain enforced.
-- Current60USD authority remains binding; the operator revoked the prior
-  15percent weekly stop. Subscription tokens remain a conserved resource;
-  API and subscription accounting are separate. The failed attempt reports
-  executor cost3.9178638USD; terminal engine/aggregate cost and complete owned
-  cleanup reconciliation are pending before any further paid admission.
+- **Latest release tag: `v0.70.0`; Current HEAD status: tagged as `v0.70.0`.**
+  This immutable private candidate is unpublished. Both live clones retain
+  installed `v0.69.1`; genuine BOTH FULL/signup acceptance remains unmet.
+- Reviewed D1 diagnostics, F fail-fast and P bounded-history code form the
+  private release, with all166 cs files identical to the retained D3 verification
+  wheel. The corrected pre-release integrated suite passes. The original failed
+  suite and the interrupted HEAD-wording failure remain retained separately.
+  The mandatory at-tag suite and clean wheel equality proof are release gates.
+- [Private adoption](execution-plans/2026-11-01-private-fp-adoption.md) has explicit
+  operator authority for normal private release/adoption and one corrected cohort,
+  subject to reviewed installation and admission gates. Total API allowance70USD,
+  target8 and hard13.25USD per native job retain8.012607USD uncertainty; qualified
+  known estimates29.4464882 plus planned cohort28.50 leave4.0409048USD provisional.
+  No paid admission, clone mutation or public push is established by this release.
+- Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
+  source case returns three complete human-hold observations and
+  `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
+  the historical failed FULL or prove whole-inventory/model acceptance.
+- Three original owned future-tick cron holds remain intact. The read-only goal
+  checker retains real rejection and isolated runtime evidence; whole-checker
+  positive feasibility remains unapproved and grants no operational acceptance.
 
-The following platform observations are retained from the source baseline;
-this host migration has not re-audited their deployment:
-
-- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
-  source families, verified by all439/459/355 package files and authenticated
-  owner/PID/source bindings. Canonical source is655b167; the other three peers
-  and Qonto retain their previous source families with refreshed process identities.
-  A historical Git family label
-  alone does not establish the deployed baseline.
-- The retained live Desktop consumer baseline matches canonical `d9e0361`.
-  The new independent codec is developed only in its isolated worktree; native,
-  provider-mail and signup business oracles remain unchanged. The current
-  consumer's route/fallback additions have M4 approval; adoption remains pending.
-- Shared-deadline finalization reserves time inside the existing allowance.
-  First-cause and native phase/cost diagnostics retain scope and causal links;
-  historical overruns remain unexplained. Current ordinary acceptance is separate.
-- Mario’s exact missing Sent source is repaired through scoped native maintenance.
-  Prior data is preserved; reconstructed auto-updating remains disabled. Recurring
-  ingestion history stays unknown; the release plan owns source/data evidence.
-- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
-  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
-  and a supported cause/investigation route for each incident. `cs-diagnose` is
-  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
-  [Operational logs](operator-observability.md) retain safe counts, failed checks,
-  primary causal links and known exception origins without granting replay authority.
-- Automatic inventory uses48bounded hooks with8000-character preferred parts
-  and the original whole7000partition for Unicode-heavy input,4MBprivate
-  capture and one exact
-  progress duplicate paired with its successful final. Complete native inspection,
-  whole inventory and effect-time source/authority checks remain independent.
-  The source successor emits a single explicit overflow notice with complete
-  paging instructions, and preserves capacity counts/run references in failed
-  supervisor notices. Focused real-process/ordinary-surface checks and integration
-  pass; installed verification and whole-service acceptance remain separate.
-- [Runtime controls](operator-runtime.md) separate the selected scheduled host,
-  engine and direct classifier spending. Both clones retain USD4 fallback soft budgets;
-  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
-  not running Claude or independent engine work.
-- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
-  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
-  Support/Mario share the approved company space while private mail/tasks stay
-  isolated. Provider Sent/All Mail remains dedup truth.
-- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
-  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
-  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
-  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
-- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
-  retains signed R9 evidence for its exact historical candidate. Current composition
-  requires fresh genuine acceptance; retained bytes do not prove model inspection.
-- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
-  require human Desktop confirmation for managed changes. Scheduled sessions cannot
-  publish rules or substitute local copies for unavailable published procedures.
-- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
-  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
-  supports protocol2, direct start, cross-owner refusal and complete artifacts;
-  maintained clones use it, with separate ordinary/final acceptance still open.
-- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
-  hosts share canonical skills. Company files, Café prices and authored help are
-  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
-  preserves old authored data while using cs-bootstrap/company other-systems.
-- Stripe reads and explicit portal requests retain their existing engine route.
-  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
-  restored canonical instructions must STOP when that capability is absent.
-  Implementing that engine feature is outside this release-alignment work.
-  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
-  native selection and Faire acceptance remain open.
+Durable platform contracts remain in the [kernel charter](kernel-charter.md),
+[operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
+[assignments](task-assignment.md) and [draft lifecycle](draft-lifecycle.md).
+Historical deployment observations are retained in the archive; this diagnostic
+candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
@@ -104,9 +48,9 @@ this host migration has not re-audited their deployment:
   changes. Prior approvals and pending obligations remain retained; the installed
   protocol supplies no documented same-task migration. Baseline advancement is
   not claimed and runtime acceptance remains an independent requirement.
-- Genuine strict BOTH-clone FULL, publication and public Git/lock installation
-  proof remain required. Failed candidates and uncertain charges/effects are
-  retained; a component read or earlier protected reply certifies no whole FULL.
+- Genuine strict BOTH-clone FULL and signup remain required. Publication and
+  public Git installation proof await separate explicit authority. Failed runs
+  and uncertain charges/effects remain retained; a component read certifies no FULL.
 - Recurring peer ingestion history and mutable scheduling remain unknown.
   E13 repairs one exact source counterpart; it grants no automatic business
   authority or recurring scheduling change.
@@ -127,8 +71,11 @@ this host migration has not re-audited their deployment:
 
 ## Next
 
-1. Complete affected documentation review of the approved corrections.
-2. Reconcile terminal costs/effects and owned cleanup before another admission.
-3. Deliver reviewed corrections through immutable release and installed checks.
-4. Require genuine sequential BOTH FULL/signup, final review and legitimate
-   baseline closure. Public publication requires explicit authority.
+1. Complete private release verification and fresh M1 integration review before
+   clone adoption; preserve the public-push ban.
+2. Verify normal installation and lock-only rebuilds on both clones, then bind
+   the actual producer/consumer and obtain admission review before one cohort.
+3. Require genuine BOTH FULL/signup, actual known/uncertain costs and owned
+   cleanup. Keep historical failed runs rejected and avoid identical paid retries.
+4. Reconcile final docs and reviews before baseline advancement. Preserve the
+   existing workflow-hash closure blocker without repairing kit state here.

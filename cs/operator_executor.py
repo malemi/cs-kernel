@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import importlib.metadata
 import os
 import re
@@ -22,6 +23,29 @@ from .operator_executor_protocol import (Journal, RunStart, RunEnd, Diagnostic,
     ModelRequest, ModelResponse, ProviderSubmission, Artifact, canonical, decode, sha256)
 from .operator_executor_tools import ToolRuntime, Refusal, identity
 
+
+REFUSAL_REASONS = frozenset((
+    'unsupported_request_serialization', 'executor_credential_unavailable',
+    'provider_endpoint_or_auth_binding_differs', 'provider_submission_evidence_missing',
+    'journal_directory_not_private', 'supervisor_identity_differs', 'supervisor_not_ancestor',
+    'unbound_or_repeated_provider_submission', 'provider_wire_exceeds_admitted_input_bound',
+    'provider_wire_model_differs', 'provider_cache_mode_binding_differs',
+    'foreign_or_modified_request_page', 'authoritative_context_unavailable',
+    'kernel_source_identity_differs', 'unsupported_launcher_policy', 'paused',
+    'context_path_outside_scope', 'context_path_secret_or_unsupported',
+    'context_path_symlink_or_missing', 'context_not_regular', 'foreign_artifact',
+    'invalid_page_interval', 'artifact_changed', 'artifact_capacity',
+    'authoritative_context_reference_capacity', 'context_capacity',
+    'founder_rendered_binding_differs', 'authoritative_context_changed',
+    'kernel_source_identity_changed', 'founder_configuration_binding_differs',
+    'owner_binding_differs', 'required_workflow_context_missing',
+    'required_workflow_context_undelivered', 'uncertain_previous_effect',
+    'incomplete_request_coverage', 'incomplete_workflow_phases',
+    'discovery_context_missing', 'discovery_context_binding_differs',
+    'discovery_executor_binding_differs', 'complete_recurring_material_v2_required',
+    'discovery_cli_result_binding_differs', 'recurring_cli_stdout_binding_differs',
+    'uncertain_effect_stops_run', 'assignment_read_incomplete',
+))
 
 def decimal_string(value):
     return format(value, 'f')
@@ -121,7 +145,12 @@ def instrument_model(model, runtime):
             # This is the actual supported Model.request call boundary. Retain
             # the full submitted messages, schemas/settings and page references;
             # prompt assembly or tool reads alone never grant delivery coverage.
-            message_values = ModelMessagesTypeAdapter.dump_python(messages, mode='json')
+            from .operator_executor_evidence import archive_history, page_archive_maps
+            message_values = ModelMessagesTypeAdapter.dump_python(copy.deepcopy(messages), mode='json')
+            runtime.request_pages(message_values)
+            message_values = archive_history(message_values, runtime.archive_witnesses)
+            messages = ModelMessagesTypeAdapter.validate_python(message_values)
+            runtime.sdk_page_maps = page_archive_maps(message_values)
             payload = {'messages': message_values, 'settings': model_settings,
                        'parameters': _jsonable(asdict(model_request_parameters))}
             raw = canonical(payload)
@@ -129,20 +158,33 @@ def instrument_model(model, runtime):
             pages = runtime.request_pages(message_values)
             # UTF-8 bytes bound input tokens conservatively (including schemas),
             # plus fixed framing overhead; unsupported oversized contexts refuse.
-            input_bound = len(raw) + 4096
-            bound = runtime.admission.reserve(input_bound)
+            conservative_input_bound = len(raw) + 4096
+            runtime.admission_refusal = None
+            try:
+                bound = runtime.admission.reserve(conservative_input_bound)
+            except AdmissionError as exc:
+                runtime.admission_refusal = dict(stage='admission', cause=str(exc),
+                    rejected_history_artifact=artifact.model_dump(mode='json'), refused_request_submitted=False)
+                if str(exc) == 'context_capacity':
+                    runtime.admission_refusal.update(sdk_payload_bytes=len(raw), framing_reserve=4096,
+                        output_reserve=runtime.config.max_output_tokens,
+                        required_bound=conservative_input_bound + runtime.config.max_output_tokens,
+                        available_bound=runtime.config.pricing.maximum_context_tokens,
+                        bound_unit='conservative_token_upper_bound')
+                raise
             rid = str(uuid4())
             runtime.requests.add(rid)
             from pydantic_ai.models.function import FunctionModel
             fixture = isinstance(self.wrapped, FunctionModel)
-            runtime.input_bound = input_bound
+            runtime.conservative_input_bound = conservative_input_bound
+            runtime.sdk_artifact = artifact
             runtime.active_request = rid
             runtime.wire_pages = None
             runtime.response_facts = None
             runtime.response_usage = None
             runtime.journal.append(ModelRequest(request_id=rid, transport='function-test' if fixture else 'anthropic-boundary', messages=artifact,
                 payload_sha256=sha256(raw), page_ids=pages, phase=runtime.current_phase(),
-                input_token_estimate=input_bound, reserved_maximum_usd=decimal_string(bound)))
+                input_token_estimate=conservative_input_bound, reserved_maximum_usd=decimal_string(bound)))
             try:
                 response = await self.wrapped.request(messages, model_settings, model_request_parameters)
             except BaseException as exc:
@@ -165,7 +207,7 @@ def instrument_model(model, runtime):
                 if not fixture and not runtime.config.pricing.accepts(response.model_name):
                     raise AdmissionError('response_model_pricing_binding_differs')
                 buckets = validate_usage(usage,runtime.response_usage,fixture=fixture)
-                if usage.input_tokens > input_bound or usage.output_tokens > runtime.config.max_output_tokens:
+                if usage.input_tokens > conservative_input_bound or usage.output_tokens > runtime.config.max_output_tokens:
                     raise AdmissionError('usage_exceeds_admitted_token_bounds')
                 cost = runtime.admission.reconcile(usage.input_tokens, usage.output_tokens, **buckets)
             except (AttributeError, AdmissionError):
@@ -185,6 +227,11 @@ def instrument_model(model, runtime):
                 raise Refusal('provider_submission_evidence_missing')
             runtime.tools.covered.update(pages if fixture else runtime.wire_pages)
             runtime.tools.parent_request_id = rid
+            if not fixture:
+                for pid in runtime.sdk_page_maps[0]:
+                    runtime.archive_witnesses.setdefault(pid, dict(request_id=rid,
+                        call_id=runtime.sdk_page_maps[0][pid]['call_id'],
+                        sdk=artifact.model_dump(mode='json'), wire=runtime.wire_artifact.model_dump(mode='json')))
             return response
 
     return InstrumentedModel(model)
@@ -219,6 +266,10 @@ class ExecutorRuntime:
         self.wire_pages = None
         self.response_facts = None
         self.response_usage = None
+        self.admission_refusal = None
+        self.archive_witnesses = {}
+        self.sdk_page_maps = ({}, {})
+        self.wire_artifact = None
 
     async def provider_response(self, response):
         await response.aread()
@@ -249,7 +300,7 @@ class ExecutorRuntime:
         if self.active_request is None or self.wire_pages is not None:
             raise Refusal('unbound_or_repeated_provider_submission')
         raw = await request.aread()
-        if len(raw) + 1024 > self.input_bound:
+        if len(raw) + 1024 > self.conservative_input_bound:
             raise Refusal('provider_wire_exceeds_admitted_input_bound')
         body = decode(raw)
         if body.get('model') != self.config.model:
@@ -257,7 +308,11 @@ class ExecutorRuntime:
         if not cache_request_matches(self.config,body):
             raise Refusal('provider_cache_mode_binding_differs')
         pages = self.request_pages(body)
+        from .operator_executor_evidence import page_archive_maps
+        if page_archive_maps(body) != self.sdk_page_maps:
+            raise Refusal('foreign_or_modified_request_page')
         artifact = self.tools.persist(raw, required=False)
+        self.wire_artifact = artifact
         # Headers (including credentials) are deliberately never persisted.
         self.journal.append(ProviderSubmission(request_id=self.active_request,
             body=artifact, page_ids=pages, endpoint=str(request.url.copy_with(query=None))))
@@ -271,31 +326,23 @@ class ExecutorRuntime:
         return 'execution'
 
     def request_pages(self, value):
+        from .operator_executor_evidence import page_entries, archive_content
         found = []
-        def visit(item):
-            if isinstance(item, dict):
-                if 'executor_page' in item:
-                    page = item['executor_page']
-                    pid = page.get('page_id') if isinstance(page, dict) else None
-                    expected = self.tools.pages.get(pid)
-                    if expected is None or item != expected:
-                        raise Refusal('foreign_or_modified_request_page')
-                    if pid not in found:
-                        found.append(pid)
-                for child in item.values():
-                    visit(child)
-            elif isinstance(item, list):
-                for child in item:
-                    visit(child)
-            elif isinstance(item, str) and item.lstrip().startswith('{'):
-                # Bootstrap is an actual user-message string supplied below;
-                # parse only this infrastructure envelope, never arbitrary prose.
-                try:
-                    nested = decode(item)
-                except ValueError:
-                    return
-                visit(nested)
-        visit(value)
+        for item, eligible, call_id in page_entries(value):
+            page = item['executor_page']
+            pid = page.get('page_id') if isinstance(page, dict) else None
+            expected = self.tools.pages.get(pid)
+            if expected is None or page != expected['executor_page']:
+                raise Refusal('foreign_or_modified_request_page')
+            if isinstance(item.get('content'), dict):
+                witness = self.archive_witnesses.get(pid)
+                if (not eligible or witness is None or witness['call_id'] != call_id or set(item) != {'executor_page', 'content'}
+                        or item['content'] != archive_content(page, witness)):
+                    raise Refusal('foreign_or_modified_request_page')
+            elif item != expected:
+                raise Refusal('foreign_or_modified_request_page')
+            elif pid not in found:
+                found.append(pid)
         return found
 
     async def run(self, prompt: str, *, model=None):
@@ -375,6 +422,18 @@ class ExecutorRuntime:
                 terminal = 'unknown'
             if self.requests and terminal == 'completed':
                 terminal = 'unknown'
+            if diagnostic is not None:
+                terminal_failure = dict(stage=diagnostic.stage, cause=diagnostic.cause)
+                reason = diagnostic.observed.partition(':')[0]
+                if reason in REFUSAL_REASONS:
+                    terminal_failure['reason'] = reason
+                if (self.admission_refusal is not None and diagnostic.stage == 'admission'
+                        and self.admission_refusal['cause'] == diagnostic.cause):
+                    terminal_failure.update(self.admission_refusal)
+                envelope = dict(schema='cs.executor.diagnostic.v1', terminal_failure=terminal_failure)
+                if self.tools.first_failure is not None:
+                    envelope['first_failure'] = self.tools.first_failure
+                diagnostic = diagnostic.model_copy(update={'observed': canonical(envelope).decode()})
             self.journal.append(RunEnd(terminal=terminal,
                 outstanding_tool_ids=sorted(self.tools.outstanding), outstanding_request_ids=sorted(self.requests),
                 phase_outcomes=self.tools.phases, input_tokens=self.admission.input_tokens,

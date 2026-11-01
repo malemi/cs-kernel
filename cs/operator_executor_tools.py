@@ -208,6 +208,8 @@ class ToolRuntime:
         self.context_artifacts = {}
         self.phases = {}
         self.phase_tools = {}
+        self.first_failure = None
+        self.discovery_failed = False
         self.inventory_artifacts = []
         self.material_stdout = {}
         self.selected_pending = set()
@@ -329,6 +331,8 @@ class ToolRuntime:
         return result
 
     def assert_context(self):
+        if self.discovery_failed:
+            raise Refusal('assignment_read_incomplete')
         from .operator_inventory_view import source_identity
         if source_identity() != self.config.kernel_source_digest:
             raise Refusal('kernel_source_identity_changed')
@@ -443,6 +447,9 @@ class ToolRuntime:
             return
         name, prerequisites = item
         valid = code == 0 and bool(self.parent_request_id) and all(self.phases.get(p) == 'completed' for p in prerequisites)
+        cause = ('phase_exit_nonzero' if code != 0 else 'phase_request_missing' if not self.parent_request_id
+            else 'phase_prerequisite_incomplete' if not all(self.phases.get(p) == 'completed' for p in prerequisites)
+            else 'phase_validation_failed')
         try:
             value = raw.decode('utf-8').strip() if name == 'founder_mail' else decode(raw)
             if name == 'identity':
@@ -476,7 +483,14 @@ class ToolRuntime:
                 # this call by dynamic_inventory; raw stdout need not be paged.
                 from .operator_health import assess
                 context = decode(os.environ['CS_OPERATOR_HEALTH_CONTEXT'])
-                valid = bool(self.parent_request_id) and bool(self.inventory_artifacts) and assess(context, identity().model_dump(), self.config.owner) == ''
+                if self.parent_request_id and self.inventory_artifacts:
+                    health_cause = assess(context, identity().model_dump(), self.config.owner)
+                    valid = health_cause == ''
+                    if health_cause:
+                        cause = health_cause
+                else:
+                    valid = False
+                    cause = 'phase_request_missing' if not self.parent_request_id else 'discovery_inventory_missing'
             elif name == 'campaign_list':
                 valid &= isinstance(value, list) and all(isinstance(row, dict) for row in value)
             elif name == 'campaign_pending':
@@ -487,10 +501,22 @@ class ToolRuntime:
                 valid &= bool(value)  # authenticated canonical ask JSON result
         except (ValueError, KeyError, TypeError, AttributeError):
             valid = False
+            cause = 'phase_response_invalid'
+        if not valid and self.first_failure is None:
+            self.first_failure = dict(phase=name, cause=cause, tool_id=tool_id, run_id=self.config.run_id)
         self.phases[name] = 'completed' if valid else 'held'
         self.phase_tools[name] = tool_id
         self.journal.append(Phase(name=name, prerequisites=prerequisites, tool_ids=[tool_id],
             request_ids=[self.parent_request_id] if self.parent_request_id else [], outcome=self.phases[name]))
+        if (name == 'discovery' and not valid and cause == 'assignment_read_incomplete'
+                and code == (3 if value.get('read_incomplete') or value.get('assignment_incomplete') else 0)
+                and all(self.phases.get(p) == 'completed' for p in prerequisites)
+                and self.command_results and self.command_results[-1]['tool_id'] == tool_id
+                and self.command_results[-1]['argv'] == argv
+                and self.command_results[-1]['exit_code'] == code
+                and self.command_results[-1]['stdout'] == raw):
+            self.discovery_failed = True
+            raise Refusal('assignment_read_incomplete')
         if name == 'campaign_pending' and valid and not self.campaign_pending_items:
             self.phases['campaign_work'] = 'completed'
             self.journal.append(Phase(name='campaign_work', prerequisites=['campaign_pending'], tool_ids=[tool_id],

@@ -341,6 +341,24 @@ cannot be reconstructed from a warning alone.
 
 ## Pydantic scheduled executor
 
+Distinguish primary-account projection failure from peer-account failure;
+aggregation must retain the original finite source reason and existing
+correlation references. A later terminal error does not explain an earlier
+failed phase. Before displaying a cause as fact, corroborate phase/tool
+references and preceding discovery shape/exit predicates; unsupported details
+remain UNKNOWN. Use accurate account labels while preserving consumed legacy
+identifiers where compatibility requires them. No new source event is needed
+merely to improve a label.
+
+On local capacity refusal, compare the actual retained SDK byte count plus the
+framing/output reserve with the conservative admission bound. Do not call that
+number a measured model token count or infer provider exhaustion when submission
+never began. Use the rejected-history reference and run ID; preserve first and
+terminal causes separately. For provider deadlines, reconstruct ordered
+operations: a final SEARCH/FETCH can enter with less than a second remaining
+after earlier operations consumed the shared allowance. Its own short duration
+is not evidence that it occupied the whole projection.
+
 The operational acceptance runner retains `runner-failure.json` privately for
 preflight/infrastructure errors. It records exception type, source frames and
 whitelisted actor/check causes, excluding exception text, locals and provider

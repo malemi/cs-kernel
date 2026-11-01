@@ -65,7 +65,7 @@ class Workers(unittest.IsolatedAsyncioTestCase):
                             result=(await asyncio.to_thread(unanswered._scheduled_discovery,worker_command=lambda fd:(sys.executable,'-B','-c',bootstrap,'--worker',str(fd)),observation_seconds=8,cleanup_seconds=.3,publication_seconds=.2,final_seconds=.2,total_seconds=9))['value']
                         self.assertEqual(current_context(),before)
         self.assertEqual(result['projection'][KEY]['state'],'unknown')
-        self.assertEqual(result['projection'][KEY]['reason'],'assignment peer scope unreadable: operator')
+        self.assertEqual(result['projection'][KEY]['reason'],'assignment account scope unreadable: primary account: REPLY_SOURCE_UNAVAILABLE')
         requests=[f for f in frames if f['method']=='tasks.assignment.project']
         self.assertEqual(len(requests),1)
         self.assertEqual(requests[0]['params'],{'thread_key':KEY})

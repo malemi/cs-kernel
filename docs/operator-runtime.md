@@ -120,6 +120,39 @@ putting the selector in a dotenv file read later by Python does not select it
 in the shell wrapper. Adoption state and outstanding acceptance are recorded in
 [active context](active-context.md), not inferred from source tests.
 
+The unreleased first-cause diagnostic candidate keeps the existing journal
+schema. Its `Diagnostic.observed` string can contain the bounded
+`cs.executor.diagnostic.v1` envelope, with a corroborated first phase failure
+separate from the terminal failure. Capacity details distinguish SDK payload
+bytes, the conservative token upper bound, framing/output allowances and the
+configured capacity; they are not a measured provider token count. The refused
+request's existing private history reference identifies the input without
+printing its contents. Legacy or malformed details remain unavailable.
+Controlled job rejection and unexpected runner infrastructure failure have
+separate readable messages and retained run references. This source candidate
+is not installed by the existing691delivery proof.
+
+The unreleased functional successor terminates after a validated discovery
+`assignment_read_incomplete` phase through the existing failed-job cleanup path.
+It preserves the one-time discovery recovery and legitimate complete business
+holds. The held phase and first-cause references remain in the journal; no later
+model request, reservation or business tool starts in that attempt.
+
+Its request-history paging preserves the initial bootstrap and immutable original
+history. Only eligible tool-return page bodies can become explicit archive
+references after an earlier reconciled successful request delivered the exact
+full bytes in both retained SDK and actual HTTP captures. References preserve
+page metadata, original tool-call placement and reread coordinates; kernel and
+independent consumer validate witnesses chronologically. Archived references add
+no coverage. Fresh reads return full bytes, and accumulated coverage and original
+effect-time guards remain required. Fixture-only captures grant no production
+witness. The transformed request copy is both retained and dispatched.
+
+Capacity, output reserves and money admission remain unchanged. Archive metadata
+and nonpage history still grow; irreducible oversize fails with the existing
+visible capacity diagnostic and no new submission/reservation. These source
+controls do not establish live-provider acceptance or installation.
+
 Executor configuration is separate from classifier and engine settings. It binds
 `CS_EXECUTOR_PROVIDER`, `CS_EXECUTOR_MODEL`, `CS_EXECUTOR_API_KEY_ENV`, the exact
 endpoint and reviewed `CS_EXECUTOR_PRICING_JSON`, together with the separate soft

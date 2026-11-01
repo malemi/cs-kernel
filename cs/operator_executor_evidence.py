@@ -26,6 +26,108 @@ def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
 
+def archive_content(page, witness):
+    return {'executor_page_archive': dict(prior_successful_request_id=witness['request_id'],
+        sdk=witness['sdk'], wire=witness['wire'], reread=dict(tool='read_artifact',
+        artifact_id=page['artifact_id'], offset=page['start'], length=page['end']-page['start']))}
+
+
+def map_page_history(value, transform):
+    from .operator_executor_protocol import canonical, decode
+    def visit(item, eligible=False, call_id=None):
+        if isinstance(item, dict):
+            if 'executor_page_archive' in item:
+                raise ValueError('executor_archive_placement')
+            if 'executor_page' in item:
+                result = transform(item, eligible, call_id)
+                return result, result != item
+            values, changed = {}, False
+            for key, child in item.items():
+                values[key], delta = visit(child, eligible, call_id)
+                changed |= delta
+            return values, changed
+        if isinstance(item, list):
+            values, changed = [], False
+            for child in item:
+                result, delta = visit(child, eligible, call_id)
+                values.append(result)
+                changed |= delta
+            return values, changed
+        if isinstance(item, str) and item.lstrip().startswith('{'):
+            try:
+                nested = decode(item)
+            except ValueError:
+                return item, False
+            result, changed = visit(nested, eligible, call_id)
+            return (canonical(result).decode(), True) if changed else (item, False)
+        return item, False
+    def message(item):
+        if not isinstance(item, dict):
+            return visit(item)[0]
+        key = 'parts' if 'parts' in item else 'content'
+        parts = item.get(key)
+        if not isinstance(parts, list):
+            return visit(item)[0]
+        values = dict(item)
+        values[key] = []
+        for part in parts:
+            if not isinstance(part, dict):
+                values[key].append(visit(part)[0])
+                continue
+            result = part.get('part_kind') == 'tool-return' if key == 'parts' else part.get('type') == 'tool_result'
+            cid = part.get('tool_call_id') if key == 'parts' else part.get('tool_use_id')
+            values[key].append({name: visit(child, result and name == 'content', cid)[0]
+                for name, child in part.items()})
+        for name in values.keys() - {key}:
+            values[name] = visit(values[name])[0]
+        return values
+    if isinstance(value, list):
+        return [message(item) for item in value]
+    if isinstance(value, dict) and isinstance(value.get('messages'), list):
+        return {key: [message(item) for item in child] if key == 'messages' else visit(child)[0]
+            for key, child in value.items()}
+    return visit(value)[0]
+
+
+def page_entries(value):
+    found = []
+    def collect(item, eligible, call_id):
+        found.append((item, eligible, call_id))
+        return item
+    map_page_history(value, collect)
+    return found
+
+
+def archive_history(value, witnesses):
+    def replace(item, eligible, call_id):
+        page = item['executor_page']
+        witness = witnesses.get(page.get('page_id')) if isinstance(page, dict) else None
+        if (eligible and witness is not None and witness['call_id'] == call_id
+                and isinstance(item.get('content'), str)):
+            return dict(executor_page=page, content=archive_content(page, witness))
+        return item
+    return map_page_history(value, replace)
+
+
+def page_archive_maps(value):
+    full, archived = {}, {}
+    for item, eligible, call_id in page_entries(value):
+        page = item['executor_page']
+        pid = page.get('page_id') if isinstance(page, dict) else None
+        entry = dict(page=item, call_id=call_id)
+        if isinstance(item.get('content'), dict):
+            if not eligible:
+                raise ValueError('executor_archive_placement')
+            if pid in archived and archived[pid] != entry:
+                raise ValueError('executor_archive_duplicate')
+            archived[pid] = entry
+        elif eligible:
+            if pid in full and full[pid] != entry:
+                raise ValueError('executor_page_duplicate')
+            full[pid] = entry
+    return full, archived
+
+
 def run_call_matches(arguments, start, end, config):
     """Join submitted spellings through the same policy used by the executor."""
     from .operator_executor_tools import validate_argv
@@ -268,6 +370,7 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
             accounted_cost_usd=terminal.accounted_cost_usd, uncertain_cost_usd=terminal.uncertain_cost_usd,
             fallback_hold='zero_charge_unproven' if failures else 'prework_refusal_unproven')
     pages, requests, responses, submissions = {}, {}, {}, {}
+    archive_witnesses, request_page_maps = {}, {}
     starts, spawns, ends, phase_rows = {}, {}, {}, []
     covered, required, phases, tools = set(), set(), {}, []
     superseded = set()
@@ -381,6 +484,12 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                     pid = page.get('page_id') if isinstance(page, dict) else None
                     if pid not in pages or page != pages[pid].model_dump(mode='json'):
                         raise ValueError('executor_foreign_request_page')
+                    if isinstance(item.get('content'), dict):
+                        witness = archive_witnesses.get(pid)
+                        if (witness is None or set(item) != {'executor_page', 'content'}
+                                or item['content'] != archive_content(page, witness)):
+                            raise ValueError('executor_archive_witness')
+                        return
                     try:
                         raw = item['content'].encode() if page['decoding'] == 'utf-8' else base64.b64decode(item['content'], validate=True)
                     except (KeyError, ValueError, TypeError):
@@ -443,6 +552,10 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                 raise ValueError('executor_duplicate_request')
             raw = artifact(p.messages, directory)
             value = decode(raw)
+            request_page_maps[p.request_id] = page_archive_maps(value['messages'])
+            for pid, entry in request_page_maps[p.request_id][1].items():
+                if pid not in archive_witnesses or entry['call_id'] != archive_witnesses[pid]['call_id']:
+                    raise ValueError('executor_archive_call_placement')
             calls=call_map(value['messages'])
             for cid,call in calls.items():
                 if cid in sdk_calls:
@@ -461,6 +574,8 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
             if p.request_id not in requests or p.request_id in submissions or p.request_id in responses:
                 raise ValueError('executor_submission_order')
             body = decode(artifact(p.body, directory))
+            if page_archive_maps(body) != request_page_maps[p.request_id]:
+                raise ValueError('executor_sdk_wire_page_archives')
             calls=call_map(body.get('messages',[]),wire=True)
             if calls!=request_calls[p.request_id]:
                 raise ValueError('executor_sdk_wire_call_map')
@@ -500,6 +615,12 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                 if actual_cost > Decimal(config.admitted_ceiling_usd):
                     raise ValueError('executor_admitted_ceiling_exceeded')
                 covered.update(req.page_ids if req.transport == 'function-test' else submissions[p.request_id].page_ids)
+                if req.transport != 'function-test':
+                    for pid in request_page_maps[p.request_id][0]:
+                        archive_witnesses.setdefault(pid, dict(request_id=p.request_id,
+                            call_id=request_page_maps[p.request_id][0][pid]['call_id'],
+                            sdk=req.messages.model_dump(mode='json'),
+                            wire=submissions[p.request_id].body.model_dump(mode='json')))
                 if p.model:
                     successful_models.add(p.model)
         elif p.kind == 'tool_start':

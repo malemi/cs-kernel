@@ -1370,6 +1370,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else e
 step "59. scheduled Claude retry requires a proven pre-work refusal"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor.py"; then echo "OK"; else echo "FAIL: typed executor permissions, context or request admission regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_paging.py" PagingTests; then echo "OK"; else echo "FAIL: executor history paging lost chronological delivery or coverage guards"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_integration.py"; then echo "OK"; else echo "FAIL: executor source, lifecycle or actual CLI evidence join regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_routes.py"; then echo "OK"; else echo "FAIL: executor provider authority or bounded fallback changed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_operator_executor_alias_runtime.py"; then echo "OK"; else echo "FAIL: recurring metadata renewal, original deadlines or canonical binding regressed"; FAIL=1; fi

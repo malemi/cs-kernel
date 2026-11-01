@@ -1,5 +1,30 @@
 # Changelog — cs-kernel
 
+## v0.70.0 — 2026-11-01 (MINOR, private unpublished candidate)
+
+Stop scheduled executor model and tool work after a validated technical discovery
+failure, retaining the initiating cause separately from its terminal diagnostic.
+Complete legitimate business holds remain complete. Account-projection diagnostics
+name the authenticated read and preserve specific failure evidence across workers.
+
+Bound model history by archiving only tool-page bodies already delivered
+successfully, with chronological SDK and HTTP witnesses. Preserve bootstrap,
+original artifacts, coverage, inspection, effect-time and financial guards. The
+complete 166-file cs payload is identical to the reviewed D3 verification wheel;
+this normal-semver artifact changes its distribution identity for normal adoption.
+No dependency version changes are included.
+
+Migration: install the immutable private tag through normal package management,
+verify actual imported bytes and lock-only rebuilds, and bind the independent
+consumer to this artifact. Retain the prior failed runs, uncertain costs and
+owned scheduling holds. Never resume a failed attempt or resend a prior reply.
+
+**Re-collaudo tier: FULL on BOTH maintained clones before publication.** Executor
+admission and permission-adjacent behavior require genuine complete workflow and
+signup acceptance. Source, wheel and integrated suite controls do not establish
+business acceptance or restored service. This candidate is unpublished; public
+push and public Git provenance require separate explicit operator authority.
+
 ## v0.69.1 — 2026-10-29 (PATCH)
 
 Keep scheduled discovery stdout byte-identical to its published JSON when the
@@ -695,7 +720,7 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (last shared sign-off, 2026-10-08): **`v0.51.0`**.
+**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-01): **`v0.69.1`**.
 Both maintained clones install immutable local candidate `v0.68.0`; all166package
 files and lock-only rebuilds pass. The first real68FULL fails before fixtures/jobs
 because Cafe's externally changed engine family lacks a matching approved binding.

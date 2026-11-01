@@ -1,7 +1,10 @@
 # Transversal Documentation Index
 
+- [Private F/P release and installed acceptance](execution-plans/2026-11-01-private-fp-adoption.md) — immutable private release, normal clone adoption and genuine acceptance gates; [brief](briefs/2026-11-01-private-fp-adoption.md).
+
 - [Operational logs and manual diagnosis](operator-observability.md) — DEBUG-first logs, ten-minute filesystem problems and the manually invoked `cs-diagnose` skill; [delivery plan](execution-plans/2026-10-23-debug-logs-hybrid-monitor.md).
 - [Log-driven diagnosis and continuous improvement](log-diagnosis-workflow.md) — the two required incident questions, precise causal evidence, real-path regressions and blind acceptance.
+- [Executor first-cause diagnostics](execution-plans/2026-10-29-executor-first-cause-diagnostics.md) — account-projection naming and first/terminal diagnostics, plus reviewed executor fail-fast and bounded-history work; [brief](briefs/2026-10-29-executor-first-cause-diagnostics.md).
 
 
 - [Supervised review drafts](execution-plans/2026-10-21-supervised-review-draft.md) — interactive draft preparation separated from sending; local candidate, hosted adoption pending.

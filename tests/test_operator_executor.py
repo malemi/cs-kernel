@@ -206,6 +206,9 @@ class ExecutorTests(unittest.TestCase):
     def test_exact_paging_partial_and_oversize(self):
         runtime = self.runtime(page_bytes=5, max_artifact_bytes=40)
         artifact = runtime.tools.persist('Ωoriginal body\n'.encode())
+        split = [runtime.tools.page(artifact.artifact_id, offset, 1) for offset in (0, 1)]
+        self.assertTrue(all(page['executor_page']['decoding'] == 'base64' for page in split))
+        self.assertEqual(b''.join(__import__('base64').b64decode(page['content']) for page in split), 'Ω'.encode())
         p1 = runtime.tools.page(artifact.artifact_id, 0, 5)
         runtime.tools.covered.add(p1['executor_page']['page_id'])
         self.assertFalse(runtime.tools.full_coverage(artifact.artifact_id))
@@ -238,6 +241,163 @@ class ExecutorTests(unittest.TestCase):
         admission.reserve(100)
         with self.assertRaisesRegex(AdmissionError, 'unknown_previous_cost'):
             admission.reserve(100)
+
+    def test_first_phase_failure_survives_later_admission_refusal(self):
+        from decimal import Decimal
+        cases = (('context_capacity', True), ('admitted_ceiling', True), ('context_capacity', False))
+        for index, (cause, prior_failure) in enumerate(cases):
+            with self.subTest(cause=cause, prior_failure=prior_failure):
+                overrides = dict(journal_path=str(self.private / f'diagnostic-{index}.jsonl'))
+                if cause == 'context_capacity':
+                    overrides['pricing'] = self.config.pricing.model_copy(update={'maximum_context_tokens': 100})
+                else:
+                    overrides['admitted_ceiling_usd'] = '0.000001'
+                runtime = self.runtime(**overrides)
+                tool_id = str(uuid4())
+                original_bootstrap = runtime.tools.bootstrap
+                def bootstrap():
+                    pages = original_bootstrap()
+                    if prior_failure:
+                        runtime.tools.parent_request_id = str(uuid4())
+                        runtime.tools.inventory_artifacts = [str(uuid4())]
+                        os.environ['CS_OPERATOR_HEALTH_CONTEXT'] = '{}'
+                        with patch('cs.operator_health.assess', return_value='discovery_inventory_missing'):
+                            runtime.tools.complete_phase(['unanswered','--days','14','--json','--all-buckets'], tool_id, 3, b'{}')
+                        runtime.tools.complete_phase(['tasks','--json'], str(uuid4()), 1, b'[]')
+                    return pages
+                async def sentinel(messages, info):
+                    self.fail('refused request reached wrapped model')
+                with patch.object(runtime.tools, 'bootstrap', side_effect=bootstrap):
+                    terminal = self.run_async(runtime.run('Fixture refusal', model=FunctionModel(sentinel)))
+                self.assertEqual(terminal, 'capacity' if cause == 'context_capacity' else 'budget_exhausted')
+                parse_journal(Path(runtime.config.journal_path))
+                raw_rows = [decode(raw) for raw in Path(runtime.config.journal_path).read_bytes().splitlines()]
+                end = raw_rows[-1]['payload']
+                diagnostic = end['diagnostic']
+                self.assertEqual((diagnostic['stage'], diagnostic['cause']), ('admission', cause))
+                observed = decode(diagnostic['observed'])
+                self.assertEqual(observed['schema'], 'cs.executor.diagnostic.v1')
+                if prior_failure:
+                    self.assertEqual(observed['first_failure'], dict(phase='discovery', cause='discovery_inventory_missing',
+                        tool_id=tool_id, run_id=runtime.config.run_id))
+                    self.assertEqual(end['phase_outcomes']['discovery'], 'held')
+                else:
+                    self.assertNotIn('first_failure', observed)
+                failure = observed['terminal_failure']
+                self.assertFalse(failure['refused_request_submitted'])
+                artifact = failure['rejected_history_artifact']
+                self.assertEqual(len(Path(artifact['path']).read_bytes()), artifact['bytes'])
+                self.assertEqual(artifact, runtime.tools.artifacts[artifact['artifact_id']].model_dump())
+                if cause == 'context_capacity':
+                    self.assertEqual(failure['required_bound'], artifact['bytes'] + 4096 + runtime.config.max_output_tokens)
+                    self.assertEqual(failure['available_bound'], 100)
+                    self.assertEqual(failure['bound_unit'], 'conservative_token_upper_bound')
+                else:
+                    self.assertNotIn('required_bound', failure)
+                self.assertEqual((runtime.admission.requests, runtime.admission.uncertain), (0, Decimal(0)))
+                self.assertEqual(runtime.requests, set())
+                self.assertFalse(any(row['payload']['kind'] in ('model_request','provider_submission') for row in raw_rows))
+
+    def test_discovery_technical_failure_stops_controller_and_latched_boundaries(self):
+        self.install_services()
+        site = self.base / 'fixture-services/sitecustomize.py'
+        site.write_text(site.read_text().replace("'human_work':[]", "'human_work':[{'thread_key':'<fixture@fixture.test>','assignment':{'actor_uid':'fixture-owner','source_owner_uid':'fixture-owner','complete':False,'state':'unknown','hold_auto_reply':True,'reason':'SOURCE_UNAVAILABLE'}}]").replace("'assignment_incomplete':False", "'assignment_incomplete':True").replace('operator_health.capture(raw,value,0,settings.engine_owner_uid)', 'operator_health.capture(raw,value,3,settings.engine_owner_uid)').replace('return 0\nunanswered.scheduled_command', 'return 3\nunanswered.scheduled_command'))
+        runtime = self.runtime()
+        queue = [['whoami','--json'], ['config','--json'], ['tasks','--json'], ['review','--json'],
+                 ['unanswered','--days','14','--json','--all-buckets']]
+        calls = []
+        async def sentinel(messages, info):
+            self.assertFalse(runtime.tools.discovery_failed, 'model invoked after technical discovery failure')
+            calls.append(1)
+            self.assertTrue(queue, 'unexpected model continuation')
+            return ModelResponse(parts=[ToolCallPart('run_cs', {'argv':queue.pop(0)}, tool_call_id='fixture-' + str(len(calls)))])
+        terminal = self.run_async(runtime.run('Technical discovery failure', model=FunctionModel(sentinel)))
+        self.assertEqual(terminal, 'held', Path(runtime.config.journal_path).read_text()[-3000:])
+        rows = [r.payload for r in parse_journal(Path(runtime.config.journal_path))]
+        end = rows[-1]
+        self.assertEqual(end.phase_outcomes['discovery'], 'held')
+        self.assertFalse(end.model_completed)
+        self.assertEqual((end.outstanding_tool_ids, end.outstanding_request_ids), ([], []))
+        self.assertEqual((len(calls), runtime.admission.requests), (5, 5))
+        self.assertEqual((runtime.admission.uncertain, runtime.tools.processes), (0, set()))
+        phase = next(r for r in rows if r.kind == 'phase' and r.name == 'discovery')
+        failure = decode(end.diagnostic.observed)
+        self.assertEqual(failure['first_failure'], dict(phase='discovery', cause='assignment_read_incomplete', tool_id=phase.tool_ids[0], run_id=runtime.config.run_id))
+        self.assertEqual(failure['terminal_failure']['reason'], 'assignment_read_incomplete')
+        before = (runtime.admission.requests, runtime.admission.uncertain, runtime.admission.accounted)
+        from pydantic_ai.models import ModelRequestParameters
+        with self.assertRaisesRegex(Refusal, 'assignment_read_incomplete'):
+            self.run_async(instrument_model(FunctionModel(sentinel), runtime).request([], {}, ModelRequestParameters()))
+        with self.assertRaisesRegex(Refusal, 'assignment_read_incomplete'):
+            runtime.tools.effects_allowed()
+        self.assertEqual(before, (runtime.admission.requests, runtime.admission.uncertain, runtime.admission.accounted))
+        self.assertFalse(any(r.kind == 'tool_end' and r.effect for r in rows))
+        for row in rows:
+            if row.kind == 'tool_spawn':
+                self.assertFalse(Path(f'/proc/{row.child.pid}').exists())
+
+    def test_discovery_fail_fast_requires_normal_command_and_phase_joins(self):
+        argv = ['unanswered','--days','14','--json','--all-buckets']
+        for index, mode in enumerate(('tool', 'argv', 'exit', 'stdout', 'prerequisite', 'unsupported_exit', 'request', 'inventory', 'payload_exit')):
+            with self.subTest(mode=mode):
+                runtime = self.runtime(journal_path=str(self.private / f'join-{index}.jsonl'))
+                tool_id = str(uuid4())
+                runtime.tools.parent_request_id = str(uuid4())
+                runtime.tools.inventory_artifacts = [str(uuid4())]
+                runtime.tools.phases['review'] = 'completed'
+                row = dict(tool_id=tool_id, argv=argv, exit_code=3, stdout=b'{"assignment_incomplete":true}')
+                code = 3
+                if mode == 'tool': row['tool_id'] = str(uuid4())
+                if mode == 'argv': row['argv'] = ['tasks','--json']
+                if mode == 'exit': row['exit_code'] = 0
+                if mode == 'stdout': row['stdout'] = b'[]'
+                if mode == 'prerequisite': runtime.tools.phases['review'] = 'held'
+                if mode == 'unsupported_exit': code = row['exit_code'] = 1
+                if mode == 'request': runtime.tools.parent_request_id = None
+                if mode == 'inventory': runtime.tools.inventory_artifacts = []
+                if mode == 'payload_exit': code = row['exit_code'] = 0
+                runtime.tools.command_results.append(row)
+                os.environ['CS_OPERATOR_HEALTH_CONTEXT'] = '{}'
+                with patch('cs.operator_health.assess', return_value='assignment_read_incomplete'):
+                    runtime.tools.complete_phase(argv, tool_id, code, b'{"assignment_incomplete":true}')
+                self.assertFalse(runtime.tools.discovery_failed)
+                runtime.journal.close()
+
+    def test_runtime_refusal_reason_uses_only_known_codes(self):
+        for index, (message, reason) in enumerate((
+            ('customer_secret_value', None),
+            ('customer_secret_value:private details', None),
+            ('required_workflow_context_missing:company/private-context.md', 'required_workflow_context_missing'),
+        )):
+            with self.subTest(reason=reason):
+                runtime = self.runtime(journal_path=str(self.private / f'reason-{index}.jsonl'))
+                async def sentinel(messages, info):
+                    self.fail('bootstrap refusal reached wrapped model')
+                with patch.object(runtime.tools, 'bootstrap', side_effect=Refusal(message)):
+                    terminal = self.run_async(runtime.run('Fixture reason control', model=FunctionModel(sentinel)))
+                self.assertEqual(terminal, 'held')
+                diagnostic = parse_journal(Path(runtime.config.journal_path))[-1].payload.diagnostic
+                self.assertEqual((diagnostic.stage, diagnostic.cause), ('execution', 'Refusal'))
+                failure = decode(diagnostic.observed)['terminal_failure']
+                self.assertEqual(failure.get('reason'), reason)
+                self.assertNotIn('customer_secret_value', diagnostic.observed)
+                self.assertNotIn('private details', diagnostic.observed)
+                self.assertNotIn('company/private-context.md', diagnostic.observed)
+                self.assertEqual((runtime.admission.requests, runtime.admission.uncertain), (0, 0))
+
+    def test_phase_failure_cause_controls(self):
+        for index, (argv, code, raw, cause) in enumerate((
+            (['tasks','--json'], 1, b'[]', 'phase_exit_nonzero'),
+            (['tasks','--json'], 0, b'[]', 'phase_prerequisite_incomplete'),
+            (['tasks','--json'], 0, b'{', 'phase_response_invalid'),
+        )):
+            with self.subTest(cause=cause):
+                runtime = self.runtime(journal_path=str(self.private / f'phase-{index}.jsonl'))
+                runtime.tools.parent_request_id = str(uuid4())
+                runtime.tools.complete_phase(argv, str(uuid4()), code, raw)
+                self.assertEqual(runtime.tools.first_failure['cause'], cause)
+                self.assertEqual(runtime.tools.phases['tasks'], 'held')
+                runtime.journal.close()
 
     def test_real_module_startup_holds_without_credentials(self):
         path = self.private / 'config.json'
@@ -298,7 +458,7 @@ class ExecutorTests(unittest.TestCase):
         from pydantic_ai.messages import ModelRequest as PAIRequest, UserPromptPart
         runtime = self.runtime()
         pages = runtime.tools.bootstrap()
-        runtime.active_request, runtime.input_bound = str(uuid4()), 1000000
+        runtime.active_request, runtime.conservative_input_bound = str(uuid4()), 1000000
         bodies = []
         async def transport(request):
             bodies.append(bytes(request.content))

@@ -1,3 +1,237 @@
+## 2026-11-01 — state before private v0.70.0 release
+
+## State now
+
+- **Latest release tag: `v0.69.1`; Current HEAD status: untagged.** Both live clones
+  retain this immutable installed version. Genuine BOTH FULL/signup acceptance
+  remains unmet; service restoration is not claimed.
+- Reviewed D1 diagnostics, F fail-fast and P bounded-history code remain unreleased.
+  The exact private wheel `0.69.1+fp.874d68ec72d3` has disposable installed proof:
+  166 cs files/171 non-RECORD payloads match, six controls pass and all33 owned
+  disposable processes are gone. Source/consumer reviews and focused repairs are
+  retained. The original full suite remains exit1 with its two groups repaired
+  separately; no duplicate full-suite exit0 is invented.
+- Private E1/E3 engine adoption is active on support. Its original120-second
+  case returned a complete evidence set in32.4seconds with a legitimate human
+  hold. No new kernel release was needed for that engine read.
+- The subsequent FULL failed discovery before local context capacity. Its one
+  required peer lacked an exact Sent archive counterpart. Current exactUID11403
+  /UIDVALIDITY5 was acquired and inserted through separately admitted native E13
+  recovery. Independent checks confirm one row, all34 fields,1536 embedding bytes
+  and unchanged33 preexisting table snapshots. No cursor or existing row changed.
+- The normal installed peer-merged status now returns three complete human-hold
+  observations and `NEEDS_HUMAN_VERIFICATION`, replacing that root's technical
+  UNKNOWN. Automatic replies remain held. This repairs the source case, not the
+  historical failed FULL or whole-inventory/model acceptance. Historical ingestion
+  cause remains unproved. Actual installed CLI/authority bytes matchv0.69.1;
+  an initial candidate incorrectly named the uninstalled authority hash and is
+  retained with the corrected actual-source binding receipt.
+- API authority remains60USD, target8 and hard13.25USD per native job. Latest
+  conservative estimate29.4464882USD plus8.012607USD retained uncertain reserves
+  leaves22.5409048USD provisional. The last failed native job cost6.520387USD;
+  engine usage stayed support.02517/Cafe.129223 after source recovery with cached offline embeddings.
+  The unused28.50USD cohort reservation is not spend. Further paid admission and
+  kernel adoption await their explicit gates; subscription tokens are separate.
+- Owned recovery maintenance expired cleanly: four locks released, two owned
+  pause markers removed, source/daemon/profile identity preserved. Two expected
+  empty root-owned quarantine directories remain with identity receipts. The
+  three original owned future-tick cron holds remain intact.
+- The read-only goal checker has real rejection and isolated runtime evidence,
+  but whole-checker positive feasibility remains unapproved. It grants no paid
+  admission or operational acceptance.
+
+
+## Next
+
+1. Resolve the pending private kernel-release/adoption and funding decisions;
+   preserve the explicit publication ban and avoid identical paid retries.
+2. Reuse qualified F/P wheel/source/install proofs for approved adoption, then
+   require genuine BOTH FULL/signup, actual costs and owned cleanup.
+3. Complete the read-only goal-checker positive witness/review separately from
+   actual service acceptance; keep the current failed cohort rejected.
+4. Reconcile final docs and reviews before baseline advancement. Preserve the
+   existing workflow-hash closure blocker without repairing kit state here.
+
+## 2026-11-01 — pre-release HEAD wording
+
+- **Latest release tag: `v0.69.1`; current HEAD is untagged.** Both live clones
+  retain this immutable installed version. Genuine BOTH FULL/signup acceptance
+  remains unmet; service restoration is not claimed.
+
+## 2026-10-29 — Superseded source-only installation qualification
+
+  Controlled SDK/MockTransport proof is not live-provider or installed acceptance.
+
+## 2026-10-29 — Superseded in-progress source suite status
+
+- One finished-candidate full suite is running on frozen355 cs/test file hashes;
+  previous whole-suite PASS receipts do not cover these changes. No source edits
+  are admitted during the run. Documentation/final review remain open.
+
+## 2026-10-29 — Diagnostic-only source checkpoint
+
+## State now
+
+- **Latest release and installed clone version: `v0.69.1`.** Both installed
+  packages match the immutable tag; source and tagged suites pass. Genuine
+  sequential BOTH FULL/signup acceptance remains unmet; service is not restored.
+- The latest MrCall FULL fails discovery with `assignment_read_incomplete`, then
+  terminates at local `context_capacity`. Mailbox `read_incomplete` is absent.
+  Both original account projections exhaust the shared120000ms deadline during
+  IMAP operations. Recorded command intervals consume118.94s and117.27s;
+  original provider bodies and candidate ordering are unavailable.
+- The unreleased diagnostic candidate retains original per-account reasons,
+  distinguishes first and terminal failures, and reports conservative capacity
+  bounds with artifact/run references. Three source integration reviews approve
+  it and revised blind reading distinguishes the causes. These checks do not
+  establish installed behavior or repair the functional failures.
+- The rejected SDK payload is999838bytes; framing/output reserves yield a
+  conservative bound1012126 against1000000. That request was not submitted.
+  Functional fail-fast and bounded-history corrections require separate review.
+- API authority is60USD total,8USD soft and13.25USD hard per job. The operator
+  revoked the former15percent subscription stop; conserve subscription tokens.
+  Latest FULL native cost is6.4405892USD, separate from cumulative engine usage
+  and ordinary Cafe work; aggregate reconciliation remains required.
+- Failed FULL owned-process cleanup and scheduler restoration are verified.
+  Future ticks are now held by the owned `m5-after691-failure-hold` scheduling
+  window. Ordinary Cafe execution after restoration remains separately pending
+  terminal/effect/cost reconciliation. Preserve it; require quiescence for adoption.
+
+
+## 2026-10-29 — Superseded executor delivery snapshot
+
+## State now
+
+- **Latest release tag: `v0.69.1`; Current HEAD status: untagged.**
+  Both clones still install immutable69 with verified package bytes and context
+  closure. The correction's source suite passes; its tagged-suite and genuine
+  BOTH FULL/signup results remain required.
+- Funded69 failed on a92-byte informational line appended to otherwise exact
+  discovery JSON. The producer correction passes actual CLI/publication/validator
+  controls and independent review. It is not installed in the live clones.
+- Discovery contains32 valid authority holds and no mailbox-read incompleteness.
+  Four mixed-evidence holds exposed a separate independent-consumer defect;
+  its isolated correction passes32-row replay and focused negatives, with
+  independent integration review approved. All authority holds remain enforced.
+- Current60USD authority remains binding; the operator revoked the prior
+  15percent weekly stop. Subscription tokens remain a conserved resource;
+  API and subscription accounting are separate. The failed attempt reports
+  executor cost3.9178638USD; terminal engine/aggregate cost and complete owned
+  cleanup reconciliation are pending before any further paid admission.
+
+The following platform observations are retained from the source baseline;
+this host migration has not re-audited their deployment:
+
+- Both ACTOR runtimes and the Mario peer execute reviewed immutable preserved
+  source families, verified by all439/459/355 package files and authenticated
+  owner/PID/source bindings. Canonical source is655b167; the other three peers
+  and Qonto retain their previous source families with refreshed process identities.
+  A historical Git family label
+  alone does not establish the deployed baseline.
+- The retained live Desktop consumer baseline matches canonical `d9e0361`.
+  The new independent codec is developed only in its isolated worktree; native,
+  provider-mail and signup business oracles remain unchanged. The current
+  consumer's route/fallback additions have M4 approval; adoption remains pending.
+- Shared-deadline finalization reserves time inside the existing allowance.
+  First-cause and native phase/cost diagnostics retain scope and causal links;
+  historical overruns remain unexplained. Current ordinary acceptance is separate.
+- Mario’s exact missing Sent source is repaired through scoped native maintenance.
+  Prior data is preserved; reconstructed auto-updating remains disabled. Recurring
+  ingestion history stays unknown; the release plan owns source/data evidence.
+- Both clones use DEBUG-first logs and ten-minute private filesystem collection.
+  [Log-driven diagnosis](log-diagnosis-workflow.md) requires malfunction detection
+  and a supported cause/investigation route for each incident. `cs-diagnose` is
+  manual-only; technical SMTP, old scanners and off-host watchdogs stay disabled.
+  [Operational logs](operator-observability.md) retain safe counts, failed checks,
+  primary causal links and known exception origins without granting replay authority.
+- Automatic inventory uses48bounded hooks with8000-character preferred parts
+  and the original whole7000partition for Unicode-heavy input,4MBprivate
+  capture and one exact
+  progress duplicate paired with its successful final. Complete native inspection,
+  whole inventory and effect-time source/authority checks remain independent.
+  The source successor emits a single explicit overflow notice with complete
+  paging instructions, and preserves capacity counts/run references in failed
+  supervisor notices. Focused real-process/ordinary-surface checks and integration
+  pass; installed verification and whole-service acceptance remain separate.
+- [Runtime controls](operator-runtime.md) separate the selected scheduled host,
+  engine and direct classifier spending. Both clones retain USD4 fallback soft budgets;
+  MrCall uses its own primary launcher. CS_PAUSE prevents new guarded ticks,
+  not running Claude or independent engine work.
+- [Assignments](task-assignment.md) use engine-owned signed authority and scoped
+  drafts. Six company engines retain reviewed repairs; Qonto stays excluded.
+  Support/Mario share the approved company space while private mail/tasks stay
+  isolated. Provider Sent/All Mail remains dedup truth.
+- [Interactive completion](execution-plans/2026-10-22-interactive-send-completion.md)
+  and [exact draft lifecycle](draft-lifecycle.md) retain scoped installed proof.
+  Exact-ID sends preserve assignment/source/dedup guards; automatic reconciliation
+  is off and native Gmail browser/mobile/API edit/send preservation is unverified.
+- The [protected fixture protocol](execution-plans/2026-10-13-protected-operator-fixture-protocol.md)
+  retains signed R9 evidence for its exact historical candidate. Current composition
+  requires fresh genuine acceptance; retained bytes do not prove model inspection.
+- [Standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md)
+  require human Desktop confirmation for managed changes. Scheduled sessions cannot
+  publish rules or substitute local copies for unavailable published procedures.
+- [Shared memory](briefs/2026-09-10-shared-project-memory.md) and finance/legal
+  are engine-owned. The [thin legal client](execution-plans/2026-10-16-authenticated-legal-client.md)
+  supports protocol2, direct start, cross-owner refusal and complete artifacts;
+  maintained clones use it, with separate ordinary/final acceptance still open.
+- Stamped AGENTS owns workspace rules; CLAUDE is its one-time bootstrap. Three
+  hosts share canonical skills. Company files, Café prices and authored help are
+  clone-owned. [Bootstrap naming](execution-plans/2026-10-11-bootstrap-name.md)
+  preserves old authored data while using cs-bootstrap/company other-systems.
+- Stripe reads and explicit portal requests retain their existing engine route.
+  The retained engine lacks fixed-EUR Payment Link creation capability/handler;
+  restored canonical instructions must STOP when that capability is absent.
+  Implementing that engine feature is outside this release-alignment work.
+  [Integration closure](execution-plans/2026-10-24-stripe-payment-method-link.md),
+  native selection and Faire acceptance remain open.
+
+## Unresolved
+
+- The existing completion record refuses closure after installed workflow hash
+  changes. Prior approvals and pending obligations remain retained; the installed
+  protocol supplies no documented same-task migration. Baseline advancement is
+  not claimed and runtime acceptance remains an independent requirement.
+- Genuine strict BOTH-clone FULL, publication and public Git/lock installation
+  proof remain required. Failed candidates and uncertain charges/effects are
+  retained; a component read or earlier protected reply certifies no whole FULL.
+- Recurring peer ingestion history and mutable scheduling remain unknown.
+  E13 repairs one exact source counterpart; it grants no automatic business
+  authority or recurring scheduling change.
+- Historical SELECT, empty-fixture and discarded helper exceptions remain
+  UNKNOWN. Later success and controlled reproductions cannot recover missing
+  production observations. Time ceilings and economic quotas are separate.
+- [Assignment recovery](execution-plans/2026-10-15-ordinary-assignment-recovery.md)
+  retains failed V27 and separate permission/ordinary acceptance. Earlier V14,
+  scoped Café draft and R9 proofs certify only their respective cases.
+- OpenCode diagnosis selection and conditional-instruction reading have qualified
+  native coverage. Native Gmail edits, wide dossier latency and live unanswered
+  parity retain their owners; incomplete authority continues to hold named roots.
+- The [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
+  remains undeployed; newer explicit bindings require stronger policy, while
+  compatible released workflows retain current guards and separate launch limits.
+- Engine/classifier failover, SIP/customer trunks, PBX, secondary-account onboarding
+  and factory update/help debt remain separate work.
+
+## Next
+
+1. Complete affected documentation review of the approved corrections.
+2. Reconcile terminal costs/effects and owned cleanup before another admission.
+3. Deliver reviewed corrections through immutable release and installed checks.
+4. Require genuine sequential BOTH FULL/signup, final review and legitimate
+   baseline closure. Public publication requires explicit authority.
+
+
+## 2026-10-29 — Superseded69 delivery checkpoint
+
+Both clones install immutable local v0.69.0 (`cb7d11de866ed74afb6f31715aa48bd6980317c9`); source/tag suites and installed package/context checks remain valid. The funded69 FULL failed on MrCall before Cafe/signup: exact JSON discovery bytes were followed by a92-byte informational stdout trailer, causing `discovery_cli_result_binding_differs`. The actual discovery has no mailbox-read incompleteness and contains32 legitimate assignment holds. Native executor usage-price cost is3.9178638USD with0uncertain executor cost for this attempt; engine and aggregate terminal reconciliation remain pending. The harness scheduling-window record reports restored; complete owned cleanup remains to be reconciled before another admission.
+
+The approved bounded correction is in source only: Pydantic publication emits the exact registered JSON, without changing ordinary/legacy output or consumer identity/hash guards. Baseline/red/green and three focused tests pass; independent integration review APPROVED. The isolated Desktop consumer correction handles strictly validated AUTOMATIC companions alongside required human-verification observations. Retained32-row replay changes28PASS/4FAIL to32PASS/0FAIL without changing any row or authority hold; two focused tests include24 negative subcases and Unicode digest coverage. Its independent integration review is APPROVED (`m5-assignment-consumer-integration-review.md`).
+
+Evidence: `m5-discovery-stdout-fix/evidence.json`, `m5-discovery-stdout-integration-review.md`, `m5-assignment-incomplete-diagnosis.json`, and `m5-assignment-consumer-fix/result.json` under `/tmp/mrcall-ai-kit/pydantic-headless-20261028/`. New amendments are approved in `m5-discovery-correction-plan-review.md` and `m5-assignment-consumer-plan-review.md`.
+
+Remaining: affected documentation review; immutable release/installed adoption of actual corrections; terminal engine/aggregate cost and owned-cleanup reconciliation; genuine sequential BOTH FULL/signup; final review and legitimate baseline closure. No restoration is claimed, no public push is authorized, no automatic retry is permitted. Original40USD authority and global15percent weekly stop remain unchanged (last measured22percent remaining). Never resend the earlier FULL66.2 response proved in Sent. Superseded checkpoint narrative is preserved verbatim in the context archive.
+
 ## 2026-10-29 — Superseded Pydantic delivery checkpoint
 
 
@@ -5258,3 +5492,55 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 3. Complete public provenance and public Git/lock proof after authorized publication.
 4. Finish doc-end/final review and restore only owned maintenance controls.
 5. Keep cs-diagnose manual.
+
+
+## 2026-10-30 — prior restoration snapshot
+
+## State now
+
+- **Latest release tag: `v0.69.1`; Current HEAD status: untagged.** Both clones
+  install this immutable tag and their package bytes match.
+  Genuine sequential BOTH FULL/signup acceptance remains unmet; service is not
+  restored. Latest FULL fails discovery, then local context capacity.
+- Original engine projections exhaust120000ms during IMAP operations. Command
+  unions consume118.94s/117.27s; original bodies/order are unavailable. Engine
+  optimization requires explicit scope extension beyond the executor migration.
+- Unreleased D1 diagnostics, F fail-fast and P bounded-history changes have
+  independent source integration approval. F proves zero requests/tools after
+  validated assignment-read failure while32 legitimate holds remain valid.
+  P independently validates chronological SDK/HTTP witnesses, full inventory
+  continuation and visible finite refusal without raising capacity or guards.
+  Disposable installed proof now covers the exact private wheel
+  `0.69.1+fp.874d68ec72d3`:166 cs files/171 non-RECORD payloads match; six controls
+  pass. Independent Desktop readers preserve F rejection and validate P transport.
+  All33 disposable processes are gone. This is controlled SDK/MockTransport
+  evidence, not live-provider, whole-business FULL or live-clone adoption.
+- The single finished suite records exit1/1487.559s with355 files unchanged.
+  Its two failed groups have focused repairs: release markers pass; eight worker
+  context tests pass after the exact expected D1 wording is updated. Four new
+  P tests are now wired explicitly and pass without imported-test duplication.
+  Both test-only adaptations are reviewed; production code is unchanged after
+  the suite. This reconciled evidence is not an original full-suite exit0.
+- API authority is60USD total,8USD soft and13.25USD hard per job. Current usage
+  estimate22.7717082USD plus8.012607USD retained reserves leaves provisional
+ 29.2156848USD. Uncaptured costs and invoice verification remain qualified;
+  no new paid admission is authorized by that calculation. The old15percent
+  subscription stop is revoked; conserve subscription tokens.
+- Failed FULL owned cleanup is verified; future ticks remain held by the exact
+  owned `m5-after691-failure-hold` scheduling window. Ordinary Cafe has separately
+  failed with native3.4385270USD; its captured processes are gone and no native
+  effectful tool/send appears. Broader engine effects remain unverified. Require
+  current identity/quiescence checks before any adoption or owned-control cleanup.
+
+
+- Genuine strict BOTH-clone FULL, publication and public Git/lock installation
+  proof remain required. Failed candidates and uncertain charges/effects are
+  retained; a component read or earlier protected reply certifies no whole FULL.
+
+## Next
+
+1. Retain the exact private wheel and installed proofs for reviewed adoption.
+2. Obtain explicit engine scope disposition; preserve the E blocker separately.
+3. Reconcile all costs/effects and current owned controls before immutable adoption.
+4. Require installed checks, genuine BOTH FULL/signup and final review. Baseline
+   closure remains blocked; public push requires explicit authority.

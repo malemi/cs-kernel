@@ -1,3 +1,8 @@
+"""Validate and aggregate primary and peer account assignment projections.
+
+The legacy assignment_peer_projection/reply causal identifiers cover all accounts.
+"""
+
 from __future__ import annotations
 
 from . import observability
@@ -70,7 +75,30 @@ def _unknown(thread_key: str, reason: str, *, owner_uid: str | None = None) -> d
             "events": [], "covered_inbound": [], "reply_evidence": [], "reason": reason}
 
 
-def _observe_peer(settings, thread_key, response=None, *, failure=None):
+def _account_context(primary_uid, uid, label):
+    return "primary account" if uid == primary_uid else f"peer account {label!r}"
+
+
+def _projection_failure(error, diagnostic=None):
+    if diagnostic is not None:
+        try:
+            return rpc_reads.validate_diagnostic(diagnostic)["cause"]
+        except Exception:
+            pass
+    if isinstance(error, rpc.EngineError):
+        return "remote_invalid_params" if error.code == -32602 else "remote_error"
+    if isinstance(error, AssignmentUnavailable):
+        return "projection_invalid"
+    return "transport_unavailable"
+
+
+def _projection_reason(response):
+    from .observability_causal import PAIRS
+    reason = response.get("reason")
+    return reason if reason in PAIRS["assignment_peer_projection"] else "unknown (upstream detail unavailable)"
+
+
+def _observe_account_projection(settings, thread_key, response=None, *, failure=None):
     try:
         from .observability_causal import PAIRS, decision
         from .observability_producers import emit
@@ -102,17 +130,17 @@ def _project_one(settings, thread_key: str, space_id: str | None = None) -> dict
     try:
         raw = rpc.call_sync(settings, "tasks.assignment.project", {"thread_key": thread_key}, timeout=150)
     except rpc.EngineError as error:
-        _observe_peer(settings, thread_key, failure="remote_invalid_params" if error.code == -32602 else "remote_error")
+        _observe_account_projection(settings, thread_key, failure="remote_invalid_params" if error.code == -32602 else "remote_error")
         raise
     except Exception:
-        _observe_peer(settings, thread_key, failure="transport_unavailable")
+        _observe_account_projection(settings, thread_key, failure="transport_unavailable")
         raise
     try:
         result = _validate_projection(settings, thread_key, raw, space_id)
     except Exception:
-        _observe_peer(settings, thread_key, failure="projection_invalid")
+        _observe_account_projection(settings, thread_key, failure="projection_invalid")
         raise
-    _observe_peer(settings, thread_key, result)
+    _observe_account_projection(settings, thread_key, result)
     return result
 
 
@@ -203,11 +231,11 @@ def project(settings, thread_key: str, *, peers: bool = True) -> dict:
     try:
         result = _project_one(settings, thread_key)
     except Exception as exc:
-        return _unknown(thread_key, f"assignment authority unavailable ({type(exc).__name__})", owner_uid=settings.engine_owner_uid)
+        return _unknown(thread_key, "assignment primary account unavailable: " + _projection_failure(exc), owner_uid=settings.engine_owner_uid)
     if not peers:
         return result
     responses = [(settings.engine_owner_uid, result)]
-    peer_settings = {settings.engine_owner_uid: settings}
+    account_settings = {settings.engine_owner_uid: settings}
     unknown = []
     seen = {settings.engine_owner_uid}
     for name, uid in settings.account_map.items():
@@ -216,17 +244,21 @@ def project(settings, thread_key: str, *, peers: bool = True) -> dict:
         seen.add(uid)
         try:
             peer = config.load(engine_owner_uid=uid)
-            peer_settings[uid] = peer
-            responses.append((name, _project_one(peer, thread_key, result["space_id"])))
         except Exception:
-            unknown.append(name)
-    responses, unknown = _resolve_peer_aliases(thread_key, responses, unknown,
+            unknown.append(f"peer account {name!r}: account configuration unavailable")
+            continue
+        account_settings[uid] = peer
+        try:
+            responses.append((name, _project_one(peer, thread_key, result["space_id"])))
+        except Exception as exc:
+            unknown.append(f"peer account {name!r}: " + _projection_failure(exc))
+    responses, unknown = _resolve_account_aliases(thread_key, responses, unknown,
         lambda uid, key: _project_one(settings if uid == settings.engine_owner_uid else config.load(engine_owner_uid=uid), key, result["space_id"]),
-        observe=lambda response, code: _observe_peer(peer_settings[response["actor_uid"]], thread_key, failure=code))
-    return _merge_peers(result, responses, unknown)
+        observe=lambda response, code: _observe_account_projection(account_settings[response["actor_uid"]], thread_key, failure=code))
+    return _merge_account_projections(result, responses, unknown)
 
 
-def _resolve_peer_aliases(requested, responses, unknown, read, observe=None):
+def _resolve_account_aliases(requested, responses, unknown, read, observe=None):
     primary = responses[0][1]
     canonical = primary.get("authoritative_thread_key", requested)
     primary_component = set(primary.get("component_thread_keys", []))
@@ -282,11 +314,13 @@ def _resolve_peer_aliases(requested, responses, unknown, read, observe=None):
             resolved.append((name, original))
             if fallback is not None:
                 resolved.append((name, fallback))
-            unknown.append(name + " canonical scope unreadable")
+            unknown.append(_account_context(primary["actor_uid"], original["actor_uid"], name)
+                           + " canonical scope unreadable: " + _projection_failure(exc))
     return resolved, unknown
 
 
-def _merge_peers(result: dict, responses: list, unknown: list) -> dict:
+def _merge_account_projections(result: dict, responses: list, unknown: list) -> dict:
+    primary_uid = result["actor_uid"]
     partial = next((response for _, response in responses
                     if _ancestry_conflict(response, result["thread_key"])), None)
     if partial is not None:
@@ -294,7 +328,11 @@ def _merge_peers(result: dict, responses: list, unknown: list) -> dict:
                 or (not response["complete"] and not _ancestry_conflict(response, result["thread_key"]))
                 or response.get("authoritative_thread_key", result["thread_key"]) != result["thread_key"]
                 for _, response in responses):
-            return {**partial, "state": "unknown", "reason": "assignment peer scope unreadable with unresolved ancestry conflict"}
+            return {**partial, "state": "unknown", "reason": "assignment account scope unreadable with unresolved ancestry conflict: "
+                    + ", ".join([*unknown, *(_account_context(primary_uid, response["actor_uid"], name)
+                        + ": " + _projection_reason(response) for name, response in responses
+                        if response["state"] == "unknown" or (not response["complete"]
+                            and not _ancestry_conflict(response, result["thread_key"])))])}
         return dict(partial)
     evidence = [item for _, response in responses for item in response["reply_evidence"]]
     result = {**responses[0][1], "thread_key": result["thread_key"]}
@@ -304,7 +342,7 @@ def _merge_peers(result: dict, responses: list, unknown: list) -> dict:
     for _, response in responses:
         if response.get("task") != result.get("task"):
             return {**result, "state": "conflict", "hold_auto_reply": True,
-                    "reason": "assignment changed while reading peer scope", "reply_evidence": evidence}
+                    "reason": "assignment changed while reading account scope", "reply_evidence": evidence}
     task = result.get("task") or {}
     if observation_only and task:
         unknown.append("observed message does not establish component assignment authority")
@@ -320,20 +358,21 @@ def _merge_peers(result: dict, responses: list, unknown: list) -> dict:
                          and response.get("source_owner_uid") == task.get("creator_uid"))
         unwaived_hold |= response["hold_auto_reply"] and not owner_refusal
         if ((not response["complete"] and response["state"] != "needs-assignment") or response["state"] == "unknown") and not owner_refusal:
-            unknown.append(name)
+            unknown.append(_account_context(primary_uid, response["actor_uid"], name)
+                           + ": " + _projection_reason(response))
     result = {**result, "reply_evidence": evidence}
     if unknown:
         return {**result, "state": "unknown", "complete": False, "hold_auto_reply": True,
-                "reason": "assignment peer scope unreadable: " + ", ".join(unknown)}
+                "reason": "assignment account scope unreadable: " + ", ".join(unknown)}
     if any(response["state"] == "conflict" for _, response in responses):
         return {**result, "state": "conflict", "hold_auto_reply": True,
-                "reason": "assignment peer reports conflicting authority"}
+                "reason": "assignment account reports conflicting authority"}
     if any(response["state"] == "needs-assignment" for _, response in responses) and result["state"] in {"normal", "later-inbound"}:
         return {**result, "state": "needs-assignment", "complete": False, "hold_auto_reply": True,
                 "reason": "peer reply requires explicit human verification and assignment"}
     if unwaived_hold and not result["hold_auto_reply"]:
         return {**result, "state": "unknown", "complete": False, "hold_auto_reply": True,
-                "reason": "assignment peer retains an action hold"}
+                "reason": "assignment account retains an action hold"}
     return result
 
 
@@ -363,7 +402,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
         try:
             accounts.append((name, config.load(engine_owner_uid=uid)))
         except Exception:
-            unavailable.append(name)
+            unavailable.append(f"peer account {name!r}: account configuration unavailable")
     first_timeout_event = {}
     budget_stats = {selected.engine_owner_uid: dict(dispatched=0, returned=0, timed_out=0,
                     deferred=0, serial_read_ms=0, failed=0, first=None, event=None,
@@ -431,7 +470,7 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
     recovery_holds = {}
     observations = {}
     timeout_events = {}
-    peer_observations = set()
+    account_observations = set()
     configurations = {uid: json.dumps(selected.model_dump(mode="json") if hasattr(selected, "model_dump") else vars(selected), sort_keys=True, default=str)
                       for uid, (_, selected) in selected_accounts.items()}
 
@@ -473,14 +512,18 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                     raise outcome.error
                 responses.append((name, _validate_projection(selected, key, outcome.value)))
             except Exception as exc:
-                unknown.append(name + (" " + str(exc) if isinstance(exc, AssignmentUnavailable) and "capacity deferred" in str(exc) else ""))
+                unknown.append(_account_context(settings.engine_owner_uid, uid, name) + ": "
+                    + (str(exc) if isinstance(exc, AssignmentUnavailable) and "capacity deferred" in str(exc)
+                       else _projection_failure(exc, outcome.diagnostic)))
                 if uid == settings.engine_owner_uid:
                     primary_error = exc
         primary = next((response for _, response in responses
                         if response["actor_uid"] == settings.engine_owner_uid), None)
         if primary is None:
-            reason = (f"assignment authority unavailable ({type(primary_error).__name__})"
-                      if primary_error is not None else "assignment authority unavailable")
+            primary_outcome = states[index]["original"][settings.engine_owner_uid]
+            reason = ("assignment primary account unavailable: "
+                      + _projection_failure(primary_error, primary_outcome.diagnostic)
+                      if primary_error is not None else "assignment primary account unavailable")
             results[key] = {**_unknown(key, reason + ("; " + ", ".join(unknown)
                 if isinstance(primary_error, AssignmentUnavailable) and "capacity deferred" in str(primary_error) else ""), owner_uid=settings.engine_owner_uid),
                 "reply_evidence": [item for _, response in responses for item in response["reply_evidence"]]}
@@ -489,7 +532,8 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
         scoped = []
         for name, response in responses:
             if response["space_id"] != primary["space_id"]:
-                unknown.append(name)
+                unknown.append(_account_context(settings.engine_owner_uid, response["actor_uid"], name)
+                               + ": projection_invalid")
             else:
                 scoped.append((name, response))
 
@@ -508,28 +552,28 @@ def projections(settings, thread_keys, *, deadline=None, owned_process_group=Non
                 raise outcome.error
             return _validate_projection(selected_accounts[uid][1], canonical, outcome.value, primary["space_id"])
 
-        scoped, unknown = _resolve_peer_aliases(key, scoped, unknown, canonical_read,
-            observe=lambda response, code: _observe_peer(selected_accounts[response["actor_uid"]][1], key, failure=code))
+        scoped, unknown = _resolve_account_aliases(key, scoped, unknown, canonical_read,
+            observe=lambda response, code: _observe_account_projection(selected_accounts[response["actor_uid"]][1], key, failure=code))
         if any(outcome is None for outcome in states[index]["canonical"].values()):
             return
-        results[key] = _merge_peers(primary, scoped, unknown)
+        results[key] = _merge_account_projections(primary, scoped, unknown)
         completed.add(index)
 
     def record(uid, job, outcome):
         index, key, canonical = job
         identity = (uid, key)
         observation = (uid, key, id(outcome))
-        if observation not in peer_observations:
-            peer_observations.add(observation)
+        if observation not in account_observations:
+            account_observations.add(observation)
             if outcome.error is None:
                 try:
                     observed = _validate_projection(selected_accounts[uid][1], key, outcome.value)
                 except Exception:
-                    _observe_peer(selected_accounts[uid][1], key, failure="projection_invalid")
+                    _observe_account_projection(selected_accounts[uid][1], key, failure="projection_invalid")
                 else:
-                    _observe_peer(selected_accounts[uid][1], key, observed)
+                    _observe_account_projection(selected_accounts[uid][1], key, observed)
             elif outcome.diagnostic is None:
-                _observe_peer(selected_accounts[uid][1], key, failure="transport_unavailable")
+                _observe_account_projection(selected_accounts[uid][1], key, failure="transport_unavailable")
         if outcome.error is None and identity not in recovered:
             try:
                 value = _validate_projection(selected_accounts[uid][1], key, outcome.value)
@@ -682,10 +726,15 @@ def render(projection: dict) -> str:
         f"{item['basis']}={item.get('assignee_uid') or item.get('owner') or '?'}"
         + (f" ({item['reason']})" if item.get("reason") else "") for item in origins
     )
+    root_hash = observability.safe_metadata({"root_id": projection.get("thread_key")}).get("root_id", "unavailable")
+    context = observability.current_context()
+    references = " ".join(f"{key}={observability.diagnostic_id(context.get(key)) or 'unavailable'}"
+                          for key in ("trace_id", "run_id"))
     return (f"{projection.get('thread_key') or '?'}: {projection['state']}{identity} "
             f"— {projection.get('reason') or ''}; automatic reply "
             f"{'HELD' if projection['hold_auto_reply'] else 'not held by assignment'}"
-            + (f"; provenance: {provenance_text}" if provenance_text else ""))
+            + (f"; provenance: {provenance_text}" if provenance_text else "")
+            + f"; diagnostic refs: root_sha256={root_hash} {references}")
 
 
 def guard(settings, thread_key: str) -> dict:
