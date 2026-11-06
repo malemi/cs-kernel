@@ -45,7 +45,8 @@ from .project_init import (
     is_clone_authored,
     is_executable_target,
     load_existing_config,
-    bootstrap_may_land,
+    bootstrap_profile_mode,
+    bootstrap_skip_reason,
     stamped_default_untouched,
     unlink_if_symlink,
 )
@@ -544,6 +545,12 @@ def cmd_update(args: list[str]) -> int:
         )
         return 1
 
+    try:
+        bootstrap_profile_mode(clone_root)
+    except ValueError as exc:
+        print(f"error: cannot update instruction bootstrap: {exc}", file=sys.stderr)
+        return 1
+
     # Bare `cs update` opens with the release offer (prompted, default No);
     # on an accepted upgrade it re-execs on the new kernel and never returns.
     rc = _offer_release_upgrade(clone_root)
@@ -644,9 +651,10 @@ def cmd_update(args: list[str]) -> int:
             # touch it again. See CLONE_AUTHORED_PREFIXES for why this is not a
             # conflict to resolve but a file class that must not be tracked.
             clone_file = clone_root / out_rel
+            bootstrap_reason = bootstrap_skip_reason(clone_root, out_rel)
             if clone_file.exists():
                 if stamped_default_untouched(clone_file, old_checksums.get(str_out_rel)):
-                    if bootstrap_may_land(clone_root, out_rel):
+                    if not bootstrap_reason:
                         # Still the kernel's own render — the ledger says so —
                         # and nobody has authored it: it takes the kernel's new
                         # default, once. This run drops the path from the
@@ -658,20 +666,12 @@ def cmd_update(args: list[str]) -> int:
                         print(f"  ✓ {str_out_rel} (was the kernel's own default, never edited — "
                               f"replaced; yours from now on)")
                     else:
-                        # AGENTS.md did not render this run, so the bootstrap
-                        # that imports it stays unwritten. The ledger entry is
-                        # KEPT, so the next run — with the render fixed — can
-                        # still tell this file is the kernel's own and finish
-                        # the move; dropping it here would freeze the old
-                        # charter in CLAUDE.md for good.
                         new_checksums[str_out_rel] = old_checksums[str_out_rel]
-                        print(f"  ! {str_out_rel}: kept as it is — AGENTS.md did not render, "
-                              f"so the bootstrap that imports it is not written")
+                        print(f"  ! {str_out_rel}: kept as it is — {bootstrap_reason}")
                 elif verbose:
                     print(f"  · {str_out_rel} is yours (clone-authored) — left alone")
-            elif not bootstrap_may_land(clone_root, out_rel):
-                print(f"  ! {str_out_rel}: not written — AGENTS.md did not render, "
-                      f"so the bootstrap that imports it would point at nothing")
+            elif bootstrap_reason:
+                print(f"  ! {str_out_rel}: not written — {bootstrap_reason}")
             else:
                 clone_file.parent.mkdir(parents=True, exist_ok=True)
                 _write_clone_file(clone_file, rendered, out_rel, tpl_file.name)

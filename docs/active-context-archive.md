@@ -1,3 +1,9 @@
+## 2026-11-06 — Bootstrap ownership before the v9 guard
+
+- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
+  Hosts share canonical skills. `cs-triage-mail` reads the optional company
+  playbook while preserving send and approval boundaries.
+
 ## 2026-10-16 — Stripe source state before operator adoption
 
 - The [Stripe candidate](../../docs/execution-plans/2026-10-16-stripe-connection.md)

@@ -11,10 +11,13 @@ from __future__ import annotations
 
 import contextlib
 import io
+import json
+import os
 import shutil
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -61,9 +64,159 @@ def _seed_legacy(clone: Path, prompts: Path) -> None:
         (directory / "mine.md").write_text("keep\n")
 
 
+
+def bootstrap_profile_controls(tmp: Path) -> None:
+    import cs
+    from cs import project_update as pu
+    from test_project_update import _FULL_INIT_DATA
+
+    package = tmp / "profile-package"
+    templates = package / "templates/project"
+    templates.mkdir(parents=True)
+    charter = "# Shared fixture charter"
+    (templates / "AGENTS.md.j2").write_text(charter)
+    (templates / "CLAUDE.md").write_bytes((ROOT / "cs/templates/project/CLAUDE.md").read_bytes())
+    skill = templates / ".claude/skills/example/SKILL.md.j2"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("# Shared fixture skill\n")
+    valid = "harness_version = 9\nindex_file = AGENTS.md\ninventory_ignore =\n"
+
+    def seed(name, profile=valid):
+        root = tmp / name
+        (root / "docs").mkdir(parents=True)
+        (root / ".git").mkdir()
+        (root / "AGENTS.md").write_text(charter)
+        if profile is not None:
+            (root / "docs/.doc-profile").write_text(profile)
+        rule = root / ".claude/rules/project-instructions.md"
+        rule.parent.mkdir(parents=True)
+        rule.symlink_to("../../AGENTS.md")
+        return root
+
+    def initialize(root):
+        with patch.object(cs, "__file__", str(package / "__init__.py")), \
+                patch.object(pi, "collect_config", return_value={**_FULL_INIT_DATA, "dest_dir": str(root)}), \
+                patch.object(pi, "prompt_yes_no", return_value=True), \
+                patch.object(pi, "write_state_env"), \
+                patch.object(pi, "offer_project_install", return_value=None), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            return pi.cmd_init([])
+
+    def update(root):
+        previous = Path.cwd()
+        output = io.StringIO()
+        try:
+            os.chdir(root)
+            with patch.object(cs, "__file__", str(package / "__init__.py")), \
+                    patch("builtins.input", side_effect=EOFError), \
+                    contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
+                result = pu.cmd_update([])
+        finally:
+            os.chdir(previous)
+        return result, output.getvalue()
+
+    with _legacy_prompts(tmp, "profile-prompts"):
+        root = seed("managed-profile")
+        check("actual init succeeds with v9 AGENTS-only layout", initialize(root) == 0)
+        check("actual init does not create v9 CLAUDE bootstrap", not (root / "CLAUDE.md").exists())
+        check("v9 init preserves profile and charter", (root / "docs/.doc-profile").read_text() == valid
+              and (root / "AGENTS.md").read_text() == charter)
+        preserved = root / "AGENTS.md"
+        preserved.write_text(charter + "\nLocal managed instructions\n")
+        (templates / "AGENTS.md.j2").write_text(charter + "\nChanged upstream instructions\n")
+        for iteration in range(2):
+            result, output = update(root)
+            check(f"actual v9 update {iteration + 1} succeeds and explains omission",
+                  result == 0 and "harness v9 uses AGENTS.md directly" in output)
+            check(f"actual v9 update {iteration + 1} cannot resurrect CLAUDE",
+                  not (root / "CLAUDE.md").exists())
+            check(f"actual v9 update {iteration + 1} retains declined AGENTS conflict",
+                  preserved.read_text() == charter + "\nLocal managed instructions\n")
+        for host in (".agents", ".opencode"):
+            check(f"v9 {host} alias retains canonical skill bytes",
+                  (root / host / "skills").is_symlink()
+                  and os.readlink(root / host / "skills") == "../.claude/skills"
+                  and (root / host / "skills/example/SKILL.md").read_bytes()
+                  == (root / ".claude/skills/example/SKILL.md").read_bytes())
+        check("v9 Claude rules link remains exact", os.readlink(root / ".claude/rules/project-instructions.md")
+              == "../../AGENTS.md")
+        custom = root / "CLAUDE.md"
+        custom.write_text("# Existing custom bootstrap\n")
+        custom.chmod(0o640)
+        before = custom.read_bytes()
+        result, _ = update(root)
+        check("v9 update preserves existing custom CLAUDE bytes and mode",
+              result == 0 and custom.read_bytes() == before and custom.stat().st_mode & 0o777 == 0o640)
+        ledger = json.loads((root / "template-manifest.json").read_text())
+        ledger["file_checksums"]["CLAUDE.md"] = pu._checksum(custom.read_text())
+        (root / "template-manifest.json").write_text(json.dumps(ledger))
+        result, _ = update(root)
+        check("v9 cannot refresh even a ledgered existing CLAUDE",
+              result == 0 and custom.read_bytes() == before)
+        custom.unlink()
+        external = tmp / "custom-instructions.md"
+        external.write_text("Preserve external custom instructions")
+        custom.symlink_to(external)
+        result, _ = update(root)
+        check("v9 update preserves an existing custom CLAUDE link and its target",
+              result == 0 and custom.is_symlink()
+              and external.read_text() == "Preserve external custom instructions")
+        custom.unlink()
+        with patch.object(pi, "bootstrap_profile_mode", return_value="legacy"):
+            result, _ = update(root)
+        check("removing v9 guard reproduces actual update resurrection",
+              result == 0 and custom.read_bytes() == (templates / "CLAUDE.md").read_bytes())
+
+        legacy = seed("legacy-profile", None)
+        check("actual legacy init still creates original bootstrap",
+              initialize(legacy) == 0 and (legacy / "CLAUDE.md").read_bytes()
+              == (templates / "CLAUDE.md").read_bytes())
+        (legacy / "CLAUDE.md").unlink()
+        result, _ = update(legacy)
+        check("actual legacy update still restores absent bootstrap",
+              result == 0 and (legacy / "CLAUDE.md").read_bytes()
+              == (templates / "CLAUDE.md").read_bytes())
+        (legacy / "AGENTS.md").unlink()
+        check("missing legacy charter still refuses bootstrap", not pi.bootstrap_may_land(legacy, "CLAUDE.md"))
+        (legacy / "AGENTS.md").symlink_to("CLAUDE.md")
+        check("symlink legacy charter still refuses bootstrap", not pi.bootstrap_may_land(legacy, "CLAUDE.md"))
+
+        cases = ["", "not a profile\n", "harness_version = 8\nindex_file = CLAUDE.md\n",
+                 "harness_version = 10\nindex_file = AGENTS.md\n",
+                 valid + "harness_version = 9\n", valid + "harness_file =\n",
+                 "harness_version = 9\nindex_file = CLAUDE.md\n",
+                 'harness_version = 9\nindex_file = "AGENTS.md\n']
+        for number, profile in enumerate(cases):
+            bad = seed(f"invalid-profile-{number}", profile)
+            (bad / "template-manifest.json").write_text(json.dumps({"init_data": {}, "file_checksums": {}}))
+            before_agents = (bad / "AGENTS.md").read_bytes()
+            before_manifest = (bad / "template-manifest.json").read_bytes()
+            result, output = update(bad)
+            check(f"invalid profile {number} refuses update before writes with diagnosis",
+                  result == 1 and "unresolved instruction layout" in output
+                  and not (bad / "CLAUDE.md").exists()
+                  and (bad / "AGENTS.md").read_bytes() == before_agents
+                  and (bad / "template-manifest.json").read_bytes() == before_manifest)
+            check(f"invalid profile {number} refuses init before writes", initialize(bad) == 1
+                  and not (bad / "CLAUDE.md").exists()
+                  and (bad / "AGENTS.md").read_bytes() == before_agents)
+        unsafe = seed("linked-profile")
+        profile = unsafe / "docs/.doc-profile"
+        profile.rename(unsafe / "profile.txt")
+        profile.symlink_to("../profile.txt")
+        check("symlink profile refuses actual init", initialize(unsafe) == 1
+              and not (unsafe / "CLAUDE.md").exists())
+        (templates / "AGENTS.md.j2").write_text("{{ missing_charter_value }}")
+        failed = seed("failed-legacy-render", None)
+        (failed / "AGENTS.md").unlink()
+        check("failed legacy charter render cannot publish dangling bootstrap",
+              initialize(failed) == 1 and not (failed / "CLAUDE.md").exists())
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
+        bootstrap_profile_controls(tmp)
         clone = _clone(tmp, "acme-cs")
 
         print("project-scoped skill wiring and exact legacy cleanup")

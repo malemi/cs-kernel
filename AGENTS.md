@@ -2,8 +2,15 @@
 ## Documentation lifecycle (harness v9)
 This repository's managed protocol lives here in AGENTS.md; no CLAUDE.md read is
 required. Use this v9 entry instead of any older kit instruction to load CLAUDE.md.
-When repository `.agents/skills/` provides doc-start/doc-end/doc-critic, load those
-copies; do not select same-named older global workflows.
+Resolve skills from their exact current catalog paths, expanding only declared
+root aliases. For doc-start/doc-end/doc-critic, prefer each repository
+`.agents/skills/<name>/SKILL.md` only if that file exists; otherwise use its
+declared installed source. A directory or CS-workflow symlink proves no entry.
+Use `python3 "${MRCALL_KIT_HOME:-$HOME/.config/mrcall-ai-kit}/skill-path.py"
+--declared <catalog-path>` with `--local <entry>` only for a required override.
+Resolve every input before batching reads; nonzero exit or partial output is
+not a completed read. Missing declared sources require a clear diagnostic,
+not a guessed namespace, copied global skill, or suppressed failure.
 
 The lead, before source reads, searches, diagnosis, edits, or delegation for ANY repository
 request (including questions, fast-path fixes, briefs, and reviews), invoke
@@ -108,10 +115,12 @@ never stamped. Each needs its own `package-data` glob (see `pyproject.toml`).
 
 **`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills` and `.opencode/skills` point
 into it; `install_agent_surfaces` owns those links and the exact legacy cleanup. A clone's `AGENTS.md` is
-the rendered charter (`templates/project/AGENTS.md.j2`), and its `CLAUDE.md` is a bootstrap the kernel
-writes once — the `@AGENTS.md` import Claude Code follows — and never touches again
-(`CLONE_AUTHORED_PREFIXES`), so a documentation harness that manages `CLAUDE.md` owns it without a drift
-report. Never render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
+the rendered charter (`templates/project/AGENTS.md.j2`). Without a documentation profile, the kernel
+creates a missing `CLAUDE.md` bootstrap importing `AGENTS.md` and preserves existing clone-authored
+copies. A canonical v9 AGENTS-only profile suppresses bootstrap creation on init/update; malformed
+or unsupported profile ownership refuses it. Kernel code never retires a custom bootstrap or adopts
+a harness on its own. This source guard requires separate package adoption to affect installed clones.
+Never render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
 
 **Clone-owned, never kernel source**, shipped only as `.j2` under `cs/templates/project/`: `.claude/`,
 `bin/cs_operator_cron.sh`, `company/*.md`, `manifest.toml`, `requirements.txt`. `company/**` is

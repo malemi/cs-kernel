@@ -69,8 +69,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   hosts. Its predecessor has 33 accepted native cases for publication, narrow
   Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
   [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
-- Stamped AGENTS owns workspace instructions; CLAUDE is its one-time bootstrap.
-  Hosts share canonical skills. `cs-triage-mail` reads the optional company
+- Stamped AGENTS owns workspace instructions. Canonical v9 AGENTS-only profiles
+  suppress CLAUDE bootstrap creation on init/update; absent-profile legacy clones
+  retain it. Custom instructions and shared skill aliases are preserved. This is
+  source-only until separately adopted; [publication scope](execution-plans/2026-11-06-bootstrap-guard-main-publication.md)
+  retains verification and exclusions. `cs-triage-mail` reads the optional company
   playbook while preserving send and approval boundaries.
 - The engine owns classification, task judgement and company memory. Written
   projects are revisioned engine records; legacy folders remain in private Git.
@@ -99,6 +102,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   Faire authenticated use and a kernel adapter remain unverified/unimplemented.
 
 ## Unresolved
+
+- Interactive-reply M1–M5 main integration needs reviewed predecessor dependencies.
+  M6, native/provider acceptance and both ordinary FULL obligations remain open;
+  controlled fixture identities and bounded spending remain required. Parent
+  completion-checker binding is separately owned. This publication closes none
+  of those obligations and changes no installed package or service.
 
 - The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
   are verified. Remote MCP remains separate; wide dossier/review latency remains

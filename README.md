@@ -250,12 +250,14 @@ claude
 opencode
 ```
 
-What each agent reads first is `AGENTS.md`, the project's instructions:
-Codex and OpenCode load it natively, Claude Code reaches it through the
-`@AGENTS.md` import in `CLAUDE.md`. `cs init` writes that `CLAUDE.md` once
-and never touches it again, so a documentation harness may take it over —
-the one in [mrcall-ai-kit](https://github.com/malemi/mrcall-ai-kit) does,
-through its `/doc-create`. That is optional; nothing here depends on it.
+`AGENTS.md` holds the project's instructions. For legacy clones without a
+`docs/.doc-profile`, init/update create a missing `CLAUDE.md` bootstrap importing
+it and preserve clone-authored instructions. A canonical v9 profile declaring
+`index_file = AGENTS.md` suppresses that bootstrap; malformed or unsupported
+profiles refuse before stamping. Existing custom instruction files are not
+retired automatically. The [source publication record](docs/execution-plans/2026-11-06-bootstrap-guard-main-publication.md)
+separates this behavior from installed package adoption. A documentation harness
+is optional; clones without one keep their existing bootstrap behavior.
 
 Start the review skill: **`/cs-review`** in Claude Code, **`$cs-review`** in
 Codex, or OpenCode's native skill invocation. This is the review bootstrap, zero

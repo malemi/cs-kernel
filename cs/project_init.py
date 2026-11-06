@@ -941,13 +941,6 @@ def is_executable_target(rel_dir: Path, template_name: str) -> bool:
 # Entries are matched with `startswith`, so a member is either a directory
 # prefix (`company/`) or one whole path (`docs/active-context.md`).
 #
-# `CLAUDE.md` (v0.42.0): the entry point Claude Code reads, whose body is the
-# `@AGENTS.md` import. The charter itself is rendered into `AGENTS.md`, the
-# file Codex and OpenCode read natively. The kernel writes `CLAUDE.md` once,
-# when a clone has none, because a clone with no `CLAUDE.md` starts every
-# Claude Code session with no charter at all — and then never again, because
-# a documentation harness that manages `CLAUDE.md` byte-for-byte replaces it
-# and would otherwise be reported as drift on every update, for ever.
 CLONE_AUTHORED_PREFIXES = ("company/", "docs/active-context.md", "CLAUDE.md")
 
 
@@ -995,20 +988,52 @@ def unlink_if_symlink(path: Path) -> bool:
     return False
 
 
-def bootstrap_may_land(root: Path, out_rel) -> bool:
-    """True unless `out_rel` is the `CLAUDE.md` bootstrap and `AGENTS.md` is
-    not yet a regular file beside it.
+def bootstrap_profile_mode(root: Path) -> str:
+    """Resolve bootstrap ownership without treating an unknown profile as legacy."""
+    profile = root / "docs" / ".doc-profile"
+    if (root / "docs").is_symlink() or profile.is_symlink():
+        raise ValueError("unresolved instruction layout: docs/.doc-profile must not use symlinks")
+    if not profile.exists():
+        return "legacy"
+    if not profile.is_file():
+        raise ValueError("unresolved instruction layout: docs/.doc-profile is not a regular file")
+    fields = {}
+    try:
+        for line in profile.read_text(encoding="utf-8").splitlines():
+            line = line.partition("#")[0].strip()
+            if not line:
+                continue
+            key, separator, value = line.partition("=")
+            key, value = key.strip(), value.strip()
+            if not separator or not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", key) or key in fields:
+                raise ValueError("malformed or duplicate profile field")
+            fields[key] = value
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise ValueError("unresolved instruction layout: docs/.doc-profile is unreadable or malformed") from exc
+    version = fields.get("harness_version")
+    index = fields.get("index_file")
+    if (version not in ("9", '"9"', "'9'")
+            or index not in ("AGENTS.md", '"AGENTS.md"', "'AGENTS.md'")
+            or "harness_file" in fields):
+        raise ValueError("unresolved instruction layout: docs/.doc-profile must declare harness_version = 9, "
+                         "index_file = AGENTS.md, and no harness_file")
+    return "agents-only"
 
-    The bootstrap's whole body is `@AGENTS.md`. Written before the charter has
-    landed — because that render failed — it would leave a clone whose only
-    instruction file imports a file that does not exist. Both stamping paths
-    visit `AGENTS.md` first (sorted walks), so this is false only when that
-    render did fail; the old `CLAUDE.md` is then kept, and reported.
-    """
+
+def bootstrap_skip_reason(root: Path, out_rel) -> str | None:
     if str(out_rel).replace(os.sep, "/") != "CLAUDE.md":
-        return True
+        return None
+    if bootstrap_profile_mode(root) == "agents-only":
+        return "harness v9 uses AGENTS.md directly; CLAUDE.md bootstrap is not written"
     agents = root / "AGENTS.md"
-    return agents.is_file() and not agents.is_symlink()
+    if not agents.is_file() or agents.is_symlink():
+        return "AGENTS.md did not render as a regular file, so the bootstrap that imports it is not written"
+    return None
+
+
+def bootstrap_may_land(root: Path, out_rel) -> bool:
+    """Allow the legacy bootstrap only with known ownership and a regular charter."""
+    return bootstrap_skip_reason(root, out_rel) is None
 
 
 def toml_quote(value) -> str:
@@ -1075,6 +1100,11 @@ def migrate_company_systems(dest_dir: Path) -> None:
 
 def render_templates(config: dict, template_dir: Path, dest_dir: Path):
     """Render Jinja2 templates and copy other files to destination."""
+    try:
+        bootstrap_mode = bootstrap_profile_mode(dest_dir)
+    except ValueError as exc:
+        print(f"Cannot render instruction bootstrap: {exc}", file=sys.stderr)
+        return False, {}
     jinja_env = build_jinja_env(template_dir)
 
     # Create destination directory
@@ -1118,17 +1148,19 @@ def render_templates(config: dict, template_dir: Path, dest_dir: Path):
         # dest_dir "." on an existing clone) would otherwise overwrite it with
         # the blank template, silently.
         rel_dest = dest_path.relative_to(dest_dir)
+        bootstrap_reason = bootstrap_skip_reason(dest_dir, rel_dest)
         if is_clone_authored(rel_dest) and dest_path.exists():
             if not stamped_default_untouched(dest_path, ledger.get(str(rel_dest))):
                 print(f"Kept: {rel_dest} (yours — clone-authored, never re-stamped)")
                 continue
-            if not bootstrap_may_land(dest_dir, rel_dest):
-                print(f"Kept: {rel_dest} (AGENTS.md did not render, so the bootstrap that imports it is not written)")
+            if bootstrap_reason:
+                print(f"Kept: {rel_dest} ({bootstrap_reason})")
                 continue
             print(f"Replaced: {rel_dest} (still the kernel's own default, never edited — it takes the new one)")
-        elif not bootstrap_may_land(dest_dir, rel_dest):
-            print(f"Skipped: {rel_dest} (AGENTS.md did not render, so the bootstrap that imports it is not written)")
-            success = False
+        elif bootstrap_reason:
+            print(f"Skipped: {rel_dest} ({bootstrap_reason})")
+            if bootstrap_mode != "agents-only":
+                success = False
             continue
 
         try:
@@ -1333,9 +1365,8 @@ def install_agent_surfaces(dest_dir: Path) -> None:
 
     - `.agents/skills` and `.opencode/skills` → `.claude/skills`.
 
-    `AGENTS.md` is not a link: it is the rendered charter, the file Codex and
-    OpenCode read natively and Claude Code reaches through `CLAUDE.md`'s
-    `@AGENTS.md` import. This function never creates, replaces or removes it.
+    `AGENTS.md` is the regular rendered charter. This function never creates,
+    replaces or removes it, or changes the clone's instruction-loading layout.
 
     The exact five command-era OpenCode and home-global Codex entries are
     retired idempotently. Unrelated files are never touched.
@@ -1557,7 +1588,7 @@ def cmd_init(argv=None) -> int:
     print("=" * 60)
     print(f"Done! Your secrets live in '~/.{config['company_slug']}-cs/.env' (never commit it)")
     print(f"Its reference copy is: {dest_dir}/.env.example")
-    print(f"Project instructions: {dest_dir}/AGENTS.md (CLAUDE.md imports it for Claude Code)")
+    print(f"Project instructions: {dest_dir}/AGENTS.md")
 
     installed = offer_project_install(dest_dir)
     if installed is False:
