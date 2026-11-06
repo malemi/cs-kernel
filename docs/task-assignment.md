@@ -39,10 +39,13 @@ send around a newer binding. Source-free standalone messages keep ordinary
 approval rules; arbitrary prose is not semantically classified as reply intent.
 Kernel fixed-template bulk and first-contact delivery remain separate.
 
-The candidate requires `system.capabilities.contextual_email_policy: 1` for
-`cs chat`, `cs draft-reply` and `cs draft-send`; unavailable support refuses
-before chat generation or a draft effect. `draft-reply` also retains its existing
-assignment-draft policy negotiation and required exact thread flag.
+The contextual route requires `system.capabilities.contextual_email_policy: 1`
+for context-bound `cs chat`, scheduled `cs draft-reply` and ordinary `cs draft-send`;
+unavailable support refuses those effects. Source-free generic chat retains its
+existing negotiation. Scheduled `draft-reply` retains assignment-draft policy
+negotiation and the exact thread flag. The untagged
+[interactive reply route](interactive-reply-source.md) negotiates supervised
+review, exact publication and exact operator-send capabilities separately.
 
 ```bash
 cs chat --thread-id '<root@example.com>' --reply-to '<inbound@example.com>' 'Prepare this reply'
@@ -72,9 +75,11 @@ engine draft instead. A separate unlocked provider append would evade current
 assignment admission. Source-free campaign queueing retains its previous
 Gmail review surface.
 
-The existing `cs draft-reply` Gmail review-copy behavior remains compatible.
-It checks current assignment projection immediately before append, but the
-append is outside the engine/company lock and has no atomic assignment guarantee.
+The scheduled `cs draft-reply` Gmail review-copy path remains compatible.
+It checks current assignment projection immediately before append, but that
+legacy append is outside the engine/company lock and has no atomic assignment
+guarantee. Interactive publication instead uses the engine exact-publication
+operation journal; its capability and uncertainty contract is documented separately.
 Manual Gmail edits/sends and other external mailbox clients are outside engine
 enforcement. The strengthened capability certifies actual engine private draft
 writes and final transport, not a global lock on mailbox credentials or clients.
@@ -140,11 +145,16 @@ Manual assignment, supervised source confirmation and local address escalation
 retain separate provenance. Different or unverifiable escalation/assignee
 identities hold action rather than choosing an authority silently.
 
-`cs draft-reply` requires exact `--thread-id` before composition. The negotiated
-engine assignment draft policy must also enforce that scope before a draft write;
+Scheduled `cs draft-reply` requires exact `--thread-id` before composition. The
+negotiated engine assignment draft policy must enforce that scope before a draft write;
 a post-compose check alone cannot establish this boundary. An older engine without
 the required policy cannot safely compose this scoped workflow. Existing send
-authorization remains separate from assignment status.
+authorization remains separate from assignment status. Interactive supervised
+review may prepare held work without authorizing a send. An explicit
+`draft-send --operator-request` has a separate exact-draft admission: a positive
+manual-member assignment may be excepted, but conflicts, incomplete peer authority
+and other holds remain blocking. It neither releases nor self-assigns the thread
+and does not use the signed assignment-mutation grant flow.
 
 ## Handled resolution
 

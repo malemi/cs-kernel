@@ -4,6 +4,52 @@
   Hosts share canonical skills. `cs-triage-mail` reads the optional company
   playbook while preserving send and approval boundaries.
 
+## 2026-11-06 — Prior ordinary send description
+
+- Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine
+  draft and checks recorded sent status. Cron denies it; the CLI has no
+  headless/pause guard. Ambient Gmail connectors remain read/review tools.
+
+## 2026-11-06 — Consolidated predecessor acceptance detail
+
+- The released [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
+  adds `cs-capabilities`: authoritative local procedures, canonical workflow
+  bodies and engine catalog discovery without MCP. Engine acceptance and 19
+  qualified native observations pass for the frozen bootstrap parent; these are
+  retained observations, not fresh native execution of the integrated tree.
+  Canonical instructions and discovery read routes retain the reviewed parent
+  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
+  owns current kernel checks. Claude's standalone profile excludes identified
+  ai-kit injection while preserving permissions and non-kit hooks. Historical
+  runtime/configuration limits remain qualified; no universal compliance is established.
+- Untagged source uses `cs-bootstrap` with a local-only plain invocation and
+  brief confirmation, and `company/other-systems.md` for other systems. Published
+  `v0.52.0` and MrCall retain `cs-capabilities` and `company/claude-extra.md`.
+  Old guide bytes and bootstrap directories are preserved during restamping;
+  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) owns checks.
+- `cs-instructions` supplies the interactive teaching workflow on all three
+  hosts. Its predecessor has 33 accepted native cases for publication, narrow
+  Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
+  [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+- `cs-legal-research` is a released interactive Italian/EU legal-research skill
+  with four references and a date-arithmetic helper. MrCall installs its canonical
+  files on all three host paths; Café 124 retains its previous pin. The instruction-level
+  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
+  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+
+## 2026-11-06 — Pre-integration source status
+
+- Interactive-reply M1–M5 main integration needs reviewed predecessor dependencies.
+  M6, native/provider acceptance and both ordinary FULL obligations remain open;
+  controlled fixture identities and bounded spending remain required. Parent
+  completion-checker binding is separately owned. This publication closes none
+  of those obligations and changes no installed package or service.
+
+- [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
+  preservation, pairing and reconciliation are unimplemented. Gmail sends can
+  leave stale mirrored drafts; current pairing uses thread/recipient inference,
+  and Gmail-only review rows have no authored body.
+
 ## 2026-10-16 — Stripe source state before operator adoption
 
 - The [Stripe candidate](../../docs/execution-plans/2026-10-16-stripe-connection.md)

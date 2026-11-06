@@ -426,19 +426,23 @@ age, instead of being handed out as work);
 
 `cs assignment status`, `preview`, `export` and `commit` consume the engine's
 company task subtype. An independent host operator approves exact writes;
-unknown or human-held thread authority blocks the scoped draft workflow.
-`draft-reply` requires an exact `--thread-id` and compatible engine policy.
+unknown or human-held thread authority blocks the scheduled scoped draft workflow.
+Interactive review preparation uses the separate policy described below; it
+authorizes no send. `draft-reply` requires an exact `--thread-id`.
 A local `handled` record does not settle company ownership without an exact
 engine acknowledgement. Current availability and examples are in
 [the assignment guide](docs/task-assignment.md).
 
-The local unreleased candidate negotiates `contextual_email_policy: 1` for
-`chat`, `draft-reply` and `draft-send`. For a contextual reply, use the original
+The local unreleased contextual route negotiates `contextual_email_policy: 1` for
+context-bound `chat`, scheduled `draft-reply` and ordinary `draft-send`. Interactive
+review preparation and `--operator-request` use their separate capability contracts. For a contextual reply, use the original
 thread and exact source: `cs chat --thread-id '<root@example.com>' --reply-to
 '<inbound@example.com>' 'Prepare the reply'`. `--source-id` can supply the
 owner-scoped engine email ID; `--draft-id` binds an existing full draft ID.
-All supplied identities must agree. Send approval does not override a held
-assignment. Released `v0.52.0` retains its previous scoped draft contract;
+All supplied identities must agree. Ordinary send approval does not override a
+held assignment. The untagged [interactive reply contract](docs/interactive-reply-source.md)
+adds supervised review preparation, exact publication/resume and a separately
+requested exact send with a narrowly checked manual-member assignment exception. Released `v0.52.0` retains its previous scoped draft contract;
 candidate flags and final-send enforcement require compatible candidate engine
 and kernel code. See [contextual policy](docs/task-assignment.md#contextual-email-policy--unreleased-candidate).
 

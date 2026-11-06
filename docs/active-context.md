@@ -14,6 +14,16 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
+- The [embedded Desktop helpers](desktop-operator-source.md) have reviewed
+  main-source bindings and exact owner-method denies. Local diagnostics remain
+  credential-free and loopback-only. Desktop pairing and native managed workflow
+  acceptance are separate; no installed package is adopted.
+
+- The [M1–M3 source candidate](interactive-reply-source.md) has fresh integration
+  approval and focused CLI/import/publication/resume/retirement/send-failure
+  checks. Main scheduled reply paths, runner, native workflow bodies and v9 guard are retained.
+  Source approval does not certify installed engine pairing or live effects.
+
 - Stripe's canonical skill uses fixed `cs rpc stripe.*` reads, independently of
   generic finance chat/history. Bootstrap routes advertised systems to their
   installed workflow even without the general catalog. Both maintained clones
@@ -33,42 +43,30 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   drafts and exact inbound coverage. Six hosted engines have verified reads and
   root-owned trust. Local hardening is closed with limits in the
   [closure record](execution-plans/2026-10-07-desktop-kernel-hardening-closure.md).
-- The released [bootstrap workflow](execution-plans/2026-10-08-capability-discovery.md)
-  adds `cs-capabilities`: authoritative local procedures, canonical workflow
-  bodies and engine catalog discovery without MCP. Engine acceptance and 19
-  qualified native observations pass for the frozen bootstrap parent; these are
-  retained observations, not fresh native execution of the integrated tree.
-  Canonical instructions and discovery read routes retain the reviewed parent
-  behavior; [integration verification](execution-plans/2026-10-10-bootstrap-integration.md)
-  owns current kernel checks. Claude's standalone profile excludes identified
-  ai-kit injection while preserving permissions and non-kit hooks. Historical
-  runtime/configuration limits remain qualified; no universal compliance is established.
-- Untagged source uses `cs-bootstrap` with a local-only plain invocation and
-  brief confirmation, and `company/other-systems.md` for other systems. Published
-  `v0.52.0` and MrCall retain `cs-capabilities` and `company/claude-extra.md`.
-  Old guide bytes and bootstrap directories are preserved during restamping;
-  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) owns checks.
+- Untagged bootstrap uses `cs-bootstrap`, local procedure loading and
+  `company/other-systems.md`; released `v0.52.0` retains `cs-capabilities` and
+  `company/claude-extra.md`. Old guide/skill bytes are preserved on restamping.
+  [Integration](execution-plans/2026-10-10-bootstrap-integration.md) and
+  [rename verification](execution-plans/2026-10-11-bootstrap-name.md) own current
+  distribution evidence. Retained native observations qualify their frozen
+  predecessor, not current model behavior or universal compliance.
 - The local [contextual-email guard](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
   negotiates strengthened engine enforcement for chat and exact draft sending,
   carrying original source/thread/draft context. Fixed-template bulk retains its
   existing path. It is excluded from `v0.52.0`; the hosted contextual policy remains unavailable.
   The bootstrap tag preserves the released chat and sending contracts.
   The separately owned MrCall launcher remains an uninstalled handoff.
-- `cs-legal-research` is a released interactive Italian/EU legal-research skill
-  with four references and a date-arithmetic helper. MrCall installs its canonical
-  files on all three host paths; Café 124 retains its previous pin. The instruction-level
-  boundary and distribution contract live in [agent-skills.md](agent-skills.md),
-  with evidence in the [legal plan](execution-plans/2026-10-08-legal-research-skill.md).
+- `cs-legal-research` is the released Italian/EU research workflow; its
+  distribution and instructional limits are in [agent-skills.md](agent-skills.md).
 - Company procedures and mailbox identity are authoritative clone-owned files.
   `cs instructions` compiles them into reserved engine `operator-instructions`
   documents; only `instructions.store` publishes them. Project verbs refuse
   that slug. `cs setup` and `cs memory` expose this standing-instructions store.
   Loopback publication is verified; production publication and Firebase
   authentication for that acceptance remain unverified.
-- `cs-instructions` supplies the interactive teaching workflow on all three
-  hosts. Its predecessor has 33 accepted native cases for publication, narrow
-  Git commits and refusals; current explanation behavior passes its separate observed cases. MrCall installs the explanation update; Café 124 retains the predecessor; see the
-  [completed plan](execution-plans/2026-10-07-cs-instructions-skill.md).
+- `cs-instructions` is the canonical three-host teaching workflow. MrCall uses
+  its explanation update; Café retains the predecessor. Historical native
+  acceptance remains qualified by the [plan](execution-plans/2026-10-07-cs-instructions-skill.md).
 - Stamped AGENTS owns workspace instructions. Canonical v9 AGENTS-only profiles
   suppress CLAUDE bootstrap creation on init/update; absent-profile legacy clones
   retain it. Custom instructions and shared skill aliases are preserved. This is
@@ -83,9 +81,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   scope. Incomplete evidence refuses applicable sends; `send-first` keeps its
   existing contact-state path. [Fan-out acceptance](execution-plans/2026-10-06-fanout-bounded-reads.md)
   owns provider parity, RFC-key and bounded FETCH evidence on both clones.
-- Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine
-  draft and checks recorded sent status. Cron denies it; the CLI has no
-  headless/pause guard. Ambient Gmail connectors remain read/review tools.
+- Ordinary `cs draft-send <full-engine-draft-id>` approves the exact engine
+  draft and verifies sent/cleanup state. Cron denies it. The separate exact
+  `--operator-request` route enforces interactive and pause admission. Ambient
+  Gmail connectors remain read/review tools.
 - Descriptor-based `cs init` and `cs setup` verify workspace, identity,
   preparation evidence, memory and agent tools. Preparation counts do not
   certify reply quality or mailbox credential validity.
@@ -103,21 +102,19 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- Interactive-reply M1–M5 main integration needs reviewed predecessor dependencies.
-  M6, native/provider acceptance and both ordinary FULL obligations remain open;
-  controlled fixture identities and bounded spending remain required. Parent
-  completion-checker binding is separately owned. This publication closes none
-  of those obligations and changes no installed package or service.
+- M4 collector dependencies and M5 workflows remain separate from the reviewed
+  M1–M3 source slice. M6, native/provider acceptance and both ordinary FULL
+  obligations remain open; controlled recipients and bounded spending are still
+  required. Parent checker binding is separately owned. No installed adoption
+  or overall completion follows from source publication.
 
 - The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
   are verified. Remote MCP remains separate; wide dossier/review latency remains
   unresolved. Native observations still qualify their frozen parent configurations.
 - Engine/direct-classifier failover remains separate from scheduled recovery;
   the [broader plan](execution-plans/2026-09-27-operator-llm-recovery.md) is active.
-- [Exact draft identity](execution-plans/2026-09-16-exact-draft-identity.md)
-  preservation, pairing and reconciliation are unimplemented. Gmail sends can
-  leave stale mirrored drafts; current pairing uses thread/recipient inference,
-  and Gmail-only review rows have no authored body.
+- Exact draft identity and retirement are present in the untagged M1–M3 source;
+  installed mailbox behavior and real provider acceptance remain unverified.
 - MrCall support and Mario share support's company space through a separately
   authorized fenced join. Assignment/project reads pass; private tasks/mail
   remain isolated. No real assignment is created.
