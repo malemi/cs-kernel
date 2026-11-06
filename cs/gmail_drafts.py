@@ -32,10 +32,13 @@ import re
 import sys
 import time
 from email.message import EmailMessage
+from email.header import decode_header, make_header
 from email.utils import formatdate
 
 from .config import Settings
 from .thread_key import thread_key
+from .draft_identity import (BODY_BYTES, ID_HEADER, OWNER_HEADER, authored_message,
+                             fingerprint, validate_identity)
 
 
 def _imap(
@@ -91,6 +94,10 @@ def find_trash_folder(M: imaplib.IMAP4_SSL) -> str | None:
     return _find_special(M, "\\trash")
 
 
+from .observability_producers import observe as _diagnostic_observe
+
+
+@_diagnostic_observe("provider", success="accepted", effect="accepted")
 def append_draft(
     settings: Settings,
     to: str,
@@ -101,6 +108,8 @@ def append_draft(
     html: str | None = None,
     cc: str | None = None,
     body_md: bool = False,
+    engine_draft_id: str | None = None,
+    engine_owner_uid: str | None = None,
 ) -> tuple[str, list[str]]:
     """Append one draft; returns ``(folder, guard_warnings)``.
 
@@ -121,6 +130,8 @@ def append_draft(
     callers (e.g. `send_first`'s draft branch, fixed-template copy from a
     campaign pack) are unaffected and never pay for an inspection they don't
     need."""
+    engine_draft_id = validate_identity(engine_draft_id)
+    engine_owner_uid = validate_identity(engine_owner_uid)
     guard_warnings: list[str] = []
     if body_md:
         from . import send_guard
@@ -134,6 +145,10 @@ def append_draft(
             )
 
     msg = EmailMessage()
+    if engine_draft_id is not None:
+        msg[ID_HEADER] = engine_draft_id
+    if engine_owner_uid is not None:
+        msg[OWNER_HEADER] = engine_owner_uid
     msg["From"] = settings.email_address
     msg["To"] = to
     if cc:
@@ -163,8 +178,8 @@ def append_draft(
             pass
 
 
-def list_drafts(settings: Settings) -> list[dict]:
-    """Header summaries of the drafts waiting in the operator's Gmail Drafts —
+def list_drafts(settings: Settings, *, observation: dict | None = None) -> list[dict]:
+    """Headers and bounded complete authored bodies of the drafts waiting in the operator's Gmail Drafts —
     the review queue the operator sends from. Read-only.
 
     Each row carries its `uid`: that is the handle `delete_draft` takes, and
@@ -182,38 +197,174 @@ def list_drafts(settings: Settings) -> list[dict]:
     engine's own copy of itself."""
     import email as _email
 
+    coverage = {"version": 1, "complete": False, "search_complete": False,
+                "expected_uids": [], "observed_uids": [], "uidvalidity": None}
+    if observation is not None:
+        observation.clear()
+        observation.update(coverage)
     M = _imap(settings)
     try:
         folder = find_drafts_folder(M)
-        M.select(f'"{folder}"', readonly=True)
+        typ, _ = M.select(f'"{folder}"', readonly=True)
+        if typ != "OK":
+            raise RuntimeError("cannot select Gmail Drafts")
+        validity = _uidvalidity(M)
+        coverage["uidvalidity"] = validity
         typ, data = M.uid("SEARCH", None, "ALL")
-        if typ != "OK" or not data or not data[0]:
+        if typ != "OK" or not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], bytes):
             return []
+        uids = data[0].split()
+        coverage["search_complete"] = all(u.isdigit() for u in uids)
+        coverage["expected_uids"] = [u.decode() for u in uids]
         out = []
-        for uid in data[0].split():
+        fetches_complete = True
+        for uid in uids:
             typ, md = M.uid(
                 "FETCH",
                 uid,
-                "(BODY.PEEK[HEADER.FIELDS (TO SUBJECT DATE MESSAGE-ID "
-                "REFERENCES IN-REPLY-TO)])",
+                "(BODY.PEEK[HEADER.FIELDS (TO CC SUBJECT DATE MESSAGE-ID "
+                "REFERENCES IN-REPLY-TO X-CS-ENGINE-DRAFT-ID X-CS-ENGINE-OWNER-UID)])",
             )
             if typ != "OK" or not md or not md[0]:
                 continue
             hdr = _email.message_from_bytes(md[0][1])
-            out.append({"uid": uid.decode(), "to": hdr.get("To"),
-                        "subject": hdr.get("Subject"), "date": hdr.get("Date"),
-                        "message_id": hdr.get("Message-ID"),
-                        "references": hdr.get("References"),
-                        "in_reply_to": hdr.get("In-Reply-To"),
-                        "thread_key": thread_key(hdr.get("Message-ID"),
-                                                 hdr.get("References"),
-                                                 hdr.get("In-Reply-To"))})
+            body_observation = {}
+            payload = _body_evidence(M, uid, observation=body_observation)
+            fetches_complete = fetches_complete and body_observation.get("fetch_complete") is True
+            observed_headers = payload.pop("_headers", None)
+            flags = payload.pop("_flags", "") or ""
+            payload["is_draft"] = bool(re.search(r"\\Draft(?=[\s)])", flags, re.I))
+            coverage["observed_uids"].append(uid.decode())
+            out.append({**payload, "uidvalidity": validity, "uid": uid.decode(),
+                        **(observed_headers or _header_evidence(hdr))})
+        coverage["complete"] = bool(validity and coverage["search_complete"] and fetches_complete
+                                    and coverage["expected_uids"] == coverage["observed_uids"]
+                                    and len(uids) == len(set(uids)))
         return out
     finally:
+        if observation is not None:
+            observation.update(coverage)
         try:
             M.logout()
         except Exception:
             pass
+
+
+def _identity_header(hdr, name: str) -> str | None:
+    values = hdr.get_all(name, [])
+    if not values:
+        return None
+    if len(values) != 1:
+        return "invalid:duplicate-header"
+    try:
+        return validate_identity(str(values[0]))
+    except ValueError:
+        return "invalid:malformed-header"
+
+
+def decoded_subject(hdr):
+    values = hdr.get_all("Subject", [])
+    if len(values) != 1:
+        return None
+    try:
+        value = str(make_header(decode_header(str(values[0]))))
+        return value if not any(ord(c) < 32 and c not in "\r\n\t" for c in value) else None
+    except (LookupError, UnicodeError, ValueError):
+        return None
+
+
+def _header_evidence(hdr) -> dict:
+    from .draft_identity import canonical_message_id
+    from email import policy
+    from email.parser import Parser
+    checked = Parser(policy=policy.default).parsestr(hdr.as_string(), headersonly=True)
+    identity_headers_valid = all(
+        len(checked.get_all(name, [])) <= 1
+        and all(not getattr(value, "defects", ()) for value in checked.get_all(name, []))
+        for name in ("From", "To", "Cc", "Bcc", "Subject", "Message-ID", "References", "In-Reply-To"))
+    target = canonical_message_id(hdr.get("In-Reply-To"))
+    if hdr.get_all("In-Reply-To", []) and target is None:
+        identity_headers_valid = False
+    def addresses(name):
+        return ", ".join(str(v) for v in hdr.get_all(name, [])) or None
+    return {
+        "identity_headers_valid": identity_headers_valid,
+        "engine_draft_id": _identity_header(hdr, ID_HEADER),
+        "engine_owner_uid": _identity_header(hdr, OWNER_HEADER),
+        "to": addresses("To"), "cc": addresses("Cc"),
+        "subject": decoded_subject(hdr), "date": hdr.get("Date"),
+        "bcc": addresses("Bcc"),
+        "from": str(hdr.get("From") or ""),
+        "message_id": hdr.get("Message-ID"), "references": hdr.get("References"),
+        "in_reply_to": target,
+        "thread_key": thread_key(hdr.get("Message-ID"), hdr.get("References"), hdr.get("In-Reply-To")),
+    }
+
+
+def _merge_body_evidence(target: dict, evidence: dict) -> bool:
+    """Bind context and flags to the MIME observation; refuse an observed race."""
+    headers = evidence.pop("_headers", None)
+    flags = evidence.pop("_flags", None)
+    changed = bool(headers and any(target.get(k) != headers.get(k) for k in
+                                  ("engine_draft_id", "engine_owner_uid", "to", "cc", "subject", "date", "message_id")))
+    target.update(evidence)
+    if headers:
+        target.update(headers)
+    if flags is not None:
+        target["flags"] = flags
+    return not changed
+
+
+def _uidvalidity(M) -> str | None:
+    try:
+        # imaplib.response() pops the SELECT response. Reading it twice on
+        # the same connection would invent a changed folder before MOVE.
+        responses = getattr(M, "untagged_responses", None)
+        if isinstance(responses, dict):
+            typ, data = "UIDVALIDITY", responses.get("UIDVALIDITY")
+        else:
+            typ, data = M.response("UIDVALIDITY")
+        if typ and data and data[0]:
+            value = data[0].decode() if isinstance(data[0], bytes) else str(data[0])
+            return value if value.isdigit() else None
+    except (AttributeError, TypeError, ValueError):
+        pass
+    return None
+
+
+def _mime_evidence(raw):
+    from email import policy
+    from email.parser import BytesParser
+    message = BytesParser(policy=policy.default).parsebytes(raw)
+    parts = list(message.walk())
+    structural = [(part.get_content_type(), part.get_content_disposition(), part.get_filename()) for part in parts]
+    valid = all(not part.defects and all(len(part.get_all(name, [])) <= 1
+                and all(not getattr(value, "defects", ()) for value in part.get_all(name, []))
+                for name in ("Content-Type", "Content-Disposition", "Content-Transfer-Encoding", "MIME-Version"))
+                for part in parts)
+    return {"mime_structure": structural,
+            "mime_plain_only": bool(valid and len(parts) == 1 and structural == [("text/plain", None, None)])}
+
+
+def _body_evidence(M, uid: bytes, *, observation: dict | None = None) -> dict:
+    if observation is not None:
+        observation["fetch_complete"] = False
+    typ, data = M.uid("FETCH", uid, f"(FLAGS RFC822.SIZE BODY.PEEK[]<0.{BODY_BYTES}>)")
+    parts = [p for p in (data or []) if isinstance(p, tuple) and isinstance(p[1], bytes)] if typ == "OK" else []
+    if len(parts) != 1:
+        return {"body": "", "body_complete": False, "body_note": "MIME body unavailable", "fingerprint": None}
+    if observation is not None:
+        observation["fetch_complete"] = True
+    meta, raw = parts[0]
+    match = re.search(rb"RFC822.SIZE\s+(\d+)", meta or b"", re.I)
+    complete = bool(match and int(match[1]) == len(raw) and len(raw) < BODY_BYTES)
+    if not complete:
+        return {"body": "", "body_complete": False, "body_note": "MIME size unknown or body incomplete", "fingerprint": None}
+    import email as _email
+    body, note = authored_message(raw)
+    return {**_mime_evidence(raw), "body": body, "body_complete": True, "body_note": note, "fingerprint": fingerprint(raw),
+            "_headers": _header_evidence(_email.message_from_bytes(raw)),
+            "_flags": (meta or b"").decode(errors="replace")}
 
 
 _UID_RE = re.compile(r"^[0-9]+$")
@@ -227,7 +378,7 @@ def _draft_row(M: imaplib.IMAP4_SSL, uid: bytes) -> dict:
     import email as _email
 
     typ, md = M.uid(
-        "FETCH", uid, "(FLAGS BODY.PEEK[HEADER.FIELDS (TO SUBJECT DATE MESSAGE-ID)])"
+        "FETCH", uid, "(FLAGS BODY.PEEK[HEADER.FIELDS (TO CC SUBJECT DATE MESSAGE-ID X-CS-ENGINE-DRAFT-ID X-CS-ENGINE-OWNER-UID)])"
     )
     flags, hdr = "", None
     for part in (md or []) if typ == "OK" else []:
@@ -240,9 +391,12 @@ def _draft_row(M: imaplib.IMAP4_SSL, uid: bytes) -> dict:
             flags += part.decode(errors="replace")
     return {
         "uid": uid.decode(),
+        "engine_draft_id": _identity_header(hdr, ID_HEADER) if hdr else None,
+        "engine_owner_uid": _identity_header(hdr, OWNER_HEADER) if hdr else None,
         "flags": flags,
-        "to": (hdr.get("To") if hdr else None),
-        "subject": (hdr.get("Subject") if hdr else None),
+        "to": (", ".join(str(v) for v in hdr.get_all("To", [])) or None if hdr else None),
+        "cc": (", ".join(str(v) for v in hdr.get_all("Cc", [])) or None if hdr else None),
+        "subject": (decoded_subject(hdr) if hdr else None),
         "date": (hdr.get("Date") if hdr else None),
         "message_id": (hdr.get("Message-ID") if hdr else None),
     }
@@ -254,6 +408,10 @@ def delete_draft(
     message_id: str | None = None,
     *,
     commit: bool = False,
+    expected_engine_draft_id: str | None = None,
+    expected_owner_uid: str | None = None,
+    expected_uidvalidity: str | None = None,
+    expected_fingerprint: str | None = None,
 ) -> dict:
     """Remove ONE named draft from Gmail Drafts by MOVING it to Trash.
 
@@ -348,6 +506,18 @@ def delete_draft(
             }
 
         target = rows[0]
+        strict = any(v is not None for v in (expected_engine_draft_id, expected_owner_uid, expected_uidvalidity, expected_fingerprint))
+        target["uidvalidity"] = _uidvalidity(M)
+        if strict:
+            if not _merge_body_evidence(target, _body_evidence(M, matched[0])):
+                return {"ok": False, "refused": "draft headers changed during MIME read", "target": target}
+            checks = {"engine_draft_id": expected_engine_draft_id, "engine_owner_uid": expected_owner_uid,
+                      "uidvalidity": expected_uidvalidity, "fingerprint": expected_fingerprint}
+            for key, expected in checks.items():
+                if expected is not None and (target.get(key) is None or str(target[key]) != str(expected)):
+                    return {"ok": False, "refused": f"draft {key} changed or unavailable", "target": target}
+            if target.get("fingerprint") is None or target["uidvalidity"] is None:
+                return {"ok": False, "refused": "complete MIME fingerprint and UIDVALIDITY required", "target": target}
         # Second guard on "am I really in Drafts": a message in this folder that
         # is not flagged \Draft is not a draft, whatever the folder is called.
         if "\\Draft" not in target["flags"]:
@@ -366,12 +536,22 @@ def delete_draft(
             return {"ok": True, "dry_run": True, "folder": folder,
                     "target": target, "would_move_to": trash}
 
+        if strict:
+            current = _draft_row(M, matched[0])
+            if not _merge_body_evidence(current, _body_evidence(M, matched[0])):
+                return {"ok": False, "refused": "draft headers changed during MIME read", "target": current}
+            current["uidvalidity"] = _uidvalidity(M)
+            if any(current.get(k) != target.get(k) for k in ("engine_draft_id", "engine_owner_uid", "uidvalidity", "fingerprint")) or "\\Draft" not in current["flags"]:
+                return {"ok": False, "refused": "draft changed before MOVE", "target": current}
         try:
             typ, resp = M.uid("MOVE", target["uid"], f'"{trash}"')
-        except imaplib.IMAP4.error as e:
-            return {"ok": False, "folder": folder, "target": target,
-                    "error": f"the server refused UID MOVE ({e}); NOT falling back "
-                             f"to \\Deleted+EXPUNGE, which cannot be undone"}
+        except imaplib.IMAP4.error:
+            # Includes IMAP4.abort: MOVE may have applied before its response
+            # was lost. Only a received tagged refusal establishes no effect.
+            return {"ok": False, "partial": True, "outcome_uncertain": True,
+                    "folder": folder, "target": target,
+                    "error": "IMAP UID MOVE acknowledgement unavailable",
+                    "check": "Check the named draft and Trash before retrying; no expunge is attempted."}
         if typ != "OK":
             return {"ok": False, "folder": folder, "target": target,
                     "error": f"IMAP UID MOVE to {trash!r} failed: {typ} {resp!r}"}

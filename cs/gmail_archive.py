@@ -71,7 +71,7 @@ class SearchFailed(Exception):
     """A header SEARCH was refused, so matching messages could not be read."""
 
 
-def _fetch_headers(M, ids, chunk: int = 200):
+def _fetch_headers(M, ids, chunk: int = 200, *, provider_identity: bool = False):
     """Batch BODY.PEEK header FETCH over a list of UID byte-strings, yielding
     parsed email.message objects. One FETCH per `chunk` UIDs (not one per UID) —
     the bulk path. Read-only (PEEK).
@@ -83,7 +83,7 @@ def _fetch_headers(M, ids, chunk: int = 200):
         typ, data = M.uid(
             "FETCH",
             b",".join(batch),
-            "(BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC BCC SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
+            ("(UID " if provider_identity else "(") + "BODY.PEEK[HEADER.FIELDS (DATE FROM TO CC BCC SUBJECT MESSAGE-ID REFERENCES IN-REPLY-TO)])",
         )
         if typ != "OK" or not data:
             raise ChunkFetchFailed(
@@ -92,7 +92,12 @@ def _fetch_headers(M, ids, chunk: int = 200):
             )
         for part in data:
             if isinstance(part, tuple) and part[1]:
-                out.append(email.message_from_bytes(part[1], policy=policy.default))
+                header = email.message_from_bytes(part[1], policy=policy.default)
+                if provider_identity:
+                    uids = re.findall(rb"\bUID\s+(\d+)\b", part[0] or b"", re.I)
+                    header._provider_uid = (uids[0].decode() if len(uids) == 1
+                                            and uids[0] in batch else None)
+                out.append(header)
     return out
 
 
@@ -573,13 +578,13 @@ def _normalise(text: str, limit: int = BODY_MAX) -> str:
     return _BLANKS.sub("\n\n", text).strip()[:limit]
 
 
-def _body_and_attachments(msg) -> tuple[str, list[str]]:
+def _body_and_attachments(msg, *, limit: int = BODY_MAX, observation: dict | None = None) -> tuple[str, list[str]]:
     """(body, attachment filenames) of a parsed message.
 
     text/plain wins; an HTML-only mail is tag-stripped. Attachment parts (and
     any part carrying a filename, e.g. an inline screenshot) contribute their
     FILENAME only, never body text — base64 in a prompt is noise."""
-    plain, html_alt, files = [], [], []
+    plain, html_alt, html_original, files = [], [], [], []
     for part in msg.walk():
         if part.get_content_maintype() == "multipart":
             continue
@@ -588,17 +593,42 @@ def _body_and_attachments(msg) -> tuple[str, list[str]]:
             files.append(filename or f"(unnamed {part.get_content_type()})")
             continue
         ctype = part.get_content_type()
+        if observation is not None and ctype in ("text/plain", "text/html"):
+            try:
+                (part.get_payload(decode=True) or b"").decode(part.get_content_charset() or "utf-8", errors="strict")
+            except (LookupError, UnicodeError):
+                observation["decode_complete"] = False
         if ctype == "text/plain":
             plain.append(_part_text(part))
         elif ctype == "text/html":
-            html_alt.append(_html_to_text(_part_text(part)))
+            rich = _part_text(part)
+            html_original.append(rich)
+            html_alt.append(_html_to_text(rich))
     body = "\n\n".join(p for p in plain if p.strip())
     if not body.strip():
         body = "\n\n".join(p for p in html_alt if p.strip())
-    return _normalise(body), files
+    full = _normalise(body, limit=len(body) + 1)
+    if observation is not None:
+        alternatives_match = True
+        if plain and html_alt:
+            plain_text = " ".join("\n\n".join(plain).split())
+            html_text = " ".join("\n\n".join(html_alt).split())
+            alternatives_match = plain_text == html_text
+        observation["alternatives_equivalent"] = alternatives_match
+        alternatives = []
+        for kind, values in (("text/plain", plain), ("text/html", html_original)):
+            for text in values:
+                alternatives.append({"type": kind, "body": text[:limit]})
+                if len(text) > limit:
+                    observation["decode_complete"] = False
+        observation["alternatives"] = alternatives
+        observation["body_complete"] = (len(full) <= limit and observation.get("decode_complete", True))
+    return full[:limit], files
 
 
-def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
+def thread_with(settings: Settings, addr: str, limit: int = 20, *, observation: dict | None = None,
+                body_limit: int = BODY_MAX, thread_root: str | None = None,
+                thread_since: datetime | None = None) -> list[dict]:
     """Every message exchanged with `addr` (All Mail), NEWEST FIRST, with bodies.
 
     The ground-truth conversation reader: one read-only IMAP session
@@ -625,16 +655,61 @@ def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
 
     `limit` keeps the newest N messages of the conversation (0 = all).
 
+    Optional `thread_root` searches an HTML-escape-invariant substring of the
+    root in Message-ID, References and In-Reply-To across All Mail, including
+    other participants and escaped RFC identifiers. Header-search candidates
+    still require exact RFC-key validation by the caller. Optional observation
+    distinguishes `inventory_complete` (headers, fetches, labels, bounded read)
+    from each row's `body_complete`; `complete` requires both for every row.
+    Without observation the historical row shape and body preference remain.
+    With `thread_since`, the reader instead inventories at most 1000 recent
+    All Mail UIDs and fetches headers in batches with exact UID coverage. It
+    filters exact normalized roots locally, avoiding provider header-index
+    omissions, and fetches complete bodies only for matching roots. Observation
+    records the actual lower bound, header count, and exact-root count.
+
     SINGLE-MAILBOX, and not fannable as it stands: `outbound` is decided by
     comparing the sender against `settings.email_address`, so in another
     mailbox every row's direction would be wrong."""
+    if not isinstance(body_limit, int) or not 1 <= body_limit <= 65536:
+        raise ValueError("body_limit must be between 1 and 65536 characters")
+    if thread_root is not None and (not isinstance(thread_root, str) or not thread_root
+                                    or any(c in thread_root for c in "\r\n")):
+        raise ValueError("thread_root must be a nonempty single-line RFC root")
+    if observation is not None:
+        observation.update(complete=False, inventory_complete=False, issues=[], body_issues=[],
+                           fetched=0, draft_skipped=0)
+    def incomplete(reason):
+        if observation is not None:
+            observation["issues"].append(reason)
     addr = (addr or "").strip().lower()
     self_addr = (settings.email_address or "").strip().lower()
     M = _imap(settings)
     try:
         allm = _find_folder(M, "\\all", "[Gmail]/All Mail")
-        M.select(f'"{allm}"', readonly=True)
-        typ, d = M.uid("SEARCH", None, "OR", "FROM", f'"{addr}"', "TO", f'"{addr}"')
+        selected, _ = M.select(f'"{allm}"', readonly=True)
+        if selected != "OK":
+            incomplete("select failed")
+        if thread_since is not None:
+            if thread_root is None or observation is None:
+                raise ValueError("source-window reads require exact root and observation")
+            ids = _window_thread_ids(M, thread_root, thread_since, observation)
+            typ, d = "OK", [b" ".join(ids)]
+        elif thread_root is None:
+            typ, d = M.uid("SEARCH", None, "OR", "FROM", f'"{addr}"', "TO", f'"{addr}"')
+        else:
+            # Every one-pass entity spelling accepted by thread_key preserves
+            # these runs. Searching a literal <root> misses &lt;root&gt;; even
+            # the inner ID can contain &, quotes or apostrophes encoded there.
+            runs = re.findall(r'''[^&<>"']+''', thread_root)
+            if not runs:
+                raise ValueError("RFC root has no stable header search token")
+            search_token = max(runs, key=len)
+            quoted_root = '"' + search_token.replace('\\', '\\\\').replace('"', '\\"') + '"'
+            typ, d = M.uid("SEARCH", None, "OR", "HEADER", "MESSAGE-ID", quoted_root,
+                           "OR", "HEADER", "REFERENCES", quoted_root, "HEADER", "IN-REPLY-TO", quoted_root)
+        if typ != "OK" or not d or not isinstance(d[0], bytes):
+            incomplete("search failed or malformed")
         ids = d[0].split() if (typ == "OK" and d and d[0]) else []
         out = []
         labels = True  # X-GM-LABELS is a Gmail extension; degrade on other servers
@@ -642,26 +717,50 @@ def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
         # `limit` REAL messages are in hand (drafts are skipped, not counted).
         for uid in reversed(ids):
             if limit and limit > 0 and len(out) >= limit:
+                incomplete("message limit reached")
                 break
             typ, md = "NO", None
             if labels:
                 try:
-                    typ, md = M.uid("FETCH", uid, "(X-GM-LABELS BODY.PEEK[])")
+                    typ, md = M.uid("FETCH", uid, "(UID X-GM-LABELS BODY.PEEK[])" if observation is not None
+                                    else "(X-GM-LABELS BODY.PEEK[])")
                 except imaplib.IMAP4.error:
                     labels = False
+                    incomplete("draft labels unavailable")
             if not labels:
                 typ, md = M.uid("FETCH", uid, "(BODY.PEEK[])")
             if typ != "OK" or not md or not isinstance(md[0], tuple) or not md[0][1]:
+                incomplete("message fetch failed or malformed")
                 continue
             line = md[0][0].decode(errors="replace") if md[0][0] else ""
+            if observation is not None:
+                observation["fetched"] += 1
+                provider_uids = re.findall(r"\bUID\s+(\d+)\b", line, re.I)
+                if provider_uids != [uid.decode()]:
+                    incomplete("full message UID coverage is incomplete or ambiguous")
+                if "X-GM-LABELS" not in line.upper():
+                    incomplete("draft labels missing")
             if "\\Draft" in line:  # matches both the \Draft and escaped \\Draft forms
+                if observation is not None:
+                    observation["draft_skipped"] += 1
                 continue
             msg = email.message_from_bytes(md[0][1], policy=policy.default)
+            if thread_since is not None and thread_key(str(msg.get("Message-ID") or ""),
+                    str(msg.get("References") or ""), str(msg.get("In-Reply-To") or "")) != thread_root:
+                incomplete("full message disagrees with exact-root header inventory")
+            if observation is not None:
+                for issue in _identity_header_issues(msg):
+                    incomplete(issue)
             mid = str(msg.get("Message-ID") or "").strip()
             if mid and not mid.startswith("<"):
                 mid = f"<{mid}>"
             from_addr = (parseaddr(str(msg.get("From") or ""))[1] or "").strip().lower()
-            body, files = _body_and_attachments(msg)
+            body_observation = {} if observation is not None else None
+            body, files = _body_and_attachments(msg, limit=body_limit, observation=body_observation)
+            if body_observation is not None and any(part.defects for part in msg.walk()):
+                body_observation["body_complete"] = False
+            if body_observation is not None and not body_observation.get("body_complete"):
+                observation["body_issues"].append("message body incomplete")
             out.append(
                 {
                     "date": _parse_date(msg.get("Date")),
@@ -674,12 +773,20 @@ def thread_with(settings: Settings, addr: str, limit: int = 20) -> list[dict]:
                     ).strip(),
                     "body": body,
                     "attachments": files,
+                    **({"body_complete": body_observation["body_complete"],
+                        "provider_uid": uid.decode() if provider_uids == [uid.decode()] else None,
+                        "body_alternatives": body_observation["alternatives"],
+                        "in_reply_to": _SPACES.sub(" ", str(msg.get("In-Reply-To") or "").replace("\n", " ")).strip()}
+                       if body_observation is not None else {}),
                 }
             )
         # Date header order, newest first; undated messages sink to the bottom
         # keeping their UID-descending order (sort is stable).
         floor = datetime.min.replace(tzinfo=timezone.utc)
         out.sort(key=lambda m: m["date"] or floor, reverse=True)
+        if observation is not None:
+            observation["inventory_complete"] = not observation["issues"]
+            observation["complete"] = observation["inventory_complete"] and not observation["body_issues"]
         return out
     finally:
         try:
@@ -730,3 +837,45 @@ def sent_recent(settings: Settings, days: int) -> list[dict]:
             M.logout()
         except Exception:
             pass
+
+
+def _identity_header_issues(msg):
+    issues = []
+    for header in ("Message-ID", "References", "In-Reply-To", "From", "Date", "Subject"):
+        if len(msg.get_all(header, [])) > 1:
+            issues.append(f"duplicate singleton header: {header}")
+    senders = getaddresses([str(value) for value in msg.get_all("From", [])])
+    if len(senders) != 1 or not senders[0][1]:
+        issues.append("ambiguous or missing sender header")
+    if any(getattr(msg.get(header), "defects", ()) for header in
+           ("Message-ID", "References", "In-Reply-To", "From", "Date")):
+        issues.append("message header parse defects")
+    return issues
+
+
+def _window_thread_ids(M, root, since, observation):
+    """Complete bounded recent header inventory, independent of Gmail's References index."""
+    if not isinstance(since, datetime) or since.tzinfo is None:
+        raise ValueError("thread_since requires an aware source-window datetime")
+    typ, data = M.uid("SEARCH", None, "SINCE", _imap_since(since))
+    if typ != "OK" or not data or not isinstance(data[0], bytes):
+        raise ValueError("source-window search failed or malformed")
+    ids = data[0].split()
+    if len(ids) > 1000 or len(set(ids)) != len(ids) or any(not value.isdigit() for value in ids):
+        raise ValueError("source-window UID inventory is malformed or exceeds 1000 headers")
+    headers = _fetch_headers(M, ids, provider_identity=True)
+    returned = [getattr(header, "_provider_uid", None) for header in headers]
+    if (len(returned) != len(ids) or len(set(returned)) != len(returned)
+            or set(returned) != {value.decode() for value in ids}):
+        raise ValueError("source-window header UID coverage is incomplete or ambiguous")
+    selected = []
+    for header in headers:
+        issues = _identity_header_issues(header)
+        if issues:
+            raise ValueError("source-window header inventory: " + issues[0])
+        if thread_key(str(header.get("Message-ID") or ""), str(header.get("References") or ""),
+                      str(header.get("In-Reply-To") or "")) == root:
+            selected.append(header._provider_uid.encode())
+    observation.update(window_since=_imap_since(since), header_count=len(headers),
+                       exact_root_count=len(selected), inventory_kind="source_date_window")
+    return sorted(selected, key=int)

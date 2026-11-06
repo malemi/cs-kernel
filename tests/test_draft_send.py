@@ -6,6 +6,7 @@ import contextlib
 import asyncio
 import io
 import types
+from unittest.mock import patch
 
 from assignment_fixture import normal_projection
 
@@ -57,8 +58,12 @@ def run_case(*, approval_input=None, approvals=True, final_status="sent",
     rpc.chat = fake_chat
     args = types.SimpleNamespace(draft_id=DRAFT_ID, timeout=30)
     err = io.StringIO()
-    with contextlib.redirect_stderr(err):
+    with contextlib.redirect_stderr(err), patch("cs.send_completion.complete") as complete:
         rc = cli.cmd_draft_send(args)
+    if rc == 0:
+        complete.assert_called_once_with(cfg.load(), DRAFT, [dict(DRAFT, status="sent")])
+    else:
+        complete.assert_not_called()
     return rc, err.getvalue(), calls
 
 

@@ -20,6 +20,8 @@ import asyncio
 import contextlib
 import io
 import types
+import os
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 
 from assignment_fixture import normal_projection
@@ -187,7 +189,8 @@ def run_still_reports_when_nothing_was_composed() -> None:
 
 
 if __name__ == "__main__":
-    run()
-    run_warns_about_the_drafts_it_does_not_mirror()
-    run_distinguishes_a_reused_draft_from_no_draft()
-    run_still_reports_when_nothing_was_composed()
+    with patch.dict(os.environ, {"CS_OPERATOR_HEADLESS": "1"}, clear=True):
+        run()
+        run_warns_about_the_drafts_it_does_not_mirror()
+        run_distinguishes_a_reused_draft_from_no_draft()
+        run_still_reports_when_nothing_was_composed()

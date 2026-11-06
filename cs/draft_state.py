@@ -63,7 +63,7 @@ not cost the operator the whole digest.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from email.utils import parseaddr
+from email.utils import getaddresses, parseaddr
 
 from .gmail_archive import _parse_date as parse_mail_date
 from .thread_key import normalize_key, thread_key
@@ -660,3 +660,8 @@ def split(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     ready = [r for r in rows if r.get("verdict") == "ready"]
     re_decide = [r for r in rows if r.get("verdict") in RE_DECIDE]
     return ready, re_decide
+
+
+def _recipient_set(raw) -> tuple[str, ...]:
+    values = raw if isinstance(raw, (list, tuple)) else [str(raw or "")]
+    return tuple(sorted({addr.strip().lower() for _, addr in getaddresses(values) if addr.strip()}))

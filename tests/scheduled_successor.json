@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "stages": [
+    {
+      "id": "mcp-owner-denies:.claude/settings.json",
+      "template": ".claude/settings.json.j2",
+      "source": {
+        "before_sha256": "0950216a66cfe4d54174840373f839ad89929596deac6d83fcb80012299d11d4",
+        "after_sha256": "1234622ea4f0d3ac5e376dcdcc81ce0721d140176b85c6ce5b34bbba695b2584"
+      },
+      "rendered": {
+        "generic/normal": {
+          "variant": "generic/normal",
+          "hashes": {
+            "before_sha256": "58f5ada0513b2607f115ccf80528436c533939760280917eb096bca0251a91e0",
+            "after_sha256": "f3a953f5a78819b60517cc0cdc3ed193baa5f3fe801dd6965415b962a77fbb82"
+          }
+        },
+        "generic/conditional": {
+          "variant": "generic/conditional",
+          "hashes": {
+            "before_sha256": "58f5ada0513b2607f115ccf80528436c533939760280917eb096bca0251a91e0",
+            "after_sha256": "f3a953f5a78819b60517cc0cdc3ed193baa5f3fe801dd6965415b962a77fbb82"
+          }
+        },
+        "as-built/normal": {
+          "variant": "as-built/normal",
+          "hashes": {
+            "before_sha256": "58f5ada0513b2607f115ccf80528436c533939760280917eb096bca0251a91e0",
+            "after_sha256": "f3a953f5a78819b60517cc0cdc3ed193baa5f3fe801dd6965415b962a77fbb82"
+          }
+        },
+        "as-built/conditional": {
+          "variant": "as-built/conditional",
+          "hashes": {
+            "before_sha256": "58f5ada0513b2607f115ccf80528436c533939760280917eb096bca0251a91e0",
+            "after_sha256": "f3a953f5a78819b60517cc0cdc3ed193baa5f3fe801dd6965415b962a77fbb82"
+          }
+        }
+      }
+    },
+    {
+      "id": "mcp-owner-denies:bin/cs_operator_cron.sh",
+      "template": "bin/cs_operator_cron.sh.j2",
+      "source": {
+        "before_sha256": "e55ae9790163fecbe4395c3223bd0fedd27d55b459d150db5784b33ae354ced8",
+        "after_sha256": "2b03ab95dad6b0d25dee4b11b6b0e17f8a20dc5ff79db5a699c39f5e89500aa6"
+      },
+      "rendered": {
+        "generic/normal": {
+          "variant": "generic/normal",
+          "hashes": {
+            "before_sha256": "00aaea8be348579cd9fce61d02d8dd15903ba005f12d26dbb7ed3b7503319da9",
+            "after_sha256": "b4a307be4c6835764c18233b3cab104bae9cd02a11fc520cfce95a09269648a8"
+          }
+        },
+        "generic/conditional": {
+          "variant": "generic/conditional",
+          "hashes": {
+            "before_sha256": "aa2081db989f6c39440a4928fe4ae8316959096d8dabeea58114d8c97e61c481",
+            "after_sha256": "da163bb696f23c459eb299820d88fc67b005482cee547851a656631f0bd79adb"
+          }
+        },
+        "as-built/normal": {
+          "variant": "as-built/normal",
+          "hashes": {
+            "before_sha256": "00aaea8be348579cd9fce61d02d8dd15903ba005f12d26dbb7ed3b7503319da9",
+            "after_sha256": "b4a307be4c6835764c18233b3cab104bae9cd02a11fc520cfce95a09269648a8"
+          }
+        },
+        "as-built/conditional": {
+          "variant": "as-built/conditional",
+          "hashes": {
+            "before_sha256": "aa2081db989f6c39440a4928fe4ae8316959096d8dabeea58114d8c97e61c481",
+            "after_sha256": "da163bb696f23c459eb299820d88fc67b005482cee547851a656631f0bd79adb"
+          }
+        }
+      }
+    }
+  ]
+}

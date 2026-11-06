@@ -185,6 +185,18 @@ DENIED=(
     "Bash(python -m cs connection vonage allow-ip:*)" \
     "Bash(python3 -m cs connection vonage allow-ip:*)" \
     "Bash(cs connection vonage allow-ip:*)" \
+    "Bash(.venv/bin/python -m cs rpc operator.rules.decide:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc operator.rules.decide:*)" \
+    "Bash(.venv/bin/cs rpc operator.rules.decide:*)" \
+    "Bash(python -m cs rpc operator.rules.decide:*)" \
+    "Bash(python3 -m cs rpc operator.rules.decide:*)" \
+    "Bash(cs rpc operator.rules.decide:*)" \
+    "Bash(.venv/bin/python -m cs rpc operator.rules.import_confirm:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc operator.rules.import_confirm:*)" \
+    "Bash(.venv/bin/cs rpc operator.rules.import_confirm:*)" \
+    "Bash(python -m cs rpc operator.rules.import_confirm:*)" \
+    "Bash(python3 -m cs rpc operator.rules.import_confirm:*)" \
+    "Bash(cs rpc operator.rules.import_confirm:*)" \
 {% for action in ['preview', 'export', 'commit'] %}
     "Bash(.venv/bin/python -m cs assignment {{ action }}:*)" \
     "Bash(.venv/bin/python3 -m cs assignment {{ action }}:*)" \

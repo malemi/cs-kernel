@@ -1314,11 +1314,14 @@ def cmd_draft_send(args) -> int:
 
     The Gmail copy created by ``draft-reply`` is only a review surface. An
     ambient Gmail connector can send that copy, but cannot update the engine
-    row; this verb therefore never touches Gmail and never approves a
-    ``send_draft`` request whose input differs from the exact id supplied by
-    the operator.
+    row. This verb approves only the exact supplied draft ID. Interactive
+    sends verify Gmail Sent before retiring the unchanged exact review copy;
+    incomplete verification or cleanup never retries delivery.
     """
     settings = config.load()
+    if getattr(args, "operator_request", False):
+        from .operator_send import execute
+        return execute(settings, args)
     draft_id = (args.draft_id or "").strip()
     drafts = _drafts_with_status(settings, "draft", args.timeout)
     matches = [d for d in drafts if str(d.get("id") or "") == draft_id]
@@ -1330,7 +1333,8 @@ def cmd_draft_send(args) -> int:
         )
         return 1
 
-    draft = matches[0]
+    from copy import deepcopy
+    draft = deepcopy(matches[0])
     from . import task_assignment
     from .thread_key import thread_key
     key = draft.get("thread_id") or thread_key(None, " ".join(draft.get("references") or []) if isinstance(draft.get("references"), list) else draft.get("references"), draft.get("in_reply_to"))
@@ -1402,6 +1406,14 @@ def cmd_draft_send(args) -> int:
     sent = _drafts_with_status(settings, "sent", args.timeout)
     if any(str(d.get("id") or "") == draft_id for d in sent):
         print(f"sent and recorded by engine: {draft_id}")
+        from . import review_draft, send_completion
+        if review_draft.interactive():
+            try:
+                send_completion.complete(settings, draft, sent)
+            except Exception as exc:
+                detail = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__
+                print(f"Sent, but verification or cleanup incomplete: {detail}. Do not retry sending.", file=sys.stderr)
+                return 5
         return 0
 
     states = {}
@@ -1591,6 +1603,16 @@ def cmd_draft_reply(args) -> int:
     # Guarded by tests/test_draft_reply.py + the run.sh grep gate — do NOT remove
     # the append_draft call: that reintroduces the "draft not in Gmail" regression.
     settings = config.load()
+    from . import review_draft
+    if review_draft.interactive():
+        from . import interactive_draft
+        return interactive_draft.prepare(settings, args)
+    if getattr(args, "resume_draft", None) or getattr(args, "operation_id", None):
+        print("Draft HELD: exact resume requires interactive execution", file=sys.stderr)
+        return 3
+    if not args.message:
+        print("Draft HELD: composition message required", file=sys.stderr)
+        return 3
     from . import gmail_drafts
 
     from . import task_assignment
@@ -1729,6 +1751,21 @@ def _retire_sent_mirrors(settings, *, commit: bool, timeout: int,
     return {"ok": all(d["ok"] for d in done) if done else True,
             "orphans": rows, "retired": done, "skipped": skipped}
 
+
+
+def cmd_draft_retire(args) -> int:
+    from . import draft_lifecycle
+
+    function = draft_lifecycle.retire_sent_mirror if args.sent_mirror else draft_lifecycle.retire
+    extra = ({"thread_id": args.thread_id, "operation_id": args.operation_id,
+              "gmail_folder": args.gmail_folder} if args.sent_mirror else {})
+    out = function(
+        config.load(), args.draft_id, args.gmail_uid, args.uidvalidity,
+        commit=args.commit, gmail_fingerprint=args.gmail_fingerprint,
+        engine_snapshot=args.engine_snapshot, timeout=args.timeout, **extra,
+    )
+    _print_json(out)
+    return 0 if out.get("ok") else 5 if out.get("partial") else 3
 
 def cmd_draft_delete(args) -> int:
     # Take ONE bad draft out of the review queue. Destructive, so it follows the
@@ -2367,6 +2404,9 @@ def main(argv=None) -> int:
     )
     pds.add_argument("draft_id", help="full engine draft id from `cs review --json`")
     pds.add_argument("--timeout", type=float, default=600)
+    pds.add_argument("--operator-request", action="store_true")
+    pds.add_argument("--operation-id")
+    pds.add_argument("--json", action="store_true")
     pds.set_defaults(func=cmd_draft_send)
 
     pas = sub.add_parser(
@@ -2383,11 +2423,14 @@ def main(argv=None) -> int:
         help="compose a reply via the engine as a DRAFT only — never sends (no --allow). "
         "The headless-safe reply path.",
     )
-    pdr.add_argument("message")
+    pdr.add_argument("message", nargs="?")
     pdr.add_argument("--thread-id", help="exact RFC thread identity required before composing")
     pdr.add_argument("--source-id", help="exact original engine email id when known")
     pdr.add_argument("--timeout", type=float, default=600)
     # APPENDS the composed draft into the operator's own Gmail Drafts
+    pdr.add_argument("--resume-draft")
+    pdr.add_argument("--operation-id")
+    pdr.add_argument("--json", action="store_true")
     pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
 
     pdd = sub.add_parser(
@@ -2419,6 +2462,22 @@ def main(argv=None) -> int:
     pdd.add_argument("--commit", action="store_true", help="apply (default: dry-run)")
     # Writes the operator's own Gmail over IMAP — --account cannot redirect it.
     pdd.set_defaults(func=cmd_draft_delete, reads_operator_mailbox=True)
+
+    prt = sub.add_parser(
+        "draft-retire", help="preview retirement of ONE exact Gmail/engine draft pair; interactive only",
+    )
+    prt.add_argument("draft_id", help="full engine draft ID")
+    prt.add_argument("--gmail-uid", required=True, help="exact Gmail Drafts UID")
+    prt.add_argument("--uidvalidity", required=True, help="Gmail Drafts UIDVALIDITY from review JSON")
+    prt.add_argument("--gmail-fingerprint", help="complete Gmail message fingerprint from preview")
+    prt.add_argument("--engine-snapshot", help="engine snapshot from preview")
+    prt.add_argument("--commit", action="store_true", help="apply only the unchanged preview snapshots")
+    prt.add_argument("--sent-mirror", action="store_true", help="recover only a verified-sent residual copy; retain engine row")
+    prt.add_argument("--thread-id", help="exact thread root for sent-mirror recovery")
+    prt.add_argument("--operation-id", help="stable operation ID from sent-mirror preview")
+    prt.add_argument("--gmail-folder", help="exact Drafts folder from sent-mirror preview")
+    prt.add_argument("--timeout", type=float, default=120)
+    prt.set_defaults(func=cmd_draft_retire, reads_operator_mailbox=True)
 
     prv = sub.add_parser(
         "review",

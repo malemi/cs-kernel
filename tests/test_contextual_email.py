@@ -21,9 +21,10 @@ def settings():
 
 
 class Wire:
-    def __init__(self, capability=True):
+    def __init__(self, capability=True, approve=True):
         self.frames = []
         self.capability = capability
+        self.approve = approve
         self.handshakes = []
     async def connect(self, url, **kwargs):
         self.handshakes.append((url, kwargs))
@@ -56,6 +57,9 @@ class Wire:
             await self.emit({"id": frame["id"], "result": normal_projection(settings(), frame["params"])})
         elif method == "chat.send":
             self.chat_id = frame["id"]
+            if not self.approve:
+                await self.emit({"id": frame["id"], "result": {"response": "checked"}})
+                return
             await self.emit({"method": "chat.pending_approval", "params": {
                 "name": "send_draft", "tool_use_id": "send-one", "input": {"draft_id": DRAFT_ID}}})
         elif method == "chat.approve":
@@ -112,8 +116,12 @@ class ContextualEmail(unittest.TestCase):
 
     def test_actual_exact_draft_cli_binds_authenticated_chat_and_verifies_sent(self):
         wire = Wire()
-        with wire.patches(), contextlib.redirect_stdout(io.StringIO()):
+        with wire.patches(), patch("cs.send_completion.complete") as complete, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(cli.main(["draft-send", DRAFT_ID]), 0)
+        draft = {"id": DRAFT_ID, "status": "draft", "thread_id": ROOT, "in_reply_to": TARGET,
+                 "references": [ROOT], "to_addresses": ["customer@example.test"], "subject": "Reply",
+                 "sent_message_id": "<sent@example.test>"}
+        complete.assert_called_once_with(settings(), draft, [{**draft, "status": "sent"}])
         chat = next(frame for frame in wire.frames if frame["method"] == "chat.send")
         self.assertEqual(chat["params"]["email_context"], {"draft_id": DRAFT_ID})
         self.assertEqual(wire.frames[-1]["method"], "drafts.list")

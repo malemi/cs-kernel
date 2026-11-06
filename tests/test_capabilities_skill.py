@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from cs import project_init as pi
 from test_project_update import _FULL_INIT_DATA
+from scheduled_successor import load_successors, undo_rendered
 
 BASE_COMMIT = "03b4449"
 TPL = ROOT / "cs/templates/project"
@@ -78,6 +79,7 @@ def scheduled_surfaces(old: Path) -> None:
     with patch.object(pi, "partials_root", return_value=old.parent / "partials"):
         old_env = pi.build_jinja_env(old)
     current_env = pi.build_jinja_env(TPL)
+    successors = load_successors(TPL)
     print(f"scheduled comparison base: {BASE_COMMIT}")
     for shape in ("generic", "as-built"):
         rendered_sets = {}
@@ -95,6 +97,7 @@ def scheduled_surfaces(old: Path) -> None:
             for rel in SCHEDULED:
                 before = old_env.get_template(rel + ".j2").render(**config).encode()
                 after = current_env.get_template(rel + ".j2").render(**config).encode()
+                after = undo_rendered(after, rel, shape, variant, successors)
                 rendered_sets[variant][rel] = after
                 old_hash = hashlib.sha256(before).hexdigest()
                 new_hash = hashlib.sha256(after).hexdigest()

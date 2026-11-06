@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import os
 import sys
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional
 
@@ -244,6 +245,7 @@ async def chat(
     assignment_thread_key: str | None = None,
     email_context: dict | None = None,
     require_contextual_email_policy: bool = False,
+    supervised_review: bool = False,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -291,6 +293,10 @@ async def chat(
 
     from . import model_config
 
+    if supervised_review and (not assignment_thread_key or read_only or role is not None or allow_tools
+                              or any(os.environ.get(key) for key in
+                                     ("CS_OPERATOR_HEADLESS", "CS_HEADLESS_SEND", "CS_OPERATOR_HEALTH_CONTEXT"))):
+        raise ValueError("supervised review requires interactive assignment-scoped draft-only execution")
     if email_context is not None and (read_only or role is not None):
         raise ValueError("contextual email cannot use read-only/direct classifier routing")
     if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
@@ -349,7 +355,7 @@ async def chat(
         params = {"message": message, "conversation_id": conv}
         if email_context is not None or assignment_thread_key is not None or require_contextual_email_policy:
             capabilities = await c.call("system.capabilities", {}, timeout=60)
-            if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
+            if (email_context is not None or require_contextual_email_policy or not supervised_review) and (not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1):
                 raise RuntimeError("engine does not support required contextual email policy version 1")
         if email_context is not None:
             params.update(email_context=email_context, contextual_email_policy_version=1)
@@ -357,6 +363,11 @@ async def chat(
             if not isinstance(capabilities, dict) or capabilities.get("assignment_draft_policy") != 1:
                 raise RuntimeError("engine does not support required assignment draft policy version 1")
             params.update(assignment_thread_key=assignment_thread_key, assignment_policy_version=1)
+        if supervised_review:
+            version = capabilities.get("supervised_review_draft_policy") if isinstance(capabilities, dict) else None
+            if type(version) is not int or version != 1:
+                raise RuntimeError("engine does not support supervised review draft policy version 1")
+            params["supervised_review_draft_policy_version"] = 1
         result = await c.call("chat.send", params, timeout=timeout)
         return {"result": result, "approvals": approvals, "notifications": c.notifications}
 
