@@ -7,7 +7,8 @@ runner, native workflows or scheduled branches. Compatible engine services are
 required independently; this document does not certify installed behavior.
 The [integration plan](execution-plans/2026-11-06-interactive-reply-core-main.md)
 owns source evidence and remaining acceptance. The published v9 bootstrap guard
-is preserved. M4 collectors and M5 workflow changes are separate follow-ons.
+is preserved. The [M4 collector binding](operational-diagnostics-source.md) has
+its own integration scope; M5 workflow changes remain a separate follow-on.
 
 ## Prepare and resume one review draft
 

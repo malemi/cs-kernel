@@ -4,6 +4,14 @@
   Hosts share canonical skills. `cs-triage-mail` reads the optional company
   playbook while preserving send and approval boundaries.
 
+## 2026-11-06 — Before the M4 prerequisite binding
+
+- M4 collector dependencies and M5 workflows remain separate from the reviewed
+  M1–M3 source slice. M6, native/provider acceptance and both ordinary FULL
+  obligations remain open; controlled recipients and bounded spending are still
+  required. Parent checker binding is separately owned. No installed adoption
+  or overall completion follows from source publication.
+
 ## 2026-11-06 — Prior ordinary send description
 
 - Interactive `cs draft-send <full-engine-draft-id>` approves the exact engine

@@ -41,3 +41,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Interactive reply source contract](interactive-reply-source.md) — untagged M1–M3 callers, exact operations and acceptance limits; [integration plan](execution-plans/2026-11-06-interactive-reply-core-main.md).
 
 - [Embedded Desktop operator helpers](desktop-operator-source.md) — paired source/dependency boundary and local-only diagnostics; [main integration plan](execution-plans/2026-11-06-desktop-operator-main.md).
+
+- [Operational diagnostics source contract](operational-diagnostics-source.md) — M4 ordinary logs, bounded collector and filesystem inbox; [main integration plan](execution-plans/2026-11-06-interactive-reply-m4-main.md).

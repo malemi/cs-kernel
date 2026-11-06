@@ -14,6 +14,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
+- The [M4 diagnostic candidate](operational-diagnostics-source.md) connects ordinary
+  logs and bounded collection to the filesystem inbox. Focused local CLI, cause,
+  uncertainty/recovery and sink-failure controls pass. Integration/publication
+  gates remain scoped separately from installed monitoring and engine acceptance.
+
 - The [embedded Desktop helpers](desktop-operator-source.md) have reviewed
   main-source bindings and exact owner-method denies. Local diagnostics remain
   credential-free and loopback-only. Desktop pairing and native managed workflow
@@ -102,11 +107,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- M4 collector dependencies and M5 workflows remain separate from the reviewed
-  M1–M3 source slice. M6, native/provider acceptance and both ordinary FULL
-  obligations remain open; controlled recipients and bounded spending are still
-  required. Parent checker binding is separately owned. No installed adoption
-  or overall completion follows from source publication.
+- M5 workflows remain a separate follow-on. M6, native/provider acceptance and
+  both ordinary FULL obligations remain open; controlled recipients and bounded
+  spending are still required. Parent checker binding is separately owned.
+  Source publication does not establish installed adoption or overall completion.
 
 - The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
   are verified. Remote MCP remains separate; wide dossier/review latency remains
