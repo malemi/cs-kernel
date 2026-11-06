@@ -1,0 +1,225 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "m5-interactive-preparation",
+      "template": "project/.claude/skills/cs-triage-mail/SKILL.md.j2",
+      "hashes": {
+        "before_sha256": "b7b655f5cc613b16ec8a9be465e78448de9dc2ac515b3263fb5f9da2240c567a",
+        "after_sha256": "a98c79ced60a9142e964f7d2b05a93f402e9e6c00502d566670464b025201a91"
+      },
+      "undo_old": "## Interactive preparation when sending is held\n\nFor an explicit interactive preparation request, follow `cs-customer`'s\nrequested interactive reply procedure after reading the exact thread and dossier.\nA human takeover or assignment hold does not by itself prevent a requested review\ndraft. Preserve the hold, assignee, uncertainty, tasks and assignment records.\nMissing source/content, suppression, SELF and unsafe content still refuse.\n\nPreparation grants no send permission and does not change scheduled discovery,\nselection or assignment admission. If the interactive operator separately asks\nto send one selected existing draft, follow the exact `cs-customer` send and\nrecovery procedure: only a positive manual-member-activity hold has that narrow\nexception. This triage workflow remains draft-only; unattended runs must never\nselect `--operator-request`. Other holds remain enforced. Distinguish engine-saved\nfrom verified Gmail-visible copies, and resume saved IDs without regeneration.\n\n## Invariants (read before acting)",
+      "undo_new": "## Invariants (read before acting)"
+    },
+    {
+      "id": "m5-composition-outcome",
+      "template": "project/.claude/skills/cs-triage-mail/SKILL.md.j2",
+      "hashes": {
+        "before_sha256": "a98c79ced60a9142e964f7d2b05a93f402e9e6c00502d566670464b025201a91",
+        "after_sha256": "dff77e07666a29f6ed6df577bcd5b1d06060244ab66cf058daff9cb5081a65aa"
+      },
+      "undo_old": "`draft-reply` requires the exact thread. Scheduled and supported supervised\nroutes negotiate the engine draft policy before composition; unsupported authority\nholds those routes, and the engine checks their actual draft target\nbefore writing. All routes deny send tools during composition. Composition uses memory,\ntrained voice and reply threading. Engine-saved does not establish a Gmail-visible\ncopy: inspect achieved stages and retain saved IDs on partial failure. Interactive\npublication and recovery follow `cs-customer`; unsupported publication never\npermits a local APPEND fallback. The command has no `--allow` option and cannot\nsend. An explicit interactive request to send a selected existing draft routes\nto `cs-customer`, never Gmail, generic chat or another connector. This triage\nworkflow and its scheduled runs remain draft-only.\n\n",
+      "undo_new": "`draft-reply` requires the exact thread and negotiates the engine draft policy\nbefore compose; unsupported authority holds the request. The engine checks the\nactual draft target before writing, not only the free-form instruction. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** \u2014 the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**.\n\n"
+    },
+    {
+      "id": "m5-shared-partial",
+      "template": "partials/outbound-fact-sourcing.md.j2",
+      "hashes": {
+        "before_sha256": "74b4c23f11611d978ca6273809e4da13e7fa8d3a6488bef247f7d6a0d0b85b32",
+        "after_sha256": "defbc7b85054a4398ba3517eca0827ad4928b362a2106a297fdb8c5920a6d5a2"
+      },
+      "undo_old": "**A nonzero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules.\n",
+      "undo_new": "**A non-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found.\n"
+    }
+  ],
+  "rendered": {
+    ".claude/skills/cs-triage-mail/SKILL.md": {
+      "generic/normal": {
+        "variant": "generic/normal",
+        "stages": [
+          {
+            "id": "m5-interactive-preparation",
+            "hashes": {
+              "before_sha256": "3bcf71668e55d7d7f7e9c1d44cb5c9317c4f90c7c9c629d8c9a859819dc0c64d",
+              "after_sha256": "bdc5f49c1b5cee4b34d8db4462359bf333cc867f27a78c3474c22035c6c776f5"
+            },
+            "undo_old": "teractive preparation when sending is held\n\nFor an explicit interactive preparation request, follow `cs-customer`'s\nrequested interactive reply procedure after reading the exact thread and dossier.\nA human takeover or assignment hold does not by itself prevent a requested review\ndraft. Preserve the hold, assignee, uncertainty, tasks and assignment records.\nMissing source/content, suppression, SELF and unsafe content still refuse.\n\nPreparation grants no send permission and does not change scheduled discovery,\nselection or assignment admission. If the interactive operator separately asks\nto send one selected existing draft, follow the exact `cs-customer` send and\nrecovery procedure: only a positive manual-member-activity hold has that narrow\nexception. This triage workflow remains draft-only; unattended runs must never\nselect `--operator-request`. Other holds remain enforced. Distinguish engine-saved\nfrom verified Gmail-visible copies, and resume saved IDs without regeneration.\n\n## In",
+            "undo_new": ""
+          },
+          {
+            "id": "m5-composition-outcome",
+            "hashes": {
+              "before_sha256": "bdc5f49c1b5cee4b34d8db4462359bf333cc867f27a78c3474c22035c6c776f5",
+              "after_sha256": "7cebbc15933d50b29d5354d707c59e678b0d98c8b3defcc2b7d0cd5d512364bd"
+            },
+            "undo_old": ". Scheduled and supported supervised\nroutes negotiate the engine draft policy before composition; unsupported authority\nholds those routes, and the engine checks their actual draft target\nbefore writing. All routes deny send tools during composition. Composition uses memory,\ntrained voice and reply threading. Engine-saved does not establish a Gmail-visible\ncopy: inspect achieved stages and retain saved IDs on partial failure. Interactive\npublication and recovery follow `cs-customer`; unsupported publication never\npermits a local APPEND fallback. The command has no `--allow` option and cannot\nsend. An explicit interactive request to send a selected existing draft routes\nto `cs-customer`, never Gmail, generic chat or another connector. This triage\nworkflow and its scheduled runs remain draft-only",
+            "undo_new": " and negotiates the engine draft policy\nbefore compose; unsupported authority holds the request. The engine checks the\nactual draft target before writing, not only the free-form instruction. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in support@acme.example/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** \u2014 the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**"
+          },
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "7cebbc15933d50b29d5354d707c59e678b0d98c8b3defcc2b7d0cd5d512364bd",
+              "after_sha256": "88b7034dc0c11900dad393443370d8d779d4f33ce56919b5c2194639b8ab7baf"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "generic/conditional": {
+        "variant": "generic/conditional",
+        "stages": [
+          {
+            "id": "m5-interactive-preparation",
+            "hashes": {
+              "before_sha256": "9390c7720e27a25d26a56b1bda32acbbbe958e9b62044f42d7b40483ca30fa64",
+              "after_sha256": "ffc2db6d4cbaab3f252b97daa0683b0bdfdce83e954250f8f9f1b25a2f968ee7"
+            },
+            "undo_old": "teractive preparation when sending is held\n\nFor an explicit interactive preparation request, follow `cs-customer`'s\nrequested interactive reply procedure after reading the exact thread and dossier.\nA human takeover or assignment hold does not by itself prevent a requested review\ndraft. Preserve the hold, assignee, uncertainty, tasks and assignment records.\nMissing source/content, suppression, SELF and unsafe content still refuse.\n\nPreparation grants no send permission and does not change scheduled discovery,\nselection or assignment admission. If the interactive operator separately asks\nto send one selected existing draft, follow the exact `cs-customer` send and\nrecovery procedure: only a positive manual-member-activity hold has that narrow\nexception. This triage workflow remains draft-only; unattended runs must never\nselect `--operator-request`. Other holds remain enforced. Distinguish engine-saved\nfrom verified Gmail-visible copies, and resume saved IDs without regeneration.\n\n## In",
+            "undo_new": ""
+          },
+          {
+            "id": "m5-composition-outcome",
+            "hashes": {
+              "before_sha256": "ffc2db6d4cbaab3f252b97daa0683b0bdfdce83e954250f8f9f1b25a2f968ee7",
+              "after_sha256": "63409155ff22b2f79b9b77c1f3a7d727294e2af7ab2f6a620674be57e8833c2c"
+            },
+            "undo_old": ". Scheduled and supported supervised\nroutes negotiate the engine draft policy before composition; unsupported authority\nholds those routes, and the engine checks their actual draft target\nbefore writing. All routes deny send tools during composition. Composition uses memory,\ntrained voice and reply threading. Engine-saved does not establish a Gmail-visible\ncopy: inspect achieved stages and retain saved IDs on partial failure. Interactive\npublication and recovery follow `cs-customer`; unsupported publication never\npermits a local APPEND fallback. The command has no `--allow` option and cannot\nsend. An explicit interactive request to send a selected existing draft routes\nto `cs-customer`, never Gmail, generic chat or another connector. This triage\nworkflow and its scheduled runs remain draft-only",
+            "undo_new": " and negotiates the engine draft policy\nbefore compose; unsupported authority holds the request. The engine checks the\nactual draft target before writing, not only the free-form instruction. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in support@acme.example/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** \u2014 the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**"
+          },
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "63409155ff22b2f79b9b77c1f3a7d727294e2af7ab2f6a620674be57e8833c2c",
+              "after_sha256": "32afee538620a2c1bd6688d3bd56036e0834266a8d0ee62f6b1701e21101d86b"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "as-built/normal": {
+        "variant": "as-built/normal",
+        "stages": [
+          {
+            "id": "m5-interactive-preparation",
+            "hashes": {
+              "before_sha256": "3bcf71668e55d7d7f7e9c1d44cb5c9317c4f90c7c9c629d8c9a859819dc0c64d",
+              "after_sha256": "bdc5f49c1b5cee4b34d8db4462359bf333cc867f27a78c3474c22035c6c776f5"
+            },
+            "undo_old": "teractive preparation when sending is held\n\nFor an explicit interactive preparation request, follow `cs-customer`'s\nrequested interactive reply procedure after reading the exact thread and dossier.\nA human takeover or assignment hold does not by itself prevent a requested review\ndraft. Preserve the hold, assignee, uncertainty, tasks and assignment records.\nMissing source/content, suppression, SELF and unsafe content still refuse.\n\nPreparation grants no send permission and does not change scheduled discovery,\nselection or assignment admission. If the interactive operator separately asks\nto send one selected existing draft, follow the exact `cs-customer` send and\nrecovery procedure: only a positive manual-member-activity hold has that narrow\nexception. This triage workflow remains draft-only; unattended runs must never\nselect `--operator-request`. Other holds remain enforced. Distinguish engine-saved\nfrom verified Gmail-visible copies, and resume saved IDs without regeneration.\n\n## In",
+            "undo_new": ""
+          },
+          {
+            "id": "m5-composition-outcome",
+            "hashes": {
+              "before_sha256": "bdc5f49c1b5cee4b34d8db4462359bf333cc867f27a78c3474c22035c6c776f5",
+              "after_sha256": "7cebbc15933d50b29d5354d707c59e678b0d98c8b3defcc2b7d0cd5d512364bd"
+            },
+            "undo_old": ". Scheduled and supported supervised\nroutes negotiate the engine draft policy before composition; unsupported authority\nholds those routes, and the engine checks their actual draft target\nbefore writing. All routes deny send tools during composition. Composition uses memory,\ntrained voice and reply threading. Engine-saved does not establish a Gmail-visible\ncopy: inspect achieved stages and retain saved IDs on partial failure. Interactive\npublication and recovery follow `cs-customer`; unsupported publication never\npermits a local APPEND fallback. The command has no `--allow` option and cannot\nsend. An explicit interactive request to send a selected existing draft routes\nto `cs-customer`, never Gmail, generic chat or another connector. This triage\nworkflow and its scheduled runs remain draft-only",
+            "undo_new": " and negotiates the engine draft policy\nbefore compose; unsupported authority holds the request. The engine checks the\nactual draft target before writing, not only the free-form instruction. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in support@acme.example/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** \u2014 the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**"
+          },
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "7cebbc15933d50b29d5354d707c59e678b0d98c8b3defcc2b7d0cd5d512364bd",
+              "after_sha256": "88b7034dc0c11900dad393443370d8d779d4f33ce56919b5c2194639b8ab7baf"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "as-built/conditional": {
+        "variant": "as-built/conditional",
+        "stages": [
+          {
+            "id": "m5-interactive-preparation",
+            "hashes": {
+              "before_sha256": "9390c7720e27a25d26a56b1bda32acbbbe958e9b62044f42d7b40483ca30fa64",
+              "after_sha256": "ffc2db6d4cbaab3f252b97daa0683b0bdfdce83e954250f8f9f1b25a2f968ee7"
+            },
+            "undo_old": "teractive preparation when sending is held\n\nFor an explicit interactive preparation request, follow `cs-customer`'s\nrequested interactive reply procedure after reading the exact thread and dossier.\nA human takeover or assignment hold does not by itself prevent a requested review\ndraft. Preserve the hold, assignee, uncertainty, tasks and assignment records.\nMissing source/content, suppression, SELF and unsafe content still refuse.\n\nPreparation grants no send permission and does not change scheduled discovery,\nselection or assignment admission. If the interactive operator separately asks\nto send one selected existing draft, follow the exact `cs-customer` send and\nrecovery procedure: only a positive manual-member-activity hold has that narrow\nexception. This triage workflow remains draft-only; unattended runs must never\nselect `--operator-request`. Other holds remain enforced. Distinguish engine-saved\nfrom verified Gmail-visible copies, and resume saved IDs without regeneration.\n\n## In",
+            "undo_new": ""
+          },
+          {
+            "id": "m5-composition-outcome",
+            "hashes": {
+              "before_sha256": "ffc2db6d4cbaab3f252b97daa0683b0bdfdce83e954250f8f9f1b25a2f968ee7",
+              "after_sha256": "63409155ff22b2f79b9b77c1f3a7d727294e2af7ab2f6a620674be57e8833c2c"
+            },
+            "undo_old": ". Scheduled and supported supervised\nroutes negotiate the engine draft policy before composition; unsupported authority\nholds those routes, and the engine checks their actual draft target\nbefore writing. All routes deny send tools during composition. Composition uses memory,\ntrained voice and reply threading. Engine-saved does not establish a Gmail-visible\ncopy: inspect achieved stages and retain saved IDs on partial failure. Interactive\npublication and recovery follow `cs-customer`; unsupported publication never\npermits a local APPEND fallback. The command has no `--allow` option and cannot\nsend. An explicit interactive request to send a selected existing draft routes\nto `cs-customer`, never Gmail, generic chat or another connector. This triage\nworkflow and its scheduled runs remain draft-only",
+            "undo_new": " and negotiates the engine draft policy\nbefore compose; unsupported authority holds the request. The engine checks the\nactual draft target before writing, not only the free-form instruction. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in support@acme.example/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** \u2014 the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**"
+          },
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "63409155ff22b2f79b9b77c1f3a7d727294e2af7ab2f6a620674be57e8833c2c",
+              "after_sha256": "32afee538620a2c1bd6688d3bd56036e0834266a8d0ee62f6b1701e21101d86b"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      }
+    },
+    ".claude/skills/cs-campaign-tick/SKILL.md": {
+      "generic/normal": {
+        "variant": "generic/normal",
+        "stages": [
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "2595b767fe8252517f3254da5b33f111597ed3f7775f7e958ac0cffa55d7aae7",
+              "after_sha256": "a20fafe944685382e16c92c2ce700f1d676f09ba4c81692b0e6b4d03c89a4cc8"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "generic/conditional": {
+        "variant": "generic/conditional",
+        "stages": [
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "4e6f03598fb2cad1453d8e84436031913fac58f66655108ee47ed508eb154962",
+              "after_sha256": "9dd017dff000a0655a1edf58cbd4422f6b6860cd97816aa165336b3210931374"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "as-built/normal": {
+        "variant": "as-built/normal",
+        "stages": [
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "2595b767fe8252517f3254da5b33f111597ed3f7775f7e958ac0cffa55d7aae7",
+              "after_sha256": "a20fafe944685382e16c92c2ce700f1d676f09ba4c81692b0e6b4d03c89a4cc8"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      },
+      "as-built/conditional": {
+        "variant": "as-built/conditional",
+        "stages": [
+          {
+            "id": "m5-shared-partial",
+            "hashes": {
+              "before_sha256": "4e6f03598fb2cad1453d8e84436031913fac58f66655108ee47ed508eb154962",
+              "after_sha256": "9dd017dff000a0655a1edf58cbd4422f6b6860cd97816aa165336b3210931374"
+            },
+            "undo_old": "zero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. Read its structured outcome even on nonzero exit; retain the\nfull saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved\nis not Gmail-visible. Resume an existing saved draft through the interactive\n`cs-customer` procedure without generating another reply. Unknown publication or\nsend outcomes require exact operation reconciliation, never blind retry.\nScheduled workflows retain their holds and must never select `--operator-request`\nor adopt an interactive recovery route to bypass their admission rules",
+            "undo_new": "-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n\u2014 `error` / `error_detail` on stderr \u2014 and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found"
+          }
+        ]
+      }
+    }
+  }
+}

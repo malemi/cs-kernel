@@ -22,6 +22,10 @@ upstream-provider or hostname literal), but the shape — `response` carrying
 fluent prose, `metadata.error` / `metadata.error_detail` carrying the real
 verdict — is not invented.
 
+The draft-reply cases explicitly exercise the scheduled legacy engine contract
+without exact publication capability. Interactive partial-success outcomes are
+covered separately in test_publication_outcomes.py.
+
 Four properties, and the third is the one this whole fix exists to hold:
 
   1. A `chat.send` result carrying `metadata.error` makes `cmd_ask`,
@@ -47,6 +51,7 @@ directly against the helper, not inferred from the two verbs that use it.
 from __future__ import annotations
 
 import io
+import os
 import sys
 import types
 from contextlib import redirect_stderr, redirect_stdout
@@ -99,6 +104,7 @@ def _stub_chat(envelope: dict):
 
 
 def _install_common_stubs():
+    os.environ["CS_OPERATOR_HEADLESS"] = "1"
     cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
 
 
@@ -211,6 +217,10 @@ def test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step():
     list_calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "system.capabilities":
+            return {}
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
         list_calls["n"] += 1
@@ -255,6 +265,10 @@ def test_cmd_draft_reply_success_is_unchanged():
     calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "system.capabilities":
+            return {}
+        if method == "emails.list_by_thread":
+            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
         if method == "tasks.assignment.project":
             return normal_projection(settings, params)
         assert method == "drafts.list", method
@@ -266,7 +280,8 @@ def test_cmd_draft_reply_success_is_unchanged():
     appended: dict = {}
 
     def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None, body_md=False):
+                    references=None, html=None, cc=None, body_md=False,
+                    engine_draft_id=None, engine_owner_uid=None):
         appended.update(to=to, subject=subject)
         return "[Gmail]/Drafts", []
     gmail_drafts.append_draft = fake_append

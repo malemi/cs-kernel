@@ -24,6 +24,22 @@ This skill is **general** — it is NOT about any campaign; campaign
 follow-up is the `cs-campaign-tick` skill's job, not this one.
 {% endif %}
 
+## Interactive preparation when sending is held
+
+For an explicit interactive preparation request, follow `cs-customer`'s
+requested interactive reply procedure after reading the exact thread and dossier.
+A human takeover or assignment hold does not by itself prevent a requested review
+draft. Preserve the hold, assignee, uncertainty, tasks and assignment records.
+Missing source/content, suppression, SELF and unsafe content still refuse.
+
+Preparation grants no send permission and does not change scheduled discovery,
+selection or assignment admission. If the interactive operator separately asks
+to send one selected existing draft, follow the exact `cs-customer` send and
+recovery procedure: only a positive manual-member-activity hold has that narrow
+exception. This triage workflow remains draft-only; unattended runs must never
+select `--operator-request`. Other holds remain enforced. Distinguish engine-saved
+from verified Gmail-visible copies, and resume saved IDs without regeneration.
+
 ## Invariants (read before acting)
 
 - **Identity is ALWAYS `{{ email_address }}`.** Every read, draft, send
@@ -248,18 +264,17 @@ is **grounded in the thread + engine memory**:
 .venv/bin/python -m cs draft-reply "reply in the thread with <email>: <what to say, concise>" --thread-id '<exact-thread-key>'
 ```
 
-`draft-reply` requires the exact thread and negotiates the engine draft policy
-before compose; unsupported authority holds the request. The engine checks the
-actual draft target before writing, not only the free-form instruction. It runs
-compose (memory + trained voice + threading
-headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts
-for the operator to review and send. It has **no `--allow` option and cannot
-send** — the engine denies `send_draft` whatever the message (or any injected
-text) says. Sending is the interactive operator's job through
-`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and
-other ambient app connectors are never the send path for an engine draft.
-Autonomous send is a future, separately permissioned step, **never this
-skill's job**.
+`draft-reply` requires the exact thread. Scheduled and supported supervised
+routes negotiate the engine draft policy before composition; unsupported authority
+holds those routes, and the engine checks their actual draft target
+before writing. All routes deny send tools during composition. Composition uses memory,
+trained voice and reply threading. Engine-saved does not establish a Gmail-visible
+copy: inspect achieved stages and retain saved IDs on partial failure. Interactive
+publication and recovery follow `cs-customer`; unsupported publication never
+permits a local APPEND fallback. The command has no `--allow` option and cannot
+send. An explicit interactive request to send a selected existing draft routes
+to `cs-customer`, never Gmail, generic chat or another connector. This triage
+workflow and its scheduled runs remain draft-only.
 
 **(b) Escalate** — a judgment call, out of scope, legal- or
 billing-sensitive, angry, an unclear ask, OR an answer you cannot ground

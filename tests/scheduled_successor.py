@@ -2,6 +2,7 @@
 import hashlib
 import json
 from pathlib import Path
+from scheduled_m5_successor import load_m5_successors, undo_m5_rendered
 
 PATHS = ('.claude/settings.json', 'bin/cs_operator_cron.sh')
 VARIANTS = ('generic/normal', 'generic/conditional', 'as-built/normal', 'as-built/conditional')
@@ -59,10 +60,11 @@ def load_successors(template_root, packet=None):
             if set(row['hashes']) != {'before_sha256', 'after_sha256'}:
                 raise ValueError('missing or extra rendered hash')
         result[rel] = stage
+    result["m5"] = load_m5_successors(template_root)
     return result
 
 
 def undo_rendered(data, rel, shape, variant, stages):
     if rel not in PATHS:
-        return data
+        return undo_m5_rendered(data, rel, shape, variant, stages["m5"])
     return exact_undo(data, rel, stages[rel]['rendered'][shape + '/' + variant]['hashes'])

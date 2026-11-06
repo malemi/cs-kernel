@@ -45,12 +45,13 @@ change drifts and `cs update` overwrites it: `AGENTS.md` (this charter) ·
 `.claude/settings.json` · `.claude/skills/*` · `bin/cs_operator_cron.sh` ·
 `.env.example` · `.gitignore` · `requirements.txt`.
 
-**`CLAUDE.md` is written once by the kernel and then never touched.** It is the
-entry point Claude Code reads, and its body is the `@AGENTS.md` import. The
-kernel stamps it only when a clone has none, keeps it out of the checksum
-ledger and never re-renders it, so whoever manages it afterwards owns it: a
-documentation harness's `/doc-create` replaces it with the harness's own
-template, and that harness — never the kernel — also owns `docs/.doc-profile`.
+**A legacy clone without a documentation profile receives a missing `CLAUDE.md`
+bootstrap importing `AGENTS.md`.** A canonical v9 AGENTS-only profile suppresses
+that creation; malformed or unsupported profile ownership refuses it. Existing
+clone-authored bootstrap files remain untouched. The kernel keeps `CLAUDE.md`
+out of its checksum ledger and never re-renders it. The documentation harness
+owns `docs/.doc-profile`; the kernel neither adopts a harness nor retires custom
+instructions on its own.
 
 **Clone-owned — edit freely here:** `manifest.toml` (the declared per-company
 variance, the ONE place values change) · `company/*.md` (the *file* is templated,
@@ -189,7 +190,15 @@ boundary.
   human `CS_TRIAGE_MODE=send`. Two gated send paths: contextual → the engine's
   approval-gated `send_draft`; fixed-template bulk → cs-owned SMTP
   (`cs/send_mail.py`). For an engine-owned contextual draft, the interactive
-  path is **only** `cs draft-send <full-engine-draft-id>`. Never use Gmail,
+  path for an explicit request to send the selected unchanged draft is **only**
+  `cs draft-send FULL_ID --operator-request --operation-id SEND_OPERATION_ID --json`. Follow the existing
+  `cs-customer` skill for exact operation recovery; do not ask for the same
+  consent again. This passes only a positively identified manual-member-activity
+  hold when the connected engine supports the exact operation; unsupported
+  capability remains a refusal. Other-owner assignments, conflict, missing evidence, suppression, SELF
+  and pause remain enforced. Never assign or close a task to enable sending.
+  Unattended `cs-operator`, `cs-triage-mail` and campaign workflows must never
+  select `--operator-request`; their automatic holds remain unchanged. Never use Gmail,
   Superhuman or another ambient app connector to send it: those paths bypass
   the engine row's claim, sent status and message-id bookkeeping. Never compose
   an ad-hoc contextual send outside the engine.

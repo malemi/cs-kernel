@@ -28,9 +28,15 @@ empty, that is the answer: say we do not have it, or put the question to the
 operator. An unanswered question costs a round trip; an invented one is sent to
 a customer over this company's name.
 
-**A non-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,
-not a second "empty."** It means the engine itself reported failure on that turn
-— `error` / `error_detail` on stderr — and stdout carries nothing, so there is
-no text to mistake for a real answer. Treat it exactly like an empty search for
-sourcing purposes: try the next source. If it was the last one, say the engine
-turn failed, not that the answer is unknown or that nothing was found.
+**A nonzero exit is not an empty search.** For `cs ask` and `cs chat`, an
+engine-turn failure is reported on stderr; try another authorized source and
+report the failed layer rather than asserting no facts were found.
+
+`cs draft-reply` can save an engine draft before generation transport or
+publication fails. Read its structured outcome even on nonzero exit; retain the
+full saved draft ID, operation ID, achieved stages and uncertainty. Engine-saved
+is not Gmail-visible. Resume an existing saved draft through the interactive
+`cs-customer` procedure without generating another reply. Unknown publication or
+send outcomes require exact operation reconciliation, never blind retry.
+Scheduled workflows retain their holds and must never select `--operator-request`
+or adopt an interactive recovery route to bypass their admission rules.
