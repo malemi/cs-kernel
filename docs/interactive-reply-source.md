@@ -8,7 +8,8 @@ required independently; this document does not certify installed behavior.
 The [integration plan](execution-plans/2026-11-06-interactive-reply-core-main.md)
 owns source evidence and remaining acceptance. The published v9 bootstrap guard
 is preserved. The [M4 collector binding](operational-diagnostics-source.md) has
-its own integration scope; M5 workflow changes remain a separate follow-on.
+its own integration scope. The [M5 workflow integration](execution-plans/2026-11-06-interactive-reply-m5-main.md)
+separately binds the canonical instructions to these source commands.
 
 ## Prepare and resume one review draft
 
@@ -83,5 +84,27 @@ sends or regenerates a draft.
 Local loopback/fake-provider tests cover publication uncertainty, resume,
 retirement, send failures and admission. They do not prove current installed
 engine pairing, native agent execution, real provider behavior or both ordinary
-FULL clone obligations. No template workflow, main runner, operational package,
-customer thread or account configuration is adopted by this source change.
+FULL clone obligations. No operational package, customer thread or account configuration is adopted by
+this source change. The main runner is unchanged.
+
+## Canonical interactive workflow
+
+The selected M5 source updates `cs-customer`, the interactive preparation guidance
+in `cs-triage-mail`, the shared outbound-outcome fragment and the stamped charter.
+Context loading and inspection grant no preparation or send authority. The human's
+explicit request selects one existing draft and retains a stable operation ID;
+unknown delivery never authorizes a fresh operation or regeneration. Only proven
+terminal non-dispatch with a new explicit request permits a new operation ID.
+Scheduled workflows retain their admission and draft-only boundaries.
+
+The canonical instructions are distributed through Claude Code, Codex and OpenCode
+paths under the existing [skill surface contract](agent-skills.md). Local rendering
+and command checks establish distribution and parser compatibility, not native
+model selection or runtime effects. The integration plan records actual results.
+
+The owner-supplied current Desktop pairing does not provide
+`exact_draft_publication:1`, `sent_mirror_recovery:1` or `interactive_exact_send:1`.
+The workflow names these prerequisites and preserves capability refusals and
+achieved stages. Source availability is not a promise that a connected engine can
+publish, recover a mirror or execute the requested exact send. This source work
+does not upgrade REMOTE's separately frozen Desktop/kernel pairing.

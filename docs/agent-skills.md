@@ -37,6 +37,16 @@ explicitly scoped that way, as with the existing Claude-owned cron wrapper.
 They do not create a second copy of the skill instructions and do not relax the
 three-host invariant for the skill itself.
 
+## Interactive reply source workflow
+
+The [M5 source integration](execution-plans/2026-11-06-interactive-reply-m5-main.md)
+binds `cs-customer`, triage preparation and the shared outbound-outcome fragment to
+current kernel commands. Its three-host rendering and copy-fallback checks are
+distribution evidence only; native selection and both ordinary FULL obligations
+remain separate. Existing bootstrap and standing-instruction templates are preserved.
+Exact publication, sent-mirror recovery and requested sending require independently
+negotiated engine capabilities; workflow prose cannot grant them.
+
 ## Company customer-service playbooks
 
 `cs-triage-mail` reads `company/customer-service-playbook.md` when a clone has

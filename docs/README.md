@@ -43,3 +43,5 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 - [Embedded Desktop operator helpers](desktop-operator-source.md) — paired source/dependency boundary and local-only diagnostics; [main integration plan](execution-plans/2026-11-06-desktop-operator-main.md).
 
 - [Operational diagnostics source contract](operational-diagnostics-source.md) — M4 ordinary logs, bounded collector and filesystem inbox; [main integration plan](execution-plans/2026-11-06-interactive-reply-m4-main.md).
+
+- [Interactive reply M5 workflow integration](execution-plans/2026-11-06-interactive-reply-m5-main.md) — minimal canonical workflow source and three-host/command-contract verification, with runtime capability limits.

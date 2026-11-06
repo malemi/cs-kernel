@@ -14,6 +14,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
+- The [M5 workflow source](execution-plans/2026-11-06-interactive-reply-m5-main.md)
+  binds canonical preparation, exact requested send and recovery instructions to
+  main commands. Capability refusals remain explicit; three-host distribution
+  checks do not establish native execution or live engine effects.
+
 - The [M4 diagnostic candidate](operational-diagnostics-source.md) connects ordinary
   logs and bounded collection to the filesystem inbox. Focused local CLI, cause,
   uncertainty/recovery and sink-failure controls pass. Integration/publication
@@ -107,10 +112,11 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## Unresolved
 
-- M5 workflows remain a separate follow-on. M6, native/provider acceptance and
-  both ordinary FULL obligations remain open; controlled recipients and bounded
-  spending are still required. Parent checker binding is separately owned.
-  Source publication does not establish installed adoption or overall completion.
+- Current engine pairing still lacks the three exact publication/recovery/send
+  capabilities required by the interactive workflow. M6, native/provider and both
+  ordinary FULL obligations remain open; controlled recipients and bounded
+  spending are required. Parent checker binding is separately owned. Source
+  publication does not establish installed adoption or overall completion.
 
 - The [bootstrap release and MrCall adoption](execution-plans/2026-10-11-bootstrap-release.md)
   are verified. Remote MCP remains separate; wide dossier/review latency remains

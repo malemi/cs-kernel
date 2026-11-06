@@ -95,7 +95,9 @@ remain unchanged outside the reviewed CLI and ordinary-guard diagnostic hunks.
 ## Remaining obligations
 
 Focused execution and source integration are established by actual receipts;
-documentation/final source-publication gates are recorded separately. M5, current Desktop capability pairing, M6 real controlled
+documentation/final source-publication gates are recorded separately. The
+[M5 source continuation](2026-11-06-interactive-reply-m5-main.md) is separately bound.
+Current Desktop capability pairing, M6 real controlled
 recipients and bounded spend/effect authority, native/provider and both ordinary
 FULL acceptance remain open. No runtime adoption, installed monitor, tag, release,
 baseline advancement or overall completion follows from this source work.

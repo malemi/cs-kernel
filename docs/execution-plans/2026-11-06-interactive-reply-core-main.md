@@ -72,8 +72,8 @@ smoke for ordinary lifecycle availability, without rewriting that evidence.
 ## Unmet parent obligations
 
 The [M4 logs/collector integration](2026-11-06-interactive-reply-m4-main.md)
-owns its separately reviewed prerequisite closure. M5 workflow integration remains
-a separate follow-on. The frozen
+owns its separately reviewed prerequisite closure. M5 workflow source integration has its own
+[bounded continuation](2026-11-06-interactive-reply-m5-main.md). The frozen
 MCP ten-helper/five-test donor is a separate kernel-owned compatibility scope,
 not blocked by M4 and not proof of Desktop current-main pairing. M6, native/provider
 acceptance and both ordinary FULL clone obligations remain open. Controlled
