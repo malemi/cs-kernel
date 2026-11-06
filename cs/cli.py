@@ -2098,6 +2098,10 @@ def cmd_login_stub(args) -> int:
     )
 
 
+from .observability_producers import observe as _diagnostic_observe
+
+
+@_diagnostic_observe("cli")
 def main(argv=None) -> int:
     # --- init/update/login: dispatched before the argparse tree is even
     # built. init/update must work WITHOUT a manifest (a brand-new machine
@@ -2107,6 +2111,9 @@ def main(argv=None) -> int:
     # all three are ALSO registered on the real argparse tree. ---
     if argv is None:
         argv = sys.argv[1:]
+    if argv[:1] == ["monitor"]:
+        from .monitor_cli import main as monitor_main
+        return monitor_main(argv[1:])
     if argv and argv[0] in ("init", "update", "login"):
         cmd = argv[0]
         rest = argv[1:]
@@ -2634,6 +2641,9 @@ def main(argv=None) -> int:
 
     # Shared written projects use the configured engine company memory.
     project_memory_mod.add_subparsers(sub)
+    from . import logs_cli, monitor_cli
+    logs_cli.add_subparsers(sub)
+    monitor_cli.add_subparsers(sub)
 
     # Standing instructions: compile company/ into the engine's reserved
     # operator-instructions project, through instructions.store only.

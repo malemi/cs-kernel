@@ -184,6 +184,8 @@ def render(projection: dict) -> str:
 def guard(settings, thread_key: str) -> dict:
     result = project(settings, thread_key)
     if result["hold_auto_reply"]:
+        from .observability_operations import assignment_hold
+        assignment_hold(settings, result, thread_key)
         raise AssignmentUnavailable(render(result))
     return result
 
