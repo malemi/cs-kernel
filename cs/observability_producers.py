@@ -140,13 +140,20 @@ def observe(stage, *, success='result', effect='unknown', identities=()):
                 pass
             old = current_context() or inherited_context()
             from . import observability_causal as causal
-            scope = causal.scope() if stage == 'launch' else contextlib.nullcontext()
+            scope = causal.scope() if stage == 'launch' or (stage == 'cli' and causal._STATE.get() is None) else contextlib.nullcontext()
             with scope, context({**old, **({'run_id': old.get('run_id') or uuid.uuid4().hex} if stage == 'launch' else {}), 'parent_span_id': old.get('span_id'), 'span_id': uuid.uuid4().hex}):
                 started = time.monotonic()
                 emit(settings, stage, 'start', reason='none', **metadata)
                 try:
                     result = function(*args, **kwargs)
                 except BaseException as exc:
+                    if function.__name__ == "mirror" and stage == "verification":
+                        from .observability_operations import record, summary
+                        record(settings, {"cause": "unknown", "ok": False, "draft_id": metadata.get("draft_id"), "operation_id": bound.get("operation_id"), "effect_certainty": "unknown", "achieved_stages": ["engine-saved"]}, command="draft-reply", root=metadata.get("root_id"))
+                        if summary():
+                            metadata.update(summary()["metadata"])
+                            metadata["causal"] = causal.selected()
+                            metadata["effect_certainty"] = summary()["effect_certainty"]
                     if isinstance(exc, SystemExit) and exc.code in (None, 0):
                         emit(settings, stage, 'result', reason='none', exit_code=0, **metadata)
                     else:
@@ -170,11 +177,20 @@ def observe(stage, *, success='result', effect='unknown', identities=()):
                         status, certainty, reason = 'failed', 'none', 'unknown'
                 if status in {'failed','held','unknown-effect'}:
                     certainty = 'unknown'
-                selected_cause = causal.selected() if stage == 'launch' else None
+                from .observability_operations import summary, record
+                if isinstance(result, dict) and 'cause' in result:
+                    record(settings, result, command='draft-retire' if stage == 'cleanup' else 'draft-reply', root=metadata.get('root_id'))
+                operation = summary()
+                if operation:
+                    status, certainty, reason = operation['status'], operation['effect_certainty'], operation['reason']
+                    metadata.update(operation['metadata'])
+                selected_cause = causal.selected() if stage == 'launch' or operation else None
                 if stage == 'launch' and selected_cause is None:
                     selected_cause = causal.decision('causal_evidence', 'unknown', layer='supervisor', outcome='unknown', method='operator.tick', **({'process_exit': result} if type(result) is int else {}))
                 if selected_cause:
-                    metadata.update(causal=selected_cause, method='operator.tick')
+                    metadata.update(causal=selected_cause)
+                    if stage == 'launch':
+                        metadata['method'] = 'operator.tick'
                 with context({**current_context(), **({'attempt_id': selected_cause['refs']['attempt_id']} if selected_cause and selected_cause['refs']['attempt_id'] else {})}):
                     emit(settings, stage, status, reason=reason, effect_certainty=certainty, elapsed_ms=(time.monotonic()-started)*1000, **metadata)
                 return result

@@ -274,6 +274,7 @@ def decoded_subject(hdr):
 
 
 def _header_evidence(hdr) -> dict:
+    from .draft_identity import canonical_message_id
     from email import policy
     from email.parser import Parser
     checked = Parser(policy=policy.default).parsestr(hdr.as_string(), headersonly=True)
@@ -281,6 +282,9 @@ def _header_evidence(hdr) -> dict:
         len(checked.get_all(name, [])) <= 1
         and all(not getattr(value, "defects", ()) for value in checked.get_all(name, []))
         for name in ("From", "To", "Cc", "Bcc", "Subject", "Message-ID", "References", "In-Reply-To"))
+    target = canonical_message_id(hdr.get("In-Reply-To"))
+    if hdr.get_all("In-Reply-To", []) and target is None:
+        identity_headers_valid = False
     def addresses(name):
         return ", ".join(str(v) for v in hdr.get_all(name, [])) or None
     return {
@@ -292,7 +296,7 @@ def _header_evidence(hdr) -> dict:
         "bcc": addresses("Bcc"),
         "from": str(hdr.get("From") or ""),
         "message_id": hdr.get("Message-ID"), "references": hdr.get("References"),
-        "in_reply_to": hdr.get("In-Reply-To"),
+        "in_reply_to": target,
         "thread_key": thread_key(hdr.get("Message-ID"), hdr.get("References"), hdr.get("In-Reply-To")),
     }
 

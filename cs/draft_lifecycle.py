@@ -16,6 +16,22 @@ def _digest(value):
     return isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value) is not None
 
 
+def _exact_pair(mirror, draft, owner_uid):
+    from .thread_key import normalize_key
+
+    gmail = draft_state._gmail_row(mirror)
+    engine = draft_state._engine_row(draft)
+    gmail_context = normalize_key(gmail["thread_key"]) or "subject:" + gmail["subject"].strip().lower()
+    engine_context = normalize_key(engine["thread_key"]) or "subject:" + engine["subject"].strip().lower()
+    return (
+        mirror.get("engine_draft_id") == draft.get("id")
+        and mirror.get("engine_owner_uid") == owner_uid
+        and gmail_context == engine_context
+        and draft_state._recipient_set(mirror.get("to")) == draft_state._recipient_set(draft.get("to_addresses"))
+        and draft_state._recipient_set(mirror.get("cc")) == draft_state._recipient_set(draft.get("cc_addresses"))
+    )
+
+
 def _bound(value, settings, draft_id):
     return (
         isinstance(value, dict)
@@ -70,11 +86,7 @@ def retire(settings, draft_id, gmail_uid, uidvalidity, *, commit=False,
         if len(selected) != 1 or len(copies) != 1 or selected[0] is not copies[0]:
             return refused("the exact Gmail copy is missing or ambiguous")
         mirror = selected[0]
-        paired = draft_state._pair(
-            [draft_state._gmail_row(mirror), draft_state._engine_row(draft)],
-            settings.engine_owner_uid,
-        )
-        if len(paired) != 1 or paired[0].get("identity_evidence") != "exact":
+        if not _exact_pair(mirror, draft, settings.engine_owner_uid):
             return refused("Gmail and engine identity or recipient/thread context conflicts")
         fingerprint = mirror.get("fingerprint")
         if str(mirror.get("uidvalidity")) != uidvalidity or not _digest(fingerprint):
@@ -161,3 +173,51 @@ def retire(settings, draft_id, gmail_uid, uidvalidity, *, commit=False,
                        check="Inspect the exact engine row. Restore the Gmail copy from Trash if needed; do not retry both effects blindly.")
     return {**base, "ok": True, "gmail_moved": True, "moved_to": moved["moved_to"],
             "engine_discarded": True}
+
+
+@_diagnostic_observe("cleanup", success="result", effect="unknown")
+def retire_sent_mirror(settings, draft_id, gmail_uid, uidvalidity, *, thread_id,
+                       commit=False, gmail_fingerprint=None, engine_snapshot=None,
+                       gmail_folder=None, operation_id=None, timeout=120):
+    """Recover only an exact residual sent copy through the engine journal."""
+    from uuid import uuid4
+    from .draft_identity import canonical_message_id
+
+    operation_id = operation_id or (None if commit else str(uuid4()))
+    base = {"version": 1, "draft_id": draft_id, "operation_id": operation_id,
+            "engine_discarded": False, "ok": False}
+    from .review_draft import interactive
+    if not interactive():
+        return {**base, "cause": "interactive_retirement_required"}
+    root = canonical_message_id(thread_id)
+    if not root or not operation_id:
+        return {**base, "cause": "exact_root_and_operation_required"}
+    if commit and not (gmail_folder and _digest(gmail_fingerprint) and _digest(engine_snapshot)):
+        return {**base, "cause": "commit_requires_preview"}
+    attempted = False
+    try:
+        capabilities = rpc.call_sync(settings, "system.capabilities", {}, timeout=timeout)
+        if not isinstance(capabilities, dict) or type(capabilities.get("sent_mirror_recovery")) is not int or capabilities["sent_mirror_recovery"] != 1:
+            return {**base, "cause": "sent_mirror_recovery_unsupported"}
+        inspected = rpc.call_sync(settings, "drafts.inspect", {"draft_id": draft_id}, timeout=timeout)
+        if not _bound(inspected, settings, draft_id) or not _digest(inspected.get("expected_snapshot")):
+            return {**base, "cause": "exact_draft_unavailable"}
+        expected = engine_snapshot if commit else inspected["expected_snapshot"]
+        target = {"uid": gmail_uid, "uidvalidity": uidvalidity}
+        if commit:
+            target.update(folder=gmail_folder, raw_fingerprint=gmail_fingerprint)
+        attempted = commit
+        answer = rpc.call_sync(settings, "drafts.retire_sent_mirror", {
+            "draft_id": draft_id, "expected_snapshot": expected, "thread_id": root,
+            "operation_id": operation_id, "target": target, "commit": commit,
+        }, timeout=timeout)
+        if not isinstance(answer, dict) or any(answer.get(key) != value for key, value in {
+            "draft_id": draft_id, "operation_id": operation_id, "owner_uid": settings.engine_owner_uid,
+            "owner_id": settings.email_address, "root": root, "expected_snapshot": expected,
+        }.items()):
+            raise ValueError("retirement response binding mismatch")
+        return answer
+    except Exception:
+        return {**base, "cause": "sent_mirror_recovery_unavailable",
+                "effect_certainty": "unknown" if attempted else "not-dispatched",
+                "next_action": "inspect-operation" if attempted else "retire-sent-mirror"}

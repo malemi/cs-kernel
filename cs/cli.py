@@ -1529,6 +1529,9 @@ def cmd_draft_send(args) -> int:
     Cleanup failure reports confirmed delivery without retrying it.
     """
     settings = config.load()
+    if getattr(args, "operator_request", False):
+        from .operator_send import execute
+        return execute(settings, args)
     scheduled = _scheduled_workset_enabled()
     if scheduled and (settings.cs_triage_mode.lower() != "send"
                       or os.environ.get("CS_HEADLESS_SEND") != "1"):
@@ -1871,6 +1874,9 @@ def cmd_draft_reply(args) -> int:
     if review_draft.interactive():
         from . import interactive_draft
         return interactive_draft.prepare(settings, args)
+    if getattr(args, "resume_draft", None) or getattr(args, "operation_id", None):
+        print("Draft HELD: exact resume requires interactive execution", file=sys.stderr)
+        return 3
     supervised = review_draft.interactive()
     if not _scheduled_workset_scope(settings, root=getattr(args, "thread_id", None), effect=True):
         return 3
@@ -1882,6 +1888,9 @@ def cmd_draft_reply(args) -> int:
             task_assignment.guard(settings, getattr(args, "thread_id", None) or "")
     except task_assignment.AssignmentUnavailable as exc:
         print(f"Draft HELD: {exc}", file=sys.stderr)
+        return 3
+    if not getattr(args, "message", None):
+        print("Draft HELD: composition message required", file=sys.stderr)
         return 3
     message = args.message
     if not getattr(args, "source_id", None):
@@ -2133,10 +2142,13 @@ def cmd_draft_delete(args) -> int:
 def cmd_draft_retire(args) -> int:
     from . import draft_lifecycle
 
-    out = draft_lifecycle.retire(
+    function = draft_lifecycle.retire_sent_mirror if args.sent_mirror else draft_lifecycle.retire
+    extra = ({"thread_id": args.thread_id, "operation_id": args.operation_id,
+              "gmail_folder": args.gmail_folder} if args.sent_mirror else {})
+    out = function(
         config.load(), args.draft_id, args.gmail_uid, args.uidvalidity,
         commit=args.commit, gmail_fingerprint=args.gmail_fingerprint,
-        engine_snapshot=args.engine_snapshot, timeout=args.timeout,
+        engine_snapshot=args.engine_snapshot, timeout=args.timeout, **extra,
     )
     _print_json(out)
     return 0 if out.get("ok") else 5 if out.get("partial") else 3
@@ -2772,6 +2784,9 @@ def main(argv=None) -> int:
     )
     pds.add_argument("draft_id", help="full engine draft id from `cs review --json`")
     pds.add_argument("--timeout", type=float, default=600)
+    pds.add_argument("--operator-request", action="store_true")
+    pds.add_argument("--operation-id")
+    pds.add_argument("--json", action="store_true")
     pds.set_defaults(func=cmd_draft_send)
 
     pas = sub.add_parser(
@@ -2788,11 +2803,14 @@ def main(argv=None) -> int:
         help="compose a reply via the engine as a DRAFT only — never sends (no --allow). "
         "The headless-safe reply path.",
     )
-    pdr.add_argument("message")
+    pdr.add_argument("message", nargs="?")
     pdr.add_argument("--thread-id", help="exact RFC thread identity required before composing")
     pdr.add_argument("--source-id", help="exact original engine email id when known")
     pdr.add_argument("--timeout", type=float, default=600)
     # APPENDS the composed draft into the operator's own Gmail Drafts
+    pdr.add_argument("--resume-draft")
+    pdr.add_argument("--operation-id")
+    pdr.add_argument("--json", action="store_true")
     pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
 
     pdd = sub.add_parser(
@@ -2834,6 +2852,10 @@ def main(argv=None) -> int:
     prt.add_argument("--gmail-fingerprint", help="complete Gmail message fingerprint from preview")
     prt.add_argument("--engine-snapshot", help="engine snapshot from preview")
     prt.add_argument("--commit", action="store_true", help="apply only the unchanged preview snapshots")
+    prt.add_argument("--sent-mirror", action="store_true", help="recover only a verified-sent residual copy; retain engine row")
+    prt.add_argument("--thread-id", help="exact thread root for sent-mirror recovery")
+    prt.add_argument("--operation-id", help="stable operation ID from sent-mirror preview")
+    prt.add_argument("--gmail-folder", help="exact Drafts folder from sent-mirror preview")
     prt.add_argument("--timeout", type=float, default=120)
     prt.set_defaults(func=cmd_draft_retire, reads_operator_mailbox=True)
 

@@ -6,7 +6,7 @@ from email.message import EmailMessage
 from email.parser import BytesParser
 
 from . import gmail_drafts
-from .draft_identity import authored_message
+from .draft_identity import authored_message, canonical_message_id
 from .thread_key import thread_key
 
 _FIELDS = ('id', 'owner_id', 'thread_id', 'in_reply_to', 'references', 'to_addresses',
@@ -117,7 +117,7 @@ def _sent(settings, draft, message_id):
         message = BytesParser(policy=policy.default).parsebytes(raw)
         if any(part.defects for part in message.walk()):
             raise ValueError('Gmail Sent MIME is malformed')
-        if str(_one(message, 'Message-ID')) != message_id:
+        if canonical_message_id(_one(message, 'Message-ID')) != message_id:
             raise ValueError('Gmail Sent Message-ID differs')
         if _addresses(message, 'From') != (settings.email_address.lower(),):
             raise ValueError('Gmail Sent sender differs')
@@ -125,7 +125,7 @@ def _sent(settings, draft, message_id):
             if _addresses(message, header) != _expected_addresses(draft, key):
                 raise ValueError(f'Gmail Sent {header} differs')
         refs = str(_one(message, 'References', required=False) or '')
-        target = str(_one(message, 'In-Reply-To'))
+        target = canonical_message_id(_one(message, 'In-Reply-To'))
         expected_refs = draft.get('references') or [draft.get('in_reply_to')]
         root = draft.get('thread_id') or thread_key(None, ' '.join(expected_refs), draft.get('in_reply_to'))
         if (not root or target != draft.get('in_reply_to') or refs.split() != expected_refs

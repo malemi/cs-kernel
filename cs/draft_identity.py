@@ -16,6 +16,28 @@ ID_HEADER = 'X-CS-Engine-Draft-ID'
 OWNER_HEADER = 'X-CS-Engine-Owner-UID'
 
 
+def canonical_message_id(value: str | None) -> str | None:
+    """Compare one conservative RFC ID, allowing only legal header folding.
+
+    Callers must separately reject duplicate headers and parser defects. Never
+    extract an ID from surrounding text or collapse whitespace inside the ID.
+    """
+    if not isinstance(value, str) or getattr(value, 'defects', ()):
+        return None
+    unfolded = re.sub(r'\r?\n(?=[ \t])', '', value).strip(' \t')
+    if re.fullmatch(r'<[^<>\s@"\\()]+@[^<>\s@"\\()]+>', unfolded) is None:
+        return None
+    if any(not char.isascii() or not char.isprintable() for char in unfolded):
+        return None
+    try:
+        parsed = policy.default.header_factory('Message-ID', unfolded)
+    except (ValueError, IndexError):
+        return None
+    if parsed.defects:
+        return None
+    return unfolded
+
+
 def validate_identity(value: str | None) -> str | None:
     if value is None:
         return None

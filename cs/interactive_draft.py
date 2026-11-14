@@ -7,12 +7,15 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import contextlib
+import io
+import json
 import contextvars
 import functools
 import sys
 from datetime import datetime, timedelta, timezone
 from email.utils import parseaddr
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from . import gmail_archive, review_draft, rpc, state
 from .engine_view import _parse
@@ -30,7 +33,7 @@ def _preparation_scope(function):
     def wrapped(*args, **kwargs):
         token = _SOURCE.set({})
         try:
-            with causal.scope():
+            with causal.scope() if causal._STATE.get() is None else contextlib.nullcontext():
                 return function(*args, **kwargs)
         finally:
             _SOURCE.reset(token)
@@ -272,15 +275,62 @@ def changed_drafts(before, after):
 from .observability_producers import observe as _diagnostic_observe
 
 
-@_diagnostic_observe("generation", success="result", effect="unknown")
 @_preparation_scope
+@_diagnostic_observe("generation", success="result", effect="unknown")
 def prepare(settings, args):
     """One negotiated compose attempt; assignment holds still allow review work."""
     if not review_draft.interactive():
         raise ValueError("interactive preparation cannot be used by a scheduled caller")
     generated = False
+    publication_attempted = False
+    publication_operation_id = None
+    draft = None
+    capabilities = None
+    before = None
+    verified = None
+    policy = None
+    def report(value):
+        from .observability_operations import record
+        record(settings, value, command="draft-reply", root=args.thread_id)
+        if value.get("ok") and verified is not None:
+            prepared = _source_decision("draft_preparation", "review_prepared", outcome="accepted", generation_started=True)
+            emit(settings, "generation", "result", reason="none", effect_certainty="unknown",
+                 root_id=args.thread_id, method="draft.prepare", causal=prepared)
+        if getattr(args, "json", False):
+            print(json.dumps(value, sort_keys=True))
+        elif value.get("ok"):
+            print(f"Gmail review draft verified: {value['draft_id']}.")
+        else:
+            print(f"Draft {value.get('draft_id') or 'identity unknown'}: "
+                  f"{value['cause']}; achieved {', '.join(value['achieved_stages']) or 'unknown'}. "
+                  f"Next: {value['next_action']}.", file=sys.stderr)
+        return 0 if value.get("ok") else 3
+    def partial(cause):
+        return {"version": 1, "ok": False, "draft_id": draft["id"] if draft else None,
+                "state": "publication-failed", "cause": cause,
+                "operation_id": publication_operation_id,
+                "achieved_stages": ["engine-saved"] if draft else [],
+                "review_surface": "primary-mailbox-drafts", "effect_certainty": "unknown" if publication_attempted else "not-dispatched" if cause in {"publication-unsupported", "generation-returned-error-after-save"} or not generated else "unknown",
+                "next_action": "inspect-operation" if publication_attempted else "resume-existing-draft" if draft else "inspect-engine-drafts"}
     try:
-        policy = route(rpc.call_sync(settings, "system.capabilities", {}, timeout=args.timeout))
+        capabilities = rpc.call_sync(settings, "system.capabilities", {}, timeout=args.timeout)
+        policy = route(capabilities)
+        resume = getattr(args, "resume_draft", None)
+        if resume:
+            if args.message:
+                raise ValueError("resume does not accept a composition message")
+            inspected = rpc.call_sync(settings, "drafts.inspect", {"draft_id": resume}, timeout=args.timeout)
+            if not isinstance(inspected, dict) or not inspected.get("ok"):
+                raise ValueError("existing draft unavailable")
+            draft = review_draft.select(settings, args.thread_id, [inspected["draft"]], legacy=policy == "legacy")
+            if type(capabilities.get("exact_draft_publication")) is not int or capabilities["exact_draft_publication"] != 1:
+                return report(partial("publication-unsupported"))
+            publication_operation_id = getattr(args, "operation_id", None) or str(uuid4())
+            publication_attempted = True
+            return report(review_draft.mirror(settings, args.thread_id, draft, timeout=args.timeout,
+                                             operation_id=publication_operation_id))
+        if not args.message:
+            raise ValueError("composition message or --resume-draft is required")
         verified = source(settings, args.thread_id, getattr(args, "source_id", None), args.timeout)
         before = copy.deepcopy(_drafts(settings, args.timeout))
         message = (f"Prepare exactly ONE draft for HUMAN REVIEW ONLY. Do not send anything. "
@@ -302,22 +352,29 @@ def prepare(settings, args):
         out = asyncio.run(rpc.chat(settings, message, allow_tools=set(), timeout=args.timeout, **options))
         from .cli import _chat_engine_error
         result = out.get("result") or {}
-        rc = _chat_engine_error(result)
-        if rc is not None:
-            return rc
+        if getattr(args, "json", False):
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                rc = _chat_engine_error(result)
+        else:
+            rc = _chat_engine_error(result)
         after = _drafts(settings, args.timeout)
         candidates = changed_drafts(before, after)
         draft = review_draft.select(settings, args.thread_id, candidates,
                                     source=verified, legacy=policy == "legacy")
-        review_draft.mirror(settings, args.thread_id, draft)
-        value = _source_decision("draft_preparation", "review_prepared", outcome="accepted", generation_started=True)
-        emit(settings, "generation", "result", reason="none", effect_certainty="unknown",
-             root_id=args.thread_id, method="draft.prepare", causal=value)
-        label = "Legacy engine draft for human review (source scope checked locally)" if policy == "legacy" else "Supervised review draft"
-        print(f"{label} prepared: {draft['id']}. Sending awaits human approval and verification.")
-        return 0
+        if rc is not None:
+            return report(partial("generation-returned-error-after-save"))
+        if type(capabilities.get("exact_draft_publication")) is not int or capabilities["exact_draft_publication"] != 1:
+            return report(partial("publication-unsupported"))
+        publication_operation_id = getattr(args, "operation_id", None) or str(uuid4())
+        publication_attempted = True
+        return report(review_draft.mirror(settings, args.thread_id, draft, timeout=args.timeout,
+                                         operation_id=publication_operation_id))
     except Exception as exc:
-        detail = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__
-        suffix = "; inspect existing engine/Gmail drafts before retrying" if generated else "; nothing generated"
-        print(f"Draft review incomplete: {detail}{suffix}", file=sys.stderr)
-        return 3
+        if generated and draft is None and before is not None and verified is not None:
+            try:
+                draft = review_draft.select(settings, args.thread_id,
+                    changed_drafts(before, _drafts(settings, args.timeout)),
+                    source=verified, legacy=policy == "legacy")
+            except Exception:
+                pass
+        return report(partial("publication-or-generation-incomplete"))

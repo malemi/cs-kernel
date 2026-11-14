@@ -104,7 +104,7 @@ def initial_state() -> dict:
 
 
 def operation_identity(event: dict, *, uncertain: bool = False) -> str:
-    for key in ("provider_id", "draft_id", "job_id"):
+    for key in ("operation_id", "provider_id", "draft_id", "job_id"):
         if event.get(key):
             return key + ":" + event[key]
     if event.get("root_id") and event.get("request_revision") and not uncertain:
@@ -119,15 +119,49 @@ def operation_identity(event: dict, *, uncertain: bool = False) -> str:
     return "root:" + event["root_id"] if event.get("root_id") else "service"
 
 
+def same_cause_scope(previous: dict, event: dict) -> bool:
+    if previous.get("operation_id") or event.get("operation_id"):
+        return all(previous.get(key) and previous[key] == event.get(key) for key in ("operation_id", "draft_id", "root_id", "request_revision"))
+    old_refs = previous.get("causal", {}).get("refs", {})
+    new_refs = event.get("causal", {}).get("refs", {})
+    for key in ("attempt_id", "run_id"):
+        if old_refs.get(key) or new_refs.get(key):
+            if not old_refs.get(key) or old_refs[key] != new_refs.get(key):
+                return False
+    return bool(previous.get("trace_id") and previous["trace_id"] == event.get("trace_id"))
+
+
+
+def verified_exact_delivery(event: dict) -> bool:
+    cause = event.get("causal", {})
+    return (event.get("command") == "draft-send"
+        and event.get("effect_certainty") in {"verified", "recipient-received"}
+        and event.get("status") == "delivered-cleanup-incomplete"
+        and cause.get("layer") == "exact_draft"
+        and cause.get("check") == "exact_draft_operation"
+        and cause.get("cause") == "sent_verified_cleanup_pending"
+        and cause.get("outcome") == "accepted"
+        and cause.get("evidence_complete") is True
+        and cause.get("facts", {}).get("sent_verified") is True
+        and event.get("achieved_stages") == ["engine-saved", "sent"])
+
+
+
 def matching_evidence(previous: dict, event: dict, *, verified: bool) -> bool:
-    if previous.get("causal", {}).get("layer") == "source":
+    if previous.get("causal", {}).get("layer") == "exact_draft":
+        new = event.get("causal", {})
+        if not verified or new.get("layer") != "exact_draft" or new.get("outcome") != "accepted":
+            return False
+        if previous.get("operation_id") and not same_cause_scope(previous, event):
+            return False
+    elif previous.get("causal", {}).get("layer") == "source":
         new = event.get("causal", {})
         return (new.get("layer") == "source" and new.get("check") == "draft_preparation"
                 and new.get("cause") == "review_prepared" and new.get("outcome") == "accepted"
                 and previous.get("root_id") is not None
                 and previous["root_id"] == event.get("root_id")
                 and previous.get("method") == event.get("method") == "draft.prepare")
-    if previous.get("causal"):
+    elif previous.get("causal"):
         old, new = previous['causal'], event.get('causal')
         if not new or new['check'] != 'supervisor_completion' or new['cause'] != 'run_verified' or new['outcome'] != 'accepted':
             return False
@@ -148,7 +182,7 @@ def matching_evidence(previous: dict, event: dict, *, verified: bool) -> bool:
         return False
     if previous.get("uncertain") and not verified:
         return False
-    for key in ("provider_id", "draft_id", "job_id"):
+    for key in ("operation_id", "provider_id", "draft_id", "job_id"):
         if previous.get(key):
             return previous[key] == event.get(key)
     if previous.get("uncertain"):
@@ -241,8 +275,9 @@ def observe(state: dict, event: dict, now: float) -> None:
         "cancelled",
     }
     uncertain = status == "unknown-effect" or (
-        (stage in {"provider", "persistence"}
-         or (stage == "cli" and event.get("command") in {"draft-send", "chat", "campaign"}))
+        (stage in {"provider", "persistence", "verification", "cleanup"}
+         or event.get("causal", {}).get("layer") == "exact_draft"
+         or (stage == "cli" and event.get("command") in {"draft-send", "draft-reply", "draft-retire", "chat", "campaign"}))
         and failed and event["effect_certainty"] == "unknown"
     )
     failure_key = ":".join(
@@ -253,6 +288,12 @@ def observe(state: dict, event: dict, now: float) -> None:
             "uncertain" if uncertain else "failure",
         )
     )
+    if verified_exact_delivery(event):
+        for key, previous in list(state["failures"].items()):
+            if (previous.get("uncertain") and previous.get("command") == "draft-send"
+                    and when > previous.get("last", previous["at"]) and same_cause_scope(previous, event)
+                    and matching_evidence(previous, event, verified=True)):
+                state["failures"].pop(key)
     if failed:
         prior = state["failures"].get(failure_key)
         if prior is not None:
@@ -279,11 +320,11 @@ def observe(state: dict, event: dict, now: float) -> None:
                     "span_id": event["span_id"],
                     "uncertain": uncertain,
                     **{
-                        key: event[key] for key in ("provider_id", "draft_id", "job_id") if key in event
+                        key: event[key] for key in ("operation_id", "provider_id", "draft_id", "job_id") if key in event
                     },
                     **{
                         key: event[key]
-                        for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "elapsed_ms", "deadline_seconds", "provider_diagnostic")
+                        for key in ("error_class", "error_code", "error_file", "error_line", "method", "command", "causal", "achieved_stages", "elapsed_ms", "deadline_seconds", "provider_diagnostic")
                         if key in event
                     },
                 }

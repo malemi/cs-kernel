@@ -76,28 +76,21 @@ def _matches(row, draft, root, owner):
             and note is None and row.get("body") == body)
 
 
-def _mirror(settings, root, draft):
-    """Reuse exact copies, preserve edits, and verify readback after an append."""
-    rows = _read(settings)
-    copies = [row for row in rows if row.get("engine_draft_id") == draft["id"]]
-    if copies:
-        if len(copies) != 1 or not _matches(copies[0], draft, root, settings.engine_owner_uid):
-            raise RuntimeError("existing Gmail copy changed or conflicts; preserved for human review")
-        print(f"Existing Gmail review draft reused (UID {copies[0]['uid']}).")
-        return
-    # A legacy or human-created draft on this thread must not become a duplicate.
-    if any(row.get("thread_key") == root for row in rows):
-        raise RuntimeError("another Gmail draft already covers this thread; preserved for human review")
-    gmail_drafts.append_draft(
-        settings, to=", ".join(draft["to_addresses"]), subject=draft.get("subject") or "",
-        body=draft["body"], in_reply_to=draft["in_reply_to"], references=draft.get("references"),
-        cc=", ".join(draft.get("cc_addresses") or []) or None, body_md=True,
-        engine_draft_id=draft["id"], engine_owner_uid=settings.engine_owner_uid,
-    )
-    copies = [row for row in _read(settings) if row.get("engine_draft_id") == draft["id"]]
-    if len(copies) != 1 or not _matches(copies[0], draft, root, settings.engine_owner_uid):
-        raise RuntimeError("engine draft saved; Gmail append needs verification before retrying")
-    print(f"Gmail review draft verified (UID {copies[0]['uid']}).")
+def _mirror(settings, root, draft, *, timeout=60, operation_id=None):
+    """Publish only through the engine's durable exact operation."""
+    from . import rpc
+    from uuid import uuid4
+
+    inspected = rpc.call_sync(settings, "drafts.inspect", {"draft_id": draft["id"]}, timeout=timeout)
+    if (not isinstance(inspected, dict) or not inspected.get("ok")
+            or not inspected.get("expected_snapshot") or inspected.get("draft") != draft):
+        from .observability_operations import record
+        record(settings, {"cause": "stale_snapshot", "ok": False, "draft_id": draft["id"], "operation_id": operation_id, "achieved_stages": ["engine-saved"], "effect_certainty": "not-dispatched"}, command="draft-reply", root=root)
+        raise ValueError("engine draft changed before publication")
+    return rpc.call_sync(settings, "drafts.publish_review", {
+        "draft_id": draft["id"], "expected_snapshot": inspected["expected_snapshot"],
+        "thread_id": root, "operation_id": operation_id or str(uuid4()),
+    }, timeout=timeout)
 
 
 @contextlib.contextmanager
@@ -122,6 +115,5 @@ from .observability_producers import observe as _diagnostic_observe
 
 
 @_diagnostic_observe("verification", success="verified", effect="verified")
-def mirror(settings, root, draft):
-    with mirror_lock(settings, root):
-        _mirror(settings, root, draft)
+def mirror(settings, root, draft, *, timeout=60, operation_id=None):
+    return _mirror(settings, root, draft, timeout=timeout, operation_id=operation_id)

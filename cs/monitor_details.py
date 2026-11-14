@@ -31,7 +31,7 @@ def safe_detail(value: dict) -> dict:
         elif key in {"event_id", "trace_id", "span_id", "last_event_id", "last_trace_id", "last_span_id"}:
             if diagnostic_id(item) != item or (key in latest and item is None):
                 raise ValueError("Invalid incident reference")
-        elif key in {"root_id", "request_revision", "draft_id", "provider_id", "job_id"}:
+        elif key in {"root_id", "request_revision", "draft_id", "provider_id", "job_id", "operation_id"}:
             if item is not None and (
                 not isinstance(item, str) or not re.fullmatch(r"[a-f0-9]{64}", item)
             ):
@@ -75,6 +75,9 @@ def safe_detail(value: dict) -> dict:
         elif key == "provider_diagnostic":
             from .observability_provider import validate
             item = validate(item)
+        elif key == "achieved_stages":
+            if safe_metadata({key: item}).get(key) != item:
+                raise ValueError("Invalid achieved stages")
         elif key == "causal":
             from .observability_causal import validate
             validate(item)

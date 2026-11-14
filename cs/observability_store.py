@@ -182,6 +182,8 @@ def _validate_event(event: Any, store: Any) -> bool:
         allowed = base | set(safe_metadata(event))
     except (ValueError, TypeError, KeyError):
         return False
+    if "achieved_stages" in event and safe_metadata(event).get("achieved_stages") != event["achieved_stages"]:
+        return False
     if set(event) - allowed:
         return False
     for name in ("event_id", "trace_id", "span_id"):
@@ -206,7 +208,7 @@ def _validate_event(event: Any, store: Any) -> bool:
         or not re.fullmatch(r"[0-9]{1,32}", event["process_start"])
     ):
         return False
-    for key in ("draft_id", "job_id", "root_id", "request_revision", "provider_id", "evidence_ref"):
+    for key in ("draft_id", "job_id", "root_id", "request_revision", "provider_id", "evidence_ref", "operation_id"):
         if key in event and (
             not isinstance(event[key], str) or not re.fullmatch(r"[a-f0-9]{64}", event[key])
         ):

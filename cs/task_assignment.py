@@ -225,7 +225,7 @@ def _validate_observation_hold(result, thread_key):
         raise AssignmentUnavailable("observation-only assignment source metadata is invalid")
 
 
-def project(settings, thread_key: str, *, peers: bool = True) -> dict:
+def project(settings, thread_key: str, *, peers: bool = True, operator: bool = False) -> dict:
     if not isinstance(thread_key, str) or not thread_key.strip():
         return _unknown(thread_key or "", "exact thread identity is required", owner_uid=settings.engine_owner_uid)
     try:
@@ -255,7 +255,7 @@ def project(settings, thread_key: str, *, peers: bool = True) -> dict:
     responses, unknown = _resolve_account_aliases(thread_key, responses, unknown,
         lambda uid, key: _project_one(settings if uid == settings.engine_owner_uid else config.load(engine_owner_uid=uid), key, result["space_id"]),
         observe=lambda response, code: _observe_account_projection(account_settings[response["actor_uid"]], thread_key, failure=code))
-    return _merge_account_projections(result, responses, unknown)
+    return _merge_account_projections(result, responses, unknown, operator=operator)
 
 
 def _resolve_account_aliases(requested, responses, unknown, read, observe=None):
@@ -319,7 +319,7 @@ def _resolve_account_aliases(requested, responses, unknown, read, observe=None):
     return resolved, unknown
 
 
-def _merge_account_projections(result: dict, responses: list, unknown: list) -> dict:
+def _merge_account_projections(result: dict, responses: list, unknown: list, *, operator: bool = False) -> dict:
     primary_uid = result["actor_uid"]
     partial = next((response for _, response in responses
                     if _ancestry_conflict(response, result["thread_key"])), None)
@@ -360,6 +360,20 @@ def _merge_account_projections(result: dict, responses: list, unknown: list) -> 
         if ((not response["complete"] and response["state"] != "needs-assignment") or response["state"] == "unknown") and not owner_refusal:
             unknown.append(_account_context(primary_uid, response["actor_uid"], name)
                            + ": " + _projection_reason(response))
+    if operator:
+        for _, response in responses:
+            if response.get("state") == "conflict":
+                return {**result, "state": "conflict", "hold_auto_reply": True,
+                        "reason": "Conflicting peer projection", "reply_evidence": evidence}
+            if response.get("authority_complete") is False:
+                return {**result, "authority_complete": False, "hold_auto_reply": True,
+                        "reply_evidence": evidence}
+            owner_refusal = (creator is not None and response.get("reason") == "SOURCE_OWNER_REQUIRED"
+                             and response.get("source_owner_uid") == task.get("creator_uid"))
+            if (response.get("hold_auto_reply") and not owner_refusal
+                    and not _manual_activity(response)):
+                return {**result, "state": "unknown", "hold_auto_reply": True,
+                        "reason": "Peer action boundary unavailable", "reply_evidence": evidence}
     result = {**result, "reply_evidence": evidence}
     if unknown:
         return {**result, "state": "unknown", "complete": False, "hold_auto_reply": True,
@@ -740,6 +754,8 @@ def render(projection: dict) -> str:
 def guard(settings, thread_key: str) -> dict:
     result = project(settings, thread_key)
     if result["hold_auto_reply"]:
+        from .observability_operations import assignment_hold
+        assignment_hold(settings, result, thread_key)
         raise AssignmentUnavailable(render(result))
     return result
 
@@ -807,3 +823,37 @@ def split_inbound(inbound: list[dict], assignment: dict[str, dict], escalated: d
         else:
             normal.extend(messages)
     return normal, human, audit, reopened
+
+
+def _manual_activity(value):
+    evidence = value.get("reply_evidence") or []
+    return (value.get("task") is None and value.get("state") == "needs-assignment"
+            and value.get("reason") == "NEEDS_HUMAN_VERIFICATION"
+            and value.get("hold_auto_reply") is True
+            and value.get("authority_complete") is not False and bool(evidence)
+            and all(isinstance(item, dict) and item.get("complete") is True for item in evidence)
+            and any(item.get("judgement") in {"NONAUTOMATIC_MEMBER_REPLY_CANDIDATE",
+                    "MEMBER_ACTIVITY_REQUIRES_HUMAN_VERIFICATION"} for item in evidence))
+
+
+
+def operator_guard(settings, root, target):
+    """Keep automatic projection intact while admitting only exact manual activity."""
+    value = project(settings, root, operator=True)
+    allowed = (
+        value.get("actor_uid") == settings.engine_owner_uid
+        and value.get("source_owner_uid") == settings.engine_owner_uid
+        and value.get("thread_key") == root
+        and target in value.get("current_message_ids", [])
+        and _manual_activity(value)
+    )
+    if value["hold_auto_reply"] and not allowed:
+        from .observability_operations import assignment_hold
+        diagnostic_cause = assignment_hold(settings, value, root, operator=True)
+        error = AssignmentUnavailable(render(value))
+        error.diagnostic_cause = diagnostic_cause
+        raise error
+    from .observability_operations import record
+    record(settings, {"cause": "explicit_operator_request", "ok": True, "effect_certainty": "not-dispatched"}, command="draft-send", root=root)
+    return value
+

@@ -10,6 +10,7 @@ import re
 import uuid
 
 PAIRS = {
+    "exact_draft_operation": {'unsupported_operation', 'explicit_operator_request', 'assignment_hold', 'automatic_manual_hold', 'changed_snapshot', 'review_verified', 'operation_not_dispatched', 'mirror_retired', 'sent_verified_cleanup_pending', 'thread_conflict', 'local_send_hold', 'operation_held', 'saved_unpublished', 'uncertain_provider_outcome'},
     "assignment_peer_projection": {"remote_invalid_params", "remote_error", "REPLY_SOURCE_UNAVAILABLE", "SOURCE_UNAVAILABLE", "SOURCE_OWNER_REQUIRED", "projection_invalid", "transport_unavailable", "alias_authority_conflict", "alias_scope_unavailable", "unknown"},
     "assignment_peer_reply": {"SENT_REPLY_NOT_SYNCED", "unknown"},
     "assignment_time_budget": {"shared_deadline_exhausted", "request_timeout", "batch_deadline", "timeout_origin_unknown", "deadline_capacity_deferred", "capacity_deferred", "read_failed", "complete", "no_work"},
@@ -50,10 +51,10 @@ PAIRS = {
     'causal_evidence': {'unknown'},
 }
 PHASES = {'identity', 'configuration', 'tasks', 'discovery', 'review', 'campaigns', 'founder_tasks', 'founder_ask'}
-COMMANDS = {'whoami', 'config', 'tasks', 'unanswered', 'review', 'campaign', 'ask', 'dossier', 'contacted', 'history', 'assignment', 'draft-reply', 'draft-send', 'chat'}
+COMMANDS = {'whoami', 'config', 'tasks', 'unanswered', 'review', 'campaign', 'ask', 'dossier', 'contacted', 'history', 'assignment', 'draft-reply', 'draft-send', 'draft-retire', 'chat'}
 METHODS = {'tasks.assignment.budget', 'fixture.admission', 'fixture.connect', 'fixture.login', 'fixture.select', 'fixture.uidvalidity', 'fixture.fetch', 'fixture.mime', 'fixture.logout', 'tasks.assignment.project', 'operator.discovery.context', 'operator.discovery.publication', 'operator.discovery.prepare', 'operator.discovery.parse', 'operator.discovery.view', 'operator.discovery.material', 'operator.discovery.capture', 'operator.discovery.verify', 'draft.prepare', 'sync.run', 'operator.notice', 'operator.health.assess', 'operator.health.inspection', 'operator.health.native_read', 'operator.native.terminal', 'operator.tick'}
 NATIVE_TERMINALS = {'completed', 'budget_exhausted', 'max_turns', 'api_error', 'error', 'unknown'}
-FACTS = {'native_total_cost_usd', 'native_terminal_reason', 'scoped_sent_match_unique', 'expected_roots', 'effective_entry_ms', 'scheduler_dispatched', 'returned_values', 'read_timeouts', 'scheduler_deferred', 'serial_read_ms', 'global_concurrency', 'account_concurrency', 'inbound_count', 'enrollment_count', 'match_count', 'candidate_count', 'confirmed_count', 'expired_count', 'attempted', 'shared_deadline_selected', 'batch_deadline_selected', 'request_timeout_selected', 'elapsed_ms', 'bound_ms', 'remaining_ms', 'remaining_available', 'available', 'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
+FACTS = {'engine_saved', 'review_visible', 'sent_verified', 'cleanup_verified', 'operator_requested', 'native_total_cost_usd', 'native_terminal_reason', 'scoped_sent_match_unique', 'expected_roots', 'effective_entry_ms', 'scheduler_dispatched', 'returned_values', 'read_timeouts', 'scheduler_deferred', 'serial_read_ms', 'global_concurrency', 'account_concurrency', 'inbound_count', 'enrollment_count', 'match_count', 'candidate_count', 'confirmed_count', 'expired_count', 'attempted', 'shared_deadline_selected', 'batch_deadline_selected', 'request_timeout_selected', 'elapsed_ms', 'bound_ms', 'remaining_ms', 'remaining_available', 'available', 'review_material', 'gmail_draft_material', 'engine_body_chars', 'provider_body_chars', 'engine_authored_chars', 'provider_authored_chars', 'engine_parse_ambiguous', 'provider_parse_ambiguous', 'body_comparison_performed', 'generation_started', 'required', 'present', 'expected', 'observed', 'uses', 'results', 'reads', 'completed', 'matching_proofs', 'process_exit', 'malformed', 'overflow', 'timed_out', 'native_is_error', 'delivery_ok', 'no_work_proven'}
 REFS = ('run_id', 'attempt_id', 'child_event_id', 'cause_event_id', 'tool_id_hash', 'session_id_hash')
 _STATE = contextvars.ContextVar('causal_decision', default=None)
 
@@ -63,7 +64,7 @@ def _validate(value):
         raise ValueError('Invalid causal shape')
     if type(value['version']) is not int or value['version'] != 1:
         raise ValueError('Invalid causal version')
-    if value['layer'] not in {'source', 'process', 'native', 'ordinary_health', 'intake', 'configuration', 'notice', 'supervisor', 'wrapper'} or value['outcome'] not in {'accepted', 'failed', 'held', 'unknown'}:
+    if value['layer'] not in {'exact_draft', 'source', 'process', 'native', 'ordinary_health', 'intake', 'configuration', 'notice', 'supervisor', 'wrapper'} or value['outcome'] not in {'accepted', 'failed', 'held', 'unknown'}:
         raise ValueError('Invalid causal outcome')
     if value['check'] not in PAIRS or value['cause'] not in PAIRS[value['check']]:
         raise ValueError('Invalid causal pair')

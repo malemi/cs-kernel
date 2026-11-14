@@ -98,10 +98,15 @@ def safe_metadata(values: dict) -> dict:
         value = values.get(key)
         if isinstance(value, str) and re.fullmatch(r'[a-z][a-z0-9_.-]{0,79}', value):
             out[key] = value
-    for key in ('draft_id', 'job_id', 'root_id', 'request_revision', 'provider_id', 'evidence_ref'):
+    for key in ('draft_id', 'job_id', 'root_id', 'request_revision', 'provider_id', 'evidence_ref', 'operation_id'):
         value = values.get(key)
         if isinstance(value, str) and 0 < len(value) <= 4096:
             out[key] = hashlib.sha256(value.encode()).hexdigest()
+    stages = values.get('achieved_stages')
+    if (isinstance(stages, list) and len(stages) <= 5
+            and all(isinstance(item, str) and item in {'engine-saved', 'review-visible', 'sent', 'residual-copy-retired'} for item in stages)
+            and len(stages) == len(set(stages))):
+        out['achieved_stages'] = stages
     value = values.get('error_class')
     if value in {'TypeError', 'AttributeError', 'LookupError', 'UnicodeDecodeError', 'IMAP4.error', 'IMAP4.abort', 'IMAP4.readonly', 'TimeoutError', 'PermissionError', 'ConnectionError', 'OSError', 'ValueError', 'RuntimeError', 'CancelledError', 'EngineError', 'UnknownError'}:
         out['error_class'] = value
