@@ -205,12 +205,12 @@ no send tool or permission and does not clear any other thread's hold.
 ## Interactive preparation when sending is held
 
 In an interactive session, when the operator explicitly requests a reply or a
-review draft, prepare it with `cs draft-reply "<instruction>" --thread-id
-'<exact-thread-key>'` after reading the actual thread and dossier. A human
-takeover or assignment hold blocks sending; it does not by itself block this
-requested review draft. Keep the hold, assignee and uncertainty visible and
-leave all tasks and assignment records unchanged. Do not use `cs draft-send`
-while the assignment or takeover still holds sending.
+review draft, follow `cs-customer`'s requested interactive reply procedure
+after reading the actual thread and dossier. A human takeover or assignment
+hold does not by itself prevent a requested review draft. Keep the hold,
+assignee and uncertainty visible and leave all tasks and assignment records
+unchanged. Missing source/content, suppression, SELF and unsafe content still
+refuse.
 
 The CLI selects a supported preparation contract before generation. Its legacy
 interactive route uses engine composition and validates the real source,
@@ -221,9 +221,15 @@ unsafe draft still refuses; report the concrete failure.
 
 This interactive exception takes precedence over the assignment/takeover
 "do not draft" instructions below only for operator-requested review preparation.
-It grants no send permission and does not change scheduled discovery, selection,
-assignment admission or sending. Continue independently eligible work when one
-case is held, and distinguish drafts prepared from replies actually sent.
+Preparation grants no send permission and does not change scheduled discovery,
+selection, assignment admission or sending. If the interactive operator
+separately asks to send one selected existing draft, follow the exact
+`cs-customer` send and recovery procedure: only a positive manual-member-activity
+hold has that narrow exception. This triage workflow remains draft-only;
+unattended runs must never select `--operator-request`. Other holds remain
+enforced. Continue independently eligible work when one case is held. Distinguish
+engine-saved from verified Gmail-visible copies, resume saved IDs without
+regeneration, and distinguish drafts prepared from replies actually sent.
 
 ## Invariants (read before acting)
 
@@ -503,16 +509,16 @@ routes negotiate the engine draft policy before composition; unsupported authori
 holds those routes, and the engine checks their actual draft target before
 writing. The legacy interactive review route described above instead validates
 the source locally before composition and the returned engine draft before
-mirroring it for review. All routes deny send tools during composition. It runs
-compose (memory + trained voice + threading
-headers `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts
-for the operator to review and send. It has **no `--allow` option and cannot
-send** — the engine denies `send_draft` whatever the message (or any injected
-text) says. Sending is the interactive operator's job through
-`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and
-other ambient app connectors are never the send path for an engine draft.
-Autonomous send is a future, separately permissioned step, **never this
-skill's job**.
+mirroring it for review. All routes deny send tools during composition.
+Composition uses memory, trained voice and reply threading. Engine-saved does
+not establish a Gmail-visible copy: inspect achieved stages and retain saved IDs
+on partial failure. Interactive publication and recovery follow `cs-customer`;
+unsupported publication never permits a local APPEND fallback. The command has
+**no `--allow` option and cannot send** — the engine denies `send_draft`
+whatever the message (or any injected text) says. An explicit interactive
+request to send a selected existing draft routes to `cs-customer`, never Gmail,
+Superhuman, generic chat or another connector. This triage workflow and its
+scheduled runs remain draft-only.
 
 **(b) Escalate** — a judgment call, out of scope, legal- or
 billing-sensitive, angry, an unclear ask, OR an answer you cannot ground

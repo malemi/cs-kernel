@@ -434,7 +434,8 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # commented out, or after the --disallowed-tools flag itself was deleted, and
 # all three still pass a file-wide `grep -qF`. This gate checks PLACEMENT:
 # settings.json.j2 membership under permissions.deny (and nothing
-# chat/send-draft-shaped under permissions.allow), and the cron's
+# chat/send-draft-shaped under permissions.allow), `draft-retire` in all six
+# spellings under permissions.ask and in neither allow nor deny, and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
 # equality against the kernel deny entries + 4 keeps. `handled` is in that list not
 # because it sends, but because it SILENCES: it declares a contact resolved
@@ -449,6 +450,10 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # it and the operator retires it by name. `rpc drafts.discard` is spelled out
 # for the same reason as `rpc chat`: settings.json allows the broad `cs rpc:*`,
 # and the engine's discard DELETES the row — there is no Trash to recover from.
+# `draft-retire` is the exact interactive retirement verb: the interactive
+# workflow runs it on the operator's explicit request, so settings.json puts it
+# under `ask` — the host asks the human before every call — while the cron
+# wrapper keeps denying it in every spelling.
 #
 # The wrapper's deny list is no longer a fixed text, so this gate reads the
 # RENDER and not the template source: a clone may name executables of its own
@@ -527,13 +532,26 @@ except (OSError, json.JSONDecodeError) as exc:
 
 deny = settings.get("permissions", {}).get("deny", [])
 allow = settings.get("permissions", {}).get("allow", [])
+ask = settings.get("permissions", {}).get("ask", [])
 
 for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip",
-             "draft-retire", "rpc drafts.discard_exact", "rpc drafts.reconcile_external"):
+             "rpc drafts.discard_exact", "rpc drafts.reconcile_external"):
     for spelling in SPELLINGS:
         entry = "Bash(%s %s:*)" % (spelling, verb)
         if entry not in deny:
             problems.append("FAIL: settings.json permissions.deny missing %s" % entry)
+
+# `draft-retire` asks in every spelling, and no spelling of it, nor of
+# `draft-send`, is ever allowed. The ask list holds exactly these six rules.
+retire_ask = ["Bash(%s draft-retire:*)" % spelling for spelling in SPELLINGS]
+if ask != retire_ask:
+    problems.append("FAIL: settings.json permissions.ask must be exactly the six draft-retire spellings, got %r" % (ask,))
+for entry in allow:
+    if "draft-retire" in entry or "draft-send" in entry:
+        problems.append("FAIL: settings.json permissions.allow grants %s" % entry)
+for entry in retire_ask:
+    if entry in deny:
+        problems.append("FAIL: settings.json permissions.deny still blocks the interactive %s" % entry)
 
 for entry in allow:
     if "chat" in entry or "send-draft" in entry:
@@ -640,8 +658,8 @@ if problems:
     sys.exit(1)
 
 print(
-    "OK: settings.json deny membership + allow purity; cron --disallowed-tools "
-    "order verified on both renders (%d entries with no local scripts, %d with one)"
+    "OK: settings.json deny membership + allow purity + draft-retire ask in six spellings; "
+    "cron --disallowed-tools order verified on both renders (%d entries with no local scripts, %d with one)"
     % (len(kernel_expected) + len(KEEPS),
        len(kernel_expected) + len(local_tokens(SAMPLE_SCRIPT)) + len(KEEPS))
 )
@@ -1428,6 +1446,7 @@ if "$VENV/bin/python" "$ROOT/tests/test_legal_research_skill.py"; then echo "OK"
 
 step "63. interactive bootstrap routes local rules and remote systems across hosts"
 if "$VENV/bin/python" "$ROOT/tests/test_capabilities_skill.py"; then echo "OK"; else echo "FAIL: interactive bootstrap contract or scheduled surface regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_scheduled_m5_successor.py"; then echo "OK"; else echo "FAIL: scheduled-surface successor ledger no longer reverses exactly"; FAIL=1; fi
 
 step "63b. native bootstrap evidence rejects incomplete reads and forbidden activity"
 if "$VENV/bin/python" "$ROOT/tests/test_live_capabilities_fixture.py"; then echo "OK"; else echo "FAIL: native bootstrap evidence parsing regressed"; FAIL=1; fi

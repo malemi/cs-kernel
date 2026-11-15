@@ -11,8 +11,11 @@ class StatusPermissions(unittest.TestCase):
  def test_exact_four_read_grants_and_retained_mutation_denies(self):
   d=json.loads((ROOT/'cs/templates/project/.claude/settings.json.j2').read_text())['permissions'];expected={'Bash('+x+' assignment status:*)'for x in FOUR}
   self.assertEqual({r for r in d['allow']if 'assignment'in r},expected)
-  for verb in ('campaign send-draft','draft-retire','rpc drafts.discard_exact','rpc drafts.reconcile_external'):
+  for verb in ('campaign send-draft','rpc drafts.discard_exact','rpc drafts.reconcile_external'):
    for prefix in SIX:self.assertIn('Bash('+prefix+' '+verb+':*)',d['deny'])
+  retire=['Bash('+prefix+' draft-retire:*)'for prefix in SIX]
+  self.assertEqual(d['ask'],retire)
+  for rule in retire:self.assertNotIn(rule,d['allow'])
   self.assertNotIn('Bash(python:*)',d['allow']);self.assertNotIn('Bash(cs assignment:*)',d['allow'])
  def test_status_calls_only_read_projection_after_scope(self):
   settings=SimpleNamespace(engine_owner_uid='owner');args=SimpleNamespace(assignment_action='status',thread_key='<selected@example.test>',json=True);order=[]

@@ -177,7 +177,9 @@ def _fanout_contract(clone: Path, label: str) -> None:
           f"[{label}] unrelated thread work survives assignment holds while contact safety holds remain")
     check("--thread-id '<exact-thread-key>'" in triage and "before\nwriting" in triage
           and "negotiate the engine draft policy before composition" in triage
-          and "validates\nthe source locally before composition" in triage,
+          and "validates\nthe source locally before composition" in triage
+          and "All routes deny send tools during composition" in triage
+          and "does not change scheduled discovery" in triage,
           f"[{label}] composing requires exact thread and actual prewrite authority")
     for skill in ("cs-triage-mail", "cs-operator", "cs-customer"):
         text = (clone / f".claude/skills/{skill}/SKILL.md").read_text()

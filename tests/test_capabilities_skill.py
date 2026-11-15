@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT))
 
 from cs import project_init as pi
 from test_project_update import _FULL_INIT_DATA
+import scheduled_m5_successor
 
 BASE_COMMIT = "03b4449"
 TPL = ROOT / "cs/templates/project"
@@ -385,7 +386,8 @@ def scheduled_surfaces(old: Path) -> None:
     partial_receipt = (ROOT / "tests/fixtures" / RELEASE_REVIEW["partial_review_receipt"]).read_bytes()
     assert hashlib.sha256(partial_receipt).hexdigest() == RELEASE_REVIEW["partial_review_receipt_sha256"]
     for partial, digest in RELEASE_REVIEW["partials"].items():
-        assert hashlib.sha256((ROOT / partial).read_bytes()).hexdigest() == digest
+        partial_bytes = scheduled_m5_successor.undo(partial, (ROOT / partial).read_bytes())
+        assert hashlib.sha256(partial_bytes).hexdigest() == digest
     timeout_review = RELEASE_REVIEW["bash_timeout_review"]
     timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
     assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
@@ -421,6 +423,7 @@ def scheduled_surfaces(old: Path) -> None:
                 after = current_env.get_template(rel + ".j2").render(**config).encode()
                 record = RELEASE_REVIEW["templates"][rel]
                 source = (TPL / (rel + ".j2")).read_bytes()
+                source = scheduled_m5_successor.undo_template(rel, source)
                 source = undo_executor_guidance(rel, source)
                 source = undo_subskill_timeout_guidance(rel, source)
                 if rel == ".claude/skills/cs-operator/SKILL.md":
@@ -747,7 +750,7 @@ def executor_guidance_controls(tmp: Path) -> None:
     baseline = base_templates(tmp / "executor-guidance", record["baseline_commit"])
     check("executor binding preserves pending REVISE gate", record["review_state"] == "REVISE_PENDING_REQUIRED_EVIDENCE")
     for rel in record["templates"]:
-        current = (TPL / (rel + ".j2")).read_bytes()
+        current = scheduled_m5_successor.undo_template(rel, (TPL / (rel + ".j2")).read_bytes())
         previous = undo_executor_guidance(rel, current)
         check(f"executor delta reverses byte-exactly: {rel}", previous == (baseline / (rel + ".j2")).read_bytes())
         for label, changed in (("unknown addition", current + b"Unbound executor instruction.\n"),

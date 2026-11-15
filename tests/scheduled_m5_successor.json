@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "review_state": "PENDING_FRESH_REVIEW",
+  "origin": "Interactive reply workflow text ported from commit 846bebb onto this line's templates, and the interactive draft-retire ask rule. Not yet reviewed.",
+  "stages": [
+    {
+      "id": "m5-interactive-reply-triage",
+      "template": "cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2",
+      "hashes": {
+        "before_sha256": "cde220ef251da08173866a8289db49c1d9a9802a26873abd96b49de07f6d1e69",
+        "after_sha256": "1216ceefb459d96705043fbe1d635501c16f478ad25cfb97270ec7f91832b5cc"
+      },
+      "edits": [
+        {
+          "before": "In an interactive session, when the operator explicitly requests a reply or a\nreview draft, prepare it with `cs draft-reply \"<instruction>\" --thread-id\n'<exact-thread-key>'` after reading the actual thread and dossier. A human\ntakeover or assignment hold blocks sending; it does not by itself block this\nrequested review draft. Keep the hold, assignee and uncertainty visible and\nleave all tasks and assignment records unchanged. Do not use `cs draft-send`\nwhile the assignment or takeover still holds sending.\n\n",
+          "after": "In an interactive session, when the operator explicitly requests a reply or a\nreview draft, follow `cs-customer`'s requested interactive reply procedure\nafter reading the actual thread and dossier. A human takeover or assignment\nhold does not by itself prevent a requested review draft. Keep the hold,\nassignee and uncertainty visible and leave all tasks and assignment records\nunchanged. Missing source/content, suppression, SELF and unsafe content still\nrefuse.\n\n"
+        },
+        {
+          "before": "\"do not draft\" instructions below only for operator-requested review preparation.\nIt grants no send permission and does not change scheduled discovery, selection,\nassignment admission or sending. Continue independently eligible work when one\ncase is held, and distinguish drafts prepared from replies actually sent.\n\n",
+          "after": "\"do not draft\" instructions below only for operator-requested review preparation.\nPreparation grants no send permission and does not change scheduled discovery,\nselection, assignment admission or sending. If the interactive operator\nseparately asks to send one selected existing draft, follow the exact\n`cs-customer` send and recovery procedure: only a positive manual-member-activity\nhold has that narrow exception. This triage workflow remains draft-only;\nunattended runs must never select `--operator-request`. Other holds remain\nenforced. Continue independently eligible work when one case is held. Distinguish\nengine-saved from verified Gmail-visible copies, resume saved IDs without\nregeneration, and distinguish drafts prepared from replies actually sent.\n\n"
+        },
+        {
+          "before": "the source locally before composition and the returned engine draft before\nmirroring it for review. All routes deny send tools during composition. It runs\ncompose (memory + trained voice + threading\nheaders `In-Reply-To`/`References`) and stores a **DRAFT** in {{ email_address }}/Drafts\nfor the operator to review and send. It has **no `--allow` option and cannot\nsend** — the engine denies `send_draft` whatever the message (or any injected\ntext) says. Sending is the interactive operator's job through\n`cs draft-send <full-engine-draft-id>` after review; Gmail, Superhuman and\nother ambient app connectors are never the send path for an engine draft.\nAutonomous send is a future, separately permissioned step, **never this\nskill's job**.\n\n",
+          "after": "the source locally before composition and the returned engine draft before\nmirroring it for review. All routes deny send tools during composition.\nComposition uses memory, trained voice and reply threading. Engine-saved does\nnot establish a Gmail-visible copy: inspect achieved stages and retain saved IDs\non partial failure. Interactive publication and recovery follow `cs-customer`;\nunsupported publication never permits a local APPEND fallback. The command has\n**no `--allow` option and cannot send** — the engine denies `send_draft`\nwhatever the message (or any injected text) says. An explicit interactive\nrequest to send a selected existing draft routes to `cs-customer`, never Gmail,\nSuperhuman, generic chat or another connector. This triage workflow and its\nscheduled runs remain draft-only.\n\n"
+        }
+      ]
+    },
+    {
+      "id": "m5-shared-partial",
+      "template": "cs/templates/partials/outbound-fact-sourcing.md.j2",
+      "hashes": {
+        "before_sha256": "74b4c23f11611d978ca6273809e4da13e7fa8d3a6488bef247f7d6a0d0b85b32",
+        "after_sha256": "b65e0346d6fc2871c8f0eeac3f49d7b7475a54541b95a0b271735fbdc9a01484"
+      },
+      "edits": [
+        {
+          "before": "\n**A non-zero exit from `cs ask` / `cs chat` / `cs draft-reply` is a THIRD state,\nnot a second \"empty.\"** It means the engine itself reported failure on that turn\n— `error` / `error_detail` on stderr — and stdout carries nothing, so there is\nno text to mistake for a real answer. Treat it exactly like an empty search for\nsourcing purposes: try the next source. If it was the last one, say the engine\nturn failed, not that the answer is unknown or that nothing was found.\n",
+          "after": "\n**A nonzero exit is not an empty search.** For `cs ask` and `cs chat`, an\nengine-turn failure is reported on stderr; try another authorized source and\nreport the failed layer rather than asserting no facts were found.\n\n`cs draft-reply` can save an engine draft before generation transport or\npublication fails. In an interactive session, read its `--json` outcome even on\na nonzero exit; retain the full saved draft ID, operation ID, achieved stages\nand uncertainty. Engine-saved is not Gmail-visible. Resume an existing saved\ndraft through the interactive `cs-customer` procedure without generating\nanother reply. Unknown publication or send outcomes require exact operation\nreconciliation, never blind retry. Scheduled workflows retain their holds and\nmust never select `--operator-request` or adopt an interactive recovery route\nto bypass their admission rules.\n"
+        }
+      ]
+    },
+    {
+      "id": "interactive-draft-retire-ask",
+      "template": "cs/templates/project/.claude/settings.json.j2",
+      "hashes": {
+        "before_sha256": "6c6835be39b47eb8da9426176ad9c2e74a28da607125a6cdac864598663d012c",
+        "after_sha256": "2d18fd39c5211f9bff0ea47651fb0e1c766e4143d0a7724e2f24a712b8a329da"
+      },
+      "edits": [
+        {
+          "before": "{\n  \"_comment\": \"Scoped permissions for the headless cs-operator tick (claude -p '/cs-operator'). IN THIS FILE no allowed command can send mail to a customer. Drafting goes through the structurally-send-incapable verbs `draft-reply` (engine, allow_tools always empty) and `campaign queue-draft` (Gmail Drafts only, never SMTP). The send-capable surfaces — `cs chat` (can carry --allow send_email) and `cs campaign send-draft` (send mode) — are DENIED here. THIS FILE IS NOT THE LAST WORD ON WHAT A RUN MAY SEND: a command-line --allowedTools overrides it, so a clone that has decided to answer customers autonomously grants those surfaces in its own launcher (a wrapper under ext/), and that launcher is then the authority for the session it starts. To know what a given tick may do, read the launcher that started it, never this header — a tick that re-derived its authority from here concluded it could not send and escalated a day of answerable mail. Widening an INTERACTIVE session's send authority is a deliberate widening of THIS file. Still verify with a supervised headless run that it neither halts nor over-grants before installing the cron. Every cs rule is enumerated in multiple spellings (module path and console script, venv-prefixed and bare) because permission rules match command text, not behavior; the deny block additionally carries the python3 spellings. tests/run.sh asserts the deny enumeration — do not collapse the spellings back to one. One allow entry is deliberately narrower than a verb: `cs catchup --check` is allowed (it reads, and /cs-review runs it every time) while bare `cs catchup` is NOT, so the pass that spends real LLM budget stops for an explicit human yes.\",\n  \"permissions\": {\n",
+          "after": "{\n  \"_comment\": \"Scoped permissions for the headless cs-operator tick (claude -p '/cs-operator'). IN THIS FILE no allowed command can send mail to a customer. Drafting goes through the structurally-send-incapable verbs `draft-reply` (engine, allow_tools always empty) and `campaign queue-draft` (Gmail Drafts only, never SMTP). The send-capable surfaces — `cs chat` (can carry --allow send_email) and `cs campaign send-draft` (send mode) — are DENIED here. THIS FILE IS NOT THE LAST WORD ON WHAT A RUN MAY SEND: a command-line --allowedTools overrides it, so a clone that has decided to answer customers autonomously grants those surfaces in its own launcher (a wrapper under ext/), and that launcher is then the authority for the session it starts. To know what a given tick may do, read the launcher that started it, never this header — a tick that re-derived its authority from here concluded it could not send and escalated a day of answerable mail. Widening an INTERACTIVE session's send authority is a deliberate widening of THIS file. Still verify with a supervised headless run that it neither halts nor over-grants before installing the cron. Every cs rule is enumerated in multiple spellings (module path and console script, venv-prefixed and bare) because permission rules match command text, not behavior; the deny and ask blocks additionally carry the python3 spellings. `cs draft-retire` is in ask, never allow: an interactive session asks the human before every call, and the cron wrapper denies it. tests/run.sh asserts the deny enumeration — do not collapse the spellings back to one. One allow entry is deliberately narrower than a verb: `cs catchup --check` is allowed (it reads, and /cs-review runs it every time) while bare `cs catchup` is NOT, so the pass that spends real LLM budget stops for an explicit human yes.\",\n  \"permissions\": {\n"
+        },
+        {
+          "before": "    ],\n    \"deny\": [\n",
+          "after": "    ],\n    \"ask\": [\n      \"Bash(.venv/bin/python -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/python3 -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/cs draft-retire:*)\",\n      \"Bash(python -m cs draft-retire:*)\",\n      \"Bash(python3 -m cs draft-retire:*)\",\n      \"Bash(cs draft-retire:*)\"\n    ],\n    \"deny\": [\n"
+        },
+        {
+          "before": "      \"Bash(cs connection vonage allow-ip:*)\",\n      \"Bash(.venv/bin/python -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/python3 -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/cs draft-retire:*)\",\n      \"Bash(python -m cs draft-retire:*)\",\n      \"Bash(python3 -m cs draft-retire:*)\",\n      \"Bash(cs draft-retire:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)\",\n",
+          "after": "      \"Bash(cs connection vonage allow-ip:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)\",\n"
+        }
+      ]
+    }
+  ]
+}

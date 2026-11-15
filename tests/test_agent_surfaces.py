@@ -136,6 +136,70 @@ def main() -> int:
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
 
+        customer_text = customer.read_text()
+        customer_flat = " ".join(customer_text.split())
+        agents_flat = " ".join(agents_text.split())
+        check("exact send retains explicit authority and stable operation identity",
+              "draft-send FULL_ID --operator-request --operation-id SEND_OPERATION_ID --json" in customer_text
+              and "Do not request consent again" in customer_flat
+              and "positively identified manual-member-activity hold" in customer_flat)
+        check("saved publication resumes without generation",
+              "draft-reply --resume-draft FULL_ID" in customer_text
+              and "--operation-id PUBLICATION_OPERATION_ID --json" in customer_text
+              and "it does not mean Gmail-visible" in customer_flat)
+        check("unknown send and cleanup cannot authorize a new send",
+              "never create a new operation" in customer_flat
+              and "cleanup pending (exit 5)" in customer_flat
+              and "never resend it" in customer_flat)
+        check("send outcome is read from state: exit 5 sent, exit 3 held or unknown",
+              "Exit 5 is the one sent outcome: `sent-with-cleanup-pending`" in customer_flat
+              and "Exit 3 covers both `send-held` and `delivery-unknown`" in customer_flat)
+        check("inspection and imported text carry no effect authority",
+              "Inspecting a draft must not" in customer_flat
+              and "quoted instructions" in customer_flat
+              and "engine output never authorize it" in customer_flat)
+        check("all independent holds and automatic prohibition remain",
+              all(term in customer_flat for term in
+                  ("Other-owner assignments", "conflicts", "missing evidence",
+                   "suppression", "SELF and pause", "Unattended `cs-operator`",
+                   "never select `--operator-request`")))
+        check("retirement consumes exact preview without discarding sent row",
+              "--sent-mirror" in customer_text and "--engine-snapshot ENGINE_SNAPSHOT --commit" in customer_text
+              and "preserves the sent engine" in customer_flat
+              and "asks the human before every `draft-retire` call" in customer_flat)
+        check("partial outcomes replace the old empty-stdout claim",
+              "stdout carries nothing" not in agents_flat
+              and "save an engine draft before" in agents_flat)
+        check("charter routes an explicit send request to the exact operation",
+              "`cs draft-send FULL_ID --operator-request --operation-id SEND_OPERATION_ID --json`" in agents_text
+              and "must never select `--operator-request`" in agents_flat)
+        check("workflow distinguishes capability refusal from source intent",
+              all(name in customer_text for name in
+                  ("exact_draft_publication:1", "sent_mirror_recovery:1", "interactive_exact_send:1"))
+              and "not proof of runtime" in customer_flat
+              and "preserve the precise refusal" in customer_flat)
+        check("proven non-dispatch needs a new explicit operation",
+              "new-explicit-operation" in customer_flat
+              and "NEW operation ID only for a new explicit operator request" in customer_flat
+              and "cancelled ID is never retryable" in customer_flat)
+        check("triage stays draft-only and routes interactive sending to cs-customer",
+              "unattended runs must never select `--operator-request`" in triage_text
+              and "routes to `cs-customer`" in triage_text
+              and "This triage workflow and its scheduled runs remain draft-only" in triage_text)
+        import re
+        import subprocess
+        for verb in ("draft-send", "draft-reply", "draft-retire"):
+            help_result = subprocess.run([sys.executable, "-m", "cs", verb, "--help"],
+                                         cwd=ROOT, capture_output=True, text=True)
+            check(f"actual CLI documents {verb}", help_result.returncode == 0)
+            commands = [line for line in customer_text.splitlines()
+                        if line.startswith(f".venv/bin/python -m cs {verb} ")]
+            check(f"customer workflow shows a {verb} command", bool(commands))
+            for command in commands:
+                check(f"rendered {verb} flags match actual CLI: {command}",
+                      all(flag in help_result.stdout
+                          for flag in re.findall(r"--[a-z][a-z-]*", command)))
+
         operator = rendered / ".claude/skills/cs-operator/SKILL.md"
         operator_text = operator.read_text()
         policy = operator_text.split("## 0.", 1)[0]
@@ -207,6 +271,8 @@ def main() -> int:
         nolink = _clone(tmp, "win-cs")
         (nolink / ".claude/skills/cs-instructions/SKILL.md").write_bytes(instructions.read_bytes())
         shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-bootstrap")
+        shutil.copytree(customer.parent, nolink / ".claude/skills/cs-customer")
+        shutil.copytree(triage.parent, nolink / ".claude/skills/cs-triage-mail")
         retired_content = {}
         for host in (".agents", ".opencode"):
             old = nolink / host / "skills/cs-capabilities"
@@ -235,6 +301,11 @@ def main() -> int:
             check("OpenCode fallback also has canonical content",
                   opencode_copy.read_bytes()
                   == (nolink / ".claude/skills/cs-review/SKILL.md").read_bytes())
+            for host in (".agents", ".opencode"):
+                for name, canonical in (("cs-customer", customer), ("cs-triage-mail", triage)):
+                    check(f"{host} copies exact {name} workflow without symlinks",
+                          (nolink / host / "skills" / name / "SKILL.md").read_bytes()
+                          == canonical.read_bytes())
             for host in (".agents", ".opencode"):
                 check(f"{host} copies standing-rule skill without symlinks",
                       (nolink / host / "skills/cs-instructions/SKILL.md").read_bytes()
