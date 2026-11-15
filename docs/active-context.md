@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.0`; Current HEAD status: tagged as `v0.73.0`.**
+- **Latest release tag: `v0.73.0`; Current HEAD status: untagged.**
   The tag adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
