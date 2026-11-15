@@ -22,6 +22,10 @@ upstream-provider or hostname literal), but the shape — `response` carrying
 fluent prose, `metadata.error` / `metadata.error_detail` carrying the real
 verdict — is not invented.
 
+The draft-reply cases explicitly exercise the scheduled legacy engine contract
+without exact publication capability. Interactive partial-success outcomes are
+covered separately in test_publication_outcomes.py.
+
 Four properties, and the third is the one this whole fix exists to hold:
 
   1. A `chat.send` result carrying `metadata.error` makes `cmd_ask`,
@@ -100,6 +104,7 @@ def _stub_chat(envelope: dict):
 
 
 def _install_common_stubs():
+    os.environ["CS_OPERATOR_HEADLESS"] = "1"
     cfg.load = lambda: types.SimpleNamespace(engine_owner_uid="fixture-owner", account_map={})
 
 
@@ -212,10 +217,12 @@ def test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step():
     list_calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
-        if method == "tasks.assignment.project":
-            return normal_projection(settings, params)
+        if method == "system.capabilities":
+            return {}
         if method == "emails.list_by_thread":
             return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         list_calls["n"] += 1
         assert method == "drafts.list", method
         return []
@@ -258,10 +265,12 @@ def test_cmd_draft_reply_success_is_unchanged():
     calls = {"n": 0}
 
     def fake_call_sync(settings, method, params, timeout=None):
-        if method == "tasks.assignment.project":
-            return normal_projection(settings, params)
+        if method == "system.capabilities":
+            return {}
         if method == "emails.list_by_thread":
             return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
+        if method == "tasks.assignment.project":
+            return normal_projection(settings, params)
         assert method == "drafts.list", method
         calls["n"] += 1
         return [] if calls["n"] == 1 else [fresh]
@@ -295,7 +304,6 @@ if __name__ == "__main__":
     test_cmd_ask_fails_loudly_on_the_captured_payload()
     test_cmd_ask_success_is_byte_identical_to_before_the_fix()
     test_cmd_chat_fails_loudly_through_the_same_shared_helper()
-    os.environ["CS_OPERATOR_HEADLESS"] = "1"
     test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step()
     test_cmd_draft_reply_success_is_unchanged()
     print("test_engine_error_exit_code: all assertions passed")

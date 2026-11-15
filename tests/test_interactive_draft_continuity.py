@@ -125,12 +125,28 @@ class Continuity(unittest.TestCase):
         def call(s, method, params, timeout=None):
             calls.append(method)
             if method == 'system.capabilities':
-                return {'assignment_draft_policy':1} if caps is None else caps
+                return {'assignment_draft_policy':1, 'exact_draft_publication':1} if caps is None else ({**caps, 'exact_draft_publication':1} if isinstance(caps,dict) else caps)
             if method == 'emails.list_by_thread':
                 self.assertEqual(params, {'thread_id':ROOT})
                 return {'emails':source if isinstance(source,list) else [source]}
             if method == 'drafts.list':
                 return [] if calls.count(method) == 1 else [draft]
+            if method == 'drafts.inspect':
+                return {'ok':True, 'draft':draft, 'expected_snapshot':'native-snapshot'}
+            if method == 'drafts.publish_review':
+                inventory(s, observation={})
+                copies=[r for r in rows if r.get('engine_draft_id')==draft['id']]
+                if copies:
+                    ok=len(copies)==1 and review_draft._matches(copies[0],draft,ROOT,s.engine_owner_uid)
+                elif any(r.get('thread_key')==ROOT for r in rows):
+                    ok=False
+                else:
+                    append(s,engine_draft_id=draft['id'])
+                    ok=True
+                return {'version':1,'ok':ok,'draft_id':draft['id'],
+                        'achieved_stages':['engine-saved']+(['review-visible'] if ok else []),
+                        'cause':'exact_copy_published' if ok else 'thread_copy_conflict',
+                        'next_action':'review-draft' if ok else 'inspect-operation'}
             raise AssertionError(method)
         async def chat(s, message, **kw):
             calls.append(('chat',kw))
@@ -308,7 +324,7 @@ class Continuity(unittest.TestCase):
         rc,calls,_=self.invoke(chat_error=True)
         self.assertEqual(rc,3)
         self.assertEqual(sum(isinstance(item,tuple) for item in calls),1)
-        self.assertEqual(calls.count('drafts.list'),1)
+        self.assertEqual(calls.count('drafts.list'),2)
 
     def test_self_and_suppression_fail_before_generation(self):
         for kwargs in ({'self_email':True},{'suppressed':True},{'suppressed':'wildcard'}):
@@ -337,20 +353,20 @@ class Continuity(unittest.TestCase):
             rc,_,_=self.invoke(real_chat=True)
         self.assertEqual(rc,0)
         self.assertEqual([f['method'] for f in wire.frames],['system.capabilities','chat.send','chat.approve'])
-        params=wire.frames[1]['params']
+        params=next(f['params'] for f in wire.frames if f['method']=='chat.send')
         self.assertEqual(set(params),{'message','conversation_id'})
         self.assertNotIn('assignment_thread_key',params)
         self.assertNotIn('email_context',params)
 
     def test_scheduled_branch_retains_assignment_hold(self):
-        with patch.dict(os.environ,{'CS_OPERATOR_HEADLESS':'1'},clear=True), \
-             patch.object(config,'load',return_value=settings()), \
-             patch.object(cli,'_scheduled_workset_scope',return_value=True), \
-             patch.object(interactive_draft,'prepare',side_effect=AssertionError('interactive route reached')), \
-             patch.object(task_assignment,'guard',side_effect=task_assignment.AssignmentUnavailable('Held')), \
-             patch.object(rpc,'chat',side_effect=AssertionError('generation reached')), \
-             contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.cmd_draft_reply(SimpleNamespace(thread_id=ROOT,message='Draft',timeout=10)),3)
+        for marker in ('CS_OPERATOR_HEADLESS','CS_HEADLESS_SEND','CS_OPERATOR_HEALTH_CONTEXT'):
+            with patch.dict(os.environ,{marker:'1'},clear=True), \
+                 patch.object(config,'load',return_value=settings()), \
+                 patch.object(interactive_draft,'prepare',side_effect=AssertionError('interactive route reached')), \
+                 patch.object(task_assignment,'guard',side_effect=task_assignment.AssignmentUnavailable('Held')), \
+                 patch.object(rpc,'chat',side_effect=AssertionError('generation reached')), \
+                 contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(cli.cmd_draft_reply(SimpleNamespace(thread_id=ROOT,message='Draft',timeout=10)),3)
 
     def test_real_reader_fetch_gap_or_material_body_tail_prevents_generation(self):
         @header_batches

@@ -35,13 +35,20 @@ class SourceLogging(unittest.TestCase):
         def call(s, method, params, timeout=None):
             calls.append(method)
             if method == 'system.capabilities':
-                return {}
+                return {'exact_draft_publication': 1}
             if method == 'emails.list_by_thread':
                 if unknown:
                     raise RuntimeError(CANARY)
                 return {'emails': [source or SOURCE]}
             if method == 'drafts.list':
                 return [] if calls.count(method) == 1 else [copy.deepcopy(DRAFT)]
+            if method == 'drafts.inspect':
+                return {'ok': True, 'draft': copy.deepcopy(DRAFT), 'expected_snapshot': 'native-snapshot'}
+            if method == 'drafts.publish_review':
+                append(s)
+                return {'version': 1, 'ok': True, 'draft_id': DRAFT['id'],
+                        'achieved_stages': ['engine-saved', 'review-visible'],
+                        'cause': 'exact_copy_published', 'next_action': 'review-draft'}
             raise AssertionError(method)
         async def chat(*args, **kwargs):
             calls.append('chat')

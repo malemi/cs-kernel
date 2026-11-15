@@ -331,6 +331,26 @@ if "$VENV/bin/python" "$ROOT/tests/test_draft_reply.py"; then echo "OK"; else ec
 step "8a. interactive review drafts retain source, persistence and send boundaries"
 if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_supervised_review_draft.py"; then echo "OK"; else echo "FAIL: supervised review drafts"; FAIL=1; fi
 
+step "8a2. interactive reply: exact source, publication, resumption, operator send and sent-copy recovery"
+# The interactive reply runtime: verified source before generation, engine-only
+# exact publication with saved-draft resumption, header folding, the explicit
+# operator send with its exact operation and manual-hold admission, send
+# completion, and the exact sent-mirror retirement. Each file runs in-process
+# against the working tree; 8a3 repeats the uncertainty cases on the installed
+# package.
+for reply_test in test_interactive_draft_continuity.py test_publication_outcomes.py \
+                  test_reply_header_folding.py test_operator_send.py test_operator_request_guard.py \
+                  test_send_completion.py test_sent_mirror_recovery.py; do
+  if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/$reply_test"; then echo "OK: $reply_test"; else echo "FAIL: $reply_test"; FAIL=1; fi
+done
+
+step "8a3. installed CLI keeps exact operation identity across uncertain outcomes"
+# Child processes run the INSTALLED `cs` module (no source directory on the
+# path) against a synthetic transport: same-operation publication resume,
+# retirement preview bindings into an uncertain commit, and an uncertain
+# operator send never generate, never switch operation and never dispatch twice.
+if CLI_TEST_HELPERS="$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_installed_cli.py"; then echo "OK"; else echo "FAIL: installed CLI operation identity"; FAIL=1; fi
+
 step "8b. draft-send names, input-gates and verifies one engine draft"
 if "$VENV/bin/python" "$ROOT/tests/test_draft_send.py"; then echo "OK"; else echo "FAIL: canonical contextual send regressed"; FAIL=1; fi
 

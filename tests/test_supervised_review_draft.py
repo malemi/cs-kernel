@@ -33,7 +33,7 @@ class ReviewTests(unittest.TestCase):
         def rpc_call(s, method, params, timeout=None):
             calls.append(method)
             if method == 'system.capabilities':
-                return {'assignment_draft_policy': 1, 'supervised_review_draft_policy': 1}
+                return {'assignment_draft_policy': 1, 'supervised_review_draft_policy': 1, 'exact_draft_publication': 1}
             if method == 'emails.list_by_thread':
                 return {'emails': [{'id': '8ac7571d-778b-46a2-a55b-a08e703149f7',
                     'mailbox_address': 'support@fixture.example',
@@ -44,6 +44,20 @@ class ReviewTests(unittest.TestCase):
                     'is_user_sent': False, 'original_message_id': None}]}
             if method == 'drafts.list':
                 return [] if calls.count(method) == 1 else ([DRAFT] if after is None else after)
+            if method == 'drafts.inspect':
+                return {'ok':True,'draft':DRAFT,'expected_snapshot':'snapshot'}
+            if method == 'drafts.publish_review':
+                observed={}; read(s,observation=observed)
+                if not observed['complete']:
+                    ok=False
+                elif current:
+                    ok=len(current)==1 and current[0].get('engine_draft_id')==DRAFT_ID and review_draft._matches(current[0],DRAFT,ROOT,'fixture-owner')
+                else:
+                    append(engine_draft_id=DRAFT_ID)
+                    read(s,observation={})
+                    ok=not edited
+                return {'version':1,'ok':ok,'draft_id':DRAFT_ID,'cause':'published' if ok else 'publication-failed',
+                        'achieved_stages':['engine-saved'],'next_action':'inspect-operation'}
             raise AssertionError(method)
         async def chat(s, message, **kw):
             calls.append('chat')
@@ -112,7 +126,7 @@ class ReviewTests(unittest.TestCase):
         self.assertNotIn('append',calls)
 
     def test_real_mime_inventory_exposes_draft_state(self):
-        from test_draft_identity import IMAP
+        from mirror_fixture import IMAP
         for expected in (True, False):
             client=IMAP()
             original=client.uid
@@ -128,14 +142,19 @@ class ReviewTests(unittest.TestCase):
             self.assertTrue(observed['complete'])
             self.assertEqual(row['is_draft'],expected)
 
-    def test_real_nonblocking_lock_prevents_concurrent_provider_append(self):
-        with tempfile.TemporaryDirectory() as home, patch.dict(os.environ, {'HOME':home}, clear=True):
-            with review_draft.mirror_lock(settings(),ROOT):
-                with patch.object(gmail_drafts,'list_drafts',side_effect=AssertionError('provider read reached')),self.assertRaisesRegex(RuntimeError,'active'):
-                    review_draft.mirror(settings(),ROOT,DRAFT)
-            with review_draft.mirror_lock(settings(),ROOT):
-                pass
-            self.assertEqual(len(list((Path(home)/'.cs'/'review-draft-locks').iterdir())),1)
+    def test_publication_calls_engine_and_never_local_append(self):
+        calls=[]
+        def call(settings,method,params,timeout=None):
+            calls.append(method)
+            if method=='drafts.inspect':
+                return {'ok':True,'draft':DRAFT,'expected_snapshot':'native-snapshot'}
+            self.assertEqual(method,'drafts.publish_review')
+            self.assertEqual(params['expected_snapshot'],'native-snapshot')
+            return {'version':1,'ok':True,'draft_id':DRAFT_ID}
+        with patch.object(rpc,'call_sync',side_effect=call), patch.object(gmail_drafts,'append_draft') as append:
+            self.assertTrue(review_draft.mirror(settings(),ROOT,DRAFT)['ok'])
+            append.assert_not_called()
+        self.assertEqual(calls,['drafts.inspect','drafts.publish_review'])
 
     def test_launcher_markers_preserve_scheduled_policy(self):
         for marker in ('CS_OPERATOR_HEADLESS','CS_HEADLESS_SEND','CS_OPERATOR_HEALTH_CONTEXT'):

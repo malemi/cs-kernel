@@ -26,3 +26,23 @@ def mirror_evidence(draft, owner):
     return {**gmail_drafts._header_evidence(email.message_from_bytes(raw)),
             **gmail_drafts._mime_evidence(raw), 'body':body, 'body_note':note,
             'body_complete':True, 'is_draft':True, 'fingerprint':fingerprint(raw)}
+
+
+class IMAP:
+    def __init__(self):
+        m = EmailMessage(); m['To'] = 'person@example.test'; m['X-CS-Engine-Draft-ID'] = 'a'; m['X-CS-Engine-Owner-UID'] = 'owner'; m.set_content('Actual editable mirror')
+        self.raw = m.as_bytes(); self.validity = b'5'; self.moves = []; self.calls = []; self.change = False; self.reads = 0
+    def list(self): return 'OK', [b'(\\Drafts) "/" "Drafts"', b'(\\Trash) "/" "Trash"']
+    def select(self, *args, **kwargs): return 'OK', [b'1']
+    def response(self, name): return name, [self.validity]
+    def logout(self): pass
+    def uid(self, cmd, *args):
+        self.calls.append((cmd, args))
+        if cmd == 'SEARCH': return 'OK', [b'1']
+        if cmd == 'MOVE': self.moves.append(args); return 'OK', []
+        query = args[1]
+        if 'RFC822.SIZE' in query:
+            self.reads += 1
+            raw = self.raw + (b'changed' if self.change and self.reads > 1 else b'')
+            return 'OK', [(b'1 (UID 1 FLAGS (\\Draft) RFC822.SIZE ' + str(len(raw)).encode() + b')', raw)]
+        return 'OK', [(b'1 (FLAGS (\\Draft))', self.raw)]

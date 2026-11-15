@@ -49,7 +49,7 @@ class CompletionTests(unittest.TestCase):
             identity_headers_valid=True, body_complete=True, is_draft=True, uid='99', uidvalidity='5', fingerprint='abc')
         mirror.update(mirror_evidence(draft,'fixture-owner'))
         if mode == 'mirror-pdf':
-            from test_draft_identity import IMAP
+            from mirror_fixture import IMAP
             raw_provider = IMAP()
             edited = mirror_message(draft,'fixture-owner')
             edited.add_attachment(b'Human revised invoice',maintype='application',subtype='pdf',filename='invoice.pdf')
@@ -131,7 +131,7 @@ class CompletionTests(unittest.TestCase):
             self.assertEqual(any(row.get('engine_draft_id') == DRAFT_ID for row in mirrors),mode == 'move-no-effect')
 
     def test_real_mime_human_edits_refuse_reuse_and_cleanup(self):
-        from test_draft_identity import IMAP
+        from mirror_fixture import IMAP
         from cs import review_draft
         draft = copy.deepcopy(DRAFT)
         sent = dict(draft,status='sent',sent_message_id='<sent@example.test>')
@@ -154,8 +154,8 @@ class CompletionTests(unittest.TestCase):
             provider = IMAP()
             provider.raw = message.as_bytes()
             with patch.object(gmail_drafts,'_imap',return_value=provider), patch.object(gmail_drafts,'append_draft') as append:
-                with self.assertRaisesRegex(RuntimeError,'changed or conflicts'):
-                    review_draft._mirror(settings(),ROOT,draft)
+                row = gmail_drafts.list_drafts(settings())[0]
+                self.assertFalse(review_draft._matches(row,draft,ROOT,'fixture-owner'))
                 append.assert_not_called()
             with patch.object(gmail_drafts,'_imap',side_effect=[SentIMAP(draft),provider]):
                 with self.assertRaisesRegex(ValueError,'changed or is unverifiable'):
@@ -223,7 +223,7 @@ class CompletionTests(unittest.TestCase):
             self.assertEqual(sum(isinstance(c,tuple) for c in calls),1)
 
     def test_real_rfc2047_append_readback_and_different_subject_preserved(self):
-        from test_draft_identity import IMAP
+        from mirror_fixture import IMAP
         from cs import review_draft
         draft = dict(DRAFT,subject='Re: Fatture — Francesco Zuccaro / Smash Arena')
         client = IMAP()
@@ -234,12 +234,14 @@ class CompletionTests(unittest.TestCase):
             return 'OK', []
         client.append = append
         with patch.dict(os.environ,{},clear=True), patch.object(gmail_drafts,'_imap',return_value=client):
-            review_draft._mirror(settings(),ROOT,draft)
-            review_draft._mirror(settings(),ROOT,draft)
+            gmail_drafts.append_draft(settings(), to=', '.join(draft['to_addresses']),
+                subject=draft['subject'], body=draft['body'], in_reply_to=draft['in_reply_to'],
+                references=draft['references'], body_md=True, engine_draft_id=DRAFT_ID,
+                engine_owner_uid='fixture-owner')
             self.assertEqual(len(appended),1)
             self.assertIn(b'=?utf-8?',appended[0])
-            with self.assertRaisesRegex(RuntimeError,'changed or conflicts'):
-                review_draft._mirror(settings(),ROOT,dict(draft,subject='Different subject'))
+            row = gmail_drafts.list_drafts(settings())[0]
+            self.assertFalse(review_draft._matches(row,dict(draft,subject='Different subject'),ROOT,'fixture-owner'))
             self.assertEqual(len(appended),1)
             row = gmail_drafts.list_drafts(settings())[0]
             result = gmail_drafts.delete_draft(settings(), uid=row['uid'], commit=True,
@@ -248,6 +250,39 @@ class CompletionTests(unittest.TestCase):
             self.assertTrue(result['ok'],result)
             self.assertEqual(len(client.moves),1)
 
+    def test_predispatch_snapshot_survives_mutating_rpc_rows(self):
+        selected=settings()
+        draft=copy.deepcopy(DRAFT)
+        original=copy.deepcopy(draft)
+        async def chat(*a,**kw):
+            draft['body']='Changed in flight'
+            draft['to_addresses'].append('other@example.test')
+            return {'result':{},'approvals':[{'tool':'send_draft','mode':'once','input':{'draft_id':DRAFT_ID}}]}
+        sent=[dict(draft,status='sent')]
+        def call(s,method,params,**kw):
+            self.assertEqual(method,'drafts.list')
+            return [draft] if params['status']=='draft' else sent
+        with patch.dict(os.environ,{},clear=True),patch.object(config,'load',return_value=selected), \
+             patch.object(rpc,'call_sync',side_effect=call),patch.object(rpc,'chat',side_effect=chat), \
+             patch.object(task_assignment,'guard'),patch.object(send_completion,'complete') as complete, \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(cli.cmd_draft_send(SimpleNamespace(draft_id=DRAFT_ID,timeout=10)),0)
+        complete.assert_called_once_with(selected,original,sent)
+        self.assertNotEqual(draft,original)
+
+    def test_scheduled_send_bypasses_interactive_completion(self):
+        from test_operator_workset_cli import CliWorksetTests
+        fixture = CliWorksetTests()
+        fixture.setUp()
+        try:
+            with fixture.send_sequence() as state, patch.object(send_completion, 'complete') as complete:
+                self.assertEqual(cli.main(['draft-send', state['full_id']]), 0)
+                self.assertEqual(state['draft']['status'], 'sent')
+                self.assertEqual(state['retired'], [state['full_id']])
+                self.assertEqual(sum(call[0] == 'chat' for call in state['calls']), 2)
+                complete.assert_not_called()
+        finally:
+            fixture.tearDown()
 
 if __name__ == '__main__':
     unittest.main()
