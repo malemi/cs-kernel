@@ -869,7 +869,7 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-15): **`v0.72.0`**.
+**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-15): **`v0.73.0`**.
 
 **Historical operational pin** (2026-11-01): **`v0.70.1` on both clones**.
 
