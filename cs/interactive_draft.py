@@ -377,4 +377,6 @@ def prepare(settings, args):
                     source=verified, legacy=policy == "legacy")
             except Exception:
                 pass
+        detail = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__
+        print(f"Draft review incomplete: {detail}" + ("" if generated else "; nothing generated"), file=sys.stderr)
         return report(partial("publication-or-generation-incomplete"))
