@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.72.0`; Current HEAD status: tagged as `v0.72.0`.**
+- **Latest release tag: `v0.72.0`; Current HEAD status: untagged.**
   The tag adds the interactive reply runtime, its agent workflow and permission
   rules, and the discovery schema entry for unreadable-mailbox gaps
   ([changelog](../CHANGELOG.md)). Both maintained clones run the private build
