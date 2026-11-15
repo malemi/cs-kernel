@@ -39,19 +39,23 @@ legacy generic-chat review route with no send approvals. That route checks sourc
 scope locally and does not claim server-enforced source isolation. Generation
 failure is never replayed through another route. Missing or conflicting original
 and recipient evidence refuses on both paths. Assignment holds remain binding on
-sending.
+sending; the one exception is an explicit interactive
+`cs draft-send FULL_ID --operator-request`, which admits only a positively
+identified manual-member-activity hold ([task assignment](task-assignment.md)).
 
 The supervised engine can reuse identical rows and refuses conflicting existing
 content. An explicit interactive request may edit an existing row through the
 legacy engine path. The kernel selects exactly one new or materially changed
-owner/root-bound row, then requires complete Gmail inventory before mirroring.
-An unchanged or ambiguous result refuses without a second generation attempt. Existing matching copies are reused; edited, conflicting, legacy or
-other thread copies are preserved with an explicit incomplete result. A new append
-requires exact identity, recipients, headers, Draft flag and complete authored-body readback
-before the command reports a prepared review draft. Persistent nonblocking owner/root
-locks serialize copies sharing the same local state directory; this is not a
-cross-host IMAP transaction. Attachment/Bcc-bearing drafts
-are not mirrored through this candidate path.
+owner/root-bound row. An unchanged or ambiguous result refuses without a second
+generation attempt. The Gmail review copy is published only by the engine's
+exact operation `drafts.publish_review` (capability `exact_draft_publication: 1`),
+bound to the freshly inspected engine snapshot and an operation ID; the kernel
+appends nothing itself on this path. Without the capability the outcome reports
+an engine-saved draft with cause `publication-unsupported`.
+`cs draft-reply --resume-draft FULL_ID --thread-id ROOT --operation-id ID --json`
+publishes an existing saved draft without generating another one, and an
+unknown publication outcome is reconciled by repeating the same operation ID.
+Attachment/Bcc-bearing drafts are not mirrored through this candidate path.
 
 Scheduled launchers retain policy1 admission and their existing selection and
 send permissions. A review request grants no send approval. Actual provider and
@@ -85,6 +89,36 @@ are not one atomic transaction across providers. An uncertain or partial
 result names the exact handles and says which store to inspect before retrying.
 The command refuses headless execution and cross-account mailbox selection.
 
+## Retire a residual sent copy
+
+After `cs draft-send FULL_ENGINE_DRAFT_ID --operator-request` reports
+`sent-with-cleanup-pending` (exit 5), the Gmail review copy of the sent draft
+remains in Drafts. `--sent-mirror` retires only that copy through the engine's
+exact operation journal and keeps the sent engine row. It requires the engine
+capability `sent_mirror_recovery: 1`, the exact thread root, and the Gmail UID
+and UIDVALIDITY from `cs review --json`. Preview:
+
+```bash
+cs draft-retire FULL_ENGINE_DRAFT_ID --sent-mirror --thread-id '<root@example.test>' \
+  --gmail-uid 17 --uidvalidity 9
+```
+
+The preview returns the operation ID, Drafts folder, raw fingerprint and engine
+snapshot. Commit requires exactly those values:
+
+```bash
+cs draft-retire FULL_ENGINE_DRAFT_ID --sent-mirror --thread-id '<root@example.test>' \
+  --gmail-uid 17 --uidvalidity 9 --operation-id PREVIEW_OPERATION_ID \
+  --gmail-folder PREVIEW_FOLDER --gmail-fingerprint PREVIEW_FINGERPRINT \
+  --engine-snapshot PREVIEW_ENGINE_SNAPSHOT --commit
+```
+
+A changed copy or incomplete Sent evidence leaves the copy untouched. An
+unknown move outcome reports `next_action: inspect-operation`; it is reconciled
+by repeating the same operation and preview values, never by a new operation.
+Both forms of `cs draft-retire` print JSON and exit 0 on success, 5 on a partial
+effect and 3 on any other refusal.
+
 `cs draft-delete` remains the separately named Gmail-only operation. Sent-mirror
 cleanup acts only on an exact unique identity with unchanged, verifiable authored
 content; edited or inferred copies remain for review. No review verdict deletes
@@ -106,8 +140,11 @@ retirement pass through authenticated runtime calls. The scoped kernel candidate
 passes scoped both-clone CLI acceptance. Both maintained kernel packages now
 run identical clean immutable local packages; their exact version, public
 provenance and fresh release acceptance belong to the living context and
-canonical release plan. Scheduled settings
-and launchers already deny the new mutations.
+canonical release plan. The scheduled launcher denies `cs draft-retire`,
+`rpc drafts.discard_exact` and `rpc drafts.reconcile_external` in every
+spelling. A clone's `.claude/settings.json` denies the two RPC mutations and
+lists every spelling of `cs draft-retire` under `ask`, so an interactive host
+asks the human before each call.
 
 Real Gmail IMAP APPEND/replacement and owner-to-self SMTP preserve the custom
 identity headers. Replacement-edit and stale-fingerprint refusal pass on both

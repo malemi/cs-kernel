@@ -119,8 +119,20 @@ complete source inventory. One narrow quoted-envelope form accepts a repeated
 known address as its unquoted display name; it does not relax actual From-header
 validation or omit the provider's quoted tail.
 
+Interactive preparation publishes the Gmail review copy only through the
+engine's exact publication operation (`exact_draft_publication: 1`). Without
+that capability the draft stays engine-saved, the outcome says so, and no local
+copy is appended. `cs draft-reply --resume-draft FULL_ID --thread-id ROOT`
+publishes an existing saved draft without generating another one.
+
 A prepared review draft does not clear an assignment or authorize sending.
-`draft-send` keeps its existing exact-ID and current-assignment admission checks.
+Ordinary `draft-send FULL_ID` keeps its exact-ID and current-assignment admission
+checks. `draft-send FULL_ID --operator-request` is the interactive operator's
+explicit request to send one existing draft through the engine's exact send
+operation (`interactive_exact_send: 1`). It admits only a positively identified
+manual-member-activity hold on the exact root and current target; other holds,
+pause, SELF recipients and suppression still refuse, and scheduled sessions
+refuse the flag.
 Scheduled callers retain scoped assignment negotiation and workset restrictions.
 This local candidate's actual source and hosted checks are recorded in the
 [continuity plan](execution-plans/2026-10-22-interactive-draft-continuity.md).
