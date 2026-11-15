@@ -19,7 +19,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
   unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
-  install `v0.72.0` since 2026-11-15: `cs verify-install` matches all 168
+  install `v0.73.0` since 2026-11-15: `cs verify-install` matches all 168
   package files on each, and each lock file installs alone. Public provenance remains unmet; no
   public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
@@ -48,9 +48,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   source case returns three complete human-hold observations and
   `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
   the historical failed FULL or prove whole-inventory/model acceptance.
-- The MrCall operator and signup schedules run since 2026-11-14 on the `claude`
-  scheduled host with a pinned model. The Café 124 schedule is held until this
-  tag is installed. The Pydantic executor has not completed a scheduled tick: ten
+- The MrCall operator and signup schedules run since 2026-11-14. An operator
+  tick uses the `claude` scheduled host with a pinned model, on the API key, the
+  USD 4 cap and the Claude Code build named in its clone's
+  `operator-executor.env`; the signup job uses no model. The Café 124
+  schedule is held until its first staff mailbox has a working IMAP credential:
+  with that mailbox unreadable a tick prepares no draft. The Pydantic executor has not completed a scheduled tick: ten
   recorded runs between 2026-10-29 and 2026-11-01 ended held, out of capacity,
   out of budget or failed.
 - The read-only goal
@@ -74,6 +77,34 @@ candidate does not re-audit those deployments or grant new send authority.
   `wire_usage_bucket_binding_differs` when the package is installed in a fresh
   environment. No test covers that route's cache accounting. No maintained clone
   selects the Pydantic executor.
+- The native stream check accepts one Claude Code build, 2.1.296
+  (`cs/operator_discovery_receipt.py`, `CLAUDE_VERSION` and `CLAUDE_SHA256`).
+  On any other build a tick that completes is recorded `stopped||no_result` and
+  exits 1. The clones select that build with `CLAUDE_BIN`; the host's default
+  `claude` is newer.
+- The same check accepts a permission denial only in one shape: a Bash command
+  that is not a `cs` command, refused by the auto-mode classifier with the
+  reason `[Auto-Mode Bypass]` after a `permission_check_status` cycle
+  (`cs/operator_native_composition.py`). A completed tick with any other
+  classifier denial is recorded `stopped||no_result` and exits 1.
+- Café 124's inventory view needs 53 context slots and the run hook grants 48
+  (`context_slots_exhausted`, 2026-11-15): in two ticks the agent stopped before
+  reading it and prepared nothing.
+- A tick that completes while discovery reports an incomplete assignment read
+  is recorded `stopped||assignment_read_incomplete` and exits 1
+  (`cs/operator_health.py`). Every MrCall tick does, for its unreadable second
+  account, and Café 124's second verification tick did.
+- The `v0.73.0` changelog entry is wrong in two sentences. The kernel appends
+  `--max-budget-usd` whenever `CS_PRIMARY_BUDGET_USD` is set
+  (`cs/operator_recovery.py`, `_run`), so a launcher that also passes the flag
+  passes it twice. No clone launcher passes the flag: the MrCall launcher's
+  budget shim is removed and the cap of both clones comes from the kernel.
+- No test covers the refusal of an unusable `CS_PRIMARY_BUDGET_USD` in
+  `_run_tick`; the tests of the variable call `_run`.
+- The kernel records no command line of a scheduled run. The cap of the
+  re-collaudo ticks was read from the process arguments while they ran; Café
+  124's two ticks on `v0.73.0` were started by hand with the cron line's
+  command.
 - Commits `12d7264` and `18da6e7`, the `v0.72.0` release commits and the whole
   of `v0.73.0` have no independent review.
   The scheduled-surface hash ledger of this release is `PENDING_FRESH_REVIEW`.
