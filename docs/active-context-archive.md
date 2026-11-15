@@ -1,3 +1,23 @@
+## 2026-11-15 — Before the v0.72.0 release commit
+
+- **Latest release tag: `v0.71.0`; Current HEAD status: untagged.**
+  Both maintained clones still install immutable private `v0.70.1` at
+  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`, with all166 package files and
+  complete95/58 distribution rebuilds verified. The reviewed1h candidate awaits
+  normal0.71.0 adoption and genuine BOTH FULL/signup acceptance. Public provenance
+  remains unmet; no public push or protected-checker change is performed.
+
+- Three owned future-tick cron holds are active after failed-cohort cleanup.
+
+Replaced items 1 and 2 of "Next":
+
+1. Kernel and independent Desktop1h controls are approved. Finish the normal
+   immutable private release/adoption, preserving authored context and held ticks.
+   Keep exact duration pricing, legacy fallback and source/business guards.
+2. Require immutable normal release/adoption and reviewed free admission checks
+   before the single new bounded MrCall FULL -> Cafe FULL -> signup cohort.
+   Exact-hash clone-harness consent remains pending; final closure is unverified.
+
 ## 2026-11-01 — Tagged candidate before registry and funding revision
 
 - **Latest release tag: `v0.71.0`; Current HEAD status: tagged as `v0.71.0`.**

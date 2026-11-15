@@ -14,12 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.71.0`; Current HEAD status: untagged.**
-  Both maintained clones still install immutable private `v0.70.1` at
-  `bb29c7928be66279b67cf6b451c6b0992dd85ac6`, with all166 package files and
-  complete95/58 distribution rebuilds verified. The reviewed1h candidate awaits
-  normal0.71.0 adoption and genuine BOTH FULL/signup acceptance. Public provenance
-  remains unmet; no public push or protected-checker change is performed.
+- **Latest release tag: `v0.72.0`; Current HEAD status: tagged as `v0.72.0`.**
+  The tag adds the interactive reply runtime, its agent workflow and permission
+  rules, and the discovery schema entry for unreadable-mailbox gaps
+  ([changelog](../CHANGELOG.md)). Both maintained clones run the private build
+  `0.72.0.dev0+interactive682` until they move to this tag; their
+  `requirements.txt` still pins `v0.71.0`. Public provenance remains unmet; no
+  public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
   explicit5m point after the full immutable bootstrap. Compared with0.70.0,
   only the approved executor module changes. No dependency, model, price,
@@ -46,7 +47,12 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
   source case returns three complete human-hold observations and
   `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
   the historical failed FULL or prove whole-inventory/model acceptance.
-- Three owned future-tick cron holds are active after failed-cohort cleanup. The read-only goal
+- The MrCall operator and signup schedules run since 2026-11-14 on the `claude`
+  scheduled host with a pinned model. The Café 124 schedule is held until this
+  tag is installed. The Pydantic executor has not completed a scheduled tick: ten
+  recorded runs between 2026-10-29 and 2026-11-01 ended held, out of capacity,
+  out of budget or failed.
+- The read-only goal
   checker has reviewed isolated positive feasibility and real-failure rejection.
   Missing PID, cost or closure controls also reject. This structural proof grants
   no operational acceptance.
@@ -98,11 +104,10 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Kernel and independent Desktop1h controls are approved. Finish the normal
-   immutable private release/adoption, preserving authored context and held ticks.
-   Keep exact duration pricing, legacy fallback and source/business guards.
-2. Require immutable normal release/adoption and reviewed free admission checks
-   before the single new bounded MrCall FULL -> Cafe FULL -> signup cohort.
-   Exact-hash clone-harness consent remains pending; final closure is unverified.
+1. Move both maintained clones to `v0.72.0` through the normal upgrade, restore
+   the held schedule and update the operational pin marker in the changelog.
+2. Publication needs FULL on both clones. Its runtime policy binds an earlier
+   system and nothing regenerates it. The changelog lists the two gates that
+   fail at the tag.
 3. Require actual M5, documentation critic and separate final review. Baseline
    and protected goal acceptance remain open until their prerequisites pass.

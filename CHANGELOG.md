@@ -1,5 +1,71 @@
 # Changelog — cs-kernel
 
+## v0.72.0 — 2026-11-15 (MINOR, private unpublished candidate)
+
+Add the interactive reply runtime and the agent workflow that drives it.
+
+`cs draft-reply` journals publication of the review copy, reports the achieved
+stages on a partial failure, and resumes one exact saved draft with
+`--resume-draft` and `--operation-id` without generating again.
+`cs draft-send --operator-request --operation-id` sends one exact unchanged
+draft on the interactive operator's explicit request through the engine's exact
+send route. It passes only a positively identified manual-member-activity hold,
+exits 5 with `sent-with-cleanup-pending` after a verified delivery and 3 when
+held; a repeated operation ID reads back the stored result and sends nothing.
+`cs draft-retire --sent-mirror` previews and commits the removal of the verified
+residual Drafts copy of a sent draft and keeps the sent engine row.
+
+The stamped `cs-customer` and `cs-triage-mail` skills, the outbound fact-sourcing
+partial and the clone charter describe requested preparation, the exact send, its
+recovery and the cleanup. Unattended workflows never select `--operator-request`.
+
+Permission surface. The six `cs draft-retire` spellings move from `deny` to `ask`
+in the stamped `.claude/settings.json`, so Claude Code asks the human before
+every retirement call. The stamped settings and the scheduled wrapper deny the
+raw engine methods `rpc drafts.send_operator`, `rpc drafts.retire_sent_mirror`
+and `rpc drafts.publish_review` in every spelling, so the broad `cs rpc` allow
+rule cannot reach a send, a retirement or a publication around the CLI's own
+checks. The scheduled wrapper keeps denying `draft-retire` and `draft-send`.
+
+Scheduled discovery accepts unreadable-mailbox gaps. The discovery material
+schema declares the string elements of a draft row's `evidence_incomplete`, so a
+declared mailbox that cannot be read holds the affected roots
+(`review_evidence_incomplete`) and no longer fails the publication for the whole
+tick with `material_type_invalid`. Sixteen other list paths of that schema still
+have no element shape; a non-empty value at any of them fails discovery
+publication, and a structural test names them.
+
+A draft preparation that stops before generation prints its exact refusal on
+stderr again, ahead of the structured outcome.
+
+The connected engine must advertise `exact_draft_publication:1`,
+`sent_mirror_recovery:1` and `interactive_exact_send:1`. Without them the commands
+refuse and keep the saved identifiers. No dependency change.
+
+Migration: `cs update --pin v0.72.0`, `uv pip install -r requirements.txt`, then
+`cs update` to refresh the stamped skills, charter, settings and cron wrapper. A
+clone that carries local entries in `.claude/settings.json` or in its cron
+wrapper puts them back after the refresh.
+
+Known failing gates at this tag, both present before it:
+
+- Gate 59 (`tests/test_operator_executor_cache.py`, two cases) fails in a fresh
+  environment with `wire_usage_bucket_binding_differs`; the unchanged `v0.71.0`
+  source fails the same two cases there.
+- Gate 66 (`tests/test_draft_source_logging.py`): a refusal before generation
+  records the diagnostic event `generation failed` where the test expects
+  `generation held`, and one case is marked as an expected failure because the
+  preparation reuses the caller's causal scope. Both behaviours come with the
+  interactive reply runtime.
+
+**Re-collaudo tier: FULL on BOTH maintained clones.** Send paths and the
+permission surface change. Apart from the schema row and the refusal message,
+the Python payload of `cs/` equals the private build `0.72.0.dev0+interactive682`,
+which completed a command-level live lifecycle on both clone mailboxes on
+2026-11-13 and 2026-11-14; the agent-level check and ordinary FULL remain
+required before publication. This is a private prepublication candidate; no
+public push is part of this release.
+
 ## v0.71.0 — 2026-11-01 (MINOR, private unpublished candidate)
 
 Add explicit one-hour executor caching with reviewed one-hour write pricing,
