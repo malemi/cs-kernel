@@ -17,9 +17,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 - **Latest release tag: `v0.72.0`; Current HEAD status: untagged.**
   The tag adds the interactive reply runtime, its agent workflow and permission
   rules, and the discovery schema entry for unreadable-mailbox gaps
-  ([changelog](../CHANGELOG.md)). Both maintained clones run the private build
-  `0.72.0.dev0+interactive682` until they move to this tag; their
-  `requirements.txt` still pins `v0.71.0`. Public provenance remains unmet; no
+  ([changelog](../CHANGELOG.md)). Both maintained clones install this tag since 2026-11-15:
+  `cs verify-install` matches all 168 package files on each, and each lock file
+  installs alone. Public provenance remains unmet; no
   public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
   explicit5m point after the full immutable bootstrap. Compared with0.70.0,
@@ -104,8 +104,8 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Move both maintained clones to `v0.72.0` through the normal upgrade, restore
-   the held schedule and update the operational pin marker in the changelog.
+1. Restore the held Café 124 schedule once a scheduled tick completes its work
+   on this tag.
 2. Publication needs FULL on both clones. Its runtime policy binds an earlier
    system and nothing regenerates it. The changelog lists the two gates that
    fail at the tag.
