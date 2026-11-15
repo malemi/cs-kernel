@@ -14,13 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.1`; Current HEAD status: tagged as `v0.73.1`.**
+- **Latest release tag: `v0.73.1`; Current HEAD status: untagged.**
   The tag makes a completed run with an incomplete mailbox or assignment read
   exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
   unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
-  install `v0.73.0` since 2026-11-15: `cs verify-install` matches all 168
+  install `v0.73.1` since 2026-11-15: `cs verify-install` matches all 168
   package files on each, and each lock file installs alone. Public provenance remains unmet; no
   public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
@@ -91,8 +91,7 @@ candidate does not re-audit those deployments or grant new send authority.
 - The run hook delivers the inventory view in at most 64 context slots
   (`cs/operator_context_delivery.py`). Café 124's view needed 52 to 53 on
   2026-11-15 (about 405,000 bytes); with 48 slots three ticks stopped before
-  reading it and prepared nothing. A view above 64 slots stops the run the same
-  way: the agent does not page it literally.
+  reading it and prepared nothing: the agent did not page it literally.
 - A tick that completes while discovery reports an incomplete mailbox or
   assignment read is recorded `stopped||<cause>`. It exits 0 when that read is
   its only defect and 1 when a further health check fails
