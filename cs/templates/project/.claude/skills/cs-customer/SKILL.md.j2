@@ -214,6 +214,9 @@ resume that same draft and publication operation without generation:
 .venv/bin/python -m cs draft-reply --resume-draft FULL_ID --thread-id '<exact-thread-key>' --operation-id PUBLICATION_OPERATION_ID --json
 ```
 
+When the saved outcome carries no `operation_id`, choose and retain a new one
+for the resume.
+
 For an explicit request to send the selected existing unchanged draft, use its
 full engine ID from the actual inventory. Choose and retain one new send operation
 ID before the first call; do not reuse the publication operation ID:
@@ -245,9 +248,11 @@ operator request. The cancelled ID is never retryable. This does not permit a ne
 operation for an unknown outcome or an automatic retry.
 
 For an explicitly requested residual copy cleanup after verified delivery, use
-only the exact sent-mirror path. The host asks the human before every
-`draft-retire` call; scheduled sessions are denied it. Obtain UID and
-UIDVALIDITY from actual review, then preview without effects:
+only the exact sent-mirror path. Claude Code asks the human before every
+`draft-retire` call through the stamped settings; on any other host, show the
+preview and wait for the operator's explicit confirmation before `--commit`.
+Scheduled sessions are denied it. Obtain UID and UIDVALIDITY from actual
+review, then preview without effects:
 
 ```bash
 .venv/bin/python -m cs draft-retire FULL_ID --sent-mirror --thread-id '<exact-thread-key>' --gmail-uid UID --uidvalidity UIDVALIDITY

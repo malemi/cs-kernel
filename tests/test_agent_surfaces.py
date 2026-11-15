@@ -166,7 +166,10 @@ def main() -> int:
         check("retirement consumes exact preview without discarding sent row",
               "--sent-mirror" in customer_text and "--engine-snapshot ENGINE_SNAPSHOT --commit" in customer_text
               and "preserves the sent engine" in customer_flat
-              and "asks the human before every `draft-retire` call" in customer_flat)
+              and "Claude Code asks the human before every `draft-retire` call through the stamped settings" in customer_flat
+              and "wait for the operator's explicit confirmation before `--commit`" in customer_flat)
+        check("a resume without a saved operation ID retains a new one",
+              "carries no `operation_id`, choose and retain a new one for the resume" in customer_flat)
         check("partial outcomes replace the old empty-stdout claim",
               "stdout carries nothing" not in agents_flat
               and "save an engine draft before" in agents_flat)

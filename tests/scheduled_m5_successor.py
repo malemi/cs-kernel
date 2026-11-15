@@ -2,8 +2,9 @@
 
 The scheduled-surface comparison in test_capabilities_skill.py binds the
 current scheduled sources to separately reviewed byte hashes. The interactive
-reply workflow text (ported from the reviewed M5 workflow sources) and the
-interactive `draft-retire` ask rule change three of those sources. This module
+reply workflow text (ported from the reviewed M5 workflow sources), the
+interactive `draft-retire` ask rule and the raw-RPC denies of the engine's exact
+send, retirement and publication operations change four of those sources. This module
 reverses exactly those recorded edits, and nothing else, so the older binding
 can still be checked byte for byte. Every stage is bound by its postimage and
 preimage SHA-256; an edit must occur exactly once. Any other difference fails.
@@ -21,7 +22,8 @@ REVIEW_STATE = "PENDING_FRESH_REVIEW"
 STAGES = (
     ("m5-interactive-reply-triage", "cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2"),
     ("m5-shared-partial", "cs/templates/partials/outbound-fact-sourcing.md.j2"),
-    ("interactive-draft-retire-ask", "cs/templates/project/.claude/settings.json.j2"),
+    ("interactive-reply-permissions", "cs/templates/project/.claude/settings.json.j2"),
+    ("interactive-reply-raw-rpc-denies", "cs/templates/project/bin/cs_operator_cron.sh.j2"),
 )
 
 

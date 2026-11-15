@@ -473,7 +473,10 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # `draft-retire` is the exact interactive retirement verb: the interactive
 # workflow runs it on the operator's explicit request, so settings.json puts it
 # under `ask` — the host asks the human before every call — while the cron
-# wrapper keeps denying it in every spelling.
+# wrapper keeps denying it in every spelling. The engine's exact send,
+# sent-copy retirement and publication operations are denied as raw RPC in
+# both files: the broad `cs rpc:*` allow would otherwise reach them without the
+# CLI's pause, SELF, suppression and assignment checks.
 #
 # The wrapper's deny list is no longer a fixed text, so this gate reads the
 # RENDER and not the template source: a clone may name executables of its own
@@ -508,6 +511,7 @@ VERBS = [
     "instructions", "rpc instructions.store",
     "handled", "escalated", "draft-delete", "draft-retire", "rpc drafts.discard",
     "rpc drafts.discard_exact", "rpc drafts.reconcile_external",
+    "rpc drafts.send_operator", "rpc drafts.retire_sent_mirror", "rpc drafts.publish_review",
     "connection vonage provision", "connection vonage allow-ip",
     "assignment preview", "assignment export", "assignment commit",
     "rpc operator.rules.decide", "rpc operator.rules.import_confirm", "rpc tasks.assignment.commit",
@@ -555,7 +559,8 @@ allow = settings.get("permissions", {}).get("allow", [])
 ask = settings.get("permissions", {}).get("ask", [])
 
 for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip",
-             "rpc drafts.discard_exact", "rpc drafts.reconcile_external"):
+             "rpc drafts.discard_exact", "rpc drafts.reconcile_external",
+             "rpc drafts.send_operator", "rpc drafts.retire_sent_mirror", "rpc drafts.publish_review"):
     for spelling in SPELLINGS:
         entry = "Bash(%s %s:*)" % (spelling, verb)
         if entry not in deny:

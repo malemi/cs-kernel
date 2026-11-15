@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "review_state": "PENDING_FRESH_REVIEW",
-  "origin": "Interactive reply workflow text ported from commit 846bebb onto this line's templates, and the interactive draft-retire ask rule. Not yet reviewed.",
+  "origin": "Interactive reply workflow text ported from commit 846bebb onto this line's templates, the interactive draft-retire ask rule, and raw-RPC denies for the engine exact send, sent-copy retirement and publication operations. Not yet reviewed.",
   "stages": [
     {
       "id": "m5-interactive-reply-triage",
@@ -40,11 +40,11 @@
       ]
     },
     {
-      "id": "interactive-draft-retire-ask",
+      "id": "interactive-reply-permissions",
       "template": "cs/templates/project/.claude/settings.json.j2",
       "hashes": {
         "before_sha256": "6c6835be39b47eb8da9426176ad9c2e74a28da607125a6cdac864598663d012c",
-        "after_sha256": "2d18fd39c5211f9bff0ea47651fb0e1c766e4143d0a7724e2f24a712b8a329da"
+        "after_sha256": "04fad3e1b90772a4724e140ea1ab7eade7ef1fee2f6932a34baf1e233600d454"
       },
       "edits": [
         {
@@ -58,6 +58,24 @@
         {
           "before": "      \"Bash(cs connection vonage allow-ip:*)\",\n      \"Bash(.venv/bin/python -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/python3 -m cs draft-retire:*)\",\n      \"Bash(.venv/bin/cs draft-retire:*)\",\n      \"Bash(python -m cs draft-retire:*)\",\n      \"Bash(python3 -m cs draft-retire:*)\",\n      \"Bash(cs draft-retire:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)\",\n",
           "after": "      \"Bash(cs connection vonage allow-ip:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)\",\n"
+        },
+        {
+          "before": "      \"Bash(cs rpc drafts.reconcile_external:*)\",\n      \"Bash(rm:*)\"\n",
+          "after": "      \"Bash(cs rpc drafts.reconcile_external:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.send_operator:*)\",\n      \"Bash(.venv/bin/python3 -m cs rpc drafts.send_operator:*)\",\n      \"Bash(.venv/bin/cs rpc drafts.send_operator:*)\",\n      \"Bash(python -m cs rpc drafts.send_operator:*)\",\n      \"Bash(python3 -m cs rpc drafts.send_operator:*)\",\n      \"Bash(cs rpc drafts.send_operator:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(.venv/bin/python3 -m cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(.venv/bin/cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(python -m cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(python3 -m cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(cs rpc drafts.retire_sent_mirror:*)\",\n      \"Bash(.venv/bin/python -m cs rpc drafts.publish_review:*)\",\n      \"Bash(.venv/bin/python3 -m cs rpc drafts.publish_review:*)\",\n      \"Bash(.venv/bin/cs rpc drafts.publish_review:*)\",\n      \"Bash(python -m cs rpc drafts.publish_review:*)\",\n      \"Bash(python3 -m cs rpc drafts.publish_review:*)\",\n      \"Bash(cs rpc drafts.publish_review:*)\",\n      \"Bash(rm:*)\"\n"
+        }
+      ]
+    },
+    {
+      "id": "interactive-reply-raw-rpc-denies",
+      "template": "cs/templates/project/bin/cs_operator_cron.sh.j2",
+      "hashes": {
+        "before_sha256": "bb0811db71254a7be9033eea47668758cc53b5980338fe510b6ffc3e78d4208c",
+        "after_sha256": "1af7b4ed31258bc7168f71ca709faabc24ea051c822864ca1e2c7dc2e2f9027d"
+      },
+      "edits": [
+        {
+          "before": "    \"Bash(cs rpc drafts.reconcile_external:*)\" \\\n    \"Bash(.venv/bin/python -m cs connection vonage provision:*)\" \\\n",
+          "after": "    \"Bash(cs rpc drafts.reconcile_external:*)\" \\\n    \"Bash(.venv/bin/python -m cs rpc drafts.send_operator:*)\" \\\n    \"Bash(.venv/bin/python3 -m cs rpc drafts.send_operator:*)\" \\\n    \"Bash(.venv/bin/cs rpc drafts.send_operator:*)\" \\\n    \"Bash(python -m cs rpc drafts.send_operator:*)\" \\\n    \"Bash(python3 -m cs rpc drafts.send_operator:*)\" \\\n    \"Bash(cs rpc drafts.send_operator:*)\" \\\n    \"Bash(.venv/bin/python -m cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(.venv/bin/python3 -m cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(.venv/bin/cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(python -m cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(python3 -m cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(cs rpc drafts.retire_sent_mirror:*)\" \\\n    \"Bash(.venv/bin/python -m cs rpc drafts.publish_review:*)\" \\\n    \"Bash(.venv/bin/python3 -m cs rpc drafts.publish_review:*)\" \\\n    \"Bash(.venv/bin/cs rpc drafts.publish_review:*)\" \\\n    \"Bash(python -m cs rpc drafts.publish_review:*)\" \\\n    \"Bash(python3 -m cs rpc drafts.publish_review:*)\" \\\n    \"Bash(cs rpc drafts.publish_review:*)\" \\\n    \"Bash(.venv/bin/python -m cs connection vonage provision:*)\" \\\n"
         }
       ]
     }

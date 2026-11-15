@@ -8,7 +8,11 @@ from scheduled_m5_successor import MANIFEST, ROOT, STAGES, digest, load, undo
 SPELLINGS = (".venv/bin/python -m cs", ".venv/bin/python3 -m cs", ".venv/bin/cs",
              "python -m cs", "python3 -m cs", "cs")
 RETIRE = ["Bash(%s draft-retire:*)" % spelling for spelling in SPELLINGS]
+RAW_RPC = ["Bash(%s rpc %s:*)" % (spelling, method)
+           for method in ("drafts.send_operator", "drafts.retire_sent_mirror", "drafts.publish_review")
+           for spelling in SPELLINGS]
 SETTINGS = "cs/templates/project/.claude/settings.json.j2"
+CRON = "cs/templates/project/bin/cs_operator_cron.sh.j2"
 
 
 class SuccessorTests(unittest.TestCase):
@@ -25,18 +29,28 @@ class SuccessorTests(unittest.TestCase):
     def test_valid_stages_reverse_exactly(self):
         self.exercise()
 
-    def test_permission_stage_only_moves_draft_retire_from_deny_to_ask(self):
+    def test_permission_stage_moves_draft_retire_to_ask_and_denies_raw_rpc(self):
         after = json.loads(self.current[SETTINGS])["permissions"]
         before = json.loads(undo(SETTINGS, self.current[SETTINGS]))["permissions"]
         self.assertNotIn("ask", before)
         self.assertEqual(set(after), {"allow", "ask", "deny"})
         self.assertEqual(after["ask"], RETIRE)
         self.assertEqual(after["allow"], before["allow"])
-        self.assertEqual(after["deny"], [entry for entry in before["deny"] if entry not in RETIRE])
+        self.assertEqual([entry for entry in after["deny"] if entry not in RAW_RPC],
+                         [entry for entry in before["deny"] if entry not in RETIRE])
+        self.assertEqual([entry for entry in after["deny"] if entry in RAW_RPC], RAW_RPC)
+        self.assertFalse(set(RAW_RPC) & set(before["deny"]))
         self.assertEqual([entry for entry in before["deny"] if entry in RETIRE], RETIRE)
         for entry in ("rpc drafts.discard_exact", "rpc drafts.reconcile_external"):
             for spelling in SPELLINGS:
                 self.assertIn("Bash(%s %s:*)" % (spelling, entry), after["deny"])
+
+    def test_wrapper_stage_only_adds_the_raw_rpc_denies(self):
+        after = self.current[CRON].decode()
+        before = undo(CRON, self.current[CRON]).decode()
+        added = [line for line in after.splitlines() if line not in before.splitlines()]
+        self.assertEqual(added, ['    "%s" \\' % entry for entry in RAW_RPC])
+        self.assertEqual([line for line in after.splitlines() if line not in added], before.splitlines())
 
     def test_every_hash_rejects_corrupt_missing_and_swapped(self):
         count = 0
