@@ -34,7 +34,7 @@ if case in ('ancestry','ancestry_bad'):
     value['assignment_incomplete']=True
     value['human_work']=[{'thread_key':'<root@example.test>','assignment':{'version':1,'actor_uid':'owner','space_id':'space','thread_key':'<root@example.test>','complete':False,'state':'conflict','hold_auto_reply':True,'reason':'RFC_ANCESTRY_CONFLICT','task':None,'authoritative_thread_key':'<root@example.test>','component_thread_keys':['<root@example.test>'],'component_scope_present':False,'source_owner_uid':'owner','events':[],'covered_inbound':[],'current_inbound':[],'current_message_ids':[],'covered_message_ids':[],'reply_evidence':[]}}]
     if case=='ancestry_bad': value['human_work'][0]['assignment']['source_owner_uid']='foreign'
-if case in ('technical','mixed'):
+if case in ('technical','mixed','mixed_send','technical_unread','technical_workset'):
     value['assignment_incomplete']=True
     value['human_work']=[{'assignment':{'complete':False,'hold_auto_reply':True,'state':'unknown'}}]
 if case=='mixed': value['human_work'].append({'assignment':{'complete':False,'hold_auto_reply':True,'state':'needs-assignment'}})
@@ -62,23 +62,27 @@ with patch.object(cli.config,'load',return_value=Settings(engine_owner_uid='owne
     for index,command in enumerate(['whoami','config','tasks --json','review --json','campaign pending']):
         if case=='missing_phase' and command=='campaign pending': continue
         use('.venv/bin/python -m cs '+command,'{}','phase-'+str(index))
-    clipped=case in ('large','large_unread','partial','early_draft','early_chat','early_send','late_chat')
+    clipped=case in ('large','large_unread','technical_unread','partial','early_draft','early_chat','early_send','late_chat')
+    if case=='technical_workset':
+        reserved=json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT'])['directory']+'/workset-reserved.json'
+        record=json.load(open(reserved)); record['nonce']='foreign'
+        open(reserved,'w').write(json.dumps(record))
     output='[native output clipped]' if clipped else child.stdout.decode()
     if child.returncode==3: output='Exit code 3'+chr(10)+output
     use('.venv/bin/python -m cs unanswered --days 14 --json --all-buckets',output,'discovery',child.returncode!=0)
     if case=='send_success': use('.venv/bin/python -m cs draft-send exact-full-id','sent and recorded','send')
     if case=='send_pending':
         print(json.dumps({'type':'assistant','message':{'content':[{'type':'tool_use','id':'send-pending','name':'Bash','input':{'command':'.venv/bin/python -m cs draft-send exact-full-id'}}]}}))
-    if case in ('draft_failed','chat_failed','send_failed'):
+    if case in ('draft_failed','chat_failed','send_failed','mixed_send'):
         command=('.venv/bin/python -m cs draft-reply test --thread-id root' if case=='draft_failed'
-                 else '.venv/bin/python -m cs draft-send exact-full-id' if case=='send_failed'
+                 else '.venv/bin/python -m cs draft-send exact-full-id' if case in ('send_failed','mixed_send')
                  else '.venv/bin/python -m cs chat --allow send_draft test')
         failed=subprocess.run([os.environ['HEALTH_PYTHON'],'-c',"import sys; print('engine generation refused',file=sys.stderr); raise SystemExit(1)"],capture_output=True)
         use(command,'Exit code '+str(failed.returncode)+chr(10)+failed.stderr.decode(),'operation',failed.returncode!=0)
     if case=='early_chat': use('.venv/bin/python -m cs chat generate reply','{}','chat')
     if case=='early_draft': use('.venv/bin/python -m cs draft-reply test --thread-id root','{}','draft')
     if case=='early_send': use('.venv/bin/python -m cs draft-send exact-full-id','{}','send')
-    if clipped and case!='large_unread':
+    if clipped and case not in ('large_unread','technical_unread'):
         path=json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT'])['directory']+'/discovery.json'
         raw=open(path,'rb').read()
         end=len(raw)//2 if case=='partial' else len(raw)
@@ -125,6 +129,9 @@ with tempfile.TemporaryDirectory() as temporary:
                             ('ancestry_bad', 'assignment_read_incomplete'),
                             ('technical', 'assignment_read_incomplete'),
                             ('mixed', 'assignment_read_incomplete'),
+                            ('mixed_send', 'assignment_read_incomplete'),
+                            ('technical_unread', 'assignment_read_incomplete'),
+                            ('technical_workset', 'assignment_read_incomplete'),
                             ('large_unread', 'discovery_inspection_incomplete'),
                             ('partial', 'discovery_inspection_incomplete'),
                             ('early_draft', 'discovery_inspection_incomplete'),
@@ -138,12 +145,17 @@ with tempfile.TemporaryDirectory() as temporary:
                             ('mailbox', 'mailbox_read_incomplete')):
             os.environ['HEALTH_CASE'] = case
             before = len(calls.read_text().splitlines())
-            assert recovery.run(str(binary), ['Write']) == 1
+            # An incomplete read that is the run's only defect keeps its notice
+            # and exits 0; a malformed row, a failed operation, an uninspected
+            # discovery or a foreign workset reservation beside it does not.
+            assert recovery.run(str(binary), ['Write']) == (0 if case in ('technical', 'mixed', 'mailbox') else 1), case
             assert len(calls.read_text().splitlines()) == before + 1
             assert f'Notice code: stopped/{cause}' in recorded[-1]
         before = len(recorded)
-        assert recovery.run(str(binary), ['Write']) == 1
+        assert recovery.run(str(binary), ['Write']) == 0
         assert len(recorded) == before
+        os.environ['HEALTH_CASE'] = 'missing'
+        assert recovery.run(str(binary), ['Write']) == 1
         os.environ['HEALTH_CASE'] = 'empty'
         assert recovery.run(str(binary), ['Write']) == 0
         assert 'Resolved.' in recorded[-1]

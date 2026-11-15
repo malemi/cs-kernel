@@ -10,7 +10,7 @@ from pathlib import Path
 import shlex
 import sys
 
-SLOTS = 48
+SLOTS = 64
 CHARS = 8000
 LEGACY_CHARS = 7000
 SCHEMA = 'cs.inventory.context.v1'

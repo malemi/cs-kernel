@@ -147,23 +147,10 @@ def assess(context, child, owner):
         if value['assignment_incomplete'] != bool(incomplete_rows):
             decision('ordinary_health_result', 'assignment_read_incomplete', phase='discovery', command='unanswered', method='operator.health.assess')
             return 'assignment_read_incomplete'
-        if context.get('workset_enabled') is True:
-            check, cause = 'workset_identity', 'workset_invalid'
-            from .operator_workset import _read, _hash
-            workset = value.get('triage_workset')
-            if (context.get('owner_uid') != owner or not isinstance(workset, dict)
-                    or workset.get('complete') is not True
-                    or type(workset.get('limit')) is not int or workset['limit'] != 2
-                    or not isinstance(workset.get('selected'), list) or len(workset['selected']) > 2):
-                raise ValueError('workset incomplete')
-            roots = [row['thread_key'] for row in workset['selected']]
-            if any(not isinstance(root, str) for root in roots) or len(set(roots)) != len(roots):
-                raise ValueError('workset roots differ')
-            check, cause = 'workset_reservation', 'reservation_mismatch'
-            reserved = _read(directory / 'workset-reserved.json')
-            if (reserved['owner_uid'] != owner or reserved['nonce'] != context['nonce']
-                    or reserved['selected'] != [_hash(root) for root in roots]):
-                raise ValueError('workset reservation differs')
+        failure = _workset_failure(context, value, owner, directory)
+        if failure:
+            check, cause = failure
+            raise ValueError('workset differs')
         if not value['open'] and not value['human_work']:
             decision('ordinary_health_result', 'complete_empty', outcome='accepted', phase='discovery', command='unanswered', method='operator.health.assess')
         elif not value['open'] and value['human_work'] and all(row['assignment']['hold_auto_reply'] is True for row in value['human_work']):
@@ -172,6 +159,69 @@ def assess(context, child, owner):
     except Exception:
         decision(check, cause, phase='discovery', command='unanswered', method='operator.health.assess')
         return 'discovery_evidence_invalid'
+
+
+def _workset_failure(context, value, owner, directory):
+    """The failed check and cause of the triage workset, or None."""
+    if context.get('workset_enabled') is not True:
+        return None
+    failure = 'workset_identity', 'workset_invalid'
+    try:
+        from .operator_workset import _read, _hash
+        workset = value.get('triage_workset')
+        if (context.get('owner_uid') != owner or not isinstance(workset, dict)
+                or workset.get('complete') is not True
+                or type(workset.get('limit')) is not int or workset['limit'] != 2
+                or not isinstance(workset.get('selected'), list) or len(workset['selected']) > 2):
+            return failure
+        roots = [row['thread_key'] for row in workset['selected']]
+        if any(not isinstance(root, str) for root in roots) or len(set(roots)) != len(roots):
+            return failure
+        failure = 'workset_reservation', 'reservation_mismatch'
+        reserved = _read(directory / 'workset-reserved.json')
+        if (reserved['owner_uid'] != owner or reserved['nonce'] != context['nonce']
+                or reserved['selected'] != [_hash(root) for root in roots]):
+            return failure
+    except Exception:
+        return failure
+    return None
+
+
+def read_gap_only(context, owner):
+    """Whether an incomplete read is the only defect of the recorded discovery.
+
+    `assess` returns at the first incomplete read, before its remaining row and
+    workset checks. This applies them to the artifact `assess` has identified,
+    and accepts as unread only a held row whose assignment state is `unknown`.
+    """
+    try:
+        directory = Path(context['directory'])
+        path = directory / 'discovery.json'
+        private(path)
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, 'rb') as stream:
+            value = json.loads(stream.read(LIMIT * 2 + 1))['discovery']
+        incomplete = 0
+        for row in value['human_work']:
+            assignment = row['assignment']
+            unread = assignment.get('state') == 'unknown'
+            if (type(assignment['complete']) is not bool or assignment.get('hold_auto_reply') is not True
+                    or (unread and assignment['complete'] is not False)
+                    or (not unread and assignment.get('state') not in ('needs-assignment', 'assigned', 'conflict'))
+                    or (assignment.get('reason') == 'RFC_ANCESTRY_CONFLICT'
+                        and not _ancestry_conflict(assignment, row.get('thread_key')))):
+                return False
+            if assignment['complete'] is False:
+                incomplete += 1
+                if (not unread and assignment['state'] != 'needs-assignment'
+                        and not _ancestry_conflict(assignment, row.get('thread_key'))):
+                    return False
+        if value['assignment_incomplete'] != bool(incomplete):
+            return False
+        # An unread mailbox leaves no complete workset to check.
+        return value['read_incomplete'] is not None or _workset_failure(context, value, owner, directory) is None
+    except Exception:
+        return False
 
 
 def _read_decision(check, cause, command, tool=None, session=None, **facts):

@@ -105,36 +105,36 @@ else:
     raise AssertionError('stale source accepted')
 from unittest.mock import patch
 with patch('cs.config.load', return_value=object()), patch('cs.observability_producers.emit') as record:
-    diagnostic = delivery.capacity_failure(delivery.CapacityError(49), emit=True)
+    diagnostic = delivery.capacity_failure(delivery.CapacityError(65), emit=True)
     assert record.call_count == 1
     metadata = record.call_args.kwargs
-    assert metadata['causal']['facts'] == {'required': 49, 'available': 48}
+    assert metadata['causal']['facts'] == {'required': 65, 'available': 64}
     assert metadata['error_file'] == 'cs/operator_context_delivery.py'
     assert metadata['method'] == 'operator.discovery.context'
 full_view = b'x' * ((delivery.SLOTS - 1) * delivery.CHARS)
 full_values = delivery.parts(full_view, raw, envelope, 'constructed-session')
-assert len(full_values) == 48
+assert len(full_values) == 64
 assert ''.join(value.split('\n', 1)[1] for value in full_values).encode() == raw + full_view
 assert all(len(value.encode('utf-16-le')) // 2 < 10000 for value in full_values)
 assert delivery.delivered(fixture(full_values), full_view, raw, envelope)
 assert not delivery.delivered(fixture(full_values)[:-2], full_view, raw, envelope)
 try:
-    delivery.parts(b'x' * (48 * delivery.CHARS), raw, envelope, 'constructed-session')
+    delivery.parts(b'x' * (64 * delivery.CHARS), raw, envelope, 'constructed-session')
 except delivery.CapacityError as exc:
-    assert exc.required == 49
+    assert exc.required == 65
     diagnostic = delivery.capacity_failure(exc)
-    assert diagnostic['facts'] == {'required': 49, 'available': 48}
+    assert diagnostic['facts'] == {'required': 65, 'available': 64}
     assert diagnostic['cause'] == 'context_slots_exhausted'
 else:
-    raise AssertionError('49 parts accepted')
+    raise AssertionError('65 parts accepted')
 with tempfile.TemporaryDirectory() as folder:
     settings = json.loads(delivery.overlay(folder, '/usr/bin/python3').read_text())
     assert set(settings) == {'hooks'}
-    assert len(settings['hooks']['PostToolUse'][0]['hooks']) == 48
-    assert len(settings['hooks']['UserPromptSubmit'][0]['hooks']) == 48
+    assert len(settings['hooks']['PostToolUse'][0]['hooks']) == 64
+    assert len(settings['hooks']['UserPromptSubmit'][0]['hooks']) == 64
     import shlex
     commands = settings['hooks']['PostToolUse'][0]['hooks']
-    assert [shlex.split(item['command'])[-1] for item in commands] == [str(index) for index in range(48)]
+    assert [shlex.split(item['command'])[-1] for item in commands] == [str(index) for index in range(64)]
     assert (Path(folder) / 'inventory-context-settings.json').stat().st_mode & 0o777 == 0o600
 print('Constructed multipart UTF-8/order/limits/reserved/partial/session/duplicate/early-effects/additive-overlay PASS')
 
@@ -164,8 +164,8 @@ legacy_capture(json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT']))
 """
 subprocess.run([sys.executable,'-B','-c',cli],check=True)
 path,values=current_snapshot(ctx,'real-process-control')
-assert len(values)==48,len(values)
-assert hook(slot=48)==''
+assert len(values)==64,len(values)
+assert hook(slot=64)==''
 from cs.operator_context_delivery import overlay
 import shlex
 settings=json.loads(overlay(path,sys.executable).read_text())
@@ -205,13 +205,13 @@ from cs.observability import context as diagnostic_context
 path,view,envelope=inventory.load(ctx)
 try:current_snapshot(ctx,'real-process-control')
 except CapacityError as exc:
- assert exc.required==50,exc.required
+ assert exc.required==66,exc.required
  assert exc.path==path and exc.snapshot_digest==__import__('hashlib').sha256(inventory.read_private(path/'inventory-view-envelope.json')+view).hexdigest()
 else:raise AssertionError('overflow accepted')
 assert hook(slot=47)==''
 notice_output=hook()
 notice=json.loads(json.loads(notice_output)['hookSpecificOutput']['additionalContext'])
-assert notice['notice']=='context_slots_exhausted' and notice['required']==50 and notice['available']==48
+assert notice['notice']=='context_slots_exhausted' and notice['required']==66 and notice['available']==64
 assert notice['run_id']=='1'*32 and notice['attempt_id']=='2'*32
 assert notice['directory']==str(path)
 assert (notice['event_id'] is None) == (os.environ.get('OVERFLOW_SINK_FAILURE')=='1')
@@ -227,7 +227,7 @@ events=[{'type':'system','subtype':'init','session_id':'real-process-control'},
 with causal.scope(), diagnostic_context({'run_id':'1'*32,'attempt_id':'2'*32}):
  assert inspection_failure(events,ctx,phases)=='discovery_inspection_incomplete'
  selected=causal.selected()
- assert selected['cause']=='context_slots_exhausted' and selected['facts']=={'required':50,'available':48}
+ assert selected['cause']=='context_slots_exhausted' and selected['facts']=={'required':66,'available':64}
  assert selected['refs']['run_id']=='1'*32 and selected['refs']['attempt_id']=='2'*32
 for key in ('nonce','owner_uid'):
  with causal.scope():
@@ -252,7 +252,7 @@ with causal.scope():
  assert causal.selected()['cause']=='discovery_inspection_incomplete'
 assert hook()==''
 (path/'inventory-view-envelope.json').write_bytes(original)
-print('Real ancestry overflow50/48: bounded notice once, no delivery markers, current-run causal counts, foreign/stale refusal, complete literal paging PASS')
+print('Real ancestry overflow66/64: bounded notice once, no delivery markers, current-run causal counts, foreign/stale refusal, complete literal paging PASS')
 '''
 overflow_worker = worker[:worker.index("path,values=current_snapshot")] + capacity_checks
 overflow_worker = overflow_worker.replace('(SLOTS-2)*CHARS+4000', 'SLOTS*CHARS+4000')
@@ -284,7 +284,7 @@ for sink_failure in (False, True):
             capacity = [row for row in rows if row.get('causal', {}).get('cause') == 'context_slots_exhausted']
             assert len(capacity) == 1, rows
             value = capacity[0]['causal']
-            assert value['facts'] == {'required': 50, 'available': 48}
+            assert value['facts'] == {'required': 66, 'available': 64}
             assert value['refs']['run_id'] == '1'*32 and value['refs']['attempt_id'] == '2'*32
             target = owner_root(Path(folder)/'.overflow-cs', 'constructed-owner')
             cfg = MonitorConfig(mode='filesystem', monitor_id='a'*32, owner_uid='constructed-owner',
@@ -307,9 +307,9 @@ source = ast.parse((Path(__file__).with_name('test_operator_health.py')).read_te
 native = ast.literal_eval(next(node.value for node in source.body
     if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'FAKE' for target in node.targets)))
 native = native.replace("observe(Settings(engine_owner_uid='owner'),'review',{'drafts':[]})", "from cs.draft_state import inventory_proof\nreview={'drafts':[],'gmail_drafts':[],'engine_drafts':[],'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,'expected_uids':[],'observed_uids':[],'uidvalidity':'1'}}\nreview['drafts_inventory']=inventory_proof([],[],[],review['gmail_drafts_observation'])\nobserve(Settings(engine_owner_uid='owner'),'review',review)")
-native = native.replace("args=argparse.Namespace", "value['note']='x'*388000\nargs=argparse.Namespace")
+native = native.replace("args=argparse.Namespace", "value['note']='x'*516000\nargs=argparse.Namespace")
 native = native.replace("    clipped=case in (", "    clipped=True or case in (")
-native = native.replace("    if clipped and case!='large_unread':", "    if False:")
+native = native.replace("    if clipped and case not in ('large_unread','technical_unread'):", "    if False:")
 native = native.replace("    case=os.environ.get('HEALTH_CASE')", "    print(json.dumps({'type':'system','subtype':'init','session_id':'supervisor-capacity'}))\n    case=os.environ.get('HEALTH_CASE')")
 native = native.replace("{'type':'assistant'", "{'session_id':'supervisor-capacity','type':'assistant'")
 native = native.replace("{'type':'user'", "{'session_id':'supervisor-capacity','type':'user'")
@@ -332,12 +332,12 @@ with tempfile.TemporaryDirectory() as folder:
         if retained := os.environ.get('OVERFLOW_EVIDENCE_DIR'):
             (Path(retained)/'supervisor-capacity-notice.json').write_text(json.dumps(recorded[-1], indent=2))
         assert recorded[-1]['causal']['cause'] == 'context_slots_exhausted', recorded[-1]
-        assert recorded[-1]['causal']['facts']['required'] > 48
-        assert recorded[-1]['causal']['facts']['available'] == 48
+        assert recorded[-1]['causal']['facts']['required'] > 64
+        assert recorded[-1]['causal']['facts']['available'] == 64
         assert recorded[-1]['causal']['refs']['run_id']
         assert recorded[-1]['causal']['refs']['attempt_id']
         rendered = recovery.operator_notices.render(settings, recorded[-1])[1]
-        assert 'context_slots_exhausted' in rendered and 'required' in rendered and '48' in rendered
+        assert 'context_slots_exhausted' in rendered and 'required' in rendered and '64' in rendered
         assert recorded[-1]['causal']['refs']['run_id'] in rendered
         assert recorded[-1]['causal']['refs']['cause_event_id'] in rendered
         subject, plain, rich = recovery.operator_notices.render(settings, recorded[-1])

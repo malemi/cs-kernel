@@ -58,6 +58,7 @@ class Attempt:
     stderr_present: bool = False
     timed_out: bool = False
     health_failure: str = ""
+    read_gap_completed: bool = False
     native_producer: dict[str, Any] | None = None
     ordinary_native: bool = False
     health_context: dict[str, Any] | None = None
@@ -821,14 +822,24 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
         attempt.health_failure = attempt.health_failure or operator_health.assess(
             health_context, child_identity, settings.engine_owner_uid)
         _, phase_results = _phase_receipts(attempt.events)
-        if not attempt.health_failure:
-            attempt.health_failure = operator_health.inspection_failure(
+        # An incomplete read keeps its verdict. The checks it used to end are
+        # still applied when it is the discovery's only defect, and they decide
+        # whether the run counts as completed.
+        gap = (attempt.health_failure in INCOMPLETE_READS
+               and operator_health.read_gap_only(health_context, settings.engine_owner_uid))
+        later = ""
+        if not attempt.health_failure or gap:
+            later = operator_health.inspection_failure(
                 attempt.events, health_context, phase_results, settings.founder_sweep_enabled)
         if operator_health.native_read_failed(attempt.events, attempt.business_read_proofs,
-                discovery_proven=not operator_health.assess(health_context, child_identity, settings.engine_owner_uid)) or any(
+                discovery_proven=gap or not operator_health.assess(health_context, child_identity, settings.engine_owner_uid)) or any(
                 row.get("is_error") is True and row.get("phase") != "discovery"
                 for row in phase_results):
-            attempt.health_failure = attempt.health_failure or "execution_read_failed"
+            later = later or "execution_read_failed"
+        if gap and later:
+            print(f"operator: incomplete read ({attempt.health_failure}) and a further failed check ({later})", flush=True)
+        attempt.read_gap_completed = gap and not later
+        attempt.health_failure = attempt.health_failure or later
         if attempt.health_failure:
             with diagnostic_context(json.loads(env['CS_DIAGNOSTIC_CONTEXT'])):
                 cause_event = diagnostic_emit(settings, 'context', 'failed', reason='incomplete-input', complete=False, method='operator.health.'+attempt.health_failure, **({'causal': causal.selected()} if causal.selected() else {}))
@@ -1252,6 +1263,20 @@ def _check_executor_resolution(job,resolution):
             raise ValueError('fallback_metadata_retention_differs')
 
 
+# A run that reached its end while a mailbox or the assignment state could not be
+# read completely, and that passed every other health check, did its work on
+# what it could read. Its verdict stays in the owner notice; its exit code is
+# the one of a completed run.
+INCOMPLETE_READS = frozenset({'mailbox_read_incomplete', 'assignment_read_incomplete'})
+
+
+def _health_exit(attempt: Attempt, recorded: bool) -> int:
+    if attempt.health_failure in INCOMPLETE_READS and attempt.read_gap_completed and recorded:
+        print(f"operator: run completed with an incomplete read ({attempt.health_failure})", flush=True)
+        return 0
+    return 1
+
+
 def _executor_fallback_admission(primary):
     from .operator_executor_evidence import validate
     if (primary.executor_proof is None or primary.malformed or primary.overflow
@@ -1408,9 +1433,9 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
     if _successful(primary):
         causal.select(primary)
         if primary.health_failure:
-            _notice(settings, state, "stopped", reason=primary.health_failure,
-                    diagnostic=diagnostics.stopped(primary.health_failure, {"provider": "Engine"}, ctx))
-            return 1
+            recorded = _notice(settings, state, "stopped", reason=primary.health_failure,
+                               diagnostic=diagnostics.stopped(primary.health_failure, {"provider": "Engine"}, ctx))
+            return _health_exit(primary, recorded)
         delivered = _notice(settings, state, "primary", _effective_models(primary),
                             diagnostic={**primary_identity, 'context': ctx})
         if delivered:
@@ -1476,9 +1501,9 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
     causal.select(fallback)
     if _successful(fallback):
         if fallback.health_failure:
-            _notice(settings, state, "stopped", reason=fallback.health_failure,
-                    diagnostic=diagnostics.stopped(fallback.health_failure, {"provider": "Engine"}, ctx))
-            return 1
+            recorded = _notice(settings, state, "stopped", reason=fallback.health_failure,
+                               diagnostic=diagnostics.stopped(fallback.health_failure, {"provider": "Engine"}, ctx))
+            return _health_exit(fallback, recorded)
         used_model = _effective_models(fallback)
         if not used_model:
             causal.decision('fallback_model_report', 'model_unreported', layer='configuration', method='operator.tick')

@@ -14,8 +14,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.0`; Current HEAD status: untagged.**
-  The tag adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
+- **Latest release tag: `v0.73.1`; Current HEAD status: tagged as `v0.73.1`.**
+  The tag makes a completed run with an incomplete mailbox or assignment read
+  exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
   unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
@@ -87,18 +88,22 @@ candidate does not re-audit those deployments or grant new send authority.
   reason `[Auto-Mode Bypass]` after a `permission_check_status` cycle
   (`cs/operator_native_composition.py`). A completed tick with any other
   classifier denial is recorded `stopped||no_result` and exits 1.
-- Café 124's inventory view needs 53 context slots and the run hook grants 48
-  (`context_slots_exhausted`, 2026-11-15): in two ticks the agent stopped before
-  reading it and prepared nothing.
-- A tick that completes while discovery reports an incomplete assignment read
-  is recorded `stopped||assignment_read_incomplete` and exits 1
-  (`cs/operator_health.py`). Every MrCall tick does, for its unreadable second
-  account, and Café 124's second verification tick did.
-- The `v0.73.0` changelog entry is wrong in two sentences. The kernel appends
-  `--max-budget-usd` whenever `CS_PRIMARY_BUDGET_USD` is set
+- The run hook delivers the inventory view in at most 64 context slots
+  (`cs/operator_context_delivery.py`). Café 124's view needed 52 to 53 on
+  2026-11-15 (about 405,000 bytes); with 48 slots three ticks stopped before
+  reading it and prepared nothing. A view above 64 slots stops the run the same
+  way: the agent does not page it literally.
+- A tick that completes while discovery reports an incomplete mailbox or
+  assignment read is recorded `stopped||<cause>`. It exits 0 when that read is
+  its only defect and 1 when a further health check fails
+  (`cs/operator_recovery.py`, `_health_exit`; `cs/operator_health.py`,
+  `read_gap_only`). In both cases the owner notice names only the incomplete
+  read; the further failed check is in the tick log. Every MrCall tick carries
+  `assignment_read_incomplete`, for one thread of its unreadable second account.
+- No test drives the fallback route with an incomplete-read verdict.
+- The kernel appends `--max-budget-usd` whenever `CS_PRIMARY_BUDGET_USD` is set
   (`cs/operator_recovery.py`, `_run`), so a launcher that also passes the flag
-  passes it twice. No clone launcher passes the flag: the MrCall launcher's
-  budget shim is removed and the cap of both clones comes from the kernel.
+  passes it twice. No clone launcher passes the flag.
 - No test covers the refusal of an unusable `CS_PRIMARY_BUDGET_USD` in
   `_run_tick`; the tests of the variable call `_run`.
 - The kernel records no command line of a scheduled run. The cap of the
@@ -106,7 +111,7 @@ candidate does not re-audit those deployments or grant new send authority.
   124's two ticks on `v0.73.0` were started by hand with the cron line's
   command.
 - Commits `12d7264` and `18da6e7`, the `v0.72.0` release commits and the whole
-  of `v0.73.0` have no independent review.
+  of `v0.73.0` and `v0.73.1` have no independent review.
   The scheduled-surface hash ledger of this release is `PENDING_FRESH_REVIEW`.
 - The pinned external R7 checker accepts only disabled/5m and hardcodes60USD.
   It cannot accept the reviewed1h/95USD correction through a new artifact index.

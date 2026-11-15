@@ -1,5 +1,51 @@
 # Changelog — cs-kernel
 
+## v0.73.1 — 2026-11-15 (PATCH, private unpublished candidate)
+
+A scheduled run that reaches its end with an incomplete mailbox or assignment
+read as its only defect exits 0.
+
+The supervisor (`cs.operator_recovery`) records the verdict of such a run as
+before: the owner notice carries `stopped/mailbox_read_incomplete` or
+`stopped/assignment_read_incomplete`, and the route state keeps the same
+signature. The run worked the threads it could read, so its process exit is the
+one of a completed run and the launcher's `tick end` line reports `exit 0`. The
+log carries `operator: run completed with an incomplete read (<cause>)`.
+
+The exit is 0 only when every other health check passes. An incomplete read
+ends `operator_health.assess` early; `operator_health.read_gap_only` applies the
+remaining row and workset checks to the same discovery artifact and accepts as
+unread only a held row whose assignment state is `unknown`. The inspection of
+the discovery, the required phases and the failed reads and operations of the
+run are then checked as for a healthy discovery. A run that fails one of them
+keeps the incomplete-read verdict, exits 1 and logs `operator: incomplete read
+(<cause>) and a further failed check (<check>)`. The exit also stays 1 when the
+notice cannot be recorded and for every other health verdict.
+
+The automatic delivery of the inventory view to the scheduled run grows from
+48 to 64 context slots (`cs/operator_context_delivery.py`, `SLOTS`), about
+512,000 characters. A view that needs more keeps the existing behaviour: one
+`context_slots_exhausted` notice, and the run stops before any effect unless it
+pages the view literally.
+
+Two sentences of the `v0.73.0` entry are wrong and are corrected here. The
+supervisor appends `--max-budget-usd` whenever `CS_PRIMARY_BUDGET_USD` is set,
+so a launcher that also passes the flag passes it twice. No maintained clone's
+launcher passes the flag: the cap of both clones comes from the variable.
+
+No template, schema or dependency change.
+
+Migration: `cs update --pin v0.73.1`, `uv pip install -r requirements.txt`.
+
+**Re-collaudo tier: live read-only on BOTH maintained clones**, with one
+scheduled tick observed on the clone whose discovery reports an incomplete
+assignment read and one on the clone whose inventory view needs more than 48
+slots. Below FULL because the release changes one return value of the
+supervisor after the run has ended and its notice is recorded, and the number
+of parts in which an unchanged inventory view reaches the run: no command,
+prompt, permission rule, send path, verdict or notice text changes. This is a
+private prepublication candidate; no public push is part of this release.
+
 ## v0.73.0 — 2026-11-15 (MINOR, private unpublished candidate)
 
 Add a per-run spending cap for the scheduled Claude run.
