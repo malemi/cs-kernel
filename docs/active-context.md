@@ -65,6 +65,17 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
+- Open defects of `v0.72.0`, found by its review. A draft preparation refused
+  before generation records the diagnostic event `generation failed`, not
+  `held`, and its source decision replaces the caller's selected cause;
+  `tests/test_draft_source_logging.py` holds both, as one failing assertion and
+  one expected failure, so gate 66 is red. `campaigns/*/flagged` is one of the
+  sixteen list paths without an element shape and `cs/review.py` fills it when a
+  campaign contact's dossier is escalated: that tick's discovery publication
+  fails. Gate 59 fails in a fresh environment on `v0.71.0` as well.
+- Commits `12d7264` and `18da6e7` and the release commits were made while the
+  four-lens review of the branch was running; they have no review of their own.
+  The scheduled-surface hash ledger of this release is `PENDING_FRESH_REVIEW`.
 - The pinned external R7 checker accepts only disabled/5m and hardcodes60USD.
   It cannot accept the reviewed1h/95USD correction through a new artifact index.
   Free private release/adoption may proceed; the new paid cohort is held until
