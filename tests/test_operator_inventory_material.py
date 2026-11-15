@@ -4,8 +4,82 @@ import json
 import unittest
 from cs import operator_inventory_material as material
 
+# A non-empty value at any of these list paths fails discovery publication until
+# its element shape is declared.
+LIST_PATHS_WITHOUT_ELEMENT_SHAPE = frozenset({
+    'workset-review.json:/payload/assignment_audit',
+    'workset-review.json:/payload/assignment_coverage/roots/*/projection/covered_inbound',
+    'workset-review.json:/payload/assignment_coverage/roots/*/projection/covered_message_ids',
+    'workset-review.json:/payload/assignment_coverage/roots/*/projection/current_inbound',
+    'workset-review.json:/payload/assignment_coverage/roots/*/projection/events',
+    'workset-review.json:/payload/assignments',
+    'workset-review.json:/payload/campaigns/*/flagged',
+    'workset-review.json:/payload/engine_drafts/*/attachment_paths',
+    'workset-review.json:/payload/engine_drafts/*/bcc_addresses',
+    'workset-review.json:/payload/human_work/*/assignment/covered_inbound',
+    'workset-review.json:/payload/human_work/*/assignment/covered_message_ids',
+    'workset-review.json:/payload/human_work/*/assignment/current_inbound',
+    'workset-review.json:/payload/human_work/*/assignment/events',
+    'workset-review.json:/payload/tasks/*/sources/calendar_events',
+    'workset-tasks.json:/payload/*/sources/calendar_events',
+    'workset-tasks.json:/payload/tasks/*/sources/calendar_events',
+})
+
 
 class MaterialTests(unittest.TestCase):
+    def test_every_list_path_declares_its_element_shape(self):
+        undeclared = {path for path, (types, _) in material.SCHEMA.items()
+                      if 'list' in types and path + '/*' not in material.SCHEMA}
+        self.assertEqual(undeclared, LIST_PATHS_WITHOUT_ELEMENT_SHAPE)
+        for path in sorted(LIST_PATHS_WITHOUT_ELEMENT_SHAPE):
+            with self.subTest(path=path):
+                material.validate([], path)
+                with self.assertRaises(material.MaterialValidationError) as failure:
+                    material.validate(['element'], path)
+                self.assertEqual(failure.exception.cause, 'material_type_invalid')
+
+    def test_unreadable_mailbox_gaps_on_ready_drafts_are_valid_review_material(self):
+        # The real producer: one declared mailbox fails authentication, so
+        # draft_state.reconcile qualifies every `ready` row with that mailbox's
+        # description, and the review material carries those strings.
+        from datetime import datetime, timedelta, timezone
+        from email.utils import format_datetime
+        from unittest.mock import patch
+        from cs import draft_state, mailboxes
+        from cs.config import Settings
+        gap = mailboxes.Unreadable(account='declared', address='colleague@example.com',
+                                   reason="IMAP: b'[AUTHENTICATIONFAILED] Invalid credentials (Failure)'")
+        def bulk(unreadable, skipped, notes):
+            def read(settings, addrs, since):
+                unreadable.setdefault(gap.address, gap.describe())
+                return {}, {}
+            return read
+        selected = Settings(_env_file=None)
+        selected.email_address = 'support@example.com'
+        selected.email_password = 'pw'
+        now = datetime.now(timezone.utc)
+        drafts = [{'uid': '9', 'uidvalidity': '5', 'to': 'customer@example.com', 'subject': 're: your request',
+                   'date': format_datetime(now - timedelta(days=1)), 'body': 'short',
+                   'thread_key': '', 'message_id': '<m@example.com>'}]
+        with patch.object(draft_state, '_bulk_across', bulk):
+            rows, _ = draft_state.reconcile(selected, drafts, [],
+                                            settled=lambda settings, keys: ({}, None),
+                                            delivered=lambda settings, addr, body: (None, None), now=now)
+        self.assertEqual([row['verdict'] for row in rows], ['ready'])
+        self.assertEqual(rows[0]['evidence_incomplete'], [gap.describe()])
+        # `cs review --json` serializes with default=str (cs.cli._print_json).
+        rows = json.loads(json.dumps(rows, ensure_ascii=False, default=str))
+        value = {'digest': 'x', 'nonce': 'n', 'owner_uid': 'o', 'source': 'review',
+                 'payload': {'drafts': rows}}
+        material.validate(value, 'workset-review.json:')
+        material.validate({**value, 'payload': {'drafts': [{**rows[0], 'evidence_incomplete': []}]}},
+                          'workset-review.json:')
+        for bad in ([None], [1], [{'mailbox': gap.address}], [[gap.describe()]]):
+            with self.subTest(bad=bad), self.assertRaises(material.MaterialValidationError) as failure:
+                material.validate({**value, 'payload': {'drafts': [{**rows[0], 'evidence_incomplete': bad}]}},
+                                  'workset-review.json:')
+            self.assertEqual(failure.exception.cause, 'material_type_invalid')
+
     def test_strict_json(self):
         for raw in ('{"x":1,"x":2}', '[NaN]', '[Infinity]'):
             with self.assertRaises(ValueError):material.parse(raw)

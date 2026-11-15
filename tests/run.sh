@@ -1438,6 +1438,14 @@ if "$VENV/bin/python" "$ROOT/tests/test_stripe_cli.py"; then echo "OK"; else ech
 step "65. bounded ordinary mail worksets preserve scope, fairness, complete inventory and private state"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_workset.py" && "$VENV/bin/python" "$ROOT/tests/test_operator_workset_cli.py" && "$VENV/bin/python" "$ROOT/tests/test_review_inventory.py"; then echo "OK"; else echo "FAIL: ordinary workset scheduling, inventory coverage or CLI scope enforcement regressed"; FAIL=1; fi
 
+step "65b. discovery publication material declares every list element it can carry"
+# A list path in the material schema without an element row rejects any
+# non-empty value and fails the whole scheduled discovery publication. The
+# unreadable-mailbox gaps on `ready` draft rows are one such designed state;
+# the structural case names every list path whose element shape is still
+# undeclared, so a new one cannot appear without a decision.
+if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p test_operator_inventory_material.py; then echo "OK"; else echo "FAIL: discovery publication material schema rejects a designed review state"; FAIL=1; fi
+
 step "66. ordinary diagnostic persistence, request traces and independent monitoring stay bounded and owner-scoped"
 if "$VENV/bin/python" "$ROOT/tests/test_draft_source_logging.py"; then echo "OK"; else echo "FAIL: exact draft-source diagnostic logging regressed"; FAIL=1; fi
 if "$VENV/bin/python" -m unittest discover -s "$ROOT/tests" -p 'test_observability*.py'; then echo "OK"; else echo "FAIL: diagnostic persistence, lifecycle evidence or retention regressed"; FAIL=1; fi

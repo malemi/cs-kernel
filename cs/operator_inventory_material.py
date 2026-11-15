@@ -99,6 +99,7 @@ SCHEMA_ROWS = [
     ('workset-review.json:/payload/drafts/*/engine_id', 'NoneType,str', ''),
     ('workset-review.json:/payload/drafts/*/engine_owner_uid', 'NoneType,str', ''),
     ('workset-review.json:/payload/drafts/*/evidence_incomplete', 'list', ''),
+    ('workset-review.json:/payload/drafts/*/evidence_incomplete/*', 'str', ''),
     ('workset-review.json:/payload/drafts/*/gmail_body_complete', 'bool', ''),
     ('workset-review.json:/payload/drafts/*/gmail_body_observed', 'bool', ''),
     ('workset-review.json:/payload/drafts/*/gmail_fingerprint', 'NoneType,str', ''),
