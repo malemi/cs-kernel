@@ -83,8 +83,6 @@ class SourceLogging(unittest.TestCase):
             rc = cli.main(['draft-reply', 'Answer', '--thread-id', ROOT, '--timeout', '10'])
         return rc, calls, stderr.getvalue()
 
-    # Expected failure: the preparation reuses the caller's causal scope, so its source decision replaces the caller's selected cause.
-    @unittest.expectedFailure
     def test_real_preparation_cli_collector_corpus(self):
         retained = os.environ.get('DRAFT_SOURCE_EVIDENCE_DIR')
         manager = contextlib.nullcontext(retained) if retained else tempfile.TemporaryDirectory()

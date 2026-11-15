@@ -773,6 +773,39 @@ with tempfile.TemporaryDirectory() as temporary:
             else:
                 assert pins.call_count == 0 and attempt.native_producer is None
                 assert attempt.result == events[-1]
+    for raw, expected in [('4', '4.00'), ('2.5', '2.50'), ('', None), ('0', ValueError), ('nan', ValueError), ('four', ValueError), ('fallback', '1.50')]:
+        events = constructed('foreground')
+        events[0]['claude_code_version'] = binary.name
+        driver = 'import json\nfor event in json.loads(' + repr(json.dumps(events)) + '): print(json.dumps(event),flush=True)\n'
+        commands = []
+        def capped_child(cmd, **kwargs):
+            commands.append(cmd.copy())
+            kwargs['env'] = dict(kwargs['env'], PYTHONHOME=sys.base_prefix)
+            return actual_popen([cmd[0], '-c', driver], **kwargs)
+        with patch.object(operator_recovery.subprocess, 'Popen', side_effect=capped_child), \
+             patch.object(operator_recovery.config, 'load', return_value=settings), \
+             patch.object(operator_health, 'assess', return_value=''), \
+             patch.object(operator_health, 'inspection_failure', return_value=''), \
+             patch.dict(os.environ, {'CS_OPERATOR_ACCEPTANCE_RECEIPT':'', 'HOME':str(root), 'CS_OPERATOR_NATIVE_BINARY':'',
+                        'CS_PRIMARY_BUDGET_USD':'9' if raw == 'fallback' else raw}):
+            if expected is ValueError:
+                runs_before = len(list((settings.state_dir / 'operator-runs').glob('run-*')))
+                try:
+                    operator_recovery._run(str(binary), ['Write'], prompt='/cs-signup')
+                except ValueError as refused:
+                    assert 'CS_PRIMARY_BUDGET_USD' in str(refused) and not commands
+                    assert len(list((settings.state_dir / 'operator-runs').glob('run-*'))) == runs_before
+                else:
+                    raise AssertionError('an unusable primary budget ran: ' + raw)
+                continue
+            fallback = dict(model='provider/model', budget=1.5, key='offline-key') if raw == 'fallback' else {}
+            attempt = operator_recovery._run(str(binary), ['Write'], prompt='/cs-signup', **fallback)
+            assert attempt.result == events[-1]
+            cmd = commands[0]
+            assert cmd.count('--max-budget-usd') == (0 if expected is None else 1), cmd
+            if expected is not None:
+                assert cmd[cmd.index('--max-budget-usd') + 1] == expected, cmd
+    print('PASS: CS_PRIMARY_BUDGET_USD caps the primary Claude run once; unset leaves the command unchanged; unusable refuses before launch; the fallback keeps its own cap')
 print('PASS: ordinary metadata uses exact v2 terminal; real local ELF prelaunch/child pin, custom prompt compatibility. Constructed events, no native/provider acceptance.')
 
 from jinja2 import Environment, FileSystemLoader

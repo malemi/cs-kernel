@@ -491,6 +491,14 @@ That route requires dedicated API, pricing and admission configuration; a Claude
 subscription login is not an API credential. Follow the [runtime contract](docs/operator-runtime.md#pydantic-executor-authority-and-evidence)
 and the recorded adoption gates before changing a schedule.
 
+The cron line can load one file for the scheduled host before the wrapper runs
+(`BASH_ENV=~/.<slug>-cs/operator-executor.env`). That file selects the executor
+and the model, and holds the credential of the scheduled Claude run
+(`ANTHROPIC_API_KEY`) with its spending cap per run in USD
+(`CS_PRIMARY_BUDGET_USD`, passed to Claude Code as `--max-budget-usd`). Without
+a key there the run uses the host's Claude Code login. `~/.<slug>-cs/.env` holds
+the kernel's own credentials; the scheduled Claude run does not read it.
+
 #### Try one tick by hand
 
 ```bash

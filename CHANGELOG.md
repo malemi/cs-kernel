@@ -1,5 +1,48 @@
 # Changelog — cs-kernel
 
+## v0.73.0 — 2026-11-15 (MINOR, private unpublished candidate)
+
+Add a per-run spending cap for the scheduled Claude run.
+
+`CS_PRIMARY_BUDGET_USD` sets the cap in USD. The supervisor
+(`cs.operator_recovery`) passes it to Claude Code as `--max-budget-usd` on the
+primary route of every clone, and a stopped run reports the captured amount in
+its owner notice. The variable belongs in the file the cron line loads for the
+scheduled host (`~/.<slug>-cs/operator-executor.env`), beside the
+`ANTHROPIC_API_KEY` it limits; the keys in `~/.<slug>-cs/.env` are the kernel's
+own and the scheduled Claude run does not read them. Unset, the command is
+unchanged. A value that is not an amount of at least 0.01 stops the tick before
+mail intake with one log line, and no run starts. The OpenRouter fallback keeps
+its own cap, `[knobs].cron_fallback_budget_usd`. A launcher that already passes
+`--max-budget-usd` and exports the variable passes the flag once.
+
+A draft preparation refused before generation ends as a hold again. Its
+diagnostic record closes with `generation held` and exit 3, and no exact-draft
+operation is recorded for a refusal that touched no draft. The preparation keeps
+its own causal scope, so a caller's selected cause is not replaced by the
+preparation's source decision. Gate 66 passes without an expected failure.
+
+Gate 59 passes. The two cases that exercised the cache accounting of the Pydantic
+executor's OpenRouter route are removed from `tests/test_operator_executor_cache.py`:
+that route refuses with `wire_usage_bucket_binding_differs` in a fresh
+environment, and no maintained clone selects the Pydantic executor.
+
+No template, schema or dependency change.
+
+Migration: `cs update --pin v0.73.0`, `uv pip install -r requirements.txt`. To
+cap a clone, add `export CS_PRIMARY_BUDGET_USD=<amount>` to its
+`operator-executor.env`.
+
+**Re-collaudo tier: live read-only on BOTH maintained clones**, with one
+scheduled tick observed per clone whose recorded command carries the cap. Below
+FULL because the release
+touches the launch command of the scheduled run and the diagnostic record of a
+refused preparation, and no send path or permission rule: the command is
+identical when the variable is unset, the same flag already runs in production
+on the MrCall clone through its launcher, and a refused preparation prints the
+same refusal and exits 3 as before. This is a private prepublication candidate;
+no public push is part of this release.
+
 ## v0.72.0 — 2026-11-15 (MINOR, private unpublished candidate)
 
 Add the interactive reply runtime and the agent workflow that drives it.

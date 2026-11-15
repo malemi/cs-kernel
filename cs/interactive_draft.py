@@ -33,7 +33,7 @@ def _preparation_scope(function):
     def wrapped(*args, **kwargs):
         token = _SOURCE.set({})
         try:
-            with causal.scope() if causal._STATE.get() is None else contextlib.nullcontext():
+            with causal.scope():
                 return function(*args, **kwargs)
         finally:
             _SOURCE.reset(token)
@@ -289,9 +289,10 @@ def prepare(settings, args):
     before = None
     verified = None
     policy = None
-    def report(value):
-        from .observability_operations import record
-        record(settings, value, command="draft-reply", root=args.thread_id)
+    def report(value, *, operation=True):
+        if operation:
+            from .observability_operations import record
+            record(settings, value, command="draft-reply", root=args.thread_id)
         if value.get("ok") and verified is not None:
             prepared = _source_decision("draft_preparation", "review_prepared", outcome="accepted", generation_started=True)
             emit(settings, "generation", "result", reason="none", effect_certainty="unknown",
@@ -379,4 +380,6 @@ def prepare(settings, args):
                 pass
         detail = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__
         print(f"Draft review incomplete: {detail}" + ("" if generated else "; nothing generated"), file=sys.stderr)
-        return report(partial("publication-or-generation-incomplete"))
+        # A refusal before generation touched no draft: it is a hold of this
+        # preparation, not the outcome of an exact draft operation.
+        return report(partial("publication-or-generation-incomplete"), operation=generated or draft is not None)

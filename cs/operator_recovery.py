@@ -619,6 +619,25 @@ def _run_executor(denies, *, prompt, allows, model="", budget=0, key="", fallbac
     return attempt
 
 
+def _primary_budget(env) -> float | None:
+    """The owner's per-run spending cap for the primary Claude route, if one is set.
+
+    ``CS_PRIMARY_BUDGET_USD`` belongs in the file the cron line loads for the
+    scheduled host, beside the credential it limits. An unusable value stops
+    the run: an uncapped run is never the reading of a cap that was asked for.
+    """
+    raw = (env.get("CS_PRIMARY_BUDGET_USD") or "").strip()
+    if not raw:
+        return None
+    try:
+        budget = float(raw)
+    except ValueError:
+        budget = math.nan
+    if not math.isfinite(budget) or budget < 0.01:
+        raise ValueError("CS_PRIMARY_BUDGET_USD must be an amount of at least 0.01")
+    return budget
+
+
 @causal.attempt_scope
 def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
          allows: list[str] | None = None, model: str = "",
@@ -633,6 +652,7 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
     cmd = [claude_bin, "-p", prompt, "--verbose", "--output-format",
            "stream-json"]
     env = os.environ.copy()
+    primary_budget = None if key else _primary_budget(env)
     from . import operator_discovery_receipt
     ordinary_native = prompt.split(maxsplit=1)[0:1] == ["/cs-operator"]
     if ordinary_native:
@@ -681,6 +701,8 @@ def _run(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator",
         for name in ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CODE_USE_VERTEX",
                      "CLAUDE_CODE_USE_FOUNDRY"):
             env.pop(name, None)
+    elif primary_budget is not None:
+        cmd.extend(["--max-budget-usd", format(primary_budget, ".2f")])
     if allows:
         cmd.extend(["--allowedTools", *allows])
     # Scheduled mail has a symbolic shared workset. Native evidence agents
@@ -1330,6 +1352,13 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
         _notice(settings, state, "stopped", reason="mode_mismatch",
                 diagnostic=diagnostics.stopped('mode_mismatch', {}, ctx, no_work_proven=True))
         return 1
+    primary_budget = None
+    if executor == "claude":
+        try:
+            primary_budget = _primary_budget(os.environ)
+        except ValueError as exc:
+            print(f"operator: {exc}", flush=True)
+            return 1
     if settings.pause_path.exists():
         causal.decision('pause_state', 'paused', layer='configuration', outcome='held', method='operator.tick')
         print("operator: paused before mail intake", flush=True)
@@ -1395,7 +1424,8 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
         primary_key = os.environ.get(source, '')
         if primary_key:
             primary_identity.update(_backup_identity(_openrouter_identity(primary_key)))
-    primary_diagnostic = diagnostics.describe(primary, primary_identity, ctx, no_work_proven=prework)
+    primary_diagnostic = diagnostics.describe(primary, primary_identity, ctx, no_work_proven=prework,
+                                              budget=primary_budget)
     if not prework:
         causal.select(primary)
         _notice(settings, state, "stopped", reason=primary_diagnostic['cause'],

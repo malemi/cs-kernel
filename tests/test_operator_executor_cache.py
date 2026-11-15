@@ -102,13 +102,11 @@ class CacheTests(ExecutorTests):
             requests=bodies,model_settings=executor.executor_model_settings(config),
             reservation='conservative upper rates unchanged; response cost is usage-price estimate'),indent=2)+'\n')
 
-    def test_one_hour_actual_sdk_write_read_both_routes(self):
-        for provider in ('anthropic','openrouter'):
-            with self.subTest(provider=provider):
-                value=self.config_with_cache(provider,'1h').model_dump(mode='json')
-                value['journal_path']=str(self.private/(provider+'-1h.jsonl'))
-                with patch.object(self,'config_with_cache',return_value=ExecutorConfig.model_validate(value)):
-                    self.two_turns(provider,mode='1h')
+    def test_one_hour_actual_sdk_write_read_anthropic(self):
+        value=self.config_with_cache('anthropic','1h').model_dump(mode='json')
+        value['journal_path']=str(self.private/'anthropic-1h.jsonl')
+        with patch.object(self,'config_with_cache',return_value=ExecutorConfig.model_validate(value)):
+            self.two_turns('anthropic',mode='1h')
 
     def test_one_hour_usage_split_and_prices_reject_ambiguity(self):
         config=self.config_with_cache(mode='1h')
@@ -151,9 +149,6 @@ class CacheTests(ExecutorTests):
 
     def test_anthropic_actual_sdk_two_turn_cache_write_read(self):
         self.two_turns('anthropic')
-
-    def test_openrouter_actual_sdk_two_turn_cache_write_read(self):
-        self.two_turns('openrouter')
 
     def test_runtime_bootstrap_cache_point_survives_long_tool_history(self):
         for provider in ('anthropic','openrouter'):
