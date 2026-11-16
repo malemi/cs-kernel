@@ -12,7 +12,8 @@ view of about 405,000 bytes take about 11 seconds; 48 take about 8. With the
 10-second limit the client cancelled part of them, the supervisor's stream
 check refused the cancelled hook responses and the run was recorded
 `stopped||no_result` with part of the view undelivered. `v0.73.1` raised the
-slot count without the time its hooks need and is not to be installed.
+slot count without the time its hooks need and is superseded: a clone on it
+moves to `v0.73.2`.
 
 No template, schema or dependency change.
 
@@ -940,7 +941,7 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-15): **`v0.73.1`**.
+**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-16): **`v0.73.2`**.
 
 **Historical operational pin** (2026-11-01): **`v0.70.1` on both clones**.
 

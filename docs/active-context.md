@@ -14,13 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.2`; Current HEAD status: tagged as `v0.73.2`.**
+- **Latest release tag: `v0.73.2`; Current HEAD status: untagged.**
   It gives the inventory context hooks 60 seconds each. `v0.73.1` makes a completed run with an incomplete mailbox or assignment read
   exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
   unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
-  install `v0.73.1` since 2026-11-15: `cs verify-install` matches all 168
+  install `v0.73.2` since 2026-11-16: `cs verify-install` matches all 168
   package files on each, and each lock file installs alone. Public provenance remains unmet; no
   public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
@@ -114,7 +114,8 @@ candidate does not re-audit those deployments or grant new send authority.
   124's two ticks on `v0.73.0` were started by hand with the cron line's
   command.
 - Commits `12d7264` and `18da6e7`, the `v0.72.0` release commits and the whole
-  of `v0.73.0` and `v0.73.1` have no independent review.
+  of `v0.73.0` have no independent review. One reviewer read the diffs of
+  `v0.73.1` and `v0.73.2`.
   The scheduled-surface hash ledger of this release is `PENDING_FRESH_REVIEW`.
 - The pinned external R7 checker accepts only disabled/5m and hardcodes60USD.
   It cannot accept the reviewed1h/95USD correction through a new artifact index.
