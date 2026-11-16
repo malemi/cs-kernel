@@ -14,13 +14,13 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.3`; Current HEAD status: tagged as `v0.73.3`.**
+- **Latest release tag: `v0.73.3`; Current HEAD status: untagged.**
   It syncs the engine's mail right before scheduled discovery reads the mailbox. `v0.73.2` gives the inventory context hooks 60 seconds each. `v0.73.1` makes a completed run with an incomplete mailbox or assignment read
   exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for
   unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
-  install `v0.73.2` since 2026-11-16: `cs verify-install` matches all 168
+  install `v0.73.3` since 2026-11-16: `cs verify-install` matches all 168
   package files on each, and each lock file installs alone. Public provenance remains unmet; no
   public push is performed.
 - Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
