@@ -88,6 +88,16 @@ candidate does not re-audit those deployments or grant new send authority.
   reason `[Auto-Mode Bypass]` after a `permission_check_status` cycle
   (`cs/operator_native_composition.py`). A completed tick with any other
   classifier denial is recorded `stopped||no_result` and exits 1.
+- When the stream check refuses a run, the kernel records only
+  `native_terminal_presence` / `terminal_unavailable`: the bounded reason that
+  `operator_native_composition.rejection` can compute is not emitted. The MrCall tick of
+  2026-11-16 02:50Z on `v0.73.2` was refused with process exit 0, its run
+  directory kept no stream and its cause is not established; the next tick was
+  accepted.
+- A completed tick whose only defect is an incomplete read exits 0
+  (`_health_exit`, `cs/operator_recovery.py`); it exits 1 when a further check
+  fails or when its notice cannot be recorded. No test covers a failed read
+  beside an incomplete read.
 - The run hook delivers the inventory view in at most 64 context slots
   (`cs/operator_context_delivery.py`). Café 124's view needed 52 to 53 on
   2026-11-15 (about 405,000 bytes); with 48 slots three ticks stopped before
