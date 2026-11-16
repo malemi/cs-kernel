@@ -11,6 +11,11 @@ import shlex
 import sys
 
 SLOTS = 64
+# Every slot is one hook process that verifies the whole view before it prints
+# its part, and the native client runs them together: 64 of them on a view of
+# 400,000 bytes take about 11 seconds on six cores. A hook the client cancels at
+# its timeout invalidates the run's stream.
+HOOK_TIMEOUT = 60
 CHARS = 8000
 LEGACY_CHARS = 7000
 SCHEMA = 'cs.inventory.context.v1'
@@ -113,7 +118,7 @@ def overlay(directory, python):
     """Add only hooks; native settings layering preserves all other settings."""
     from .operator_inventory_view import exclusive
     hooks = [{'type': 'command', 'command': shlex.join([python, '-B', '-m',
-        'cs.operator_context_delivery', str(index)]), 'timeout': 10}
+        'cs.operator_context_delivery', str(index)]), 'timeout': HOOK_TIMEOUT}
         for index in range(SLOTS)]
     value = {'hooks': {'PostToolUse': [{'matcher': '.*', 'hooks': hooks}],
                        'UserPromptSubmit': [{'hooks': hooks}]}}

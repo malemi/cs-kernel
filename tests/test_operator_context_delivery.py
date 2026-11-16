@@ -131,6 +131,7 @@ with tempfile.TemporaryDirectory() as folder:
     settings = json.loads(delivery.overlay(folder, '/usr/bin/python3').read_text())
     assert set(settings) == {'hooks'}
     assert len(settings['hooks']['PostToolUse'][0]['hooks']) == 64
+    assert {item['timeout'] for item in settings['hooks']['PostToolUse'][0]['hooks']} == {60} == {delivery.HOOK_TIMEOUT}
     assert len(settings['hooks']['UserPromptSubmit'][0]['hooks']) == 64
     import shlex
     commands = settings['hooks']['PostToolUse'][0]['hooks']

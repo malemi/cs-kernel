@@ -1,5 +1,30 @@
 # Changelog — cs-kernel
 
+## v0.73.2 — 2026-11-16 (PATCH, private unpublished candidate)
+
+The hooks that deliver the inventory view to the scheduled run get 60 seconds
+each instead of 10 (`cs/operator_context_delivery.py`, `HOOK_TIMEOUT`).
+
+Each of the 64 context slots is one hook process, and each verifies the whole
+view against its discovery before it prints its part. The native client starts
+them together after every tool call. On the scheduled host, 64 of them on a
+view of about 405,000 bytes take about 11 seconds; 48 take about 8. With the
+10-second limit the client cancelled part of them, the supervisor's stream
+check refused the cancelled hook responses and the run was recorded
+`stopped||no_result` with part of the view undelivered. `v0.73.1` raised the
+slot count without the time its hooks need and is not to be installed.
+
+No template, schema or dependency change.
+
+Migration: `cs update --pin v0.73.2`, `uv pip install -r requirements.txt`.
+
+**Re-collaudo tier: live read-only on BOTH maintained clones**, with one
+scheduled tick observed per clone whose stream holds no cancelled hook. Below
+FULL because the release changes one number in the generated hook settings of
+the scheduled run: no command, prompt, permission rule, send path, verdict or
+notice text changes. This is a private prepublication candidate; no public push
+is part of this release.
+
 ## v0.73.1 — 2026-11-15 (PATCH, private unpublished candidate)
 
 A scheduled run that reaches its end with an incomplete mailbox or assignment
