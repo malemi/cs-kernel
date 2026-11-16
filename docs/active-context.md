@@ -70,6 +70,29 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
+- A scheduled run of a clone with a fixed-template campaign ends
+  `execution_read_failed` (exit 1) on every tick while one campaign contact has
+  a reply that is already classified. `cs campaign pending` lists that contact
+  as `handle_reply` on every run (`cs/campaign.py`, `_fixed_template_items`);
+  the agent has to compare the reply's date with `classified_upto` and the item
+  carries no thread id; `cs history <email>` and `cs rpc emails.search` are
+  refused for a contact outside the selected workset (exit 3); `cs dossier`
+  records that refusal as a deferral proof (`capture_workset_deferral`) and
+  `cmd_history` records none, and `command_scope` in
+  `cs/operator_read_outcomes.py` maps `history` only to `history_absent`.
+  Every autoresponder to a campaign mail recreates the condition once its own
+  thread has left the workset.
+  - Dropping the classified reply from the worklist is not a local change:
+    `test_actual_already_classified_preview_without_mutation` in
+    `tests/test_operator_executor_integration.py` pins that `pending` lists it
+    and that the executor proves the `already_classified` disposition from the
+    preview and the thread read. Branch `attempt/classified-reply-worklist`
+    holds that change with its unit test; the full gates fail on that
+    integration test and it is not released.
+  - Giving `cs history` a deferral proof changes `command_scope`, which five
+    modules compare by equality with one scope per command
+    (`operator_read_outcomes`, `operator_executor_evidence`,
+    `operator_discovery_receipt`, `operator_native_composition`, `cli`).
 - `campaigns/*/flagged` is one of the sixteen list paths of the discovery
   material schema without an element shape, and `cs/review.py` fills it when a
   campaign contact's dossier is escalated: that tick's discovery publication
