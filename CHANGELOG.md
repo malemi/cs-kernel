@@ -1,5 +1,35 @@
 # Changelog — cs-kernel
 
+## v0.73.3 — 2026-11-16 (PATCH, private unpublished candidate)
+
+Scheduled discovery syncs the engine's mail right before it reads the mailbox
+(`cs/cli.py`, `cmd_unanswered`: `sync.run` with `scope=email`, `days_back=14`
+when the scheduled workset is enabled).
+
+`cs unanswered` enumerates the mailbox live, and every later thread read of the
+run goes through the engine, which holds only what its last sync fetched. The
+tick syncs once at its start and `cs review` then runs for 15 to 25 minutes. A
+message that arrived in that interval was discovered, took the workset's
+fresh slot, and `emails.list_by_thread` returned no rows for it: the run could
+not read or answer it, ended `execution_read_failed`, and the root lost its
+fresh slot for the following ticks. Observed on 2026-11-16 on a customer
+message received eight minutes into a MrCall tick.
+
+A refused or failed sync is reported on stderr (`unanswered: mail intake
+before discovery failed (<type>)`) and the sweep still runs on the earlier
+sync. Outside a scheduled run the command makes no sync call.
+
+No template, schema or dependency change.
+
+Migration: `cs update --pin v0.73.3`, `uv pip install -r requirements.txt`.
+
+**Re-collaudo tier: live read-only on BOTH maintained clones**, with one
+scheduled tick observed per clone whose discovery is preceded by the sync.
+Below FULL because the release adds one engine read-side call to one command
+of the scheduled run: no prompt, permission rule, send path, verdict or notice
+text changes. This is a private prepublication candidate; no public push is
+part of this release.
+
 ## v0.73.2 — 2026-11-16 (PATCH, private unpublished candidate)
 
 The hooks that deliver the inventory view to the scheduled run get 60 seconds

@@ -14,8 +14,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.2`; Current HEAD status: untagged.**
-  It gives the inventory context hooks 60 seconds each. `v0.73.1` makes a completed run with an incomplete mailbox or assignment read
+- **Latest release tag: `v0.73.3`; Current HEAD status: tagged as `v0.73.3`.**
+  It syncs the engine's mail right before scheduled discovery reads the mailbox. `v0.73.2` gives the inventory context hooks 60 seconds each. `v0.73.1` makes a completed run with an incomplete mailbox or assignment read
   exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
   run, to `v0.72.0`, which carries the interactive reply runtime, its agent
   workflow and permission rules, and the discovery schema entry for

@@ -1455,6 +1455,7 @@ step "61. engine assignment consumers preserve exact scope and hold uncertainty"
 if "$VENV/bin/python" "$ROOT/tests/test_task_assignment.py"; then echo "OK"; else echo "FAIL: assignment consumer lifecycle or authority boundary regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_review_budget.py"; then echo "OK"; else echo "FAIL: finite review work or cleanup boundaries regressed"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_scheduled_discovery_budget.py"; then echo "OK"; else echo "FAIL: discovery work, publication or cleanup boundaries regressed"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_discovery_mail_intake.py"; then echo "OK"; else echo "FAIL: scheduled discovery no longer syncs mail before its sweep"; FAIL=1; fi
 
 step "62. the legal-research skill arrives whole on every host, and its helper only counts days"
 # The first kernel skill with supporting files: four references, a provenance

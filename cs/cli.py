@@ -496,6 +496,19 @@ def cmd_unanswered(args) -> int:
     settings = config.load()
     from . import unanswered as unanswered_mod
 
+    if args.json and getattr(args, "all_buckets", False) and _scheduled_workset_enabled():
+        # The sweep reads the mailbox live and every later thread read goes
+        # through the engine, which holds only what its last sync fetched. The
+        # tick syncs once at its start and `cs review` runs for many minutes
+        # after that: a message that arrives in between is discovered,
+        # selected, and then unreadable. Sync again right before the sweep.
+        try:
+            res = rpc.call_sync(settings, "sync.run", {"scope": "email", "days_back": 14}, timeout=240)
+            if not isinstance(res, dict) or res.get("success") is not True or res.get("scope") != "email":
+                raise ValueError("mail intake result rejected")
+        except Exception as exc:  # noqa: BLE001 — discovery still runs on the earlier sync
+            print(f"unanswered: mail intake before discovery failed ({type(exc).__name__})",
+                  file=sys.stderr, flush=True)
     d = unanswered_mod.sweep(settings, days=args.days)
     rows, held, mine = d["open"], d["handled"], d["escalated"]
     resumed, automatic = d.get("resumed") or [], d.get("automatic") or []
