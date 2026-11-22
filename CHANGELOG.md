@@ -1,5 +1,16 @@
 # Changelog — cs-kernel
 
+## v0.74.1 — 2026-11-22 (PATCH, private unpublished release)
+
+This private release ships the reviewed selected-assignment read interface
+from v0.74.0. Its predecessor failed the release metadata gate because its
+changelog omitted the recognized tier name. No maintained clone installed
+that tag. The kernel code and rendered instructions are identical.
+
+**Re-collaudo tier: live read-only on BOTH maintained clones.** Verify
+the immutable installation, lock-only rebuild, workflow guidance, guarded
+CLI and authenticated account identity. This release adds no effect.
+
 ## v0.74.0 — 2026-11-22 (MINOR, private unpublished release)
 
 Scheduled operators can read the assignment for each reserved conversation

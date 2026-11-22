@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.74.0`; Current HEAD status: tagged as `v0.74.0`.** Both maintained clones still install private v0.73.3 before adoption. The hosted engines and clone executors have independent versions and controls.
+- **Latest release tag: `v0.74.1`; Current HEAD status: tagged as `v0.74.1`.** Both maintained clones still install private v0.73.3 before adoption. The hosted engines and clone executors have independent versions and controls.
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Both clone schedules are active. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
