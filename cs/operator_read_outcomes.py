@@ -25,7 +25,7 @@ def _json(raw):
 
 
 def command_scope(command):
-    if not isinstance(command, str) or any(char in command for char in ('\n', '\r', '$', '`')):
+    if not isinstance(command, str) or any(char in command for char in ('\n', '\r', '`')):
         return None
     try:
         words = shlex.split(command)
@@ -34,9 +34,18 @@ def command_scope(command):
     if words[:3] != ['.venv/bin/python', '-m', 'cs']:
         return None
     argv = words[3:]
+    # Only the canonical assignment command quotes a dollar-bearing root as literal data.
+    if '$' in command and not (
+        len(argv) == 4 and argv[:2] == ['assignment', 'status'] and '$' in argv[2]
+        and argv[3] == '--json' and command == shlex.join(words)
+    ):
+        return None
     if (len(argv) == 4 and argv[:2] == ['assignment', 'status'] and argv[3] == '--json'
             and re.fullmatch(r'<[^<>\s@]+@[^<>\s@]+>', argv[2])):
         return {'kind': 'assignment_hold', 'thread_key': argv[2], 'argv': argv, 'exit_code': 3}
+    if (len(argv) == 5 and argv[:3] == ['assignment', 'status', '--selected']
+            and argv[3] in ('1', '2') and argv[4] == '--json' and command == shlex.join(words)):
+        return {'kind': 'assignment_hold', 'position': int(argv[3]), 'argv': argv, 'exit_code': 3}
     if (len(argv) == 2 and argv[0] == 'dossier'
             and re.fullmatch(r'[^@\s<>;&|$`]+@[^@\s<>;&|$`]+\.[^@\s<>;&|$`]+', argv[1])):
         return {'kind':'outside_selected_workset','contact':argv[1].lower(),'argv':argv,'exit_code':3}
@@ -226,12 +235,26 @@ def outside_workset_value(value, scope, owner, context=None):
         return False
 
 
-def eligible(value, scope, owner):
+def eligible(value, scope, owner, *, run_context=None, child=None):
     if scope.get('kind') == 'outside_selected_workset':
         return outside_workset_value(value, scope, owner)
     if scope.get('kind') == 'assignment_hold':
+        root = scope.get('thread_key')
+        if 'position' in scope:
+            from types import SimpleNamespace
+            from .operator_workset import selected_root, WorksetError
+            if run_context is None or child is None:
+                return False
+            directory = Path(run_context['directory'])
+            if directory.parent.name != 'operator-runs' or not re.fullmatch(r'run-[A-Za-z0-9_-]+', directory.name):
+                return False
+            settings = SimpleNamespace(engine_owner_uid=owner, state_dir=directory.parent.parent)
+            try:
+                root = selected_root(settings, scope['position'], context=run_context, child_identity=child)
+            except WorksetError:
+                return False
         return (isinstance(value,dict) and set(value) == {'projection','configured_account_map'}
-                and assignment_hold(value['projection'],owner,scope['thread_key'],value['configured_account_map']))
+                and assignment_hold(value['projection'],owner,root,value['configured_account_map']))
     return absence(value,scope,owner)
 
 
@@ -332,8 +355,9 @@ def capture(output, value, code, owner, configured_accounts=None):
     import sys
     command = '.venv/bin/python -m cs ' + shlex.join(sys.argv[1:])
     scope = command_scope(command)
-    if (scope is None or type(code) is not int or code != scope['exit_code']
-            or not assignment_hold(value, owner, scope['thread_key'], configured_accounts)
+    if (scope is None or scope['kind'] != 'assignment_hold' or type(code) is not int or code != scope['exit_code']
+            or not isinstance(value, dict)
+            or not assignment_hold(value, owner, scope.get('thread_key', value.get('thread_key')), configured_accounts)
             or output != (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()):
         return
     typed = {'projection':value,'configured_account_map':configured_accounts or {}}
@@ -441,7 +465,7 @@ def join(events, child, owner, producer=None, lifecycle=None, context_value=None
             if (value != record.get('discovery') or len(payload) > transport.LIMIT or len(payload) != record.get('output_length')
                     or transport.sha(payload) != record.get('output_sha256')
                     or type(record.get('exit_code')) is not int or record['exit_code'] != scope['exit_code']
-                    or not eligible(value, scope, owner)):
+                    or not eligible(value, scope, owner, run_context=ctx, child=child)):
                 return []
             uses, results = [], []
             for event in events:

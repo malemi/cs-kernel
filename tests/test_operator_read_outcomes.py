@@ -19,15 +19,25 @@ from cs import operator_read_outcomes as outcomes
 ROOT = '<read@example.test>'
 
 
-def projection():
-    return dict(version=1, actor_uid='owner', space_id='space', thread_key=ROOT,
-        authoritative_thread_key=ROOT, component_thread_keys=[ROOT], component_scope_present=False,
+def projection(root=ROOT):
+    return dict(version=1, actor_uid='owner', space_id='space', thread_key=root,
+        authoritative_thread_key=root, component_thread_keys=[root], component_scope_present=False,
         source_owner_uid='owner', complete=False, state='conflict', hold_auto_reply=True, task=None,
         events=[], covered_inbound=[], current_inbound=[], current_message_ids=[], covered_message_ids=[],
         reply_evidence=[], reason='RFC_ANCESTRY_CONFLICT')
 
 
 class ReadOutcomeTests(unittest.TestCase):
+    def test_single_quoted_dollar_in_assignment_root(self):
+        root = '<first$part@example.test>'
+        prefix = '.venv/bin/python -m cs assignment status '
+        command = prefix + shlex.quote(root) + ' --json'
+        self.assertEqual(outcomes.command_scope(command)['thread_key'], root)
+        self.assertIsNone(outcomes.command_scope(prefix + '"' + root + '" --json'))
+        self.assertIsNone(outcomes.command_scope(prefix + root + ' --json'))
+        self.assertIsNone(outcomes.command_scope(command + ' extra'))
+        self.assertIsNone(outcomes.command_scope('.venv/bin/python -m cs history ' + shlex.quote(root)))
+
     def test_finite_scope_and_projection(self):
         command = '.venv/bin/python -m cs assignment status ' + shlex.quote(ROOT) + ' --json'
         self.assertEqual(outcomes.command_scope(command)['exit_code'], 3)
@@ -88,9 +98,12 @@ class ReadOutcomeTests(unittest.TestCase):
 
     def _real_control(self, case):
         repo = Path(__file__).resolve().parents[1]
+        position = {'slot_one': 1, 'slot_two': 2}.get(case)
+        roots = ['<a$root@example.test>', '<b-long-' + 'x' * 64 + '@example.test>']
+        expected_projection = projection(roots[position - 1]) if position else projection()
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary); root.chmod(0o700)
-            if case in ('deferral','search_deferral'):
+            if position or case in ('deferral','search_deferral'):
                 state = root
                 root = state / 'operator-runs' / 'run-control'
                 root.mkdir(mode=0o700, parents=True)
@@ -100,7 +113,7 @@ class ReadOutcomeTests(unittest.TestCase):
             binary.parent.mkdir(); shutil.copyfile(Path(sys.executable).resolve(), binary); binary.chmod(0o700)
             digest = hashlib.sha256(binary.read_bytes()).hexdigest()
             (root / '.venv').symlink_to(Path(sys.prefix), target_is_directory=True)
-            code = 3 if case in ('assignment','deferral','search_deferral') else 1
+            code = 3 if position or case in ('assignment','deferral','search_deferral') else 1
             (root / 'cs.py').write_text('''import os,sys,json
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -111,6 +124,16 @@ transport.CLAUDE_VERSION=os.environ['CONTROL_VERSION']
 transport.CLAUDE_SHA256=os.environ['CONTROL_DIGEST']
 value=json.loads(os.environ['CONTROL_VALUE'])
 case=os.environ['CONTROL_CASE']
+if case.startswith('slot_'):
+ import argparse
+ settings=SimpleNamespace(engine_owner_uid='owner',state_dir=os.environ['CONTROL_STATE'])
+ parser=argparse.ArgumentParser()
+ assignment_cli.register(parser.add_subparsers(required=True))
+ args=parser.parse_args()
+ with patch.object(assignment_cli.config,'load',return_value=settings),patch.object(assignment_cli.authority,'project',return_value=value) as project:
+  result=args.func(args)
+  project.assert_called_once_with(settings,value['thread_key'])
+  raise SystemExit(result)
 if case in ('deferral','search_deferral'):
  from cs.operator_workset import require_contact, OutsideSelectedWorkset
  from cs.operator_read_outcomes import capture_workset_deferral
@@ -141,6 +164,8 @@ with patch.object(assignment_cli.config,'load',return_value=SimpleNamespace(engi
                 command = ('.venv/bin/python -m cs rpc emails.search ' + shlex.quote(json.dumps(dict(query='excluded@example.test',limit=5))) if case == 'search_deferral' else '.venv/bin/python -m cs dossier excluded@example.test')
             if case == 'history_json':
                 command = command.replace('contact@example.test', '"contact@example.test"')
+            if position:
+                command = f'.venv/bin/python -m cs assignment status --selected {position} --json'
             marker = '/tmp/claude-' + uuid.uuid4().hex + '-cwd'
             wrapper = transport.CLEANUP + ' && eval ' + shlex.quote(command) + ' < /dev/null && pwd -P >| ' + marker
             supervisor = {k:transport.proc(os.getpid())[k] for k in ('pid','started_ticks')}
@@ -155,7 +180,24 @@ with patch.object(assignment_cli.config,'load',return_value=SimpleNamespace(engi
                     path.write_text(json.dumps(value));path.chmod(0o600)
             env = dict(os.environ, CONTROL_STATE=str(root.parent.parent), PYTHONPATH=str(repo), PYTHONHOME=sys.base_prefix,
                        CS_OPERATOR_HEALTH_CONTEXT=json.dumps(context), CONTROL_VERSION=binary.name,
-                       CONTROL_DIGEST=digest, CONTROL_VALUE=json.dumps(projection()), CONTROL_WRAPPER=wrapper, CONTROL_CASE=case)
+                       CONTROL_DIGEST=digest, CONTROL_VALUE=json.dumps(expected_projection), CONTROL_WRAPPER=wrapper, CONTROL_CASE=case)
+            if position:
+                context['workset_enabled'] = True
+                env['CS_OPERATOR_HEALTH_CONTEXT'] = json.dumps(context)
+                env['CONTROL_SELECTION'] = json.dumps(roots)
+                env['CONTROL_FIXTURE'] = """import os,json,sys
+from types import SimpleNamespace
+from cs import operator_workset as w, operator_health as h
+s=SimpleNamespace(engine_owner_uid='owner',state_dir=os.environ['CONTROL_STATE'])
+w.observe(s,'tasks',[])
+w.observe(s,'review',{'drafts':[],'drafts_notes':[]})
+rows=[{'thread_key':root,'email':f'fixture{i}@example.test','last_inbound_date':date,'_workset_revision':w._hash(root)}
+      for i,(root,date) in enumerate(zip(json.loads(os.environ['CONTROL_SELECTION']),('2026-10-19','2026-10-18')))]
+d={'open':rows,'resumed':[],'human_work':[],'assignment_audit':[],'escalated':[],'assignment_incomplete':False,'read_incomplete':None}
+d['triage_workset']=w.reserve(s,d)
+sys.argv=['fixture']+h.ARGV
+h.capture((json.dumps(d,indent=2)+'\\n').encode(),d,0,'owner')
+"""
             for key in list(env):
                 if key.startswith('CS_OPERATOR_ACCEPTANCE'):
                     env.pop(key)
@@ -163,6 +205,8 @@ with patch.object(assignment_cli.config,'load',return_value=SimpleNamespace(engi
 print('READY',flush=True)
 sys.stdin.readline()
 env=dict(os.environ);env.pop('PYTHONHOME',None)
+if 'CONTROL_FIXTURE' in env:
+ subprocess.run([os.path.abspath('.venv/bin/python'),'-c',env['CONTROL_FIXTURE']],env=env,cwd=env['PYTHONPATH'],check=True)
 p=subprocess.run(['/bin/bash','-c',os.environ['CONTROL_WRAPPER']],env=env,capture_output=True)
 sys.stdout.buffer.write(p.stdout);sys.stdout.buffer.flush()
 sys.stderr.buffer.write(p.stderr);sys.stderr.buffer.flush()
@@ -183,6 +227,9 @@ sys.exit(p.returncode)
                     self.assertEqual(stderr,outcomes.workset_deferral_output(outcomes.command_scope(command)))
                     # Native result joins stderr for this CLI; historical stdout remains unchanged.
                     stdout = stderr
+                elif position:
+                    self.assertEqual(json.loads(stdout), expected_projection)
+                    self.assertEqual(stderr, b'')
                 else:
                     baseline_env = dict(env); baseline_env.pop('CS_OPERATOR_HEALTH_CONTEXT'); baseline_env.pop('PYTHONHOME',None)
                     baseline = subprocess.run(['/bin/bash','-c',wrapper],cwd=root,env=baseline_env,capture_output=True,timeout=15)
@@ -208,6 +255,28 @@ sys.exit(p.returncode)
                 for index, event in enumerate(events):
                     event['uuid'] = 'constructed-' + str(index)
                 self.assertEqual(len(outcomes.join(events,identity,'owner',producer)),1)
+                if position:
+                    cursor_path = state / 'operator-workset' / 'cursor.json'
+                    raw = cursor_path.read_bytes()
+                    cursor = json.loads(raw)
+                    next(iter(cursor['runs'].values()))['selected'].reverse()
+                    cursor_path.write_text(json.dumps(cursor))
+                    self.assertEqual(outcomes.join(events,identity,'owner',producer),[])
+                    cursor_path.write_bytes(raw)
+                    original = paths[0].read_bytes()
+                    changed = json.loads(original)
+                    other = projection(roots[2-position])
+                    changed['discovery']['projection'] = other
+                    changed['output'] = json.dumps(other, ensure_ascii=False, indent=2) + '\n'
+                    changed['output_length'] = len(changed['output'].encode())
+                    changed['output_sha256'] = transport.sha(changed['output'].encode())
+                    altered_events = copy.deepcopy(events)
+                    altered_content = 'Exit code 3\n' + changed['output']
+                    altered_events[2]['message']['content'][0]['content'] = altered_content
+                    altered_events[2]['tool_use_result'] = 'Error: ' + altered_content
+                    paths[0].write_text(json.dumps(changed))
+                    self.assertEqual(outcomes.join(altered_events, identity, 'owner', producer), [])
+                    paths[0].write_bytes(original)
                 if case == 'assignment':
                     self.assertTrue(output.endswith('\n'))
                     native_output = output[:-1]
@@ -299,7 +368,7 @@ sys.exit(p.returncode)
                 self.assertEqual(outcomes.join(events,identity,'owner',producer,lifecycle),[])
 
     def test_real_private_reads_without_acceptance_environment(self):
-        for case in ('assignment','contacted','history','history_json','deferral','search_deferral'):
+        for case in ('assignment','contacted','history','history_json','deferral','search_deferral','slot_one','slot_two'):
             with self.subTest(case=case):
                 self._real_control(case)
 

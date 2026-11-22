@@ -41,15 +41,26 @@ def run(args) -> int:
     settings = config.load()
     try:
         if args.assignment_action == "status":
-            if os.environ.get("CS_OPERATOR_HEALTH_CONTEXT"):
-                from .operator_workset import require_root, WorksetError
+            thread_key = args.thread_key
+            position = getattr(args, "selected", None)
+            if position is not None or os.environ.get("CS_OPERATOR_HEALTH_CONTEXT"):
+                from .operator_workset import require_root, selected_root, WorksetError
                 try:
-                    require_root(settings, args.thread_key)
+                    if position is not None:
+                        if not args.json:
+                            print("Scheduled assignment status by position requires --json", file=sys.stderr)
+                            return 2
+                        thread_key = selected_root(settings, position)
+                    else:
+                        require_root(settings, thread_key)
                 except WorksetError:
-                    print("Scheduled assignment read deferred outside selected workset", file=sys.stderr)
+                    if position is not None:
+                        print("Scheduled assignment position unavailable in the current workset", file=sys.stderr)
+                    else:
+                        print("Scheduled assignment read deferred outside selected workset", file=sys.stderr)
                     return 3
-            if args.thread_key:
-                result = authority.project(settings, args.thread_key)
+            if thread_key:
+                result = authority.project(settings, thread_key)
                 output = json.dumps(result, ensure_ascii=False, indent=2) if args.json else authority.render(result)
                 code = 0 if result["complete"] else 3
                 if args.json and code == 3:
@@ -95,7 +106,10 @@ def register(sub) -> None:
     parser = sub.add_parser("assignment", help="engine-owned thread assignment; independent host approval required for writes")
     commands = parser.add_subparsers(dest="assignment_action", required=True)
     status = commands.add_parser("status", help="show authoritative assignment and held work")
-    status.add_argument("thread_key", nargs="?")
+    target = status.add_mutually_exclusive_group()
+    target.add_argument("thread_key", nargs="?")
+    target.add_argument("--selected", type=int, choices=(1, 2),
+                        help="read this position in the current scheduled workset (requires --json)")
     status.add_argument("--json", action="store_true")
     status.set_defaults(func=run)
     for name in ("preview", "export"):

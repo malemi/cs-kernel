@@ -10,16 +10,36 @@ SCOPE_WORKER=r'''
 import hashlib,json,os,subprocess,sys
 from pathlib import Path
 from types import SimpleNamespace
-from cs import operator_workset as w
+from cs import cli, operator_workset as w, task_assignment
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+from unittest.mock import patch
 ctx=json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT']);base=Path(ctx['directory']);settings=SimpleNamespace(engine_owner_uid='owner',state_dir=base/'state')
 w.observe(settings,'tasks',[]);w.observe(settings,'review',{'drafts':[],'drafts_notes':[]})
 value={'open':[{'email':'a@example.test','thread_key':'<a@example.test>','_workset_revision':'a'*64,'last_inbound_date':'2026-10-19'}, {'email':'b@example.test','thread_key':'<b@example.test>','_workset_revision':'b'*64,'last_inbound_date':'2026-10-18'}], 'resumed':[], 'human_work':[{'email':'a@example.test','thread_key':'<old-held@example.test>'}], 'assignment_audit':[], 'escalated':[], 'read_incomplete':None,'assignment_incomplete':False}
+first_root = '<' + 'm' * 90 + '$part@example.test>'
+value['open'][0]['thread_key'] = first_root
 value['triage_workset']=w.reserve(settings,value)
 code="import json,sys;from cs.operator_health import ARGV,capture;sys.argv=['fixture']+ARGV;d=json.load(sys.stdin);capture((json.dumps(d,ensure_ascii=False,indent=2)+'\\n').encode(),d,0,'owner')"
 subprocess.run([sys.executable,'-B','-c',code],input=json.dumps(value),text=True,check=True)
-assert [x['thread_key']for x in w.selected_contact_roots(settings,'a@example.test')]==['<a@example.test>']
+assert [x['thread_key']for x in w.selected_contact_roots(settings,'a@example.test')]==[first_root]
 assert [x['thread_key']for x in w.selected_contact_roots(settings,'B@example.test')]==['<b@example.test>']
 checks=['A contact excludes B selected root and old held sibling','case-insensitive exact contact']
+settings.prog_name = 'cs'
+def assignment_status(*argv):
+ with patch.object(cli.config, 'load', return_value=settings), redirect_stdout(StringIO()), redirect_stderr(StringIO()):
+  return cli.main(['assignment', 'status', *argv])
+with patch.object(task_assignment, 'project', return_value={'complete': True}) as project:
+ for position, expected in enumerate([first_root, '<b@example.test>'], 1):
+  assert assignment_status('--selected', str(position), '--json') == 0
+  project.assert_called_with(settings, expected)
+ assert project.call_count == 2
+ for extra in [('--selected', '3', '--json'), ('--selected', '1', first_root, '--json')]:
+  try: assignment_status(*extra)
+  except SystemExit as exc: assert exc.code == 2
+  else: raise AssertionError('invalid arguments accepted')
+ assert assignment_status('--selected', '1') == 2
+ assert project.call_count == 2
 files={p:p.read_bytes()for p in [base/'discovery.json',base/'workset-tasks.json',base/'workset-reserved.json',settings.state_dir/'operator-workset/cursor.json']}
 def denied(label):
  try:w.selected_contact_roots(settings,'a@example.test')
@@ -37,10 +57,13 @@ for path,mutate,label in [
  (settings.state_dir/'operator-workset/cursor.json',lambda d:d.update(version=True),'noninteger cursor version'),
  (base/'workset-tasks.json',lambda d:d.update(digest='0'*64),'changed observation digest'),
  (base/'workset-reserved.json',lambda d:d.update(digest='0'*64),'changed reservation digest'),
- (settings.state_dir/'operator-workset/cursor.json',lambda d:d['roots'][w._hash('<a@example.test>')].update(revision='f'*64),'changed cursor revision')]:
+ (settings.state_dir/'operator-workset/cursor.json',lambda d:d['roots'][w._hash(first_root)].update(revision='f'*64),'changed cursor revision')]:
  data=json.loads(path.read_text());mutate(data)
  if path.name=='discovery.json':data['output_sha256']=hashlib.sha256((json.dumps(data['discovery'],ensure_ascii=False,indent=2)+'\n').encode()).hexdigest()
- path.write_text(json.dumps(data));denied(label);path.write_bytes(files[path])
+ path.write_text(json.dumps(data));denied(label)
+ with patch.object(task_assignment, 'project', side_effect=AssertionError('unexpected projection')):
+  assert assignment_status('--selected', '1', '--json') == 3
+ path.write_bytes(files[path])
 p=base/'discovery.json';p.chmod(0o644);denied('nonprivate capture');p.chmod(0o600)
 original=base/'original-discovery';p.rename(original);p.symlink_to(original);denied('symlink capture');p.unlink();original.rename(p)
 p.rename(original);denied('missing capture');original.rename(p)
@@ -53,6 +76,10 @@ nextdir=base/'takeover';nextdir.mkdir(mode=0o700);nextctx={**ctx,'directory':str
 w.observe(settings,'tasks',[]);w.observe(settings,'review',{'drafts':[],'drafts_notes':[]});taken={k:v for k,v in value.items()if k!='triage_workset'};taken['escalated']=[{'email':'a@example.test'}];taken['triage_workset']=w.reserve(settings,taken);subprocess.run([sys.executable,'-B','-c',code],input=json.dumps(taken),text=True,check=True)
 denied('address takeover blocks contact A')
 assert [r['thread_key']for r in w.selected_contact_roots(settings,'b@example.test')]==['<b@example.test>'];checks.append('unrelated contact B remains eligible')
+with patch.object(task_assignment, 'project', side_effect=AssertionError('unexpected projection')):
+ assert assignment_status('--selected', '2', '--json') == 3
+ with patch.dict(os.environ, {'CS_OPERATOR_HEALTH_CONTEXT': ''}):
+  assert assignment_status('--selected', '1', '--json') == 3
 print(json.dumps({'scope_checks':checks,'no_authority_returned':all(set(r)=={'thread_key','revision','sources'}for r in w.selected_contact_roots(settings,'b@example.test'))}))
 '''
 
@@ -80,6 +107,14 @@ class SelectedDossierPrimitives(unittest.TestCase):
    ctx={'directory':temp,'nonce':'a'*32,'owner_uid':'owner','supervisor':identity(os.getpid())[0],'workset_enabled':True}
    r=subprocess.run([sys.executable,'-B','-c',SCOPE_WORKER],env={**os.environ,'CS_OPERATOR_HEALTH_CONTEXT':json.dumps(ctx)},text=True,capture_output=True,timeout=10)
    self.assertEqual(r.returncode,0,r.stderr);data=json.loads(r.stdout);self.assertEqual(len(data['scope_checks']),21);self.assertTrue(data['no_authority_returned'])
+   from cs.operator_workset import selected_root, WorksetError
+   settings = SimpleNamespace(engine_owner_uid='owner', state_dir=Path(temp) / 'state')
+   discovery = json.loads((Path(temp) / 'discovery.json').read_bytes())
+   child = discovery['ancestry'][-2]
+   for position, row in enumerate(discovery['discovery']['triage_workset']['selected'], 1):
+    self.assertEqual(selected_root(settings, position, context=ctx, child_identity=child), row['thread_key'])
+   with self.assertRaises(WorksetError):
+    selected_root(settings, 1, context=ctx, child_identity={**child, 'started_ticks': child['started_ticks'] + 1})
  def test_missing_scheduled_context_refuses(self):
   from cs.operator_workset import selected_contact_roots,WorksetError
   env={k:v for k,v in os.environ.items()if k!='CS_OPERATOR_HEALTH_CONTEXT'}

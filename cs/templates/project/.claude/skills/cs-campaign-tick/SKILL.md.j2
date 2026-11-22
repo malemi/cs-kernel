@@ -116,7 +116,7 @@ For each active campaign:
 
 Returns JSON: `campaigns[].items[]`, each item carrying an `action`
 (`reconcile` / `send_draft` / `handle_reply` / `evidence_incomplete`), a `contact_id`, the `email`,
-and (for replies) a `thread_id` anchor. The verb sends nothing and mutates
+and, when available for a reply, a `thread_id` anchor. The verb sends nothing and mutates
 nothing — it is the worklist only. An entry may also carry
 `delivery_blocked` (the campaign is over: reason + date, with `held` counting
 the sends withheld), `escalated_hold` (deliveries withheld because a human has
@@ -173,6 +173,13 @@ A customer thread has a reply after our send. **If the item carries
 `escalated_to`, stop here**: a human is writing to that contact, so the reply
 is his to answer. Say so in the report — with the address and who has it — and
 work the next item.
+
+During a scheduled tick, use the current discovery and its selected roots to
+match the pending reply to an exact selected conversation before any deep mail
+read. An email address alone cannot identify the conversation. If the item
+is outside selection or lacks an unambiguous match, report it
+as deferred for this tick and continue with the next item. Leave its campaign
+state as it stands. A search or history lookup cannot supply that initial match.
 
 When the pending item omits the contact dossier, read the existing contact
 preview before deciding whether a reply is already classified:

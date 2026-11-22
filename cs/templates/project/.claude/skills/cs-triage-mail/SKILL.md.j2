@@ -330,8 +330,21 @@ only; all current authority, history, dedup and contextual generation guards
 below remain mandatory for selected roots. Interactive triage keeps its existing
 scope and performs no scheduled reservation.
 
-Then for EACH selected candidate, preserve the exact `thread_key` and read current
-assignment authority before any Sent-based decision:
+In scheduled triage, read current assignment authority in the order of
+`triage_workset.selected`. Run the first command when the list has at least one
+entry. Run the second only when it has two entries.
+
+```bash
+.venv/bin/python -m cs assignment status --selected 1 --json
+```
+
+```bash
+.venv/bin/python -m cs assignment status --selected 2 --json
+```
+
+Use the exact `thread_key` from each result for that conversation. If a
+position cannot be verified, keep it on hold and continue the recurring
+phases. In interactive triage, read each candidate by its exact key:
 
 ```bash
 .venv/bin/python -m cs assignment status '<exact-thread-key>' --json

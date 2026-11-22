@@ -130,7 +130,7 @@ def _capture(output, value, code, owner, cli_pid, deadline, status_fd, business=
             expected_argv = business['argv']
             command = '.venv/bin/python -m cs ' + shlex.join(expected_argv)
             if (outcomes.command_scope(command) != business or health['owner_uid'] != owner
-                    or not outcomes.eligible(value, business, owner) or code != business['exit_code']):
+                    or code != business['exit_code']):
                 return
         if not isinstance(context, dict) or set(context) != {'pid', 'started_ticks'} or any(type(context[k]) is not int for k in context):
             return
@@ -166,6 +166,9 @@ def _capture(output, value, code, owner, cli_pid, deadline, status_fd, business=
         native = chain[2]
         if not native['executable'].endswith('/versions/' + CLAUDE_VERSION) or sha(Path(native['executable']).read_bytes()) != CLAUDE_SHA256:
             raise ValueError('capture guard')
+        if business is not None and not outcomes.eligible(
+                value, business, owner, run_context=health, child={k:native[k] for k in ('pid','started_ticks')}):
+            return
         stage = 'private_record'
         record = {'schema_version': 1, 'nonce': nonce,
                   'owner_uid': owner, 'kernel_source_digest': package_digest(),

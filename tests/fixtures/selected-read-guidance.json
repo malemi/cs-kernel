@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "review_state": "PENDING_FRESH_REVIEW",
+  "origin": "Scheduled selected reads, based on the installed v0.73.3 workflow templates.",
+  "stages": [
+    {
+      "id": "scheduled-selected-reads-cs-triage-mail",
+      "template": "cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2",
+      "hashes": {
+        "before_sha256": "1216ceefb459d96705043fbe1d635501c16f478ad25cfb97270ec7f91832b5cc",
+        "after_sha256": "0fcdfb2fe1c5a44d2b19fbdbb36bff44bd58db9d2dad8d6a3f87cece5f0efe6d"
+      },
+      "edits": [
+        {
+          "before": "Then for EACH selected candidate, preserve the exact `thread_key` and read current\nassignment authority before any Sent-based decision:\n",
+          "after": "In scheduled triage, read current assignment authority in the order of\n`triage_workset.selected`. Run the first command when the list has at least one\nentry. Run the second only when it has two entries.\n\n```bash\n.venv/bin/python -m cs assignment status --selected 1 --json\n```\n\n```bash\n.venv/bin/python -m cs assignment status --selected 2 --json\n```\n\nUse the exact `thread_key` from each result for that conversation. If a\nposition cannot be verified, keep it on hold and continue the recurring\nphases. In interactive triage, read each candidate by its exact key:\n"
+        }
+      ]
+    },
+    {
+      "id": "scheduled-selected-reads-cs-campaign-tick",
+      "template": "cs/templates/project/.claude/skills/cs-campaign-tick/SKILL.md.j2",
+      "hashes": {
+        "before_sha256": "4e3d14f174e754efce2197ddaee6d79fccd2d0151d52f6eb16a9ac46501d52ea",
+        "after_sha256": "5042db5e85903c7266371d8a0f97a47570cdd5cf879afed9082fbe5742990735"
+      },
+      "edits": [
+        {
+          "before": "and (for replies) a `thread_id` anchor. The verb sends nothing and mutates\n",
+          "after": "and, when available for a reply, a `thread_id` anchor. The verb sends nothing and mutates\n"
+        },
+        {
+          "before": "",
+          "after": "\nDuring a scheduled tick, use the current discovery and its selected roots to\nmatch the pending reply to an exact selected conversation before any deep mail\nread. An email address alone cannot identify the conversation. If the item\nis outside selection or lacks an unambiguous match, report it\nas deferred for this tick and continue with the next item. Leave its campaign\nstate as it stands. A search or history lookup cannot supply that initial match.\n"
+        }
+      ]
+    }
+  ]
+}

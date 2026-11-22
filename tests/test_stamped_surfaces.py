@@ -152,7 +152,7 @@ def italian_hits(text: str) -> list[str]:
 def _fanout_contract(clone: Path, label: str) -> None:
     """Read the actual stamped workflow's decision order and scope contract."""
     triage = (clone / ".claude/skills/cs-triage-mail/SKILL.md").read_text()
-    decision = triage.split("Then for EACH selected candidate,", 1)[1].split("## 1b.", 1)[0]
+    decision = triage.split("## 1. Find work and preserve every held thread", 1)[1].split("## 1b.", 1)[0]
     incomplete = decision.index("If any mailbox is unreadable")
     authority = decision.index("Check assignment state before answered subtraction")
     ordinary = decision.index("With complete scope and no assignment hold")

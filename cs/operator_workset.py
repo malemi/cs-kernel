@@ -36,12 +36,15 @@ def _timestamp(value):
         return 0.0
 
 
-def _context(settings):
-    raw = os.environ.get('CS_OPERATOR_HEALTH_CONTEXT')
-    if raw is None:
-        return None
+def _context(settings, supplied=None):
     try:
-        context = json.loads(raw)
+        if supplied is None:
+            raw = os.environ.get('CS_OPERATOR_HEALTH_CONTEXT')
+            if raw is None:
+                return None
+            context = json.loads(raw)
+        else:
+            context = dict(supplied)
         if context.get('workset_enabled') is not True:
             return None
         directory = Path(context['directory'])
@@ -410,8 +413,9 @@ def reserve(settings, discovery):
         raise WorksetError('workset reservation incomplete or unsafe') from exc
 
 
-def _reservation(settings):
-    context = _context(settings)
+def _reservation(settings, context=None):
+    if context is None:
+        context = _context(settings)
     if context is None:
         return None
     try:
@@ -468,11 +472,8 @@ def require_contact(settings, email, *, typed_exclusion=False):
         raise WorksetError('contact is outside the scheduled workset')
 
 
-def selected_contact_roots(settings, email):
-    """Resolve admitted scheduled roots/revisions; never return action authority."""
-    if not isinstance(email, str) or re.fullmatch(r'[^\s@<>]+@[^\s@<>]+', email) is None:
-        raise WorksetError('invalid scheduled contact', reason='selection_invalid')
-    context = _context(settings)
+def _verified_selection(settings, context=None, child_identity=None):
+    context = _context(settings, context)
     if context is None:
         raise WorksetError('scheduled reservation required', reason='selection_invalid')
     try:
@@ -480,7 +481,7 @@ def selected_contact_roots(settings, email):
         def read(path):
             return json.loads(read_private(path))
         directory = Path(context['directory'])
-        reservation = _reservation(settings)
+        reservation = _reservation(settings, context)
         if reservation != read(directory / 'workset-reserved.json'):
             raise ValueError('reservation changed')
         cursor = read(Path(settings.state_dir) / 'operator-workset' / 'cursor.json')
@@ -509,7 +510,13 @@ def selected_contact_roots(settings, email):
                 break
         else:
             raise ValueError('foreign process')
-        if ancestry[-2] not in chain[:-1]:
+        native_child = ancestry[-2]
+        if child_identity is not None:
+            if (child_identity != native_child
+                    or any(type(value) is not int for value in child_identity.values())):
+                raise ValueError('discovery child differs')
+        if native_child not in chain[:-1] and not (
+                child_identity == native_child and chain[0] == context['supervisor']):
             raise ValueError('foreign native child')
         discovery = raw['discovery']
         output = (json.dumps(discovery, ensure_ascii=False, indent=2, default=str) + '\n').encode()
@@ -547,13 +554,32 @@ def selected_contact_roots(settings, email):
         for root in roots:
             if cursor['roots'][_hash(root)]['revision'] != candidates[root]['revision']:
                 raise ValueError('cursor revision changed')
-        requested = _hash(email.lower())
-        result = [row for row in expected['selected'] if requested in candidates[row['thread_key']]['contacts']]
-        if not result:
-            raise ValueError('contact outside selected roots')
-        return result
+        return expected['selected'], candidates
     except Exception as exc:
-        raise WorksetError('scheduled contact selection missing or changed', reason='selection_invalid') from exc
+        raise WorksetError('scheduled selection missing or changed', reason='selection_invalid') from exc
+
+
+def selected_root(settings, position, *, context=None, child_identity=None):
+    if type(position) is not int or position not in (1, 2):
+        raise WorksetError('invalid scheduled selection position', reason='selection_invalid')
+    if (context is None) != (child_identity is None):
+        raise WorksetError('incomplete scheduled selection identity', reason='selection_invalid')
+    rows, _ = _verified_selection(settings, context, child_identity)
+    if position > len(rows):
+        raise WorksetError('scheduled selection position unavailable', reason='selection_invalid')
+    return rows[position - 1]['thread_key']
+
+
+def selected_contact_roots(settings, email):
+    """Resolve admitted scheduled roots/revisions; never return action authority."""
+    if not isinstance(email, str) or re.fullmatch(r'[^\s@<>]+@[^\s@<>]+', email) is None:
+        raise WorksetError('invalid scheduled contact', reason='selection_invalid')
+    rows, candidates = _verified_selection(settings)
+    requested = _hash(email.lower())
+    result = [row for row in rows if requested in candidates[row['thread_key']]['contacts']]
+    if not result:
+        raise WorksetError('contact outside selected roots', reason='selection_invalid')
+    return result
 
 
 def _send_snapshot(settings, context, draft, root):

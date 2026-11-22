@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: baa9b0d7245089c1d046fe67860165746bb19148
-doc_baseline_date: 2026-10-11
+doc_baseline_commit: 57b3929f46bf5c0d20012badcafd9c8ebad42ec3
+doc_baseline_date: 2026-11-22
 ---
 
 # Active Context — cs-kernel
@@ -14,53 +14,10 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.3`; Current HEAD status: untagged.**
-  It syncs the engine's mail right before scheduled discovery reads the mailbox. `v0.73.2` gives the inventory context hooks 60 seconds each. `v0.73.1` makes a completed run with an incomplete mailbox or assignment read
-  exit 0 and raises the inventory context delivery from 48 to 64 slots. `v0.73.0` adds `CS_PRIMARY_BUDGET_USD`, the spending cap per scheduled Claude
-  run, to `v0.72.0`, which carries the interactive reply runtime, its agent
-  workflow and permission rules, and the discovery schema entry for
-  unreadable-mailbox gaps ([changelog](../CHANGELOG.md)). Both maintained clones
-  install `v0.73.3` since 2026-11-16: `cs verify-install` matches all 168
-  package files on each, and each lock file installs alone. Public provenance remains unmet; no
-  public push is performed.
-- Reviewed D1/F/P controls are installed; the0.70.1 cache change adds only an
-  explicit5m point after the full immutable bootstrap. Compared with0.70.0,
-  only the approved executor module changes. No dependency, model, price,
-  permission or business guard changes. Both mandatory release suites pass.
-  R1/R2 integration reviews and actual normal producer validation pass.
-  Previous failures, helper REVISE findings and corrected rollback remain retained.
-- The private0.70.1 cohort is FAILED at admission/soft_target_reached after23
-  reconciled responses costing8.0846050USD in usage-price estimates. Identity,
-  config, tasks, review and discovery completed; the whole workflow did not.
-  Cafe/signup never started. All336 recorded PID/start identities are absent,
-  both exact fixture enrollments are absent and three owned schedules are held.
-- The earlier0.70.0 soft8 failure remains consumed and retained. No attempt is
-  resumed or reset. Current inspected5m wire prefixes are identical; two cold
-  requests follow approximately20/9-minute tool intervals. Provider-internal
-  cache eviction remains unknown. [Longer cache work](briefs/2026-11-01-executor-long-cache.md)
-  adds explicit1h support with correct accounting before any further paid run.
-- Qualified committed estimates, captured engine delta and retained uncertainty
-  total54.0427724USD. The lead selects finite aggregate95, native target10/hard18.25,
-  signup2 and at most one new38.50USD cohort under the operator's broader spending
-  authorization. Worst-case planning is92.5427724, leaving2.4572276USD. These
-  bounds require fresh candidate/admission review before execution. Provider
-  invoices and uncaptured/external charges remain unknown; no reserve is released.
-- Private E1/E3 and exact E13 engine corrections remain adopted. The repaired
-  source case returns three complete human-hold observations and
-  `NEEDS_HUMAN_VERIFICATION`; automatic replies stay held. This does not repair
-  the historical failed FULL or prove whole-inventory/model acceptance.
-- The MrCall operator and signup schedules run since 2026-11-14. An operator
-  tick uses the `claude` scheduled host with a pinned model, on the API key, the
-  USD 4 cap and the Claude Code build named in its clone's
-  `operator-executor.env`; the signup job uses no model. The Café 124
-  schedule is held until its first staff mailbox has a working IMAP credential:
-  with that mailbox unreadable a tick prepares no draft. The Pydantic executor has not completed a scheduled tick: ten
-  recorded runs between 2026-10-29 and 2026-11-01 ended held, out of capacity,
-  out of budget or failed.
-- The read-only goal
-  checker has reviewed isolated positive feasibility and real-failure rejection.
-  Missing PID, cost or closure controls also reject. This structural proof grants
-  no operational acceptance.
+- **Latest release tag: `v0.73.3`; Current HEAD status: untagged.** Both maintained clones install that private release. The hosted engines and clone executors have independent versions and controls.
+- Scheduled assignment reads by position are a source candidate. The installed clones still require exact thread keys. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
+- Both clone schedules are active. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
+- Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
 
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
 [operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
@@ -70,29 +27,8 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Unresolved
 
-- A scheduled run of a clone with a fixed-template campaign ends
-  `execution_read_failed` (exit 1) on every tick while one campaign contact has
-  a reply that is already classified. `cs campaign pending` lists that contact
-  as `handle_reply` on every run (`cs/campaign.py`, `_fixed_template_items`);
-  the agent has to compare the reply's date with `classified_upto` and the item
-  carries no thread id; `cs history <email>` and `cs rpc emails.search` are
-  refused for a contact outside the selected workset (exit 3); `cs dossier`
-  records that refusal as a deferral proof (`capture_workset_deferral`) and
-  `cmd_history` records none, and `command_scope` in
-  `cs/operator_read_outcomes.py` maps `history` only to `history_absent`.
-  Every autoresponder to a campaign mail recreates the condition once its own
-  thread has left the workset.
-  - Dropping the classified reply from the worklist is not a local change:
-    `test_actual_already_classified_preview_without_mutation` in
-    `tests/test_operator_executor_integration.py` pins that `pending` lists it
-    and that the executor proves the `already_classified` disposition from the
-    preview and the thread read. Branch `attempt/classified-reply-worklist`
-    holds that change with its unit test; the full gates fail on that
-    integration test and it is not released.
-  - Giving `cs history` a deferral proof changes `command_scope`, which five
-    modules compare by equality with one scope per command
-    (`operator_read_outcomes`, `operator_executor_evidence`,
-    `operator_discovery_receipt`, `operator_native_composition`, `cli`).
+- A fixed-template campaign can keep returning a previously classified reply. Deep reads outside the current selection can cause an execution failure. The source candidate instructs scheduled operators to defer pending items that lack an exact selected match. Campaign state and read authority are unchanged.
+
 - `campaigns/*/flagged` is one of the sixteen list paths of the discovery
   material schema without an element shape, and `cs/review.py` fills it when a
   campaign contact's dossier is escalated: that tick's discovery publication
@@ -101,55 +37,10 @@ candidate does not re-audit those deployments or grant new send authority.
   `wire_usage_bucket_binding_differs` when the package is installed in a fresh
   environment. No test covers that route's cache accounting. No maintained clone
   selects the Pydantic executor.
-- The native stream check accepts one Claude Code build, 2.1.296
-  (`cs/operator_discovery_receipt.py`, `CLAUDE_VERSION` and `CLAUDE_SHA256`).
-  On any other build a tick that completes is recorded `stopped||no_result` and
-  exits 1. The clones select that build with `CLAUDE_BIN`; the host's default
-  `claude` is newer.
-- The same check accepts a permission denial only in one shape: a Bash command
-  that is not a `cs` command, refused by the auto-mode classifier with the
-  reason `[Auto-Mode Bypass]` after a `permission_check_status` cycle
-  (`cs/operator_native_composition.py`). A completed tick with any other
-  classifier denial is recorded `stopped||no_result` and exits 1.
-- When the stream check refuses a run, the kernel records only
-  `native_terminal_presence` / `terminal_unavailable`: the bounded reason that
-  `operator_native_composition.rejection` can compute is not emitted. The MrCall tick of
-  2026-11-16 02:50Z on `v0.73.2` was refused with process exit 0, its run
-  directory kept no stream and its cause is not established; the next tick was
-  accepted.
-- A completed tick whose only defect is an incomplete read exits 0
-  (`_health_exit`, `cs/operator_recovery.py`); it exits 1 when a further check
-  fails or when its notice cannot be recorded. No test covers a failed read
-  beside an incomplete read.
-- The run hook delivers the inventory view in at most 64 context slots
-  (`cs/operator_context_delivery.py`). Café 124's view needed 52 to 53 on
-  2026-11-15 (about 405,000 bytes); with 48 slots three ticks stopped before
-  reading it and prepared nothing: the agent did not page it literally. Each
-  slot is a hook process that verifies the whole view; 64 of them on that view
-  take about 11 seconds on the scheduled host and have 60 (`HOOK_TIMEOUT`).
-  With `v0.73.1`, which left them 10, the client cancelled part of the hooks
-  and the tick was recorded `stopped||no_result`.
-- A tick that completes while discovery reports an incomplete mailbox or
-  assignment read is recorded `stopped||<cause>`. It exits 0 when that read is
-  its only defect and 1 when a further health check fails
-  (`cs/operator_recovery.py`, `_health_exit`; `cs/operator_health.py`,
-  `read_gap_only`). In both cases the owner notice names only the incomplete
-  read; the further failed check is in the tick log. Every MrCall tick carries
-  `assignment_read_incomplete`, for one thread of its unreadable second account.
-- No test drives the fallback route with an incomplete-read verdict.
-- The kernel appends `--max-budget-usd` whenever `CS_PRIMARY_BUDGET_USD` is set
-  (`cs/operator_recovery.py`, `_run`), so a launcher that also passes the flag
-  passes it twice. No clone launcher passes the flag.
-- No test covers the refusal of an unusable `CS_PRIMARY_BUDGET_USD` in
-  `_run_tick`; the tests of the variable call `_run`.
-- The kernel records no command line of a scheduled run. The cap of the
-  re-collaudo ticks was read from the process arguments while they ran; Café
-  124's two ticks on `v0.73.0` were started by hand with the cron line's
-  command.
-- Commits `12d7264` and `18da6e7`, the `v0.72.0` release commits and the whole
-  of `v0.73.0` have no independent review. One reviewer read the diffs of
-  `v0.73.1` and `v0.73.2`.
-  The scheduled-surface hash ledger of this release is `PENDING_FRESH_REVIEW`.
+- The pinned native validator can reject a whole result when a required task failed. The retained stream is needed to distinguish a literal identifier from an unrelated lifecycle failure. A completed incomplete read exits 0 when it is the only defect. A second failure remains visible in the tick log.
+- The inventory delivery hook has 64 slots and a 60-second timeout. Remaining coverage gaps include fallback with incomplete reads, conflicting launcher budget flags and invalid budget configuration at tick startup.
+- Earlier releases and the protected-surface ledger retain the review limitations in their release records.
+
 - The pinned external R7 checker accepts only disabled/5m and hardcodes60USD.
   It cannot accept the reviewed1h/95USD correction through a new artifact index.
   Free private release/adoption may proceed; the new paid cohort is held until
@@ -189,10 +80,5 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Restore the held Café 124 schedule once a scheduled tick completes its work
-   on this tag.
-2. Publication needs FULL on both clones. Its runtime policy binds an earlier
-   system and nothing regenerates it. The changelog lists the two gates that
-   fail at the tag.
-3. Require actual M5, documentation critic and separate final review. Baseline
-   and protected goal acceptance remain open until their prerequisites pass.
+1. Compare the repaired selected reads through the actual scheduled caller before any release decision. Live clone adoption is a separate operation.
+2. Public publication and the earlier protected acceptance remain open under their existing owners.

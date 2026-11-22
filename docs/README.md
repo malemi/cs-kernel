@@ -1,5 +1,7 @@
 # Transversal Documentation Index
 
+- [Scheduled assignment reads by selected position](briefs/2026-11-22-scheduled-selected-reads.md) and [source verification plan](execution-plans/2026-11-22-scheduled-selected-reads.md).
+
 - [Executor cache across long reads](execution-plans/2026-11-01-executor-long-cache.md) — explicit1h cache support, exact pricing and bounded new installed acceptance; [brief](briefs/2026-11-01-executor-long-cache.md).
 
 - [Executor bootstrap cache candidate](execution-plans/2026-11-01-executor-bootstrap-cache.md) — conditional stable cache point, offline transport proof and pending installed/provider acceptance; [brief](briefs/2026-11-01-executor-bootstrap-cache.md).

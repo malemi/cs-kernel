@@ -1,5 +1,9 @@
 # Engine-owned thread assignments
 
+## Scheduled reads on the source candidate
+
+In a scheduled native run, `cs assignment status --selected 1 --json` reads the first reserved conversation. Position 2 is available when the run selected a second conversation. Positions follow discovery order and start at 1. Each read checks the current run and reservation before asking the engine. Missing or changed evidence holds the read. The exact-key interface remains available for interactive use. Both maintained clones still use the v0.73.3 interface.
+
 ## Availability
 
 This consumer ships in `v0.51.0` and is installed in both maintained clones.

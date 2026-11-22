@@ -114,6 +114,17 @@ def main() -> int:
                 pi.install_agent_surfaces(rendered)
         customer = rendered / ".claude/skills/cs-customer/SKILL.md"
         triage = rendered / ".claude/skills/cs-triage-mail/SKILL.md"
+        campaign = rendered / ".claude/skills/cs-campaign-tick/SKILL.md"
+        selected_commands = [
+            ".venv/bin/python -m cs assignment status --selected 1 --json",
+            ".venv/bin/python -m cs assignment status --selected 2 --json",
+        ]
+        check("scheduled triage reads the two reserved positions in order",
+              [line for line in triage.read_text().splitlines() if "status --selected" in line]
+              == selected_commands)
+        check("scheduled campaign defers an unmatched reply before deep reads",
+              "If the item is outside selection or lacks an unambiguous match, report it "
+              "as deferred for this tick" in " ".join(campaign.read_text().split()))
         check("written projects are not initialized in docs", not (rendered / "docs/projects").exists())
         check("project usage guide is available", (rendered / "docs/project-memory.md").is_file())
         triage_text = " ".join(triage.read_text().split())
@@ -135,6 +146,8 @@ def main() -> int:
                   (rendered / host / "skills/cs-customer/SKILL.md").read_bytes() == customer.read_bytes())
             check(f"{host} resolves real triage workflow",
                   (rendered / host / "skills/cs-triage-mail/SKILL.md").read_bytes() == triage.read_bytes())
+            check(f"{host} resolves real campaign workflow",
+                  (rendered / host / "skills/cs-campaign-tick/SKILL.md").read_bytes() == campaign.read_bytes())
 
         customer_text = customer.read_text()
         customer_flat = " ".join(customer_text.split())
@@ -276,6 +289,7 @@ def main() -> int:
         shutil.copytree(capabilities.parent, nolink / ".claude/skills/cs-bootstrap")
         shutil.copytree(customer.parent, nolink / ".claude/skills/cs-customer")
         shutil.copytree(triage.parent, nolink / ".claude/skills/cs-triage-mail")
+        shutil.copytree(campaign.parent, nolink / ".claude/skills/cs-campaign-tick")
         retired_content = {}
         for host in (".agents", ".opencode"):
             old = nolink / host / "skills/cs-capabilities"
@@ -317,6 +331,10 @@ def main() -> int:
                 check(f"{host} copy fallback has no retired legal procedure",
                       not (nolink / host / "skills/cs-legal-research").exists())
             for host in (".agents", ".opencode"):
+                for skill in (triage, campaign):
+                    check(f"{host} copies {skill.parent.name} without symlinks",
+                          (nolink / host / "skills" / skill.parent.name / "SKILL.md").read_bytes()
+                          == skill.read_bytes())
                 hosted = nolink / host / "skills/cs-bootstrap/SKILL.md"
                 check(f"{host} copies bootstrap without symlinks",
                       not (nolink / host / "skills").is_symlink()
