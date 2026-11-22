@@ -1,5 +1,20 @@
 # Changelog — cs-kernel
 
+## v0.74.0 — 2026-11-22 (MINOR, private unpublished release)
+
+Scheduled operators can read the assignment for each reserved conversation
+with `cs assignment status --selected 1|2 --json`. The kernel binds each
+position to its authenticated run, ordered reservation and exact thread.
+The existing exact-key command accepts a literal dollar in a quoted argument.
+Scheduled campaign instructions defer deep reads outside the reserved work.
+
+**Re-collaudo tier: read on BOTH maintained clones.** This minor release adds
+a read-only CLI option and renders guidance for the existing reservation.
+It preserves assignment authority, effect permissions and campaign mutations.
+Verify installed bytes, each rendered workflow, selection refusal outside a
+scheduled run and the authenticated read identity. Rebuild each dependency
+lock in a fresh environment. Both installations use the local immutable tag.
+
 ## v0.73.3 — 2026-11-16 (PATCH, private unpublished candidate)
 
 Scheduled discovery syncs the engine's mail right before it reads the mailbox

@@ -14,8 +14,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.73.3`; Current HEAD status: untagged.** Both maintained clones install that private release. The hosted engines and clone executors have independent versions and controls.
-- Scheduled assignment reads by position are a source candidate. The installed clones still require exact thread keys. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
+- **Latest release tag: `v0.74.0`; Current HEAD status: tagged as `v0.74.0`.** Both maintained clones still install private v0.73.3 before adoption. The hosted engines and clone executors have independent versions and controls.
+- The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Both clone schedules are active. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
 
@@ -80,5 +80,5 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Compare the repaired selected reads through the actual scheduled caller before any release decision. Live clone adoption is a separate operation.
+1. Install the private tag in both maintained clones and verify each runtime and stamped workflow.
 2. Public publication and the earlier protected acceptance remain open under their existing owners.
