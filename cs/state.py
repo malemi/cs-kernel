@@ -23,6 +23,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS mailbox_reply_sources (
+  owner TEXT NOT NULL,
+  request_key TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  thread_key TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  PRIMARY KEY (owner, request_key)
+);
 CREATE TABLE IF NOT EXISTS sends (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   category   TEXT NOT NULL,          -- lead | signup | cancellation

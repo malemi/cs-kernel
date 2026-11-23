@@ -14,8 +14,6 @@ LIST_PATHS_WITHOUT_ELEMENT_SHAPE = frozenset({
     'workset-review.json:/payload/assignment_coverage/roots/*/projection/events',
     'workset-review.json:/payload/assignments',
     'workset-review.json:/payload/campaigns/*/flagged',
-    'workset-review.json:/payload/engine_drafts/*/attachment_paths',
-    'workset-review.json:/payload/engine_drafts/*/bcc_addresses',
     'workset-review.json:/payload/human_work/*/assignment/covered_inbound',
     'workset-review.json:/payload/human_work/*/assignment/covered_message_ids',
     'workset-review.json:/payload/human_work/*/assignment/current_inbound',
@@ -58,11 +56,11 @@ class MaterialTests(unittest.TestCase):
         selected.email_address = 'support@example.com'
         selected.email_password = 'pw'
         now = datetime.now(timezone.utc)
-        drafts = [{'uid': '9', 'uidvalidity': '5', 'to': 'customer@example.com', 'subject': 're: your request',
-                   'date': format_datetime(now - timedelta(days=1)), 'body': 'short',
+        drafts = [{'id': '9', 'mailbox_id':'box', 'to_addresses':['customer@example.com'], 'subject': 're: your request',
+                   'created_at': format_datetime(now - timedelta(days=1)), 'body': 'short',
                    'thread_key': '', 'message_id': '<m@example.com>'}]
         with patch.object(draft_state, '_bulk_across', bulk):
-            rows, _ = draft_state.reconcile(selected, drafts, [],
+            rows, _ = draft_state.reconcile(selected, drafts,
                                             settled=lambda settings, keys: ({}, None),
                                             delivered=lambda settings, addr, body: (None, None), now=now)
         self.assertEqual([row['verdict'] for row in rows], ['ready'])
@@ -83,6 +81,14 @@ class MaterialTests(unittest.TestCase):
     def test_strict_json(self):
         for raw in ('{"x":1,"x":2}', '[NaN]', '[Infinity]'):
             with self.assertRaises(ValueError):material.parse(raw)
+
+    def test_native_mailbox_material(self):
+        path = 'workset-review.json:/payload/mailbox_drafts/*'
+        material.validate({'id':'native','mailbox_id':'box','attachments':[{'name':'a','content_type':'text/plain'}],
+            'bcc_addresses':['person@example.test'],'source_id':None,'body_editable':False},path)
+        for invalid in ({'bcc_addresses':42},{'attachments':[{'foreign':True}]},{'body_editable':1}):
+            with self.assertRaises(material.MaterialValidationError):
+                material.validate(invalid,path)
 
     def test_exact_types_unknown_fields(self):
         value={'digest':'x','nonce':'n','owner_uid':'o','source':'tasks','payload':[]}
@@ -116,9 +122,8 @@ class MaterialTests(unittest.TestCase):
             record={'nonce':context['nonce'],'owner_uid':'neutral','ancestry':[{'pid':3,'started_ticks':30},{'pid':2,'started_ticks':20},context['supervisor']],'exit_code':0,'output_sha256':'neutral','discovery':discovery}
             view.exclusive(path/'discovery.json',json.dumps(record).encode())
             with self.assertRaises(OSError):view.capture(context)
-            review={'gmail_drafts':[],'engine_drafts':[],'drafts':[],
-                    'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,'expected_uids':[],'observed_uids':[],'uidvalidity':'1'},
-                    'drafts_inventory':{'version':1,'complete':True,'gmail_count':0,'engine_count':0,'row_count':0,'identity_sha256':hashlib.sha256(b'[]').hexdigest()}}
+            review={'mailbox_drafts':[],'drafts':[],
+                    'drafts_inventory':{'version':2,'complete':True,'mailbox_count':0,'row_count':0,'identity_sha256':hashlib.sha256(b'[]').hexdigest()}}
             observations={'tasks':[],'review':review}
             for source,payload in observations.items():
                 value={'digest':material.commitment(payload),'nonce':context['nonce'],'owner_uid':'neutral','source':source,'payload':payload}
@@ -150,9 +155,8 @@ class MaterialTests(unittest.TestCase):
 
     def test_task_completeness_before_compact_coverage(self):
         from pathlib import Path
-        review={'gmail_drafts':[],'engine_drafts':[],'drafts':[],
-                'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,'expected_uids':[],'observed_uids':[],'uidvalidity':'1'},
-                'drafts_inventory':{'version':1,'complete':True,'gmail_count':0,'engine_count':0,'row_count':0,'identity_sha256':hashlib.sha256(b'[]').hexdigest()}}
+        review={'mailbox_drafts':[],'drafts':[],
+                'drafts_inventory':{'version':2,'complete':True,'mailbox_count':0,'row_count':0,'identity_sha256':hashlib.sha256(b'[]').hexdigest()}}
         good={'tasks':[{'id':'neutral'}]}
         variants=[{'tasks':[],'complete':True},{'tasks':[{'id':'neutral'}],'errors':[]}]
         invalid=[{**good,'complete':False},{**good,'total':2},{**good,'error':'unavailable'},
@@ -167,32 +171,3 @@ class MaterialTests(unittest.TestCase):
             if payload in invalid:
                 with self.assertRaises(ValueError):material.load_sources(Path('.'),context,{'triage_workset':{}},lambda path:files[path.name])
             else:material.load_sources(Path('.'),context,{'triage_workset':{}},lambda path:files[path.name])
-
-
-    def test_actual_gmail_mime_producer_fields_are_typed_optional_material(self):
-        from email.message import EmailMessage
-        from cs import gmail_drafts
-        message = EmailMessage()
-        message['From'] = 'sender@example.test'
-        message['To'] = 'receiver@example.test'
-        message['Bcc'] = 'private@example.test'
-        message['Subject'] = 'Neutral draft'
-        message.set_content('Private body')
-        row = {**gmail_drafts._header_evidence(message),
-               **gmail_drafts._mime_evidence(message.as_bytes()), 'is_draft': True}
-        row = json.loads(json.dumps(row))
-        path = 'workset-review.json:/payload/gmail_drafts/*'
-        material.validate(row, path)
-        material.validate({}, path)
-        for key, bad in [('bcc', []), ('from', None), ('identity_headers_valid', 1),
-                         ('is_draft', 'true'), ('mime_plain_only', 0),
-                         ('mime_structure', 'plain'), ('mime_structure', [[None, None, None]]),
-                         ('mime_structure', [['text/plain', None]]),
-                         ('mime_structure', [['text/plain', {}, None]])]:
-            with self.subTest(key=key, bad=bad), self.assertRaises(material.MaterialValidationError):
-                material.validate({**row, key: bad}, path)
-        with self.assertRaises(material.MaterialValidationError) as failure:
-            material.validate({**row, 'unrecognized_secret': 'PRIVATE_SENTINEL'}, path)
-        self.assertEqual(failure.exception.cause, 'material_unknown_field')
-        self.assertTrue(failure.exception.gmail_draft_material)
-        self.assertNotIn('PRIVATE_SENTINEL', str(failure.exception))

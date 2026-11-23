@@ -1,66 +1,4 @@
-"""Does this draft still answer the conversation it was written for?
-
-A draft has no lifecycle. Gmail Drafts is a folder, the engine's draft store is
-a `status='draft'` filter, and neither of them knows that the customer wrote
-again an hour after the draft was composed, or that somebody already answered
-by hand. `cs review` used to list both stores raw, so a reply written for a
-question that has since been withdrawn was presented as ready to send.
-
-This module gives every draft a VERDICT, computed at review time and stored
-nowhere. Three of the four signals are Gmail-anchored, need no engine and
-cannot degrade:
-
-    duplicate   — the same text is already in Sent to that contact: this draft
-                  is a SECOND COPY of a mail they already have, and sending it
-                  mails them the same thing twice. Ranked strongest, because
-                  it is the only signal about the draft's CONTENT rather than
-                  about the conversation around it. It needs a body to
-                  compare, so it fires on engine drafts (and on a Gmail draft
-                  paired with its engine copy); a Gmail-only row carries
-                  a bounded complete authored body when available.
-    overtaken   — the contact has a message in All Mail dated AFTER the draft
-                  was composed: the draft answers a state of the conversation
-                  that no longer holds.
-    superseded  — the operator mailbox has a message in Sent to that contact
-                  dated after the draft was composed: somebody answered another
-                  way, and sending the draft would answer twice.
-
-The engine adds one enrichment on top, never a substitute:
-
-    settled     — `emails.needs_reply` (via `cs/engine_view.py`) says the newest
-                  inbound on that conversation owes nothing. That is meaning,
-                  and meaning is the engine's (charter invariant 4). When the
-                  engine cannot be asked the label is simply absent and the
-                  caller gets a note; the two Gmail comparisons still fire.
-
-The split is the charter's: *does this message exist* → Gmail;
-*what kind of message is it* → the engine.
-
-A draft with no signal is `ready`. Precedence when several fire is
-duplicate > overtaken > superseded > settled. A copy of mail already delivered
-outranks everything: on a thread where the customer has since replied, both
-`duplicate` and `overtaken` are true, and "they already have this text" is the
-more actionable of the two.
-
-No verdict blocks anything. `RE_DECIDE` GROUPS the drafts the digest asks the
-operator to read again before sending; a deliberate re-send is flagged, never
-skipped, and nothing here can refuse one.
-
-**Nothing here deletes anything.** Retiring a draft is a silencing action in the
-class of `cs handled` — a named, per-draft, human instruction — so this module
-computes and reports, and the operator decides. Verdicts are recomputed every
-run: a persisted "stale" flag would be a second piece of state to keep true
-against a mailbox that keeps moving.
-
-One logical draft can exist TWICE — `cs draft-reply` lets the engine compose and
-mirrors the result into Gmail Drafts — so copies are paired first by full draft ID and selected engine owner. Legacy
-thread/recipient inference is explicitly labelled; contradictions remain separate.
-Valid pairs are reported as ONE row carrying both handles, the Gmail `uid` and the
-engine draft `id`. Retiring it takes both.
-
-Degradation is a note, never an exception: a mailbox hiccup on one contact must
-not cost the operator the whole digest.
-"""
+"""Read-time verdicts on current mailbox drafts, based on correspondence and Sent."""
 from __future__ import annotations
 
 import hashlib
@@ -128,229 +66,21 @@ def _refs(value) -> str:
     return str(value or "")
 
 
-def _engine_composed_at(row: dict) -> datetime | None:
-    """When the engine says it composed this draft (UTC, tz-aware).
-
-    The engine serialises UTC without an offset, so a naive value is read as
-    UTC — the same convention as `cs/_time.py` and `cs/engine_view.py`.
-    """
-    for key in ("created_at", "updated_at"):
-        raw = row.get(key)
-        if not raw:
-            continue
-        try:
-            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            continue
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    return None
-
-
-def _gmail_row(row: dict) -> dict:
-    """One Gmail Drafts header row → the shape this module reconciles."""
-    key = row.get("thread_key")
-    if not key:
-        key = thread_key(row.get("message_id"), row.get("references"),
-                         row.get("in_reply_to"))
-    return {
-        "source": "gmail",
-        "gmail_uid": row.get("uid"),
-        "engine_id": None,
-        "to": next(iter(_recipient_set(row.get("to"))), ""),
-        "to_display": row.get("to") or "",
-        "recipients": _recipient_set(row.get("to")),
-        "cc_recipients": _recipient_set(row.get("cc")),
-        "subject": row.get("subject") or "",
-        "thread_key": key or "",
-        "composed_at": parse_mail_date(row.get("date")),
-        # A complete bounded Gmail MIME read carries authored text; failures
-        # stay empty with a note and cannot borrow an engine body as proof.
-        "body": row.get("body") or "",
-        "engine_draft_id": row.get("engine_draft_id"),
-        "engine_owner_uid": row.get("engine_owner_uid"),
-        "gmail_uidvalidity": row.get("uidvalidity"),
-        "gmail_body_observed": "body_complete" in row,
-        "gmail_body_complete": row.get("body_complete") is True,
-        "gmail_fingerprint": row.get("fingerprint"),
-        "body_note": row.get("body_note"),
-    }
-
-
-def _engine_row(row: dict) -> dict:
-    """One `drafts.list` row → the shape this module reconciles."""
-    to = _first(row.get("to_addresses"))
-    # `normalize_key`, not the raw field: the engine stores the id the send
-    # path gave it, and a mirror filed under an HTML-escaped id must still
-    # reconcile against the Gmail copy of the same conversation.
+def mailbox_row(row: dict) -> dict:
     key = normalize_key(row.get("thread_id")) or thread_key(
-        None, _refs(row.get("references")), row.get("in_reply_to")
-    )
+        None, _refs(row.get("references")), row.get("in_reply_to"))
     return {
-        "source": "engine",
-        "gmail_uid": None,
-        "engine_id": row.get("id"),
+        "draft_id": row["id"],
+        "mailbox_id": row["mailbox_id"],
         "to": next(iter(_recipient_set(row.get("to_addresses"))), ""),
-        "to_display": to,
+        "to_display": _first(row.get("to_addresses")),
         "recipients": _recipient_set(row.get("to_addresses")),
         "cc_recipients": _recipient_set(row.get("cc_addresses")),
         "subject": row.get("subject") or "",
         "thread_key": key or "",
-        "composed_at": _engine_composed_at(row),
+        "composed_at": parse_mail_date(row.get("created_at")),
         "body": row.get("body") or "",
     }
-
-
-def _pair(rows: list[dict], expected_owner_uid: str | None = None) -> list[dict]:
-    """Exact unique owner/ID first; contradictions never enter legacy inference."""
-    gmail = [r for r in rows if r["source"] == "gmail"]
-    engine = [r for r in rows if r["source"] == "engine"]
-    used = set()
-    out = []
-
-    def context(r):
-        return (r["thread_key"] or "subject:" + r["subject"].strip().lower(), r["to"])
-
-    def single(r, conflict=None):
-        base = dict(r)
-        base.pop("source", None)
-        base["identity_evidence"] = "gmail-only" if r["source"] == "gmail" else "engine-only"
-        base["identity_conflict"] = conflict
-        return base
-
-    def merge(g, e, evidence):
-        base = single(g)
-        base["engine_id"] = e["engine_id"]
-        stamps = [t for t in (g["composed_at"], e["composed_at"]) if t]
-        base["composed_at"] = min(stamps) if stamps else None
-        base["body"] = g["body"] if g.get("gmail_body_observed") else (g["body"] or e["body"])
-        base["identity_evidence"] = evidence
-        return base
-
-    claimed = {g.get("engine_draft_id") for g in gmail if g.get("engine_draft_id")}
-    for g in gmail:
-        identity = g.get("engine_draft_id")
-        if identity:
-            matches = [e for e in engine if e["engine_id"] == identity]
-            copies = [x for x in gmail if x.get("engine_draft_id") == identity]
-            conflict = None
-            if not expected_owner_uid or g.get("engine_owner_uid") != expected_owner_uid:
-                conflict = "missing or wrong selected engine owner"
-            elif len(copies) != 1 or len(matches) > 1:
-                conflict = "duplicate exact identity"
-            elif matches and (context(g) != context(matches[0]) or g["recipients"] != matches[0]["recipients"] or g["cc_recipients"] != matches[0]["cc_recipients"]):
-                conflict = "exact identity recipient/thread mismatch"
-            if conflict:
-                out.append(single(g, conflict))
-            elif matches:
-                used.add(id(matches[0]))
-                out.append(merge(g, matches[0], "exact"))
-            else:
-                out.append(single(g))
-            continue
-        if g.get("engine_owner_uid"):
-            out.append(single(g, "owner header without draft identity"))
-            continue
-        matches = [e for e in engine if id(e) not in used and e["engine_id"] not in claimed and context(e) == context(g)]
-        if matches:
-            e = matches[0]
-            used.add(id(e))
-            out.append(merge(g, e, "legacy-inferred"))
-        else:
-            out.append(single(g))
-    for e in engine:
-        if id(e) not in used:
-            out.append(single(e, "conflicting Gmail identity" if e["engine_id"] in claimed else None))
-    return out
-
-
-def _sent_at(row: dict) -> datetime | None:
-    """When the engine says it SENT this draft (UTC, tz-aware)."""
-    for key in ("sent_at", "updated_at", "created_at"):
-        raw = row.get(key)
-        if not raw:
-            continue
-        try:
-            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        except (TypeError, ValueError):
-            continue
-        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-    return None
-
-
-def sent_orphans(sent_rows: list[dict], gmail_rows: list[dict], expected_owner_uid: str | None = None) -> list[dict]:
-    """Gmail mirrors whose engine original has already been SENT.
-
-    The mirror exists so a human can read a composed reply where they read
-    everything else; the SEND happens on the engine's own copy, and nothing
-    retracts the mirror afterwards. So every contextual reply leaves one
-    behind, the review queue fills with drafts of mail already answered, and
-    the queue that is supposed to say "these need a decision" stops meaning
-    anything. Retiring them is the other half of sending.
-
-    Exact unique mirror IDs and the selected owner permit automatic retirement.
-    Legacy context matches remain preview-only. A candidate agrees on the recipient
-    AND on the conversation — the thread key when either side is a reply, the
-    subject when neither is — and the mirror was composed no later than the
-    send. That last clause is the whole safety margin: a NEW draft written
-    after the send, on the same thread and to the same person, is the operator
-    composing again and is never touched. When either time is unknown the row
-    is left alone and reported, because "probably already sent" is not a
-    reason to delete somebody's draft.
-
-    Pure: plain dicts in, plain dicts out, no IMAP and no engine.
-    """
-    sent = []
-    for row in sent_rows:
-        e = _engine_row(row)
-        e["sent_at"] = _sent_at(row)
-        sent.append(e)
-
-    out: list[dict] = []
-    for raw in gmail_rows:
-        g = _gmail_row(raw)
-        if not g["gmail_uid"]:
-            continue
-        for e in sent:
-            if g["to"] != e["to"] or not g["to"]:
-                continue
-            if g["thread_key"] and e["thread_key"]:
-                if g["thread_key"] != e["thread_key"]:
-                    continue
-            elif g["subject"].strip().lower() != e["subject"].strip().lower():
-                continue
-            identity = g.get("engine_draft_id")
-            same_context = (g["thread_key"] == e["thread_key"]
-                            if g["thread_key"] or e["thread_key"]
-                            else g["subject"].strip().lower() == e["subject"].strip().lower())
-            exact = bool(identity and identity == e["engine_id"] and expected_owner_uid and g.get("engine_owner_uid") == expected_owner_uid and g["recipients"] == e["recipients"] and g["cc_recipients"] == e["cc_recipients"] and same_context)
-            conflict = bool(identity and (not exact or sum(x.get("engine_draft_id") == identity for x in gmail_rows) != 1 or sum(x.get("id") == identity for x in sent_rows) != 1))
-            if identity and identity != e["engine_id"]:
-                continue
-            when, sent_when = g["composed_at"], e["sent_at"]
-            out.append({
-                "gmail_uid": g["gmail_uid"],
-                "to": g["to_display"] or g["to"],
-                "subject": g["subject"],
-                "thread_key": g["thread_key"],
-                "composed_at": when,
-                "engine_id": e["engine_id"],
-                "sent_at": sent_when,
-                # Reported, never silently dropped: an operator who cannot see
-                # why a draft was skipped cannot retire it by hand either.
-                "retire": bool(exact and not conflict and when and sent_when and when <= sent_when),
-                "identity_evidence": "exact" if exact and not conflict else "legacy-inferred" if not identity else "gmail-only",
-                "identity_conflict": "conflicting or nonunique exact identity" if conflict else None,
-                "reason": (
-                    "identity conflict — left alone" if conflict else
-                    "legacy inference — preview only" if not exact else
-                    "composed before the send" if (when and sent_when and when <= sent_when)
-                    else "composed AFTER the send — a newer draft, left alone"
-                    if (when and sent_when) else
-                    "no comparable timestamps — left alone"
-                ),
-            })
-            break
-    return out
 
 
 def _after(rows, composed_at: datetime) -> list[dict]:
@@ -455,8 +185,7 @@ def _across_sent(unreadable: dict[str, str]):
 
 def reconcile(
     settings,
-    gmail_drafts: list[dict],
-    engine_drafts: list[dict],
+    mailbox_drafts: list[dict],
     *,
     inbound=None,
     sent=None,
@@ -484,7 +213,7 @@ def reconcile(
     is a different question.)
 
     Every row: `to`, `to_display`, `subject`, `thread_key`, `composed_at`,
-    `composed_iso`, `gmail_uid`, `engine_id`, `verdict`, `signal`, `signal_at`,
+    `composed_iso`, `mailbox_id`, `draft_id`, `verdict`, `signal`, `signal_at`,
     `evidence_incomplete`. The last one is the mailboxes that could not be read
     while this row's verdict was computed — empty unless the verdict is `ready`,
     which is the only one that rests on an absence. `notes` holds one line per
@@ -512,27 +241,15 @@ def reconcile(
     delivered = delivered or (lambda settings, addr, body: gmail_archive.sent_body_match(settings, addr, body, authored=True))
     now = now or datetime.now(timezone.utc)
 
-    rows = _pair(
-        [_gmail_row(d) for d in (gmail_drafts or [])]
-        + [_engine_row(d) for d in (engine_drafts or [])],
-        getattr(settings, "engine_owner_uid", None),
-    )
-    notes: list[str] = []
+    rows = [mailbox_row(draft) for draft in mailbox_drafts]
+    notes = []
     for row in rows:
-        row["workset_hold_reasons"] = []
-        for condition, code in ((row.get("identity_conflict"), "identity_conflict"),
-                                (not row.get("body") or row.get("body_note") or (row.get("gmail_uid") and not row.get("gmail_body_complete")), "body_unavailable"),
-                                (row.get("gmail_uid") and not row.get("gmail_uidvalidity"), "uidvalidity_unknown"),
-                                (not row.get("thread_key"), "root_missing"),
-                                (not row.get("to"), "recipient_missing"),
-                                (row.get("composed_at") is None, "date_missing")):
-            if condition:
-                row["workset_hold_reasons"].append(code)
-        for note in (row.get("identity_conflict"), row.get("body_note")):
-            if note:
-                notes.append(f"draft {row.get('gmail_uid') or row.get('engine_id')}: {note}")
-        if row.get("gmail_body_observed") and row.get("gmail_uidvalidity") is None:
-            notes.append(f"draft {row['gmail_uid']}: UIDVALIDITY unknown")
+        row["workset_hold_reasons"] = [reason for missing, reason in (
+            (not row["body"], "body_unavailable"),
+            (not row["thread_key"], "root_missing"),
+            (not row["to"], "recipient_missing"),
+            (row["composed_at"] is None, "date_missing"),
+        ) if missing]
 
     # One engine call for every thread at once (`emails.needs_reply` batches);
     # an engine that is asleep, or that predates the method, costs a note and
@@ -612,7 +329,7 @@ def reconcile(
         # `duplicate` and `overtaken`, and only the first says "do not send
         # this text again". No date bound — a copy of something delivered is
         # a copy whenever it was delivered.
-        from .draft_identity import authored_plain
+        from .authored_mail import authored_plain
         body, body_note = authored_plain(row.get("body") or "")
         if body_note or row.get("body_note"):
             body = ""
@@ -750,51 +467,29 @@ def split(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     return ready, re_decide
 
 
-def inventory_proof(gmail_rows, engine_rows, reconciled_rows, gmail_observation) -> dict:
-    result = {"version": 1, "complete": False, "gmail_count": 0,
-              "engine_count": 0, "row_count": 0, "identity_sha256": None}
-    if not all(isinstance(v, list) for v in (gmail_rows, engine_rows, reconciled_rows)):
+def inventory_proof(mailbox_rows, reviewed) -> dict:
+    result = {"version": 2, "complete": False, "mailbox_count": 0,
+              "row_count": 0, "identity_sha256": None}
+    if not isinstance(mailbox_rows, list) or not isinstance(reviewed, list):
         return result
-    result.update(gmail_count=len(gmail_rows), engine_count=len(engine_rows), row_count=len(reconciled_rows))
-    if not all(isinstance(r, dict) for rows in (gmail_rows, engine_rows, reconciled_rows) for r in rows):
+    result.update(mailbox_count=len(mailbox_rows), row_count=len(reviewed))
+    def identities(rows, key):
+        pairs = []
+        for row in rows:
+            if not isinstance(row, dict):
+                return None
+            pair = row.get("mailbox_id"), row.get(key)
+            if not all(isinstance(field, str) and field for field in pair):
+                return None
+            pairs.append(pair)
+        return sorted(pairs) if len(set(pairs)) == len(pairs) else None
+    ids = identities(mailbox_rows, "id")
+    if ids is None or ids != identities(reviewed, "draft_id"):
         return result
-    obs = gmail_observation
-    if not isinstance(obs, dict) or set(obs) != {"version", "complete", "search_complete", "expected_uids", "observed_uids", "uidvalidity"}:
-        return result
-    if type(obs["version"]) is not int or obs["version"] != 1 or obs["complete"] is not True or obs["search_complete"] is not True:
-        return result
-    validity = obs["uidvalidity"]
-    if not isinstance(validity, str) or not validity.isdigit():
-        return result
-    def identifiers(values):
-        return isinstance(values, list) and all(isinstance(x, str) and x for x in values) and len(values) == len(set(values))
-    expected, observed = obs["expected_uids"], obs["observed_uids"]
-    if not identifiers(expected) or not identifiers(observed) or sorted(expected) != sorted(observed) or not all(x.isdigit() for x in expected):
-        return result
-    raw_g = [r.get("uid") for r in gmail_rows]
-    raw_e = [r.get("id") for r in engine_rows]
-    if not identifiers(raw_g) or not identifiers(raw_e) or sorted(raw_g) != sorted(expected):
-        return result
-    if any(r.get("uidvalidity") != validity for r in gmail_rows):
-        return result
-    joined_g, joined_e, identities = [], [], []
-    for row in reconciled_rows:
+    for row in reviewed:
         holds = row.get("workset_hold_reasons")
-        if not isinstance(holds, list) or any(not isinstance(x, str) or x not in WORKSET_HOLD_REASONS for x in holds) or len(holds) != len(set(holds)):
+        if not isinstance(holds, list) or any(not isinstance(item, str) or item not in WORKSET_HOLD_REASONS for item in holds):
             return result
-        uid, eid = row.get("gmail_uid"), row.get("engine_id")
-        if uid is None and eid is None:
-            return result
-        if uid is not None:
-            if row.get("gmail_uidvalidity") != validity:
-                return result
-            joined_g.append(uid)
-        if eid is not None:
-            joined_e.append(eid)
-        identities.append([validity if uid is not None else None, uid, eid])
-    if not identifiers(joined_g) or not identifiers(joined_e) or sorted(joined_g) != sorted(raw_g) or sorted(joined_e) != sorted(raw_e):
-        return result
-    identities.sort(key=lambda value: json.dumps(value, separators=(",", ":")))
-    result["identity_sha256"] = hashlib.sha256(json.dumps(identities, separators=(",", ":"), ensure_ascii=True).encode()).hexdigest()
+    result["identity_sha256"] = hashlib.sha256(json.dumps(ids, separators=(",", ":")).encode()).hexdigest()
     result["complete"] = True
     return result

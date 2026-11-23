@@ -15,7 +15,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
-from cs import cli, config, gmail_archive, gmail_drafts, interactive_draft as draft, rpc
+from cs import cli, config, gmail_archive, interactive_draft as draft, rpc
 from cs import observability_causal as causal
 from cs.monitor_config import Component, MonitorConfig
 from cs.monitor_evaluate import initial_state, observe
@@ -23,7 +23,7 @@ from cs.observability import context, current_context, safe_metadata, store_for
 from cs.observability_store import _validate_event
 from cs.monitor_details import safe_detail
 from test_contextual_email import settings
-from test_interactive_draft_continuity import SOURCE, GMAIL, DRAFT, COPY, ROOT
+from test_interactive_draft_continuity import SOURCE, GMAIL, ROOT
 
 CANARY = 'PRIVATE_SOURCE_CANARY_86741'
 
@@ -35,43 +35,24 @@ class SourceLogging(unittest.TestCase):
         def call(s, method, params, timeout=None):
             calls.append(method)
             if method == 'system.capabilities':
-                return {'exact_draft_publication': 1}
+                return {'mailbox_reply': 1}
             if method == 'emails.list_by_thread':
                 if unknown:
                     raise RuntimeError(CANARY)
                 return {'emails': [source or SOURCE]}
-            if method == 'drafts.list':
-                return [] if calls.count(method) == 1 else [copy.deepcopy(DRAFT)]
-            if method == 'drafts.inspect':
-                return {'ok': True, 'draft': copy.deepcopy(DRAFT), 'expected_snapshot': 'native-snapshot'}
-            if method == 'drafts.publish_review':
-                append(s)
-                return {'version': 1, 'ok': True, 'draft_id': DRAFT['id'],
-                        'achieved_stages': ['engine-saved', 'review-visible'],
-                        'cause': 'exact_copy_published', 'next_action': 'review-draft'}
+            if method == 'drafts.compose_reply':
+                return {'ok': True, 'state': 'completed', 'draft_id':'native',
+                        'current_draft':{'exists': True}, 'request_key':params['request_key']}
             raise AssertionError(method)
-        async def chat(*args, **kwargs):
-            calls.append('chat')
-            self.assertEqual(kwargs['allow_tools'], set())
-            return {'result': {'response': 'Prepared'}}
         def read(s, addr, **kwargs):
             kwargs['observation']['inventory_complete'] = True
             return [provider or GMAIL]
-        def inventory(s, *, observation):
-            observation['complete'] = True
-            return copies
-        def append(s, **kwargs):
-            calls.append('append')
-            copies.append(copy.deepcopy(COPY))
-            return 'Drafts', []
-        stderr = io.StringIO()
+        stdout, stderr = io.StringIO(), io.StringIO()
         with contextlib.ExitStack() as stack:
-            for target, method, effect in ((rpc, 'call_sync', call), (rpc, 'chat', chat),
-                    (gmail_archive, 'thread_with', read), (gmail_drafts, 'list_drafts', inventory),
-                    (gmail_drafts, 'append_draft', append)):
+            for target, method, effect in ((rpc, 'call_sync', call), (gmail_archive,'thread_with',read)):
                 stack.enter_context(patch.object(target, method, side_effect=effect))
             stack.enter_context(patch.object(config, 'load', return_value=selected))
-            stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+            stack.enter_context(contextlib.redirect_stdout(stdout))
             stack.enter_context(contextlib.redirect_stderr(stderr))
             if sink:
                 stack.enter_context(patch('cs.observability.EventStore.emit', side_effect=OSError(CANARY)))
@@ -81,7 +62,7 @@ class SourceLogging(unittest.TestCase):
                 stack.enter_context(patch.object(cli, '_scheduled_workset_scope', return_value=True))
                 stack.enter_context(patch.object(task_assignment, 'guard', side_effect=task_assignment.AssignmentUnavailable('Held')))
             rc = cli.main(['draft-reply', 'Answer', '--thread-id', ROOT, '--timeout', '10'])
-        return rc, calls, stderr.getvalue()
+        return rc, calls, stdout.getvalue() + stderr.getvalue()
 
     def test_real_preparation_cli_collector_corpus(self):
         retained = os.environ.get('DRAFT_SOURCE_EVIDENCE_DIR')
@@ -118,11 +99,11 @@ class SourceLogging(unittest.TestCase):
                         self.assertEqual(causal.selected(), parent)
                     self.assertIsNone(draft._SOURCE.get())
                     events = store.events(limit=200)['events']
-                    terminals = [e for e in events if e['stage']=='generation' and e['status']=='held']
-                    failures = [e for e in events if e.get('causal', {}).get('layer')=='source' and e['status']=='failed']
+                    terminals = [e for e in events if e['stage']=='generation' and e.get('exit_code')==3]
+                    failures = [e for e in events if e.get('causal', {}).get('layer')=='source' and e.get('error_class')]
                     if expected:
                         self.assertEqual(rc, 3)
-                        self.assertIn('; nothing generated', stderr)
+                        self.assertNotIn('drafts.compose_reply', calls)
                         self.assertNotIn('chat', calls)
                         self.assertNotIn('drafts.list', calls)
                         self.assertNotIn('append', calls)
@@ -195,7 +176,7 @@ class SourceLogging(unittest.TestCase):
             rc, calls, stderr = self.invoke(selected, provider=provider)
             self.assertEqual(rc, 3)
             self.assertIn('total 65536 character prompt bound', stderr)
-            self.assertIn('; nothing generated', stderr)
+            self.assertNotIn('drafts.compose_reply', calls)
             self.assertNotIn('chat', calls)
             self.assertNotIn('drafts.list', calls)
             self.assertNotIn('append', calls)
@@ -205,7 +186,7 @@ class SourceLogging(unittest.TestCase):
             self.assertEqual(failure['causal']['facts'],
                 {'body_comparison_performed':True, 'generation_started':False})
             self.assertEqual(failure['error_class'], 'ValueError')
-            self.assertTrue(any(e['stage']=='generation' and e['status']=='held' and e['exit_code']==3 for e in events))
+            self.assertTrue(any(e['stage']=='generation' and e.get('exit_code')==3 and e['exit_code']==3 for e in events))
             self.assertIsNone(draft._SOURCE.get())
 
     def test_recovery_binding_and_concurrent_scope(self):

@@ -19,14 +19,13 @@ def gmail(settings,*,observation):
  observation.update(version=1,complete=True,search_complete=True,expected_uids=['17'],observed_uids=['17'],uidvalidity='6')
  return [{'uid':'17','uidvalidity':'6','thread_key':'<draft@test>','body':'local fixture','body_complete':True}]
 def rpc(settings,method,params,**kw):
- if method=='drafts.list':return [{'id':'draft','thread_id':'<draft@test>','body':'local fixture'}]
+ if method=='drafts.list':return [{'id':'draft','mailbox_id':'box','owner_id':settings.email_address,'status':'draft','thread_id':'<draft@test>','body':'local fixture'}]
  if method=='tasks.list':return [{'id':'task','thread_key':'<task@test>'},{'id':'overlap','thread_key':'<listed@test>'}]
  raise AssertionError(method)
 def listing(*args,**kwargs):return {'items':[{'thread_key':'<listed@test>'}]}
 def projections(settings,roots,**kwargs):
  Path(os.environ['COVERAGE_CALLS']).write_text(json.dumps(list(roots)))
  return {root:(assignment._unknown(root,'simulated timeout') if root=='<task@test>' else normal_projection(settings,{'thread_key':root})) for root in roots if root!='<draft@test>'}
-review.gmail_drafts.list_drafts=gmail
 review.rpc.call_sync=rpc
 review.draft_state.reconcile=lambda *a,**kw:([],[])
 review.draft_state.inventory_proof=lambda *a,**kw:{'version':1,'complete':True}
@@ -70,7 +69,7 @@ class Coverage(unittest.TestCase):
    rows={row['thread_key']:row for row in coverage['roots']}
    self.assertEqual(len(rows),4)
    self.assertEqual(rows['<listed@test>']['sources'],['task','company_assignment'])
-   self.assertEqual(rows['<draft@test>']['sources'],['gmail_draft','engine_draft'])
+   self.assertEqual(rows['<draft@test>']['sources'],['mailbox_draft'])
    self.assertEqual(rows['<settled@test>']['sources'],['inbound'])
    for key in ('<draft@test>','<task@test>'):
     self.assertFalse(rows[key]['projection']['complete'])

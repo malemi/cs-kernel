@@ -11,7 +11,7 @@ silence that had not happened.
 
 What these gates hold, in the order the work builds it:
 
-  1. `gmail_drafts._imap` takes an EXPLICIT (address, password) and logs in with
+  1. `imap_connection._imap` takes an EXPLICIT (address, password) and logs in with
      it; omitted, it is byte-for-byte today's behaviour, so no existing caller
      changes and none can be silently redirected to another mailbox.
   2. Another account's credential comes from ITS engine profile — owner-
@@ -74,7 +74,7 @@ from pathlib import Path
 from cs import cli
 from cs import config as config_mod
 from cs import config_report
-from cs import gmail_archive, gmail_drafts, mailboxes
+from cs import gmail_archive, imap_connection, mailboxes
 from cs import rpc as rpc_mod
 from cs.config import Settings
 
@@ -315,16 +315,16 @@ def _test_imap_credential_argument() -> None:
     """(1) The default is today's behaviour; an explicit pair is honoured."""
     settings = _settings()
     with _world(settings):
-        M = gmail_drafts._imap(settings)
+        M = imap_connection._imap(settings)
         assert M.address == OPERATOR, "no credential must mean the operator's own"
-        M2 = gmail_drafts._imap(settings, (FOUNDER, FOUNDER_PW))
+        M2 = imap_connection._imap(settings, (FOUNDER, FOUNDER_PW))
         assert M2.address == FOUNDER, "an explicit credential must be the one used"
         # the spaced app-password paste is still tolerated on both paths
-        M3 = gmail_drafts._imap(settings, (FOUNDER, "foun der-app-pw-2222"))
+        M3 = imap_connection._imap(settings, (FOUNDER, "foun der-app-pw-2222"))
         assert M3.address == FOUNDER, "spaced app password must still log in"
         refused = False
         try:
-            gmail_drafts._imap(settings, (FOUNDER, "wrong-password"))
+            imap_connection._imap(settings, (FOUNDER, "wrong-password"))
         except imaplib.IMAP4.error:
             refused = True
         assert refused, "a wrong password must raise, never open a session"

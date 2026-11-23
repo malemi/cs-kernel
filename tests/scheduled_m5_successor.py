@@ -14,6 +14,7 @@ happened. The stage bytes still need a fresh review of the scheduled surfaces.
 """
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,8 +82,18 @@ def undo_stage(template, data, stages):
     return data
 
 
+def before_mailbox(template, data):
+    packet = json.loads((MANIFEST.parent / "fixtures/mailbox-guidance.json").read_text())
+    expected = packet["templates"].get(template)
+    if not expected:
+        return data
+    assert digest(data) == expected, f"mailbox successor postimage mismatch: {template}"
+    return subprocess.check_output(["git", "show", packet["base_commit"] + ":" + template], cwd=ROOT)
+
+
 def undo(template, data, packet=None):
     """Reverse selected-read guidance before the earlier interactive-reply stage."""
+    data = before_mailbox(template, data)
     selected = json.loads((MANIFEST.parent / "fixtures/selected-read-guidance.json").read_text())
     data = undo_stage(template, data, load(selected, SELECTED_READ_STAGES))
     return undo_stage(template, data, load(packet))

@@ -59,10 +59,12 @@ adoption and actual-byte integrity verification.
 4. **The invariants are code, not config** (never manifest fields):
    - Identity is always the company's own support mailbox (daemon gates
      `token.sub == OWNER_ID`; SMTP logs in with the mailbox's own creds).
-   - Contextual/free-form generation and send ONLY via the engine; use `cs draft-send <full-id>`.
-     Gmail/Superhuman are read/review only; fixed-template bulk is cs-owned.
-   - The headless cron is draft-only via the wrapper's `--disallowed-tools`
-     re-deny set (template-side, baked verbatim) — not a knob.
+   - The engine owns contextual generation, mailbox drafts and verified sending.
+     A person reviews and edits the same named draft in Gmail, Superhuman or Desktop.
+     The kernel sends fresh fixed-template bulk via SMTP.
+   - The generic headless cron template is draft-only through its baked
+     `--disallowed-tools` set. A separately installed send-enabled launcher
+     grants only its explicit surfaces; changing a mode is not a permission grant.
    - **Standing-instruction authority is explicit.** Read effective mailbox identity
      and procedures through authenticated `cs standing-instructions`. Failed reads
      hold drafting; local files cannot substitute for unavailable published rules.

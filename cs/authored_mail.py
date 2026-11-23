@@ -1,49 +1,12 @@
-"""Exact mirror identity and conservative newly authored MIME content.
-
-Bounded reads never turn a partial body or ambiguous quote extraction into proof.
-The fingerprint names the complete MIME bytes observed, not their rendered text.
-"""
+"""Conservative newly authored MIME text for archive comparisons."""
 from __future__ import annotations
 
-import hashlib
 import re
 from email import policy
 from email.parser import BytesParser
 from html.parser import HTMLParser
 
 BODY_BYTES = 262144
-ID_HEADER = 'X-CS-Engine-Draft-ID'
-OWNER_HEADER = 'X-CS-Engine-Owner-UID'
-
-
-def canonical_message_id(value: str | None) -> str | None:
-    """Compare one conservative RFC ID, allowing only legal header folding.
-
-    Callers must separately reject duplicate headers and parser defects. Never
-    extract an ID from surrounding text or collapse whitespace inside the ID.
-    """
-    if not isinstance(value, str) or getattr(value, 'defects', ()):
-        return None
-    unfolded = re.sub(r'\r?\n(?=[ \t])', '', value).strip(' \t')
-    if re.fullmatch(r'<[^<>\s@"\\()]+@[^<>\s@"\\()]+>', unfolded) is None:
-        return None
-    if any(not char.isascii() or not char.isprintable() for char in unfolded):
-        return None
-    try:
-        parsed = policy.default.header_factory('Message-ID', unfolded)
-    except (ValueError, IndexError):
-        return None
-    if parsed.defects:
-        return None
-    return unfolded
-
-
-def validate_identity(value: str | None) -> str | None:
-    if value is None:
-        return None
-    if not isinstance(value, str) or not value or value != value.strip() or any(c.isspace() or not c.isprintable() for c in value):
-        raise ValueError('identity must be a nonempty opaque string without whitespace or controls')
-    return value
 
 
 def normalize_authored(text: str) -> str:
@@ -144,7 +107,3 @@ def authored_message(raw: bytes) -> tuple[str, str | None]:
             return '', 'divergent MIME authored alternatives; authored text not compared'
         return candidates[0], None
     return '', 'no readable authored body'
-
-
-def fingerprint(raw: bytes) -> str:
-    return hashlib.sha256(raw).hexdigest()

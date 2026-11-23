@@ -14,9 +14,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.74.1`; Current HEAD status: tagged as `v0.74.1`.** Both maintained clones still install private v0.73.3 before adoption. The hosted engines and clone executors have independent versions and controls.
+- **Latest release tag: `v0.74.1`; Current HEAD status: untagged.** Both maintained clones install private release `v0.74.1`. The untagged `v0.75.0` source candidate uses native mailbox drafts and the corresponding engine capabilities. Its complete source suite passes with observed exit zero and unchanged product bytes. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
-- Both clone schedules are active. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
+- Both recurring clone schedules are paused. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
 
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
@@ -57,8 +57,9 @@ candidate does not re-audit those deployments or grant new send authority.
   remaining obligations include refreshed documentation/focused evidence, M5 and
   final review. Historical workflow-hash refusals remain retained; no reset or
   migration is performed. Baseline advancement and runtime acceptance stay open.
-- Genuine strict BOTH-clone FULL and signup remain required. Publication and
-  public Git installation proof await separate explicit authority. Failed runs
+- The earlier private executor workstream retains its own strict BOTH-clone FULL,
+  signup and publication obligations. Mailbox delivery has current operator
+  authorization and its own reviews and installed acceptance requirements. Failed runs
   and uncertain charges/effects remain retained; a component read certifies no FULL.
 - Recurring peer ingestion history and mutable scheduling remain unknown.
   E13 repairs one exact source counterpart; it grants no automatic business
@@ -80,5 +81,7 @@ candidate does not re-audit those deployments or grant new send authority.
 
 ## Next
 
-1. Install the private tag in both maintained clones and verify each runtime and stamped workflow.
+1. Complete source checks and account consent, then run FULL on both normal
+   clones with the frozen local release artifact before public publication.
+   Verify public-tag provenance after publication and preserve paused schedules.
 2. Public publication and the earlier protected acceptance remain open under their existing owners.

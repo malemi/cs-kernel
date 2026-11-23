@@ -126,11 +126,11 @@ def test_failed_bulk_read_marks_every_ready_row_incomplete():
     draft_state._bulk_across = _read
 
     composed = NOW - timedelta(days=1)
-    drafts = [{"uid": "9", "to": CUSTOMER, "subject": "re: your request",
-               "date": format_datetime(composed), "body": "short",
+    drafts = [{"id":"9","mailbox_id":"box","to_addresses":[CUSTOMER], "subject": "re: your request",
+               "created_at": format_datetime(composed), "body": "short",
                "thread_key": "", "message_id": "<m@acme.example>"}]
     rows, notes = draft_state.reconcile(
-        _settings(), drafts, [],
+        _settings(), drafts,
         settled=lambda settings, keys: ({}, None),
         delivered=lambda settings, addr, body: (None, None),
         now=NOW)

@@ -15,7 +15,7 @@ Execute the steps below **silently** (tool calls fine, narration not).
 The only user-visible text is the final report in step 6. If a step
 emits a STOP, do exactly that — STOP, after printing the stated line. Do
 **not** improvise recovery or act blind. Do only what the two sub-skills
-already do, plus the narrow parent-owned exact-ID send in step 3 under its
+already do, plus the narrow parent-owned direct reply in step 3 under its
 existing mode, launcher grant and marker requirements. This exception grants
 no other action or permission and never overrides a STOP.
 
@@ -153,18 +153,9 @@ no send tool or permission and does not clear any other thread's hold.
 
 - **Identity is ALWAYS `{{ email_address }}`.** Every read, draft, reply
   acts as {{ email_address }}. You never assume another identity.
-- **Triage only drafts; this parent owns the conditional exact-ID send below.**
-  This bootstrap never composes mail or marks work handled. Its only send path
-  is the existing engine command after draft-only triage returns, within the
-  already-authorized scheduled launcher boundary in step 3.
-- **Whether free-form replies are sent or only drafted is `cs_triage_mode`,
-  and step 2b is the ONLY place you learn its value.** While it resolves to
-  `draft`, replies become engine drafts for the operator to review. The
-  triage sub-skill remains draft-only in every mode. Only this parent may
-  perform step 3's existing exact-ID send after triage returns, when the actual
-  scheduled/headless launcher grant and marker match effective `send` mode.
-  A mode/grant/marker mismatch STOPs under the supervisor's existing preflight;
-  never infer authority from prose or tool availability, or silently downgrade.
+- Read the configured mode and actual launcher grant. In draft mode triage
+  prepares a mailbox draft. In send mode triage identifies the exact source and
+  the parent executes the single direct reply in step 3. A mismatch stops the tick.
 - **Current assignment holds survive this bootstrap.** The current exact-thread
   assignment projection decides the boundary before Sent subtraction or drafting;
   only an earlier transient UNKNOWN snapshot may be superseded under the current
@@ -271,44 +262,26 @@ deferral do not mean answered, handled or closed. Continue all recurring phases.
 
 Invoke the `cs-triage-mail` sub-skill using the host's native skill mechanism.
 
-It finds inbound {{ email_address }} mail needing a human answer, reads full bodies
-(not snippets) via the engine and composes drafts **through the engine**
-(memory + trained voice + exact threading). It leaves engine drafts for the
-operator and **sends nothing**, even if the effective mode says `send`; it
-escalates judgment calls / out-of-scope / angry mail rather than
-auto-answering. It checks existing exact-thread drafts without treating a
-draft as handled or closing an assignment. Capture what it reports (drafted / escalated / nothing to
-do). If it has nothing to do, that is a valid outcome — record it and move
-on.
+Triage reads the original message, current instructions, dossier and exact
+assignment, Sent and mailbox draft evidence for each selected conversation.
+Keep an existing draft for human review in both modes. Keep an already
+answered inbound held until a newer eligible inbound arrives.
 
-After triage returns, keep its draft-only contract intact. In effective `draft`
-mode, leave its drafts for review and proceed to campaigns. In effective `send`
-mode, this parent may send only when the existing supervisor has admitted the
-actual scheduled/headless launcher with its explicit exact `draft-send` grant
-and `CS_HEADLESS_SEND=1`. A missing, unknown or contradictory admission, grant,
-marker or mode is a STOP, not a draft-only fallback. Neither a prompt, a local
-permission explanation nor mere tool availability establishes this authority.
-
-Use only full scoped engine draft IDs printed by successful `cs draft-reply`
-results from THIS triage invocation for this run's selected exact RFC roots.
-Require a successfully prepared ready draft, complete inspected source/evidence,
-and no current assignment, takeover, suppression, dedup or applicable STOP hold.
-Do not send a pre-existing queue entry, an old review row, a wildcard, an ID
-prefix, an inferred ID or a draft from failed/ambiguous preparation. Triage
-itself never sends. For each eligible same-run prepared draft, the parent uses
-the existing command in its own native Bash call:
+In draft mode, triage runs `cs draft-reply` for eligible mail. In send mode,
+triage returns the exact selected RFC root, source email ID and grounded
+instruction to this parent without composing. Only the dedicated launcher with
+the explicit `reply-send` grant, effective send mode and `CS_HEADLESS_SEND=1`
+may run the following command, once per selected eligible source:
 
 ```bash
-.venv/bin/python -m cs draft-send <full-engine-draft-id>
+.venv/bin/python -m cs reply-send "<reply instruction>" --thread-id '<exact-thread-key>' --source-id '<source-email-id>'
 ```
 
-The existing engine exact-ID route must freshly validate the real draft and
-current authority before any effect. Do not bypass a refusal, retry an uncertain
-send or replace those guards with this earlier triage result. Preserve actual
-exit/result evidence; report sent only after a successful exact send result.
-If no same-run draft qualifies, report the actual reason; never drain old drafts
-or invent work. Then continue the existing campaigns step unless a genuine STOP
-has occurred. A successful reply is not completion of the recurring operator.
+The engine reads the live conversation again before generation. It returns
+`draft_exists` or `answered` when it leaves the conversation alone. A successful
+send returns `state=sent`, verified certainty and the RFC Message-ID from
+Sent. Retain the request key for uncertain delivery and report the uncertainty.
+Continue the remaining recurring phases.
 
 Keep the sub-skill's `human_work`, ordinary `escalated` owner/age, closed audit
 and reopened-thread decisions in the consolidated report. A positive reply
@@ -394,7 +367,7 @@ signal fired. Transcribe the verdict; do not re-derive it and do not argue
 with it.
 
 **Retire nothing.** Not a draft, on any verdict, on any path — the cron denies
-both halves of that, `cs draft-delete` and `cs rpc drafts.discard`, in every
+mailbox Trash through `cs draft-delete` and `cs rpc drafts.trash`, in every
 spelling. A draft the mailbox has moved past is a
 prepared answer a human has not seen yet, and deciding it is worthless is the
 operator's call in a session, not an unattended tick's while it reads
@@ -404,7 +377,7 @@ so has done its job; one that quietly removes it has not.
 ## 5. Do not exceed the sub-skills
 
 This run's authority ends at what steps 3–4 normally do, including only the
-explicit parent-owned exact-ID send exception in step 3 under already granted
+explicit parent-owned direct reply exception in step 3 under already granted
 authority. That exception changes none of the restrictions below. The following
 are **OUT of scope** for the bootstrap and must be **escalated, never
 performed**, even if a sub-skill surfaces them or it looks convenient:
@@ -483,4 +456,4 @@ address takeover still holds the contact. Keep incomplete named roots held
 and continue only independently eligible selected work. Wait for the original
 background task notification; do not add shell waiting loops or rerun the
 dossier. A completed dossier never replaces fresh engine checks before an
-exact-root draft or exact-ID send.
+exact-root draft or direct reply.

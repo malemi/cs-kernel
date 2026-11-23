@@ -2,7 +2,7 @@
 
 ## Scheduled reads on the source candidate
 
-In a scheduled native run, `cs assignment status --selected 1 --json` reads the first reserved conversation. Position 2 is available when the run selected a second conversation. Positions follow discovery order and start at 1. Each read checks the current run and reservation before asking the engine. Missing or changed evidence holds the read. The exact-key interface remains available for interactive use. Both maintained clones still use the v0.73.3 interface.
+In a scheduled native run, `cs assignment status --selected 1 --json` reads the first reserved conversation. Position 2 is available when the run selected a second conversation. Positions follow discovery order and start at 1. Each read checks the current run and reservation before asking the engine. Missing or changed evidence holds the read. The exact-key interface remains available for interactive use. Both maintained clones install v0.74.1 and expose this selected-position interface.
 
 ## Availability
 
@@ -22,136 +22,33 @@ self-approves an operation. See the engine's
 [operational contract](../../mrcall-desktop/engine/docs/features/task-assignment.md)
 for fixed root-owned trust/signing paths and rollback restrictions.
 
-## Contextual email policy — unreleased candidate
+## Contextual email and mailbox preparation
 
-The local [contextual-email workstream](execution-plans/2026-10-08-contextual-email-assignment-guard.md)
-extends the engine boundary to reply draft updates and final sending, including
-already composed drafts. The stronger engine feature is excluded from public
-`v0.52.0` and hosted engine pins. The old `assignment_draft_policy: 1` capability
-proves only its scoped draft contract and cannot certify stronger final-send enforcement.
-The [compatible caller repair](execution-plans/2026-10-13-released-email-caller-compatibility.md)
-restores the released ordinary chat, exact-thread draft and exact-ID send contract
-without activating persistent enrollment or advertising contextual policy v1.
+Assignments are durable engine records. A local take-over, a missing trust
+record or a draft in Gmail cannot settle an engine assignment. Managed
+profiles with incomplete authority hold the scheduled conversation.
 
-The engine owns durable [assignment enrollment](../../mrcall-desktop/engine/docs/features/assignment-enrollment.md).
-Missing trust or an empty ledger cannot turn a managed company into an unmanaged
-one. Fresh never-enabled local profiles retain contextual email without root
-configuration; ambiguous assignment-capable legacy profiles require trusted
-offline historical classification or privileged enrollment.
+Scheduled preparation uses the exact selected RFC conversation and inbound
+email identity. The kernel checks the current assignment. The engine applies
+its live assignment, Sent, draft and conversation checks before generation.
+The generic launcher can prepare a mailbox draft. A send-enabled launcher
+can send a newly generated reply directly with `reply-send`. Both preserve
+an existing draft and hold when the inbound has already been answered.
 
-Generic send-tool approval grants an effect permission, not an assignment
-exemption. Exact thread/source/draft context must survive composition, ordinary
-email-backed task routing and final send. Stale draft snapshots cannot clear or
-send around a newer binding. Source-free standalone messages keep ordinary
-approval rules; arbitrary prose is not semantically classified as reply intent.
-Kernel fixed-template bulk and first-contact delivery remain separate.
+Interactive review preparation corroborates the source and may prepare the
+draft requested by a person on a held conversation. It leaves the assignment
+in place. A person can explicitly send the current named draft or move it
+to Trash. The [mailbox draft lifecycle](draft-lifecycle.md) describes stable
+request keys and recovery after an uncertain operation.
 
-Explicit contextual bindings require `system.capabilities.contextual_email_policy: 1`
-and unavailable support refuses before generation. This applies to the new chat
-context flags, scheduled `draft-reply --source-id`, and direct RPC
-contextual/required-policy requests. Interactive review preparation has its
-separate locally validated contract below. A failed bound request is never
-retried as an unbound operation.
+Generic `cs chat` keeps its separate approvals and contextual policy.
+Fixed-template bulk remains kernel-owned.
 
-Ordinary generic chat retains its released approval contract. Scheduled
-`draft-reply` with only its exact thread requires `assignment_draft_policy: 1`
-and sends the original assignment scope/version. Ordinary `draft-send FULL_ID` requires current assignment
-admission, approves exactly one matching send and verifies the exact Sent row;
-it does not assert stronger contextual-policy enforcement on older engines.
+## Scheduled reply origin
 
-```bash
-cs chat --thread-id '<root@example.com>' --reply-to '<inbound@example.com>' 'Prepare this reply'
-cs chat --allow send_draft --thread-id '<root@example.com>' --source-id ENGINE_EMAIL_ID 'Send the approved reply'
-cs draft-reply 'Prepare this reply' --thread-id '<root@example.com>' --source-id ENGINE_EMAIL_ID
-cs draft-send FULL_ENGINE_DRAFT_ID
-```
-
-`cs chat` accepts `--thread-id`, `--source-id`, `--reply-to` and `--draft-id`.
-They bind the original RFC root, owner-scoped engine email, exact RFC target and
-existing draft respectively. All supplied identifiers must agree with stored
-source; they cannot name a different owner or strip an established reply binding.
-Explicit bindings are carried as `chat.send.email_context` with
-`contextual_email_policy_version: 1`. Ordinary exact-ID sending retains its separate
-released full-ID approval and Sent verification contract.
-
-Ordinary email-backed task context also constrains effects across chat and worker
-thread hops. Multiple original messages in one task are admissible only within
-the same exact thread; an explicit original source can narrow that set. Conflicting
-threads or unavailable identities remain held. A custom send launcher must pass
-the selected original thread and source explicitly; the separately owned MrCall
-launcher candidate is an uninstalled handoff, not a changed live schedule.
-
-Contextual campaign sending requires an exact existing engine draft and verifies
-its recorded sent state after the guarded engine lifecycle. A campaign's
-`queue-draft` cannot copy a contextual reply into Gmail: review its existing
-engine draft instead. A separate unlocked provider append would evade current
-assignment admission. Source-free campaign queueing retains its previous
-Gmail review surface.
-
-The scheduled `cs draft-reply` Gmail review-copy behavior remains compatible.
-It checks current assignment projection immediately before append, but the
-append is outside the engine/company lock and has no atomic assignment guarantee.
-Manual Gmail edits/sends and other external mailbox clients are outside engine
-enforcement. The strengthened capability certifies actual engine private draft
-writes and final transport, not a global lock on mailbox credentials or clients.
-
-## Interactive review preparation
-
-An explicit interactive `draft-reply` request prepares a review draft even when
-assignment or takeover evidence holds sending. The command selects its route
-before composition: engines advertising the supervised-review contract retain
-that path; supported legacy engines use their existing generic interactive chat
-for draft composition, with all send approvals denied. The legacy route provides
-source/recipient/header validation before a Gmail review copy, not a claim of
-newer engine-enforced source scope. Missing or ambiguous originals and invalid
-returned drafts refuse. Failed generation is never replayed through another route.
-
-Source corroboration inventories recent All Mail headers across participants,
-starting one day before the earlier of the selected source Date and current UTC
-time. The window permits at most 1,000 headers with exact batched UID coverage;
-normalized RFC-root filtering precedes at most 100 full message reads. Gmail's
-References search is not completeness evidence. Provider UID arrival order,
-known direction/date and matching source content establish the selected original.
-Incomplete search, fetch, header or draft-label evidence refuses.
-
-The selected plain body must match the engine source. Complete additional raw
-plain/HTML representations reach the engine as untrusted source material;
-presentation differences alone do not discard material or prevent preparation.
-Incomplete decoding, clipping or more than 65,536 retained source characters
-refuses before generation. An unrelated message's body defect cannot invalidate
-complete source inventory. One narrow quoted-envelope form accepts a repeated
-known address as its unquoted display name; it does not relax actual From-header
-validation or omit the provider's quoted tail.
-
-Interactive preparation publishes the Gmail review copy only through the
-engine's exact publication operation (`exact_draft_publication: 1`). Without
-that capability the draft stays engine-saved, the outcome says so, and no local
-copy is appended. `cs draft-reply --resume-draft FULL_ID --thread-id ROOT`
-publishes an existing saved draft without generating another one.
-
-A prepared review draft does not clear an assignment or authorize sending.
-Ordinary `draft-send FULL_ID` keeps its exact-ID and current-assignment admission
-checks. `draft-send FULL_ID --operator-request` is the interactive operator's
-explicit request to send one existing draft through the engine's exact send
-operation (`interactive_exact_send: 1`). It admits only a positively identified
-manual-member-activity hold on the exact root and current target; other holds,
-pause, SELF recipients and suppression still refuse, and scheduled sessions
-refuse the flag.
-Scheduled callers retain scoped assignment negotiation and workset restrictions.
-This local candidate's actual source and hosted checks are recorded in the
-[continuity plan](execution-plans/2026-10-22-interactive-draft-continuity.md).
-
-## Scheduled reply origin — local candidate
-
-The [scheduled provenance repair](execution-plans/2026-10-13-scheduled-reply-provenance.md)
-negotiates `operator_reply_provenance: 1` independently of contextual policy.
-It carries authenticated caller automation intent only for the existing scheduled
-send marker plus actual send-tool authorization. Intent is not permission or
-proof of human ownership. The opted-in engine route must check existing complete
-assignment authority and exact owner, original root and reply target immediately
-before SMTP. Assigned, pending, conflicting or UNKNOWN inputs remain held.
-This origin-specific final gate is new; generic released approval alone does not
-supply it. It does not activate the separate enrollment/contextual-policy rollout.
+The engine receives `operator_origin=scheduled_operator` and
+`operator_origin_version=1` for both scheduled reply modes. Admission
+requires the selected source and the launcher's effective authority.
 
 Normal projections use `current_message_ids` for exact current inbound identity;
 `current_inbound` carries a closed task's digested snapshot and can be empty in a
@@ -270,13 +167,10 @@ Manual assignment, supervised source confirmation and local address escalation
 retain separate provenance. Different or unverifiable escalation/assignee
 identities hold action rather than choosing an authority silently.
 
-`cs draft-reply` requires exact `--thread-id` before composition. Scheduled
-composition negotiates engine assignment scope before a draft write; a
-post-compose check alone cannot establish that engine boundary. An older engine
-without the required policy cannot compose the scheduled scoped workflow.
-Interactive review preparation instead selects the contract documented above
-before generation. Existing send authorization remains separate from assignment
-status.
+The selected source and exact RFC thread bind scheduled `draft-reply` and
+`reply-send`. The engine checks the live conversation before the effect.
+An answered thread or an existing draft remains held until the ordinary
+evidence admits new work. A draft edit leaves the assignment unchanged.
 
 ## Handled resolution
 

@@ -32,9 +32,11 @@ model classification. Deterministic health assessment and problem collection con
 recorded execution evidence and issue no extra model requests. A draft-only
 policy does not make reasoning or generation free. Charging Claude to a subscription rather than
 API billing must be checked in its actual runtime authentication, not inferred
-from `claude -p` or the engine's credentials. The legacy supervisor's primary run supplies no
-`--model` or `--max-budget-usd` flag. The fallback, when configured, supplies
-both; the budget flag is a soft guard that may be exceeded by one model call.
+from `claude -p` or the engine's credentials. The legacy supervisor's primary run
+adds `--max-budget-usd` when `CS_PRIMARY_BUDGET_USD` supplies a valid positive cap;
+an unset cap leaves its command unchanged and an invalid cap refuses before launch.
+The fallback retains its independently configured model and cap. The budget flag
+is a soft guard that may be exceeded by one model call.
 The alternate key's provider-side limit is the final spending boundary. Never
 assume the engine's selected model is Claude's.
 
@@ -530,12 +532,13 @@ A classifier's historical evaluation does not certify memory or merge quality.
 `cs ask` first requires `system.capabilities.chat_read_only_policy == 1`, then
 sends `mutation_policy=read_only` and `policy_version=1` with `chat.send`. It
 refuses an older engine rather than treating an empty approval allowlist as a
-mutation policy. Published supervised `cs chat` and `cs draft-reply` retain
-their released contracts. The local unreleased [contextual-email candidate](task-assignment.md#contextual-email-policy--unreleased-candidate)
-retains stronger capability negotiation for explicit context-bound operations.
-The [compatible local caller](execution-plans/2026-10-13-released-email-caller-compatibility.md)
-restores the released ordinary chat, scoped-draft and exact-ID send contract on
-hosted engines; supplied newer bindings never fall back to unbound calls.
+mutation policy. Generic supervised `cs chat` retains its separate approvals. The mailbox
+candidate requires native draft/reply capabilities for `cs draft-reply` and
+named operations; it does not fall back to private drafts. Explicit contextual
+bindings retain their [own policy](task-assignment.md#contextual-email-and-mailbox-preparation).
+The [released caller plan](execution-plans/2026-10-13-released-email-caller-compatibility.md)
+records the historical hosted compatibility contract; it does not activate the
+mailbox candidate. Supplied newer bindings never fall back to unbound calls.
 The scheduled wrapper also denies raw RPC entry points that run
 update, reconsolidation, memory join/reset/restore, preparation resume or
 `instructions.store` in every supported command spelling; the wrapper denies
@@ -678,17 +681,14 @@ provider acceptance, permission to retry, or public release.
 
 ## Scheduled root-bound exact sending
 
-The installed [compatibility route](execution-plans/2026-10-19-bound-send-workset-compatibility.md)
-uses `draft-reply --thread-id ROOT` followed by the full successful engine draft
-ID in `draft-send`. Scheduled send requires existing send mode and its launcher
-marker. The actual looked-up row must match its selected root, known owner and
-same-run snapshot of recipients, body, headers and attachments. A complete typed
-review may bind an existing ready draft; incomplete or changed evidence refuses.
-Current assignment and exact-ID approval checks remain mandatory. Only confirmed
-sending permits exact mirror retirement; retirement failure warns without resend.
-MrCall's six exact-send grants replace six generic-chat grants; Café has no send
-grant. Health recognizes exact-send failures using the existing symbolic notice
-path. Full discovery and ordinary generation retain their existing costs/limits.
+The mailbox candidate binds both reply modes to the selected RFC thread and
+inbound email ID. The generic launcher grants draft preparation. A send-enabled
+launcher grants `reply-send` in its supported CLI spellings, with send mode and
+the headless send marker. The engine checks current assignment, conversation,
+Sent and existing drafts before generating. An existing draft or an answered
+thread holds in both modes. A direct-send receipt requires verified Sent
+evidence and a message ID. Current mailbox drafts are sent or trashed only
+under explicit interactive instructions. [Mailbox draft lifecycle](draft-lifecycle.md).
 
 ## Installed foreground and inventory repair
 
@@ -705,14 +705,11 @@ Observer failures expose allowlisted reason/key codes on stderr and in a private
 workset failure record. Native refusal receipts expose a bounded reason and event
 index/type. Diagnostics grant no authority and include no customer payload.
 
-Draft identity inventory now has source-owned SEARCH/FETCH coverage and exact
-Gmail UIDVALIDITY/UID and engine-ID reconciliation. Complete typed proof may
-coexist with visible policy/BCC notes; failed reads, reconciliation, dropped or
-foreign identities still refuse. Per-row body, identity, date, root, verdict and
-mailbox gaps remain held before discovery/task/review selection. Missing-root
-holds retain every To/CC recipient, including list/display representations.
-Without typed proof, legacy nonempty notes still refuse. Scheduling, checking
-and alerts are symbolic; full review reconciliation can separately use a model.
+In the mailbox candidate, the inventory binds every returned native handle to
+its mailbox and review verdict. Missing identities or failed reads prevent a complete
+inventory. A ready draft contributes its identity to the revision of an
+otherwise eligible root. Missing source evidence and assignment holds still
+withhold that root.
 
 Source regressions combine real local capture with labelled constructed controls.
 Unchanged genuine V18 MrCall lifecycle passes replay; two other complete streams

@@ -147,7 +147,9 @@ the outcome for the report.
 .venv/bin/python -m cs campaign queue-draft <contact_id> --commit
 ```
 
-Composed-draft outreach: a personalized mail already written on the contact.
+Campaign authors supply a stable `draft_request_key` when passing `draft_subject` or `draft_body` to `campaign.add_contact` or `campaign.update_contact`. The engine writes the current mailbox draft and records its handle in `dossier.mailbox_draft_id`. Reuse that key only to retry the same preparation.
+
+Composed-draft outreach uses the current mailbox draft named by the contact.
 `queue-draft` is dedup-first (refuses + flags `reconcile` if the address is
 already in the Sent archive) and **only ever surfaces the mail to {{ email_address }}'s
 Gmail Drafts — it never sends** (the send-capable `send-draft` verb is denied
@@ -222,9 +224,9 @@ judgment and route:
   from the thread + memory** ⇒ compose a contextual reply **via the engine**
   (memory + trained voice + threading, {{ email_address }}):
   ```bash
-  .venv/bin/python -m cs draft-reply "reply in the thread with <email>: <brief intent>"
+  .venv/bin/python -m cs draft-reply "<brief intent>" --thread-id '<exact-thread-key>' --source-id '<source-email-id>'
   ```
-  `draft-reply` stores a DRAFT and cannot send (the operator reviews & sends).
+  Use this in draft mode. In send mode the authorized parent processes the selected source through `reply-send`. An existing mailbox draft stays available for review.
   **Check it actually succeeded before marking anything.** A non-zero exit
   means the engine reported failure on that turn (`error` / `error_detail` on
   stderr) and NO draft was composed — do not mark the contact `engaged` on a

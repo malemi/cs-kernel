@@ -21,9 +21,9 @@ from .operator_executor_protocol import (Artifact, ContextPage, Identity, Phase,
 
 WORKFLOWS = ('cs-operator', 'cs-triage-mail', 'cs-campaign-tick')
 DENIED = frozenset(('chat', 'monitor', 'instructions', 'handled', 'escalated', 'draft-delete',
-    'draft-retire', 'rm', 'Write', 'Edit', 'Agent', 'Task'))
+    'draft-send', 'rm', 'Write', 'Edit', 'Agent', 'Task'))
 DENIED_RPC = frozenset(('chat', 'settings.update', 'instructions.store', 'drafts.discard',
-    'drafts.discard_exact', 'drafts.reconcile_external', 'operator.rules.decide',
+    'drafts.compose_reply', 'drafts.send', 'drafts.trash', 'drafts.create', 'drafts.update', 'operator.rules.decide',
     'operator.rules.import_confirm', 'tasks.assignment.commit', 'update.run',
     'memory.reconsolidate_now', 'memory.join', 'memory.reset', 'memory.restore_version',
     'preparation.resume'))
@@ -52,7 +52,7 @@ GRAMMAR = {
     ('plan',): (0, {'--verbose', '-v'}, {'--period'}),
     ('ask',): (1, set(), {'--timeout'}),
     ('draft-reply',): (1, set(), {'--thread-id', '--source-id', '--timeout'}),
-    ('draft-send',): (1, set(), {'--timeout'}),
+    ('reply-send',): (1, set(), {'--thread-id', '--source-id', '--timeout'}),
     ('campaign', 'list'): (0, set(), set()),
     ('campaign', 'pending'): (0, set(), {'--name'}),
     ('campaign', 'reconcile'): (1, {'--commit'}, set()),
@@ -143,13 +143,12 @@ def validate_argv(argv, config):
         raise Refusal('catchup_requires_check')
     if key == ('tasks', 'create') and not {'--email', '--title', '--event-id'} <= flags.keys():
         raise Refusal('missing_task_identity')
-    if key == ('draft-reply',) and '--thread-id' not in flags:
+    if key in (('draft-reply',), ('reply-send',)) and not {'--thread-id','--source-id'} <= flags.keys():
         raise Refusal('missing_exact_thread')
-    if key == ('draft-send',):
-        if (config.send_mode != 'send' or os.environ.get('CS_HEADLESS_SEND') != '1'
-                or positional[0] not in config.exact_send_ids):
+    if key == ('reply-send',):
+        if config.send_mode != 'send' or os.environ.get('CS_HEADLESS_SEND') != '1':
             raise Refusal('send_not_authorized')
-    effect = key in (('tasks', 'create'), ('draft-reply',), ('draft-send',),
+    effect = key in (('tasks', 'create'), ('draft-reply',), ('reply-send',),
         ('campaign', 'reconcile'), ('campaign', 'mark'), ('campaign', 'queue-draft'))
     if key==('campaign','mark') and not flags and positional:
         effect=False  # Canonical no-argument mark is a read-only dry-run.
@@ -467,8 +466,7 @@ class ToolRuntime:
                 valid &= len(rows) < 200
             elif name == 'review':
                 from .draft_state import inventory_proof
-                proof = inventory_proof(value.get('gmail_drafts'), value.get('engine_drafts'),
-                    value.get('drafts'), value.get('gmail_drafts_observation'))
+                proof = inventory_proof(value.get('mailbox_drafts'), value.get('drafts'))
                 valid &= proof.get('complete') is True and proof == value.get('drafts_inventory')
             elif name == 'authority':
                 from .config import load
@@ -590,11 +588,6 @@ class ToolRuntime:
                     target = None
                     if '--thread-id' in normalized:
                         target = normalized[normalized.index('--thread-id')+1]
-                    elif normalized[:1] == ['draft-send']:
-                        for path in self.directory.glob('workset-draft-*.json'):
-                            snapshot=decode(path.read_bytes())
-                            if snapshot.get('draft_id') == normalized[1]:
-                                target=snapshot['root']
                     if target not in self.selected_pending:
                         raise Refusal('effect_exact_selected_root_missing')
                     outcomes=selected_roots(self.directory,self.config.owner,self.config.nonce,

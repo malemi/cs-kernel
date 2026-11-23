@@ -775,28 +775,6 @@ class Consumer(unittest.TestCase):
             self.assertEqual(cli.main(["draft-reply", "reply"]), 3)
             calls.assert_not_called()
 
-    @patch.dict(os.environ, {"CS_OPERATOR_HEADLESS": "1"})
-    def test_gmail_mirror_rechecks_live_authority_and_exact_composed_thread(self):
-        async def chat(*args, **kwargs):
-            return {"result": {"response": "composed"}}
-        for foreign in (False, True):
-            calls = {"projection": 0, "drafts": 0}
-            def call(selected, method, params, timeout):
-                if method == "tasks.assignment.project":
-                    calls["projection"] += 1
-                    return projection() if calls["projection"] == 1 else projection("assigned", task=task())
-                if method == "emails.list_by_thread":
-                    return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
-                self.assertEqual(method, "drafts.list")
-                calls["drafts"] += 1
-                return [] if calls["drafts"] == 1 else [{"id": "fresh", "to_addresses": [EMAIL], "body": "Reply",
-                    "references": [OTHER if foreign else KEY], "created_at": "2026-10-08T12:00:00"}]
-            from cs import gmail_drafts
-            with patch.object(config, "load", return_value=settings()), patch.object(rpc, "call_sync", side_effect=call), patch.object(rpc, "chat", side_effect=chat), patch.object(gmail_drafts, "append_draft") as append, contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                self.assertEqual(cli.main(["draft-reply", "reply", "--thread-id", KEY]), 3)
-                append.assert_not_called()
-            self.assertEqual(calls["projection"], 1 if foreign else 2)
-
     def test_review_keeps_escalation_age_and_local_handled_hold(self):
         from cs import review
         p = assignment.provenance(projection("assigned", task=task()), {"owner": "human", "reason": "Personally writing"})

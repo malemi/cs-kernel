@@ -59,9 +59,8 @@ def hdr(dt: datetime) -> str:
 
 def gmail(uid="101", to="cust@example.test", subject="Re: invoice",
           when=None, key="<t1@example.test>"):
-    return {"uid": uid, "to": to, "subject": subject,
-            "date": hdr(when or at(6)), "message_id": "<d1@local>",
-            "references": key, "in_reply_to": key, "thread_key": key}
+    return {"id":uid,"mailbox_id":"box","status":"draft","owner_id":"owner","to_addresses":[to],"subject":subject,
+            "created_at":hdr(when or at(6)),"thread_id":key,"in_reply_to":key,"body":""}
 
 
 BODY = ("Buongiorno, la fattura è stata emessa ieri e le arriva in giornata. "
@@ -70,8 +69,8 @@ BODY = ("Buongiorno, la fattura è stata emessa ieri e le arriva in giornata. "
 
 def engine(id="eng-1", to="cust@example.test", subject="Re: invoice",
            when=None, key="<t1@example.test>", body=None):
-    return {"id": id, "to_addresses": [to], "subject": subject,
-            "created_at": (when or at(6)).replace(tzinfo=None).isoformat(),
+    return {"id": id, "mailbox_id":"box", "owner_id":"owner", "status":"draft", "to_addresses": [to], "subject": subject,
+            "created_at": hdr(when or at(6)),
             "thread_id": key, "in_reply_to": key, "references": [key],
             "body": body if body is not None else BODY}
 
@@ -79,7 +78,7 @@ def engine(id="eng-1", to="cust@example.test", subject="Re: invoice",
 def run(gmail_rows, engine_rows, *, inbound=None, sent=None, settled=None,
         delivered=None):
     return draft_state.reconcile(
-        None, gmail_rows, engine_rows,
+        None, gmail_rows + engine_rows,
         inbound=inbound or (lambda s, a, after=None: []),
         sent=sent or (lambda s, a, days=None: []),
         settled=settled or (lambda s, keys: ({}, None)),
@@ -157,29 +156,6 @@ def _verdicts() -> None:
 
 # ---------------------------------------------------------------------- C
 
-def _pairing() -> None:
-    """One logical draft, two stores, one row — and the earlier timestamp."""
-    rows, _ = run([gmail(when=at(5))], [engine(when=at(5) - timedelta(minutes=2))])
-    check(len(rows) == 1, f"the two copies are ONE row, got {len(rows)}")
-    check(rows[0]["gmail_uid"] == "101" and rows[0]["engine_id"] == "eng-1",
-          f"the row carries both handles, got {rows[0]}")
-
-    # A message that arrived BETWEEN the engine's compose and the Gmail mirror
-    # is later than the engine copy: with the wrong timestamp it reads as older
-    # than the draft and no signal fires.
-    between = at(5) - timedelta(minutes=1)
-    rows, _ = run([gmail(when=at(5))], [engine(when=at(5) - timedelta(minutes=2))],
-                  inbound=lambda s, a, after=None: (
-                      [{"date": hdr(between)}] if after and between > after else []))
-    check(rows[0]["verdict"] == "overtaken",
-          "the comparison uses the EARLIER of the two timestamps")
-
-    # Two DIFFERENT drafts to the same contact stay two rows: one has a handle
-    # the other does not, and a merged row loses one of them.
-    rows, _ = run([gmail(uid="101", key="<t1@example.test>"),
-                   gmail(uid="102", key="<t2@example.test>")], [])
-    check(sorted(r["gmail_uid"] for r in rows) == ["101", "102"],
-          f"two conversations are two rows, got {rows}")
 
 
 # ---------------------------------------------------------------------- D
@@ -201,7 +177,7 @@ def _degradation() -> None:
           f"the engine degradation is named, got {notes}")
 
     no_date = gmail()
-    no_date["date"] = None
+    no_date["created_at"] = None
     rows, notes = run([no_date], [])
     check(rows[0]["verdict"] == "ready" and notes,
           f"a draft with no date is reported, not judged: {rows[0]}, {notes}")
@@ -262,12 +238,6 @@ def _duplicates() -> None:
     check(rows[0]["verdict"] == "ready" and any("newest 20" in n for n in notes),
           f"a truncated scan must say so: {notes}")
 
-    # A mirrored draft is ONE row, and the engine copy's body must survive the
-    # pairing or the pair silently loses the check.
-    rows, _ = run([gmail()], [engine()], delivered=delivered_hit)
-    check(len(rows) == 1 and rows[0]["verdict"] == "duplicate",
-          f"a paired row keeps the engine body, got {rows}")
-
     # A body at the normalisation cap is not compared at all: two long mails
     # sharing a 4000-character prefix normalise equal, and a false `duplicate`
     # on a draft that only STARTS like a delivered mail is worse than none.
@@ -298,7 +268,7 @@ def _duplicates() -> None:
 def _review_surface() -> None:
     settings = types.SimpleNamespace(
         excluded_campaign_set=set(), db_path="/nonexistent/cs.db",
-        timezone="Europe/Rome", log_path=Path("/nonexistent/cs_operator.log"))
+        email_address="owner", timezone="Europe/Rome", log_path=Path("/nonexistent/cs_operator.log"))
 
     g, e = [gmail()], [engine(id="eng-9", key="<t9@example.test>")]
 
@@ -307,28 +277,27 @@ def _review_surface() -> None:
 
     def _call_sync(_s, method, params=None, **kw):
         if method == "drafts.list":
-            return e
+            return g + e
         raise RuntimeError("no engine in this test")
 
     real_reconcile = draft_state.reconcile
 
-    def _reconcile(_s, gd, ed, **kw):
+    def _reconcile(_s, drafts, **kw):
         return real_reconcile(
-            None, gd, ed,
+            None, drafts,
             inbound=lambda s, a, after=None: [{"date": hdr(at(1))}],
             sent=lambda s, a, days=None: [], settled=lambda s, keys: ({}, None),
             now=NOW)
 
-    orig = (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+    orig = (review.rpc.call_sync,
             review.draft_state.reconcile, review.campaign.list_campaigns)
-    review.gmail_drafts.list_drafts = _list_drafts
     review.rpc.call_sync = _call_sync
     review.draft_state.reconcile = _reconcile
     review.campaign.list_campaigns = lambda _s: []
     try:
         d = review._aggregate(settings)
     finally:
-        (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+        (review.rpc.call_sync,
          review.draft_state.reconcile, review.campaign.list_campaigns) = orig
 
     check("drafts" in d, "gather() carries the reconciled list into --json")
@@ -336,7 +305,7 @@ def _review_surface() -> None:
           f"EVERY draft row carries a verdict: {d['drafts']}")
     check({r["verdict"] for r in d["drafts"]} == {"overtaken"},
           f"the verdict is the computed one, got {d['drafts']}")
-    check(len(d["gmail_drafts"]) == 1 and len(d["engine_drafts"]) == 1,
+    check(len(d["mailbox_drafts"]) == 2,
           "the raw store listings are still there for the callers that need them")
 
     out = review.render(d)
@@ -344,7 +313,7 @@ def _review_surface() -> None:
           f"an overtaken draft is NOT in the ready block:\n{out}")
     check("Drafts to re-decide (2)" in out,
           f"both rows land in the re-decide block:\n{out}")
-    check("uid 101" in out and "engine eng-9" in out,
+    check("101" in out and "eng-9" in out,
           f"each row prints the handle it is retired by:\n{out}")
     check("overtaken:" in out, f"the row states which signal fired:\n{out}")
     for italian in ("Bozze", "servono te", "Campagne", "Ultimo tick"):
@@ -353,7 +322,6 @@ def _review_surface() -> None:
 
 _verdicts()
 _duplicates()
-_pairing()
 _degradation()
 _review_surface()
 

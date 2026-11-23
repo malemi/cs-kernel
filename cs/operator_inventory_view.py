@@ -328,7 +328,7 @@ def effect_words(words):
         if not (option.startswith('--') and len(option) >= 3 and '--account'.startswith(option)):
             break
         canonical = canonical[1:] if '=' in canonical[0] else canonical[2:]
-    return canonical[:1] in (['draft-reply'], ['draft-send'], ['chat']) or canonical[:2] == ['campaign', 'queue-draft']
+    return canonical[:1] in (['draft-reply'], ['reply-send'], ['draft-send'], ['chat']) or canonical[:2] == ['campaign', 'queue-draft']
 
 
 def coverage(events, path, view):

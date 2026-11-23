@@ -488,16 +488,12 @@ except BlockingIOError:raise SystemExit(0)
 from pathlib import Path
 from unittest.mock import patch
 from cs import cli, config, unanswered, operator_workset
+from cs.draft_state import inventory_proof
 class Settings(config.Settings):
  @property
  def state_dir(self): return Path(os.environ['CS_TEST_STATE_DIR'])
 settings=Settings(_env_file=None,engine_owner_uid='local-owner')
-review={'gmail_drafts':[], 'engine_drafts':[], 'drafts':[],
- 'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,
- 'expected_uids':[],'observed_uids':[],'uidvalidity':'1'}}
-from cs.draft_state import inventory_proof
-review['drafts_inventory']=inventory_proof(review['gmail_drafts'],review['engine_drafts'],
- review['drafts'],review['gmail_drafts_observation'])
+review={'mailbox_drafts':[], 'drafts':[], 'drafts_inventory':inventory_proof([],[])}
 value={name:[] for name in ('open','handled','escalated','human_work','assignment_audit',
  'operational_fixture_discovery','resumed','automatic','courtesy')}
 code=int(os.environ['CS_TEST_DISCOVERY_EXIT'])
@@ -821,7 +817,7 @@ with patch.object(config,'load',return_value=settings), \\
         with self.reservation_publication_fixture() as (fixture, discovery, result, workset):
             def invalid(*args):
                 material.validate({'foreign': 'PRIVATE_SENTINEL'},
-                    'workset-review.json:/payload/gmail_drafts/*')
+                    'workset-review.json:/payload/mailbox_drafts/*')
             with patch.object(material, 'load_sources', side_effect=invalid), \
                  patch.object(unanswered, '_scheduled_discovery', return_value=result), \
                  contextlib.redirect_stdout(io.StringIO()) as output, \

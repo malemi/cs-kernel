@@ -392,7 +392,7 @@ def scheduled_surfaces(old: Path) -> None:
     timeout_receipt = (ROOT / "tests/fixtures" / timeout_review["receipt"]).read_bytes()
     assert hashlib.sha256(timeout_receipt).hexdigest() == timeout_review["receipt_sha256"]
     operator_rel = ".claude/skills/cs-operator/SKILL.md"
-    operator_source = undo_parent_send_guidance(undo_executor_guidance(operator_rel, (TPL / (operator_rel + ".j2")).read_bytes()))
+    operator_source = undo_parent_send_guidance(undo_executor_guidance(operator_rel, scheduled_m5_successor.undo_template(operator_rel, (TPL / (operator_rel + ".j2")).read_bytes())))
     phase_review = json.loads((ROOT / "tests/fixtures/reviewed-e18-operator-guidance.json").read_text())
     assert hashlib.sha256(operator_source).hexdigest() == phase_review["after_sha256"]
     operator_source = undo_e18_operator_guidance(operator_source)
@@ -467,19 +467,13 @@ def scheduled_surfaces(old: Path) -> None:
                         check("unreviewed mandatory phase edit remains refused",
                               old_phase in after and not preserves_scheduled_contract(
                                   rel, before, after.replace(old_phase, new_phase, 1)))
-                    check("parent sends only same-run prepared full IDs after draft-only triage",
-                          contains(after.decode(), "triage sub-skill remains draft-only in every mode",
-                                   "After triage returns", "THIS triage invocation", "selected exact RFC roots",
-                                   "successfully prepared ready draft", "Triage itself never sends",
-                                   "explicit exact `draft-send` grant", "CS_HEADLESS_SEND=1",
-                                   "A missing, unknown or contradictory", "is a STOP",
-                                   "pre-existing queue entry", "wildcard", "prefix", "inferred ID",
-                                   "freshly validate", "Do not bypass a refusal", "retry an uncertain",
-                                   "continue the existing campaigns step unless a genuine STOP"))
-                    for original, changed in ((b"THIS triage invocation", b"any previous triage invocation"),
+                    check("parent sends only a selected source under its launcher grant",
+                          contains(after.decode(), "exact selected RFC root, source email ID", "without composing",
+                                   "explicit `reply-send` grant", "CS_HEADLESS_SEND=1", "--source-id"))
+                    for original, changed in ((b"exact selected RFC root", b"any RFC root"),
                                               (b"CS_HEADLESS_SEND=1", b"CS_HEADLESS_SEND=0"),
-                                              (b"successfully prepared ready draft", b"any queued draft"),
-                                              (b"parent-owned step 3 exception", b"any parent action")):
+                                              (b"once per selected eligible source", b"every existing draft"),
+                                              (b"without composing", b"after composing")):
                         check("unreviewed parent send widening remains refused",
                               original in after and not preserves_scheduled_contract(
                                   rel, before, after.replace(original, changed, 1)))

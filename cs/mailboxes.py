@@ -68,7 +68,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable
 
 from . import config as config_mod
-from . import gmail_archive, gmail_drafts, rpc
+from . import gmail_archive, imap_connection, rpc
 from .config import Settings
 
 
@@ -392,7 +392,7 @@ def session(settings: Settings, mailbox: Mailbox) -> imaplib.IMAP4_SSL:
         except (imaplib.IMAP4.error, OSError):
             pass
         _drop(mailbox.address)
-    M = gmail_drafts._imap(settings, (mailbox.address, mailbox.password))
+    M = imap_connection._imap(settings, (mailbox.address, mailbox.password))
     _SESSIONS[mailbox.address] = M
     return M
 

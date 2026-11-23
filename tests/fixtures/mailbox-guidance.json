@@ -1,0 +1,15 @@
+{
+  "base_commit": "544c80f622c787778dcc1565cd1dff823e1f3e8f",
+  "templates": {
+    "cs/templates/partials/outbound-fact-sourcing.md.j2": "49c32037973f320fa376b471d1fc9c108201f6722ab45f34261f6a105ed2cab4",
+    "cs/templates/project/.claude/settings.json.j2": "4954af7106e9e2eb4e56be2c6ccd49adc0b8feba3bee1e0b4b236618b32ab66d",
+    "cs/templates/project/.claude/skills/cs-campaign-tick/SKILL.md.j2": "21cefdbc08223bbf1bede5375fe4475f6aa24359a00983fa185f701be14d57a9",
+    "cs/templates/project/.claude/skills/cs-customer/SKILL.md.j2": "768d2c8c913a8ba820f84271b179cd9491d4aae15681085831b87f85aab6d905",
+    "cs/templates/project/.claude/skills/cs-operator/SKILL.md.j2": "70308c7206366bb7544f0dcbc500ca6b2a321afcd8ee829d2b6d56ea4b9c2e4c",
+    "cs/templates/project/.claude/skills/cs-triage-mail/SKILL.md.j2": "e593a1ee7482358e5503438d634a4c034291d083b170515aad0fc11dabffb489",
+    "cs/templates/project/AGENTS.md.j2": "3bf116edb22e830fa57b8ab8939508bdde894857a64a085d7db8b40becbd35c1",
+    "cs/templates/project/README.md.j2": "b4553403ec364084943621f85939e0879cc8b67f12c7497072bc69f6f010be03",
+    "cs/templates/project/bin/cs_operator_cron.sh.j2": "c2c9812d572149a9531e87ca70b74f1da384d61582c8b2a7a770ded2918b35b0",
+    "cs/templates/project/docs/ARCHITECTURE.md.j2": "5abdfceb915051244d992ac8b8b68f174611464f0ca76394f53c5abbb95275e3"
+  }
+}

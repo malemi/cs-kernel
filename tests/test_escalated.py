@@ -357,7 +357,7 @@ def _wiring(db_path: str) -> None:
 def _review(db_path: str) -> None:
     """`cs review` is where the operator asks what there is to do: the answer
     has to include "you are on these", with an age, or an escalation rots."""
-    from cs import campaign as campaign_mod, gmail_drafts, review
+    from cs import campaign as campaign_mod, review
 
     settings = _settings(db_path)
     settings.log_path = Path(db_path).parent / "no-such.log"
@@ -365,7 +365,6 @@ def _review(db_path: str) -> None:
                                   escalated_at=_ago(12))
     State(db_path).mark_escalated("other@example.test", owner="Andrea",
                                   escalated_at=_ago(1))
-    gmail_drafts.list_drafts = lambda s, *, observation=None: []
     campaign_mod.list_campaigns = lambda s: []
     rpc.call_sync = lambda *a, **k: []
 
@@ -457,12 +456,18 @@ def _campaign(db_path: str) -> None:
 
     contacts = [
         {"id": "c1", "email": "mine@example.test", "state": "drafted",
-         "draft_subject": "s", "draft_body": "b", "dossier": {}},
+         "draft_subject": None, "draft_body": None, "dossier": {"mailbox_draft_id":"c1"}},
         {"id": "c2", "email": "cold@example.test", "state": "drafted",
-         "draft_subject": "s", "draft_body": "b", "dossier": {}},
+         "draft_subject": None, "draft_body": None, "dossier": {"mailbox_draft_id":"c2"}},
     ]
 
     def fake_call_sync(_settings, method, params=None, timeout=None):
+        if method == "system.capabilities":
+            return {"mailbox_drafts": 1}
+        if method == "drafts.get":
+            row = next(c for c in contacts if c["dossier"].get("mailbox_draft_id") == params["draft_id"])
+            return {"ok": True, "draft": {"id": params["draft_id"], "status": "draft",
+                    "owner_id": _settings.email_address, "to_addresses":[row["email"]], "body": "Personal note"}}
         if method == "campaign.list":
             return [{"id": "k1", "name": "trial", "contacts_by_state": {}}]
         if method == "campaign.contacts":

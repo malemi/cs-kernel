@@ -88,7 +88,6 @@ class Wire:
         stack.enter_context(patch.object(rpc.websockets, "connect", self.connect))
         stack.enter_context(patch.object(rpc.auth, "get_id_token", return_value="fixture-id-token"))
         stack.enter_context(patch.object(config, "load", return_value=settings()))
-        stack.enter_context(patch.object(cli, "_retire_sent_mirrors", return_value={"retired": [], "skipped": []}))
         return stack
 
 
@@ -198,25 +197,11 @@ class ScheduledReplyTransport(unittest.IsolatedAsyncioTestCase):
         call.assert_called_once_with("classify", role="triage", timeout=600)
         client.assert_not_called()
 
-    async def test_marker_preserves_actual_exact_campaign_approval_predicate(self):
-        captured = []
-        original = rpc.chat
-        async def capture(*args, **kwargs):
-            captured.append(kwargs["approval_predicate"])
-            return {"result": {}, "approvals": [{"tool": "send_draft", "mode": "once",
-                                                  "input": {"draft_id": DRAFT_ID}}]}
-        with patch.object(rpc, "chat", capture), patch.object(rpc, "call_sync", return_value=[{
-                "id": DRAFT_ID, "sent_message_id": "<sent@example.test>"}]):
-            await asyncio.to_thread(contextual_email.send_campaign_draft, settings(), {"id": DRAFT_ID},
-                                    {"draft_id": DRAFT_ID})
-        self.assertIs(rpc.chat, original)
-        frames, result = await self.exchange("1", {"operator_reply_provenance": 1},
-            allow_tools={"send_draft"}, approval_predicate=captured[0],
-            inputs=({"draft_id": "wrong"}, {"draft_id": DRAFT_ID}, {"draft_id": DRAFT_ID}))
-        self.assertEqual([f["params"]["mode"] for f in frames if f["method"] == "chat.approve"],
-                         ["deny", "once", "deny"])
-        self.assertEqual([a["mode"] for a in result["approvals"]], ["deny", "once", "deny"])
-        self.assertEqual(frames[1]["params"]["operator_origin"], "scheduled_operator")
+    async def test_campaign_send_calls_only_the_named_native_draft(self):
+        outcome = {"request_key":"campaign-send:"+DRAFT_ID, "ok":True,"state":"sent","effect_certainty":"verified","draft_id":DRAFT_ID,"message_id":"<sent@example.test>"}
+        with patch.object(rpc,"call_sync",return_value=outcome) as call:
+            self.assertEqual(contextual_email.campaign_delivery(settings(), DRAFT_ID),outcome["message_id"])
+            self.assertEqual(call.call_args.args[1:],("drafts.send",{"draft_id":DRAFT_ID,"request_key":"campaign-send:"+DRAFT_ID}))
 
 
 class ContextualEmail(unittest.TestCase):
@@ -275,58 +260,10 @@ class ContextualEmail(unittest.TestCase):
         self.assertEqual(wire.frames[1]["params"]["email_context"], {"draft_id": DRAFT_ID})
         self.assertEqual(result["approvals"][0]["mode"], "once")
 
-    def test_actual_exact_draft_cli_uses_legacy_guard_and_verifies_sent(self):
-        wire = Wire(False)
-        with wire.patches(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as stderr:
-            self.assertEqual(cli.main(["draft-send", DRAFT_ID]), 5)
-        self.assertIn("Do not retry sending", stderr.getvalue())
-        chat = next(frame for frame in wire.frames if frame["method"] == "chat.send")
-        self.assertEqual(set(chat["params"]), {"message", "conversation_id"})
-        self.assertEqual([f["method"] for f in wire.frames].count("system.capabilities"), len(wire.handshakes))
-        self.assertEqual([f["params"]["thread_key"] for f in wire.frames if f["method"] == "tasks.assignment.project"], [ROOT])
-        self.assertEqual(wire.frames[-1]["method"], "drafts.list")
-        self.assertEqual(wire.frames[-1]["params"], {"status": "sent"})
-        self.assertTrue(all(handshake[1]["additional_headers"]["Authorization"] == "Bearer fixture-id-token"
-                            for handshake in wire.handshakes))
 
-    def test_legacy_draft_reply_actual_assignment_only_frame(self):
-        wire = Wire(False, approve=False)
-        wire.source_email_ids = ["8ac7571d-778b-46a2-a55b-a08e703149f7"]
-        with wire.patches(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.main(["draft-reply", "Compose scoped reply", "--thread-id", ROOT]), 0)
-        payload = next(f["params"] for f in wire.frames if f["method"] == "chat.send")
-        self.assertEqual(set(payload), {"message", "conversation_id", "assignment_thread_key", "assignment_policy_version"})
-        self.assertEqual(payload["assignment_thread_key"], ROOT)
-        self.assertEqual(payload["assignment_policy_version"], 1)
-        self.assertEqual([f["method"] for f in wire.frames].count("system.capabilities"), len(wire.handshakes))
-        self.assertEqual([frame["params"] for frame in wire.frames if frame["method"] == "emails.list_by_thread"],
-                         [{"thread_id": ROOT}])
-        self.assertIn(wire.source_email_ids[0], payload["message"])
-        self.assertIn("Use read_email with these email_id handles", payload["message"])
-        self.assertTrue(payload["message"].endswith("Compose scoped reply"))
 
-    def test_legacy_assignment_capability_absence_refuses_before_chat(self):
-        wire = Wire(False, assignment=False, approve=False)
-        with wire.patches(), self.assertRaisesRegex(RuntimeError, "assignment draft policy"):
-            asyncio.run(rpc.chat(settings(), "Compose", assignment_thread_key=ROOT))
-        self.assertEqual([f["method"] for f in wire.frames], ["system.capabilities"])
 
-    def test_explicit_draft_source_refuses_old_engine_without_unbound_retry(self):
-        wire = Wire(False, approve=False)
-        with wire.patches(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.main(["draft-reply", "Compose", "--thread-id", ROOT, "--source-id", "source"]), 3)
-        self.assertNotIn("chat.send", [f["method"] for f in wire.frames])
-        self.assertEqual([f["method"] for f in wire.frames].count("system.capabilities"), len(wire.handshakes))
 
-    def test_explicit_draft_source_keeps_both_full_policy_bindings(self):
-        wire = Wire(approve=False)
-        with wire.patches(), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            self.assertEqual(cli.main(["draft-reply", "Compose", "--thread-id", ROOT, "--source-id", "source"]), 0)
-        payload = next(f["params"] for f in wire.frames if f["method"] == "chat.send")
-        self.assertEqual(payload["email_context"], {"thread_key": ROOT, "source_email_id": "source"})
-        self.assertEqual(payload["contextual_email_policy_version"], 1)
-        self.assertEqual(payload["assignment_thread_key"], ROOT)
-        self.assertEqual(payload["assignment_policy_version"], 1)
 
     def test_all_explicit_chat_flags_and_direct_requirement_refuse_old_engine(self):
         for flag, value in (("--thread-id", ROOT), ("--source-id", "source"), ("--reply-to", TARGET), ("--draft-id", DRAFT_ID)):
@@ -348,102 +285,86 @@ class ContextualEmail(unittest.TestCase):
             with self.subTest(routing=routing), self.assertRaises(ValueError):
                 asyncio.run(rpc.chat(settings(), "classify", require_contextual_email_policy=True, **routing))
 
-    def test_contextual_campaign_uses_exact_engine_lifecycle(self):
-        contact = {"id": "contact", "email": "customer@example.test", "state": "drafted",
-                   "draft_subject": "Reply", "draft_body": "body", "dossier": {
-                       "thread_id": ROOT, "target_message_id": TARGET, "engine_draft_id": DRAFT_ID}}
-        draft = {"id": DRAFT_ID, "thread_id": ROOT, "in_reply_to": TARGET, "references": [ROOT],
-                 "to_addresses": [contact["email"]], "subject": "Reply", "body": "body"}
-        updates = []
+
+
+
+
+
+    def test_campaign_recovery_precedes_archive_dedup_and_never_dispatches(self):
+        import tempfile
+        from pathlib import Path
+        from cs.state import State
+        key = "campaign-send:native"
+        contact = {"id":"contact","email":"contact@example.test","state":"drafted",
+                   "dossier":{"mailbox_draft_id":"native"}}
+        def rpc_call(selected, method, params):
+            if method == "drafts.send_status":
+                self.assertEqual(params, {"draft_id":"native", "request_key":key})
+                return {"ok":True, "state":"sent","effect_certainty":"verified","draft_id":"native",
+                        "request_key":key,"message_id":"<receipt@example.test>"}
+            self.assertEqual(method, "campaign.update_contact")
+            contact.update(state="sent",message_id=params["message_id"])
+            return {"ok":True,"contact":dict(contact)}
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ,{},clear=True):
+            selected = settings().model_copy(update={"cs_triage_mode":"send","db_path":str(Path(directory)/"local.db")})
+            with patch.object(campaign,"_get_contact",return_value=contact), patch.object(campaign,"_sent_threads_to",side_effect=AssertionError("fresh admission during receipt recovery")), patch.object(rpc,"call_sync",side_effect=rpc_call):
+                for _ in range(2):
+                    self.assertEqual(campaign.send_draft(selected,"contact",commit=True)["message_id"],"<receipt@example.test>")
+            local = State(selected.db_path)
+            try:
+                self.assertEqual(local.conn.execute("SELECT COUNT(*) FROM sends").fetchone()[0],1)
+            finally:
+                local.conn.close()
+
+    def test_fresh_fixed_template_queue_preserves_html_cc_and_native_binding(self):
+        selected = settings()
+        contact_id = "pack-contact"
+        with patch.object(rpc, "call_sync", return_value={"ok":True,"contact":{
+                "id":contact_id, "dossier":{"mailbox_draft_id":"current-native"}}}) as call:
+            result = campaign._queue_pack(selected, contact_id, "contact@example.test", "Pack", "plain",
+                                          {"pack_context":"fixture"}, html="<p>Pack</p>", cc="cc@example.test")
+            self.assertEqual(result["draft_id"], "current-native")
+            call.assert_called_once_with(selected,"campaign.update_contact",{
+                "contact_id":contact_id,"draft_subject":"Pack","draft_body":"<p>Pack</p>","draft_body_format":"html",
+                "draft_cc":["cc@example.test"],"draft_request_key":"campaign-pack:"+contact_id,
+                "dossier":{"pack_context":"fixture","mailbox_draft_kind":"fixed-template"}})
+
+    def test_fixed_template_pending_after_creation_never_enters_smtp(self):
+        selected = settings().model_copy(update={"cs_triage_mode":"send"})
+        cid, key = "contact-fixture", "campaign-pack:contact-fixture"
+        dossier = {"mailbox_draft_kind":"fixed-template","mailbox_draft_request":{"request_key":key,"state":"reserved"}}
+        row = {"id":cid, "email":"customer@example.test", "state":"queued", "_campaign_name":"fixture","dossier":dossier}
+        from unittest.mock import Mock
+        pack = Mock()
+        pack.build.return_value = ("Subject", "body", "<p>body</p>")
+        calls = []
+        def dispatch(settings, method, params):
+            self.assertEqual(method, "campaign.update_contact")
+            self.assertEqual(params["draft_request_key"],key)
+            calls.append(method)
+            return {"ok":True,"contact":{"id":cid,"dossier":{"mailbox_draft_id":"recovered"}}}
+        with patch.object(campaign,"_get_contact",return_value=row), patch.object(campaign,"_resolve_pack",return_value=(pack,None)), patch.object(campaign,"_finished_refusal",return_value=None), patch.object(campaign,"_escalation_block",return_value=None), patch.object(campaign,"_pause_active",return_value=False), patch.object(rpc,"call_sync",side_effect=dispatch), patch("cs.send_mail.send") as smtp:
+            self.assertEqual(campaign.send_first(selected, cid, commit=True)["draft_id"],"recovered")
+            dossier["mailbox_draft_request"]["request_key"] = "previous-contextual-key"
+            self.assertFalse(campaign.send_first(selected, cid, commit=True)["ok"])
+            self.assertEqual(calls, ["campaign.update_contact"])
+            smtp.assert_not_called()
+
+    def test_campaign_queue_uses_native_draft_after_text_retirement(self):
+        selected = settings()
+        handle = "gmail:" + "a"*64 + ":campaign"
+        contact = {"id":"contact","email":"customer@example.test","state":"drafted",
+                   "draft_subject":None,"draft_body":None,"dossier":{"mailbox_draft_id":handle}}
+        row = {"id":handle,"owner_id":selected.email_address,"status":"draft",
+               "to_addresses":[contact["email"]],"subject":"Edited","body":"Current saved reply"}
         def call(s, method, params):
-            if method == "system.capabilities":
-                return {"contextual_email_policy": 1}
-            if method == "drafts.list":
-                return [{**draft, "status": params["status"], "sent_message_id": "<sent@example.test>"}]
-            if method == "campaign.update_contact":
-                updates.append(params)
-                return {"ok": True}
+            if method == "system.capabilities":return {"mailbox_drafts":1}
+            if method == "drafts.get" and params == {"draft_id":handle}:return {"ok":True,"draft":row}
             raise AssertionError(method)
-        wire = Wire()
-        with wire.patches(), patch.object(rpc, "call_sync", side_effect=call), \
-             patch.object(campaign, "_get_contact", return_value=contact), \
-             patch.object(campaign, "_finished_send_refusal", return_value=None), \
-             patch.object(campaign, "_sent_threads_to", return_value=([], [])), \
-             patch.object(campaign, "_escalation_block", return_value=None), \
-             patch.object(campaign, "_pause_active", return_value=False), \
-             patch.object(campaign, "_record_send") as record, \
-             patch("cs.send_mail.send", side_effect=AssertionError("contextual cs SMTP bypass")):
-            result = campaign.send_draft(settings(), "contact", commit=True)
-        self.assertTrue(result["ok"], result)
-        self.assertEqual(result["message_id"], "<sent@example.test>")
-        self.assertEqual(wire.frames[1]["params"]["email_context"], {
-            "draft_id": DRAFT_ID, "thread_key": ROOT, "target_message_id": TARGET})
-        self.assertEqual(updates, [{"contact_id": "contact", "state": "sent", "message_id": "<sent@example.test>"}])
-        record.assert_called_once()
-
-    def test_actual_contextual_queue_cli_refuses_provider_append_and_dossier_update(self):
-        contact = {"id": "contact", "email": "customer@example.test", "state": "drafted",
-                   "draft_subject": "Reply", "draft_body": "body", "dossier": {
-                       "thread_id": ROOT, "target_message_id": TARGET, "engine_draft_id": DRAFT_ID}}
-        draft = {"id": DRAFT_ID, "thread_id": ROOT, "in_reply_to": TARGET, "references": [ROOT],
-                 "to_addresses": [contact["email"]], "status": "draft"}
-        for commit, already_pushed in ((False, False), (True, False), (True, True)):
-            with self.subTest(commit=commit, already_pushed=already_pushed):
-                row = {**contact, "dossier": {**contact["dossier"], "gmail_draft_pushed": already_pushed}}
-                original = json.dumps(row, sort_keys=True)
-                calls = []
-                def call(s, method, params):
-                    calls.append(method)
-                    if method == "system.capabilities":
-                        return {"contextual_email_policy": 1}
-                    if method == "drafts.list":
-                        return [draft]
-                    raise AssertionError("contextual queue must not mutate: " + method)
-                with patch.object(config, "load", return_value=settings()), \
-                     patch.object(rpc, "call_sync", side_effect=call), \
-                     patch.object(campaign, "_get_contact", return_value=row), \
-                     patch.object(campaign, "_finished_send_refusal", return_value=None), \
-                     patch.object(campaign, "_sent_threads_to", return_value=([], [])), \
-                     patch.object(campaign, "_escalation_block", return_value=None), \
-                     patch.object(campaign, "_pause_active", return_value=False), \
-                     patch("cs.gmail_drafts.append_draft") as append, \
-                     contextlib.redirect_stdout(io.StringIO()) as stdout:
-                    rc = cli.main(["campaign", "queue-draft", "contact"] + (["--commit"] if commit else []))
-                output = json.loads(stdout.getvalue())
-                self.assertEqual(rc, 0)  # Campaign CLI reports refusal in its JSON envelope.
-                self.assertFalse(output["ok"])
-                self.assertEqual(output["refused"], "contextual_email")
-                self.assertEqual(output["engine_draft_id"], DRAFT_ID)
-                self.assertEqual(output["next"], "review the existing engine draft")
-                self.assertEqual(calls, ["system.capabilities", "drafts.list"])
-                self.assertEqual(json.dumps(row, sort_keys=True), original)
-                append.assert_not_called()
-
-    def test_actual_sourcefree_queue_cli_preserves_provider_mirror(self):
-        contact = {"id": "contact", "email": "new@example.test", "state": "drafted",
-                   "draft_subject": "Independent", "draft_body": "Independent body", "dossier": {}}
-        with patch.object(config, "load", return_value=settings()), \
-             patch.object(rpc, "call_sync", return_value={"ok": True}) as call, \
-             patch.object(campaign, "_get_contact", return_value=contact), \
-             patch.object(campaign, "_finished_send_refusal", return_value=None), \
-             patch.object(campaign, "_sent_threads_to", return_value=([], [])), \
-             patch.object(campaign, "_escalation_block", return_value=None), \
-             patch.object(campaign, "_pause_active", return_value=False), \
-             patch("cs.gmail_drafts.append_draft", return_value=("Drafts", [])) as append, \
-             contextlib.redirect_stdout(io.StringIO()) as stdout:
-            self.assertEqual(cli.main(["campaign", "queue-draft", "contact", "--commit"]), 0)
-        self.assertTrue(json.loads(stdout.getvalue())["ok"])
-        append.assert_called_once_with(settings(), "new@example.test", "Independent", "Independent body", body_md=True)
-        self.assertEqual(call.call_args.args[1], "campaign.update_contact")
-        self.assertTrue(call.call_args.args[2]["dossier"]["gmail_draft_pushed"])
-
-    def test_contextual_campaign_missing_exact_id_or_old_engine_refuses(self):
-        contact = {"email": "customer@example.test", "dossier": {"thread_id": ROOT}}
-        for capability in ({}, {"assignment_draft_policy": 1}, {"contextual_email_policy": 1}):
-            with patch.object(rpc, "call_sync", return_value=capability):
-                with self.assertRaises(RuntimeError):
-                    contextual_email.campaign_draft(settings(), contact)
-        self.assertIsNone(contextual_email.campaign_draft(settings(), {"email": "new@example.test", "dossier": {}}))
+        with patch.object(campaign,"_get_contact",return_value=contact), patch.object(campaign,"_finished_send_refusal",return_value=None), patch.object(campaign,"_sent_threads_to",return_value=([],[])), patch.object(campaign,"_escalation_block",return_value=None), patch.object(campaign,"_pause_active",return_value=False), patch.object(rpc,"call_sync",side_effect=call):
+            self.assertEqual(campaign.queue_draft(selected,"contact",commit=True)["draft_id"],handle)
+            contact.update(dossier={},draft_body="Legacy private content")
+            self.assertFalse(campaign.send_draft(selected,"contact",commit=True)["ok"])
 
 
 if __name__ == "__main__":

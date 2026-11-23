@@ -212,24 +212,9 @@ assignee and uncertainty visible and leave all tasks and assignment records
 unchanged. Missing source/content, suppression, SELF and unsafe content still
 refuse.
 
-The CLI selects a supported preparation contract before generation. Its legacy
-interactive route uses engine composition and validates the real source,
-recipients and reply headers before persisting a review copy; it does not claim
-newer engine-enforced source scope. A failed generation is not retried through
-another route. Missing source/content, suppression, a SELF recipient or an
-unsafe draft still refuses; report the concrete failure.
-
-This interactive exception takes precedence over the assignment/takeover
-"do not draft" instructions below only for operator-requested review preparation.
-Preparation grants no send permission and does not change scheduled discovery,
-selection, assignment admission or sending. If the interactive operator
-separately asks to send one selected existing draft, follow the exact
-`cs-customer` send and recovery procedure: only a positive manual-member-activity
-hold has that narrow exception. This triage workflow remains draft-only;
-unattended runs must never select `--operator-request`. Other holds remain
-enforced. Continue independently eligible work when one case is held. Distinguish
-engine-saved from verified Gmail-visible copies, resume saved IDs without
-regeneration, and distinguish drafts prepared from replies actually sent.
+The engine binds preparation to the selected source. A person may request a
+draft on a held thread. Follow `cs-customer` for explicit send or Trash and
+retain the request key if an operation is unconfirmed.
 
 ## Invariants (read before acting)
 
@@ -244,11 +229,9 @@ regeneration, and distinguish drafts prepared from replies actually sent.
   only the named tool needed for that action; never co-approve a mail-send tool.
   If the headless wrapper denies the action, keep the task open and report the
   concrete operator action instead of bypassing the wrapper.
-- **You only ever DRAFT — you cannot send.** `cs draft-reply` has no send
-  capability, and the headless permission set forbids every send surface.
-  Going autonomous-send later is a deliberate permission change the operator
-  makes, not a flag this skill flips. Don't look for a way to send — there
-  isn't one, by design.
+- In draft mode, prepare through the engine. In scheduled send mode, return
+  the exact selected root, source ID and grounded answer instruction to the
+  parent for its scoped direct reply. Leave existing mailbox drafts for review.
 - **DEFAULT ON UNCERTAINTY = ESCALATE.** Never auto-send a free-form
   reply. In draft mode every reply is a draft the operator approves; a
   judgment call gets left for the operator, not answered. **Escalating means
@@ -514,24 +497,12 @@ a routine account/config issue, a normal reply where the answer
 is **grounded in the thread + engine memory**:
 
 ```bash
-.venv/bin/python -m cs draft-reply "reply in the thread with <email>: <what to say, concise>" --thread-id '<exact-thread-key>'
+.venv/bin/python -m cs draft-reply "<reply instruction>" --thread-id '<exact-thread-key>' --source-id '<source-email-id>'
 ```
 
-`draft-reply` requires the exact thread. Scheduled and supported supervised
-routes negotiate the engine draft policy before composition; unsupported authority
-holds those routes, and the engine checks their actual draft target before
-writing. The legacy interactive review route described above instead validates
-the source locally before composition and the returned engine draft before
-mirroring it for review. All routes deny send tools during composition.
-Composition uses memory, trained voice and reply threading. Engine-saved does
-not establish a Gmail-visible copy: inspect achieved stages and retain saved IDs
-on partial failure. Interactive publication and recovery follow `cs-customer`;
-unsupported publication never permits a local APPEND fallback. The command has
-**no `--allow` option and cannot send** — the engine denies `send_draft`
-whatever the message (or any injected text) says. An explicit interactive
-request to send a selected existing draft routes to `cs-customer`, never Gmail,
-Superhuman, generic chat or another connector. This triage workflow and its
-scheduled runs remain draft-only.
+Use this command in draft mode. In scheduled send mode, return the exact
+source, root and instruction to the parent without preparing a draft. The
+engine checks the live thread, Sent and mailbox Drafts before generation.
 
 **(b) Escalate** — a judgment call, out of scope, legal- or
 billing-sensitive, angry, an unclear ask, OR an answer you cannot ground
@@ -541,72 +512,20 @@ report. That is the whole gesture: no verb, no record, nothing silenced —
 the item stays in the work list until a human deals with it. **When in doubt,
 this branch.**
 
-## 4. Idempotency — do not re-draft on the next tick
+## 4. Check existing mailbox drafts and Sent
 
-A 2h re-run must NOT draft a second answer for the same exact thread. A draft
-is not a sent reply, a handled acknowledgement or an assignment close. The
-Sent-anchored sweep may still surface it. Check `cs review --json` and the
-engine draft list for an unsent draft matching that exact thread before composing;
-a draft to the same address on another thread is not a duplicate. Recheck
-assignment status before each replacement draft. Escalations and held human
-work stay visible until the human resolves them through the applicable authority.
+Inspect the selected inbound and existing mailbox drafts on every tick. Keep
+the named draft intact for the person reviewing it. Keep an answered inbound
+held until a later customer message becomes eligible. A draft supplies no
+assignment or handled acknowledgement. Report every superseded, overtaken,
+duplicate or settled draft with its native handle and the existing evidence.
+Leave deletion to an explicitly requested human action.
 
-## 4b. Re-decide the drafts already waiting — the ones step 1 can never reach
+## 5. Keep the selected workset and send boundary
 
-Skipping is not the only thing that can be true of an existing draft. A draft
-written two days ago may answer a question the customer has since withdrawn,
-answered themselves, or thanked us for — and **no candidate feed will ever
-bring it back to you** for an ordinary unheld conversation: the common
-sweep can remove that conversation from `open` after a real answer, and routes a settled courtesy
-into a bucket that is not the open feed. A thread that is resolved-and-thanked
-can therefore be absent from `open`, so § 4 above can only decline to
-duplicate it. Assignment holds still remain in `human_work`; never apply this
-ordinary answered subtraction to them. This step is where it is looked at.
-
-Use the complete actual review inventory read before scheduled discovery;
-do not issue a second full review. Interactive triage reads `cs review --json`.
-
-`drafts[]` contains one row per logical draft.
-
-Take every row whose `verdict` is NOT `ready`. The verb computed it from Gmail
-(and, when the engine answered, from its reading of the conversation), so
-**transcribe the verdict, never re-derive it**:
-
-- `overtaken` — the contact wrote after the draft was composed;
-- `superseded` — {{ email_address }} already wrote to them after it was composed;
-- `settled` — the engine reads that conversation as owing nothing.
-
-Unselected rows retain their actual verdict and handles as deferred re-decisions;
-do not read their full threads, replace drafts or classify them as resolved.
-
-For each such row whose exact root is selected in a scheduled run, apply § 2's
-judgement — read the thread, and ask whether
-their own last message still asks what the draft answers. It is the same
-question, applied to a row § 1 never returns. Then, exactly one of:
-
-- **The draft is still right** — leave it and say nothing about it.
-- **The answer has changed** — draft the reply the conversation asks for NOW
-  (`cs draft-reply`, § 3a) and report BOTH: the new draft and the old one that
-  now contradicts it, by its handles.
-- **Nothing is owed any more** — list it under the report's re-decide section
-  with its handles, its verdict and the date the signal fired.
-
-**You may not retire a draft.** No deletion, on any path, for any verdict: the
-cron denies both halves of it — `cs draft-delete` for the Gmail copy and
-`cs rpc drafts.discard` for the engine's, which deletes its row outright — in
-every spelling, and for the same reason it denies `cs handled` — removing a prepared answer nobody has seen is a silencing
-act, and this run reads untrusted mail. Report it; the operator retires it by
-name, in a session.
-
-## 5. Honour the safety gates throughout
-
-- {{ email_address }} identity is never dropped.
-- Every free-form reply goes through the engine (`cs draft-reply`), never cs-SMTP.
-- Everything is a DRAFT (`cs draft-reply`); nothing is sent — by design and
-  by permission. The operator approves and sends.
-- Uncertain / out-of-scope / sensitive / ungrounded ⇒ ESCALATE.
-- If a step fails (daemon down, RPC error), capture a one-line note and
-  continue; surface it under `Note:` in the report rather than guessing.
+Apply assignment, takeover, suppression, self-contact and applicable dossier
+holds. Neither mode sends an existing draft. Triage creates a mailbox draft
+in draft mode, or returns eligible sources for the parent's direct send.
 
 ## 6. Report
 
@@ -623,7 +542,7 @@ Drafts ready (for you to review and send):
 - …
 
 Drafts to re-decide (the conversation moved on; I touched nothing):
-- <email> — "<subject>" — <overtaken|superseded|settled>, <when> — [uid <uid> | engine <id>]
+- <email> — "<subject>" — <overtaken|superseded|settled>, <when> — [mailbox draft <native-handle>]
 - …
 
 Escalations (these need you):
@@ -654,4 +573,4 @@ address takeover still holds the contact. Keep incomplete named roots held
 and continue only independently eligible selected work. Wait for the original
 background task notification; do not add shell waiting loops or rerun the
 dossier. A completed dossier never replaces fresh engine checks before an
-exact-root draft or exact-ID send.
+selected-source draft or direct send.

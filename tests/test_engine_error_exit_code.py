@@ -206,104 +206,10 @@ def test_cmd_chat_fails_loudly_through_the_same_shared_helper():
     print("OK: cmd_chat fails loudly through the same shared helper as cmd_ask")
 
 
-def test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step():
-    """A failed turn composed no draft — `cmd_draft_reply` must return at the
-    failure, before its post-compose `drafts.list` diff, or it goes on to
-    print a SECOND, misleading explanation ("composed no new draft") over the
-    real one, and burns a round trip proving something already known."""
-    _install_common_stubs()
-    rpc.chat = _stub_chat(_failed_envelope())
-
-    list_calls = {"n": 0}
-
-    def fake_call_sync(settings, method, params, timeout=None):
-        if method == "system.capabilities":
-            return {}
-        if method == "emails.list_by_thread":
-            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
-        if method == "tasks.assignment.project":
-            return normal_projection(settings, params)
-        list_calls["n"] += 1
-        assert method == "drafts.list", method
-        return []
-    rpc.call_sync = fake_call_sync
-
-    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="reply to the customer", timeout=30)
-    out, err = io.StringIO(), io.StringIO()
-    with redirect_stdout(out), redirect_stderr(err):
-        rc = cli.cmd_draft_reply(args)
-
-    assert rc == cli._ENGINE_ERROR_RC, rc
-    assert out.getvalue() == "", out.getvalue()
-    assert "INTERNAL_ERROR" in err.getvalue(), err.getvalue()
-    assert "composed no new draft" not in err.getvalue(), (
-        "cmd_draft_reply printed the 'nothing to mirror' explanation over a "
-        "real engine failure — two disagreeing explanations for one turn:\n"
-        + err.getvalue())
-    assert list_calls["n"] == 1, (
-        f"cmd_draft_reply called drafts.list {list_calls['n']} time(s) after "
-        f"a failed turn — expected exactly 1 (the BEFORE snapshot, taken "
-        f"ahead of the chat call); the AFTER diff must not run for a turn "
-        f"that composed nothing")
-    print("OK: cmd_draft_reply fails loudly and never reaches the "
-          "drafts.list diff after an engine failure")
-
-
-def test_cmd_draft_reply_success_is_unchanged():
-    """The success path is untouched by the fix: a real compose still mirrors
-    into Gmail Drafts exactly as before."""
-    from cs import gmail_drafts
-
-    _install_common_stubs()
-    fresh = {
-        "id": "new-1", "to_addresses": ["customer@example.com"],
-        "cc_addresses": [], "subject": "Re: Question",
-        "body": "Body of the draft the engine composed.",
-        "in_reply_to": "<abc@example.com>", "references": ["<abc@example.com>"],
-        "created_at": "2026-07-16T18:00:00",
-    }
-    calls = {"n": 0}
-
-    def fake_call_sync(settings, method, params, timeout=None):
-        if method == "system.capabilities":
-            return {}
-        if method == "emails.list_by_thread":
-            return {"emails": [{"id": "8ac7571d-778b-46a2-a55b-a08e703149f7"}]}
-        if method == "tasks.assignment.project":
-            return normal_projection(settings, params)
-        assert method == "drafts.list", method
-        calls["n"] += 1
-        return [] if calls["n"] == 1 else [fresh]
-    rpc.call_sync = fake_call_sync
-    rpc.chat = _stub_chat(_ok_envelope("composed"))
-
-    appended: dict = {}
-
-    def fake_append(settings, to, subject, body, in_reply_to=None,
-                    references=None, html=None, cc=None, body_md=False,
-                    engine_draft_id=None, engine_owner_uid=None):
-        appended.update(to=to, subject=subject)
-        return "[Gmail]/Drafts", []
-    gmail_drafts.append_draft = fake_append
-
-    args = types.SimpleNamespace(thread_id="<abc@example.com>", message="compose a reply", timeout=30)
-    out, err = io.StringIO(), io.StringIO()
-    with redirect_stdout(out), redirect_stderr(err):
-        rc = cli.cmd_draft_reply(args)
-
-    assert rc == 0, rc
-    assert "composed" in out.getvalue(), out.getvalue()
-    assert appended.get("to") == "customer@example.com", appended
-    print("OK: cmd_draft_reply's success path (mirror into Gmail Drafts) is "
-          "unchanged")
-
-
 if __name__ == "__main__":
     test_helper_keys_on_metadata_error_never_on_response_prose()
     test_engine_error_rc_is_distinct_from_mailbox_incomplete_rc()
     test_cmd_ask_fails_loudly_on_the_captured_payload()
     test_cmd_ask_success_is_byte_identical_to_before_the_fix()
     test_cmd_chat_fails_loudly_through_the_same_shared_helper()
-    test_cmd_draft_reply_fails_loudly_and_skips_the_pointless_mirror_step()
-    test_cmd_draft_reply_success_is_unchanged()
     print("test_engine_error_exit_code: all assertions passed")

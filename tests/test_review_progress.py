@@ -50,6 +50,7 @@ def _settings():
     ledger — a real empty DB, not a missing path, so `escalated` and
     `handled_out_of_band` come back `[]` with no error key to work around."""
     s = types.SimpleNamespace()
+    s.email_address = "owner"
     s.excluded_campaign_set = set()
     s.db_path = Path(tempfile.mkdtemp()) / "cs.db"
     s.timezone = "Europe/Rome"
@@ -74,7 +75,7 @@ def _assert_in_order(text: str, markers: list[str]) -> None:
 def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
     gmail_fixture = [{"gmail_uid": "101", "to": "a@example.test",
                       "subject": "Hello"}]
-    engine_fixture = [{"id": "eng-1"}]
+    engine_fixture = [{"id":"eng-1","mailbox_id":"box","owner_id":"owner","status":"draft"}]
     task_fixture = [{"id": "task-1", "contact_email": "b@example.test",
                      "title": "Question", "urgency": "high"}]
     campaign_fixture = [{"id": "camp-1", "name": "spring-launch",
@@ -104,7 +105,7 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
         assert timeout == review.ENGINE_SETTLED_TIMEOUT_SECONDS, timeout
         return {}, None
 
-    def _reconcile(_s, gd, ed, **kw):
+    def _reconcile(_s, gd, **kw):
         settled_fn = kw.get("settled")
         assert settled_fn is not None and settled_fn is not review.engine_view.settled, (
             "gather() must inject its own progress+timeout wrapper as the "
@@ -116,10 +117,9 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
         assert (views, note) == ({}, None), (views, note)
         return list(reconcile_rows), []
 
-    orig = (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+    orig = (review.rpc.call_sync,
             review.draft_state.reconcile, review.campaign.list_campaigns,
             review.engine_view.settled)
-    review.gmail_drafts.list_drafts = _list_drafts
     review.rpc.call_sync = _call_sync
     review.draft_state.reconcile = _reconcile
     review.campaign.list_campaigns = lambda _s: campaign_fixture
@@ -135,7 +135,7 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
             rc = cli.cmd_review(types.SimpleNamespace(json=True))
     finally:
         cli.config.load = orig_load
-        (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+        (review.rpc.call_sync,
          review.draft_state.reconcile, review.campaign.list_campaigns,
          review.engine_view.settled) = orig
 
@@ -147,8 +147,7 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
         f"{stdout_text}")
 
     parsed = json.loads(stdout_text)  # raises if progress corrupted the JSON
-    assert parsed["gmail_drafts"] == gmail_fixture, parsed["gmail_drafts"]
-    assert parsed["engine_drafts"] == engine_fixture, parsed["engine_drafts"]
+    assert parsed["mailbox_drafts"] == engine_fixture, parsed["mailbox_drafts"]
     assert parsed["drafts"] == reconcile_rows, parsed["drafts"]
     assert parsed["drafts_notes"] == [], parsed["drafts_notes"]
     assert parsed["tasks"] == [review._task_row(t) for t in task_fixture], \
@@ -172,10 +171,8 @@ def test_stdout_stays_json_clean_while_stderr_carries_every_stage():
 
     stderr_text = err.getvalue()
     _assert_in_order(stderr_text, [
-        "[review] Gmail draft listing: starting",
-        "[review] Gmail draft listing: done (",
-        "[review] engine drafts.list: starting",
-        "[review] engine drafts.list: done (",
+        "[review] mailbox drafts.list: starting",
+        "[review] mailbox drafts.list: done (",
         "[review] draft reconcile: starting",
         "[review] engine_view.settled: starting",
         "[review] engine_view.settled: done (",
@@ -298,12 +295,11 @@ def test_full_gather_survives_a_campaign_timeout_without_raising():
             raise TimeoutError()
         raise AssertionError(f"unexpected rpc method: {method}")
 
-    def _reconcile(_s, gd, ed, **kw):
+    def _reconcile(_s, gd, **kw):
         return [], []
 
-    orig = (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+    orig = (review.rpc.call_sync,
             review.draft_state.reconcile, review.campaign.list_campaigns)
-    review.gmail_drafts.list_drafts = _list_drafts
     review.rpc.call_sync = _call_sync
     review.draft_state.reconcile = _reconcile
     review.campaign.list_campaigns = lambda _s: [
@@ -314,7 +310,7 @@ def test_full_gather_survives_a_campaign_timeout_without_raising():
         with redirect_stderr(err):
             d = review.gather(settings)
     finally:
-        (review.gmail_drafts.list_drafts, review.rpc.call_sync,
+        (review.rpc.call_sync,
          review.draft_state.reconcile, review.campaign.list_campaigns) = orig
 
     assert d["tasks"], (

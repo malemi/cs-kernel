@@ -8,7 +8,7 @@ engine's "Sent archive" is NOT the dedup truth the docs assume it is. Until the
 engine is fixed, and as defence-in-depth after, dedup reads Gmail itself.
 
 Read-only: SEARCH/FETCH headers only, never writes. Reuses the IMAP login from
-`gmail_drafts` (same app-password, same mailbox).
+`imap_connection` (same app-password, same mailbox).
 
 ONE mailbox per call — the operator's. Two readers here (`sent_to`,
 `inbound_since`) decide nothing from "is this us" and therefore also exist as
@@ -29,7 +29,7 @@ from email.utils import getaddresses, parseaddr, parsedate_to_datetime
 from html.parser import HTMLParser
 
 from .config import Settings
-from .gmail_drafts import _imap
+from .imap_connection import _imap
 from .thread_key import thread_key
 
 
@@ -294,7 +294,7 @@ def sent_body_match(settings: Settings, addr: str, body: str,
     Read-only. The `(value, note)` shape is the module's degradation contract,
     the same one `engine_view.settled` uses.
     """
-    from .draft_identity import authored_message, authored_plain, normalize_authored
+    from .authored_mail import authored_message, authored_plain, normalize_authored
     wanted, extraction_note = authored_plain(body or "") if authored else (_normalise(body or ""), None)
     if extraction_note:
         return None, extraction_note

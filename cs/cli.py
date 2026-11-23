@@ -163,6 +163,10 @@ def cmd_rpc(args) -> int:
         _print_json({"error": "stripe_unavailable", "message": "Payment Link creation requires an interactive human request."})
         return 1
     settings = config.load()
+    from .interactive_draft import scheduled
+    if scheduled() and args.method.startswith("drafts.") and args.method not in ("drafts.list", "drafts.get"):
+        print("Scheduled mail actions require the scoped reply command", file=sys.stderr)
+        return 3
     if _scheduled_workset_enabled() and args.method == "emails.search":
         import shlex
         from .operator_read_outcomes import command_scope, capture_workset_deferral
@@ -181,6 +185,11 @@ def cmd_rpc(args) -> int:
         print("Scheduled deep mail read deferred outside selected workset", file=sys.stderr)
         return 3
     params = json.loads(args.params) if args.params else {}
+    if (scheduled() and args.method in ("campaign.add_contact", "campaign.update_contact")
+            and isinstance(params, dict) and any(params.get(field) is not None
+                for field in ("draft_body", "draft_subject", "draft_body_format", "draft_cc"))):
+        print("Scheduled campaign draft preparation requires the campaign queue command", file=sys.stderr)
+        return 3
     if _scheduled_workset_enabled():
         if args.method.startswith("chat.") or (
                 args.method.startswith("drafts.") and args.method != "drafts.list"):
@@ -1484,214 +1493,12 @@ def cmd_chat(args) -> int:
         print("\n-- tool approvals --")
         for a in out["approvals"]:
             print(f"  {a['tool']}: {a['mode']}")
-    # A send is only half done while its mirror still sits in the review queue.
-    # Retiring it HERE, on the turn that sent it, is what keeps the queue a
-    # list of decisions rather than a pile of answered mail.
-    sent_ids = {
-        str((a.get("input") or {}).get("draft_id") or "")
-        for a in out["approvals"] or []
-        if a.get("tool") == "send_draft"
-    } - {""}
-    if sent_ids:
-        if getattr(args, "account_switched", False):
-            # The mirrors live in the OPERATOR's Gmail; with --account in play
-            # this turn sent from somebody else's profile and the drafts folder
-            # here is not the one that holds them.
-            print("\n[gmail-drafts] --account: mirrors are not retired from "
-                  "another profile's send; run `cs draft-delete --sent` as the "
-                  "operator.", file=sys.stderr)
-        else:
-            try:
-                res = _retire_sent_mirrors(settings, commit=True,
-                                           timeout=args.timeout,
-                                           only_ids=sent_ids)
-            except Exception as e:  # noqa: BLE001 - the mail is already sent
-                # Never turn a successful send into a failure: the customer has
-                # the reply. Say what was left behind so it can be retired.
-                print(f"\n[gmail-drafts] could not retire the mirror(s) of the "
-                      f"sent draft: {type(e).__name__}: {e}. Retire them with "
-                      f"`cs draft-delete --sent`.", file=sys.stderr)
-            else:
-                for d in res["retired"]:
-                    print(f"[gmail-drafts] retired the mirror of the sent "
-                          f"draft: {d['subject']} -> {d['to']} (uid {d['uid']})")
-                for d in res["skipped"]:
-                    print(f"[gmail-drafts] mirror left in place ({d['reason']}): "
-                          f"{d['subject']} -> {d['to']} (uid {d['gmail_uid']})",
-                          file=sys.stderr)
-                for d in res.get("failed", []):
-                    print(f"[gmail-drafts] mirror retirement needs verification: "
-                          f"uid {d['uid']}, engine {d['engine_id']}. "
-                          "Check the named copy and Trash before retrying.", file=sys.stderr)
     return 0
 
 
-def _drafts_with_status(settings, status: str, timeout: float) -> list[dict]:
-    return rpc.call_sync(
-        settings, "drafts.list", {"status": status}, timeout=timeout
-    ) or []
-
-
 def cmd_draft_send(args) -> int:
-    """Send ONE exact engine draft through the engine's own lifecycle.
-
-    The Gmail copy created by ``draft-reply`` is only a review surface. An
-    ambient Gmail connector can send that copy, but cannot update the engine
-    row. This verb approves only ``send_draft`` for the exact supplied id.
-    Interactive sends verify Gmail Sent before retiring exact review mirrors.
-    Cleanup failure reports confirmed delivery without retrying it.
-    """
-    settings = config.load()
-    if getattr(args, "operator_request", False):
-        from .operator_send import execute
-        return execute(settings, args)
-    scheduled = _scheduled_workset_enabled()
-    if scheduled and (settings.cs_triage_mode.lower() != "send"
-                      or os.environ.get("CS_HEADLESS_SEND") != "1"):
-        print("Scheduled send HELD: send mode and launcher authority required", file=sys.stderr)
-        return 3
-    draft_id = (args.draft_id or "").strip()
-    drafts = _drafts_with_status(settings, "draft", args.timeout)
-    matches = [d for d in drafts if str(d.get("id") or "") == draft_id]
-    if len(matches) != 1:
-        print(
-            f"engine draft {draft_id!r} is not an exact, currently sendable "
-            "draft id; nothing was sent",
-            file=sys.stderr,
-        )
-        return 1
-
-    from copy import deepcopy
-    draft = deepcopy(matches[0])
-    from . import task_assignment
-    from .thread_key import thread_key
-    key = draft.get("thread_id") or thread_key(None, " ".join(draft.get("references") or []) if isinstance(draft.get("references"), list) else draft.get("references"), draft.get("in_reply_to"))
-    if scheduled and (not isinstance(draft.get("owner_id"), str)
-                      or not draft["owner_id"] or draft["owner_id"] != settings.email_address):
-        print("Scheduled send HELD: exact draft owner is unavailable or foreign", file=sys.stderr)
-        return 3
-    if not _scheduled_workset_scope(settings, root=key, effect=True):
-        return 3
-    if scheduled:
-        from .operator_workset import require_draft
-        try:
-            require_draft(settings, draft, key)
-        except Exception:
-            print("Scheduled send HELD: draft snapshot unavailable or changed", file=sys.stderr)
-            return 3
-    try:
-        task_assignment.guard(settings, key)
-    except task_assignment.AssignmentUnavailable as exc:
-        print(f"Send HELD: {exc}", file=sys.stderr)
-        return 3
-    recipients = ", ".join(draft.get("to_addresses") or []) or "(no recipient)"
-    subject = draft.get("subject") or ""
-    print(f"sending engine draft {draft_id}\nto: {recipients}\nsubject: {subject}")
-
-    send_approved = False
-
-    def exact_send(tool: str, tool_input: dict) -> bool:
-        nonlocal send_approved
-        matches = (
-            tool == "send_draft"
-            and str(tool_input.get("draft_id") or "") == draft_id
-        )
-        if not matches or send_approved:
-            return False
-        send_approved = True
-        return True
-
-    instruction = (
-        "Send the already-reviewed engine draft with the exact full draft_id "
-        f"{draft_id}. Call send_draft exactly once with draft_id={draft_id}. "
-        "Do not create, edit, select, or send any other draft."
-    )
-    try:
-        out = asyncio.run(
-            rpc.chat(
-                settings,
-                instruction,
-                allow_tools={"send_draft"},
-                timeout=args.timeout,
-                approval_predicate=exact_send,
-            )
-        )
-    except RuntimeError as exc:
-        print(f"Send HELD / UNKNOWN: {exc}", file=sys.stderr)
-        return 3
-    res = out["result"] or {}
-    rc = _chat_engine_error(res)
-    if rc is not None:
-        return rc
-
-    approvals = out.get("approvals") or []
-    matching = [
-        a for a in approvals
-        if a.get("tool") == "send_draft"
-        and a.get("mode") == "once"
-        and str((a.get("input") or {}).get("draft_id") or "") == draft_id
-    ]
-    other_approved = [
-        a for a in approvals if a.get("mode") == "once" and a not in matching
-    ]
-    if len(matching) != 1 or other_approved:
-        print(
-            "engine did not request exactly one send_draft approval for the "
-            f"named id; nothing was approved by this command",
-            file=sys.stderr,
-        )
-        return 1
-
-    sent = _drafts_with_status(settings, "sent", args.timeout)
-    if any(str(d.get("id") or "") == draft_id for d in sent):
-        from .observability_producers import emit as diagnostic_emit
-        diagnostic_emit(settings, 'provider', 'accepted', reason='none', effect_certainty='accepted', draft_id=draft_id, root_id=key)
-        print(f"sent and recorded by engine: {draft_id}")
-        if scheduled:
-            try:
-                retirement = _retire_sent_mirrors(
-                    settings, commit=True, timeout=args.timeout, only_ids={draft_id})
-            except Exception:
-                print("Send is recorded; Gmail mirror retirement unavailable. Do not retry sending.",
-                      file=sys.stderr)
-                return 5
-            if retirement.get("ok") is not True or retirement.get("failed"):
-                print("Send is recorded; Gmail mirror retirement incomplete. Do not retry sending.",
-                      file=sys.stderr)
-                return 5
-            print(f"[gmail-drafts] retired {len(retirement.get('retired', []))} exact sent mirror(s)")
-            if retirement.get("skipped"):
-                print("[gmail-drafts] changed or unverifiable sent mirror(s) remain for review",
-                      file=sys.stderr)
-        else:
-            from . import send_completion
-            try:
-                send_completion.complete(settings, draft, sent)
-            except Exception as exc:
-                detail = str(exc) if isinstance(exc, (ValueError, RuntimeError)) else type(exc).__name__
-                print(f"Delivered, but Gmail cleanup incomplete: {detail}. Do not retry sending.", file=sys.stderr)
-                return 5
-            print("[gmail-drafts] exact Sent verified; unchanged review mirror retired")
-        return 0
-
-    from .observability_producers import emit as diagnostic_emit
-    diagnostic_emit(settings, 'provider', 'unknown-effect', reason='unknown', draft_id=draft_id, root_id=key)
-    states = {}
-    for status in ("draft", "sending", "failed"):
-        for row in _drafts_with_status(settings, status, args.timeout):
-            if str(row.get("id") or "") == draft_id:
-                states[status] = row
-    state = next(iter(states), "absent")
-    print(
-        f"send approval ran, but engine draft {draft_id} is {state!r}, not "
-        "recorded as sent. Delivery is uncertain; check Gmail Sent and do not "
-        "retry blindly.",
-        file=sys.stderr,
-    )
-    return 5
-
-
-# ----------------------------------------------------------------- campaign
+    from .interactive_draft import named_action
+    return named_action(config.load(), args, "send")
 
 
 def cmd_campaign_list(args) -> int:
@@ -1806,365 +1613,17 @@ def cmd_ask(args) -> int:
     return 0
 
 
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _engine_stamp(value) -> datetime | None:
-    """An engine timestamp as tz-aware UTC. The engine serialises UTC without
-    an offset, so a naive value is read as UTC — the same convention as
-    `cs/_time.py` and `cs/draft_state.py`."""
-    if not value:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    except (TypeError, ValueError):
-        return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
-
-
-def _composed_key(draft: dict) -> str:
-    return draft.get("created_at") or draft.get("updated_at") or ""
-
-
-def _all_but_newest(drafts: list[dict]) -> list[dict]:
-    newest = max(drafts, key=_composed_key)
-    return [d for d in drafts if d is not newest]
-
-
-def _touched_since(drafts: list[dict], since: datetime) -> list[dict]:
-    """Drafts the engine wrote to at or after `since`.
-
-    The engine's `create_draft` is idempotent: composing the same mail twice
-    returns the EXISTING row and stamps its `updated_at`. That stamp is the
-    only signal an outside caller gets, because no new id appears — see the
-    module docstring of the engine's `rpc/draft_queries.py`.
-    """
-    out = []
-    for d in drafts:
-        stamp = _engine_stamp(d.get("updated_at"))
-        if stamp is not None and stamp >= since:
-            out.append(d)
-    return out
-
-
-def _exact_thread_source_message(settings, root, message, timeout):
-    from uuid import UUID
-
-    result = rpc.call_sync(settings, "emails.list_by_thread", {"thread_id": root}, timeout=timeout)
-    rows = result.get("emails") if isinstance(result, dict) else None
-    if not isinstance(rows, list) or not 1 <= len(rows) <= 100:
-        raise ValueError("Exact-thread source handles unavailable")
-    handles = []
-    for row in rows:
-        value = row.get("id") if isinstance(row, dict) else None
-        if not isinstance(value, str) or len(value) != 36 or str(UUID(value)) != value or value in handles:
-            raise ValueError("Exact-thread source handles invalid")
-        handles.append(value)
-    return (f"Source context for exact RFC thread {root}:\n"
-            + "\n".join(handles)
-            + "\nUse read_email with these email_id handles to read the source messages before composing. "
-            "These handles provide context only; retain the exact thread and all assignment/write guards.\n\n"
-            + message)
-
-
 def cmd_draft_reply(args) -> int:
-    # Like `chat` but with NO `--allow` option: allow_tools is hardcoded empty,
-    # so the engine denies send_draft whatever the message says. Structurally
-    # incapable of sending — this is the verb the headless operator may run.
-    #
-    # CRITICAL: the engine's compose step auto-runs create_draft (non-destructive,
-    # so it is NOT gated by allow_tools) and stores the draft in the ENGINE draft
-    # store — which is NOT the operator's Gmail Drafts, the surface where review
-    # and sending actually happen. Without mirroring, the draft is invisible in
-    # Gmail and the operator (rightly) concludes "nothing was drafted". So we diff
-    # the engine draft store around the compose call and APPEND the freshly composed
-    # draft into Gmail Drafts via IMAP (same mechanism as `campaign queue-draft`).
-    # Guarded by tests/test_draft_reply.py + the run.sh grep gate — do NOT remove
-    # the append_draft call: that reintroduces the "draft not in Gmail" regression.
+    from .interactive_draft import prepare
     settings = config.load()
-    from . import review_draft
-    if review_draft.interactive():
-        from . import interactive_draft
-        return interactive_draft.prepare(settings, args)
-    if getattr(args, "resume_draft", None) or getattr(args, "operation_id", None):
-        print("Draft HELD: exact resume requires interactive execution", file=sys.stderr)
+    if not _scheduled_workset_scope(settings, root=args.thread_id, effect=True):
         return 3
-    supervised = review_draft.interactive()
-    if not _scheduled_workset_scope(settings, root=getattr(args, "thread_id", None), effect=True):
-        return 3
-    from . import gmail_drafts
-
-    from . import task_assignment
-    try:
-        if not supervised:
-            task_assignment.guard(settings, getattr(args, "thread_id", None) or "")
-    except task_assignment.AssignmentUnavailable as exc:
-        print(f"Draft HELD: {exc}", file=sys.stderr)
-        return 3
-    if not getattr(args, "message", None):
-        print("Draft HELD: composition message required", file=sys.stderr)
-        return 3
-    message = args.message
-    if not getattr(args, "source_id", None):
-        try:
-            message = _exact_thread_source_message(settings, args.thread_id, message, args.timeout)
-        except Exception:
-            print("Draft HELD: exact-thread source context unavailable or invalid", file=sys.stderr)
-            return 3
-    turn_started = _utcnow()
-    before = {d.get("id") for d in
-              (rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or [])}
-    try:
-        review_options = {"supervised_review": True} if supervised else {}
-        out = asyncio.run(rpc.chat(settings, message, allow_tools=set(), timeout=args.timeout,
-                                   **review_options,
-                                   assignment_thread_key=args.thread_id,
-                                   email_context={"thread_key": args.thread_id, "source_email_id": args.source_id} if getattr(args, "source_id", None) else None))
-    except RuntimeError as exc:
-        print(f"Draft HELD / UNKNOWN: {exc}", file=sys.stderr)
-        return 3
-    res = out["result"] or {}
-    rc = _chat_engine_error(res)
-    if rc is not None:
-        # No new draft can exist for a turn the engine reports as failed — skip
-        # the drafts.list round trip and the "nothing to mirror" path below,
-        # which would otherwise print a second, misleading explanation over an
-        # engine outage already reported above.
-        return rc
-    text = res.get("response") or res.get("text") or res
-    if isinstance(text, (dict, list)):
-        _print_json(text)
-    else:
-        print(text)
-
-    after = rpc.call_sync(settings, "drafts.list", {}, timeout=args.timeout) or []
-    fresh = [d for d in after if d.get("id") not in before]
-    if supervised:
-        candidates = fresh or _touched_since(after, turn_started)
-        try:
-            draft = review_draft.select(settings, args.thread_id, candidates)
-            review_draft.mirror(settings, args.thread_id, draft)
-        except (RuntimeError, ValueError) as exc:
-            print(f"Draft review incomplete: {exc}", file=sys.stderr)
-            return 3
-        except Exception as exc:
-            print(f"Draft review persistence needs verification ({type(exc).__name__}); inspect existing engine/Gmail drafts before retrying.", file=sys.stderr)
-            return 3
-        print(f"Review draft prepared: {draft['id']}. Sending awaits human approval and verification.")
-        return 0
-    if not fresh:
-        # No NEW id. Two very different things look like this, and the engine
-        # distinguishes them through `updated_at`: composing the same mail
-        # twice returns the existing draft (and stamps it) instead of writing
-        # a duplicate, so an id that moved during this turn IS the reply that
-        # was asked for. It is NOT re-mirrored: the run that first composed it
-        # already appended it to Gmail Drafts, and a second append is the very
-        # duplicate this de-duplication exists to prevent.
-        reused = _touched_since(after, turn_started)
-        if reused:
-            if _scheduled_workset_enabled():
-                if len(reused) != 1:
-                    print("Draft HELD: scoped compose did not identify one exact draft", file=sys.stderr)
-                    return 3
-                from .operator_workset import remember_draft
-                try:
-                    remember_draft(settings, reused[0], args.thread_id)
-                except Exception:
-                    print("Draft HELD: scheduled draft snapshot unavailable or changed", file=sys.stderr)
-                    return 3
-                print(f"engine draft ready: {reused[0]['id']}")
-            print("\n[gmail-drafts] engine reused an existing draft "
-                  f"({', '.join(str(d.get('id')) for d in reused)}) — identical "
-                  "to one already composed, so nothing new was mirrored. "
-                  "Review it in Gmail Drafts, or edit the instruction to "
-                  "compose a different reply.", file=sys.stderr)
-            return 0
-        # Engine asked a clarifying question / escalated instead of composing.
-        print("\n[gmail-drafts] engine composed no new draft — nothing to mirror.",
-              file=sys.stderr)
-        return 0
-    if len(fresh) > 1:
-        if _scheduled_workset_enabled():
-            print("Draft HELD: scoped compose produced multiple drafts", file=sys.stderr)
-            return 3
-        # ONE turn, several new drafts: only the newest is mirrored, so the
-        # others would leave the engine store silently and never reach the
-        # surface the operator reviews on. Name them — an unmirrored draft the
-        # operator cannot see is exactly how duplicate replies accumulate.
-        print(f"\n[gmail-drafts] WARNING: the engine composed {len(fresh)} drafts "
-              f"in one turn; mirroring the newest only. Not mirrored: "
-              f"{', '.join(str(d.get('id')) for d in _all_but_newest(fresh))}. "
-              f"Retire the extras with `cs draft-delete`, or review them with "
-              f"`cs review`.", file=sys.stderr)
-    d = max(fresh, key=_composed_key)
-    to = ", ".join(d.get("to_addresses") or [])
-    if not to or not (d.get("body") or "").strip():
-        print("\n[gmail-drafts] ERROR: composed draft has no recipient/body; "
-              "NOT appended to Gmail Drafts.", file=sys.stderr)
-        return 1
-    # `body` is the engine's freshly composed reply — always model output —
-    # so body_md=True: send_guard's deterministic tells run and, on a hit,
-    # log a WARNING and come back here to print, never to block the append.
-    from .thread_key import thread_key
-    references = d.get("references")
-    if isinstance(references, list):
-        references = " ".join(str(value) for value in references)
-    actual_key = d.get("thread_id") or thread_key(None, references, d.get("in_reply_to"))
-    if actual_key != args.thread_id:
-        print("Draft HELD / UNKNOWN: composed draft belongs to another thread; Gmail mirror refused", file=sys.stderr)
-        return 3
-    try:
-        task_assignment.guard(settings, args.thread_id)
-    except task_assignment.AssignmentUnavailable as exc:
-        print(f"Draft HELD before Gmail mirror: {exc}", file=sys.stderr)
-        return 3
-    if _scheduled_workset_enabled() and (not settings.email_address
-                                       or d.get("owner_id") != settings.email_address):
-        print("Draft HELD: scheduled draft owner is unavailable or foreign", file=sys.stderr)
-        return 3
-    folder, guard_warnings = gmail_drafts.append_draft(
-        settings,
-        to=to,
-        subject=d.get("subject") or "",
-        body=d.get("body") or "",
-        in_reply_to=d.get("in_reply_to"),
-        references=d.get("references"),
-        cc=", ".join(d.get("cc_addresses") or []) or None,
-        body_md=True,
-        engine_draft_id=str(d.get("id") or ""),
-        engine_owner_uid=settings.engine_owner_uid,
-    )
-    print(f"\n[gmail-drafts] draft appended to Gmail Drafts ({folder}): "
-          f"{d.get('subject')} -> {to}")
-    if guard_warnings:
-        print(f"[gmail-drafts] send-guard tell(s) — review before sending: "
-              f"{'; '.join(guard_warnings)}")
-    if _scheduled_workset_enabled():
-        from .operator_workset import remember_draft
-        try:
-            remember_draft(settings, d, args.thread_id)
-        except Exception:
-            print("Draft HELD: scheduled draft snapshot unavailable or changed", file=sys.stderr)
-            return 3
-        print(f"engine draft ready: {d['id']}")
-    return 0
-
-
-def _retire_sent_mirrors(settings, *, commit: bool, timeout: int,
-                         only_ids: set[str] | None = None) -> dict:
-    """Trash the Gmail mirrors of engine drafts that have already been sent.
-
-    Sending happens on the ENGINE's copy of a draft; the Gmail mirror is a
-    review surface the send never touches, so each contextual reply leaves a
-    draft of a mail that is already out. The queue a human reads to decide
-    what still needs answering fills up with answered mail.
-
-    `only_ids` narrows it to the drafts one turn just sent — the same work,
-    done at the moment it becomes true, instead of waiting for a sweep.
-    """
-    from . import draft_state, gmail_drafts
-
-    sent = rpc.call_sync(settings, "drafts.list", {"status": "sent"},
-                         timeout=timeout) or []
-    if only_ids:
-        sent = [d for d in sent if str(d.get("id") or "") in only_ids]
-    if not sent:
-        return {"ok": True, "orphans": [], "retired": [], "skipped": []}
-    mirrors = gmail_drafts.list_drafts(settings)
-    rows = draft_state.sent_orphans(sent, mirrors, expected_owner_uid=settings.engine_owner_uid)
-    from email.message import EmailMessage
-    from .draft_identity import authored_message
-    by_engine = {str(d.get("id") or ""): d for d in sent}
-    by_gmail = {d["uid"]: d for d in mirrors}
-    for row in rows:
-        if not row["retire"]:
-            continue
-        mirror = by_gmail[row["gmail_uid"]]
-        original = by_engine[row["engine_id"]]
-        paired = draft_state._pair(
-            [draft_state._gmail_row(mirror), draft_state._engine_row(original)],
-            settings.engine_owner_uid,
-        )
-        if len(paired) != 1 or paired[0].get("identity_evidence") != "exact":
-            row["retire"] = False
-            row["reason"] = "mirror thread or recipient context conflicts — left for review"
-            continue
-        message = EmailMessage()
-        message.set_content(original.get("body") or "",
-                            subtype="html" if original.get("body_format") == "html" else "plain")
-        body, note = authored_message(message.as_bytes())
-        if (note or not body or mirror.get("body_note") or not mirror.get("body_complete")
-                or mirror.get("body") != body or not mirror.get("fingerprint")
-                or not mirror.get("uidvalidity")):
-            row["retire"] = False
-            row["reason"] = "current mirror text differs or cannot be verified — left for review"
-    retire = [r for r in rows if r["retire"]]
-    skipped = [r for r in rows if not r["retire"]]
-    done, failed = [], []
-    for row in retire:
-        mirror = by_gmail[row["gmail_uid"]]
-        try:
-            res = gmail_drafts.delete_draft(
-                settings, uid=row["gmail_uid"], commit=commit,
-                expected_engine_draft_id=row["engine_id"],
-                expected_owner_uid=settings.engine_owner_uid,
-                expected_uidvalidity=mirror["uidvalidity"],
-                expected_fingerprint=mirror["fingerprint"],
-            )
-        except Exception as exc:
-            res = {"ok": False, "outcome_uncertain": True,
-                   "error": f"mirror retirement outcome unavailable ({type(exc).__name__})"}
-        item = {"uid": row["gmail_uid"], "to": row["to"],
-                     "subject": row["subject"], "engine_id": row["engine_id"],
-                     "ok": res.get("ok") is True, "result": res}
-        (done if item["ok"] else failed).append(item)
-    return {"ok": not failed, "dry_run": not commit, "orphans": rows,
-            "retired": done if commit else [], "would_retire": [] if commit else done,
-            "skipped": skipped, "failed": failed}
+    return prepare(settings, args)
 
 
 def cmd_draft_delete(args) -> int:
-    # Take ONE bad draft out of the review queue. Destructive, so it follows the
-    # campaign verbs' contract exactly: dry-run unless --commit, and the result
-    # dict is printed verbatim (what matched, what would move where) rather than
-    # re-narrated. Exit 1 on a refusal so a script cannot read "nothing matched"
-    # as "deleted".
-    settings = config.load()
-    from . import gmail_drafts
-
-    if getattr(args, "sent", False):
-        # The backlog form: every mirror whose engine original is already sent.
-        # Same contract — dry-run unless --commit, result printed verbatim.
-        if args.uid or args.message_id:
-            print("--sent retires every already-sent mirror; it does not take "
-                  "a uid or a message-id", file=sys.stderr)
-            return 2
-        out = _retire_sent_mirrors(settings, commit=args.commit,
-                                   timeout=getattr(args, "timeout", 120) or 120)
-        _print_json(out)
-        return 0 if out.get("ok") else 1
-
-    out = gmail_drafts.delete_draft(
-        settings, uid=args.uid, message_id=args.message_id, commit=args.commit
-    )
-    _print_json(out)
-    return 0 if out.get("ok") else 5 if out.get("partial") else 1
-
-
-def cmd_draft_retire(args) -> int:
-    from . import draft_lifecycle
-
-    function = draft_lifecycle.retire_sent_mirror if args.sent_mirror else draft_lifecycle.retire
-    extra = ({"thread_id": args.thread_id, "operation_id": args.operation_id,
-              "gmail_folder": args.gmail_folder} if args.sent_mirror else {})
-    out = function(
-        config.load(), args.draft_id, args.gmail_uid, args.uidvalidity,
-        commit=args.commit, gmail_fingerprint=args.gmail_fingerprint,
-        engine_snapshot=args.engine_snapshot, timeout=args.timeout, **extra,
-    )
-    _print_json(out)
-    return 0 if out.get("ok") else 5 if out.get("partial") else 3
+    from .interactive_draft import named_action
+    return named_action(config.load(), args, "trash" if args.commit else "get")
 
 
 def cmd_catchup(args) -> int:
@@ -2792,13 +2251,12 @@ def main(argv=None) -> int:
 
     pds = sub.add_parser(
         "draft-send",
-        help="send ONE exact engine draft through the engine approval gate and "
-        "verify its sent state; interactive only",
+        help="send the current contents of a named mailbox draft and verify delivery in Sent",
     )
-    pds.add_argument("draft_id", help="full engine draft id from `cs review --json`")
+    pds.add_argument("draft_id", help="mailbox draft handle from cs review")
     pds.add_argument("--timeout", type=float, default=600)
     pds.add_argument("--operator-request", action="store_true")
-    pds.add_argument("--operation-id")
+    pds.add_argument("--operation-id", "--request-key", dest="operation_id")
     pds.add_argument("--json", action="store_true")
     pds.set_defaults(func=cmd_draft_send)
 
@@ -2811,66 +2269,25 @@ def main(argv=None) -> int:
     pas.add_argument("--timeout", type=float, default=600)
     pas.set_defaults(func=cmd_ask)
 
-    pdr = sub.add_parser(
-        "draft-reply",
-        help="compose a reply via the engine as a DRAFT only — never sends (no --allow). "
-        "The headless-safe reply path.",
-    )
-    pdr.add_argument("message", nargs="?")
-    pdr.add_argument("--thread-id", help="exact RFC thread identity required before composing")
-    pdr.add_argument("--source-id", help="exact original engine email id when known")
-    pdr.add_argument("--timeout", type=float, default=600)
-    # APPENDS the composed draft into the operator's own Gmail Drafts
-    pdr.add_argument("--resume-draft")
-    pdr.add_argument("--operation-id")
-    pdr.add_argument("--json", action="store_true")
-    pdr.set_defaults(func=cmd_draft_reply, reads_operator_mailbox=True)
+    for verb, mode, help_text in (
+        ("draft-reply", "draft", "prepare one threaded reply in the mailbox"),
+        ("reply-send", "send", "compose and send one reply directly under scheduled launcher authority"),
+    ):
+        parser = sub.add_parser(verb, help=help_text)
+        parser.add_argument("message", nargs="?")
+        parser.add_argument("--thread-id", help="required exact RFC thread identity")
+        parser.add_argument("--source-id", help="exact original engine email ID")
+        parser.add_argument("--timeout", type=float, default=600)
+        parser.add_argument("--operation-id", "--request-key", dest="operation_id")
+        parser.add_argument("--json", action="store_true")
+        parser.set_defaults(func=cmd_draft_reply, reply_mode=mode, reads_operator_mailbox=True)
 
-    pdd = sub.add_parser(
-        "draft-delete",
-        help="remove ONE named draft from Gmail Drafts — moved to Trash "
-        "(recoverable 30 days), never expunged; dry-run unless --commit",
-    )
-    pdd.add_argument(
-        "uid",
-        nargs="?",
-        help="IMAP UID of the draft, as printed by `review --json` (gmail_drafts[].uid)",
-    )
-    pdd.add_argument(
-        "--message-id",
-        help="Message-ID: a cross-check on the uid when both are given, and the "
-        "selector of last resort when it is given alone (drafts written by this "
-        "tool carry no Message-ID)",
-    )
-    pdd.add_argument(
-        "--sent",
-        action="store_true",
-        help="retire EVERY mirror whose engine original has already been sent "
-        "— the review queue's backlog of answered mail. Takes no uid.",
-    )
-    pdd.add_argument(
-        "--timeout", type=int, default=120,
-        help="seconds for the engine call --sent makes (default: 120)",
-    )
-    pdd.add_argument("--commit", action="store_true", help="apply (default: dry-run)")
-    # Writes the operator's own Gmail over IMAP — --account cannot redirect it.
-    pdd.set_defaults(func=cmd_draft_delete, reads_operator_mailbox=True)
-
-    prt = sub.add_parser(
-        "draft-retire", help="preview retirement of ONE exact Gmail/engine draft pair; interactive only",
-    )
-    prt.add_argument("draft_id", help="full engine draft ID")
-    prt.add_argument("--gmail-uid", required=True, help="exact Gmail Drafts UID")
-    prt.add_argument("--uidvalidity", required=True, help="Gmail Drafts UIDVALIDITY from review JSON")
-    prt.add_argument("--gmail-fingerprint", help="complete Gmail message fingerprint from preview")
-    prt.add_argument("--engine-snapshot", help="engine snapshot from preview")
-    prt.add_argument("--commit", action="store_true", help="apply only the unchanged preview snapshots")
-    prt.add_argument("--sent-mirror", action="store_true", help="recover only a verified-sent residual copy; retain engine row")
-    prt.add_argument("--thread-id", help="exact thread root for sent-mirror recovery")
-    prt.add_argument("--operation-id", help="stable operation ID from sent-mirror preview")
-    prt.add_argument("--gmail-folder", help="exact Drafts folder from sent-mirror preview")
-    prt.add_argument("--timeout", type=float, default=120)
-    prt.set_defaults(func=cmd_draft_retire, reads_operator_mailbox=True)
+    pdd = sub.add_parser("draft-delete", help="preview or move one named mailbox draft to Trash")
+    pdd.add_argument("draft_id", help="mailbox draft handle from cs review")
+    pdd.add_argument("--timeout", type=float, default=120)
+    pdd.add_argument("--operation-id", "--request-key", dest="operation_id")
+    pdd.add_argument("--commit", action="store_true", help="move the named draft to Trash")
+    pdd.set_defaults(func=cmd_draft_delete)
 
     prv = sub.add_parser(
         "review",

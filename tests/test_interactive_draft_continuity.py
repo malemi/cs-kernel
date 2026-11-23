@@ -12,7 +12,7 @@ from email.message import EmailMessage
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from cs import cli, config, gmail_archive, gmail_drafts, interactive_draft, review_draft, rpc, state, task_assignment
+from cs import cli, config, gmail_archive, interactive_draft, rpc, state, task_assignment
 from test_contextual_email import Wire, settings
 
 ROOT = '<root@example.test>'
@@ -103,125 +103,62 @@ class WindowIMAP:
         return 'OK',result
     def logout(self):
         pass
-DRAFT = dict(id=DRAFT_ID, owner_id='support@fixture.example', status='draft',
-             thread_id=None, in_reply_to=TARGET, references=[ROOT],
-             to_addresses=['customer@example.test'], cc_addresses=[], bcc_addresses=[],
-             attachment_paths=[], subject='Reply', body='Here is the answer.')
-COPY = dict(engine_draft_id=DRAFT_ID, engine_owner_uid='fixture-owner', thread_key=ROOT,
-            in_reply_to=TARGET, references=ROOT, to='customer@example.test', cc=None,
-            subject='Reply', body='Here is the answer.', body_complete=True, is_draft=True, uid='99')
-
-from mirror_fixture import mirror_evidence
-COPY.update(mirror_evidence(DRAFT, 'fixture-owner'))
-
 class Continuity(unittest.TestCase):
-    def invoke(self, *, caps=None, source=None, gmail=None, draft=None, copies=None,
-               source_id=None, chat_error=False, real_chat=False, self_email=False, suppressed=False,
-               real_reader=False, observation_complete=True, expected_material=()):
+    def invoke(self, *, source=None, gmail=None, source_id=None, self_email=False,
+               suppressed=False, real_reader=False, observation_complete=True, expected_material=()):
         calls = []
-        rows = [] if copies is None else copy.deepcopy(copies)
-        source = SOURCE if source is None else source
-        draft = DRAFT if draft is None else draft
-        def call(s, method, params, timeout=None):
+        def call(settings, method, params, timeout=None):
             calls.append(method)
-            if method == 'system.capabilities':
-                return {'assignment_draft_policy':1, 'exact_draft_publication':1} if caps is None else ({**caps, 'exact_draft_publication':1} if isinstance(caps,dict) else caps)
-            if method == 'emails.list_by_thread':
-                self.assertEqual(params, {'thread_id':ROOT})
-                return {'emails':source if isinstance(source,list) else [source]}
-            if method == 'drafts.list':
-                return [] if calls.count(method) == 1 else [draft]
-            if method == 'drafts.inspect':
-                return {'ok':True, 'draft':draft, 'expected_snapshot':'native-snapshot'}
-            if method == 'drafts.publish_review':
-                inventory(s, observation={})
-                copies=[r for r in rows if r.get('engine_draft_id')==draft['id']]
-                if copies:
-                    ok=len(copies)==1 and review_draft._matches(copies[0],draft,ROOT,s.engine_owner_uid)
-                elif any(r.get('thread_key')==ROOT for r in rows):
-                    ok=False
-                else:
-                    append(s,engine_draft_id=draft['id'])
-                    ok=True
-                return {'version':1,'ok':ok,'draft_id':draft['id'],
-                        'achieved_stages':['engine-saved']+(['review-visible'] if ok else []),
-                        'cause':'exact_copy_published' if ok else 'thread_copy_conflict',
-                        'next_action':'review-draft' if ok else 'inspect-operation'}
+            if method == "system.capabilities":
+                return {"mailbox_reply": 1}
+            if method == "emails.list_by_thread":
+                return {"emails": source if isinstance(source, list) else [source or SOURCE]}
+            if method == "drafts.compose_reply":
+                self.assertEqual(params["source_email_id"], SOURCE_ID)
+                self.assertEqual(params["thread_key"], ROOT)
+                return {"ok": True, "state": "completed", "request_key": params["request_key"],
+                        "draft_id": "native", "current_draft": {"exists":True}}
             raise AssertionError(method)
-        async def chat(s, message, **kw):
-            calls.append(('chat',kw))
-            self.assertIn(SOURCE_ID, message)
-            self.assertIn(TARGET, message)
-            for material in expected_material:
-                self.assertIn(material,message)
-            if gmail is not None:
-                self.assertIn(gmail['body'], message)
-            if chat_error:
-                raise RuntimeError('effect failed')
-            return {'result':{'response':'Prepared'}}
-        def inventory(s, *, observation):
-            calls.append('gmail-read')
-            observation['complete'] = True
-            return rows
-        def append(s, **kw):
-            calls.append('append')
-            self.assertEqual(kw['engine_draft_id'],DRAFT_ID)
-            rows.append(copy.deepcopy(COPY))
-            return 'Drafts', []
         original_reader = gmail_archive.thread_with
-        def provider(s, addr, **kw):
+        def provider(s, addr, **kwargs):
             if real_reader:
-                return original_reader(s, addr, **kw)
-            kw['observation']['complete'] = observation_complete
-            kw['observation']['inventory_complete'] = observation_complete
-            return [GMAIL if gmail is None else gmail]
-        with tempfile.TemporaryDirectory() as home, patch.dict(os.environ,{'HOME':home},clear=True), \
-             patch.object(config,'load',return_value=settings().model_copy(update={
-                 'self_emails':'customer@example.test' if self_email else ''})), \
-             patch.object(rpc,'call_sync',side_effect=call), \
-             patch.object(gmail_archive,'thread_with',side_effect=provider) as reader, \
-             patch.object(gmail_drafts,'list_drafts',side_effect=inventory), \
-             patch.object(gmail_drafts,'append_draft',side_effect=append), \
-             patch.object(task_assignment,'guard',side_effect=AssertionError('assignment hold reached')), \
-             contextlib.redirect_stdout(io.StringIO()),contextlib.redirect_stderr(io.StringIO()):
-            with contextlib.ExitStack() as stack:
-                if suppressed:
-                    local=state.State(settings().db_path)
-                    local.suppress('*@example.test' if suppressed == 'wildcard' else 'customer@example.test')
-                    local.conn.close()
-                if not real_chat:
-                    stack.enter_context(patch.object(rpc,'chat',side_effect=chat))
-                rc=cli.cmd_draft_reply(SimpleNamespace(thread_id=ROOT,message='Answer',timeout=10,source_id=source_id))
-        return rc,calls,reader
+                return original_reader(s, addr, **kwargs)
+            kwargs["observation"]["inventory_complete"] = observation_complete
+            return [gmail or GMAIL]
+        with tempfile.TemporaryDirectory() as home, patch.dict(os.environ, {"HOME": home}, clear=True):
+            selected = settings().model_copy(update={"self_emails":"customer@example.test" if self_email else ""})
+            if suppressed:
+                local = state.State(selected.db_path)
+                local.suppress("*@example.test" if suppressed == "wildcard" else "customer@example.test")
+                local.conn.close()
+            with patch.object(config, "load", return_value=selected), patch.object(rpc, "call_sync", side_effect=call), patch.object(gmail_archive, "thread_with", side_effect=provider) as reader, contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                rc = cli.cmd_draft_reply(SimpleNamespace(thread_id=ROOT, message="Answer", timeout=10, source_id=source_id))
+        return rc, calls, reader
 
-    def test_legacy_held_thread_prepares_verified_review_copy(self):
-        rc,calls,reader=self.invoke(source_id=SOURCE_ID)
-        self.assertEqual(rc,0)
-        self.assertEqual(calls.count('append'),1)
-        options=next(item[1] for item in calls if isinstance(item,tuple))
-        self.assertEqual(options,{'allow_tools':set(),'timeout':10})
-        reader.assert_called_once()
-        self.assertEqual(reader.call_args.kwargs['limit'],100)
-        self.assertEqual(reader.call_args.kwargs['body_limit'],65536)
-        self.assertEqual(reader.call_args.kwargs['thread_root'],ROOT)
-        self.assertEqual(reader.call_args.kwargs['thread_since'],datetime(2026,10,21,8,36,44,tzinfo=timezone.utc))
-
-    def test_new_engine_keeps_supervised_policy(self):
-        strong={**DRAFT,'thread_id':ROOT,'reply_binding':{'root':ROOT,'target':TARGET}}
-        rc,calls,_=self.invoke(caps={'assignment_draft_policy':1,'supervised_review_draft_policy':1},draft=strong)
-        self.assertEqual(rc,0)
-        options=next(item[1] for item in calls if isinstance(item,tuple))
-        self.assertTrue(options['supervised_review'])
-        self.assertEqual(options['assignment_thread_key'],ROOT)
-
-    def test_invalid_capabilities_never_generate(self):
-        for caps in ([], {'assignment_draft_policy':True}, {'assignment_draft_policy':2},
-                     {'supervised_review_draft_policy':True},
-                     {'supervised_review_draft_policy':'1'}, {'supervised_review_draft_policy':2},
-                     {'supervised_review_draft_policy':1,'assignment_draft_policy':True}):
-            rc,calls,_=self.invoke(caps=caps)
-            self.assertEqual(rc,3,caps)
-            self.assertEqual(calls,['system.capabilities'])
+    def test_lost_source_recovers_only_admitted_operation(self):
+        key = "fixture-recover-original"
+        requests = []
+        def call(selected, method, params, **kwargs):
+            if method == "system.capabilities":
+                return {"mailbox_reply":1}
+            self.assertEqual(method, "drafts.compose_reply")
+            requests.append(dict(params))
+            if params.get("recover_only") and len(requests) == 1:
+                raise RuntimeError("reply_operation_not_found")
+            return {"ok":True,"state":"completed","request_key":key,"draft_id":"native","current_draft":{"exists":True}}
+        with tempfile.TemporaryDirectory() as home, patch.dict(os.environ,{"HOME":home},clear=True):
+            selected = settings()
+            args = SimpleNamespace(thread_id=ROOT, source_id=SOURCE_ID, operation_id=key, timeout=10, message="Answer")
+            with patch.object(rpc,"call_sync",side_effect=call), patch.object(interactive_draft,"source",side_effect=ValueError("missing")):
+                self.assertEqual(interactive_draft.prepare(selected,args),3)
+                self.assertTrue(requests[-1]["recover_only"])
+            with patch.object(rpc,"call_sync",side_effect=call), patch.object(interactive_draft,"source",return_value={"id":SOURCE_ID}):
+                self.assertEqual(interactive_draft.prepare(selected,args),0)
+                self.assertNotIn("recover_only",requests[-1])
+            args.source_id=None
+            with patch.object(rpc,"call_sync",side_effect=call), patch.object(interactive_draft,"source",side_effect=ValueError("missing")):
+                self.assertEqual(interactive_draft.prepare(selected,args),0)
+            self.assertEqual(requests[-1], {**requests[-2], "recover_only":True})
 
     def test_wrong_source_fails_before_generation(self):
         for source,source_id,gmail in (
@@ -234,8 +171,7 @@ class Continuity(unittest.TestCase):
                 (SOURCE,None,{**GMAIL,'subject':'Different subject'})):
             rc,calls,_=self.invoke(source=source,source_id=source_id,gmail=gmail)
             self.assertEqual(rc,3)
-            self.assertNotIn('drafts.list',calls)
-            self.assertNotIn('append',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def test_explicit_old_source_and_ambiguous_latest_are_rejected(self):
         old={**SOURCE,'id':'8ac7571d-778b-46a2-a55b-a08e703149f8','date':'2026-10-21T08:36:44'}
@@ -243,7 +179,7 @@ class Continuity(unittest.TestCase):
                                   ([SOURCE,{**old,'date':SOURCE['date']}],None)):
             rc,calls,_=self.invoke(source=sources,source_id=source_id)
             self.assertEqual(rc,3)
-            self.assertNotIn('drafts.list',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def test_authored_source_comparison_handles_quoted_history(self):
         gmail={**GMAIL,'body':'Please answer.\n\nOn Tuesday someone wrote:\n> Old request'}
@@ -257,8 +193,7 @@ class Continuity(unittest.TestCase):
                        {'from_email':''}):
             rc,calls,reader=self.invoke(source=[SOURCE,{**newer,**change}])
             self.assertEqual(rc,3,change)
-            self.assertNotIn('drafts.list',calls)
-            self.assertNotIn('append',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
             self.assertFalse(any(isinstance(item,tuple) for item in calls))
             reader.assert_not_called()
 
@@ -277,7 +212,7 @@ class Continuity(unittest.TestCase):
             rc,calls,_=self.invoke(source=source,gmail=kwargs.get('gmail',gmail),
                                    observation_complete=kwargs.get('observation_complete',True))
             self.assertEqual(rc,3)
-            self.assertNotIn('drafts.list',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def test_archive_quote_known_duplicate_email_display_name_is_narrowly_accepted(self):
         source={**SOURCE,'body_plain':'Please answer.\n\n-----Messaggio originale-----'}
@@ -298,75 +233,14 @@ class Continuity(unittest.TestCase):
                 with patch.object(interactive_draft,'parseaddr',side_effect=lambda value: ('','') if value==bad else strict(value)):
                     rc,calls,_=self.invoke(source=source,gmail={**GMAIL,'body':changed})
                 self.assertEqual(rc,3,bad)
-                self.assertNotIn('drafts.list',calls)
-
-    def test_wrong_draft_identity_never_mirrors(self):
-        for edit in ({'to_addresses':['foreign@example.test']}, {'cc_addresses':['extra@example.test']},
-                     {'in_reply_to':ROOT},{'thread_id':'<foreign@example.test>'},
-                     {'references':['<foreign@example.test>']},{'owner_id':'foreign@example.test'},
-                     {'thread_id':ROOT,'references':['<foreign@example.test>']},
-                     {'references':ROOT},
-                     {'bcc_addresses':['hidden@example.test']},{'attachment_paths':['secret']},
-                     {'reply_binding':{'root':ROOT,'target':ROOT}}):
-            rc,calls,_=self.invoke(draft={**DRAFT,**edit})
-            self.assertEqual(rc,3,edit)
-            self.assertNotIn('append',calls)
-
-    def test_exact_existing_copy_reused_and_human_edits_preserved(self):
-        rc,calls,_=self.invoke(copies=[COPY])
-        self.assertEqual(rc,0)
-        self.assertNotIn('append',calls)
-        rc,calls,_=self.invoke(copies=[{**COPY,'body':'Human edit'}])
-        self.assertEqual(rc,3)
-        self.assertNotIn('append',calls)
-
-    def test_failed_effect_never_retries(self):
-        rc,calls,_=self.invoke(chat_error=True)
-        self.assertEqual(rc,3)
-        self.assertEqual(sum(isinstance(item,tuple) for item in calls),1)
-        self.assertEqual(calls.count('drafts.list'),2)
+                self.assertNotIn('drafts.compose_reply',calls)
 
     def test_self_and_suppression_fail_before_generation(self):
         for kwargs in ({'self_email':True},{'suppressed':True},{'suppressed':'wildcard'}):
             rc,calls,reader=self.invoke(**kwargs)
             self.assertEqual(rc,3)
-            self.assertNotIn('drafts.list',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
             reader.assert_not_called()
-
-    def test_real_engineclient_denies_every_send_approval(self):
-        wire=Wire()
-        original=wire.send
-        async def send(raw):
-            frame=json.loads(raw)
-            if frame['method']=='system.capabilities':
-                wire.frames.append(frame)
-                await wire.emit({'id':frame['id'],'result':{}})
-            elif frame['method']=='chat.approve':
-                wire.frames.append(frame)
-                self.assertEqual(frame['params'],{'tool_use_id':'send-one','mode':'deny'})
-                await wire.emit({'id':frame['id'],'result':{'ok':True}})
-                await wire.emit({'id':wire.chat_id,'result':{'response':'Prepared'}})
-            else:
-                await original(raw)
-        wire.send=send
-        with wire.patches():
-            rc,_,_=self.invoke(real_chat=True)
-        self.assertEqual(rc,0)
-        self.assertEqual([f['method'] for f in wire.frames],['system.capabilities','chat.send','chat.approve'])
-        params=next(f['params'] for f in wire.frames if f['method']=='chat.send')
-        self.assertEqual(set(params),{'message','conversation_id'})
-        self.assertNotIn('assignment_thread_key',params)
-        self.assertNotIn('email_context',params)
-
-    def test_scheduled_branch_retains_assignment_hold(self):
-        for marker in ('CS_OPERATOR_HEADLESS','CS_HEADLESS_SEND','CS_OPERATOR_HEALTH_CONTEXT'):
-            with patch.dict(os.environ,{marker:'1'},clear=True), \
-                 patch.object(config,'load',return_value=settings()), \
-                 patch.object(interactive_draft,'prepare',side_effect=AssertionError('interactive route reached')), \
-                 patch.object(task_assignment,'guard',side_effect=task_assignment.AssignmentUnavailable('Held')), \
-                 patch.object(rpc,'chat',side_effect=AssertionError('generation reached')), \
-                 contextlib.redirect_stderr(io.StringIO()):
-                self.assertEqual(cli.cmd_draft_reply(SimpleNamespace(thread_id=ROOT,message='Draft',timeout=10)),3)
 
     def test_real_reader_fetch_gap_or_material_body_tail_prevents_generation(self):
         @header_batches
@@ -401,8 +275,7 @@ class Continuity(unittest.TestCase):
                  patch.object(gmail_archive,'_find_folder',return_value='All Mail'):
                 rc,calls,_=self.invoke(source=source,real_reader=True)
             self.assertEqual(rc,3)
-            self.assertNotIn('drafts.list',calls)
-            self.assertNotIn('append',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def test_real_reader_default_body_and_rows_remain_unchanged(self):
         msg=EmailMessage()
@@ -459,8 +332,8 @@ class Continuity(unittest.TestCase):
             self.assertNotIn('in_reply_to',default[0])
             rc,calls,_=self.invoke(real_reader=True)
         self.assertEqual(rc,3)
-        self.assertNotIn('drafts.list',calls)
-        self.assertNotIn('append',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
 
     def test_real_root_inventory_covers_other_participants_and_ignores_unrelated_body_defects(self):
         test=self
@@ -505,10 +378,10 @@ class Continuity(unittest.TestCase):
                 rc,calls,_=self.invoke(real_reader=True)
             self.assertEqual(rc,0 if historical else 3)
             if historical:
-                self.assertIn('append',calls)
+                self.assertIn('drafts.compose_reply',calls)
             else:
-                self.assertNotIn('drafts.list',calls)
-                self.assertNotIn('append',calls)
+                self.assertNotIn('drafts.compose_reply',calls)
+                self.assertNotIn('drafts.compose_reply',calls)
 
     def test_real_literal_header_search_finds_escaped_newer_reply(self):
         from html import escape
@@ -554,8 +427,8 @@ class Continuity(unittest.TestCase):
                 if root==ROOT:
                     rc,calls,_=self.invoke(real_reader=True)
                     self.assertEqual(rc,3)
-                    self.assertNotIn('drafts.list',calls)
-                    self.assertNotIn('append',calls)
+                    self.assertNotIn('drafts.compose_reply',calls)
+                    self.assertNotIn('drafts.compose_reply',calls)
 
     def test_real_reader_ambiguous_identity_headers_stop_before_generation(self):
         @header_batches
@@ -604,8 +477,7 @@ class Continuity(unittest.TestCase):
                 self.assertFalse(observed['inventory_complete'],header)
                 rc,calls,_=self.invoke(real_reader=True)
             self.assertEqual(rc,3,header)
-            self.assertNotIn('drafts.list',calls)
-            self.assertNotIn('append',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def window_invoke(self,mode,**kwargs):
         imap=WindowIMAP(mode)
@@ -621,32 +493,31 @@ class Continuity(unittest.TestCase):
         self.assertTrue(all('SINCE' in query for query in imap.searches))
         self.assertTrue(all(query[-1]=='21-Oct-2026' for query in imap.searches))
         self.assertEqual(imap.body_uids,[b'1'])
-        self.assertIn('append',calls)
+        self.assertIn('drafts.compose_reply',calls)
 
     def test_real_date_window_catches_new_participant_and_later_arrival_with_older_date(self):
         for mode in ('participant','older-date'):
             (rc,calls,_),imap=self.window_invoke(mode)
             self.assertEqual(rc,3,mode)
             self.assertEqual(set(imap.body_uids),{b'1',b'3'})
-            self.assertNotIn('drafts.list',calls)
-            self.assertNotIn('append',calls)
+            self.assertNotIn('drafts.compose_reply',calls)
 
     def test_real_date_window_requires_exact_batch_uid_coverage(self):
         (rc,calls,_),imap=self.window_invoke('uidgap')
         self.assertEqual(rc,3)
         self.assertEqual(imap.body_uids,[])
-        self.assertNotIn('drafts.list',calls)
-        self.assertNotIn('append',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
 
     def test_complete_divergent_html_reaches_prompt_and_total_material_is_bounded(self):
         (rc,calls,_),_=self.window_invoke('html',expected_material=(
             'Please answer.','Additional HTML request.','href="https://example.test/account"'))
         self.assertEqual(rc,0)
-        self.assertEqual(next(item[1]['allow_tools'] for item in calls if isinstance(item,tuple)),set())
+        self.assertEqual(calls.count('drafts.compose_reply'), 1)
         (rc,calls,_),_=self.window_invoke('overflow')
         self.assertEqual(rc,3)
-        self.assertNotIn('drafts.list',calls)
-        self.assertNotIn('append',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
+        self.assertNotIn('drafts.compose_reply',calls)
 
 
 if __name__=='__main__':

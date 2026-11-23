@@ -99,9 +99,9 @@ def observe(stage, *, success='result', effect='unknown', identities=()):
                     return function(*args, **kwargs)
             settings, metadata = None, {}
             if stage == 'cli' and selected:
-                known = {'init','update','login','plan','whoami','rpc','thread','contacted','history','unanswered','tasks','handled','escalated','business','dossier','chat','draft-send','ask','draft-reply','draft-delete','draft-retire','review','catchup','drive','accounts','config','memory','campaign','llm','project','instructions','cron','assignment','connection','stripe','verify-install'}
+                known = {'init','update','login','plan','whoami','rpc','thread','contacted','history','unanswered','tasks','handled','escalated','business','dossier','chat','draft-send','reply-send','ask','draft-reply','draft-delete','draft-retire','review','catchup','drive','accounts','config','memory','campaign','llm','project','instructions','cron','assignment','connection','stripe','verify-install'}
                 metadata['command'] = selected[0] if selected[0] in known else 'unknown'
-                if selected[0] in {'draft-send','draft-retire'} and len(selected)>1:
+                if selected[0] in {'draft-send','draft-delete'} and len(selected)>1:
                     metadata['draft_id'] = selected[1]
                 if '--thread-id' in selected:
                     index = selected.index('--thread-id')
@@ -147,13 +147,6 @@ def observe(stage, *, success='result', effect='unknown', identities=()):
                 try:
                     result = function(*args, **kwargs)
                 except BaseException as exc:
-                    if function.__name__ == "mirror" and stage == "verification":
-                        from .observability_operations import record, summary
-                        record(settings, {"cause": "unknown", "ok": False, "draft_id": metadata.get("draft_id"), "operation_id": bound.get("operation_id"), "effect_certainty": "unknown", "achieved_stages": ["engine-saved"]}, command="draft-reply", root=metadata.get("root_id"))
-                        if summary():
-                            metadata.update(summary()["metadata"])
-                            metadata["causal"] = causal.selected()
-                            metadata["effect_certainty"] = summary()["effect_certainty"]
                     if isinstance(exc, SystemExit) and exc.code in (None, 0):
                         emit(settings, stage, 'result', reason='none', exit_code=0, **metadata)
                     else:

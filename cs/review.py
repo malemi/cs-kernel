@@ -6,9 +6,8 @@ Read-only aggregation, run when you open a session (`cs review`):
     which mean the draft has to be re-decided before it is sent — `duplicate`
     because the customer already has that exact text, the other three because
     the conversation moved on.
-    Both stores are reconciled into one list, so the two copies of a mirrored
-    draft are one row carrying both handles;
-  - the same drafts as the two RAW store listings (the queue you review + send);
+    Every review row identifies the current native mailbox draft. The raw
+    engine listing and the verdicts describe the same handles;
   - open ENGINE TASKS needing a human answer (triage escalations live here);
   - contacts a HUMAN HAS TAKEN OVER (`cs escalated`) — still open, still owed
     an answer, but yours: shown with the age of the takeover, so the answer to
@@ -18,8 +17,7 @@ Read-only aggregation, run when you open a session (`cs review`):
   - per-CAMPAIGN state + contacts flagged escalated / engaged / declined;
   - the last cron tick from the log.
 
-The headless operator only ever DRAFTS (draft-only by permission); THIS is
-where you review and authorise. Mutates nothing.
+Review does not mutate mailbox drafts, assignments or campaign records.
 """
 from __future__ import annotations
 
@@ -39,7 +37,7 @@ import time
 from contextlib import contextmanager
 from typing import Optional
 
-from . import _time, campaign, draft_state, engine_view, gmail_drafts, rpc
+from . import _time, campaign, draft_state, engine_view, rpc
 
 # Two calls inside `gather()` are excluded, on purpose, from the 90s wall M3
 # owns (see `docs/execution-plans/2026-09-07-review-latency.md` § Verification
@@ -297,64 +295,31 @@ def _aggregate(settings, *, deadline=None, owned_process_group=None, checkpoint=
 
 def _gather(settings, out, deadline, owned_process_group) -> dict:
 
-    # 1a. Gmail Drafts — cs-SMTP outreach queued via `campaign queue-draft`
-    #     (IMAP review surface; you review + send these). Each row carries its
-    #     `uid` — the handle `draft-delete` takes to remove a bad one.
-    with _stage("Gmail draft listing"):
+    with _stage("mailbox drafts.list"):
         try:
-            out["gmail_drafts_observation"] = {}
-            out["gmail_drafts"] = gmail_drafts.list_drafts(settings, observation=out["gmail_drafts_observation"])
-            _record_roots(out, [root for row in out["gmail_drafts"]
-                if (root := draft_state._gmail_row(row)["thread_key"])], "gmail_draft")
-        except Exception as e:  # noqa: BLE001 — a mailbox hiccup must not kill the digest
-            out["gmail_drafts"] = []
-            out["gmail_drafts_error"] = f"{type(e).__name__}: {e}"
-
-    # 1b. Engine drafts — reply/compose drafts the engine composed (memory +
-    #     trained voice + threading) via the chat `create_draft` tool, stored
-    #     in the engine DB. Exposed by the read-only `drafts.list` RPC.
-    with _stage("engine drafts.list"):
-        try:
-            res = rpc.call_sync(settings, "drafts.list", {}, timeout=_remaining(60))
-            # campaign.list/tasks.list return bare arrays; handle a wrapper too.
-            if isinstance(res, list):
-                drafts = res
-            elif isinstance(res, dict) and set(res) == {"drafts"} and isinstance(res["drafts"], list):
-                drafts = res["drafts"]
-            else:
-                raise ValueError("drafts.list inventory shape is incomplete or unknown")
-            if any(not isinstance(row, dict) for row in drafts):
-                raise ValueError("drafts.list contains malformed rows")
-            out["engine_drafts"] = drafts
+            drafts = rpc.call_sync(settings, "drafts.list", {}, timeout=_remaining(60))
+            if not isinstance(drafts, list) or any(not isinstance(row, dict)
+                    or row.get("owner_id") != settings.email_address or row.get("status") != "draft"
+                    or not row.get("id") or not row.get("mailbox_id") for row in drafts):
+                raise ValueError("mailbox draft inventory contains incomplete or foreign rows")
+            out["mailbox_drafts"] = drafts
             _record_roots(out, [root for row in drafts
-                if (root := draft_state._engine_row(row)["thread_key"])], "engine_draft")
-        except Exception as e:  # noqa: BLE001
-            out["engine_drafts"] = []
-            out["engine_drafts_error"] = f"{type(e).__name__}: {e}"
+                if (root := draft_state.mailbox_row(row)["thread_key"])], "mailbox_draft")
+        except Exception as exc:
+            out["mailbox_drafts"] = []
+            out["drafts_error"] = f"{type(exc).__name__}: {exc}"
 
-    # 1c. The two stores reconciled into ONE list, every row carrying a verdict
-    #     computed from Gmail (and, when the engine answers, its reading of the
-    #     conversation). This is what makes the digest say "this draft answers a
-    #     question the customer has already withdrawn" instead of listing it as
-    #     ready. Never raises: a mailbox hiccup is a note, and the raw listings
-    #     above are still there.
     with _stage("draft reconcile"):
         try:
-            rows, notes = draft_state.reconcile(
-                settings, out["gmail_drafts"], out["engine_drafts"],
-                settled=_settled_with_timeout,
-            )
-            out["drafts"] = rows
-            out["drafts_notes"] = notes
-        except Exception as e:  # noqa: BLE001
+            out["drafts"], out["drafts_notes"] = draft_state.reconcile(
+                settings, out["mailbox_drafts"], settled=_settled_with_timeout)
+        except Exception as exc:
             out["drafts"] = []
-            out["drafts_notes"] = [f"{type(e).__name__}: {e}"]
+            out["drafts_notes"] = [f"{type(exc).__name__}: {exc}"]
             out["drafts_reconcile_error"] = True
 
-    out["drafts_inventory"] = draft_state.inventory_proof(
-        out["gmail_drafts"], out["engine_drafts"], out["drafts"],
-        out.get("gmail_drafts_observation"))
-    if out.get("gmail_drafts_error") or out.get("engine_drafts_error") or out.get("drafts_reconcile_error"):
+    out["drafts_inventory"] = draft_state.inventory_proof(out["mailbox_drafts"], out["drafts"])
+    if out.get("drafts_error") or out.get("drafts_reconcile_error"):
         out["drafts_inventory"]["complete"] = False
 
     # 2. Open engine tasks (triage escalations + general inbound needing a human)
@@ -503,19 +468,7 @@ def _gather(settings, out, deadline, owned_process_group) -> dict:
 
 
 def _handles(row: dict) -> str:
-    """Both handles of one logical draft, in the form the operator retires it
-    by. A row with two copies needs both; a count needs neither, which is why
-    neither is ever collapsed into one."""
-    parts = []
-    if row.get("gmail_uid"):
-        parts.append(f"uid {row['gmail_uid']}")
-    if row.get("engine_id"):
-        parts.append(f"engine {row['engine_id']}")
-    if row.get("identity_evidence"):
-        parts.append(row["identity_evidence"])
-    if row.get("identity_conflict"):
-        parts.append("identity conflict")
-    return ", ".join(parts) or "no handle"
+    return row.get("draft_id") or "handle unavailable"
 
 
 def render(d: dict) -> str:
@@ -548,12 +501,8 @@ def render(d: dict) -> str:
                  f"{'  (' + r['signal_at'] + ')' if r.get('signal_at') else ''}")
     for note in d.get("drafts_notes") or []:
         L.append(f"  ! {note}")
-    L.append(f"  (stores: {len(d.get('gmail_drafts', []))} in Gmail Drafts, "
-             f"{len(d.get('engine_drafts', []))} in the engine)")
-    if d.get("gmail_drafts_error"):
-        L.append(f"  ! reading Gmail Drafts failed: {d['gmail_drafts_error']}")
-    if d.get("engine_drafts_error"):
-        L.append(f"  ! drafts.list failed: {d['engine_drafts_error']}")
+    if d.get("drafts_error"):
+        L.append(f"  ! mailbox drafts.list failed: {d['drafts_error']}")
 
     from . import task_assignment
     L.append("\nEngine thread assignments / closed audit:")
@@ -667,11 +616,10 @@ def _read_checkpoint(path, binding):
 
 def _incomplete(out, reason, *, cleanup_complete=True, owner_uid=None):
     from . import task_assignment
-    out.setdefault("gmail_drafts", [])
-    out.setdefault("engine_drafts", [])
+    out.setdefault("mailbox_drafts", [])
     out.setdefault("drafts", [])
     if not cleanup_complete or "drafts_inventory" not in out:
-        out["drafts_inventory"] = {"version": 1, "complete": False}
+        out["drafts_inventory"] = {"version": 2, "complete": False}
         out["drafts_reconcile_error"] = True
         for row in out["drafts"]:
             row.setdefault("workset_hold_reasons", []).append("mailbox_unreadable")

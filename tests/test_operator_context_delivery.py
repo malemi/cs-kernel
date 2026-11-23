@@ -307,7 +307,7 @@ from cs.operational_inbox import record_notice as persist_notice
 source = ast.parse((Path(__file__).with_name('test_operator_health.py')).read_text())
 native = ast.literal_eval(next(node.value for node in source.body
     if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == 'FAKE' for target in node.targets)))
-native = native.replace("observe(Settings(engine_owner_uid='owner'),'review',{'drafts':[]})", "from cs.draft_state import inventory_proof\nreview={'drafts':[],'gmail_drafts':[],'engine_drafts':[],'gmail_drafts_observation':{'version':1,'complete':True,'search_complete':True,'expected_uids':[],'observed_uids':[],'uidvalidity':'1'}}\nreview['drafts_inventory']=inventory_proof([],[],[],review['gmail_drafts_observation'])\nobserve(Settings(engine_owner_uid='owner'),'review',review)")
+native = native.replace("observe(Settings(engine_owner_uid='owner'),'review',{'drafts':[]})", "from cs.draft_state import inventory_proof\nreview={'drafts':[],'mailbox_drafts':[]}\nreview['drafts_inventory']=inventory_proof([],[])\nobserve(Settings(engine_owner_uid='owner'),'review',review)")
 native = native.replace("args=argparse.Namespace", "value['note']='x'*516000\nargs=argparse.Namespace")
 native = native.replace("    clipped=case in (", "    clipped=True or case in (")
 native = native.replace("    if clipped and case not in ('large_unread','technical_unread'):", "    if False:")

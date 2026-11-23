@@ -744,7 +744,7 @@ class Semantics(unittest.TestCase):
         projected = {key: projection() | {"thread_key": key} for key in keys}
         with tempfile.TemporaryDirectory() as directory:
             selected = settings().model_copy(update={"db_path": str(Path(directory) / "state.db"), "log_path": Path(directory) / "operator.log"})
-            with patch.object(review.gmail_drafts, "list_drafts", return_value=[]), patch.object(review.rpc, "call_sync", return_value=[]), patch.object(review.draft_state, "reconcile", return_value=([], [])), patch.object(review.campaign, "list_campaigns", return_value=[]), patch.object(task_assignment, "listing", return_value={"items": rows}), patch.object(task_assignment, "projections", return_value=projected) as bulk, patch.object(unanswered, "sweep", side_effect=lambda s, **kw: (kw["projection_observer"](projected), {"human_work": [], "assignment_audit": []})[1]) as sweep, contextlib.redirect_stderr(io.StringIO()):
+            with patch.object(review.rpc, "call_sync", return_value=[]), patch.object(review.draft_state, "reconcile", return_value=([], [])), patch.object(review.campaign, "list_campaigns", return_value=[]), patch.object(task_assignment, "listing", return_value={"items": rows}), patch.object(task_assignment, "projections", return_value=projected) as bulk, patch.object(unanswered, "sweep", side_effect=lambda s, **kw: (kw["projection_observer"](projected), {"human_work": [], "assignment_audit": []})[1]) as sweep, contextlib.redirect_stderr(io.StringIO()):
                 result = review._aggregate(selected)
         self.assertEqual([row["thread_key"] for row in result["assignments"]], keys)
         bulk.assert_not_called()

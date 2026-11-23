@@ -248,7 +248,7 @@ fi
 step "2. boundary greps"
 BAD="$(grep -rl --include='*.py' 'smtplib' cs/ | grep -v 'cs/send_mail.py' || true)"
 if [ -n "$BAD" ]; then echo "FAIL: smtplib outside cs/send_mail.py: $BAD"; FAIL=1; else echo "OK: SMTP only in send_mail.py"; fi
-if grep -q 'smtplib' cs/gmail_drafts.py; then echo "FAIL: gmail_drafts.py must be SMTP-free"; FAIL=1; else echo "OK: gmail_drafts.py SMTP-free"; fi
+if test -e cs/gmail_drafts.py || test -e cs/draft_lifecycle.py; then echo "FAIL: kernel IMAP draft implementation found"; FAIL=1; else echo "OK: mailbox drafts delegated to the engine"; fi
 
 step "3. fresh venv install (python -m cs resolves from site-packages)"
 TMP="$(mktemp -d)"
@@ -283,7 +283,7 @@ fi
 step "4. full --help tree (every verb / sub-verb)"
 HELPLOG="$TMP/help_tree.txt"
 tree_fail=0
-for v in verify-install init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply draft-send draft-delete draft-retire review catchup drive accounts config memory chat campaign project instructions assignment; do
+for v in verify-install init update login plan whoami rpc thread contacted history unanswered handled escalated tasks business dossier ask draft-reply reply-send draft-send draft-delete review catchup drive accounts config memory chat campaign project instructions assignment; do
   if ! (cd "$EMPTY" && "$VENV/bin/python" -m cs "$v" --help >>"$HELPLOG" 2>&1); then
     echo "FAIL: cs $v --help"; tree_fail=1
   fi
@@ -322,42 +322,11 @@ if "$VENV/bin/python" "$ROOT/tests/test_golden_pack.py"; then echo "OK"; else FA
 step "7c. contextual email source binding and authenticated engine transport"
 if "$VENV/bin/python" "$ROOT/tests/test_contextual_email.py"; then echo "OK"; else echo "FAIL: contextual email binding"; FAIL=1; fi
 
-step "8. draft-reply mirrors composed draft into Gmail Drafts (anti-regression)"
-# The engine composes into its own draft store, NOT the operator's Gmail Drafts.
-# cmd_draft_reply MUST APPEND the composed draft into Gmail Drafts or it is
-# invisible to the operator ("draft not in Gmail" — a recurring regression).
-if "$VENV/bin/python" "$ROOT/tests/test_draft_reply.py"; then echo "OK"; else echo "FAIL: draft-reply no longer appends to Gmail Drafts"; FAIL=1; fi
+step "8. installed CLI routes mailbox preparation, direct send, Trash and replay through engine RPC"
+if CLI_TEST_HELPERS="$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_installed_cli.py"; then echo "OK"; else echo "FAIL: installed mailbox CLI"; FAIL=1; fi
+if "$VENV/bin/python" "$ROOT/tests/test_operator_request_guard.py"; then echo "OK"; else echo "FAIL: explicit assignment guard"; FAIL=1; fi
 
-step "8a. interactive review drafts retain source, persistence and send boundaries"
-if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_supervised_review_draft.py"; then echo "OK"; else echo "FAIL: supervised review drafts"; FAIL=1; fi
-
-step "8a2. interactive reply: exact source, publication, resumption, operator send and sent-copy recovery"
-# The interactive reply runtime: verified source before generation, engine-only
-# exact publication with saved-draft resumption, header folding, the explicit
-# operator send with its exact operation and manual-hold admission, send
-# completion, and the exact sent-mirror retirement. Each file runs in-process
-# against the working tree; 8a3 repeats the uncertainty cases on the installed
-# package.
-for reply_test in test_interactive_draft_continuity.py test_publication_outcomes.py \
-                  test_reply_header_folding.py test_operator_send.py test_operator_request_guard.py \
-                  test_send_completion.py test_sent_mirror_recovery.py; do
-  if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/$reply_test"; then echo "OK: $reply_test"; else echo "FAIL: $reply_test"; FAIL=1; fi
-done
-
-step "8a3. installed CLI keeps exact operation identity across uncertain outcomes"
-# Child processes run the INSTALLED `cs` module (no source directory on the
-# path) against a synthetic transport: same-operation publication resume,
-# retirement preview bindings into an uncertain commit, and an uncertain
-# operator send never generate, never switch operation and never dispatch twice.
-if CLI_TEST_HELPERS="$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/test_installed_cli.py"; then echo "OK"; else echo "FAIL: installed CLI operation identity"; FAIL=1; fi
-
-step "8b. draft-send names, input-gates and verifies one engine draft"
-if "$VENV/bin/python" "$ROOT/tests/test_draft_send.py"; then echo "OK"; else echo "FAIL: canonical contextual send regressed"; FAIL=1; fi
-
-step "8c. exact mirror identity, authored MIME and logical retirement"
-for draft_test in test_draft_identity.py test_draft_lifecycle.py; do
-  if PYTHONPATH="$ROOT:$ROOT/tests" "$VENV/bin/python" "$ROOT/tests/$draft_test"; then echo "OK"; else echo "FAIL: $draft_test"; FAIL=1; fi
-done
+if "$VENV/bin/python" "$ROOT/tests/test_interactive_draft_continuity.py" && "$VENV/bin/python" "$ROOT/tests/test_draft_identity.py"; then echo "OK"; else echo "FAIL: exact source or authored MIME evidence regressed"; FAIL=1; fi
 
 step "9. unanswered open-logic (deterministic Sent-anchored sweep)"
 # `cs unanswered` replaced a NON-DETERMINISTIC LLM discovery query (incident
@@ -454,7 +423,7 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # commented out, or after the --disallowed-tools flag itself was deleted, and
 # all three still pass a file-wide `grep -qF`. This gate checks PLACEMENT:
 # settings.json.j2 membership under permissions.deny (and nothing
-# chat/send-draft-shaped under permissions.allow), `draft-retire` in all six
+# chat/send-draft-shaped under permissions.allow), `draft-delete` in all six
 # spellings under permissions.ask and in neither allow nor deny, and the cron's
 # --disallowed-tools argument list compared for exact, order-preserving
 # equality against the kernel deny entries + 4 keeps. `handled` is in that list not
@@ -470,7 +439,7 @@ step "17. deny-enumeration gate (every command-text spelling of a denied surface
 # it and the operator retires it by name. `rpc drafts.discard` is spelled out
 # for the same reason as `rpc chat`: settings.json allows the broad `cs rpc:*`,
 # and the engine's discard DELETES the row — there is no Trash to recover from.
-# `draft-retire` is the exact interactive retirement verb: the interactive
+# `draft-delete` is the exact interactive retirement verb: the interactive
 # workflow runs it on the operator's explicit request, so settings.json puts it
 # under `ask` — the host asks the human before every call — while the cron
 # wrapper keeps denying it in every spelling. The engine's exact send,
@@ -507,11 +476,10 @@ SPELLINGS = [
     "cs",
 ]
 VERBS = [
+    "reply-send", "rpc drafts.compose_reply", "rpc drafts.send", "rpc drafts.trash", "rpc drafts.create", "rpc drafts.update",
     "draft-send", "chat", "rpc chat", "campaign send-draft", "rpc settings.update", "monitor",
     "instructions", "rpc instructions.store",
-    "handled", "escalated", "draft-delete", "draft-retire", "rpc drafts.discard",
-    "rpc drafts.discard_exact", "rpc drafts.reconcile_external",
-    "rpc drafts.send_operator", "rpc drafts.retire_sent_mirror", "rpc drafts.publish_review",
+    "handled", "escalated", "draft-delete", "rpc drafts.discard",
     "connection vonage provision", "connection vonage allow-ip",
     "assignment preview", "assignment export", "assignment commit",
     "rpc operator.rules.decide", "rpc operator.rules.import_confirm", "rpc tasks.assignment.commit",
@@ -559,20 +527,19 @@ allow = settings.get("permissions", {}).get("allow", [])
 ask = settings.get("permissions", {}).get("ask", [])
 
 for verb in ("campaign send-draft", "connection vonage provision", "connection vonage allow-ip",
-             "rpc drafts.discard_exact", "rpc drafts.reconcile_external",
-             "rpc drafts.send_operator", "rpc drafts.retire_sent_mirror", "rpc drafts.publish_review"):
+             "rpc drafts.compose_reply", "rpc drafts.send", "rpc drafts.trash", "rpc drafts.create", "rpc drafts.update"):
     for spelling in SPELLINGS:
         entry = "Bash(%s %s:*)" % (spelling, verb)
         if entry not in deny:
             problems.append("FAIL: settings.json permissions.deny missing %s" % entry)
 
-# `draft-retire` asks in every spelling, and no spelling of it, nor of
+# `draft-delete` asks in every spelling, and no spelling of it, nor of
 # `draft-send`, is ever allowed. The ask list holds exactly these six rules.
-retire_ask = ["Bash(%s draft-retire:*)" % spelling for spelling in SPELLINGS]
+retire_ask = ["Bash(%s draft-delete:*)" % spelling for spelling in SPELLINGS]
 if ask != retire_ask:
-    problems.append("FAIL: settings.json permissions.ask must be exactly the six draft-retire spellings, got %r" % (ask,))
+    problems.append("FAIL: settings.json permissions.ask must be exactly the six draft-delete spellings, got %r" % (ask,))
 for entry in allow:
-    if "draft-retire" in entry or "draft-send" in entry:
+    if any(verb in entry for verb in ("draft-delete","draft-send","reply-send")):
         problems.append("FAIL: settings.json permissions.allow grants %s" % entry)
 for entry in retire_ask:
     if entry in deny:
@@ -683,7 +650,7 @@ if problems:
     sys.exit(1)
 
 print(
-    "OK: settings.json deny membership + allow purity + draft-retire ask in six spellings; "
+    "OK: settings.json deny membership + allow purity + draft-delete ask in six spellings; "
     "cron --disallowed-tools order verified on both renders (%d entries with no local scripts, %d with one)"
     % (len(kernel_expected) + len(KEEPS),
        len(kernel_expected) + len(local_tokens(SAMPLE_SCRIPT)) + len(KEEPS))
@@ -868,15 +835,6 @@ step "28. RATE_CAP fully removed (send_draft no longer blocks on it)"
 # on any send path. Guards: send_draft() in CS_TRIAGE_MODE=send returns a
 # clean dry-run with no "blocked" key, and _rate_capped() no longer exists.
 if "$VENV/bin/python" "$ROOT/tests/test_campaign_rate_cap_removed.py"; then echo "OK"; else echo "FAIL: RATE_CAP mechanism regressed"; FAIL=1; fi
-
-step "29. draft-delete removes ONE named draft, to Trash, or refuses"
-# Deleting a draft deletes a person's mail. Guards: dry-run (the default)
-# selects read-only and writes nothing; zero / several / mismatched matches
-# refuse instead of picking one; no \Drafts folder and no \Trash folder both
-# refuse rather than guess or expunge; a commit issues exactly ONE UID MOVE of
-# the identified uid into Trash (recoverable 30 days) and never \Deleted +
-# EXPUNGE; the CLI verb exits non-zero on a refusal and --account refuses it.
-if "$VENV/bin/python" "$ROOT/tests/test_gmail_draft_delete.py"; then echo "OK"; else echo "FAIL: draft-delete guards regressed"; FAIL=1; fi
 
 step "30. handled out of band — dated suppression, and every surface obeys it"
 # 2026-08: a customer wrote on 17 July, the owner TELEPHONED him and resolved it,
@@ -1399,16 +1357,6 @@ step "57. an HTML-escaped message id is the same conversation"
 # left exactly as it is.
 if "$VENV/bin/python" "$ROOT/tests/test_thread_key_escaped.py"; then echo "OK"; else echo "FAIL: escaped message ids no longer rejoin their conversation"; FAIL=1; fi
 if "$VENV/bin/python" "$ROOT/tests/test_thread_key_mime.py"; then echo "OK"; else echo "FAIL: complete MIME header identities or malformed draft holds regressed"; FAIL=1; fi
-
-step "58. sending a draft retires its Gmail mirror"
-# The mirror is a review surface; the send happens on the engine's copy and
-# never touched it, so every contextual reply left a draft of answered mail
-# behind — 78 of them on the live queue, oldest from 19 June. Guards: the
-# mirror of a sent draft is paired on recipient + thread (or subject, for a
-# compose); a draft composed AFTER the send is a new draft and survives, with
-# its reason printed; another recipient is never matched; and without both
-# timestamps nothing is retired at all.
-if "$VENV/bin/python" "$ROOT/tests/test_sent_mirrors.py"; then echo "OK"; else echo "FAIL: sent drafts leave their Gmail mirror behind"; FAIL=1; fi
 
 step "59. scheduled Claude retry requires a proven pre-work refusal"
 if "$VENV/bin/python" "$ROOT/tests/test_operator_recovery.py"; then echo "OK"; else echo "FAIL: operator recovery replayed work or lost its owner notice"; FAIL=1; fi

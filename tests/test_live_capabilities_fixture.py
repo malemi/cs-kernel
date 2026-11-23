@@ -478,6 +478,19 @@ The remaining file-authoring steps apply only when authority is `legacy`.
             self.assertEqual(hashlib.sha256(review).hexdigest(), record['review_sha256'])
             manifest_bytes = (fixture_root / record['source_manifest']).read_bytes()
             self.assertEqual(hashlib.sha256(manifest_bytes).hexdigest(), record['source_manifest_sha256'])
+            installed = subprocess.check_output(['git', 'show', '544c80f:cs/rpc.py'], cwd=ROOT)
+            reduced = installed.splitlines(keepends=True)
+            chat = next(node for node in ast.parse(installed).body
+                        if isinstance(node, ast.AsyncFunctionDef) and node.name == 'chat')
+            retired = [node for node in ast.walk(chat) if isinstance(node, ast.If)
+                       and any(isinstance(name, ast.Name) and name.id == 'supervised_review'
+                               for name in ast.walk(node.test))]
+            self.assertEqual(len(retired), 2)
+            for node in sorted(retired, key=lambda node: node.lineno, reverse=True):
+                del reduced[node.lineno-1:node.end_lineno]
+            reduced.remove(b'    supervised_review: bool = False,\n')
+            self.assertEqual(candidate, b''.join(reduced))
+            candidate = installed
             self.assertEqual(hashlib.sha256(candidate).hexdigest(), json.loads(manifest_bytes)['cs/rpc.py'])
             parsed = ast.parse(candidate)
             baseline_client = next(n for n in ast.parse(baseline).body if isinstance(n, ast.ClassDef) and n.name == 'EngineClient')

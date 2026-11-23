@@ -175,12 +175,10 @@ def _fanout_contract(clone: Path, label: str) -> None:
     check("Scope an engine-assignment dossier `STOP` to its named exact thread" in triage
           and "Address takeover" in triage and "unreadable evidence still impose `STOP`" in triage,
           f"[{label}] unrelated thread work survives assignment holds while contact safety holds remain")
-    check("--thread-id '<exact-thread-key>'" in triage and "before\nwriting" in triage
-          and "negotiate the engine draft policy before composition" in triage
-          and "validates\nthe source locally before composition" in triage
-          and "All routes deny send tools during composition" in triage
-          and "does not change scheduled discovery" in triage,
-          f"[{label}] composing requires exact thread and actual prewrite authority")
+    check("--thread-id '<exact-thread-key>'" in triage
+          and "--source-id" in triage and "parent's direct send" in triage
+          and "suppression, SELF" in triage and "request key" in triage,
+          f"[{label}] mailbox reply binds thread, source, mode and retry key")
     for skill in ("cs-triage-mail", "cs-operator", "cs-customer"):
         text = (clone / f".claude/skills/{skill}/SKILL.md").read_text()
         check(all(word in text for word in ("candidate", "unknown", "conflict", "assignee")),

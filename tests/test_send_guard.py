@@ -48,7 +48,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from cs import campaign as campaign_mod, gmail_drafts, rpc, send_guard, send_mail  # noqa: E402
+from cs import campaign as campaign_mod, rpc, send_guard, send_mail  # noqa: E402
 from cs.send_guard import (  # noqa: E402
     TELL_BANNED,
     TELL_FENCE,
@@ -339,7 +339,7 @@ with tempfile.TemporaryDirectory() as td:
     db = str(Path(td) / "cs.db")
     contact = {"id": "c1", "email": CUSTOMER, "state": "drafted",
                "draft_subject": "Re: spostamento", "draft_body": OFFENDING,
-               "dossier": {}, "_campaign_name": "trial", "_campaign_id": "camp1"}
+               "dossier": {"mailbox_draft_id":"native"}, "_campaign_name": "trial", "_campaign_id": "camp1"}
     rpc_calls: list = []
     st = _settings(db_path=db, rate_cap=25, dedup_days=30, cs_triage_mode="send",
                    pause_path=Path(td) / "CS_PAUSE")
@@ -350,7 +350,13 @@ with tempfile.TemporaryDirectory() as td:
     # (threads, unreadable): the gate reads every mailbox in scope, and
     # nothing here is unreadable — what this file varies is the BODY.
     campaign_mod._sent_threads_to = lambda s, e, d: ([], [])
-    rpc.call_sync = lambda s, m, p, **kw: rpc_calls.append((m, p)) or {}
+    def call(s,m,p,**kw):
+        rpc_calls.append((m,p))
+        if m=="system.capabilities": return {"mailbox_drafts":1}
+        if m=="drafts.send_status": return {"ok":False,"cause":"named_send_operation_not_found","effect_certainty":"not-dispatched"}
+        if m=="drafts.get": return {"ok":True,"draft":{"id":"native","status":"draft","owner_id":s.email_address,"to_addresses":[CUSTOMER],"body":OFFENDING}}
+        return {}
+    rpc.call_sync = call
     send_mail.smtplib = types.SimpleNamespace(SMTP=_Sentinel)
     _Sentinel.opened.clear()
     try:
@@ -382,146 +388,6 @@ if os.environ.get("CS_SEND_GUARD_LIVE", "").strip() == "1":
           label == "customer_reply", f"{label} {why}")
 else:
     print("register judgment (LIVE provider): SKIP — set CS_SEND_GUARD_LIVE=1")
-
-
-# ------------------------------------------ 6. the draft path (warn, never block)
-print("gmail_drafts.append_draft — warn on model-composed tells, never block")
-
-
-class _ImapAppendSentinel:
-    """Mimics imaplib.IMAP4_SSL just enough for append_draft. Unlike the
-    send-path _Sentinel above (which RAISES to prove a send never reached
-    the wire), this one ALWAYS SUCCEEDS and records the APPEND — the draft
-    path must never be blocked by the guard, so the assertion here is the
-    mirror image: the append happens regardless of what inspect() finds."""
-
-    appended: list = []   # (folder, message_bytes)
-    hosts: list = []       # (host, port)
-
-    def __init__(self, host, port, *a, **kw):
-        _ImapAppendSentinel.hosts.append((host, port))
-
-    def login(self, user, pw):
-        return "OK", [b"done"]
-
-    def list(self):
-        return "OK", [b'(\\HasNoChildren \\Drafts) "/" "[Gmail]/Drafts"']
-
-    def append(self, folder, flags, date, message):
-        _ImapAppendSentinel.appended.append((folder, message))
-        return "OK", [b"1"]
-
-    def logout(self):
-        return "OK", [b"done"]
-
-
-_real_gmail_imaplib = gmail_drafts.imaplib
-gmail_drafts.imaplib = types.SimpleNamespace(
-    IMAP4_SSL=_ImapAppendSentinel, Time2Internaldate=_real_gmail_imaplib.Time2Internaldate,
-)
-# The register judgment must NEVER run from the draft path — inspect() is
-# deterministic by design. Any call here means the integration reached for
-# evaluate()/check() instead, which would also spend money on every draft.
-_register_calls: list = []
-_real_judge_register = send_guard.judge_register
-send_guard.judge_register = (
-    lambda *a, **kw: (_register_calls.append(a) or (None, "must not run")))
-
-DRAFT_SETTINGS = _settings(imap_host="imap.invalid", imap_port=993)
-
-try:
-    # -- offending body: appended anyway, warnings present in the return AND logged
-    _ImapAppendSentinel.appended.clear()
-    buf = io.StringIO()
-    with redirect_stderr(buf):
-        folder, warns = gmail_drafts.append_draft(
-            DRAFT_SETTINGS, CUSTOMER, "Re: spostamento", OFFENDING, body_md=True)
-    logged = buf.getvalue()
-    check("the offending draft is appended anyway",
-          len(_ImapAppendSentinel.appended) == 1, _ImapAppendSentinel.appended)
-    check("...to the Drafts folder found via IMAP", folder == "[Gmail]/Drafts", folder)
-    check("...only the .invalid IMAP host was ever dialed",
-          _ImapAppendSentinel.hosts == [("imap.invalid", 993)], _ImapAppendSentinel.hosts)
-    check("...guard_warnings names the tells",
-          any(w.startswith(TELL_HR) for w in warns)
-          and any(w.startswith(TELL_RECIPIENT_IN_BODY) for w in warns), warns)
-    check("...exactly one WARNING line is logged", logged.count("WARNING") == 1, logged)
-    check("...naming the tells and the recipient in the logged line",
-          TELL_HR in logged and CUSTOMER in logged, logged)
-
-    # -- clean body: appended, no warnings, nothing logged
-    _ImapAppendSentinel.appended.clear()
-    _ImapAppendSentinel.hosts.clear()
-    buf = io.StringIO()
-    with redirect_stderr(buf):
-        folder, warns = gmail_drafts.append_draft(
-            DRAFT_SETTINGS, CUSTOMER, "Re: spostamento", LEGITIMATE, body_md=True)
-    check("a clean draft is appended with no warnings",
-          len(_ImapAppendSentinel.appended) == 1 and warns == [], warns)
-    check("...and nothing is logged", buf.getvalue() == "", buf.getvalue())
-
-    # -- fixed-template/human body: body_md left at its default (False) — the
-    # guard must not even be consulted, however tell-shaped the text looks.
-    _inspect_calls: list = []
-    _real_inspect = send_guard.inspect
-    send_guard.inspect = (
-        lambda *a, _rec=_inspect_calls, **kw: (_rec.append((a, kw)) or _real_inspect(*a, **kw)))
-    try:
-        _ImapAppendSentinel.appended.clear()
-        folder, warns = gmail_drafts.append_draft(
-            DRAFT_SETTINGS, CUSTOMER, "Avviso", OFFENDING)  # body_md defaults False
-        check("a human/pack-template draft is appended",
-              len(_ImapAppendSentinel.appended) == 1, _ImapAppendSentinel.appended)
-        check("...with inspect() never called", _inspect_calls == [], _inspect_calls)
-        check("...and no warnings surfaced", warns == [], warns)
-    finally:
-        send_guard.inspect = _real_inspect
-
-    check("the register judgment never ran from the draft path",
-          _register_calls == [], _register_calls)
-finally:
-    gmail_drafts.imaplib = _real_gmail_imaplib
-    send_guard.judge_register = _real_judge_register
-
-
-# --------------------------------------- 6b. campaign.queue_draft wiring end-to-end
-print("campaign.queue_draft — guard_warnings reach the verb's own JSON shape")
-
-with tempfile.TemporaryDirectory() as td2:
-    contact2 = {"id": "c2", "email": CUSTOMER, "state": "drafted",
-                "draft_subject": "Re: spostamento", "draft_body": OFFENDING,
-                "dossier": {}, "_campaign_name": "trial", "_campaign_id": "camp1"}
-    rpc_calls2: list = []
-    st2 = _settings(db_path=str(Path(td2) / "cs.db"), dedup_days=30, timezone="Europe/Rome",
-                    pause_path=Path(td2) / "CS_PAUSE", imap_host="imap.invalid", imap_port=993)
-
-    _r_get2, _r_sent2, _r_call2 = (campaign_mod._get_contact,
-                                   campaign_mod._sent_threads_to, rpc.call_sync)
-    campaign_mod._get_contact = lambda s, cid: dict(contact2) if cid == "c2" else None
-    # (threads, unreadable): the gate reads every mailbox in scope, and
-    # nothing here is unreadable — what this file varies is the BODY.
-    campaign_mod._sent_threads_to = lambda s, e, d: ([], [])
-    rpc.call_sync = lambda s, m, p, **kw: rpc_calls2.append((m, p)) or {}
-    gmail_drafts.imaplib = types.SimpleNamespace(
-        IMAP4_SSL=_ImapAppendSentinel, Time2Internaldate=_real_gmail_imaplib.Time2Internaldate)
-    _ImapAppendSentinel.appended.clear()
-    try:
-        out2 = campaign_mod.queue_draft(st2, "c2", commit=True)
-    finally:
-        (campaign_mod._get_contact, campaign_mod._sent_threads_to,
-         rpc.call_sync) = _r_get2, _r_sent2, _r_call2
-        gmail_drafts.imaplib = _real_gmail_imaplib
-
-    check("queue_draft never blocks on a guard hit", out2.get("ok") is True, out2)
-    check("...queued_to is the plain folder string (tuple correctly unpacked)",
-          out2.get("queued_to") == "[Gmail]/Drafts", out2)
-    check("...guard_warnings reaches the verb's own JSON shape",
-          bool(out2.get("guard_warnings"))
-          and any(w.startswith(TELL_HR) for w in out2["guard_warnings"]), out2)
-    check("...the draft was actually appended", len(_ImapAppendSentinel.appended) == 1)
-    check("...the contact is still marked gmail_draft_pushed",
-          any(m == "campaign.update_contact" and p.get("dossier", {}).get("gmail_draft_pushed")
-              for m, p in rpc_calls2), rpc_calls2)
 
 
 print()

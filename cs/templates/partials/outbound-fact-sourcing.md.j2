@@ -32,12 +32,6 @@ a customer over this company's name.
 engine-turn failure is reported on stderr; try another authorized source and
 report the failed layer rather than asserting no facts were found.
 
-`cs draft-reply` can save an engine draft before generation transport or
-publication fails. In an interactive session, read its `--json` outcome even on
-a nonzero exit; retain the full saved draft ID, operation ID, achieved stages
-and uncertainty. Engine-saved is not Gmail-visible. Resume an existing saved
-draft through the interactive `cs-customer` procedure without generating
-another reply. Unknown publication or send outcomes require exact operation
-reconciliation, never blind retry. Scheduled workflows retain their holds and
-must never select `--operator-request` or adopt an interactive recovery route
-to bypass their admission rules.
+Keep the exact source, native mailbox draft handle and request key returned by
+the engine. Preserve an unconfirmed result and reconcile the original request
+with the same key. Scheduled runs follow their launcher's mode and eligibility.

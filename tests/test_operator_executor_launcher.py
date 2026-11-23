@@ -80,7 +80,10 @@ raise SystemExit(int(os.environ.get('STUB_EXIT', '0')))
         self.assertEqual(old['args'][1:3], ['--executor', 'claude'])
         self.assertEqual(new['args'][1:3], ['--executor', 'pydantic'])
         self.assertEqual(old['args'][3:], new['args'][3:])
-        self.assertIn('Bash(.venv/bin/python -m cs draft-send:*)', new['args'][3:])
+        for prefix in ('.venv/bin/python -m ', '.venv/bin/python3 -m ', '.venv/bin/',
+                       'python -m ', 'python3 -m ', ''):
+            self.assertIn('Bash('+prefix+'cs draft-send:*)',new['args'][3:])
+            self.assertIn('Bash('+prefix+'cs reply-send:*)',new['args'][3:])
         for call in (old, new):
             self.assertEqual(call['cwd'], str(self.clone))
             self.assertEqual(call['headless'], '1')

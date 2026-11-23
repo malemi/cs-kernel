@@ -1,5 +1,7 @@
 # Transversal Documentation Index
 
+- [Mailbox draft delegation](briefs/2026-11-23-mailbox-drafts.md) and [delivery checkpoint](execution-plans/2026-11-23-mailbox-drafts.md).
+
 - [Scheduled assignment reads by selected position](briefs/2026-11-22-scheduled-selected-reads.md) and [source verification plan](execution-plans/2026-11-22-scheduled-selected-reads.md).
 
 - [Executor cache across long reads](execution-plans/2026-11-01-executor-long-cache.md) — explicit1h cache support, exact pricing and bounded new installed acceptance; [brief](briefs/2026-11-01-executor-long-cache.md).
@@ -70,7 +72,7 @@ Index of transversal docs; the repo inventory / roles / ownership live only in t
 
 - [Kernel charter](kernel-charter.md) — mandatory anti-fork rules; read before source investigation.
 
-- [Exact draft lifecycle](draft-lifecycle.md) — exact mirror identity, authored-content review, snapshot-bound retirement and provider acceptance limits; [execution plan](execution-plans/2026-09-16-exact-draft-identity.md).
+- [Exact draft lifecycle](draft-lifecycle.md) — native mailbox handles, engine reply preparation, receipt recovery and the scheduled send boundary; [current delivery plan](execution-plans/2026-11-23-mailbox-drafts.md). The [September paired-draft plan](execution-plans/2026-09-16-exact-draft-identity.md) is historical.
 
 - [Conversational standing instructions](execution-plans/2026-10-07-cs-instructions-skill.md) — canonical three-host workflow; [brief](briefs/2026-10-07-cs-instructions-skill.md).
 

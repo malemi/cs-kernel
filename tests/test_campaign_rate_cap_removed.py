@@ -42,13 +42,18 @@ def main() -> int:
 
     def fake_call_sync(settings, method, params, timeout=None):
         calls.append((method, params))
+        if method == "system.capabilities":
+            return {"mailbox_drafts": 1}
+        if method == "drafts.get":
+            return {"ok":True, "draft":{"status":"draft", "id":"native","owner_id":settings.email_address,
+                    "to_addresses":["person@example.test"], "body":"Personal note"}}
         if method == "campaign.list":
             return [{"id": "camp-1", "name": "trial-campaign"}]
         if method == "campaign.contacts":
             return [{
                 "id": "contact-1", "email": "person@example.test",
                 "state": "drafted", "draft_subject": "Hello",
-                "draft_body": "A hand-written note.", "dossier": {},
+                "draft_body": None, "dossier": {"mailbox_draft_id":"native"},
             }]
         raise AssertionError(f"unexpected RPC call in a dry run: {method} {params}")
 
@@ -57,7 +62,7 @@ def main() -> int:
     mailboxes_mod.sent_to_across = lambda settings, email, days=None: _fan()
 
     settings = types.SimpleNamespace(
-        dedup_days=30,
+        dedup_days=30, email_address="ops@example.test",
         pause_path=Path("/nonexistent-cs-pause-test-dir/CS_PAUSE"),  # CS_PAUSE inactive
         cs_triage_mode="send",
         # deliberately NO db_path: proves _rate_capped()'s State(db_path) read

@@ -97,6 +97,8 @@ What you need:
 - **Codex**, **Claude Code**, or **OpenCode** (the session you work in; agent access is paid separately)
 - A **mrcall-desktop** engine profile
 - Email IMAP for the operator mailbox (supported Google Mail at the moment)
+- For the mailbox candidate, Gmail mail access authorized in the engine; an IMAP
+  app password or application sign-in alone does not grant native draft access
 
 ---
 
@@ -411,9 +413,7 @@ from this address across the configured scope — a mailbox is never asked
 about its own owner; every answer prints read, unreadable and skipped mailboxes), `unanswered`, `tasks`, `business`,
 `drive`, `llm`, `config` (the settings in force and which file declares
 each — ask it rather than reading the manifest and the `.env` chain);
-**gated writing**: `draft-reply` (scoped drafts only) / `chat` (explicit tool
-approvals and contextual source binding in the unreleased candidate described
-below), `campaign` (Sent-dedup, pause file), `draft-delete` (move
+**gated writing**: `draft-reply` (scoped mailbox draft), `reply-send` (authorized scheduled direct reply), `draft-send` (named mailbox draft), `chat` (explicit tool approvals), `campaign` (Sent-dedup, pause file), `draft-delete` (move
 ONE named draft to Trash), `tasks
 create`/`close`, `handled` (this contact was resolved off-email — by phone,
 WhatsApp, in person — so their mail up to that moment stops being raised),
@@ -427,21 +427,19 @@ age, instead of being handed out as work);
 
 `cs assignment status`, `preview`, `export` and `commit` consume the engine's
 company task subtype. An independent host operator approves exact writes;
-unknown or human-held thread authority blocks the scoped draft workflow.
+unknown or human-held thread authority blocks scheduled preparation. A person
+can explicitly request a review draft on a held thread.
 `draft-reply` requires an exact `--thread-id` and compatible engine policy.
 A local `handled` record does not settle company ownership without an exact
 engine acknowledgement. Current availability and examples are in
 [the assignment guide](docs/task-assignment.md).
 
-The local unreleased candidate negotiates `contextual_email_policy: 1` for
-`chat`, `draft-reply` and `draft-send`. For a contextual reply, use the original
-thread and exact source: `cs chat --thread-id '<root@example.com>' --reply-to
-'<inbound@example.com>' 'Prepare the reply'`. `--source-id` can supply the
-owner-scoped engine email ID; `--draft-id` binds an existing full draft ID.
-All supplied identities must agree. Send approval does not override a held
-assignment. Released `v0.52.0` retains its previous scoped draft contract;
-candidate flags and final-send enforcement require compatible candidate engine
-and kernel code. See [contextual policy](docs/task-assignment.md#contextual-email-policy--unreleased-candidate).
+The v0.75.0 candidate requires `mailbox_reply: 1` for preparing a reply
+and `mailbox_drafts: 1` for named send and Trash. An interactive
+`cs draft-reply "Prepare a reply" --thread-id ROOT --source-id SOURCE`
+returns the native handle visible in the mailbox. A send-enabled launcher
+uses `cs reply-send` for an eligible selected source. Existing drafts remain
+available for review. See the [mailbox draft lifecycle](docs/draft-lifecycle.md).
 
 ### The kernel's own model calls
 

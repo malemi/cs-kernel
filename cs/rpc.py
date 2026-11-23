@@ -306,7 +306,6 @@ async def chat(
     assignment_thread_key: str | None = None,
     email_context: dict | None = None,
     require_contextual_email_policy: bool = False,
-    supervised_review: bool = False,
 ) -> Any:
     """Run one engine-chat turn with an explicit tool-approval policy.
 
@@ -354,9 +353,6 @@ async def chat(
 
     from . import model_config
 
-    if supervised_review and (assignment_thread_key is None or read_only or role is not None or allow_tools
-                              or any(os.environ.get(k) for k in ("CS_OPERATOR_HEADLESS", "CS_HEADLESS_SEND", "CS_OPERATOR_HEALTH_CONTEXT"))):
-        raise ValueError("supervised review requires an interactive draft-only exact thread")
     if (email_context is not None or require_contextual_email_policy) and (read_only or role is not None):
         raise ValueError("contextual email cannot use read-only/direct classifier routing")
     if assignment_thread_key is not None and (read_only or role is not None or allow_tools):
@@ -419,11 +415,6 @@ async def chat(
             if email_context is not None or require_contextual_email_policy:
                 if not isinstance(capabilities, dict) or capabilities.get("contextual_email_policy") != 1:
                     raise RuntimeError("engine does not support required contextual email policy version 1")
-        if supervised_review:
-            version = capabilities.get("supervised_review_draft_policy") if isinstance(capabilities, dict) else None
-            if type(version) is not int or version != 1:
-                raise RuntimeError("engine upgrade required for supervised review drafts; nothing was generated")
-            params["supervised_review_draft_policy_version"] = 1
         if operator_reply:
             version = capabilities.get("operator_reply_provenance") if isinstance(capabilities, dict) else None
             if type(version) is not int or version != 1:

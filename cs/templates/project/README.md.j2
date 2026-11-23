@@ -66,10 +66,9 @@ running processes or stop independent engine work.
    `$cs-review` in Codex, `/cs-review` in Claude Code, or OpenCode's named
    `cs-review` skill. Deep-dive with `cs-account`, or just ask. `cs-help`
    shows the whole map with the invocation for your host.
-3. **Send** — always your call, after review: use
-   `cs draft-send <full-engine-draft-id>`, with the ID printed by
-   `cs review --json`. This is the one contextual-send path; Gmail/Superhuman
-   connector sends bypass the engine lifecycle and are not used here.
+3. Review, edit and send your mailbox draft in Gmail, Superhuman or Desktop.
+   To send the current saved draft from the CLI, use `cs draft-send HANDLE`
+   with its full handle from `cs review --json`.
 
 > The operator is **draft-first**. You are the send button.
 

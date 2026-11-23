@@ -148,13 +148,10 @@ does not authorize drafting or dropping a triage candidate.
 3. **Decide**: thread exists → reply in it; prior relationship → informed
    outreach; genuinely cold → cold template, flagged; contacted within
    `DEDUP_DAYS` / suppressed / self → **stop**.
-4. **Draft via the engine** (`cs draft-reply` / `cs chat "compose …"`), never
-   from scratch in cs. **Review** in the desktop app or Gmail Drafts, then
-   **send** the exact engine row with `cs draft-send <full-engine-draft-id>`.
-   That verb approves only `send_draft` carrying the same ID and verifies the
-   engine recorded it as sent. Gmail, Superhuman and other ambient connectors
-   may be used to read/review, never to send an engine-owned contextual draft.
-   Replies land in {{ email_address }} and re-ingest as tasks.
+4. **Draft via the engine** with `cs draft-reply`. Review and edit the mailbox
+   draft in any client. `cs draft-send HANDLE` sends its current saved content
+   after a human instruction. An authorized scheduled `cs reply-send` answers
+   directly with a single delivery confirmed by Sent.
 
 ### The two records the mailbox cannot hold
 

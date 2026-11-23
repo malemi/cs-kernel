@@ -110,6 +110,23 @@ class ExecutorTests(unittest.TestCase):
         self.assertEqual(validate_argv(['cs','catchup','--check'], self.config)[0], ['catchup','--check'])
         self.assertFalse(validate_argv(['rpc','tasks.list','{"include_completed":true}'], self.config)[1])
 
+    def test_send_authority_allows_direct_reply_and_preserves_existing_drafts(self):
+        reply = ['reply-send', 'Fixture answer', '--thread-id', '<root@fixture.test>',
+                 '--source-id', '71993202-46d4-4431-ac39-43fd0b68b051']
+        config = self.config.model_copy(update={'send_mode': 'send'})
+        for prefix in ((),) + PREFIXES:
+            with self.subTest(prefix=prefix):
+                with self.assertRaises(Refusal):
+                    validate_argv(list(prefix) + reply, self.config)
+                with self.assertRaises(Refusal):
+                    validate_argv(list(prefix) + reply, config)
+                with patch.dict(os.environ, {'CS_HEADLESS_SEND': '1'}):
+                    self.assertEqual(validate_argv(list(prefix) + reply, config), (reply, True))
+                    with self.assertRaises(Refusal):
+                        validate_argv(list(prefix) + ['draft-send', 'gmail:'+'a'*64+':native'], config)
+                    with self.assertRaises(Refusal):
+                        validate_argv(list(prefix) + reply[:-2], config)
+
     def test_secrets_symlinks_and_traversal(self):
         for relative in ('../AGENTS.md', '/etc/passwd', '.env', 'manifest.toml', 'company/secret.md'):
             with self.assertRaises(Refusal):
@@ -499,11 +516,9 @@ class ExecutorTests(unittest.TestCase):
     def install_services(self, *, fail_effect=False):
         fixture = self.base / 'fixture-services'
         fixture.mkdir(exist_ok=True)
-        review = {'gmail_drafts': [], 'engine_drafts': [], 'drafts': [],
-            'gmail_drafts_observation': {'version':1, 'complete':True, 'search_complete':True,
-                'expected_uids':[], 'observed_uids':[], 'uidvalidity':'1'},
-            'drafts_inventory': {'version':1, 'complete':True, 'gmail_count':0, 'engine_count':0,
-                'row_count':0, 'identity_sha256':__import__('hashlib').sha256(b'[]').hexdigest()}}
+        from cs.draft_state import inventory_proof
+        review = {'mailbox_drafts': [], 'drafts': [],
+                  'drafts_inventory': inventory_proof([], [])}
         code = '''import json, os, sys, hashlib
 import cs.cli as cli
 from cs import config, operator_health, operator_workset, unanswered, review, campaign, standing_instructions

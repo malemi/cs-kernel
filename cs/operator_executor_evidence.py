@@ -652,11 +652,6 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
                         target=None
                         if '--thread-id' in p.argv:
                             target=p.argv[p.argv.index('--thread-id')+1]
-                        elif p.argv[:1] == ['draft-send']:
-                            for path in directory.glob('workset-draft-*.json'):
-                                snapshot=decode(read_private(path))
-                                if snapshot.get('draft_id') == p.argv[1]:
-                                    target=snapshot['root']
                         if target not in {r['thread_key'] for r in selected}:
                             raise ValueError('executor_effect_root_missing')
                         outcomes=selected_roots(directory,config.owner,config.nonce,command_results,
@@ -797,7 +792,7 @@ def validate(proof, context, *, diagnostic_only=False, prework_only=False):
             good &= len(_rows('tasks',value)) < 200
         elif phase.name == 'review':
             from .draft_state import inventory_proof
-            actual = inventory_proof(value.get('gmail_drafts'),value.get('engine_drafts'),value.get('drafts'),value.get('gmail_drafts_observation'))
+            actual = inventory_proof(value.get('mailbox_drafts'),value.get('drafts'))
             good &= actual.get('complete') is True and actual == value.get('drafts_inventory')
         elif phase.name == 'authority':
             docs = value['documents']

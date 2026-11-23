@@ -70,7 +70,7 @@ from pathlib import Path
 from cs import campaign as campaign_mod
 from cs import cli
 from cs import config as config_mod
-from cs import draft_state, gmail_drafts, mailboxes
+from cs import draft_state, mailboxes
 from cs import rpc as rpc_mod
 from cs import send_mail, sms
 from cs.config import Settings
@@ -256,8 +256,7 @@ def _contact(state: str) -> dict:
          "created_at": "2026-07-22T08:00:00Z", "sent_at": "2026-07-22T09:00:00Z",
          "dossier": {"phone": "+393331234567", "name": "Anna"}}
     if state == "drafted":
-        c["draft_subject"] = "Hello"
-        c["draft_body"] = "A long enough hand-written note to pass the guard."
+        c["dossier"]["mailbox_draft_id"] = c["id"]
     return c
 
 
@@ -267,6 +266,16 @@ def _engine(state: str, contacts: list[dict] | None = None):
     rows = contacts if contacts is not None else [_contact(state)]
 
     def fake(settings, method, params=None, timeout=None):
+        if method == "system.capabilities":
+            return {"mailbox_drafts": 1}
+        if method == "drafts.send_status":
+            return {"ok":False, "state":"not_found", "cause":"named_send_operation_not_found",
+                    "draft_id":params["draft_id"], "request_key":params["request_key"],
+                    "effect_certainty":"not-dispatched"}
+        if method == "drafts.get":
+            row = next(c for c in rows if c["dossier"].get("mailbox_draft_id") == params["draft_id"])
+            return {"ok": True, "draft": {"id": params["draft_id"], "status": "draft",
+                    "owner_id": settings.email_address, "to_addresses":[row["email"]], "body": "Personal note"}}
         if method == "campaign.list":
             return [{"id": "camp-1", "name": PACK}]
         if method == "campaign.contacts":
@@ -290,13 +299,12 @@ def _no_delivery() -> None:
     send_mail.send = boom
     campaign_mod.send_mail = send_mail
     sms.send = boom
-    gmail_drafts.append_draft = boom
 
 
 @contextlib.contextmanager
 def _installed(settings):
     orig = (imaplib.IMAP4_SSL, rpc_mod.call_sync, config_mod.load,
-            send_mail.send, sms.send, gmail_drafts.append_draft)
+            send_mail.send, sms.send)
     imaplib.IMAP4_SSL = FakeIMAP
     config_mod.load = lambda engine_owner_uid=None: settings
     MUTATIONS.clear()
@@ -304,7 +312,7 @@ def _installed(settings):
         yield
     finally:
         (imaplib.IMAP4_SSL, rpc_mod.call_sync, config_mod.load,
-         send_mail.send, sms.send, gmail_drafts.append_draft) = orig
+         send_mail.send, sms.send) = orig
         campaign_mod.rpc.call_sync = rpc_mod.call_sync
         mailboxes._SESSIONS.clear()
         mailboxes._CREDENTIALS.clear()
@@ -466,13 +474,13 @@ def _test_review_notes_but_never_retires(db_path: str) -> None:
 
     settings = _settings(db_path)
     composed = NOW - timedelta(days=1)
-    drafts = [{"uid": "9", "to": CONTACT, "subject": "re: your request",
-               "date": format_datetime(composed), "body": "short",
+    drafts = [{"id":"9","mailbox_id":"box","to_addresses":[CONTACT], "subject": "re: your request",
+               "created_at": format_datetime(composed), "body": "short",
                "thread_key": "", "message_id": "<m@acme.example>"}]
     with _installed(settings):
         _world(colleague_password="rotated-yesterday")
         _engine("drafted")
-        rows, notes = draft_state.reconcile(settings, drafts, [], now=NOW)
+        rows, notes = draft_state.reconcile(settings, drafts, now=NOW)
         assert len(rows) == 1, rows
         assert rows[0]["verdict"] == "ready", (
             "the review is where a human looks: a mailbox that could not be read "
@@ -501,7 +509,7 @@ def _test_review_notes_but_never_retires(db_path: str) -> None:
         # its absence, and no row grows a warning nobody earned.
         _world()
         _engine("drafted")
-        rows, notes = draft_state.reconcile(settings, drafts, [], now=NOW)
+        rows, notes = draft_state.reconcile(settings, drafts, now=NOW)
         assert rows[0]["evidence_incomplete"] == [], rows[0]
         assert not [n for n in notes if "INCOMPLETE" in n], notes
 

@@ -116,8 +116,7 @@ class Union(unittest.TestCase):
                             'items':[{'id':root,'space_id':'fixture-space','thread_key':root,'assignee_uid':'human',
                                       'state':'assigned','revision':1,'covered_inbound':[]} for root in (C,B)]}
                 raise AssertionError(method)
-            with patch.object(review.gmail_drafts,'list_drafts',side_effect=gmail), \
-                 patch.object(review.rpc,'call_sync',side_effect=call), \
+            with patch.object(review.rpc,'call_sync',side_effect=call), \
                  patch.object(review.campaign,'list_campaigns',return_value=[]), \
                  patch.object(gmail_archive,'inbound_recent',return_value=inbound), \
                  patch.object(gmail_archive,'sent_recent',return_value=sent), \
@@ -253,7 +252,7 @@ def inbound(settings,days):
  stamp=next(row for row in tasks if row.get('thread_key')==target)['last_signal_at']
  rows.append({'thread_key':target,'message_id':target,'email':'support@mrcall.ai','date':datetime.fromisoformat(stamp),'subject':'Constructed headers from retained task/fixture metadata'})
  return rows
-review.gmail_drafts.list_drafts=gmail;review.rpc.call_sync=rpc;review.campaign.list_campaigns=lambda s:[]
+review.rpc.call_sync=rpc;review.campaign.list_campaigns=lambda s:[]
 gmail_archive.inbound_recent=inbound;gmail_archive.sent_recent=lambda *a:[]
 engine_view.classify=lambda *a,**kw:({},'simulated classification unavailable')
 engine_view.settled=lambda *a,**kw:({},'simulated settlement unavailable')

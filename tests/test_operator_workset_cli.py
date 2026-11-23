@@ -23,208 +23,14 @@ except ImportError:
 
 
 class CliWorksetTests(unittest.TestCase):
-    @contextlib.contextmanager
-    def send_sequence(self, compose_argv=None, *, mode='send'):
-        """Real argparse/reservation with a stateful local engine protocol."""
-        from datetime import datetime, timezone
-        self.settings.cs_triage_mode = mode
-        self.settings.email_address = 'owner@example.test'
-        if not any(row['thread_key'] == '<b@example.test>' for row in self.discovery['open']):
-            self.discovery['open'].append({'thread_key': '<b@example.test>', 'email': 'b@example.test',
-                                         '_workset_revision': 'b' * 64})
-        selected = self.prepare()
-        self.assertEqual(len(selected['selected']), 2)
-        reservation = (self.directory / 'workset-reserved.json').read_bytes()
-        state = {'draft': None, 'calls': [], 'mirrors': [], 'retired': [], 'retirement_error': False}
-        full_id = '452ddb83-69c9-479c-98ab-b6f690eab2a7'
-
-        def call(settings, method, params, **kwargs):
-            state['calls'].append((method, copy.deepcopy(params)))
-            if method == 'tasks.assignment.project':
-                return normal_projection(settings, params)
-            if method == 'emails.list_by_thread':
-                return {'emails': [{'id': '8ac7571d-778b-46a2-a55b-a08e703149f7'}]}
-            self.assertEqual(method, 'drafts.list')
-            row = state['draft']
-            return [copy.deepcopy(row)] if row and row['status'] == params.get('status', 'draft') else []
-
-        async def chat(settings, message, **kwargs):
-            state['calls'].append(('chat', copy.copy(kwargs)))
-            if kwargs['allow_tools'] == set():
-                self.assertEqual(kwargs['assignment_thread_key'], '<a@example.test>')
-                self.assertIsNone(kwargs.get('email_context'))
-                now = datetime.now(timezone.utc).isoformat()
-                state['draft'] = {'id': full_id, 'owner_id': settings.email_address,
-                    'thread_id': '<a@example.test>', 'to_addresses': ['a@example.test'],
-                    'cc_addresses': [], 'bcc_addresses': [], 'subject': 'Re: request',
-                    'body': 'Confirmed.', 'body_format': 'plain', 'in_reply_to': '<a@example.test>',
-                    'references': ['<a@example.test>'], 'original_message_id': '<a@example.test>',
-                    'attachment_paths': [], 'status': 'draft', 'created_at': now, 'updated_at': now}
-                return {'result': {'response': 'Composed.'}, 'approvals': [], 'notifications': []}
-            self.assertEqual(kwargs['allow_tools'], {'send_draft'})
-            self.assertNotIn('email_context', kwargs)
-            self.assertIn(full_id, message)
-            approve = kwargs['approval_predicate']
-            self.assertFalse(approve('send_draft', {'draft_id': 'wrong'}))
-            self.assertTrue(approve('send_draft', {'draft_id': full_id}))
-            self.assertFalse(approve('send_draft', {'draft_id': full_id}))
-            state['draft']['status'] = 'sent'
-            return {'result': {'response': 'Sent.'}, 'notifications': [], 'approvals': [
-                {'tool': 'send_draft', 'mode': 'once', 'input': {'draft_id': full_id}}]}
-
-        def mirror(settings, **kwargs):
-            state['mirrors'].append(kwargs['engine_draft_id'])
-            return 'Drafts', []
-
-        def retire(settings, *, commit, timeout, only_ids):
-            self.assertTrue(commit)
-            self.assertEqual(only_ids, {full_id})
-            self.assertEqual(state['draft']['status'], 'sent')
-            if state['retirement_error']:
-                raise OSError('unavailable')
-            state['retired'].extend(only_ids)
-            return {'ok': True, 'retired': [{}], 'skipped': [], 'failed': []}
-
-        with patch.dict(os.environ, {'CS_HEADLESS_SEND': '1'}), \
-                patch.object(cli.rpc, 'call_sync', side_effect=call), \
-                patch.object(cli.rpc, 'chat', side_effect=chat), \
-                patch('cs.gmail_drafts.append_draft', side_effect=mirror), \
-                patch.object(cli, '_retire_sent_mirrors', side_effect=retire), \
-                contextlib.redirect_stdout(io.StringIO()) as output, \
-                contextlib.redirect_stderr(io.StringIO()) as errors:
-            argv = compose_argv or ['draft-reply', 'reply in the thread with a@example.test: confirm',
-                                    '--thread-id', '<a@example.test>']
-            self.assertEqual(cli.main(argv), 0)
-            self.assertIn('engine draft ready: ' + full_id, output.getvalue())
-            state.update(full_id=full_id, output=output, errors=errors)
-            yield state
-            self.assertEqual((self.directory / 'workset-reserved.json').read_bytes(), reservation)
-
-    def test_stateful_selected_compose_then_exact_send(self):
-        with self.send_sequence() as state:
-            self.assertEqual(cli.main(['draft-send', state['full_id']]), 0)
-            self.assertEqual(state['draft']['status'], 'sent')
-            self.assertEqual(state['mirrors'], [state['full_id']])
-            self.assertEqual(state['retired'], [state['full_id']])
-            self.assertEqual(sum(c[0] == 'chat' for c in state['calls']), 2)
-
-    def test_stateful_send_rejects_changed_actual_draft_and_foreign_journal(self):
-        faults = ('recipient', 'cc', 'bcc', 'body', 'root', 'unknown-root', 'owner',
-                  'unknown-owner', 'reply', 'references', 'attachment', 'nonce', 'journal-owner', 'prefix')
-        for fault in faults:
-            with self.subTest(fault=fault):
-                # Independent run/context for each mutation; do not reuse quota or observations.
-                with tempfile.TemporaryDirectory() as directory:
-                    self.directory = Path(directory)
-                    self.directory.chmod(0o700)
-                    self.context['directory'] = directory
-                    self.context['nonce'] = fault * 3
-                    self.discovery['open'] = self.discovery['open'][:1]
-                    with patch.dict(os.environ, {'CS_OPERATOR_HEALTH_CONTEXT': json.dumps(self.context)}):
-                        with self.send_sequence() as state:
-                            row = state['draft']
-                            if fault == 'recipient':row['to_addresses'] = ['b@example.test']
-                            if fault == 'cc':row['cc_addresses'] = ['b@example.test']
-                            if fault == 'bcc':row['bcc_addresses'] = ['b@example.test']
-                            if fault == 'body':row['body'] = 'Changed.'
-                            if fault == 'root':row['thread_id'] = '<b@example.test>'
-                            if fault == 'unknown-root':
-                                row.update(thread_id=None, in_reply_to=None, references=[])
-                            if fault == 'owner':row['owner_id'] = 'foreign@example.test'
-                            if fault == 'unknown-owner':row.pop('owner_id')
-                            if fault == 'reply':row['in_reply_to'] = '<b@example.test>'
-                            if fault == 'references':row['references'] = ['<b@example.test>']
-                            if fault == 'attachment':row['attachment_paths'] = ['changed.pdf']
-                            if fault in ('nonce', 'journal-owner'):
-                                journal = next(self.directory.glob('workset-draft-*.json'))
-                                value = json.loads(journal.read_text())
-                                value['nonce' if fault == 'nonce' else 'owner_uid'] = 'foreign'
-                                journal.write_text(json.dumps(value))
-                            before = len(state['calls'])
-                            supplied = state['full_id'][:8] if fault == 'prefix' else state['full_id']
-                            self.assertIn(cli.main(['draft-send', supplied]), (1, 3))
-                            self.assertEqual(state['calls'][before:], [('drafts.list', {'status': 'draft'})])
-                            self.assertEqual(state['retired'], [])
-
-    def test_draft_mode_and_absent_marker_never_send(self):
-        for mode, marker in (('draft', '1'), ('send', '')):
-            with self.subTest(mode=mode, marker=marker), self.send_sequence(mode=mode) as state:
-                before = len(state['calls'])
-                with patch.dict(os.environ, {'CS_HEADLESS_SEND': marker}):
-                    self.assertEqual(cli.main(['draft-send', state['full_id']]), 3)
-                self.assertEqual(state['calls'][before:], [])
-                self.assertEqual(state['retired'], [])
-
-    def test_recorded_send_retirement_failure_never_retries_delivery(self):
-        with self.send_sequence() as state:
-            state['retirement_error'] = True
-            self.assertEqual(cli.main(['draft-send', state['full_id']]), 5)
-            self.assertEqual(state['draft']['status'], 'sent')
-            self.assertIn('Do not retry sending', state['errors'].getvalue())
-            self.assertEqual(sum(c[0] == 'chat' for c in state['calls']), 2)
-
-    def test_existing_ready_draft_uses_actual_typed_review_snapshot(self):
-        self.existing_ready_draft('<a@example.test>')
-
-    def test_ready_decision_for_another_root_cannot_authorize_send(self):
-        self.existing_ready_draft('<b@example.test>')
-
-    def existing_ready_draft(self, reviewed_root):
-        from cs.draft_state import inventory_proof
-        self.settings.cs_triage_mode = 'send'
-        self.settings.email_address = 'owner@example.test'
-        draft = {'id': 'ready-draft-full-id', 'owner_id': self.settings.email_address,
-                 'thread_id': '<a@example.test>', 'to_addresses': ['a@example.test'],
-                 'body': 'Ready reply.', 'status': 'draft'}
-        payload = self.typed_review()
-        payload['engine_drafts'] = [copy.deepcopy(draft)]
-        payload['drafts'][0]['engine_id'] = draft['id']
-        payload['drafts'][0]['thread_key'] = reviewed_root
-        payload['drafts_inventory'] = inventory_proof([], payload['engine_drafts'],
-            payload['drafts'], payload['gmail_drafts_observation'])
-        observe(self.settings, 'tasks', [])
-        observe(self.settings, 'review', payload)
-        reserve(self.settings, self.discovery)
-        sent = []
-
-        def call(settings, method, params, **kwargs):
-            if method == 'tasks.assignment.project':return normal_projection(settings, params)
-            self.assertEqual(method, 'drafts.list')
-            return [dict(draft, status='sent' if sent else 'draft')] if params['status'] == ('sent' if sent else 'draft') else []
-
-        async def chat(settings, message, **kwargs):
-            self.assertTrue(kwargs['approval_predicate']('send_draft', {'draft_id': draft['id']}))
-            sent.append(draft['id'])
-            return {'result': {'response': 'Sent.'}, 'notifications': [], 'approvals': [
-                {'tool': 'send_draft', 'mode': 'once', 'input': {'draft_id': draft['id']}}]}
-
-        with patch.dict(os.environ, {'CS_HEADLESS_SEND': '1'}), \
-                patch.object(cli.rpc, 'call_sync', side_effect=call), \
-                patch.object(cli.rpc, 'chat', side_effect=chat), \
-                patch.object(cli, '_retire_sent_mirrors', return_value={'ok': True}) as retire, \
-                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            if reviewed_root == '<a@example.test>':
-                self.assertEqual(cli.main(['draft-send', draft['id']]), 0)
-                self.assertEqual(sent, [draft['id']])
-                self.assertEqual(retire.call_args.kwargs['only_ids'], {draft['id']})
-            else:
-                self.assertEqual(cli.main(['draft-send', draft['id']]), 3)
-                self.assertEqual(sent, [])
-                retire.assert_not_called()
-
     def typed_review(self, *, hold=False):
         from cs.draft_state import inventory_proof
-        row = {'engine_id': 'draft-a', 'gmail_uid': None, 'gmail_uidvalidity': None,
-               'thread_key': '<a@example.test>', 'to': 'a@example.test', 'verdict': 'ready',
-               'workset_hold_reasons': ['mailbox_unreadable'] if hold else []}
-        payload = {'drafts': [row], 'gmail_drafts': [], 'engine_drafts': [{'id': 'draft-a'}],
-                   'gmail_drafts_observation': {'version': 1, 'complete': True,
-                       'search_complete': True, 'expected_uids': [], 'observed_uids': [], 'uidvalidity': '7'},
-                   'drafts_notes': ['A deliberately skipped mailbox remains reported.']}
-        payload['drafts_inventory'] = inventory_proof(payload['gmail_drafts'], payload['engine_drafts'],
-            payload['drafts'], payload['gmail_drafts_observation'])
-        self.assertIs(payload['drafts_inventory']['complete'], True)
-        return payload
+        row = {'draft_id':'draft-a','mailbox_id':'box','thread_key':'<a@example.test>',
+               'to':'a@example.test','verdict':'ready',
+               'workset_hold_reasons':['mailbox_unreadable'] if hold else []}
+        raw=[{'id':'draft-a','mailbox_id':'box'}]
+        return {'drafts':[row],'mailbox_drafts':raw,'drafts_inventory':inventory_proof(raw,[row]),
+                'drafts_notes':['A deliberately skipped mailbox remains reported.']}
 
     def test_typed_complete_review_preserves_policy_notes_and_allows_unrelated_work(self):
         payload = self.typed_review(hold=True)
@@ -248,10 +54,10 @@ class CliWorksetTests(unittest.TestCase):
         from cs.operator_workset import WorksetError
         for fault in ('proof', 'foreign-id', 'read-error', 'missing-fetch', 'unknown-hold'):
             payload = self.typed_review()
-            if fault == 'proof':payload['drafts_inventory']['gmail_count'] = 99
-            if fault == 'foreign-id':payload['drafts'][0]['engine_id'] = 'foreign'
-            if fault == 'read-error':payload['gmail_drafts_error'] = 'unavailable'
-            if fault == 'missing-fetch':payload['gmail_drafts_observation']['expected_uids'] = ['1']
+            if fault == 'proof':payload['drafts_inventory']['mailbox_count'] = 99
+            if fault == 'foreign-id':payload['drafts'][0]['draft_id'] = 'foreign'
+            if fault == 'read-error':payload['drafts_error'] = 'unavailable'
+            if fault == 'missing-fetch':payload['mailbox_drafts'] = []
             if fault == 'unknown-hold':payload['drafts'][0]['workset_hold_reasons'] = ['UNKNOWN_PRIVATE_SENTINEL']
             with self.subTest(fault=fault), self.assertRaises(WorksetError):
                 observe(self.settings, 'review', payload)
@@ -266,8 +72,7 @@ class CliWorksetTests(unittest.TestCase):
                 with patch.dict(os.environ, {'CS_OPERATOR_HEALTH_CONTEXT': json.dumps(context)}):
                     payload = self.typed_review()
                     payload['drafts'][0].update(thread_key=None, workset_hold_reasons=['root_missing'])
-                    payload['drafts_inventory'] = inventory_proof(payload['gmail_drafts'], payload['engine_drafts'],
-                        payload['drafts'], payload['gmail_drafts_observation'])
+                    payload['drafts_inventory'] = inventory_proof(payload['mailbox_drafts'],payload['drafts'])
                     observe(self.settings, 'review', payload)
                     observe(self.settings, 'tasks', [
                         {'thread_key': '<new@example.test>', field: value},
@@ -279,19 +84,18 @@ class CliWorksetTests(unittest.TestCase):
 
     def test_actual_reconciliation_missing_root_holds_all_to_and_cc_recipients(self):
         from cs import draft_state
-        raw = [{'id': 'multiple', 'to_addresses': ['a@example.test', 'z@example.test'],
+        raw = [{'id': 'multiple', 'mailbox_id':'box', 'to_addresses': ['a@example.test', 'z@example.test'],
                 'cc_addresses': ['cc@example.test'], 'body': 'Short reply',
                 'created_at': '2026-10-18T00:00:00Z'}]
-        rows, notes = draft_state.reconcile(self.settings, [], raw,
+        rows, notes = draft_state.reconcile(self.settings, raw,
             inbound=lambda *a, **kw: [], sent=lambda *a, **kw: [],
             settled=lambda *a: ({}, None), delivered=lambda *a: (None, None))
         self.assertIn('root_missing', rows[0]['workset_hold_reasons'])
         self.assertEqual(set(rows[0]['recipients']), {'a@example.test', 'z@example.test'})
         self.assertEqual(set(rows[0]['cc_recipients']), {'cc@example.test'})
         payload = self.typed_review()
-        payload.update(engine_drafts=raw, drafts=rows, drafts_notes=notes)
-        payload['drafts_inventory'] = draft_state.inventory_proof([], raw, rows,
-            payload['gmail_drafts_observation'])
+        payload.update(mailbox_drafts=raw, drafts=rows, drafts_notes=notes)
+        payload['drafts_inventory'] = draft_state.inventory_proof(raw, rows)
         self.assertIs(payload['drafts_inventory']['complete'], True)
         observe(self.settings, 'review', payload)
         observe(self.settings, 'tasks', [
@@ -307,7 +111,7 @@ class CliWorksetTests(unittest.TestCase):
         sentinel = 'PRIVATE_CUSTOMER_AND_CREDENTIAL_SENTINEL'
         for payload, reason, key in [
                 ({'drafts': [], 'drafts_notes': [sentinel]}, 'source_marked_incomplete', 'drafts_notes'),
-                ({'drafts': [], 'engine_drafts_error': sentinel}, 'review_inventory_incomplete', 'engine_drafts_error'),
+                ({'drafts': [], 'drafts_error': sentinel}, 'review_inventory_incomplete', 'drafts_error'),
                 ({'drafts': 'invalid'}, 'source_shape_invalid', None),
                 ({'drafts': [], 'total': 1}, 'source_total_mismatch', None)]:
             with self.subTest(reason=reason, key=key):

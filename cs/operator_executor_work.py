@@ -51,7 +51,7 @@ def selected_roots(directory, owner, nonce, results, *, send_mode, final=True, t
         messages=original.get('emails') if isinstance(original,dict) else original
         if (not isinstance(messages,list) or not messages
                 or any(not isinstance(m,dict) or not any(isinstance(m.get(k),str) and m[k].strip()
-                    for k in ('body','body_text','body_html','text','content')) for m in messages)):
+                    for k in ('body','body_plain','body_text','body_html','text','content')) for m in messages)):
             raise ValueError('selected_root_original_body_missing')
         required = [current,bodies[-1]]
         for family in ('dossier','history','contacted'):
@@ -81,24 +81,36 @@ def selected_roots(directory, owner, nonce, results, *, send_mode, final=True, t
                     tool_ids=[r['tool_id'] for r in required]+[result['tool_id']]))
                 break
         else:
-            drafts = [r for r in results if r['argv'][:1] == ['draft-reply'] and '--thread-id' in r['argv']
-                and r['argv'][r['argv'].index('--thread-id')+1] == root and r['exit_code'] == 0]
-            snapshots = [decode(read_private(p)) for p in Path(directory).glob('workset-draft-*.json')]
-            matched = [(r,s) for r in drafts for s in snapshots if s.get('root') == root
-                and s.get('nonce') == nonce and s.get('owner_uid') == owner
-                and isinstance(s.get('draft_id'),str) and s['draft_id']
-                and ('engine draft ready: '+s['draft_id']) in r['stdout'].decode()]
-            if len(matched) != 1:
-                raise ValueError('selected_root_outcome_missing')
-            draft,snapshot = matched[0]
-            ids = [r['tool_id'] for r in required]+[draft['tool_id']]
-            reason = 'draft_prepared'
-            if send_mode == 'send':
-                sends = [r for r in results if r['argv'][:2] == ['draft-send',snapshot['draft_id']] and r['exit_code'] == 0]
-                if len(sends) != 1:
-                    raise ValueError('selected_root_exact_send_missing')
-                ids.append(sends[0]['tool_id']);reason='draft_sent'
-            outcomes.append(dict(root=root,revision=selected['revision'],outcome='worked',reason=reason,tool_ids=ids))
+            command = "reply-send" if send_mode == "send" else "draft-reply"
+            found = []
+            for result in results:
+                argv = result["argv"]
+                if (argv[:1] != [command] or result["exit_code"] != 0 or "--thread-id" not in argv
+                        or argv[argv.index("--thread-id") + 1] != root or "--source-id" not in argv):
+                    continue
+                receipt = decode(result["stdout"])
+                source = argv[argv.index("--source-id") + 1]
+                if (receipt.get("ok") is not True or receipt.get("mode") != send_mode
+                        or receipt.get("thread_key") != root or receipt.get("source_email_id") != source
+                        or not any(message.get("id") == source for message in messages)
+                        or not receipt.get("request_key")):
+                    raise ValueError("selected_root_reply_receipt_invalid")
+                state = receipt.get("state")
+                if state in ("answered", "draft_exists") and receipt.get("effect_certainty") == "not-dispatched":
+                    found.append((result, "held", state))
+                elif state == "needs_review" and receipt.get("operation_id") and receipt.get("review"):
+                    found.append((result, "held", state))
+                elif (send_mode == "send" and state == "sent" and receipt.get("message_id")
+                        and receipt.get("effect_certainty") == "verified" and not receipt.get("draft_id")):
+                    found.append((result, "worked", "reply_sent"))
+                elif (send_mode == "draft" and state == "completed" and receipt.get("draft_id")
+                        and receipt.get("current_draft", {}).get("exists") is True):
+                    found.append((result, "worked", "draft_prepared"))
+            if len(found) != 1:
+                raise ValueError("selected_root_outcome_missing")
+            result, outcome, reason = found[0]
+            outcomes.append(dict(root=root,revision=selected['revision'],outcome=outcome,reason=reason,
+                tool_ids=[r['tool_id'] for r in required]+[result['tool_id']]))
     return outcomes
 
 
@@ -144,7 +156,7 @@ def _reply_disposition(item,results):
                     or any(value.get(k) for k in ('error','errors','truncated','has_more','next_cursor'))
                     or not isinstance(messages,list) or not messages or any(not isinstance(m,dict)
                     or m.get('body_complete',True) is not True or any(m.get(k) for k in ('body_truncated','body_error','incomplete'))
-                    or not any(isinstance(m.get(k),str) and m[k].strip() for k in ('body','body_text','body_html','text','content')) for m in messages)):
+                    or not any(isinstance(m.get(k),str) and m[k].strip() for k in ('body','body_plain','body_text','body_html','text','content')) for m in messages)):
                 continue
             inbound=[]
             for message in messages:
@@ -193,7 +205,7 @@ def _reply_disposition(item,results):
                 drafts=[r for r in results if r['argv'][:1]==['draft-reply'] and '--thread-id' in r['argv']
                     and r['argv'][r['argv'].index('--thread-id')+1]==root and r['exit_code']==0
                     and results.index(body)<results.index(r)<results.index(mark) and before(body,r) and before(r,mark)
-                    and 'engine draft ready: ' in r['stdout'].decode()]
+                    and decode(r['stdout']).get('ok') is True and decode(r['stdout']).get('draft_id')]
                 if len(drafts)==1:ids.append(drafts[0]['tool_id']);reason='engaged'
             if reason:
                 return dict(contact_id=item['contact_id'],outcome='worked',reason=reason,tool_ids=ids+[mark['tool_id']])

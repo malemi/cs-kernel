@@ -104,7 +104,7 @@ def safe_metadata(values: dict) -> dict:
             out[key] = hashlib.sha256(value.encode()).hexdigest()
     stages = values.get('achieved_stages')
     if (isinstance(stages, list) and len(stages) <= 5
-            and all(isinstance(item, str) and item in {'engine-saved', 'review-visible', 'sent', 'residual-copy-retired'} for item in stages)
+            and all(isinstance(item, str) and item in {'mailbox-draft-available', 'sent-confirmed', 'mailbox-draft-trashed', 'engine-saved', 'review-visible', 'sent', 'residual-copy-retired'} for item in stages)
             and len(stages) == len(set(stages))):
         out['achieved_stages'] = stages
     value = values.get('error_class')

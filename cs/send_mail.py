@@ -29,7 +29,7 @@ from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 
 from .config import Settings
-from .gmail_drafts import _imap  # reuse IMAP login
+from .imap_connection import _imap, find_special_folder
 
 _LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")  # markdown links — structured input
 
@@ -46,18 +46,6 @@ _LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")  # markdown links — structured 
 # fixes In-Reply-To and silently truncates a multi-id References to the first
 # id — verified.)
 _POLICY = policy.default.clone(max_line_length=998)
-
-
-def find_special_folder(M: imaplib.IMAP4_SSL, attr: str, fallback: str) -> str:
-    """Folder carrying the \\<attr> special-use flag (locale-proof)."""
-    typ, data = M.list()
-    if typ == "OK":
-        token = ("\\" + attr).lower()
-        for raw in data or []:
-            line = raw.decode(errors="replace") if isinstance(raw, bytes) else raw
-            if token in line.lower() and '"' in line:
-                return line.rsplit('"', 2)[-2]
-    return fallback
 
 
 def md_to_plain(body: str) -> str:

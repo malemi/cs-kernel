@@ -1,5 +1,20 @@
 # Changelog — cs-kernel
 
+## v0.75.0 — mailbox drafts (unreleased candidate)
+
+Current drafts are native mailbox resources addressed by an opaque handle.
+Review reads a single engine inventory. Interactive send and Trash act on the
+current mailbox draft. Scheduled draft preparation and authorized direct send
+use the selected source and a stable engine request. Both modes preserve a
+draft already present and hold an answered conversation. Campaign contacts
+reference their current mailbox draft. Fixed-template bulk sending uses SMTP.
+
+**Re-collaudo tier: full on BOTH maintained clones.** Verify both launcher
+permission scopes, ordinary selection on consecutive ticks, current mailbox
+edits, externally removed drafts, direct Sent confirmation and keyed recovery.
+
+**Current operational pin** (both maintained clones, 2026-11-23): **`v0.74.1`**.
+
 ## v0.74.1 — 2026-11-22 (PATCH, private unpublished release)
 
 This private release ships the reviewed selected-assignment read interface
@@ -997,7 +1012,7 @@ list, both on the FULL list regardless of diff size.
 Clones pin **tags only**. Every entry states which clones must re-collaudo
 and at which tier (design brief §6.6: static / +live read-only / full).
 
-**Current operational pin** (actual installed version on BOTH maintained clones, 2026-11-16): **`v0.73.3`**.
+**Historical operational pin** (2026-11-16): **`v0.73.3`**.
 
 **Historical operational pin** (2026-11-01): **`v0.70.1` on both clones**.
 

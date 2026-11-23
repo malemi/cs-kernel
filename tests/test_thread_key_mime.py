@@ -4,7 +4,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from cs import draft_state, gmail_drafts, operator_workset
+from cs import draft_state, operator_workset
 from cs.thread_key import normalize_key, thread_key
 
 
@@ -48,54 +48,17 @@ class IdentityHeaders(unittest.TestCase):
                     self.assertEqual(thread_key(OTHER, **{source: raw}), '')
                     self.assertEqual(normalize_key(raw), '')
 
-    def discover(self, references):
-        raw = ('To: person@example.test\r\nDate: Mon, 26 Oct 2026 00:00:00 +0000\r\n'
-               'Subject: Identity fixture\r\nReferences: ' + references + '\r\n\r\nBody\r\n').encode()
-        class Session:
-            untagged_responses = {'UIDVALIDITY': [b'6']}
-            def list(self):
-                return 'OK', [b'(\\Drafts) "/" "Drafts"']
-            def select(self, folder, readonly):
-                return 'OK', [b'1']
-            def uid(self, method, *args):
-                if method == 'SEARCH':
-                    return 'OK', [b'1']
-                return 'OK', [(b'1 (FLAGS (\\Draft) RFC822.SIZE ' + str(len(raw)).encode() + b')', raw)]
-            def logout(self):
-                pass
-        observation = {}
-        with patch.object(gmail_drafts, '_imap', return_value=Session()):
-            rows = gmail_drafts.list_drafts(None, observation=observation)
-        return rows, observation
-
-    def test_real_discovery_and_fail_closed_inventory_retention(self):
-        for raw, expected in ((encoded(ROOT[:50]) + ' ' + encoded(ROOT[50:]), ROOT),
-                              (encoded(ROOT[:50]), '')):
-            rows, observation = self.discover(raw)
-            self.assertEqual(len(rows), 1)
-            self.assertEqual(rows[0]['thread_key'], expected)
-            reconciled, _ = draft_state.reconcile(SimpleNamespace(engine_owner_uid='owner'), rows, [],
+    def test_mailbox_draft_retains_malformed_root_hold(self):
+        for references, expected in ((encoded(ROOT[:50]) + ' ' + encoded(ROOT[50:]), ROOT),
+                                     (encoded(ROOT[:50]), '')):
+            rows = [dict(id='native', mailbox_id='box', references=references,
+                         created_at='Mon, 26 Oct 2026 00:00:00 +0000',
+                         to_addresses=['person@example.test'], body='Body')]
+            reviewed, _ = draft_state.reconcile(SimpleNamespace(engine_owner_uid='owner'), rows,
                 inbound=lambda *a, **kw: [], sent=lambda *a, **kw: [], settled=lambda *a: ({}, None))
-            self.assertEqual(reconciled[0]['thread_key'], expected)
-            self.assertEqual('root_missing' in reconciled[0]['workset_hold_reasons'], not bool(expected))
-            proof = draft_state.inventory_proof(rows, [], reconciled, observation)
-            self.assertTrue(proof['complete'])
-            if not expected:
-                payload = dict(gmail_drafts=rows, engine_drafts=[], drafts=reconciled,
-                               gmail_drafts_observation=observation, drafts_inventory=proof)
-                discovery = dict(read_incomplete=None, assignment_incomplete=False,
-                                 open=[], resumed=[], human_work=[], assignment_audit=[])
-                candidates, held = operator_workset._inventory(discovery, {'review': payload, 'tasks': []}, 'owner')
-                self.assertEqual(candidates, {})
-                self.assertEqual(held, [dict(thread_key=None, reason='review_evidence_incomplete', source='review')])
-
-    def test_foreign_owner_conflict_is_not_repaired(self):
-        rows, _ = self.discover(encoded(ROOT))
-        rows[0].update(engine_draft_id='draft-one', engine_owner_uid='foreign')
-        reconciled, _ = draft_state.reconcile(SimpleNamespace(engine_owner_uid='owner'), rows, [],
-            inbound=lambda *a, **kw: [], sent=lambda *a, **kw: [], settled=lambda *a: ({}, None))
-        self.assertIn('identity_conflict', reconciled[0]['workset_hold_reasons'])
-        self.assertEqual(len(reconciled), 1)
+            self.assertEqual(reviewed[0]['thread_key'], expected)
+            self.assertEqual('root_missing' in reviewed[0]['workset_hold_reasons'], not bool(expected))
+            self.assertTrue(draft_state.inventory_proof(rows, reviewed)['complete'])
 
 
 if __name__ == '__main__':

@@ -120,37 +120,38 @@ cli.cmd_tasks_create=original_tasks_create
         if case in ('draft-root','send-root'):
             state_path=str(self.base/'draft-backend.json')
             text+='''
-from cs import gmail_drafts
 from pathlib import Path
 from datetime import datetime,timezone
 state_path=Path(__STATE_PATH__)
-def load_draft():return json.loads(state_path.read_text()) if state_path.exists() else None
+def load_state():return json.loads(state_path.read_text()) if state_path.exists() else dict(calls=[],draft=None,sent=[])
 prior_call=cli.rpc.call_sync
 def draft_call(settings,method,params=None,**kw):
+ if method=='system.capabilities':return dict(mailbox_reply=1,mailbox_drafts=1)
  if method=='drafts.list':
-  row=load_draft();return [row] if row and row['status']==(params or {}).get('status','draft') else []
+  row=load_state()['draft'];return [row] if row else []
+ if method=='drafts.compose_reply':
+  assert params['thread_key']==root and params['source_email_id']=='71993202-46d4-4431-ac39-43fd0b68b051'
+  assert params['operator_origin']=='scheduled_operator' and params['operator_origin_version']==1
+  assert params['request_key'] and params['request_text']=='Reply grounded in the fixture body'
+  state=load_state();state['calls'].append(dict(method=method,params=params))
+  result=dict(ok=True,request_key=params['request_key'],operation_id='fixture-operation',effect_certainty='verified')
+  if params['mode']=='draft':
+   now=datetime.now(timezone.utc).isoformat()
+   draft_id='gmail:'+__import__('hashlib').sha256(settings.engine_owner_uid.encode()).hexdigest()+':native-fixture-draft'
+   row=dict(id=draft_id,mailbox_id='fixture-mailbox',owner_id=settings.email_address,thread_id=root,to_addresses=['contact@fixture.test'],cc_addresses=[],bcc_addresses=[],subject='Re: Fixture',body='Fixture grounded reply.',body_format='plain',in_reply_to=root,references=[root],status='draft',created_at=now,updated_at=now)
+   state['draft']=row;result.update(state='completed',draft_id=draft_id,current_draft={'exists':True})
+  else:
+   assert params['mode']=='send' and state['draft'] is None
+   state['sent'].append('<fixture-delivery@fixture.test>')
+   result.update(state='sent',message_id=state['sent'][-1])
+  state_path.write_text(json.dumps(state));return result
  return prior_call(settings,method,params,**kw)
 cli.rpc.call_sync=draft_call
-async def draft_chat(settings,message,**kw):
- draft_id='452ddb83-69c9-479c-98ab-b6f690eab2a7'
- if kw['allow_tools']==set():
-  assert kw['assignment_thread_key']==root
-  now=datetime.now(timezone.utc).isoformat()
-  row=dict(id=draft_id,owner_id=settings.email_address,thread_id=root,to_addresses=['contact@fixture.test'],cc_addresses=[],bcc_addresses=[],subject='Re: Fixture',body='Fixture grounded reply.',body_format='plain',in_reply_to=root,references=[root],original_message_id=root,attachment_paths=[],status='draft',created_at=now,updated_at=now)
-  state_path.write_text(json.dumps(row));return dict(result={'response':'Fixture composed'},approvals=[],notifications=[])
- assert kw['allow_tools']=={'send_draft'}
- assert kw['approval_predicate']('send_draft',{'draft_id':draft_id}) is True
- row=load_draft();row['status']='sent';state_path.write_text(json.dumps(row))
- return dict(result={'response':'Fixture sent'},approvals=[dict(tool='send_draft',mode='once',input={'draft_id':draft_id})],notifications=[])
-cli.rpc.chat=draft_chat
-gmail_drafts.append_draft=lambda *a,**kw:('Drafts',[])
-gmail_drafts.list_drafts=lambda *a,**kw:[]
 '''.replace('__STATE_PATH__',repr(state_path))
             task="['tasks','create','--email','contact@fixture.test','--title','Needs human answer','--event-id','<fixture-root@fixture.test>','--thread-id','<fixture-root@fixture.test>','--json']"
-            model=model.replace(task,"['draft-reply','Reply grounded in the fixture body','--thread-id','<fixture-root@fixture.test>']")
+            model=model.replace(task,repr(['reply-send' if case=='send-root' else 'draft-reply','Reply grounded in the fixture body','--thread-id','<fixture-root@fixture.test>','--source-id','71993202-46d4-4431-ac39-43fd0b68b051']))
             if case=='send-root':
-                os.environ.update(CS_TRIAGE_MODE='send',CS_HEADLESS_SEND='1',CS_EXECUTOR_EXACT_SEND_IDS=json.dumps(['452ddb83-69c9-479c-98ab-b6f690eab2a7']))
-                model=model.replace("else:content=[dict(type='text',text='Fixture complete')]", "elif not globals().get('did_send'):\n  globals()['did_send']=True\n  content=[dict(type='tool_use',id='send-exact',name='run_cs',input={'argv':['draft-send','452ddb83-69c9-479c-98ab-b6f690eab2a7']})]\n else:content=[dict(type='text',text='Fixture complete')]")
+                os.environ.update(CS_TRIAGE_MODE='send',CS_HEADLESS_SEND='1')
         if case=='r3-already-classified':
             text=text.replace("campaign.list_campaigns = lambda settings: []","real_campaign_list = campaign.list_campaigns\ncampaign.list_campaigns = lambda settings: []")
             text=text.replace("campaign.pending = lambda settings, **kw: {'campaigns':[]}","real_campaign_pending = campaign.pending\ncampaign.pending = lambda settings, **kw: {'campaigns':[]}")
@@ -207,12 +208,16 @@ mailboxes.inbound_since_across=replies
             text=text.replace("campaign.pending = lambda settings, **kw: {'campaigns':[]}","real_campaign_pending = campaign.pending\ncampaign.pending = lambda settings, **kw: {'campaigns':[]}")
             text+='''
 from pathlib import Path
-from cs import mailboxes,gmail_drafts
+from cs import mailboxes
 backend=Path(__BACKEND__)
-if not backend.exists():backend.write_text(json.dumps(dict(lookups=0,contact=dict(id='fixture-contact',email='contact@fixture.test',state='drafted',draft_subject='Fixture outreach',draft_body='Fixture prewritten outreach.',dossier={}))))
+if not backend.exists():backend.write_text(json.dumps(dict(lookups=0,contact=dict(id='fixture-contact',email='contact@fixture.test',state='drafted',dossier={'mailbox_draft_id':'gmail:'+'a'*64+':fixture-campaign-draft'}))))
 prior_campaign_call=cli.rpc.call_sync
 def campaign_call(settings,method,params=None,**kw):
  data=json.loads(backend.read_text())
+ if method=='system.capabilities':return dict(mailbox_drafts=1)
+ if method=='drafts.get':
+  assert params=={'draft_id':data['contact']['dossier']['mailbox_draft_id']}
+  return dict(ok=True,draft=dict(id=params['draft_id'],owner_id=settings.email_address,to_addresses=['contact@fixture.test'],status='draft',body='Current mailbox campaign body.'))
  if method=='campaign.list':return [dict(id='fixture-campaign',name='fixture-campaign',contacts_by_state={'drafted':1})]
  if method=='campaign.contacts':return [data['contact']]
  if method=='campaign.update_contact':
@@ -228,7 +233,6 @@ def campaign_sent(settings,*a,**kw):
  return mailboxes.Fanout(rows=rows,read=[settings.email_address],unreadable=[],skipped=[])
 mailboxes.sent_to_across=campaign_sent
 mailboxes.close_sessions=lambda:None
-gmail_drafts.append_draft=lambda *a,**kw:('Drafts',[])
 '''.replace('__BACKEND__',repr(str(self.base/'campaign-backend.json'))).replace('__FALLBACK__',repr(case=='repair-queue-fallback'))
             actions=[['campaign','queue-draft','fixture-contact','--commit']]
             if case=='repair-queue-fallback':actions.append(['campaign','reconcile','fixture-contact','--commit'])
@@ -260,7 +264,7 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
         fixture=self.base/'fixture-services'
         for name in ('sitecustomize.py','fixture_backend.py'):
             compile((fixture/name).read_text(),str(fixture/name),'exec')
-        launch_code="import sys; from cs import operator_recovery as r; a=r._run('unused',['Write','Edit'],executor='pydantic',allows=sorted(r.EXACT_SEND_ALLOW_RULES) if __SEND__ else None); sys.exit(0 if a.executor_facts and not a.health_failure else 1)".replace('__SEND__',repr(self.integration_case=='send-root'))
+        launch_code="import sys; from cs import operator_recovery as r; a=r._run('unused',['Write','Edit'],executor='pydantic',allows=sorted(r.SEND_ALLOW_RULES) if __SEND__ else None); sys.exit(0 if a.executor_facts and not a.health_failure else 1)".replace('__SEND__',repr(self.integration_case=='send-root'))
         command=[str(SDK),'-c',launch_code]
         import threading,time,importlib.metadata
         from cs.operator_health import identity
@@ -387,7 +391,8 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
     def test_repaired_queue_actual_canonical_producers(self):
         self.setup_integration('repair-queue');receipt=self.launch()
         state=json.loads((self.base/'campaign-backend.json').read_text())
-        self.assertTrue(state['contact']['dossier']['gmail_draft_pushed'])
+        self.assertEqual(state['contact']['dossier'],{'mailbox_draft_id':'gmail:'+'a'*64+':fixture-campaign-draft'})
+        self.assertNotIn('draft_body',state['contact'])
         self.assertEqual(receipt['executor_facts']['phases']['campaign_work'],'completed')
 
     def test_repaired_queue_reconcile_fallback_actual_canonical_producers(self):
@@ -567,11 +572,19 @@ campaign.reconcile=lambda settings,contact_id,**kw:dict(ok=True,email='contact@f
         self.setup_integration('draft-root')
         receipt=self.launch()
         self.assertEqual(receipt['executor_facts']['work_outcomes'][0]['reason'],'draft_prepared')
+        state=json.loads((self.base/'draft-backend.json').read_text())
+        self.assertTrue(state['draft']['id'].startswith('gmail:'))
+        self.assertEqual(state['sent'],[])
+        self.assertEqual([call['params']['mode'] for call in state['calls']],['draft'])
 
-    def test_selected_root_actual_exact_send_disposition(self):
+    def test_selected_root_actual_direct_send_disposition(self):
         self.setup_integration('send-root')
         receipt=self.launch()
-        self.assertEqual(receipt['executor_facts']['work_outcomes'][0]['reason'],'draft_sent')
+        self.assertEqual(receipt['executor_facts']['work_outcomes'][0]['reason'],'reply_sent')
+        state=json.loads((self.base/'draft-backend.json').read_text())
+        self.assertEqual(state['draft'],None)
+        self.assertEqual(state['sent'],['<fixture-delivery@fixture.test>'])
+        self.assertEqual([call['params']['mode'] for call in state['calls']],['send'])
 
     def test_selected_root_actual_task_disposition_with_dossier_guards(self):
         self.setup_integration('worked-root')

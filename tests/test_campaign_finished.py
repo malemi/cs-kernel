@@ -133,6 +133,11 @@ def _stub_engine(*, state: str = "sent", replied: bool = False) -> None:
     reachable) and no reminder/SMS stamp (so the day guards are open)."""
 
     def fake_call_sync(settings, method, params, timeout=None):
+        if method == "system.capabilities":
+            return {"mailbox_drafts":1}
+        if method == "drafts.get":
+            return {"ok":True,"draft":{"id":"native","owner_id":settings.email_address,
+                    "status":"draft","to_addresses":["person@example.test"],"body":"Current message"}}
         if method == "campaign.list":
             return [{"id": "camp-1", "name": PACK}]
         if method == "campaign.contacts":
@@ -141,8 +146,7 @@ def _stub_engine(*, state: str = "sent", replied: bool = False) -> None:
                  "sent_at": "2026-07-22T09:00:00Z",
                  "dossier": {"phone": "+393331234567", "name": "Anna"}}
             if state == "drafted":
-                c["draft_subject"] = "Ciao"
-                c["draft_body"] = "Un messaggio abbastanza lungo da superare il guard."
+                c["dossier"]["mailbox_draft_id"] = "native"
             return [c]
         raise AssertionError(f"unexpected RPC: {method} {params}")
 

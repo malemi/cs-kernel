@@ -47,12 +47,18 @@ def record(settings, value, *, command, root=None):
         stages = value.get("achieved_stages") or []
         certainty = value.get("effect_certainty", "unknown")
         cause = CAUSES.get(value.get("cause"), "unknown")
-        if value.get("state") == "review-visible" and value.get("ok") is True:
-            cause = "review_verified"
-        if value.get("cause") == "publication-or-generation-incomplete" and certainty == "not-dispatched" and "engine-saved" in stages:
-            cause = "saved_unpublished"
-        if value.get("cause") == "sent_mirror_recovery_unavailable" and certainty == "unknown":
-            cause = "uncertain_provider_outcome"
+        state = value.get("state")
+        if value.get("ok") is True:
+            if state == "sent" and value.get("message_id") and certainty == "verified":
+                cause, stages = "sent_confirmed", ["sent-confirmed"]
+            elif state == "completed" and value.get("draft_id") and (value.get("current_draft") or {}).get("exists"):
+                cause, stages, certainty = "mailbox_draft_available", ["mailbox-draft-available"], "verified"
+            elif state == "trashed":
+                cause, stages = "mailbox_draft_trashed", ["mailbox-draft-trashed"]
+            elif state in {"answered", "draft_exists", "needs_review"}:
+                cause = "operation_held"
+        if certainty in {"unknown", "unconfirmed"} and not value.get("ok"):
+            cause, certainty = "uncertain_provider_outcome", "unknown"
         if cause in {"automatic_manual_hold", "assignment_hold", "local_send_hold", "operation_held"}:
             status, reason, outcome = "held", "policy-hold", "held"
         elif value.get("ok") is True:
@@ -76,10 +82,10 @@ def record(settings, value, *, command, root=None):
         if previous and causal.selected() and causal.selected()["outcome"] != "accepted":
             return
         decision = causal.decision(check, cause, layer="exact_draft", command=command, outcome=outcome, replace=bool(causal.selected() and causal.selected()["outcome"] == "accepted"),
-            engine_saved="engine-saved" in stages, review_visible="review-visible" in stages,
-            sent_verified="sent" in stages, operator_requested=value.get("audit_reason") == "explicit_operator_request")
+            engine_saved="engine-saved" in stages, review_visible="mailbox-draft-available" in stages,
+            sent_verified="sent-confirmed" in stages or "sent" in stages, operator_requested=value.get("audit_reason") == "explicit_operator_request")
         metadata = {"command": command, "draft_id": value.get("draft_id"), "root_id": value.get("root") or root,
-                    "operation_id": value.get("operation_id"), "request_revision": value.get("expected_snapshot"),
+                    "operation_id": value.get("request_key") or value.get("operation_id"), "request_revision": value.get("expected_snapshot"),
                     "achieved_stages": stages, "causal": decision}
         stage = "cleanup" if command == "draft-retire" else "authority" if reason == "policy-hold" else "verification"
         event = emit(settings, stage, status, reason=reason, effect_certainty=certainty, **metadata)

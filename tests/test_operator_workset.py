@@ -85,6 +85,18 @@ class WorksetTests(unittest.TestCase):
         discovery['open'][0]['last_inbound_date'] = '2026-12-01'
         self.assertEqual(self.selected(reserve(self.settings, discovery))[0], '<a@example.test>')
 
+    def test_new_ready_mailbox_draft_reserves_same_inbound_on_next_tick(self):
+        discovery = self.discovery('a', 'b', 'c', 'd')
+        self.observe()
+        first = self.selected(reserve(self.settings, discovery))
+        root = first[0]
+        self.new_run()
+        self.observe(drafts=[dict(draft_id='native-handle', mailbox_id='box', thread_key=root,
+                                  verdict='ready', composed_at='2026-11-23T00:00:00Z')])
+        second = self.selected(reserve(self.settings, discovery))
+        self.assertIn(root, second)
+        self.assertEqual(len(set(first) | set(second)), 3)
+
     def test_held_roots_and_address_takeover(self):
         self.observe([{'id': 't', 'thread_id': '<b@example.test>', 'contact_email': 'taken@example.test'},
                       {'id': 'missing'}], [{'id': 'd', 'thread_id': '<a@example.test>', 'verdict': 'replace'}])

@@ -120,6 +120,10 @@ def operation_identity(event: dict, *, uncertain: bool = False) -> str:
 
 
 def same_cause_scope(previous: dict, event: dict) -> bool:
+    if event.get("achieved_stages") == ["sent-confirmed"]:
+        identity = "draft_id" if event.get("command") == "draft-send" else "root_id"
+        return bool(previous.get("operation_id") and previous["operation_id"] == event.get("operation_id")
+                    and previous.get(identity) and previous[identity] == event.get(identity))
     if previous.get("operation_id") or event.get("operation_id"):
         return all(previous.get(key) and previous[key] == event.get(key) for key in ("operation_id", "draft_id", "root_id", "request_revision"))
     old_refs = previous.get("causal", {}).get("refs", {})
@@ -134,6 +138,11 @@ def same_cause_scope(previous: dict, event: dict) -> bool:
 
 def verified_exact_delivery(event: dict) -> bool:
     cause = event.get("causal", {})
+    if (event.get("command") in {"reply-send", "draft-send"} and event.get("status") == "verified"
+            and event.get("effect_certainty") == "verified" and event.get("achieved_stages") == ["sent-confirmed"]
+            and cause.get("check") == "exact_draft_operation" and cause.get("cause") == "sent_confirmed"
+            and cause.get("facts", {}).get("sent_verified") is True):
+        return True
     return (event.get("command") == "draft-send"
         and event.get("effect_certainty") in {"verified", "recipient-received"}
         and event.get("status") == "delivered-cleanup-incomplete"
@@ -277,7 +286,7 @@ def observe(state: dict, event: dict, now: float) -> None:
     uncertain = status == "unknown-effect" or (
         (stage in {"provider", "persistence", "verification", "cleanup"}
          or event.get("causal", {}).get("layer") == "exact_draft"
-         or (stage == "cli" and event.get("command") in {"draft-send", "draft-reply", "draft-retire", "chat", "campaign"}))
+         or (stage == "cli" and event.get("command") in {"reply-send", "draft-delete", "draft-send", "draft-reply", "draft-retire", "chat", "campaign"}))
         and failed and event["effect_certainty"] == "unknown"
     )
     failure_key = ":".join(
@@ -290,7 +299,7 @@ def observe(state: dict, event: dict, now: float) -> None:
     )
     if verified_exact_delivery(event):
         for key, previous in list(state["failures"].items()):
-            if (previous.get("uncertain") and previous.get("command") == "draft-send"
+            if (previous.get("uncertain") and previous.get("command") == event.get("command")
                     and when > previous.get("last", previous["at"]) and same_cause_scope(previous, event)
                     and matching_evidence(previous, event, verified=True)):
                 state["failures"].pop(key)

@@ -81,14 +81,13 @@ class BudgetTests(unittest.TestCase):
                 return delay('gmail', [])
             def rpc(settings, method, *args, **kwargs):
                 if method == 'drafts.list':
-                    return [{'id': 'raw-kept'}]
+                    return delay('gmail', [{'id':'raw-kept','mailbox_id':'box','owner_id':settings.email_address,'status':'draft'}])
                 if method == 'tasks.list':
                     return [{'id': 'task-kept', 'thread_key': '<task@test>'}]
                 raise AssertionError(method)
             def projections(settings, roots, **kwargs):
                 return delay('projection', {key: task_assignment._unknown(key, 'simulated') for key in roots})
             with patch.object(review.time, 'monotonic', side_effect=lambda: clock[0]), \
-                 patch.object(review.gmail_drafts, 'list_drafts', side_effect=gmail), \
                  patch.object(review.rpc, 'call_sync', side_effect=rpc), \
                  patch.object(review.draft_state, 'reconcile', side_effect=lambda *a, **kw: delay('reconcile', ([], []))), \
                  patch.object(review.campaign, 'list_campaigns', return_value=[]), \
@@ -109,7 +108,7 @@ class BudgetTests(unittest.TestCase):
             result = review._incomplete(result, stalled)
             self.assertFalse(result.get('drafts_inventory', {}).get('complete'))
             if stalled != 'gmail':
-                self.assertEqual(result['engine_drafts'], [{'id': 'raw-kept'}])
+                self.assertEqual(result['mailbox_drafts'][0]['id'], 'raw-kept')
             for root in result.get('_known_roots', []):
                 self.assertIn(root, {row['thread_key'] for row in result['assignments']})
 
@@ -224,8 +223,8 @@ def gmail(settings, *, observation):
 
 def rpc(settings, method, params, **kwargs):
     if method == 'drafts.list':
-        return [{'id':'engine-raw-kept', 'thread_id':'<engine-known@test>',
-                 'to_addresses':['another@test'], 'created_at':'2026-10-19T00:00:00Z',
+        return [{'id':'engine-raw-kept','mailbox_id':'box','owner_id':settings.email_address,'status':'draft', 'thread_id':'<engine-known@test>',
+                 'to_addresses':['another@test'], 'created_at':'Mon, 19 Oct 2026 00:00:00 +0000',
                  'body':'Retained engine draft'}]
     if method == 'emails.needs_reply':
         return {'threads':{}}
@@ -238,7 +237,6 @@ def stall(*args, **kwargs):
         'group':os.getpgrp(), 'stage':'draft reconciliation mailbox read'}))
     time.sleep(30)
 
-review.gmail_drafts.list_drafts = gmail
 review.rpc.call_sync = rpc
 mailboxes.headers_since_across = stall
 sys.argv = ['cs.review', '--worker']
@@ -277,16 +275,15 @@ raise SystemExit(cli.cmd_review(argparse.Namespace(json=True)))
                 self.assertLess(time.monotonic()-started, 5)
                 payload = json.loads(result.stdout)
                 self.assertFalse(payload['drafts_inventory']['complete'])
-                self.assertEqual(payload['gmail_drafts'][0]['uid'], '17')
-                self.assertEqual(payload['engine_drafts'][0]['id'], 'engine-raw-kept')
+                self.assertEqual(payload['mailbox_drafts'][0]['id'], 'engine-raw-kept')
                 self.assertEqual(payload['review_coverage']['assignment_listing'], 'unknown')
                 self.assertEqual(payload['review_coverage']['mailbox_discovery'], 'unknown')
                 self.assertEqual(payload['review_coverage']['aggregation'], 'incomplete')
                 held = {row['thread_key']:row for row in payload['assignments']}
-                self.assertEqual(set(held), {'<gmail-known@test>', '<engine-known@test>'})
+                self.assertEqual(set(held), {'<engine-known@test>'})
                 self.assertTrue(all(row['hold_auto_reply'] and not row['complete'] for row in held.values()))
                 failure = json.loads((evidence/'workset-review-failure.json').read_text())
-                self.assertEqual((failure['reason'], failure['key']), ('review_inventory_incomplete', 'drafts_inventory'))
+                self.assertEqual((failure['reason'], failure['key']), ('review_inventory_incomplete', 'drafts_reconcile_error'))
                 self.assertFalse((evidence/'workset-review.json').exists())
                 self.assertIn('draft reconcile: starting', result.stderr)
                 self.assertIn('draft reconcile: incomplete', result.stderr)

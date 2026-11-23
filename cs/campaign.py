@@ -3,7 +3,7 @@
 Two lifecycles, INFERRED from contact shape (the engine `campaigns` row has no
 policy column):
 
-  composed-draft  contacts carry draft_subject/draft_body. Per contact: dedup
+  composed-draft  contacts name a mailbox draft. Per contact: dedup
                   against the Sent archive FIRST; if the mail already went out
                   (even by hand, out-of-band) reconcile the stale `drafted` row
                   to `sent` and NEVER re-send; otherwise the composed mail is a
@@ -83,7 +83,10 @@ def _is_it_mobile(phone: Optional[str]) -> bool:
 
 
 def _has_draft(c: dict) -> bool:
-    return bool((c.get("draft_subject") or "").strip() or (c.get("draft_body") or "").strip())
+    dossier = c.get("dossier") or {}
+    return (bool(dossier.get("mailbox_draft_id") or dossier.get("mailbox_draft_request"))
+            and dossier.get("mailbox_draft_kind") != "fixed-template"
+            or bool(c.get("draft_subject") or c.get("draft_body")))
 
 
 def kind_of(contacts: list[dict]) -> str:
@@ -270,7 +273,7 @@ def _composed_draft_items(settings, contacts, dedup_days) -> list[dict]:
                 items.append(_unjudgeable(c, unreadable, "prior contact"))
             else:  # genuinely unsent → a real pending outreach (CS_TRIAGE_MODE)
                 items.append({"action": "send_draft", "contact_id": c["id"],
-                              "email": c["email"], "draft_subject": c.get("draft_subject")})
+                              "email": c["email"], "draft_id": (c.get("dossier") or {}).get("mailbox_draft_id")})
         elif c["state"] == "sent":
             d = c.get("dossier") or {}
             # A reconciled contact carries a reconcile-time `sent_at` (LATER than
@@ -519,7 +522,7 @@ def _finished_send_refusal(settings, c: dict, now: Optional[datetime]) -> Option
 
     They reach a contact by id and never touch `pending()`, so without this a
     finished campaign still mails through them. Unlike the fixed-template
-    senders they do NOT require a pack (their copy is on the contact row), so a
+    senders they do NOT require a pack (their copy is in the mailbox), so a
     campaign with no pack passes — but a pack that exists and cannot be LOADED
     refuses: an unreadable pack is not evidence that the campaign is running."""
     camp_name = c.get("_campaign_name") or ""
@@ -532,26 +535,63 @@ def _finished_send_refusal(settings, c: dict, now: Optional[datetime]) -> Option
     return None
 
 
-def send_draft(settings, contact_id: str, *, commit: bool = False,
-               now: Optional[datetime] = None) -> dict:
-    """Composed-draft outreach: surface the pre-written mail for review
-    (CS_TRIAGE_MODE=draft → the operator's Gmail Drafts) or send it (=send →
-    cs-SMTP).
+def _queue_pack(settings, contact_id, email, subject, body, dossier, *, html=None, cc=None):
+    params = {"contact_id": contact_id, "draft_subject": subject, "draft_body": html or body,
+              "draft_body_format": "html" if html else "plain", "draft_cc": [cc] if cc else [],
+              "draft_request_key": "campaign-pack:" + contact_id,
+              "dossier": {**dossier, "mailbox_draft_kind": "fixed-template"}}
+    result = rpc.call_sync(settings, "campaign.update_contact", params)
+    contact = result.get("contact") if isinstance(result, dict) and result.get("ok") is True else None
+    handle = (contact.get("dossier") or {}).get("mailbox_draft_id") if contact else None
+    if not handle or contact.get("id") != contact_id:
+        raise RuntimeError("engine did not bind the campaign contact to its mailbox draft")
+    return {"ok": True, "email": email, "mode": "draft", "draft_id": handle}
 
-    DEDUP FIRST against the Sent archive — if the mail is already there (the
-    contact was mailed, even out-of-band) REFUSE and flag reconcile; never
-    re-mail. A campaign whose pack says it is over refuses before any of that,
-    and so does a contact a human has taken over (`cs escalated`). CS_PAUSE
-    blocks everything."""
+
+def _mark_mailbox_delivery(settings, contact, draft_id, message_id, subject=None):
+    if contact.get("state") != "sent" or contact.get("message_id") != message_id:
+        marked = rpc.call_sync(settings, "campaign.update_contact", {
+            "contact_id": contact["id"], "state": "sent", "message_id": message_id})
+        if not isinstance(marked, dict) or marked.get("ok") is not True:
+            return {"ok": False, "email": contact["email"], "message_id": message_id,
+                    "error": "Sent verified; contact update failed"}
+    from .state import State
+    ledger = State(settings.db_path)
+    try:
+        with ledger.conn:
+            ledger.conn.execute(
+                "INSERT INTO sends(category,key,email,subject,message_id,status,dry_run,sent_at) "
+                "SELECT 'campaign', ?, ?, ?, ?, 'sent', 0, ? WHERE NOT EXISTS "
+                "(SELECT 1 FROM sends WHERE category='campaign' AND key=? AND message_id=? AND status='sent')",
+                (contact["id"], contact["email"], subject or "", message_id, _time.now_utc().timestamp(),
+                 contact["id"], message_id))
+    finally:
+        ledger.conn.close()
+    return {"ok": True, "email": contact["email"], "mode": "send",
+            "message_id": message_id, "draft_id": draft_id}
+
+
+def send_draft(settings, contact_id: str, *, commit: bool = False, queue_only: bool = False,
+               now: Optional[datetime] = None) -> dict:
+    """Inspect or explicitly send a named current mailbox draft after campaign admission."""
     c = _get_contact(settings, contact_id)
     if c is None:
         return {"ok": False, "error": "contact not found"}
     email = c["email"]
+    from . import contextual_email, send_guard
+    mode = "draft" if queue_only else (settings.cs_triage_mode or "draft").lower()
+    draft_id = (c.get("dossier") or {}).get("mailbox_draft_id")
+    if commit and draft_id and mode == "send" and not contextual_email.scheduled():
+        try:
+            confirmed = contextual_email.campaign_delivery(settings, draft_id, status_only=True)
+        except RuntimeError as exc:
+            return {"ok": False, "email": email, "draft_id": draft_id,
+                    "refused": "contextual_email", "error": str(exc)}
+        if confirmed:
+            return _mark_mailbox_delivery(settings, c, draft_id, confirmed)
     over = _finished_send_refusal(settings, c, now)
     if over:
         return over
-    if not _has_draft(c):
-        return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
     # dedup truth: never re-mail what is already in Sent — in ANY of this
     # company's configured scope with self-owner skip; unreadable sources refuse.
     threads, unreadable = _sent_threads_to(settings, email, settings.dedup_days)
@@ -567,154 +607,25 @@ def send_draft(settings, contact_id: str, *, commit: bool = False,
     if _pause_active(settings):
         return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
 
-    subject = c.get("draft_subject") or ""
-    body = c.get("draft_body") or ""
-    mode = (settings.cs_triage_mode or "draft").lower()
-    dossier = dict(c.get("dossier") or {})
-    from . import contextual_email
     try:
-        contextual = contextual_email.campaign_draft(settings, c)
+        draft = contextual_email.campaign_draft(settings, c)
+        if mode != "send" or not commit or contextual_email.scheduled():
+            return {"ok": True, "email": email, "draft_id": draft["id"],
+                    "mode": "draft" if contextual_email.scheduled() else mode, "dry_run": not commit}
+        send_guard.check(settings, email, draft["body"])
+        mid = contextual_email.campaign_delivery(settings, draft["id"])
+    except send_guard.SendGuardRefusal as exc:
+        return {"ok": False, "email": email, "refused": "send_guard",
+                "tells": list(exc.tell_names), "error": str(exc)}
     except RuntimeError as exc:
         return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
-    if contextual is not None:
-        draft, email_context = contextual
-        # The original engine draft is the authoritative review surface; never
-        # reconstruct a contextual body into an independent cs-SMTP message.
-        if mode != "send" or not commit:
-            return {"ok": True, "email": email, "mode": mode,
-                    "engine_draft_id": draft["id"], "dry_run": not commit,
-                    "next": "review the existing engine draft"}
-        try:
-            mid = contextual_email.send_campaign_draft(settings, draft, email_context)
-        except RuntimeError as exc:
-            return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
-        rpc.call_sync(settings, "campaign.update_contact",
-                      {"contact_id": contact_id, "state": "sent", "message_id": mid})
-        _record_send(settings, contact_id=contact_id, email=email, subject=draft.get("subject") or "", message_id=mid)
-        return {"ok": True, "email": email, "mode": "send", "message_id": mid,
-                "engine_draft_id": draft["id"]}
-
-    if mode != "send":  # draft mode — review surface, idempotent per contact
-        if dossier.get("gmail_draft_pushed"):
-            return {"ok": True, "email": email, "noop": "draft already in Gmail Drafts"}
-        if not commit:
-            return {"ok": True, "dry_run": True, "email": email, "mode": "draft",
-                    "would": "append to the operator's Gmail Drafts for review"}
-        from . import gmail_drafts
-        # `body` is the same MODEL-COMPOSED draft_body the send-mode branch
-        # below gates with send_guard via send_mail.send(body_md=body) — mark
-        # it here too so a tell logs a WARNING and comes back as
-        # guard_warnings; the draft is the review surface, so it is appended
-        # either way, never blocked.
-        folder, guard_warnings = gmail_drafts.append_draft(
-            settings, email, subject, body, body_md=True)
-        dossier["gmail_draft_pushed"] = True
-        dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
-        rpc.call_sync(settings, "campaign.update_contact",
-                      {"contact_id": contact_id, "dossier": dossier})
-        out = {"ok": True, "email": email, "mode": "draft", "pushed_to": folder}
-        if guard_warnings:
-            out["guard_warnings"] = guard_warnings
-        return out
-
-    # send mode (CS_TRIAGE_MODE=send) — autonomous send
-    if not commit:
-        return {"ok": True, "dry_run": True, "email": email, "mode": "send",
-                "would": "cs-SMTP send + mark sent"}
-    from . import send_guard, send_mail
-    # The Sent-archive dedup above is the double-send backstop (a crash after the
-    # send is caught next run as 'already in Sent' → reconcile), so send then mark.
-    #
-    # `body` is a MODEL-COMPOSED draft, so send_mail gates it (cs/send_guard.py).
-    # A refusal is caught HERE only to report it in this verb's own JSON shape —
-    # every state write is below the call, so the draft stays, the contact stays
-    # out of 'sent', and no `sends` row appears, exactly as with any other refusal.
-    try:
-        mid = send_mail.send(settings, email, subject, body_md=body,
-                             cc=settings.email_address or None)
-    except send_guard.SendGuardRefusal as e:
-        return {"ok": False, "email": email, "refused": "send_guard",
-                "tells": list(e.tell_names), "error": str(e),
-                "next": "review the draft by hand — the composed body did not "
-                        "read as a message to the customer"}
-    rpc.call_sync(settings, "campaign.update_contact",
-                  {"contact_id": contact_id, "state": "sent", "message_id": mid})
-    _record_send(settings, contact_id=contact_id, email=email, subject=subject, message_id=mid)
-    return {"ok": True, "email": email, "mode": "send", "message_id": mid}
+    return _mark_mailbox_delivery(settings, c, draft["id"], mid, draft.get("subject"))
 
 
 def queue_draft(settings, contact_id: str, *, commit: bool = False,
                 now: Optional[datetime] = None) -> dict:
-    """Headless-SAFE outreach: surface a composed-draft contact's pre-written
-    mail in the operator's Gmail Drafts for review. NEVER sends — not via SMTP,
-    not regardless of CS_TRIAGE_MODE. (The send-capable path is `send_draft`,
-    deliberately kept out of the headless allow-list.)
-    Dedup-first: refuses + flags reconcile if the address is already in Sent,
-    and refuses outright for a contact a human has taken over (`cs escalated`)
-    — a draft one keystroke from the wire is a delivery path.
-    Idempotent per contact (won't push a second Gmail draft).
-
-    A finished campaign is refused here too. This verb sends nothing, but what
-    it produces is a message addressed to a customer sitting one keystroke from
-    the wire — that is a delivery path, not a report."""
-    c = _get_contact(settings, contact_id)
-    if c is None:
-        return {"ok": False, "error": "contact not found"}
-    email = c["email"]
-    over = _finished_send_refusal(settings, c, now)
-    if over:
-        return over
-    if not _has_draft(c):
-        return {"ok": False, "email": email, "error": "no draft_subject/body on contact"}
-    threads, unreadable = _sent_threads_to(settings, email, settings.dedup_days)
-    if c["state"] == "sent" or threads:
-        return {"ok": False, "email": email, "next": "reconcile",
-                "error": "already in Sent archive — reconcile, do NOT re-send"}
-    # A queued draft is a message to a customer one keystroke from the wire, so
-    # it fails closed on incomplete evidence exactly like a send.
-    blocked = _evidence_refusal(email, unreadable, "queue a draft")
-    if blocked:
-        return blocked
-    taken = _escalation_block(settings, email)
-    if taken:
-        return taken
-    if _pause_active(settings):
-        return {"ok": False, "email": email, "blocked": "CS_PAUSE active"}
-    dossier = dict(c.get("dossier") or {})
-    from . import contextual_email
-    try:
-        contextual = contextual_email.campaign_draft(settings, c)
-    except RuntimeError as exc:
-        return {"ok": False, "email": email, "refused": "contextual_email", "error": str(exc)}
-    if contextual is not None:
-        draft, _ = contextual
-        # A provider APPEND is a new reply write. This kernel path cannot hold
-        # the engine's assignment admission through that external transport;
-        # the existing engine-owned draft is the only contextual review surface.
-        return {"ok": False, "email": email, "refused": "contextual_email",
-                "engine_draft_id": draft["id"],
-                "error": "Contextual drafts cannot be mirrored into Gmail Drafts",
-                "next": "review the existing engine draft"}
-    if dossier.get("gmail_draft_pushed"):
-        return {"ok": True, "email": email, "noop": "draft already in Gmail Drafts"}
-    if not commit:
-        return {"ok": True, "dry_run": True, "email": email,
-                "would": "append to the operator's Gmail Drafts for review (no send)"}
-    from . import gmail_drafts
-    # Same draft_body a send-mode send_draft() would gate with send_guard —
-    # mark it body_md=True so a tell logs a WARNING and comes back as
-    # guard_warnings; queue_draft never sends, so it never blocks on one.
-    folder, guard_warnings = gmail_drafts.append_draft(
-        settings, email, c.get("draft_subject") or "", c.get("draft_body") or "",
-        body_md=True)
-    dossier["gmail_draft_pushed"] = True
-    dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
-    rpc.call_sync(settings, "campaign.update_contact",
-                  {"contact_id": contact_id, "dossier": dossier})
-    out = {"ok": True, "email": email, "queued_to": folder}
-    if guard_warnings:
-        out["guard_warnings"] = guard_warnings
-    return out
+    """Read the current contact's native draft for review."""
+    return send_draft(settings, contact_id, commit=commit, now=now, queue_only=True)
 
 
 # --------------------------------------------- fixed-template pack senders
@@ -891,24 +802,21 @@ def send_first(settings, contact_id: str, *, commit: bool = False,
     mode = (settings.cs_triage_mode or "draft").lower()
     dossier = dict(c.get("dossier") or {})
 
-    if mode != "send":  # draft mode — review surface in Gmail Drafts, idempotent
-        if dossier.get("gmail_draft_pushed"):
-            return {"ok": True, "email": email, "noop": "draft already in Gmail Drafts"}
+    if dossier.get("mailbox_draft_id"):
+        return queue_draft(settings, contact_id, commit=commit, now=now)
+    if dossier.get("gmail_draft_pushed"):
+        return {"ok": False, "email": email, "error": "legacy draft has no native mailbox handle"}
+    pending = dossier.get("mailbox_draft_request")
+    if pending and (not isinstance(pending, dict) or dossier.get("mailbox_draft_kind") != "fixed-template"
+                    or pending.get("request_key") != "campaign-pack:" + contact_id):
+        return {"ok": False, "email": email, "error": "campaign mailbox preparation requires recovery"}
+    if pending or mode != "send":
         if not commit:
             return {"ok": True, "dry_run": True, "email": email, "mode": "draft",
                     "subject": subject,
-                    "would": "append the first-notice mail (HTML) to the operator's Gmail Drafts"}
-        from . import gmail_drafts
-        # plain/html are pack-rendered fixed-template copy, not model output —
-        # body_md stays at its default (False): never inspected, matching the
-        # send-mode branch below, which never gates this content with send_guard.
-        folder, _guard_warnings = gmail_drafts.append_draft(
-            settings, email, subject, plain, html=html, cc=settings.email_address or None)
-        dossier["gmail_draft_pushed"] = True
-        dossier["gmail_draft_day"] = _time.local_date(_time.now_utc(), settings.timezone)
-        rpc.call_sync(settings, "campaign.update_contact",
-                      {"contact_id": contact_id, "dossier": dossier})
-        return {"ok": True, "email": email, "mode": "draft", "pushed_to": folder}
+                    "would": "create the first-notice mailbox draft"}
+        return _queue_pack(settings, contact_id, email, subject, plain, dossier,
+                              html=html, cc=settings.email_address)
 
     # send mode (CS_TRIAGE_MODE=send) — autonomous send
     if not commit:

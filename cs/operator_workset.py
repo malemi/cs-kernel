@@ -102,13 +102,12 @@ def _rows(source, payload):
                                    if key.endswith('_error') or key.endswith('_incomplete')):
             raise WorksetError('incomplete source', reason='tasks_inventory_incomplete')
         if source == 'review':
-            for key in ('drafts_error', 'gmail_drafts_error', 'engine_drafts_error', 'drafts_incomplete'):
+            for key in ('drafts_error', 'drafts_reconcile_error', 'drafts_incomplete'):
                 if payload.get(key):
                     raise WorksetError('incomplete source', reason='review_inventory_incomplete', key=key)
             if 'drafts_inventory' in payload:
                 from .draft_state import inventory_proof
-                actual = inventory_proof(payload.get('gmail_drafts'), payload.get('engine_drafts'),
-                                         payload.get('drafts'), payload.get('gmail_drafts_observation'))
+                actual = inventory_proof(payload.get('mailbox_drafts'), payload.get('drafts'))
                 if actual.get('complete') is not True or payload['drafts_inventory'] != actual:
                     raise WorksetError('incomplete source', reason='review_inventory_incomplete',
                                        key='drafts_inventory')
@@ -177,7 +176,7 @@ def observation_failure(settings, source, error):
     record = {'event': 'scheduled_workset_observation_rejected', 'version': 1,
               'source': source if source in ('tasks', 'review') else 'unknown',
               'reason': reason if reason in reasons else 'workset_invalid'}
-    keys = {'drafts_error', 'gmail_drafts_error', 'engine_drafts_error', 'drafts_incomplete',
+    keys = {'drafts_error', 'drafts_reconcile_error', 'drafts_incomplete',
             'error', 'errors', 'truncated', 'has_more', 'next_cursor', 'next_page',
             'next_page_token', 'drafts_notes', 'drafts_inventory'}
     record['key'] = error.key if isinstance(error, WorksetError) and error.key in keys else None
@@ -203,7 +202,7 @@ def _root(row):
 
 def _stable(row, source=None):
     keys = ('id', 'task_id', 'draft_id', 'uid', 'status', 'state', 'verdict', 'updated_at',
-            'composed_at', 'composed_iso', 'version', 'sources', 'thread_key', 'thread_id', 'message_id', 'engine_id', 'gmail_uid')
+            'composed_at', 'composed_iso', 'version', 'sources', 'thread_key', 'thread_id', 'message_id', 'mailbox_id')
     if source == 'tasks':
         keys += ('last_signal_at', 'created_at', 'source_root_state')
     return {key: row[key] for key in keys if key in row}
@@ -293,7 +292,7 @@ def _inventory(discovery, observations, owner):
         for row in _rows(source, payload):
             if source == 'review' and row.get('workset_hold_reasons'):
                 continue
-            if source == 'review' and row.get('verdict') == 'ready':
+            if source == 'review' and row.get('verdict') == 'ready' and _root(row) not in candidates:
                 continue
             if source == 'tasks' and row.get('status') in ('completed', 'closed', 'cancelled'):
                 continue
@@ -580,65 +579,3 @@ def selected_contact_roots(settings, email):
     if not result:
         raise WorksetError('contact outside selected roots', reason='selection_invalid')
     return result
-
-
-def _send_snapshot(settings, context, draft, root):
-    """Integrity of observed draft data; never substitutes for engine authority."""
-    from .thread_key import thread_key
-    refs = draft.get('references')
-    actual = draft.get('thread_id') or thread_key(
-        None, ' '.join(refs) if isinstance(refs, list) else refs, draft.get('in_reply_to'))
-    if (not isinstance(draft.get('id'), str) or not draft['id']
-            or draft.get('owner_id') != settings.email_address or not settings.email_address
-            or actual != root or draft.get('status') != 'draft'
-            or not isinstance(draft.get('body'), str) or not draft['body'].strip()
-            or not isinstance(draft.get('to_addresses'), list) or not draft['to_addresses']):
-        raise WorksetError('scheduled draft identity is incomplete or foreign')
-    fields = ('id', 'owner_id', 'thread_id', 'to_addresses', 'cc_addresses', 'bcc_addresses',
-              'subject', 'body', 'body_format', 'in_reply_to', 'references',
-              'original_message_id', 'attachment_paths', 'status')
-    return {'version': 1, 'nonce': context['nonce'], 'owner_uid': context['owner_uid'],
-            'root': root, 'draft_id': draft['id'],
-            'snapshot': _hash({key: draft.get(key) for key in fields})}
-
-
-def remember_draft(settings, draft, root):
-    """Retain one actual scoped compose result in the current private run."""
-    context = _context(settings)
-    if context is None:
-        return
-    require_root(settings, root)
-    value = _send_snapshot(settings, context, draft, root)
-    path = Path(context['directory']) / ('workset-draft-' + _hash(draft['id']) + '.json')
-    if path.exists() or path.is_symlink():
-        if _read(path) != value:
-            raise WorksetError('scheduled composed draft changed')
-    else:
-        _write_new(path, value)
-
-
-def require_draft(settings, draft, root):
-    """Bind exact send to a composed or ready-reviewed snapshot in this run."""
-    context = _context(settings)
-    if context is None:
-        return
-    require_root(settings, root)
-    value = _send_snapshot(settings, context, draft, root)
-    path = Path(context['directory']) / ('workset-draft-' + _hash(draft['id']) + '.json')
-    if path.exists() or path.is_symlink():
-        if _read(path) != value:
-            raise WorksetError('scheduled composed draft changed')
-        return
-    review = _read(Path(context['directory']) / 'workset-review.json')
-    if (review.get('nonce') != context['nonce'] or review.get('owner_uid') != context['owner_uid']
-            or review.get('source') != 'review' or review.get('digest') != _hash(review.get('payload'))):
-        raise WorksetError('scheduled review snapshot is foreign')
-    payload = review['payload']
-    rows = _rows('review', payload)
-    if not isinstance(payload, dict) or payload.get('drafts_inventory', {}).get('complete') is not True:
-        raise WorksetError('scheduled typed review snapshot is unavailable')
-    ready = [row for row in rows if row.get('engine_id') == draft['id'] and row.get('thread_key') == root
-             and row.get('verdict') == 'ready' and row.get('workset_hold_reasons') == []]
-    raw = [row for row in payload['engine_drafts'] if row.get('id') == draft['id']]
-    if len(ready) != 1 or len(raw) != 1 or _send_snapshot(settings, context, raw[0], root) != value:
-        raise WorksetError('scheduled draft differs from its ready review snapshot')

@@ -3,7 +3,7 @@ import copy
 import json
 import unittest
 
-from scheduled_m5_successor import MANIFEST, ROOT, STAGES, digest, load, undo
+from scheduled_m5_successor import MANIFEST, ROOT, STAGES, before_mailbox, digest, load, undo
 
 SPELLINGS = (".venv/bin/python -m cs", ".venv/bin/python3 -m cs", ".venv/bin/cs",
              "python -m cs", "python3 -m cs", "cs")
@@ -30,7 +30,7 @@ class SuccessorTests(unittest.TestCase):
         self.exercise()
 
     def test_permission_stage_moves_draft_retire_to_ask_and_denies_raw_rpc(self):
-        after = json.loads(self.current[SETTINGS])["permissions"]
+        after = json.loads(before_mailbox(SETTINGS, self.current[SETTINGS]))["permissions"]
         before = json.loads(undo(SETTINGS, self.current[SETTINGS]))["permissions"]
         self.assertNotIn("ask", before)
         self.assertEqual(set(after), {"allow", "ask", "deny"})
@@ -46,7 +46,7 @@ class SuccessorTests(unittest.TestCase):
                 self.assertIn("Bash(%s %s:*)" % (spelling, entry), after["deny"])
 
     def test_wrapper_stage_only_adds_the_raw_rpc_denies(self):
-        after = self.current[CRON].decode()
+        after = before_mailbox(CRON, self.current[CRON]).decode()
         before = undo(CRON, self.current[CRON]).decode()
         added = [line for line in after.splitlines() if line not in before.splitlines()]
         self.assertEqual(added, ['    "%s" \\' % entry for entry in RAW_RPC])
@@ -112,7 +112,7 @@ class SuccessorTests(unittest.TestCase):
             stage = load(self.packet)[template]
             for data in (original + b"\nunapproved\n",
                          original + stage["edits"][-1]["after"].encode(),
-                         original.replace(stage["edits"][0]["after"].encode()[:40], b"X" * 40, 1)):
+                         b"X" + original[1:]):
                 current = dict(self.current)
                 current[template] = data
                 with self.subTest(template=template), self.assertRaises(AssertionError):

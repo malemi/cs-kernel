@@ -40,12 +40,9 @@ GATEWAY_BASE_URL = "https://openrouter.ai/api"
 KEY_INFO_URL = "https://openrouter.ai/api/v1/key"
 MODEL_RE = re.compile(r"~?anthropic/claude-[A-Za-z0-9._-]+\Z")
 SEND_ALLOW_RULES = frozenset(
-    f"Bash({prefix}cs chat:*)" for prefix in
+    f"Bash({prefix}cs reply-send:*)" for prefix in
     (".venv/bin/python -m ", ".venv/bin/python3 -m ", ".venv/bin/",
      "python -m ", "python3 -m ", "")
-)
-EXACT_SEND_ALLOW_RULES = frozenset(
-    rule.replace("cs chat:", "cs draft-send:") for rule in SEND_ALLOW_RULES
 )
 
 
@@ -416,7 +413,7 @@ def _executor_denies(denies):
             if not rule.startswith('Bash(') or not rule.endswith(':*)'):
                 raise ValueError('unsupported deny')
             argv = normalize(shlex.split(rule[5:-3]))
-            known = (argv[0] in DENIED or argv == ['draft-send']
+            known = (argv[0] in DENIED or argv == ['reply-send']
                      or argv[:2] in (['campaign','send-draft'], ['connection','vonage'])
                      or argv[:2] in (['assignment','preview'], ['assignment','export'], ['assignment','commit'])
                      or len(argv) == 2 and argv[0] == 'rpc' and argv[1] in DENIED_RPC)
@@ -469,7 +466,6 @@ def _executor_configuration(settings, directory, context, denies, allows, *, mod
         deadline_seconds=max(1,(job.deadline_monotonic_ns-time.monotonic_ns())//1000000000) if job is not None else 10800,
         job_deadline_monotonic_ns=job.deadline_monotonic_ns if job is not None else None,
         send_mode=settings.cs_triage_mode.lower(),
-        exact_send_ids=json.loads(os.environ.get('CS_EXECUTOR_EXACT_SEND_IDS', '[]')) if allows else [],
         additional_denied=_executor_denies(denies), founder_enabled=settings.founder_sweep_enabled,
         founder_account=account, founder_question=question)
 
@@ -1360,10 +1356,8 @@ def _run_tick(claude_bin: str, denies: list[str], *, prompt: str = "/cs-operator
     allows = allows or []
     mode = settings.cs_triage_mode.lower()
     ctx = diagnostics.context(settings, claude_bin)
-    send_authorized = any(
-        len(allows) == len(rules) and set(allows) == rules and not rules.intersection(denies)
-        for rules in (SEND_ALLOW_RULES, EXACT_SEND_ALLOW_RULES)
-    )
+    send_authorized = (len(allows) == len(SEND_ALLOW_RULES)
+                       and set(allows) == SEND_ALLOW_RULES and not SEND_ALLOW_RULES.intersection(denies))
     if (mode not in ("draft", "send") or
             (mode == "send") != send_authorized or
             (mode == "draft" and bool(allows)) or

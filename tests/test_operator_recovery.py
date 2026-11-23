@@ -36,7 +36,8 @@ sys.argv=['cs',*h.ARGV]
 owner=json.loads(os.environ['CS_OPERATOR_HEALTH_CONTEXT'])['owner_uid']
 s=Settings(slug='sample',engine_owner_uid=owner)
 w.observe(s,'tasks',[])
-w.observe(s,'review',{'drafts':[]})
+from cs.draft_state import inventory_proof
+w.observe(s,'review',{'drafts':[],'mailbox_drafts':[],'drafts_inventory':inventory_proof([],[])})
 v={'open':[],'resumed':[],'human_work':[],'assignment_audit':[],'operational_fixture_discovery':[],'assignment_incomplete':False,'read_incomplete':None}
 v['triage_workset']=w.reserve(s,v)
 out=json.dumps(v,ensure_ascii=False,indent=2)+chr(10)
@@ -216,7 +217,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
 with tempfile.TemporaryDirectory() as tmp:
     root = Path(tmp)
-    exact = sorted(operator_recovery.EXACT_SEND_ALLOW_RULES)
+    exact = sorted(operator_recovery.SEND_ALLOW_RULES)
     call_log = root / 'calls.jsonl'
     with patch.dict(os.environ, {'HOME': str(root), 'FAKE_PRIMARY': 'success', 'FAKE_SEND': '1',
                                 'CS_HEADLESS_SEND': '1', 'FAKE_CALL_LOG': str(call_log),
@@ -233,7 +234,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 return sum(json.loads(line)[0] == '-p' for line in call_log.read_text().splitlines())
             assert launches() == 1
             for invalid in (exact[:-1], exact + [exact[0]],
-                            [*exact[:-1], sorted(operator_recovery.SEND_ALLOW_RULES)[0]],
+                            [*exact[:-1], 'Bash(cs draft-send:*)'],
                             exact + ['Bash(*)']):
                 assert operator_recovery.run(str(binary), ['Write'],
                     prompt='/cs-operator send briefing', allows=invalid) == 1

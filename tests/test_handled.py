@@ -299,14 +299,13 @@ def _wiring(db_path: str) -> None:
 def _review(db_path: str) -> None:
     """`cs review` is where the operator looks when he sits down: the record has
     to be THERE, with its date and reason, or the filter is invisible."""
-    from cs import campaign, gmail_drafts, review
+    from cs import campaign, review
 
     settings = _settings(db_path)
     settings.log_path = Path(db_path).parent / "no-such.log"
     State(db_path).mark_handled(
         "phoned@example.test", reason="chiamato, risolto", handled_at=_dt(33)
     )
-    gmail_drafts.list_drafts = lambda s, *, observation=None: []
     campaign.list_campaigns = lambda s: []
     rpc.call_sync = lambda *a, **k: []
 

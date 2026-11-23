@@ -66,18 +66,6 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # it. The tick's own "escalate on uncertainty" needs none of this: a triage
 # escalation is an OPEN engine task plus a line in this log, and both correctly
 # stay in the work list.
-# `cs draft-delete` is denied on the same principle, from the other end. The
-# tick DOES compute draft verdicts now (`cs review` marks a draft the
-# conversation has moved past), and the tempting next step — retiring the ones
-# it just called stale — is precisely the one it may not take: removing a draft
-# destroys a prepared answer no human ever saw, on a judgement made while
-# reading untrusted mail. The tick reports such drafts under Escalations and
-# the operator retires them by name, in a session, exactly like `cs handled`.
-# `cs rpc drafts.discard` is the ENGINE half of the same door and is denied for
-# the same reason — and, like `cs rpc chat`, the deny is load-bearing because
-# settings.json allows the broad `cs rpc:*`. It is the sharper half, too: the
-# engine DELETES the row, where `draft-delete` only moves the Gmail copy to
-# Trash, so this is the one with nothing to recover.
 # `cs instructions` and `cs rpc instructions.store` are denied for the same
 # reason as `cs rpc settings.update` above: this is the store verb for the
 # operator's standing instructions (procedures, voice, signature), and the
@@ -116,6 +104,42 @@ echo "$(ts) {{ company_prog_name }}: tick start (root=$ROOT)" >>"$LOG"
 # a sandbox. A script that must be unreachable whatever happens should not be
 # executable by the user the tick runs as.
 DENIED=(
+    "Bash(.venv/bin/python -m cs reply-send:*)" \
+    "Bash(.venv/bin/python3 -m cs reply-send:*)" \
+    "Bash(.venv/bin/cs reply-send:*)" \
+    "Bash(python -m cs reply-send:*)" \
+    "Bash(python3 -m cs reply-send:*)" \
+    "Bash(cs reply-send:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.compose_reply:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.compose_reply:*)" \
+    "Bash(.venv/bin/cs rpc drafts.compose_reply:*)" \
+    "Bash(python -m cs rpc drafts.compose_reply:*)" \
+    "Bash(python3 -m cs rpc drafts.compose_reply:*)" \
+    "Bash(cs rpc drafts.compose_reply:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.send:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.send:*)" \
+    "Bash(.venv/bin/cs rpc drafts.send:*)" \
+    "Bash(python -m cs rpc drafts.send:*)" \
+    "Bash(python3 -m cs rpc drafts.send:*)" \
+    "Bash(cs rpc drafts.send:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.trash:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.trash:*)" \
+    "Bash(.venv/bin/cs rpc drafts.trash:*)" \
+    "Bash(python -m cs rpc drafts.trash:*)" \
+    "Bash(python3 -m cs rpc drafts.trash:*)" \
+    "Bash(cs rpc drafts.trash:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.create:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.create:*)" \
+    "Bash(.venv/bin/cs rpc drafts.create:*)" \
+    "Bash(python -m cs rpc drafts.create:*)" \
+    "Bash(python3 -m cs rpc drafts.create:*)" \
+    "Bash(cs rpc drafts.create:*)" \
+    "Bash(.venv/bin/python -m cs rpc drafts.update:*)" \
+    "Bash(.venv/bin/python3 -m cs rpc drafts.update:*)" \
+    "Bash(.venv/bin/cs rpc drafts.update:*)" \
+    "Bash(python -m cs rpc drafts.update:*)" \
+    "Bash(python3 -m cs rpc drafts.update:*)" \
+    "Bash(cs rpc drafts.update:*)" \
     "Bash(.venv/bin/python -m cs draft-send:*)" \
     "Bash(.venv/bin/python3 -m cs draft-send:*)" \
     "Bash(.venv/bin/cs draft-send:*)" \
@@ -182,48 +206,12 @@ DENIED=(
     "Bash(python -m cs draft-delete:*)" \
     "Bash(python3 -m cs draft-delete:*)" \
     "Bash(cs draft-delete:*)" \
-    "Bash(.venv/bin/python -m cs draft-retire:*)" \
-    "Bash(.venv/bin/python3 -m cs draft-retire:*)" \
-    "Bash(.venv/bin/cs draft-retire:*)" \
-    "Bash(python -m cs draft-retire:*)" \
-    "Bash(python3 -m cs draft-retire:*)" \
-    "Bash(cs draft-retire:*)" \
     "Bash(.venv/bin/python -m cs rpc drafts.discard:*)" \
     "Bash(.venv/bin/python3 -m cs rpc drafts.discard:*)" \
     "Bash(.venv/bin/cs rpc drafts.discard:*)" \
     "Bash(python -m cs rpc drafts.discard:*)" \
     "Bash(python3 -m cs rpc drafts.discard:*)" \
     "Bash(cs rpc drafts.discard:*)" \
-    "Bash(.venv/bin/python -m cs rpc drafts.discard_exact:*)" \
-    "Bash(.venv/bin/python3 -m cs rpc drafts.discard_exact:*)" \
-    "Bash(.venv/bin/cs rpc drafts.discard_exact:*)" \
-    "Bash(python -m cs rpc drafts.discard_exact:*)" \
-    "Bash(python3 -m cs rpc drafts.discard_exact:*)" \
-    "Bash(cs rpc drafts.discard_exact:*)" \
-    "Bash(.venv/bin/python -m cs rpc drafts.reconcile_external:*)" \
-    "Bash(.venv/bin/python3 -m cs rpc drafts.reconcile_external:*)" \
-    "Bash(.venv/bin/cs rpc drafts.reconcile_external:*)" \
-    "Bash(python -m cs rpc drafts.reconcile_external:*)" \
-    "Bash(python3 -m cs rpc drafts.reconcile_external:*)" \
-    "Bash(cs rpc drafts.reconcile_external:*)" \
-    "Bash(.venv/bin/python -m cs rpc drafts.send_operator:*)" \
-    "Bash(.venv/bin/python3 -m cs rpc drafts.send_operator:*)" \
-    "Bash(.venv/bin/cs rpc drafts.send_operator:*)" \
-    "Bash(python -m cs rpc drafts.send_operator:*)" \
-    "Bash(python3 -m cs rpc drafts.send_operator:*)" \
-    "Bash(cs rpc drafts.send_operator:*)" \
-    "Bash(.venv/bin/python -m cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(.venv/bin/python3 -m cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(.venv/bin/cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(python -m cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(python3 -m cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(cs rpc drafts.retire_sent_mirror:*)" \
-    "Bash(.venv/bin/python -m cs rpc drafts.publish_review:*)" \
-    "Bash(.venv/bin/python3 -m cs rpc drafts.publish_review:*)" \
-    "Bash(.venv/bin/cs rpc drafts.publish_review:*)" \
-    "Bash(python -m cs rpc drafts.publish_review:*)" \
-    "Bash(python3 -m cs rpc drafts.publish_review:*)" \
-    "Bash(cs rpc drafts.publish_review:*)" \
     "Bash(.venv/bin/python -m cs connection vonage provision:*)" \
     "Bash(.venv/bin/python3 -m cs connection vonage provision:*)" \
     "Bash(.venv/bin/cs connection vonage provision:*)" \
