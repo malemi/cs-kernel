@@ -1,3 +1,7 @@
+## 2026-11-23 — Mailbox delivery source-freeze snapshot
+
+- **Latest release tag: `v0.74.1`; Current HEAD status: tagged as `v0.74.1`.** Both maintained clones install private release `v0.74.1`. The untagged `v0.75.0` source candidate uses native mailbox drafts and the corresponding engine capabilities. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.
+
 ## 2026-11-23 — Snapshot before mailbox candidate reconciliation
 
 ## State now
@@ -5991,7 +5995,3 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 3. Reconcile all costs/effects and current owned controls before immutable adoption.
 4. Require installed checks, genuine BOTH FULL/signup and final review. Baseline
    closure remains blocked; public push requires explicit authority.
-
-## Mailbox delivery source-freeze snapshot — 2026-11-23
-
-- **Latest release tag: `v0.74.1`; Current HEAD status: tagged as `v0.74.1`.** Both maintained clones install private release `v0.74.1`. The untagged `v0.75.0` source candidate uses native mailbox drafts and the corresponding engine capabilities. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.

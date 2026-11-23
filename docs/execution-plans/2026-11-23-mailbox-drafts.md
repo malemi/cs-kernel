@@ -26,7 +26,7 @@ process receipt is `full-observed-exit.json` beside that log, completed at
 2026-11-23 19:38:52 UTC. All 164 product files remain unchanged through the run;
 the product manifest SHA-256 is
 `35c94954d61c8c5f713869b68142212330069892c2691d4445e000e235037250`.
-The M2 review is retained at
+The M2 source integration review is APPROVED and retained at
 `/tmp/mrcall-ai-kit/mailbox-kernel-integration-review/report.md`.
 
 Before release, retain the completed full suite and independent integration
