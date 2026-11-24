@@ -123,12 +123,14 @@ adapter names.
 `cs project new`, `templates/partials/` is `{% include %}`d at render time and
 never stamped. Each needs its own `package-data` glob (see `pyproject.toml`).
 
-**`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills` and `.opencode/skills` point
-into it; `install_agent_surfaces` owns those links and the exact legacy cleanup. A clone's `AGENTS.md` is
-the rendered charter (`templates/project/AGENTS.md.j2`), and its `CLAUDE.md` is a bootstrap the kernel
-writes once — the `@AGENTS.md` import Claude Code follows — and never touches again
-(`CLONE_AUTHORED_PREFIXES`), so a documentation harness that manages `CLAUDE.md` owns it without a drift
-report. Never render the same workflow twice (incident: CHANGELOG `v0.10.0`; gate 27 holds it).
+**`.claude/skills/` is the ONE rendered workflow surface** — `.agents/skills` and
+`.opencode/skills` point into it; `install_agent_surfaces` owns those links and the
+exact legacy cleanup. A clone's `AGENTS.md` is the rendered charter. A canonical
+v9 AGENTS-only documentation profile prevents `CLAUDE.md` bootstrap creation on
+init/update. Legacy clones without a profile receive the missing bootstrap;
+existing clone-authored files remain intact. Malformed or unsupported ownership
+refuses bootstrap creation. Never render the same workflow twice (incident:
+CHANGELOG `v0.10.0`; gate27 holds it).
 
 **Clone-owned, never kernel source**, shipped only as `.j2` under `cs/templates/project/`: `.claude/`,
 `bin/cs_operator_cron.sh`, `company/*.md`, `manifest.toml`, `requirements.txt`. `company/**` is

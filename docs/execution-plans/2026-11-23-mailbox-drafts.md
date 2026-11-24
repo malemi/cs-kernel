@@ -11,7 +11,7 @@ The governing approved execution plan is
 Its ownership, review order, spending controls, rollout and installed acceptance
 apply to this leaf. The delivery lead owns integration and release.
 
-The local forward release candidate is `0.75.1` on
+The local forward release candidate is `0.76.0` on
 `/home/mal/worktrees/cs-kernel-mailbox-implementation`. Both installed clones
 remain on `v0.74.1`; recurring schedules are paused. The generic candidate launcher remains
 draft-only. The prepared support-launcher patch grants scheduled `reply-send`
@@ -58,3 +58,12 @@ The earlier full-suite evidence above applies to its recorded original bytes;
 the repaired release requires its own complete at-tag run and BOTH normal-clone
 FULL acceptance. Default Desktop token persistence is a separate prerequisite
 under the approved HB November24 refresh-only authentication brief and plan.
+
+
+The complete v0.75.1 run retains exit1 because the send-guard fixture omitted
+matching request/target metadata in its not-found status. The fixture repair
+keeps the production binding guard intact. The v0.76.0 candidate also integrates
+canonical v9 bootstrap ownership so actual clone updates preserve their managed
+instruction entry at the source. Focused init/update, agent surfaces, charter
+shape and send-guard checks pass. Public publication remains after exact-local
+BOTH normal-clone FULL, followed by public-tag provenance verification.

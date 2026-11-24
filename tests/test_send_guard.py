@@ -353,7 +353,7 @@ with tempfile.TemporaryDirectory() as td:
     def call(s,m,p,**kw):
         rpc_calls.append((m,p))
         if m=="system.capabilities": return {"mailbox_drafts":1}
-        if m=="drafts.send_status": return {"ok":False,"cause":"named_send_operation_not_found","effect_certainty":"not-dispatched"}
+        if m=="drafts.send_status": return {"ok":False,"state":"not_found","cause":"named_send_operation_not_found","effect_certainty":"not-dispatched","request_key":p["request_key"],"draft_id":p["draft_id"]}
         if m=="drafts.get": return {"ok":True,"draft":{"id":"native","status":"draft","owner_id":s.email_address,"to_addresses":[CUSTOMER],"body":OFFENDING}}
         return {}
     rpc.call_sync = call

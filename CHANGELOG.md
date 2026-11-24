@@ -1,5 +1,23 @@
 # Changelog — cs-kernel
 
+## v0.76.0 — 2026-11-24 (MINOR, local prepublication candidate)
+
+Clone init/update recognizes canonical v9 AGENTS-only documentation ownership.
+It preserves the managed instruction entry and native skill aliases without
+creating a competing CLAUDE bootstrap. Legacy clones without a documentation
+profile keep their existing bootstrap behavior, and custom files remain intact.
+Malformed or symlinked profile ownership refuses bootstrap creation explicitly.
+The existing approved ownership guard is integrated from canonical source.
+The mailbox campaign send-status fixture now supplies the exact request binding
+required by the production guard; production send authority is unchanged.
+
+**Re-collaudo tier: full on BOTH maintained clones.** This release includes the
+unpublished mailbox draft delegation and campaign send recovery from v0.75.1.
+Run BOTH normal-clone FULL against the exact frozen local release artifact before
+public publication. Verify native instruction preservation, launcher permissions,
+ordinary same-source draft preservation, direct sending and exact keyed recovery.
+The earlier local tags remain immutable and unpublished.
+
 ## v0.75.1 — 2026-11-24 (PATCH, local prepublication candidate)
 
 Mailbox campaign actions accept exact IMAP handles whose full request-key prefix
