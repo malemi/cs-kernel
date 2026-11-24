@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.76.0`; Current HEAD status: untagged.** Both normal maintained clones install exact local `v0.76.0` at `06568d5e`. The local unpublished `v0.76.0` release candidate uses native mailbox drafts and the corresponding engine capabilities. The campaign caller and v9 instruction preservation pass focused checks and fresh source reviews. The complete at-tag suite passes on all 164 unchanged package files. Installed FULL and public provenance remain required. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.
+- **Latest release tag: `v0.76.1`; Current HEAD status: tagged as `v0.76.1`.** Both normal maintained clones still install exact local `v0.76.0` at `06568d5e`. The independently reviewed v0.76.1 candidate preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Its complete pre-tag suite passes on unchanged 164-file product bytes; the mandatory at-tag suite, forward artifact adoption, BOTH normal-clone FULL and public provenance remain required. The [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. Hosted engines run dev12 independently of the clone version.
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Both recurring clone schedules are paused. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
@@ -22,8 +22,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
 [operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
 [assignments](task-assignment.md) and [draft lifecycle](draft-lifecycle.md).
-Historical deployment observations are retained in the archive; this diagnostic
-candidate does not re-audit those deployments or grant new send authority.
+Historical deployment observations remain in the archive. The mailbox delivery
+retains the ordinary launchers’ send boundaries and does not certify the earlier
+protected executor acceptance.
 
 ## Unresolved
 
@@ -49,10 +50,10 @@ candidate does not re-audit those deployments or grant new send authority.
 - Protected goal-client inspect exceeds its4MiB response bound; the service has
   no compact inspect request. A stale generation prevents reporting with the old
   token. Final protected acceptance remains unverified; client/service guards
-  are unchanged. Both clone harness checks separately retain the pre-existing
-  legacy-or-foreign CLAUDE entry violation. The retirement proposal is withdrawn
-  pending native-entry compatibility: Cafe has an ancestor CLAUDE file. Both
-  bootstrap imports remain intact. No baseline advancement is claimed.
+  are unchanged. The earlier cohort retains historical
+  legacy-or-foreign CLAUDE evidence. Current mailbox adoption preserves both v9
+  native entries and retires Café’s exact generated bootstrap; that separate
+  repair does not establish the earlier cohort’s protected acceptance. No baseline advancement is claimed.
 - The existing completion record accepts current lead startup attestation. Its
   remaining obligations include refreshed documentation/focused evidence, M5 and
   final review. Historical workflow-hash refusals remain retained; no reset or

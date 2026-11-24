@@ -1,5 +1,21 @@
 # Changelog — cs-kernel
 
+## v0.76.1 — 2026-11-24 (PATCH, local prepublication candidate)
+
+Provider-verified operational originals remain independent conversation candidates
+when another open conversation shares their sender. Eligible protected roots
+with matching current root-owned enrollment receive priority within the ordinary
+two-root workset on successive runs. Suppression, handled, escalation, assignment,
+Sent-answer and automatic holds remain enforced. Normal unprotected selection,
+same-run replay and cursor rotation retain their behavior. The architecture
+template correctly routes named draft actions through the selected engine.
+
+**Re-collaudo tier: full on BOTH maintained clones.** This release inherits the
+unpublished mailbox draft and send recovery changes. Run the complete suite at
+this immutable tag, adopt its exact artifact in both normal clones, and verify
+ordinary same-original draft preservation and direct send before publication.
+Previous local candidate tags remain immutable and unpublished.
+
 ## v0.76.0 — 2026-11-24 (MINOR, local prepublication candidate)
 
 Clone init/update recognizes canonical v9 AGENTS-only documentation ownership.
