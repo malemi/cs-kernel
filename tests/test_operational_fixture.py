@@ -1,12 +1,13 @@
 """Exact original admission retains ordinary assignment and suppression gates."""
 import copy
+from contextlib import ExitStack
 import hashlib
 import json
 import os
 import stat
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from email import policy
 from email.utils import formatdate
@@ -293,6 +294,151 @@ class AdmissionTests(unittest.TestCase):
             "owner_uid": "owner1", "body_sha256": hashlib.sha256(BODY.encode()).hexdigest()}])
         self.assertTrue(result["assignment_incomplete"])
         self.assertEqual(result["open"], [])
+
+
+class ScheduledOriginalTests(unittest.TestCase):
+    def setUp(self):
+        from cs.config import Settings
+        from cs.state import State
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.home = Path(self.temporary.name)
+        environment = patch.dict(os.environ, {"HOME": str(self.home)}, clear=False)
+        environment.start()
+        self.addCleanup(environment.stop)
+        self.settings = Settings(_env_file=(), slug="protected-workset", engine_owner_uid="owner1",
+                                 email_address=SETTINGS.email_address, self_emails="",
+                                 cs_triage_mode="draft", email_password="synthetic")
+        self.state = State(self.settings.db_path)
+        self.addCleanup(self.state.conn.close)
+        self.original = message()
+        self.older = {**self.original, "message_id": "<older@example.org>",
+                      "thread_key": "<older@example.org>",
+                      "date": self.original["date"] - timedelta(days=1)}
+        self.newer = {**self.original, "email": "other@example.org",
+                      "message_id": "<newer@example.org>", "thread_key": "<newer@example.org>",
+                      "date": self.original["date"] + timedelta(seconds=1)}
+        self.number = 0
+        self.new_run()
+
+    def new_run(self):
+        from cs.operator_health import identity
+        self.number += 1
+        directory = self.home / ("run-" + str(self.number))
+        directory.mkdir(mode=0o700)
+        os.environ["CS_OPERATOR_HEALTH_CONTEXT"] = json.dumps({"directory": str(directory),
+            "nonce": "run-" + str(self.number), "supervisor": identity(os.getpid())[0],
+            "workset_enabled": True, "owner_uid": self.settings.engine_owner_uid})
+
+    def projected(self, settings, roots):
+        return {root: {"complete": True, "state": "normal", "hold_auto_reply": False,
+            "thread_key": root, "actor_uid": settings.engine_owner_uid,
+            "source_owner_uid": settings.engine_owner_uid,
+            "current_message_ids": [root]} for root in roots}
+
+    def environment(self, *, registry=None, provider=None, sent=None, projections=None, views=None):
+        from cs import engine_view, gmail_archive, task_assignment
+        stack = ExitStack()
+        stack.enter_context(patch.object(fixture, "_read", return_value=payload() if registry is None else registry))
+        stack.enter_context(patch.object(fixture, "time", return_value=NOW))
+        stack.enter_context(patch.object(fixture.imaplib, "IMAP4_SSL", return_value=provider or Provider()))
+        stack.enter_context(patch.object(gmail_archive, "inbound_recent",
+                                        return_value=[self.older, self.original, self.newer]))
+        stack.enter_context(patch.object(gmail_archive, "sent_recent", return_value=sent or []))
+        stack.enter_context(patch.object(engine_view, "classify", return_value=(views or {}, None)))
+        stack.enter_context(patch.object(engine_view, "settled", return_value=({}, None)))
+        stack.enter_context(patch.object(task_assignment, "projections", side_effect=projections or self.projected))
+        return stack
+
+    def reserve(self, discovery):
+        from cs.operator_workset import observe, reserve
+        observe(self.settings, "tasks", [])
+        observe(self.settings, "review", {"drafts": [], "drafts_notes": []})
+        return reserve(self.settings, discovery)
+
+    def test_actual_sweep_and_two_reservations_keep_same_verified_original_first(self):
+        from cs.operator_workset import require_root
+        root = self.original["thread_key"]
+        ordinary = unanswered.compute_open([self.older, self.original], [], set(), set(),
+                                           datetime.now(timezone.utc))
+        self.assertEqual([row["thread_key"] for row in ordinary], [self.older["thread_key"]])
+        with self.environment():
+            discovery = unanswered.sweep(self.settings, 14)
+            roots = [row["thread_key"] for row in discovery["open"]]
+            self.assertEqual(roots.count(root), 1)
+            self.assertIn(self.older["thread_key"], roots)
+            for ordinal in range(2):
+                if ordinal:
+                    self.new_run()
+                result = self.reserve(discovery)
+                self.assertEqual(result["selected"][0]["thread_key"], root)
+                self.assertEqual(len(result["selected"]), 2)
+                require_root(self.settings, root)
+                from cs.operator_workset import reserve
+                self.assertEqual(reserve(self.settings, discovery), result)
+
+    def test_unverified_expired_foreign_and_malformed_originals_keep_normal_rollup(self):
+        invalid = [payload({**record(), "expires_at": NOW - 1}),
+                   {**payload(), "owner_uid": "foreign"}, {},
+                   {**payload(), "fixtures": [record(), record()]}]
+        cases = [(value, None) for value in invalid]
+        cases.append((payload(), Provider(raw=original_mime(BODY + " changed"))))
+        for registry, provider in cases:
+            with self.subTest(registry=registry, provider=provider), self.environment(registry=registry, provider=provider):
+                discovery = unanswered.sweep(self.settings, 14)
+                self.assertEqual(discovery["operational_fixture_discovery"], [])
+                self.assertNotIn(self.original["thread_key"], [row["thread_key"] for row in discovery["open"]])
+                self.assertIn(self.older["thread_key"], [row["thread_key"] for row in discovery["open"]])
+
+    def test_priority_rechecks_current_enrollment_and_exact_provider_proof(self):
+        with self.environment():
+            discovery = unanswered.sweep(self.settings, 14)
+        proof = discovery["operational_fixture_discovery"]
+        cases = [(payload(), [{**proof[0], key: value}]) for key, value in (
+            ("owner_uid", "foreign"), ("provider_uid", "99"), ("provider_uidvalidity", "124"),
+            ("provider_folder", "Other"), ("body_sha256", "b" * 64))]
+        cases.extend([(payload(), proof + proof), (payload(), [{}]), (payload(), []),
+                      (payload({**record(), "expires_at": NOW - 1}), proof),
+                      ({**payload(), "owner_uid": "foreign"}, proof)])
+        for registry, selected_proof in cases:
+            self.new_run()
+            (self.settings.state_dir / "operator-workset" / "cursor.json").unlink(missing_ok=True)
+            changed = {**discovery, "operational_fixture_discovery": selected_proof}
+            with self.subTest(proof=selected_proof), self.environment(registry=registry):
+                result = self.reserve(changed)
+                self.assertEqual(result["selected"][0]["thread_key"], self.newer["thread_key"])
+
+    def test_verified_original_never_bypasses_current_business_holds(self):
+        from cs import engine_view
+        root = self.original["thread_key"]
+        for hold in ("suppressed", "handled", "escalated", "assignment", "unknown", "answered", "automatic"):
+            for table in ("do_not_contact", "handled_out_of_band", "escalated_to_human"):
+                self.state.conn.execute("DELETE FROM " + table)
+            if hold == "suppressed":
+                self.state.conn.execute("INSERT INTO do_not_contact VALUES (?, ?, ?)",
+                                        (self.original["email"], "Synthetic hold", NOW))
+            if hold == "handled":
+                self.state.conn.execute("INSERT INTO handled_out_of_band VALUES (?, ?, ?, ?)",
+                                        (self.original["email"], NOW, "Synthetic hold", NOW))
+            if hold == "escalated":
+                self.state.conn.execute("INSERT INTO escalated_to_human VALUES (?, ?, ?, ?)",
+                                        (self.original["email"], "human", "Synthetic hold", NOW))
+            self.state.conn.commit()
+            def projected(settings, roots):
+                values = self.projected(settings, roots)
+                if hold in ("assignment", "unknown"):
+                    values[root].update(state="assigned" if hold == "assignment" else "unknown",
+                                        complete=hold != "unknown", hold_auto_reply=True)
+                return values
+            sent = [{"to": [self.original["email"]], "thread_key": root,
+                     "date": self.original["date"] + timedelta(seconds=1)}] if hold == "answered" else []
+            views = {root: engine_view.ThreadView(root, {int(self.original["date"].timestamp())}, 0)} if hold == "automatic" else {}
+            self.new_run()
+            with self.subTest(hold=hold), self.environment(sent=sent, projections=projected, views=views):
+                discovery = unanswered.sweep(self.settings, 14)
+                self.assertEqual(len(discovery["operational_fixture_discovery"]), 1)
+                result = self.reserve(discovery)
+                self.assertNotIn(root, [row["thread_key"] for row in result["selected"]])
 
 
 if __name__ == "__main__":

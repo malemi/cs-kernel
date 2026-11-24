@@ -113,10 +113,11 @@ a desktop sign-in. It also serves `cs drive` and lead resolution.
 
 ### `--account` switches the ENGINE profile only
 
-The Gmail-IMAP verbs — `contacted`, `unanswered`, `dossier`, `draft-reply`,
-`draft-delete` — answer about {{ email_address }}'s own mailbox, so on any other
-account they REFUSE (exit 2) rather than answering about the wrong one. Use
-`thread` / `ask` there; both are engine-backed and honour the flag.
+The operator-mailbox verbs — `contacted`, `unanswered`, `dossier`, `draft-reply`
+and `reply-send` — answer about {{ email_address }}'s own mailbox, so on any
+other account they REFUSE (exit 2). `thread` / `ask` honour the selected engine
+profile. Named `draft-send` and `draft-delete` actions also use that profile's
+engine RPC and require a mailbox handle belonging to it.
 
 `history` refuses the flag for the opposite reason: it already uses the configured
 mailbox scope — {{ email_address }}, every registry account, and every address in

@@ -366,9 +366,15 @@ def reserve(settings, discovery):
                 if not isinstance(selected, list) or len(selected) > 2 or len(set(selected)) != len(selected):
                     raise ValueError('invalid reservation')
             else:
+                from .operational_fixture import discovered_roots
+                protected = discovered_roots(settings, discovery.get('operational_fixture_discovery', []))
                 hashed = {_hash(root): root for root in candidates}
                 fresh = [root for key, root in hashed.items() if cursor['roots'].get(key, {}).get('revision') != candidates[root]['revision']]
-                chosen = sorted(fresh, key=lambda root: (candidates[root]['date'], root), reverse=True)[:1]
+                chosen = sorted((root for root in candidates if root in protected),
+                                key=lambda root: (cursor['roots'].get(_hash(root), {}).get('order', 0), root))[:2]
+                if len(chosen) < 2:
+                    chosen.extend(sorted((root for root in fresh if root not in chosen),
+                                         key=lambda root: (candidates[root]['date'], root), reverse=True)[:1])
                 remaining = sorted((root for root in candidates if root not in chosen),
                                    key=lambda root: (cursor['roots'].get(_hash(root), {}).get('order', 0), root))
                 chosen.extend(remaining[:2 - len(chosen)])

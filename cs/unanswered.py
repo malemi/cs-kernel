@@ -173,6 +173,8 @@ def _partition(
     escalated: dict[str, dict] | None = None,
     views: dict | None = None,
     settled: dict | None = None,
+    *,
+    preserve_roots: set[str] | None = None,
 ) -> tuple[list[dict], list[dict], list[dict], list[dict], list[dict], list[dict]]:
     """(open, held out of band, taken over by a human, resumed, automatic,
     courtesy) — one pass, so the public views below never disagree about who is
@@ -276,6 +278,7 @@ def _partition(
     # Per address, the strongest open conversation it has (see _RANK); an
     # address whose every conversation is settled is not reported at all.
     picked: dict[str, tuple[int, dict, str]] = {}
+    preserved = {}
     for (e, key), msgs in inbound_by_thread.items():
         state = _thread_state(msgs, outs_by_thread.get((e, key), []),
                               (views or {}).get(key), (settled or {}).get(key))
@@ -283,6 +286,8 @@ def _partition(
             continue
         bucket, last_msg = state
         rank = _RANK[bucket]
+        if key in (preserve_roots or ()):
+            preserved[(e, key)] = (rank, last_msg, bucket)
         cur = picked.get(e)
         # Strongest bucket wins; within a bucket the OLDEST conversation is the
         # one worth naming — it is the one that has been waiting.
@@ -295,7 +300,10 @@ def _partition(
     resumed: list[dict] = []
     automatic: list[dict] = []
     courtesy: list[dict] = []
-    for e, (_rank, m, bucket) in picked.items():
+    entries = list(picked.items())
+    entries.extend((e, value) for (e, key), value in preserved.items()
+                   if key != ((picked[e][1].get("thread_key") or "").strip() or e))
+    for e, (_rank, m, bucket) in entries:
         last = m["date"]
         row = {
             "email": e,
@@ -707,6 +715,7 @@ def sweep(settings: Settings, days: int, *, deadline=None, owned_process_group=N
         taken,
         views,
         settled,
+        preserve_roots={row["message_id"] for row in operational_fixture_discovery},
     )
     open_rows.extend(reopened)
     open_rows.sort(key=lambda row: row["last_inbound_date"])

@@ -337,3 +337,25 @@ def admit_originals(settings, inbound, self_addrs, now=None, discovery=None):
                               "owner_uid": settings.engine_owner_uid,
                               "body_sha256": original["_verified_body_sha256"]})
     return kept, effective_self - admitted
+
+
+def discovered_roots(settings, discovery):
+    if not isinstance(discovery, list) or not discovery or len(discovery) > 16:
+        return set()
+    expected = {}
+    for row in enrollments(settings):
+        receipt = row["provider_receipt"]
+        expected[row["message_id"]] = {
+            "message_id": row["message_id"], "owner_uid": row["owner_uid"],
+            "body_sha256": row["body_sha256"],
+            **{"provider_" + key: receipt[key] for key in ("folder", "uid", "uidvalidity")},
+        }
+    roots = set()
+    for row in discovery:
+        if not isinstance(row, dict) or not isinstance(row.get("message_id"), str):
+            return set()
+        root = row["message_id"]
+        if root in roots or row != expected.get(root):
+            return set()
+        roots.add(root)
+    return roots
