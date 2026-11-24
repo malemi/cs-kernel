@@ -367,6 +367,132 @@ class ContextualEmail(unittest.TestCase):
             self.assertFalse(campaign.send_draft(selected,"contact",commit=True)["ok"])
 
 
+class CampaignMailboxRecovery(unittest.TestCase):
+    def setUp(self):
+        environment = patch.dict(os.environ, {}, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def receipt(self, draft_id=DRAFT_ID, **changes):
+        return {"ok": True, "state": "sent", "effect_certainty": "verified",
+                "draft_id": draft_id, "request_key": "campaign-send:" + draft_id,
+                "message_id": "<receipt@example.test>", **changes}
+
+    def pending(self, **changes):
+        return self.receipt(ok=False, cause="draft_retirement_unconfirmed",
+                            draft_cleanup={"state": "pending"}, **changes)
+
+    def test_send_keys_preserve_existing_receipts_and_bound_full_handles(self):
+        keys = []
+        for size in (242, 243, 256):
+            handle = "imap:" + "a" * (size - 5)
+            calls = []
+            def dispatch(selected, method, params):
+                calls.append((method, params))
+                return self.receipt(handle, request_key=params["request_key"])
+            with patch.object(rpc, "call_sync", side_effect=dispatch):
+                contextual_email.campaign_delivery(settings(), handle, status_only=True)
+                contextual_email.campaign_delivery(settings(), handle)
+            self.assertEqual([method for method, _ in calls], ["drafts.send_status", "drafts.send"])
+            self.assertEqual(calls[0][1], calls[1][1])
+            key = calls[0][1]["request_key"]
+            self.assertEqual(calls[0][1]["draft_id"], handle)
+            self.assertLessEqual(len(key), 256)
+            self.assertEqual(key == "campaign-send:" + handle, size == 242)
+            keys.append(key)
+        self.assertEqual(len(set(keys)), 3)
+
+    def test_pending_sent_status_is_read_only_and_requires_exact_proof(self):
+        with patch.object(rpc, "call_sync", return_value=self.pending()) as call:
+            with self.assertRaises(contextual_email.CampaignDraftRetirementPending) as caught:
+                contextual_email.campaign_delivery(settings(), DRAFT_ID, status_only=True)
+            self.assertEqual(caught.exception.message_id, "<receipt@example.test>")
+            self.assertEqual(call.call_args.args[1], "drafts.send_status")
+            self.assertEqual(call.call_count, 1)
+        invalid = ({"draft_id": "another"}, {"request_key": "another"},
+                   {"state": "unconfirmed"}, {"effect_certainty": "unknown"},
+                   {"message_id": None}, {"cause": "another"},
+                   {"draft_cleanup": None}, {"draft_cleanup": {"state": "unknown"}})
+        for changed in invalid:
+            with self.subTest(changed=changed), patch.object(rpc, "call_sync", return_value={**self.pending(), **changed}) as call:
+                with self.assertRaises(RuntimeError) as caught:
+                    contextual_email.campaign_delivery(settings(), DRAFT_ID, status_only=True)
+                self.assertNotIsInstance(caught.exception, contextual_email.CampaignDraftRetirementPending)
+                self.assertEqual(call.call_count, 1)
+
+    def test_explicit_campaign_cli_finishes_original_send_before_marking(self):
+        import tempfile
+        from pathlib import Path
+        from cs.state import State
+        contact = {"id": "contact", "email": "customer@example.test", "state": "drafted",
+                   "dossier": {"mailbox_draft_id": DRAFT_ID}}
+        calls = []
+        def dispatch(selected, method, params):
+            calls.append((method, params))
+            if method == "drafts.send_status":
+                return self.receipt() if contact["state"] == "sent" else self.pending()
+            if method == "drafts.send":
+                self.assertEqual(params, calls[0][1])
+                return self.receipt(draft_cleanup={"state": "completed"})
+            self.assertEqual(method, "campaign.update_contact")
+            self.assertEqual([method for method, _ in calls[:-1]], ["drafts.send_status", "drafts.send"])
+            contact.update(state="sent", message_id=params["message_id"])
+            return {"ok": True, "contact": dict(contact)}
+        with tempfile.TemporaryDirectory() as directory:
+            selected = settings().model_copy(update={"db_path": str(Path(directory) / "local.db")})
+            with patch.object(config, "load", return_value=selected), \
+                 patch.object(campaign, "_get_contact", return_value=contact), \
+                 patch.object(campaign, "_sent_threads_to", side_effect=AssertionError("new admission during send recovery")), \
+                 patch.object(rpc, "call_sync", side_effect=dispatch):
+                for _ in range(2):
+                    output = io.StringIO()
+                    with contextlib.redirect_stdout(output):
+                        self.assertEqual(cli.main(["campaign", "send-draft", "contact", "--commit"]), 0)
+                    self.assertTrue(json.loads(output.getvalue())["ok"])
+            self.assertEqual([method for method, _ in calls],
+                             ["drafts.send_status", "drafts.send", "campaign.update_contact", "drafts.send_status"])
+            local = State(selected.db_path)
+            try:
+                self.assertEqual(local.conn.execute("SELECT COUNT(*) FROM sends").fetchone()[0], 1)
+            finally:
+                local.conn.close()
+
+    def test_failed_cleanup_or_changed_receipt_never_marks_contact(self):
+        contact = {"id": "contact", "email": "customer@example.test", "state": "drafted",
+                   "dossier": {"mailbox_draft_id": DRAFT_ID}}
+        for result in (self.pending(), self.receipt(message_id="<different@example.test>"),
+                       self.receipt(request_key="another")):
+            with self.subTest(result=result), \
+                 patch.object(campaign, "_get_contact", return_value=contact), \
+                 patch.object(campaign, "_mark_mailbox_delivery") as mark, \
+                 patch.object(rpc, "call_sync", side_effect=[self.pending(), result]) as call:
+                outcome = campaign.send_draft(settings(), "contact", commit=True)
+                self.assertFalse(outcome["ok"])
+                self.assertEqual([item.args[1] for item in call.call_args_list], ["drafts.send_status", "drafts.send"])
+                self.assertEqual(call.call_args_list[0].args[2], call.call_args_list[1].args[2])
+                mark.assert_not_called()
+
+    def test_noncommitting_and_scheduled_campaigns_never_resume_cleanup(self):
+        contact = {"id": "contact", "email": "customer@example.test", "state": "drafted",
+                   "dossier": {"mailbox_draft_id": DRAFT_ID}}
+        for commit, mode, queue_only, headless in ((False, "send", False, False),
+                (True, "draft", False, False), (True, "send", True, False),
+                (True, "send", False, True)):
+            with self.subTest(commit=commit, mode=mode, queue_only=queue_only, headless=headless), \
+                 patch.object(contextual_email, "scheduled", return_value=headless), \
+                 patch.object(contextual_email, "campaign_draft", return_value={"id": DRAFT_ID}), \
+                 patch.object(campaign, "_get_contact", return_value=contact), \
+                 patch.object(campaign, "_finished_send_refusal", return_value=None), \
+                 patch.object(campaign, "_sent_threads_to", return_value=([], [])), \
+                 patch.object(campaign, "_escalation_block", return_value=None), \
+                 patch.object(campaign, "_pause_active", return_value=False), \
+                 patch.object(rpc, "call_sync") as call:
+                outcome = campaign.send_draft(settings().model_copy(update={"cs_triage_mode": mode}),
+                                              "contact", commit=commit, queue_only=queue_only)
+                self.assertTrue(outcome["ok"])
+                call.assert_not_called()
+
+
 if __name__ == "__main__":
     import hashlib
     from pathlib import Path

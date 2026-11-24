@@ -583,7 +583,14 @@ def send_draft(settings, contact_id: str, *, commit: bool = False, queue_only: b
     draft_id = (c.get("dossier") or {}).get("mailbox_draft_id")
     if commit and draft_id and mode == "send" and not contextual_email.scheduled():
         try:
-            confirmed = contextual_email.campaign_delivery(settings, draft_id, status_only=True)
+            try:
+                confirmed = contextual_email.campaign_delivery(settings, draft_id, status_only=True)
+            except contextual_email.CampaignDraftRetirementPending as pending:
+                # This explicit send resumes the original bound receipt. Sent
+                # status itself remains read-only, and no new key is admitted.
+                confirmed = contextual_email.campaign_delivery(settings, draft_id)
+                if confirmed != pending.message_id:
+                    raise RuntimeError("campaign mailbox delivery receipt changed")
         except RuntimeError as exc:
             return {"ok": False, "email": email, "draft_id": draft_id,
                     "refused": "contextual_email", "error": str(exc)}

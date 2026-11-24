@@ -1,5 +1,21 @@
 # Changelog — cs-kernel
 
+## v0.75.1 — 2026-11-24 (PATCH, local prepublication candidate)
+
+Mailbox campaign actions accept exact IMAP handles whose full request-key prefix
+would exceed the central receipt bound. A deterministic digest bounds those keys;
+existing valid historical keys remain unchanged. Read-only send status retains
+its observation-only behavior. An explicit campaign send resumes verified pending
+draft retirement with the original key and handle, and marks the contact only
+after matching Sent identity and completed cleanup. It submits no second SMTP
+transaction. Wrong identity, missing proof and scheduled callers retain refusal.
+The preceding local v0.75.0 candidate remains unpublished and is never moved.
+
+**Re-collaudo tier: full on BOTH maintained clones.** The release touches campaign
+send recovery. Verify the exact frozen artifact, permissions, ordinary draft and
+direct-send selection, current mailbox edits, uncertain receipt replay and cleanup
+on both normal clones before public publication. No source override is installed.
+
 ## v0.75.0 — mailbox drafts (unreleased candidate)
 
 Current drafts are native mailbox resources addressed by an opaque handle.

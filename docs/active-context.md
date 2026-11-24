@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.75.0`; Current HEAD status: tagged as `v0.75.0`.** Both maintained clones install private release `v0.74.1`. The local unpublished `v0.75.0` release candidate uses native mailbox drafts and the corresponding engine capabilities. Its complete source suite passes with observed exit zero and unchanged product bytes. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.
+- **Latest release tag: `v0.75.1`; Current HEAD status: tagged as `v0.75.1`.** Both maintained clones install private release `v0.74.1`. The local unpublished `v0.75.1` release candidate uses native mailbox drafts and the corresponding engine capabilities. The repaired campaign caller has independent source approval; the complete at-tag suite and installed acceptance remain pending. Its [delivery plan](execution-plans/2026-11-23-mailbox-drafts.md) follows the governing HB plan. The hosted engines and clone executors have independent versions and controls.
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Both recurring clone schedules are paused. The operators use pinned Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
