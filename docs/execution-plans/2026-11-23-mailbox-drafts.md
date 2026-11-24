@@ -36,7 +36,11 @@ installation state. Publish only the reviewed immutable tag after those checks;
 then adopt/verify the public tag through the normal pin/install/render route
 and complete actual-byte and public-reference provenance checks. No normal clone receives a source override.
 
-The Gmail account consent dependency remains open. The HB plan requires native
+The reviewed HB November 24 amendment requires IMAP/SMTP with the existing app
+password; Gmail OAuth consent is not a dependency. The engine source milestone
+is APPROVED at `/tmp/mrcall-ai-kit/mailbox-imap-engine-milestone-review/report.md`.
+Kernel handles remain opaque and public RPC shapes remain compatible; current
+engine RPC inventory checks pass against this exact kernel source. The HB plan requires native
 Desktop/MCP/Gmail checks, two ordinary draft-mode ticks selecting the same original,
 one direct-send tick, the separate exact 17-target Trash order and one hosted
 engine release across seven units. These checks are pending; no live result or

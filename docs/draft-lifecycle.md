@@ -2,7 +2,9 @@
 
 The Desktop engine owns draft reads and mutations. Gmail Drafts is the
 editable resource for the mailbox candidate. Each current row has an opaque
-owner-bound draft ID and mailbox ID. Review reads `drafts.list` and computes
+owner-bound exact IMAP message handle and mailbox ID. Saved external edits can
+replace the handle. List/read current drafts before an explicit send; a stale
+handle never adopts another draft. Review reads `drafts.list` and computes
 its verdicts from current correspondence, Sent and settlement evidence.
 A failed list or incomplete row remains visible to discovery as a hold.
 
@@ -46,7 +48,8 @@ the mailbox resource and stores its handle in `dossier.mailbox_draft_id`.
 The campaign queue reads that handle. Sending a named campaign draft requires
 the guarded human path and verified Sent evidence. A retry first reads
 `drafts.send_status` for the original request. Confirmation can complete after
-the mailbox consumes the draft, including when the ordinary Sent dedup already
-sees delivery. Preparing a fresh pack
+the original message disappears, including when ordinary Sent dedup already
+sees delivery. `drafts.send_status` observes only; explicit original-key send can
+finish verified post-Sent cleanup without another SMTP submission. Preparing a fresh pack
 for review supplies its rendered body, format and CC through the same campaign preparation operation; sending fresh fixed-template bulk mail uses
 the existing SMTP sender.
