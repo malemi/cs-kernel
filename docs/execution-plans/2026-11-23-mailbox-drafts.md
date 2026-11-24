@@ -31,7 +31,7 @@ scoped changes. Four existing safety suites pass on each actual installed
 interpreter with isolated synthetic effects. Both authenticated identity calls
 pass. These checks do not certify native FULL by themselves.
 
-All seven actual engines run the reviewed IMAP/SMTP dev11 release. The real
+All seven actual engines run the reviewed IMAP/SMTP dev12 release. The real
 controlled saved-edit/MCP-send proof has one matching Sent and received message;
 original-key replay after restart completes exact recoverable retirement without
 another send. Current draft handles are provider observations, not immutable
@@ -39,9 +39,17 @@ containers. The earlier API transport and OAuth blocker are superseded.
 
 ## Remaining delivery
 
-The first ordinary Café tick is running against the protected original. Both
-Café ticks must actually select that same root and leave one unchanged draft
-with zero replies sent. One ordinary MrCall tick must deliver exactly one reply
+The first ordinary Café tick, `run-t1wx3jrh`, exits 1. Its protected original is
+provider-verified but disappears at the per-sender rollup and is not selected;
+it receives zero drafts and replies. A separate selected reply refuses a valid
+folded source Message-ID before composition. The independently approved kernel
+correction at `e59e13a5` preserves eligible protected roots and prioritizes them
+within the existing two-root reservation on successive runs. Normal holds,
+current enrollment matching and same-run replay remain enforced. The engine
+normalization fix is independently approved at `a4b03ad5`; its unchanged
+492-file aggregate passes 377 checks. Forward immutable adoption and fresh
+ordinary acceptance remain required. Both Café ticks must actually select the
+same root and leave one unchanged draft with zero replies sent. One ordinary MrCall tick must deliver exactly one reply
 without an intermediate draft. Verify actual native outcomes, installed Desktop
 opening, provider receipts and restoration of recurring pauses. Do not substitute
 old v0.74.1 acceptance or source fixtures for these checks.
@@ -61,7 +69,7 @@ of the 81 currently published tags. They are not a published tag contract that
 this operator release removes. The engine's selected embedded cs-kernel 0.51.0
 pair remains unchanged by normal clone adoption.
 
-Publish the exact tested v0.76.0 tag with its reviewed release branch and preserve
+Publish the exact tested v0.76.1 tag with its reviewed release branch and preserve
 public main. Do not claim main integration or merge its unrelated source into
 this tested artifact. Read-only per-file/AST and complete published-tag evidence
 is `/tmp/mrcall-ai-kit/kernel-publication-containment-20261124/`. This scoped
@@ -134,3 +142,14 @@ canonical v9 bootstrap ownership so actual clone updates preserve their managed
 instruction entry at the source. Focused init/update, agent surfaces, charter
 shape and send-guard checks pass. Public publication remains after exact-local
 BOTH normal-clone FULL, followed by public-tag provenance verification.
+
+The immutable forward tag v0.76.1 is `6b5fa007c8c0fa98c0d5f5a05a76052eea3f3d0f`.
+The complete pre-tag suite and genuine after-space at-tag suite both exit zero
+on unchanged 164-file product bytes, manifest
+`f328692d32c0b944f21362336ad8b77d75fed9c6af76029cd316d97a05aa69f4`.
+The first at-tag attempt retains actual Errno28 failures; storage recovery
+preserves every complete engine release. The passing actual receipt is
+`/tmp/mrcall-ai-kit/kernel-mailbox-v0761-at-tag-after-space-20261124/full-observed-exit.json`,
+SHA-256 `1c1c350454063b38e16d28919f24657f0023bc3e528dededfb883bb863792e1c`.
+Both exact private candidates are ready. Normal adoption requires the reviewed
+activation guard to accept this exact genuine receipt before any mutation.
