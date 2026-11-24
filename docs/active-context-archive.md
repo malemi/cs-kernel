@@ -4,6 +4,8 @@
 
 ## 2026-11-24 — Pre-v9-preservation candidate
 
+````markdown
+
 ---
 doc_baseline_commit: 57b3929f46bf5c0d20012badcafd9c8ebad42ec3
 doc_baseline_date: 2026-11-22
@@ -93,7 +95,12 @@ candidate does not re-audit those deployments or grant new send authority.
 2. Public publication and the earlier protected acceptance remain open under their existing owners.
 
 
+
+````
+
 ## 2026-11-24 — Superseded local v0.75.0 candidate
+
+````markdown
 
 ---
 doc_baseline_commit: 57b3929f46bf5c0d20012badcafd9c8ebad42ec3
@@ -184,7 +191,12 @@ candidate does not re-audit those deployments or grant new send authority.
 2. Public publication and the earlier protected acceptance remain open under their existing owners.
 
 
+
+````
+
 ## 2026-11-24 — Pre-IMAP release snapshot
+
+````markdown
 
 ---
 doc_baseline_commit: 57b3929f46bf5c0d20012badcafd9c8ebad42ec3
@@ -274,6 +286,9 @@ candidate does not re-audit those deployments or grant new send authority.
    Verify public-tag provenance after publication and preserve paused schedules.
 2. Public publication and the earlier protected acceptance remain open under their existing owners.
 
+
+
+````
 
 ## 2026-11-23 — Snapshot before mailbox candidate reconciliation
 
@@ -3743,6 +3758,8 @@ hook identities and ordinary allow/deny argv retain explicit fixture limits.
 
 ## 2026-10-16 — Before V9 engine adoption
 
+````markdown
+
 ---
 doc_baseline_commit: d31978f38339be6bb1bc2c7e2aebadf736746f03
 doc_baseline_date: 2026-10-15
@@ -3864,6 +3881,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
    enabling automatic reconciliation.
 3. Publish/adopt only after explicit publication authorization, preserving the
    distinction between the local override and public installer provenance.
+
+
+````
 
 ## 2026-10-16 — Superseded acceptance summary
 

@@ -11,5 +11,5 @@ preparation uses exact selected source identity and current engine preflight.
 Existing drafts remain for a person in both modes; authorized direct mode creates
 no intermediate draft. Stable requests recover their original operations.
 
-Acceptance belongs to the governing HB plan. Source checks and a prepared
-`v0.75.0` candidate do not establish either clone's installed acceptance.
+Acceptance belongs to the governing HB plan. Source checks and local adoption certify only their recorded boundaries;
+actual BOTH normal-clone FULL establishes installed acceptance.

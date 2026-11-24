@@ -102,7 +102,12 @@ owner. Not before.
    After authorized publication and public-ref verification, promote the new
    object to that mandatory published registry without changing the tag.
 6. **Run the sweep** (above) on the kernel.
-7. Push (main + tag) — operator's explicit ok. A published tag never moves;
+7. Publish the reviewed release branch and exact tested tag under the operator's
+   release authorization. When the release is based on main, publish main and
+   the tag together. If main carries independently owned unreleased components,
+   retain that main and publish the tested release branch explicitly; record the
+   boundary and do not claim main integration. Do not merge untested source into
+   a frozen artifact merely to align branch ancestry. A published tag never moves;
    a tag published by mistake is recorded in `TAG_VERSION_EXCEPTIONS` and
    fixed forward, never deleted.
 
