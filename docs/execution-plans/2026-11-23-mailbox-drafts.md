@@ -11,6 +11,47 @@ The governing approved execution plan is
 Its reviewed November 24 IMAP amendment and current operator authorization govern
 transport, ownership, spending and installed acceptance. This leaf adds no scope.
 
+## Current public installation and component disposition
+
+The kernel's fresh M1 integration, cumulative BOTH-clone FULL, documentation
+criticism and separate final revision 2 are APPROVED under the governing
+November 25 component boundary. The final verdict explicitly supersedes the
+previous kernel REVISE. The immutable public `v0.76.1` tag identifies
+`6b5fa007c8c0fa98c0d5f5a05a76052eea3f3d0f`; its reviewed release branch preserves
+independent public main `25099365`. The postpublication anchor is `92617671`.
+
+Both normal clones install that actual public HTTPS tag. The corrected R2
+adoption transaction exits zero at
+`kernel-public-adoption-v0761-r2/public-1795595197386138089/activation-1795595471558100350/`
+under the November 24 private evidence root. Default ordinary console and Python
+module verification match all 164 files and exact public VCS provenance.
+Complete retained dependency versions, origins and 7,968/5,793 payload files,
+independent lock rebuilds, all 115 denies per clone, native instruction aliases,
+configuration, cron and pause files pass. Earlier R1 readiness defects remain
+recorded; the corrected transaction preserves displaced pin inodes and relocates
+the actual console wrappers. The adoption performs zero paid calls or provider
+effects and retains both old environments.
+
+The cumulative FULL evidence is `kernel-component-full-20261125/acceptance.json`,
+SHA-256 `3d90d69da91cf5a1d7176723c48c38cb46105b878a25ce742873c6633edecf31`.
+The separate final evidence is `kernel-component-final-release-review-20261125/`.
+Postpublication document reconciliation and scoped final closure remain open.
+The existing two Café examinations and ordinary MrCall send retain their exact
+version scopes. The earlier Café draft is now absent in exact native reads;
+its cause is unknown. Prior opening/preservation observations apply only at their
+recorded times. The separately reviewed Desktop continuity plan uses a new
+positive controlled draft and never recreates that historical object. The separate Desktop flat formatter candidate requires current
+positive preparation/replay, current direct-send verification and its own fleet
+and release gates. Literal Gmail and parent acceptance remain open. This kernel
+record supplies no replacement Desktop outcome or earlier executor certification.
+
+## Retained prepublication plan and checkpoints
+
+The complete previously reviewed body is historical and preserved verbatim.
+Its pending publication and adoption statements describe their earlier state.
+The current disposition above records actual execution without changing scope.
+
+````markdown
 ## Current installation and verification
 
 Both normal clones use immutable local `v0.76.1` at
@@ -280,3 +321,5 @@ Cron, pauses, configuration, native surfaces and dependencies remain unchanged.
 The first post-repair ordinary Café tick is running against the same enrolled
 original. Its result, both successful Café selections and the MrCall direct
 reply remain required before BOTH FULL and public publication.
+
+````

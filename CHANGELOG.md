@@ -64,8 +64,10 @@ permission scopes, ordinary selection on consecutive ticks, current mailbox
 edits, externally removed drafts, direct Sent confirmation and keyed recovery.
 
 **Current operational pin** (both maintained clones, 2026-11-25): **`v0.76.1`**.
-Both normal clones run the exact local prepublication artifact. Installed static,
-safety and identity checks pass. Both-clone FULL and public provenance are pending.
+Both normal clones install the actual public HTTPS tag at `6b5fa007`. Cumulative
+BOTH-clone FULL and separate final judgment are approved. Default installed console
+and module verification match all 164 files. Retained dependency payloads,
+independent lock rebuilds, permissions, cron and pauses pass public adoption.
 
 ## v0.74.1 — 2026-11-22 (PATCH, private unpublished release)
 
