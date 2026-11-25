@@ -113,6 +113,9 @@ Stored model context contains correspondence, source and instructions; the typed
 kernel admission receipt remains outside it. The 17-file terminal manifest is
 `522b5b13d22989229a53abfc9bd1b4b37b6ba3e369825494ec581aa0eb390767`.
 
+The following pre-admission checkpoint is historical and retained verbatim.
+
+````markdown
 The next bounded evidence-bearing request uses the existing installed kernel's
 read-only provider inventory and `admit_originals` verification, stopping before
 classification, settlement or workset mutation. It presents the actual scoped
@@ -121,6 +124,19 @@ authenticated operator request. No rule, model, cap or original SMTP changes.
 Another review remains a possible outcome; positive draft, semantic review and
 same-key replay remain required. Previous operations and charges remain terminal
 and intact. Generated review prose stays out of acceptance artifacts.
+````
+
+The proof-bearing request is terminal as `efe98b28-e81f-4a49-9fa7-35cb442ccf6e`:
+one USD 0.032980 usage, 7,748 input and 1,021 output tokens, no missing facts
+and zero mailbox effects. Its generic review supplies no substantive rationale.
+The installed decoder preserves the assistant response and correctly retains an
+alternative draft in isolation. No local canned substitution or forced branch
+is demonstrated. The 18-file terminal manifest is
+`91afb33ca096a480825719c072c5fe09ff800486944276afe7f822f0473e9f5b`.
+The normal window is returned and the controlled enrollment is expired. The
+approved November 25 plan defines the bounded effect-free comparison; no paid
+comparison or established source repair is claimed here. Desktop positive
+preparation and replay remain open, independently of the kernel component gate.
 
 The November 25 examination-scope review explicitly replaces the preparation's
 stricter two-selection proxy with the operator's two actual examinations. Its

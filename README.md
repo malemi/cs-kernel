@@ -437,8 +437,10 @@ engine acknowledgement. Current availability and examples are in
 The mailbox contract in v0.76.1 requires `mailbox_reply: 1` for preparing a reply
 and `mailbox_drafts: 1` for named send and Trash. An interactive
 `cs draft-reply "Prepare a reply" --thread-id ROOT --source-id SOURCE`
-returns the native handle visible in the mailbox. A send-enabled launcher
-uses `cs reply-send` for an eligible selected source. Existing drafts remain
+returns a structured operation result. Only `completed` with
+`current_draft.exists` and `draft_id` establishes the native handle visible in
+the mailbox. Exit zero can also carry `needs_review` without a draft.
+A send-enabled launcher uses `cs reply-send` for an eligible selected source. Existing drafts remain
 available for review. See the [mailbox draft lifecycle](docs/draft-lifecycle.md).
 
 ### The kernel's own model calls

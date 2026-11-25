@@ -83,8 +83,9 @@ protected executor acceptance.
 
 ## Next
 
-1. Complete the separately reviewed kernel component gate, current RPC
-   compatibility and documentation closure. Preserve both Café examinations,
+1. Complete current documentation closure and the separate final kernel
+   judgment. The fresh M1 integration verifies current RPC compatibility.
+   Preserve both Café examinations,
    ordinary support delivery, restored pauses and all original accounting.
    Desktop positive preparation and parent acceptance remain open.
 2. Complete cumulative FULL on both normal clones before publishing the exact
