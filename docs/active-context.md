@@ -14,9 +14,9 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Local prepublication tag: `v0.76.1`; current HEAD: untagged.** Both normal maintained clones install exact local `v0.76.1` at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Exact normal adoption, both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities pass. All seven hosted engines independently run dev14 from Desktop `74f15a13`. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
+- **Local prepublication tag: `v0.76.1`; current HEAD: untagged.** Both normal maintained clones install exact local `v0.76.1` at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Exact normal adoption, both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities pass. All seven hosted engines independently run dev15 from Desktop `96f02460`. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
-- Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop opens that draft on dev13. The first MrCall tick exits 1 on a generation-format refusal before mailbox effects. A corrected ordinary run on dev14 is active against the same original without resubmission. Its controller owns exact recurring cron and pause restoration. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
+- Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop opens that draft on dev15. Corrected ordinary MrCall `run-v3wrbl3l` succeeds against the original without resubmission: one received and Sent reply, sum 416, zero drafts and unchanged same-key recovery/accounting. Exact cron, pauses and seven process identities are restored. The earlier failed generation stays fenced. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
 
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
@@ -28,7 +28,7 @@ protected executor acceptance.
 
 ## Unresolved
 
-- A successful ordinary MrCall direct-send run remains required; `run-v3wrbl3l` is active after the installed engine/gateway repair. Both-clone FULL retains that successful terminal requirement. The completed cumulative read matrix, independent read-only provider oracle, historical fixed-template goldens, installed safety and both paused ordinary launchers have qualified evidence. The exact local tag has no public provenance yet.
+- Both-clone FULL awaits canonical Café personal-K3 preparation on dev15 and final independent judgment. Ordinary MrCall direct-send acceptance is complete. The completed cumulative read matrix, independent read-only provider oracle, historical fixed-template goldens, installed safety and both paused ordinary launchers have qualified evidence. The exact local tag has no public provenance yet.
 
 - A fixed-template campaign can keep returning a previously classified reply. Deep reads outside the current selection can cause an execution failure. The source candidate instructs scheduled operators to defer pending items that lack an exact selected match. Campaign state and read authority are unchanged.
 
@@ -56,10 +56,9 @@ protected executor acceptance.
   legacy-or-foreign CLAUDE evidence. Current mailbox adoption preserves both v9
   native entries and retires Café’s exact generated bootstrap; that separate
   repair does not establish the earlier cohort’s protected acceptance. No baseline advancement is claimed.
-- The existing completion record accepts current lead startup attestation. Its
-  remaining obligations include refreshed documentation/focused evidence, M5 and
-  final review. Historical workflow-hash refusals remain retained; no reset or
-  migration is performed. Baseline advancement and runtime acceptance stay open.
+- The current completion record requires refreshed documentation, semantic
+  criticism and separate final review. Baseline advancement and full release
+  acceptance remain open. Existing review evidence is preserved.
 - The earlier private executor workstream retains its own strict BOTH-clone FULL,
   signup and publication obligations. Mailbox delivery has current operator
   authorization and its own reviews and installed acceptance requirements. Failed runs
@@ -84,8 +83,9 @@ protected executor acceptance.
 
 ## Next
 
-1. Verify the active ordinary MrCall direct-send result, exact provider counts
-   and same-key replay on the repaired installed engine/gateway. Preserve both Café examinations and exact restored pauses.
+1. Complete canonical Café personal-K3 preparation and replay on dev15.
+   Preserve successful ordinary MrCall and both Café examinations, the exact
+   restored pauses, original operations and accounting.
 2. Complete cumulative FULL on both normal clones before publishing the exact
    tag and reviewed release branch. Verify normal public-tag adoption and
    provenance. The earlier protected acceptance retains its own owner.

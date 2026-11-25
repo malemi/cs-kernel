@@ -97,8 +97,8 @@ What you need:
 - **Codex**, **Claude Code**, or **OpenCode** (the session you work in; agent access is paid separately)
 - A **mrcall-desktop** engine profile
 - Email IMAP for the operator mailbox (supported Google Mail at the moment)
-- For the mailbox candidate, Gmail mail access authorized in the engine; an IMAP
-  app password or application sign-in alone does not grant native draft access
+- Primary mailbox IMAP/SMTP access configured in the engine with its existing
+  app password; mailbox drafts require no separate Gmail OAuth grant
 
 ---
 

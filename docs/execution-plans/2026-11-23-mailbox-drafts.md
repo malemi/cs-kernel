@@ -36,13 +36,16 @@ evidence root. Both installed 164-file comparisons, all 115 denies per clone,
 native aliases and retained third-party bytes match. These checks do not certify
 native FULL by themselves.
 
-All seven actual engines run the reviewed IMAP/SMTP dev14 release from
-`74f15a13`. The recorded dev13
+All seven actual engines run the reviewed IMAP/SMTP dev15 release from
+`96f02460`. The actual switch preserves all previous operations and accounting;
+post-switch public MCP original/alias replay and packaged Linux draft opening pass. The recorded dev13
 controlled saved-edit/MCP-send proof has one matching Sent and received message;
 the original key and an alias accepted through authenticated RPC resolve
 the same operation and Message-ID after an actual Café service restart.
-Rechecking those original identities on dev14 remains required. There
-are zero remaining drafts. An unbound MCP key refuses on the retired handle.
+Rechecking those original identities on dev14 passes through public MCP. The
+same canonical operation and Message-ID retain one Sent, one received and zero
+drafts. Packaged Linux Desktop opens the exact first Café draft on dev15.
+An unbound MCP key refuses on the retired handle.
 Current draft handles identify exact provider observations. The earlier API
 transport and OAuth blocker are superseded.
 
@@ -72,12 +75,58 @@ edited draft and hold the exact independently human-answered source, before
 scheduled generation or dispatch.
 
 The first MrCall run exits 1 before mailbox effects on a strict generation-format
-refusal. The corrected ordinary run `run-v3wrbl3l` is active on installed dev14
-against the same source, renewed without resubmission. Its terminal result,
-semantic reply, exact received/Sent counts and same-key recovery remain pending.
-The unchanged send launcher keeps its USD 8 cap and ordinary timeout. Its
-reviewed controller owns exact cron and pause restoration after all descendants
-terminate. No second run is launched within this window.
+refusal. Corrected ordinary run `run-v3wrbl3l` exits zero on installed dev14
+against that original without resubmission. One matching reply is independently
+present in Sent and at the recipient, with zero drafts. Its reference and sum
+416 pass lead semantic review. Same-key recovery and recount preserve generation,
+send receipt, Message-ID, reservation, usage, tokens and costs. The native run
+reports USD 2.3511234 under the unchanged USD 8 cap and ordinary timeout. Its
+controller restores exact cron and pauses, with no owned descendants and all
+seven engine process identities unchanged. The earlier failed generation remains fenced.
+
+One positive canonical Café personal-K3 preparation on installed dev15 remains
+required before final independent FULL judgment. The separate noncanonical
+request retains its valid review, one USD 0.051536 usage and zero mailbox effects.
+The registered canonical original reaches dev14 once; its USD 0.026759 operation
+fails review validation before mailbox effects. The precise invalid field is
+unknown because the response was not retained. Dev15 allows a policy-only review
+with zero missing facts and records safe field-specific validation causes.
+Its independently reviewed four-file source change leaves kernel product bytes,
+provider schema, saved models and caps unchanged. All seven actual dev15 engines
+and the current public MCP/Desktop checks pass their scoped verification.
+
+On that same verified 205-byte original, the first dev15 request records a valid
+review, USD 0.027780 and zero mailbox effects. Its assessment conflicts with the controlled original, while stored source
+and reconstructed request match that original. The original wire and provider generation identifier are unavailable.
+A normal authenticated clarification quotes the exact original and requests an
+Italian acknowledgment, reference and sum 254 under a distinct stable key.
+It performs no SMTP submission, registry write or policy change. Its frozen
+packet is `cafe-dev15-operator-clarification-20261125/`, manifest
+`bea995226ae79d11310579ccff41c911e9e266e77acb79c72fff734b9f76f4f1`.
+Readiness revision 7 is independently approved. The actual clarification ends in
+`needs_review`, operation `a4369dda-a712-4e99-aaeb-152968ca107c`, with zero missing
+facts, one settled USD 0.037419 usage, 7,107 input and 1,490 output tokens, and zero
+mailbox effects. Its assessment accepts the reference and sum but requests the
+actual verification receipt for the protected original and draft-only authority.
+Stored model context contains correspondence, source and instructions; the typed
+kernel admission receipt remains outside it. The 17-file terminal manifest is
+`522b5b13d22989229a53abfc9bd1b4b37b6ba3e369825494ec581aa0eb390767`.
+
+The next bounded evidence-bearing request uses the existing installed kernel's
+read-only provider inventory and `admit_originals` verification, stopping before
+classification, settlement or workset mutation. It presents the actual scoped
+admission receipt and active enrollment/provider/draft-mode evidence through the
+authenticated operator request. No rule, model, cap or original SMTP changes.
+Another review remains a possible outcome; positive draft, semantic review and
+same-key replay remain required. Previous operations and charges remain terminal
+and intact. Generated review prose stays out of acceptance artifacts.
+
+The November 25 examination-scope review explicitly replaces the preparation's
+stricter two-selection proxy with the operator's two actual examinations. Its
+report is `/tmp/mrcall-ai-kit/cafe-second-examination-scope-review-20261125/report.md`.
+The bound native explanation and independent final provider observations support
+that criterion. This does not waive the separate human-answer and edited-draft
+controls, which pass at their recorded installed version.
 
 The cumulative read matrix, exact three-field independent provider oracle,
 installed safety, historical fixed-template goldens, degraded-CRM behavior and
