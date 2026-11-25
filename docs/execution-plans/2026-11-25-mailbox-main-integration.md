@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 created: 2026-11-25
 brief: ../briefs/2026-11-25-mailbox-main-integration.md
 ---
@@ -124,3 +124,13 @@ artifacts include `source-union-preservation.json`,
 `baseline_executor_diagnosis/diagnosis.log`. Historical archive narrative from
 both branches remains preserved; duplicate scope marker metadata is omitted only
 from inserted snapshots. `archive-preservation.json` binds that preservation.
+
+## Configured-suite result
+
+The unchanged release baseline exits 1 with its single retained executor timeout
+fixture failure; all remaining configured gates pass. The combined candidate's
+complete `bash tests/run.sh` reports `RESULT: all gates green`, including the
+actual tagged-repository/wheel/installed-CLI integrity controls. Its exact process
+exit and complete log are retained in the integration evidence root. The optional
+golden-pack fixture remains skipped because its external inputs are unset. No
+test or production file is weakened or changed for this result.

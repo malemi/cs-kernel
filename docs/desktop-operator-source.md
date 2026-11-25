@@ -9,9 +9,9 @@ owns current source verification. The November 6 plans retain historical checks.
 This source integration creates no release or installed Desktop pairing.
 
 `cs.desktop_runtime.main` exposes `desktop-init`, `desktop-status`,
-`desktop-revoke`, `desktop-configure`, `desktop-export` and `desktop-mcp`.
+`desktop-revoke`, `desktop-configure`, `desktop-export` and `mcp`.
 The host supplies its entry point and MCP dependency environment; kernel metadata
-does not install a standalone MCP SDK. Descriptor version 1 binds the owner,
+does not install a standalone MCP SDK. The version 1 managed workspace binding binds the owner,
 company, workspace and generation. Managed operations retain workspace locks,
 revocation and operation receipts.
 
@@ -31,8 +31,9 @@ verbs. The current CLI and canonical native workflows retain the released source
 
 ## Effects and verification limits
 
-Managed operations require authenticated scope and capabilities. `ask_operator`
-and `prepare_reply` can incur engine model cost; the latter writes a draft.
+Engine-backed business operations authenticate the owner and company.
+`ask_operator` and `prepare_reply` require their respective engine policy
+capabilities and can incur engine model cost; the latter writes a draft.
 Availability does not grant send authority. The merge adopts no clone descriptor,
 credential, provider operation or running service.
 

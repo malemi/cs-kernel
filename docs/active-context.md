@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: e70d2885e1a0501a5366448e8f4d12aaa965d15b
+doc_baseline_commit: 032cf0bc6ebbdccd16b05d65c94949c193b82e06
 doc_baseline_date: 2026-11-25
 ---
 
@@ -14,40 +14,44 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- Main integration combines the released native mailbox source with the nine independent embedded Desktop helper modules. The [integration plan](execution-plans/2026-11-25-mailbox-main-integration.md) owns source and entry-point verification. This merge creates no release, repin or runtime rollout; installed versions and qualifications below remain unchanged.
+**Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.**
+The public tag is immutable at `6b5fa007`. Both maintained normal clones
+install that tag with exact 164-file inventories and approved FULL acceptance.
+Seven hosted engines run immutable dev16 from Desktop product source `626d303d`.
+Main integration adds the nine independent embedded Desktop helpers to the
+released source without a new tag, repin, installed pairing or runtime rollout.
+The [main integration plan](execution-plans/2026-11-25-mailbox-main-integration.md)
+owns combined-source verification.
 
-- **Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.** Both normal maintained clones install the actual HTTPS tag at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Independent final review approves cumulative FULL acceptance on both normal local installations. This includes both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities. All seven hosted engines independently run dev16 from Desktop `626d303d`; their actual R2 switch and full payload/process bindings pass independent verification. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
-- The released kernel supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
-- Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop has retained opening proof on dev15. The earlier controlled draft is now absent in exact native reads, with unknown cause; it is never recreated for continuity. Corrected ordinary MrCall `run-v3wrbl3l` succeeds against the original without resubmission: one received and Sent reply, sum 416, zero drafts and unchanged same-key recovery/accounting. Exact cron, pauses and seven process identities are restored. The earlier failed generation stays fenced. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
-- Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
+The mailbox delivery is complete with explicit qualifications. Gmail acceptance
+covers saved-body public-MCP send, recoverable unflagged Trash and external send
+followed by old-handle refusal without recreation. Recipient/body verification
+is approved composed evidence with an engine recipient correction; uninterrupted
+Gmail-recipient-edit-to-SMTP remains unestablished. Browser actions are
+operator-reported. The current ordinary dev16 send has semantic approval, one
+Sent, zero drafts and stable same-key accounting; its recipient is unobserved.
+The absent original generated draft is not recreated. Packaged Linux Desktop
+opening proof uses a separate manual fixture and does not establish recovery of
+that original. [Mailbox delivery](execution-plans/2026-11-23-mailbox-drafts.md).
 
-The installed mailbox delivery is complete with explicit qualifications. The
-final installed review is APPROVED; the governing HB and Desktop primary plans
-are completed. Public Desktop `v0.1.57` is immutable at
-`50ee8316e1d9b793e2bbbc9a7520ef088c1f6b10`; Desktop documentation main and
-service checkout are `03175949b2a9781424b348b0724627fb0122ee46`. Seven engines
-retain dev16 product source `626d303db35c41f9b189da3197a5c1476185bf4a`.
-The terminal Gmail cases verify saved-body/public-MCP send, recoverable unflagged
-Trash and external Gmail send followed by old-handle refusal without recreation.
-Recipient verification is independently approved composed evidence, including
-an explicit engine recipient correction; uninterrupted Gmail-recipient-edit-to-
-SMTP remains unestablished. Browser actions are operator-reported. The current
-ordinary dev16 send has semantic approval, one Sent, zero draft effects and stable
-same-key accounting; its recipient remains unobserved. Controlled dev14 transport
-proof stays historical and the additional controlled 518 case remains failed.
-Public full-download/archive/CRC and all four tag jobs pass. Runner signing is
-established; Apple agreement HTTP 403 leaves the package unnotarized. Native
-Mac/Windows execution and independent Mac signature inspection remain unverified.
-Terminal evidence is under the November 24 private evidence root in
-`mailbox-final-delivery-20261125/{final-state.json,report.md}`. Recurring schedules
-remain paused, with exact cron, budgets and previous send fences preserved.
+Public Desktop `v0.1.57` is immutable at `50ee8316`; its documentation main and
+service checkout are `03175949`. All four tag jobs, full archive checks and public
+installer download pass. Runner signing is established. Apple agreement HTTP 403
+leaves the package unnotarized; native Mac/Windows execution and independent Mac
+signature inspection remain unverified. Qualified terminal evidence remains in
+`mailbox-final-delivery-20261125/{final-state.json,report.md}` under the November 24
+private evidence root.
 
-Durable platform contracts remain in the [kernel charter](kernel-charter.md),
+Recurring operators remain paused with exact cron, pause permissions and send
+fences preserved. Ordinary launchers use Claude Code 2.1.296 and an 8 USD cap;
+signup onboarding uses no model. Earlier paid cohorts remain stopped with their
+aggregate ceiling and uncertain charges retained. Mailbox acceptance does not
+certify the separate protected executor workstream.
+
+Durable contracts are the [kernel charter](kernel-charter.md),
 [operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
 [assignments](task-assignment.md) and [draft lifecycle](draft-lifecycle.md).
-Historical deployment observations remain in the archive. The mailbox delivery
-retains the ordinary launchers’ send boundaries and does not certify the earlier
-protected executor acceptance.
+Historical deployment observations and verification sequences remain archived.
 
 ## Unresolved
 
