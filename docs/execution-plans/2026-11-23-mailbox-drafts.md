@@ -85,7 +85,8 @@ controller restores exact cron and pauses, with no owned descendants and all
 seven engine process identities unchanged. The earlier failed generation remains fenced.
 
 One positive canonical Café personal-K3 preparation on installed dev15 remains
-required before final independent FULL judgment. The separate noncanonical
+required for Desktop and parent acceptance. The separate kernel component
+judgment follows the November 25 boundary amendment below. The separate noncanonical
 request retains its valid review, one USD 0.051536 usage and zero mailbox effects.
 The registered canonical original reaches dev14 once; its USD 0.026759 operation
 fails review validation before mailbox effects. The precise invalid field is
@@ -147,6 +148,24 @@ perform normal public-tag installation and repeat complete package, dependency,
 lock-only and public-reference provenance checks. Compatible rollback preserves
 all engine receipts and never restores discarded text or repeats a possible send.
 No product source overlay is installed.
+
+## Current component release dependency
+
+The governing November 25 amendment is
+`/home/mal/hb/docs/briefs/2026-11-25-mailbox-component-release-boundaries.md`,
+with execution in the matching HB plan. Its framing is independently approved.
+The exact amended HB and kernel November 23 plans require independent approval
+before a dependent milestone. Existing kernel REVISE remains effective until a
+fresh scoped final review approves actual BOTH-clone FULL, current RPC
+compatibility, documentation closure and the exact unchanged tag.
+
+The additional personal MCP K3 generation belongs to Desktop and does not call
+the kernel to compose a response. Its positive draft/replay and literal Gmail
+checks remain open for Desktop/parent acceptance. They do not erase the exact
+kernel's completed ordinary and safety evidence. Kernel publication requires its
+own fresh final judgment and subsequent real public-origin adoption on both
+clones. No older failed verdict is reinterpreted as approval. No new paid tick
+is required solely to repeat the already observed ordinary results.
 
 ## Public branch boundary
 

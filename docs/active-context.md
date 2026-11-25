@@ -28,7 +28,7 @@ protected executor acceptance.
 
 ## Unresolved
 
-- Both-clone FULL awaits canonical Café personal-K3 preparation on dev15 and final independent judgment. Ordinary MrCall direct-send acceptance is complete. The completed cumulative read matrix, independent read-only provider oracle, historical fixed-template goldens, installed safety and both paused ordinary launchers have qualified evidence. The exact local tag has no public provenance yet.
+- The kernel component release requires fresh scoped FULL and final judgment under the approved November 25 framing. Fresh execution-plan review approves the exact amended release dependencies. The earlier REVISE remains effective. Desktop canonical personal-K3 preparation/replay remains a separate open parent requirement. Ordinary MrCall direct-send acceptance is complete. The completed cumulative read matrix, independent read-only provider oracle, historical fixed-template goldens, installed safety and both paused ordinary launchers have qualified evidence. The exact local tag has no public provenance yet.
 
 - A fixed-template campaign can keep returning a previously classified reply. Deep reads outside the current selection can cause an execution failure. The source candidate instructs scheduled operators to defer pending items that lack an exact selected match. Campaign state and read authority are unchanged.
 
@@ -83,9 +83,10 @@ protected executor acceptance.
 
 ## Next
 
-1. Complete canonical Café personal-K3 preparation and replay on dev15.
-   Preserve successful ordinary MrCall and both Café examinations, the exact
-   restored pauses, original operations and accounting.
+1. Complete the separately reviewed kernel component gate, current RPC
+   compatibility and documentation closure. Preserve both Café examinations,
+   ordinary support delivery, restored pauses and all original accounting.
+   Desktop positive preparation and parent acceptance remain open.
 2. Complete cumulative FULL on both normal clones before publishing the exact
    tag and reviewed release branch. Verify normal public-tag adoption and
    provenance. The earlier protected acceptance retains its own owner.

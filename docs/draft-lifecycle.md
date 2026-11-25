@@ -15,6 +15,12 @@ A failed list or incomplete row remains visible to discovery as a hold.
 corroborates the inbound source and applies local SELF and suppression checks.
 A person can use this path to request a review draft on a held thread.
 
+Read the structured result state even when the CLI exits zero. `needs_review`
+retains the operation and its internal review without a mailbox draft. Only
+`completed` with `current_draft.exists` and a returned `draft_id` establishes the
+named draft to read, edit or send. A refused or uncertain result retains its
+original identity and never authorizes blind regeneration or retransmission.
+
 An authorized send-mode launcher invokes `cs reply-send` with the same
 source arguments and mode `send`. The generic launcher grants draft
 preparation only. The engine checks assignment, the current conversation,
