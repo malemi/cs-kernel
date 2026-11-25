@@ -1,5 +1,5 @@
 ---
-status: active
+status: completed
 created: 2026-11-23
 brief: ../briefs/2026-11-23-mailbox-drafts.md
 ---
@@ -42,15 +42,54 @@ This private formatter change preserves the public kernel RPC and request
 contracts; no kernel product file changes. Actual M3 proof is
 `mailbox-upgrade-dev16-r2/run-20261125T090254925528Z/running-proof.json`,
 SHA-256 `c03e22bcf5739f58215b61ead58610bb7a3b79c5979023298dee67aefd677439`.
-Postpublication document reconciliation and scoped final closure remain open.
-The existing two Café examinations and ordinary MrCall send retain their exact
-version scopes. The earlier Café draft is now absent in exact native reads;
-its cause is unknown. Prior opening/preservation observations apply only at their
-recorded times. The separately reviewed Desktop continuity plan uses a new
-positive controlled draft and never recreates that historical object. The separate Desktop flat formatter candidate requires current
-positive preparation/replay, current direct-send verification and its own fleet
-and release gates. Literal Gmail and parent acceptance remain open. This kernel
-record supplies no replacement Desktop outcome or earlier executor certification.
+The final installed mailbox review is APPROVED with explicit qualifications;
+the governing HB and Desktop primary plans are completed. The terminal state is
+`mailbox-final-delivery-20261125/final-state.json`, with the actual final review
+in `mailbox-final-delivery-20261125/report.md`, under the same private evidence
+root. Its accepted checkout receipt binds HB documentation
+`2a06187b827cb7d7a365ab5983a05b19f90b96e4` and Desktop documentation/service
+`03175949b2a9781424b348b0724627fb0122ee46`; later documentation descendants
+retain their own publication receipts.
+The immutable public Desktop `v0.1.57` remains at
+`50ee8316e1d9b793e2bbbc9a7520ef088c1f6b10`; installed seven-engine product
+source is `626d303db35c41f9b189da3197a5c1476185bf4a`. Public kernel tag and
+both verified 164-file public installations remain unchanged.
+
+The terminal Gmail case A preserves the saved 223-byte body and marker. After
+recipient-only engine correction, public MCP send has one Sent, one received
+copy and zero drafts; same-key replay preserves receipt identity and accounting.
+The independently approved native-MIME verification is composed evidence;
+uninterrupted Gmail-recipient-edit-to-SMTP is unestablished and browser actions
+are operator-reported. Case B has one exact recoverable unflagged Trash receipt
+and no outgoing message. Case C has one external Gmail Sent, one received copy,
+zero drafts and typed old-handle refusal without recreation; no independent C
+after-ledger is retained.
+
+Original model preparation retains its verified 197-byte body. UID 2516 is
+absent; the original key recovers its operation/body with changed context and
+no recreation. Explicit native-RPC fixture UID 2587 is distinct; installed
+Desktop opening precedes the Gmail edits/send and does not certify that model
+preparation. Current ordinary dev16 sending has one Sent, zero source draft
+effects, semantic approval and stable same-key accounting, with recipient
+unobserved. Historical dev14 recipient/transport proof stays separate; the
+controlled sum-518 case remains failed. The two original Cafe examinations retain
+one unchanged draft and zero sends at their recorded versions; the second holds
+on an incomplete Sent-body comparison rather than proving clean existing-draft
+suppression. That draft is now absent, with unknown cause. The original 17
+protected drafts are absent at first execution, which moves none; 14 are in
+Trash and three unlocated, with unknown disappearance causes.
+
+The complete anonymous 249599199-byte DMG matches SHA-256
+`f46d4c6cbfc02371b2edcd24b20a9ffe51dc2e86cd7ec6ca9aae834011a91de7`, with
+full ZIP/CRC verification and all four tag jobs successful on attempt 1 in run
+`45617312164`. The public receipt is
+`desktop-publication-dev16-r4-final-20261125/public-verification.json`, SHA-256
+`841aa0c7349a98dff5542f854c09434ed268f0cdbed7fae9546fc089d8558061`.
+Runner signing is established; Apple agreement HTTP 403 leaves the release
+unnotarized. Native Mac/Windows execution and independent Mac signature
+inspection remain unverified. Qualified mailbox completion preserves recurring
+pauses, exact cron, budgets, old-send fences and unrelated executor/cohort limits;
+it does not certify those separate historical workstreams.
 
 ## Retained prepublication plan and checkpoints
 

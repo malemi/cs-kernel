@@ -1,5 +1,5 @@
 ---
-doc_baseline_commit: 1e7a429d2f44029b481d2bf558a612c21f75af5e
+doc_baseline_commit: e70d2885e1a0501a5366448e8f4d12aaa965d15b
 doc_baseline_date: 2026-11-25
 ---
 
@@ -15,9 +15,30 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 ## State now
 
 - **Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.** Both normal maintained clones install the actual HTTPS tag at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Independent final review approves cumulative FULL acceptance on both normal local installations. This includes both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities. All seven hosted engines independently run dev16 from Desktop `626d303d`; their actual R2 switch and full payload/process bindings pass independent verification. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
-- The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
+- The released kernel supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop has retained opening proof on dev15. The earlier controlled draft is now absent in exact native reads, with unknown cause; it is never recreated for continuity. Corrected ordinary MrCall `run-v3wrbl3l` succeeds against the original without resubmission: one received and Sent reply, sum 416, zero drafts and unchanged same-key recovery/accounting. Exact cron, pauses and seven process identities are restored. The earlier failed generation stays fenced. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.
+
+The installed mailbox delivery is complete with explicit qualifications. The
+final installed review is APPROVED; the governing HB and Desktop primary plans
+are completed. Public Desktop `v0.1.57` is immutable at
+`50ee8316e1d9b793e2bbbc9a7520ef088c1f6b10`; Desktop documentation main and
+service checkout are `03175949b2a9781424b348b0724627fb0122ee46`. Seven engines
+retain dev16 product source `626d303db35c41f9b189da3197a5c1476185bf4a`.
+The terminal Gmail cases verify saved-body/public-MCP send, recoverable unflagged
+Trash and external Gmail send followed by old-handle refusal without recreation.
+Recipient verification is independently approved composed evidence, including
+an explicit engine recipient correction; uninterrupted Gmail-recipient-edit-to-
+SMTP remains unestablished. Browser actions are operator-reported. The current
+ordinary dev16 send has semantic approval, one Sent, zero draft effects and stable
+same-key accounting; its recipient remains unobserved. Controlled dev14 transport
+proof stays historical and the additional controlled 518 case remains failed.
+Public full-download/archive/CRC and all four tag jobs pass. Runner signing is
+established; Apple agreement HTTP 403 leaves the package unnotarized. Native
+Mac/Windows execution and independent Mac signature inspection remain unverified.
+Terminal evidence is under the November 24 private evidence root in
+`mailbox-final-delivery-20261125/{final-state.json,report.md}`. Recurring schedules
+remain paused, with exact cron, budgets and previous send fences preserved.
 
 Durable platform contracts remain in the [kernel charter](kernel-charter.md),
 [operator runtime](operator-runtime.md), [log diagnosis](log-diagnosis-workflow.md),
@@ -27,14 +48,6 @@ retains the ordinary launchers’ send boundaries and does not certify the earli
 protected executor acceptance.
 
 ## Unresolved
-
-- The kernel component has actual cumulative BOTH-clone FULL and separate final
-  approval. Exact public publication and both normal public-tag installations
-  are verified. Default console and module verification match all 164 files;
-  complete dependency origins/payloads, independent lock rebuilds, permissions,
-  native instruction aliases, cron and pauses retain evidence. Postpublication
-  documentation and scoped final closure remain in progress. Desktop canonical
-  personal-K3 preparation/replay and parent Gmail acceptance remain separate.
 
 - A fixed-template campaign can keep returning a previously classified reply. Deep reads outside the current selection can cause an execution failure. The source candidate instructs scheduled operators to defer pending items that lack an exact selected match. Campaign state and read authority are unchanged.
 
@@ -61,8 +74,8 @@ protected executor acceptance.
   are unchanged. The earlier cohort retains historical
   legacy-or-foreign CLAUDE evidence. Current mailbox adoption preserves both v9
   native entries and retires Café’s exact generated bootstrap; that separate
-  repair does not establish the earlier cohort’s protected acceptance. No baseline advancement is claimed.
-- The kernel completion record awaits post-adoption verification and documentation closure before baseline advancement.
+  repair does not establish the earlier cohort’s protected acceptance. No baseline
+  advancement is claimed for that earlier protected candidate.
 - The earlier private executor workstream retains its own strict BOTH-clone FULL,
   signup and publication obligations. Mailbox delivery has current operator
   authorization and its own reviews and installed acceptance requirements. Failed runs
@@ -87,5 +100,5 @@ protected executor acceptance.
 
 ## Next
 
-1. Reconcile postpublication documentation and final closure with the completed public-tag installations. Preserve both original Café examinations, ordinary support delivery and all uncertain identities.
-2. Complete kernel documentation closure against the installed results. Desktop positive preparation and parent acceptance remain open.
+Preserve recurring pauses, exact cron, spending controls and uncertain receipts.
+Continue unrelated kernel work only under its existing owner and acceptance.
