@@ -1,5 +1,8 @@
 # Transversal Documentation Index
 
+- [Unified main integration](execution-plans/2026-11-25-mailbox-main-integration.md) and [brief](briefs/2026-11-25-mailbox-main-integration.md).
+- [Embedded Desktop helpers](desktop-operator-source.md), [operational diagnostics](operational-diagnostics-source.md) and [current interactive reply routing](interactive-reply-source.md).
+
 - [Mailbox draft delegation](briefs/2026-11-23-mailbox-drafts.md) and [delivery checkpoint](execution-plans/2026-11-23-mailbox-drafts.md).
 
 - [Scheduled assignment reads by selected position](briefs/2026-11-22-scheduled-selected-reads.md) and [source verification plan](execution-plans/2026-11-22-scheduled-selected-reads.md).

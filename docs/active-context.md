@@ -14,6 +14,8 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
+- Main integration combines the released native mailbox source with the nine independent embedded Desktop helper modules. The [integration plan](execution-plans/2026-11-25-mailbox-main-integration.md) owns source and entry-point verification. This merge creates no release, repin or runtime rollout; installed versions and qualifications below remain unchanged.
+
 - **Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.** Both normal maintained clones install the actual HTTPS tag at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Independent final review approves cumulative FULL acceptance on both normal local installations. This includes both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities. All seven hosted engines independently run dev16 from Desktop `626d303d`; their actual R2 switch and full payload/process bindings pass independent verification. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
 - The released kernel supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop has retained opening proof on dev15. The earlier controlled draft is now absent in exact native reads, with unknown cause; it is never recreated for continuity. Corrected ordinary MrCall `run-v3wrbl3l` succeeds against the original without resubmission: one received and Sent reply, sum 416, zero drafts and unchanged same-key recovery/accounting. Exact cron, pauses and seven process identities are restored. The earlier failed generation stays fenced. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
@@ -48,6 +50,8 @@ retains the ordinary launchers’ send boundaries and does not certify the earli
 protected executor acceptance.
 
 ## Unresolved
+
+- The unchanged release baseline has a timing-sensitive executor timeout fixture failure: a preliminary CLI read fails before the intended effect. An isolated exact-case run passes and records the intended unknown-effect terminal result. The full baseline failure remains retained separately from integration checks.
 
 - A fixed-template campaign can keep returning a previously classified reply. Deep reads outside the current selection can cause an execution failure. The source candidate instructs scheduled operators to defer pending items that lack an exact selected match. Campaign state and read authority are unchanged.
 
