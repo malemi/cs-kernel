@@ -1,6 +1,6 @@
 ---
-doc_baseline_commit: 57b3929f46bf5c0d20012badcafd9c8ebad42ec3
-doc_baseline_date: 2026-11-22
+doc_baseline_commit: 1e7a429d2f44029b481d2bf558a612c21f75af5e
+doc_baseline_date: 2026-11-25
 ---
 
 # Active Context — cs-kernel
@@ -14,7 +14,7 @@ Durable rules live in the [kernel charter](kernel-charter.md), release history i
 
 ## State now
 
-- **Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.** Both normal maintained clones install the actual HTTPS tag at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Independent final review approves cumulative FULL acceptance on both normal local installations. This includes both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities. All seven hosted engines independently run dev15 from Desktop `96f02460`. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
+- **Latest release tag: `v0.76.1` (published); Current HEAD status: untagged.** Both normal maintained clones install the actual HTTPS tag at `6b5fa007`. It preserves provider-verified protected roots through sender rollup and prioritizes eligible roots within the existing two-root workset. Current enrollment proof, ordinary holds and cursor replay remain enforced. Pre-tag and at-tag suites exit zero on unchanged 164-file product bytes, with the optional golden-pack case skipped. Independent final review approves cumulative FULL acceptance on both normal local installations. This includes both package comparisons, retained dependencies, 115 denies and four installed safety suites per clone, and authenticated identities. All seven hosted engines independently run dev16 from Desktop `626d303d`; their actual R2 switch and full payload/process bindings pass independent verification. [Delivery plan](execution-plans/2026-11-23-mailbox-drafts.md).
 - The private release supports scheduled assignment reads by position. [Design and verification](execution-plans/2026-11-22-scheduled-selected-reads.md).
 - Two ordinary Café ticks exit 0 on dev12 and dev13 with the same examined original, one byte-identical draft and zero sends. The second identifies the draft in its bound review and final explanation; its incomplete Sent-body hold is separate from clean existing-draft suppression. Packaged Linux Desktop has retained opening proof on dev15. The earlier controlled draft is now absent in exact native reads, with unknown cause; it is never recreated for continuity. Corrected ordinary MrCall `run-v3wrbl3l` succeeds against the original without resubmission: one received and Sent reply, sum 416, zero drafts and unchanged same-key recovery/accounting. Exact cron, pauses and seven process identities are restored. The earlier failed generation stays fenced. Ordinary launchers retain Claude Code 2.1.296 and an 8 USD cap. Signup onboarding uses no model.
 - Earlier paid evaluation cohorts remain stopped. The previously recorded aggregate ceiling and uncertain charges remain binding for their owner. The production scheduled-read repair uses offline checks.

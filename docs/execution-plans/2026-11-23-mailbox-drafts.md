@@ -35,6 +35,13 @@ effects and retains both old environments.
 The cumulative FULL evidence is `kernel-component-full-20261125/acceptance.json`,
 SHA-256 `3d90d69da91cf5a1d7176723c48c38cb46105b878a25ce742873c6633edecf31`.
 The separate final evidence is `kernel-component-final-release-review-20261125/`.
+All seven actual engines now run the immutable dev16 release from Desktop
+`626d303d`, with 492 matching files and independently checked process, listener
+and user identities. The actual R2 switch and restored cron/pause window pass.
+This private formatter change preserves the public kernel RPC and request
+contracts; no kernel product file changes. Actual M3 proof is
+`mailbox-upgrade-dev16-r2/run-20261125T090254925528Z/running-proof.json`,
+SHA-256 `c03e22bcf5739f58215b61ead58610bb7a3b79c5979023298dee67aefd677439`.
 Postpublication document reconciliation and scoped final closure remain open.
 The existing two Café examinations and ordinary MrCall send retain their exact
 version scopes. The earlier Café draft is now absent in exact native reads;
