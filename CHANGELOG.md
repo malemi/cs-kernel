@@ -63,7 +63,9 @@ reference their current mailbox draft. Fixed-template bulk sending uses SMTP.
 permission scopes, ordinary selection on consecutive ticks, current mailbox
 edits, externally removed drafts, direct Sent confirmation and keyed recovery.
 
-**Current operational pin** (both maintained clones, 2026-11-23): **`v0.74.1`**.
+**Current operational pin** (both maintained clones, 2026-11-25): **`v0.76.1`**.
+Both normal clones run the exact local prepublication artifact. Installed static,
+safety and identity checks pass. Both-clone FULL and public provenance are pending.
 
 ## v0.74.1 — 2026-11-22 (PATCH, private unpublished release)
 

@@ -13,8 +13,8 @@ transport, ownership, spending and installed acceptance. This leaf adds no scope
 
 ## Current installation and verification
 
-Both normal clones use immutable local `v0.76.0` at
-`06568d5e0fdd848876e64603e59f98e9dc686d12`, installed through exact built artifacts.
+Both normal clones use immutable local `v0.76.1` at
+`6b5fa007c8c0fa98c0d5f5a05a76052eea3f3d0f`, installed through exact built artifacts.
 All 164 package files match Git. Complete retained dependency versions, origins
 and bytes match. Reviewed supported pin/render transactions preserve both
 instruction entries, local prose, native aliases and every prior deny. The
@@ -23,39 +23,77 @@ company and harness text remains unchanged. MrCall stays send mode and Café
 draft mode. Ordinary launchers retain Claude Code 2.1.296 and USD 8 caps.
 
 The complete at-tag suite exits zero on unchanged product bytes. Its actual
-receipt is `/tmp/mrcall-ai-kit/kernel-mailbox-v0760-at-tag-20261124/full-observed-exit.json`.
+receipt is `/tmp/mrcall-ai-kit/kernel-mailbox-v0761-at-tag-after-space-20261124/full-observed-exit.json`.
 The receipt's 164-file digest is
-`01681ed89b4eae0a19301bd10d55b5d854052938d98bdeef7670619ab92e6642`.
+`f328692d32c0b944f21362336ad8b77d75fed9c6af76029cd316d97a05aa69f4`.
+The optional golden-pack case is skipped by the recorded configuration.
 Fresh campaign, v9 source, artifact and charter-adoption reviews approve their
 scoped changes. Four existing safety suites pass on each actual installed
 interpreter with isolated synthetic effects. Both authenticated identity calls
-pass. These checks do not certify native FULL by themselves.
+pass. Actual adoption and preservation evidence is
+`clone-candidate-v0761/activation-20261124T205943Z/` under the November 24 private
+evidence root. Both installed 164-file comparisons, all 115 denies per clone,
+native aliases and retained third-party bytes match. These checks do not certify
+native FULL by themselves.
 
-All seven actual engines run the reviewed IMAP/SMTP dev12 release. The real
+All seven actual engines run the reviewed IMAP/SMTP dev14 release from
+`74f15a13`. The recorded dev13
 controlled saved-edit/MCP-send proof has one matching Sent and received message;
-original-key replay after restart completes exact recoverable retirement without
-another send. Current draft handles are provider observations, not immutable
-containers. The earlier API transport and OAuth blocker are superseded.
+the original key and an alias accepted through authenticated RPC resolve
+the same operation and Message-ID after an actual Café service restart.
+Rechecking those original identities on dev14 remains required. There
+are zero remaining drafts. An unbound MCP key refuses on the retired handle.
+Current draft handles identify exact provider observations. The earlier API
+transport and OAuth blocker are superseded.
 
 ## Remaining delivery
 
-The first ordinary Café tick, `run-t1wx3jrh`, exits 1. Its protected original is
-provider-verified but disappears at the per-sender rollup and is not selected;
-it receives zero drafts and replies. A separate selected reply refuses a valid
-folded source Message-ID before composition. The independently approved kernel
-correction at `e59e13a5` preserves eligible protected roots and prioritizes them
-within the existing two-root reservation on successive runs. Normal holds,
-current enrollment matching and same-run replay remain enforced. The engine
-normalization fix is independently approved at `a4b03ad5`; its unchanged
-492-file aggregate passes 377 checks. Forward immutable adoption and fresh
-ordinary acceptance remain required. Both Café ticks must actually select the
-same root and leave one unchanged draft with zero replies sent. One ordinary MrCall tick must deliver exactly one reply
-without an intermediate draft. Verify actual native outcomes, installed Desktop
-opening, provider receipts and restoration of recurring pauses. Do not substitute
-old v0.74.1 acceptance or source fixtures for these checks.
+The preliminary Café tick `run-t1wx3jrh` exited 1 and never selected the protected
+original, despite its provider proof. It created no draft or reply. The
+independently approved kernel correction at `e59e13a5` preserves eligible protected
+roots and prioritizes them within the two-root reservation. The dev12 source
+normalization fix at `a4b03ad5` separately addresses the valid folded Message-ID.
+The preliminary failure satisfies neither successful tick requirement.
+
+The first successful Café tick `run-uutzflaz` exits 0 on dev12 and this exact local
+`v0.76.1` artifact. The ordinary run records complete discovery, one provider
+proof and one exact selection, costing USD 2.7702404. It creates one draft
+(UID 2515, UIDVALIDITY 6) and sends zero replies. The actual packaged Linux
+Desktop opens that exact draft on dev13.
+
+The second ordinary Café tick `run-2gw75shw` exits 0 on dev13 at USD 3.0360272.
+Its bound review and final explanation examine the same original and native
+draft. Independent provider checks retain the exact UID, Message-ID and raw
+bytes, with one draft and zero sends. The workset selects it zero times because
+an incomplete Sent-body comparison holds it first. The independent framing
+review accepts both actual examinations; this case does not prove clean
+existing-draft suppression. Separate installed send-mode controls preserve an
+edited draft and hold the exact independently human-answered source, before
+scheduled generation or dispatch.
+
+The first MrCall run exits 1 before mailbox effects on a strict generation-format
+refusal. The corrected ordinary run `run-v3wrbl3l` is active on installed dev14
+against the same source, renewed without resubmission. Its terminal result,
+semantic reply, exact received/Sent counts and same-key recovery remain pending.
+The unchanged send launcher keeps its USD 8 cap and ordinary timeout. Its
+reviewed controller owns exact cron and pause restoration after all descendants
+terminate. No second run is launched within this window.
+
+The cumulative read matrix, exact three-field independent provider oracle,
+installed safety, historical fixed-template goldens, degraded-CRM behavior and
+both actual paused ordinary launchers have qualified retained evidence. The
+provider oracle is `normal-full-read-matrix/identity-oracle-followup-20261125/`
+under the private evidence root. Its complete projections cover the interval
+from the original October 26 cutoff through the original command observations;
+individually qualified arrivals after each command ends are separate. The oracle
+performs no provider writes or generation.
 
 Complete BOTH normal-clone FULL on this exact frozen local artifact before any
-public tag publication. Preserve the tested tag object. After publication,
+public tag publication. FULL is cumulative across installed static, live
+read-only equivalence, Sent/All Mail dedup, degraded CRM, safety, fixed-template
+preservation and ordinary launcher evidence. The outstanding matrix and retained
+coverage are in `/tmp/mrcall-ai-kit/kernel-full-obligations-20261125/report.md`.
+Preserve the tested tag object. After publication,
 perform normal public-tag installation and repeat complete package, dependency,
 lock-only and public-reference provenance checks. Compatible rollback preserves
 all engine receipts and never restores discarded text or repeats a possible send.
@@ -151,5 +189,10 @@ The first at-tag attempt retains actual Errno28 failures; storage recovery
 preserves every complete engine release. The passing actual receipt is
 `/tmp/mrcall-ai-kit/kernel-mailbox-v0761-at-tag-after-space-20261124/full-observed-exit.json`,
 SHA-256 `1c1c350454063b38e16d28919f24657f0023bc3e528dededfb883bb863792e1c`.
-Both exact private candidates are ready. Normal adoption requires the reviewed
-activation guard to accept this exact genuine receipt before any mutation.
+Both normal adoptions complete through the reviewed transaction at 20:59 UTC.
+The corrected guard accepts the exact genuine receipt and observes the actual
+ordered configuration sources, including legitimately absent optional layers.
+Cron, pauses, configuration, native surfaces and dependencies remain unchanged.
+The first post-repair ordinary Café tick is running against the same enrolled
+original. Its result, both successful Café selections and the MrCall direct
+reply remain required before BOTH FULL and public publication.

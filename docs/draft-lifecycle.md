@@ -27,8 +27,13 @@ key for the same operation. A local interactive binding stores the owner, key,
 mode, thread and source ID. If the original source becomes unavailable,
 recovery can address an engine operation already admitted for that request.
 An uncertain send stays unconfirmed until exact Sent proof is available.
-Preparation recovery reads the original native draft handle or its operation
-Message-ID in Drafts; it never repeats a possible create.
+Once a mailbox receipt permits reconciliation, recovery can read the original
+native draft handle or its operation Message-ID in Drafts. A still-reserved
+receipt returns uncertainty without a draft lookup. Recovery never repeats a
+possible create. A retained uncertain generation without a mailbox receipt returns the
+same generation operation and uncertainty, without a draft lookup, another
+model call or recreation. The CLI exposes its `operation_id`; the engine RPC
+also retains the distinct generation and reservation identifiers.
 
 ## Named mailbox operations
 

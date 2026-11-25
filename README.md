@@ -434,7 +434,7 @@ A local `handled` record does not settle company ownership without an exact
 engine acknowledgement. Current availability and examples are in
 [the assignment guide](docs/task-assignment.md).
 
-The v0.75.0 candidate requires `mailbox_reply: 1` for preparing a reply
+The mailbox contract in v0.76.1 requires `mailbox_reply: 1` for preparing a reply
 and `mailbox_drafts: 1` for named send and Trash. An interactive
 `cs draft-reply "Prepare a reply" --thread-id ROOT --source-id SOURCE`
 returns the native handle visible in the mailbox. A send-enabled launcher
